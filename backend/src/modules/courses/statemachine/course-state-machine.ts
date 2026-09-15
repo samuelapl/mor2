@@ -9,7 +9,7 @@ const ALLOWED_TRANSITIONS: Record<CourseStatus, CourseStatus[]> = {
     CourseStatus.DRAFT,
   ],
   [CourseStatus.APPROVED]: [CourseStatus.PUBLISHED, CourseStatus.ARCHIVED],
-  [CourseStatus.PUBLISHED]: [CourseStatus.ARCHIVED, CourseStatus.DRAFT],
+  [CourseStatus.PUBLISHED]: [CourseStatus.ARCHIVED, CourseStatus.DRAFT, CourseStatus.APPROVED],
   [CourseStatus.REJECTED]: [CourseStatus.DRAFT, CourseStatus.ARCHIVED],
   [CourseStatus.ARCHIVED]: [CourseStatus.DRAFT],
 };

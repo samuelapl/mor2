@@ -122,6 +122,7 @@ model Course {
   version     Int      @default(1) // BR-09: versioning on approval
   thumbnailUrl String? @map("thumbnail_url")
   status      CourseStatus @default(DRAFT)
+  level       CourseLevel @default(BASIC)
   publishedAt DateTime? @map("published_at")
   estimatedHours Float? @map("estimated_hours")
 
@@ -151,6 +152,12 @@ enum CourseStatus {
   PUBLISHED
   REJECTED
   ARCHIVED
+}
+
+enum CourseLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
 }
 
 model CourseOwner {

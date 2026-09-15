@@ -162,6 +162,7 @@ export class CoursesService {
         descriptionEn: dto.description?.en,
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
+        level: dto.level,
         status: CourseStatus.DRAFT,
         owners: {
           create: dto.ownerIds?.length
@@ -198,6 +199,7 @@ export class CoursesService {
     }
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
+    if (dto.level) data.level = dto.level;
 
     return this.prisma.course.update({
       where: { id },
@@ -275,6 +277,17 @@ export class CoursesService {
     });
 
     return updated;
+  }
+
+  async unpublish(id: string) {
+    const course = await this.findById(id);
+
+    this.stateMachine.assertCanTransition(course.status, CourseStatus.APPROVED);
+
+    return this.prisma.course.update({
+      where: { id },
+      data: { status: CourseStatus.APPROVED },
+    });
   }
 
   async archive(id: string) {

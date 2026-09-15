@@ -81,6 +81,14 @@ export class CoursesController {
     return this.coursesService.publish(id);
   }
 
+  @Post(':id/unpublish')
+  @Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Unpublish a published course (returns to approved, no longer visible to learners)' })
+  @ApiParam({ name: 'id', type: String })
+  async unpublish(@Param('id') id: string) {
+    return this.coursesService.unpublish(id);
+  }
+
   @Post(':id/archive')
   @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Archive a course' })

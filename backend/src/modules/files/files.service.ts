@@ -46,6 +46,24 @@ export class FilesService implements OnModuleInit {
     if (!exists) {
       await this.minio.makeBucket(this.bucket);
     }
+    // MinIO buckets default to private, so object URLs handed to the
+    // frontend (course covers, attachments, avatars, certificates) would
+    // 403 in the browser. These are meant to be publicly viewable, so make
+    // reads public — this call is idempotent and safe to run on every boot.
+    await this.minio.setBucketPolicy(
+      this.bucket,
+      JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: ['*'] },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`],
+          },
+        ],
+      }),
+    );
   }
 
   async upload(

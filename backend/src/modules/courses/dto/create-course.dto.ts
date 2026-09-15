@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CourseLevel } from '@prisma/client';
 import {
   IsArray,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -44,6 +46,11 @@ export class CreateCourseDto {
   @IsNumber()
   estimatedHours?: number;
 
+  @ApiPropertyOptional({ enum: CourseLevel, example: CourseLevel.BASIC })
+  @IsOptional()
+  @IsEnum(CourseLevel)
+  level?: CourseLevel;
+
   @ApiPropertyOptional({ example: ['user-uuid-1'] })
   @IsOptional()
   @IsArray()
@@ -55,6 +62,6 @@ export class CreateCourseDto {
   })
   @IsOptional()
   @IsString()
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   thumbnailUrl?: string;
 }
