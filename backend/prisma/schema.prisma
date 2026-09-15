@@ -1,0 +1,645 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────
+// 1. Users & Roles
+// ──────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  phone     String?
+  avatarUrl String?  @map("avatar_url")
+  locale    String   @default("en") // en | am
+  isActive  Boolean  @default(true) @map("is_active")
+  lastLogin DateTime? @map("last_login")
+  registrationStatus ApprovalStatus @default(APPROVED) @map("registration_status")
+
+  // Polymorphic role assignment — a user may hold multiple roles
+  roles                   UserRole[]
+  courseOwnerships        CourseOwner[]
+  contentApprovals        ContentApproval[]
+  trainerAssignments      TrainerAssignment[]
+  enrollments             Enrollment[]
+  assessmentsTaken        AssessmentAttempt[]
+  moduleCompletions       ModuleCompletion[]
+  lessonCompletions       LessonCompletion[]
+  attendanceRecords       Attendance[]
+  certificatesEarned      Certificate[]
+  certificateTemplatesCreated CertificateTemplate[]
+  notifications           Notification[]
+  auditLogs               AuditLog[]
+
+  refreshTokens           RefreshToken[]
+  passwordResets          PasswordReset[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at") // soft delete
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  sid       String   @map("sid") // session id — each browser/device gets its own
+  userAgent String?  @map("user_agent")
+  ip        String?
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sid])
+  @@map("refresh_tokens")
+}
+
+// ──────────────────────────────────────────────────────────
+// 2. Roles (enum stored as table for future extensibility)
+// ──────────────────────────────────────────────────────────
+
+enum RoleName {
+  COURSE_OWNER
+  CONTENT_APPROVER
+  TRAINING_ADMIN
+  TRAINER
+  LEARNER
+  SYSTEM_ADMIN
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  role      RoleName
+  grantedAt DateTime @default(now()) @map("granted_at")
+  grantedBy String?  @map("granted_by")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@map("user_roles")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// ──────────────────────────────────────────────────────────
+// 3. Courses
+// ──────────────────────────────────────────────────────────
+
+model Course {
+  id          String   @id @default(uuid())
+  titleAm     String   @map("title_am")
+  titleEn     String   @map("title_en")
+  descriptionAm String? @map("description_am")
+  descriptionEn String? @map("description_en")
+  code        String   @unique // e.g. "CS101"
+  version     Int      @default(1) // BR-09: versioning on approval
+  thumbnailUrl String? @map("thumbnail_url")
+  status      CourseStatus @default(DRAFT)
+  publishedAt DateTime? @map("published_at")
+  estimatedHours Float? @map("estimated_hours")
+
+  // Ownership & approval
+  owners          CourseOwner[]
+  approvals       ContentApproval[]
+  trainers        TrainerAssignment[]
+  modules         CurriculumModule[]
+  enrollments     Enrollment[]
+  assessments     Assessment[]
+  liveSessions    LiveSession[]
+  certificates    Certificate[]
+  attachments     Attachment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at") // soft delete
+
+  @@index([status])
+  @@map("courses")
+}
+
+enum CourseStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+model CourseOwner {
+  id       String @id @default(uuid())
+  courseId  String @map("course_id")
+  userId   String @map("user_id")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@map("course_owners")
+}
+
+// ──────────────────────────────────────────────────────────
+// 4. Content Approvals
+// ──────────────────────────────────────────────────────────
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVISION
+}
+
+model ContentApproval {
+  id         String @id @default(uuid())
+  courseId    String @map("course_id")
+  approverId String @map("approver_id")
+  status     ApprovalStatus @default(PENDING)
+  comments   String?
+  decidedAt  DateTime? @map("decided_at")
+
+  approver User   @relation(fields: [approverId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([courseId])
+  @@index([approverId])
+  @@map("content_approvals")
+}
+
+// ──────────────────────────────────────────────────────────
+// 5. Trainer Assignments
+// ──────────────────────────────────────────────────────────
+
+model TrainerAssignment {
+  id       String   @id @default(uuid())
+  courseId  String   @map("course_id")
+  userId   String   @map("user_id")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@unique([courseId, userId])
+  @@map("trainer_assignments")
+}
+
+// ──────────────────────────────────────────────────────────
+// 6. Curriculum (Modules + Lessons)
+// ──────────────────────────────────────────────────────────
+
+model CurriculumModule {
+  id          String   @id @default(uuid())
+  courseId     String   @map("course_id")
+  titleAm     String   @map("title_am")
+  titleEn     String   @map("title_en")
+  descriptionAm String? @map("description_am")
+  descriptionEn String? @map("description_en")
+  order       Int
+  passingScore Int?    @map("passing_score")
+
+  lessons     Lesson[]
+  completions ModuleCompletion[]
+  attachments Attachment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("curriculum_modules")
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  moduleId    String   @map("module_id")
+  titleAm     String   @map("title_am")
+  titleEn     String   @map("title_en")
+  contentAm   String?  @map("content_am")
+  contentEn   String?  @map("content_en")
+  contentType LessonContentType @map("content_type")
+  durationMinutes Int? @map("duration_minutes")
+  order       Int
+  resourceUrl String?  @map("resource_url")
+
+  completions LessonCompletion[]
+  attachments Attachment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  module CurriculumModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+enum LessonContentType {
+  VIDEO
+  DOCUMENT
+  PRESENTATION
+  INTERACTIVE
+  SCORM
+  EXTERNAL_LINK
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  moduleId     String?  @map("module_id")
+  lessonId     String?  @map("lesson_id")
+  courseId     String?  @map("course_id")
+  fileName     String   @map("file_name")
+  fileKey      String   @map("file_key")
+  fileUrl      String   @map("file_url")
+  fileType     String   @map("file_type")
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById String?  @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  module CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course Course?           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+  @@index([lessonId])
+  @@index([courseId])
+  @@map("attachments")
+}
+
+// ──────────────────────────────────────────────────────────
+// 7. Progress Tracking (normalized)
+// ──────────────────────────────────────────────────────────
+
+model ModuleCompletion {
+  id         String @id @default(uuid())
+  userId     String @map("user_id")
+  moduleId   String @map("module_id")
+  completed  Boolean @default(false)
+  completedAt DateTime? @map("completed_at")
+
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module CurriculumModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@map("module_completions")
+}
+
+model LessonCompletion {
+  id         String @id @default(uuid())
+  userId     String @map("user_id")
+  lessonId   String @map("lesson_id")
+  completed  Boolean @default(false)
+  completedAt DateTime? @map("completed_at")
+  lastPosition Int?  @map("last_position") // video progress in seconds
+  lastAccessed DateTime? @map("last_accessed")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("lesson_completions")
+}
+
+// ──────────────────────────────────────────────────────────
+// 8. Enrollments
+// ──────────────────────────────────────────────────────────
+
+model Enrollment {
+  id          String           @id @default(uuid())
+  userId      String           @map("user_id")
+  courseId     String           @map("course_id")
+  status      EnrollmentStatus @default(ACTIVE)
+enrolledAt DateTime @default(now()) @map("enrolled_at")
+  completedAt DateTime? @map("completed_at")
+  droppedAt DateTime? @map("dropped_at")
+  droppedReason String?        @map("dropped_reason")
+  droppedBy   String?          @map("dropped_by")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+// ──────────────────────────────────────────────────────────
+// 9. Assessments
+// ──────────────────────────────────────────────────────────
+
+model Assessment {
+  id            String @id @default(uuid())
+  courseId      String @map("course_id")
+  titleAm       String @map("title_am")
+  titleEn       String @map("title_en")
+  descriptionAm String? @map("description_am")
+  descriptionEn String? @map("description_en")
+  passingScore  Int    @map("passing_score") // percentage
+  maxAttempts   Int    @default(3) @map("max_attempts")
+  timeLimitMinutes Int? @map("time_limit_minutes")
+  shuffleQuestions Boolean @default(false) @map("shuffle_questions")
+
+  questions  Json   // structured question bank
+  attempts   AssessmentAttempt[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("assessments")
+}
+
+model AssessmentAttempt {
+  id             String @id @default(uuid())
+  assessmentId   String @map("assessment_id")
+  userId         String @map("user_id")
+  attemptNumber  Int    @map("attempt_number")
+  score          Int    // percentage 0-100
+  passed         Boolean
+  answers        Json
+  startedAt      DateTime @map("started_at")
+  submittedAt    DateTime? @map("submitted_at")
+  timeSpentSeconds Int?   @map("time_spent_seconds")
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([assessmentId, userId, attemptNumber])
+  @@index([userId])
+  @@map("assessment_attempts")
+}
+
+// ──────────────────────────────────────────────────────────
+// 10. Live Sessions
+// ──────────────────────────────────────────────────────────
+
+model LiveSession {
+  id           String            @id @default(uuid())
+  courseId      String            @map("course_id")
+  titleAm      String            @map("title_am")
+  titleEn      String            @map("title_en")
+  descriptionAm String?          @map("description_am")
+  descriptionEn String?          @map("description_en")
+  platform     SessionPlatform
+  externalUrl  String?           @map("external_url")
+  meetingId    String?           @map("meeting_id")
+  meetingPassword String?        @map("meeting_password")
+  scheduledAt  DateTime          @map("scheduled_at")
+  durationMinutes Int            @map("duration_minutes")
+  status       SessionStatus    @default(SCHEDULED)
+  recordingUrl String?           @map("recording_url")
+
+  attendees    Attendance[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([scheduledAt])
+  @@map("live_sessions")
+}
+
+enum SessionPlatform {
+  ZOOM
+  GOOGLE_MEET
+  MS_TEAMS
+  CUSTOM
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+// ──────────────────────────────────────────────────────────
+// 11. Attendance
+// ──────────────────────────────────────────────────────────
+
+model Attendance {
+  id           String           @id @default(uuid())
+  sessionId    String           @map("session_id")
+  userId       String           @map("user_id")
+  status       AttendanceStatus @default(ABSENT)
+  joinedAt     DateTime?        @map("joined_at")
+  leftAt       DateTime?        @map("left_at")
+  durationMinutes Int?          @map("duration_minutes")
+  notes        String?
+  // Wave 3 — check-in method + geo/biometric stubs
+  checkInMethod CheckInMethod?  @map("check_in_method")
+  latitude     Float?           @map("latitude")
+  longitude    Float?           @map("longitude")
+  biometricVerified Boolean      @default(false) @map("biometric_verified")
+  // Immutability override (system_admin)
+  overriddenBy String?          @map("overridden_by")
+  overriddenAt DateTime?        @map("overridden_at")
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([sessionId, userId])
+  @@index([userId])
+  @@map("attendance")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum CheckInMethod {
+  VIRTUAL
+  QR
+  GPS
+  BIOMETRIC
+}
+
+// ──────────────────────────────────────────────────────────
+// 12. Certificates
+// ──────────────────────────────────────────────────────────
+
+model Certificate {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  courseId       String    @map("course_id")
+  templateId    String?   @map("template_id")
+  certificateNumber String @unique @map("certificate_number") // e.g. ELTMS-2026-000001
+  issuedAt      DateTime  @default(now()) @map("issued_at")
+  expiresAt     DateTime? @map("expires_at")
+  pdfFileUrl    String?   @map("pdf_file_url")
+  verificationCode String @unique @map("verification_code") // 8-digit alphanumeric
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  template CertificateTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, courseId])
+  @@index([verificationCode])
+  @@index([templateId])
+  @@map("certificates")
+}
+
+model CertificateTemplate {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  isActive      Boolean   @default(false) @map("is_active")
+  backgroundUrl String?   @map("background_url")
+  fields        Json      @default("[]")
+  version       Int       @default(1)
+  createdById   String?   @map("created_by_id")
+
+  createdBy  User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  certificates Certificate[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("certificate_templates")
+}
+
+// ──────────────────────────────────────────────────────────
+// 13. Notifications
+// ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  type      NotificationType
+  titleAm   String    @map("title_am")
+  titleEn   String    @map("title_en")
+  bodyAm    String?   @map("body_am")
+  bodyEn    String?   @map("body_en")
+  metadata  Json?
+  readAt    DateTime? @map("read_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ENROLLMENT_APPROVED
+  ENROLLMENT_REJECTED
+  COURSE_PUBLISHED
+  COURSE_APPROVED
+  COURSE_REJECTED
+  ASSESSMENT_GRADED
+  CERTIFICATE_ISSUED
+  SESSION_REMINDER
+  TRAINING_REMINDER
+  REGISTRATION_APPROVED
+  REGISTRATION_REJECTED
+  SYSTEM
+}
+
+// ──────────────────────────────────────────────────────────
+// 14. Audit Log
+// ──────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String   // e.g. "COURSE_CREATE", "ENROLLMENT_DROP"
+  entity    String   // e.g. "Course", "Enrollment"
+  entityId  String?  @map("entity_id")
+  oldValues Json?    @map("old_values")
+  newValues Json?    @map("new_values")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ──────────────────────────────────────────────────────────
+// 15. Integrations (placeholder tables)
+// ──────────────────────────────────────────────────────────
+
+model SsoSession {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  provider     String   // e.g. "microsoft", "google"
+  providerSid  String   @map("provider_sid")
+  lastSyncAt   DateTime? @map("last_sync_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sso_sessions")
+}
+
+model HrSyncLog {
+  id        String   @id @default(uuid())
+  direction String   // "INBOUND" | "OUTBOUND"
+  status    String   // "SUCCESS" | "FAILURE"
+  payload   Json?
+  error     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("hr_sync_logs")
+}

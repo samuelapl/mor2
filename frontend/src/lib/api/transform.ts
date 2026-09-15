@@ -1,0 +1,298 @@
+import { deriveCategory } from "@/constants/course-categories";
+import type {
+  ActionResult,
+  Attachment,
+  Course,
+  Lang,
+  Role,
+  User,
+  UserStatus,
+} from "@/types";
+import type {
+  ApiApproval,
+  ApiAttachment,
+  ApiCourseDetail,
+  ApiCourseListItem,
+  ApiEnrollment,
+  ApiLesson,
+  ApiModule,
+  ApiUser,
+  BackendApprovalStatus,
+  BackendCourseStatus,
+  BackendLessonContentType,
+  BackendRoleName,
+  CreateCourseBody,
+  CreateModuleBody,
+  LocalizedText,
+  UpdateCourseBody,
+} from "./types";
+import type { Lesson, Module } from "@/types";
+
+/* -------------------------------------------------------------------------- */
+/*  Role mapping                                                               */
+/* -------------------------------------------------------------------------- */
+
+const ROLE_API_TO_FE: Record<BackendRoleName, Role> = {
+  SYSTEM_ADMIN: "system_admin",
+  TRAINING_ADMIN: "training_admin",
+  COURSE_OWNER: "course_owner",
+  TRAINER: "trainer",
+  CONTENT_APPROVER: "content_approver",
+  LEARNER: "learner",
+};
+
+const ROLE_FE_TO_API: Record<Role, BackendRoleName> = {
+  system_admin: "SYSTEM_ADMIN",
+  training_admin: "TRAINING_ADMIN",
+  course_owner: "COURSE_OWNER",
+  trainer: "TRAINER",
+  content_approver: "CONTENT_APPROVER",
+  learner: "LEARNER",
+};
+
+export function roleFromApi(code: BackendRoleName): Role {
+  return ROLE_API_TO_FE[code] ?? "learner";
+}
+
+export function roleToApi(role: Role): BackendRoleName {
+  return ROLE_FE_TO_API[role] ?? "LEARNER";
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Course status mapping                                                      */
+/* -------------------------------------------------------------------------- */
+
+const STATUS_FE_TO_API: Record<string, BackendCourseStatus> = {
+  draft: "DRAFT",
+  under_review: "PENDING_APPROVAL",
+  approved: "APPROVED",
+  rejected: "REJECTED",
+  archived: "ARCHIVED",
+};
+
+export function statusFromApi(status: BackendCourseStatus): Course["status"] {
+  switch (status) {
+    case "DRAFT":
+      return "draft";
+    case "PENDING_APPROVAL":
+      return "under_review";
+    case "APPROVED":
+    case "PUBLISHED":
+      return "approved";
+    case "REJECTED":
+      return "rejected";
+    case "ARCHIVED":
+      return "archived";
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  User                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export function userFromApi(user: ApiUser): User {
+  const primaryRole = user.roles?.[0]?.role ?? "LEARNER";
+  const registration = user.registrationStatus ?? null;
+  let status: UserStatus;
+  if (registration === "PENDING") status = "pending";
+  else if (registration === "REJECTED") status = "rejected";
+  else status = user.isActive ? "active" : "suspended";
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email,
+    phone: user.phone ?? "",
+    password: "",
+    role: roleFromApi(primaryRole),
+    department: "",
+    status,
+    createdAt: user.createdAt,
+  };
+}
+
+export function userFromAuth(payload: {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string | null;
+  roles?: { role: BackendRoleName }[];
+}): User {
+  return {
+    id: payload.id,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    name: `${payload.firstName} ${payload.lastName}`,
+    email: payload.email,
+    phone: "",
+    password: "",
+    role: roleFromApi(payload.roles?.[0]?.role ?? "LEARNER"),
+    department: "",
+    status: "active",
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Course                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function bilingual(value?: string | null): string {
+  return value ?? "";
+}
+
+export function courseFromApi(course: ApiCourseListItem): Course {
+  return {
+    id: course.id,
+    code: course.code,
+    title: course.titleEn ?? "",
+    category: deriveCategory(course.titleEn, course.descriptionEn),
+    description: course.descriptionEn ?? "",
+    ownerId: course.owners?.[0]?.userId ?? "",
+    trainerId: null,
+    status: statusFromApi(course.status),
+    published: course.status === "PUBLISHED",
+    createdAt: course.createdAt,
+    cover: course.thumbnailUrl ?? null,
+    enrolledLearnerIds: [],
+    progress: {},
+    modules: [],
+    attachments: [],
+  };
+}
+
+function approvalFromApi(approval: ApiApproval): {
+  reason?: string;
+  by?: string;
+  at?: string;
+} {
+  if (approval.status !== "REJECTED" || !approval.comments) return {};
+  return {
+    reason: approval.comments,
+    by: approval.approver
+      ? `${approval.approver.firstName} ${approval.approver.lastName}`
+      : undefined,
+    at: approval.decidedAt,
+  };
+}
+
+export function courseFromDetail(
+  apiCourse: ApiCourseDetail,
+): Course {
+  const base = courseFromApi(apiCourse);
+  const rejections = (apiCourse.approvals ?? [])
+    .filter((a) => a.status === "REJECTED")
+    .sort((a, b) => new Date(b.decidedAt).getTime() - new Date(a.decidedAt).getTime());
+
+  const latest = rejections[0] ? approvalFromApi(rejections[0]) : {};
+  const secondLatest = rejections[1] ? approvalFromApi(rejections[1]) : undefined;
+
+  return {
+    ...base,
+    trainerId: apiCourse.trainers?.[0]?.userId ?? null,
+    trainerIds: (apiCourse.trainers ?? []).map((trainer) => trainer.userId),
+    modules: (apiCourse.modules ?? []).map(moduleFromApi),
+    attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
+    rejectionReason: latest.reason,
+    lastRejectionReason: secondLatest?.reason,
+    rejectedBy: latest.by,
+    rejectedAt: latest.at,
+  };
+}
+
+export function attachmentFromApi(attachment: ApiAttachment): Attachment {
+  return {
+    id: attachment.id,
+    name: attachment.fileName,
+    type: attachment.fileType.startsWith("video") ? "video" : "pdf",
+    url: attachment.fileUrl,
+  };
+}
+
+export function moduleFromApi(mod: ApiModule): Module {
+  return {
+    id: mod.id,
+    title: mod.titleEn ?? "",
+    unlocked: mod.unlocked,
+    lessons: (mod.lessons ?? []).map(lessonFromApi),
+  };
+}
+
+function lessonFromApi(lesson: ApiLesson): Lesson {
+  return {
+    id: lesson.id,
+    title: lesson.titleEn ?? "",
+    content: lesson.contentEn ?? "",
+    durationMin: lesson.durationMinutes ?? 15,
+    unlocked: lesson.unlocked,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Create / Update bodies                                                     */
+/* -------------------------------------------------------------------------- */
+
+export function courseToCreateBody(input: {
+  code: string;
+  title: string;
+  category?: string;
+  description?: string;
+  ownerId?: string;
+}): CreateCourseBody {
+  return {
+    code: input.code || "TBD-000",
+    title: { en: input.title, am: input.title },
+    description: input.description
+      ? { en: input.description, am: input.description }
+      : undefined,
+    ownerIds: input.ownerId ? [input.ownerId] : undefined,
+  };
+}
+
+export function courseToUpdateBody(input: {
+  title: string;
+  description?: string;
+}): UpdateCourseBody {
+  return {
+    title: { en: input.title, am: input.title },
+    description: input.description
+      ? { en: input.description, am: input.description }
+      : undefined,
+  };
+}
+
+export function moduleToCreateBody(input: {
+  titleEn: string;
+  titleAm?: string;
+  descriptionEn?: string;
+  lessons?: { titleEn: string; titleAm?: string; contentEn?: string; contentType?: BackendLessonContentType; durationMinutes?: number }[];
+}): CreateModuleBody {
+  const titleAm = input.titleAm ?? input.titleEn;
+  return {
+    titleEn: input.titleEn,
+    titleAm,
+    descriptionEn: input.descriptionEn,
+    descriptionAm: input.descriptionEn,
+    lessons: (input.lessons ?? []).map((l) => ({
+      titleEn: l.titleEn,
+      titleAm: l.titleAm ?? l.titleEn,
+      contentEn: l.contentEn,
+      contentType: l.contentType ?? "DOCUMENT",
+      durationMinutes: l.durationMinutes,
+    })),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Enrollment helpers                                                         */
+/* -------------------------------------------------------------------------- */
+
+export function enrollmentCourseId(enrollment: ApiEnrollment): string {
+  return enrollment.courseId;
+}
+
+export function enrollmentUserId(enrollment: ApiEnrollment): string {
+  return enrollment.userId;
+}
