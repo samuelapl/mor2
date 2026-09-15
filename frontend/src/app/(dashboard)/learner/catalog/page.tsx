@@ -7,6 +7,7 @@ import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
 import { CourseCard } from "@/components/features/courses/CourseCard";
+import { CatalogCourseModal } from "@/components/features/courses/CatalogCourseModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
@@ -17,6 +18,7 @@ export default function LearnerCatalogPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [flash, setFlash] = useState<string | null>(null);
+  const [openCourseId, setOpenCourseId] = useState<string | null>(null);
 
   const available = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -85,13 +87,23 @@ export default function LearnerCatalogPage() {
           {available.map((course) => {
             const enrolled = me ? course.enrolledLearnerIds.includes(me) : false;
             return (
-              <CourseCard key={course.id} course={course}>
+              <CourseCard
+                key={course.id}
+                course={course}
+                onClick={() => setOpenCourseId(course.id)}
+              >
                 {enrolled ? (
                   <Button size="sm" variant="outline" disabled>
                     Already enrolled
                   </Button>
                 ) : (
-                  <Button size="sm" onClick={() => enroll(course.id)}>
+                  <Button
+                    size="sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void enroll(course.id);
+                    }}
+                  >
                     <BookPlus className="h-3.5 w-3.5" />
                     Enroll
                   </Button>
@@ -101,6 +113,14 @@ export default function LearnerCatalogPage() {
           })}
         </div>
       )}
+
+      {openCourseId ? (
+        <CatalogCourseModal
+          open
+          onClose={() => setOpenCourseId(null)}
+          courseId={openCourseId}
+        />
+      ) : null}
     </PageShell>
   );
 }

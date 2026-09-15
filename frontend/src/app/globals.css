@@ -4,7 +4,7 @@
 
 :root {
   --foreground-rgb: 15, 23, 42;
-  --background-rgb: 248, 250, 252;
+  --background-rgb: 255, 255, 255;
 }
 
 @layer base {
@@ -153,5 +153,14 @@
 
   .rich-content blockquote {
     @apply mb-2.5 border-l-2 border-indigo-300 pl-3 italic text-slate-500;
+  }
+
+  /* TipTap editor placeholder text on an empty document */
+  .rich-content p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: rgb(148 163 184);
   }
 }

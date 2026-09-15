@@ -79,7 +79,7 @@ export function LearnCourseModal({
     <Modal
       open={open}
       onClose={onClose}
-      size="lg"
+      size="screen"
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
     >

@@ -33,7 +33,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
   const [notFound, setNotFound] = useState(true);
   const [assessment, setAssessment] = useState<ApiAssessment | null>(null);
   const [attempt, setAttempt] = useState<AttemptInfo | null>(null);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [result, setResult] = useState<GradedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,7 +100,6 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     }
   };
 
-  const totalPoints = (assessment?.questions ?? []).reduce((sum, q) => sum + q.points, 0);
   const answeredCount = Object.keys(answers).length;
   const ready = (assessment?.questions ?? []).length > 0 &&
     answeredCount === assessment!.questions.length;
@@ -136,7 +135,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
             <BookOpenCheck className="h-7 w-7" />
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-500">
-            This quiz has {assessment.questions.length} questions and is worth {totalPoints} points.
+            This quiz has {assessment.questions.length} questions.
             You need at least {assessment.passingScore}% to pass.
           </p>
           {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
@@ -191,36 +190,47 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
                 </span>
                 {question.question}
               </p>
-              <div className="mt-3 space-y-2">
-                {question.options.map((option, optionIndex) => {
-                  const selected = answers[question.id] === optionIndex;
-                  return (
-                    <button
-                      key={optionIndex}
-                      type="button"
-                      onClick={() =>
-                        setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }))
-                      }
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150",
-                        selected
-                          ? "border-indigo-500 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25"
-                          : "border-slate-200/80 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/40",
-                      )}
-                    >
-                      <span
+              {question.type === "SHORT_ANSWER" ? (
+                <input
+                  value={typeof answers[question.id] === "string" ? (answers[question.id] as string) : ""}
+                  onChange={(event) =>
+                    setAnswers((prev) => ({ ...prev, [question.id]: event.target.value }))
+                  }
+                  placeholder="Type your answer…"
+                  className="mt-3 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                />
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {question.options.map((option, optionIndex) => {
+                    const selected = answers[question.id] === optionIndex;
+                    return (
+                      <button
+                        key={optionIndex}
+                        type="button"
+                        onClick={() =>
+                          setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }))
+                        }
                         className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors",
-                          selected ? "border-white text-white" : "border-slate-300 text-slate-400",
+                          "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150",
+                          selected
+                            ? "border-indigo-500 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25"
+                            : "border-slate-200/80 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/40",
                         )}
                       >
-                        {optionIndex + 1}
-                      </span>
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors",
+                            selected ? "border-white text-white" : "border-slate-300 text-slate-400",
+                          )}
+                        >
+                          {optionIndex + 1}
+                        </span>
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
           <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-md">

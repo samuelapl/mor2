@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, MonitorPlay } from "lucide-react";
+import { CalendarPlus, LinkIcon, MonitorPlay } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { fetchLiveSessions } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
@@ -81,7 +81,15 @@ export default function TrainerSessionsPage() {
                   Join
                 </Button>
               </a>
-            ) : null
+            ) : (
+              <span
+                title="No meeting link was added when this session was scheduled"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-400"
+              >
+                <LinkIcon className="h-3.5 w-3.5" />
+                No link
+              </span>
+            )
           }
         />
         <Pagination

@@ -29,6 +29,7 @@ import {
   createCourse as apiCreateCourse,
   createModule,
   publishCourse as apiPublishCourse,
+  unpublishCourse as apiUnpublishCourse,
   replaceCurriculum,
   requestApproval,
   reviewCourse,
@@ -56,9 +57,11 @@ import {
 import {
   assignTrainer as apiAssignTrainer,
   unassignTrainer,
+  deleteCourse as apiDeleteCourse,
 } from "@/lib/api/courses";
 import { uploadAttachment, uploadCover } from "@/lib/api/files";
 import { createCourseAssessment, replaceAssessment } from "@/lib/api/quiz";
+import type { AssessmentQuestionInput } from "@/lib/api/quiz";
 import {
   courseFromDetail,
   courseToCreateBody,
@@ -71,6 +74,7 @@ import type {
   ActionResult,
   Attachment,
   Course,
+  CourseLevel,
   Lang,
   LoginResult,
   Quiz,
@@ -110,6 +114,7 @@ interface LmsContextValue {
     title: string;
     category: string;
     description: string;
+    level?: CourseLevel;
     cover?: File | null;
     modules?: WizardModuleInput[];
     attachments?: Attachment[];
@@ -125,6 +130,7 @@ interface LmsContextValue {
       title: string;
       category: string;
       description: string;
+      level?: CourseLevel;
       cover?: File | null;
       modules?: WizardModuleInput[];
       attachments?: Attachment[];
@@ -144,6 +150,8 @@ interface LmsContextValue {
   approveCourse: (courseId: string) => Promise<ActionResult>;
   rejectCourse: (courseId: string, reason: string) => Promise<ActionResult>;
   publishCourse: (courseId: string) => Promise<ActionResult>;
+  unpublishCourse: (courseId: string) => Promise<ActionResult>;
+  deleteCourse: (courseId: string) => Promise<ActionResult>;
   enrollLearners: (
     courseId: string,
     learnerIds: string[],
@@ -174,6 +182,32 @@ function errorMessage(err: unknown, fallback: string): string {
 
 function fullName(user: { firstName: string; lastName: string }): string {
   return `${user.firstName} ${user.lastName}`.trim();
+}
+
+function questionToApi(q: {
+  id: string;
+  type: string;
+  text: string;
+  options: string[];
+  correctIndex: number;
+  answerText?: string;
+}): AssessmentQuestionInput {
+  if (q.type === "short_answer") {
+    return {
+      id: q.id,
+      type: "SHORT_ANSWER",
+      question: q.text,
+      options: [],
+      correctAnswer: (q.answerText ?? "").trim(),
+    };
+  }
+  return {
+    id: q.id,
+    type: q.type === "true_false" ? "TRUE_FALSE" : "MULTIPLE_CHOICE",
+    question: q.text,
+    options: q.options,
+    correctAnswer: q.correctIndex,
+  };
 }
 
 export function LmsProvider({ children }: { children: ReactNode }) {
@@ -393,14 +427,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             title: input.title,
             description: input.description,
             ownerId: owner.id,
+            level: input.level,
           }),
         );
 
-        // Cover image → upload to MinIO and persist the thumbnailUrl.
+        // Cover image → upload to MinIO; uploadCover persists thumbnailUrl
+        // on the course server-side, no follow-up PATCH needed.
         if (input.cover && created.id) {
           try {
-            const thumbnailUrl = await uploadCover(created.id, input.cover);
-            await apiUpdateCourse(created.id, { thumbnailUrl });
+            await uploadCover(created.id, input.cover);
           } catch {
             // cover upload is non-fatal
           }
@@ -457,18 +492,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         // Final assessment (optional).
         if (input.quiz && input.quiz.questions.length > 0) {
           try {
+            const quizTitle = input.quiz.title.trim() || "Final Assessment";
             await createCourseAssessment(created.id, {
-              titleEn: input.quiz.title.trim() || "Final Assessment",
+              titleEn: quizTitle,
+              titleAm: quizTitle,
               passingScore: input.quiz.passMark,
               maxAttempts: input.quiz.attemptsAllowed,
-              questions: input.quiz.questions.map((q) => ({
-                id: q.id,
-                type: "MULTIPLE_CHOICE",
-                question: q.text,
-                options: q.options,
-                correctAnswer: q.correctIndex,
-                points: q.points,
-              })),
+              questions: input.quiz.questions.map(questionToApi),
             });
           } catch {
             // assessment creation is non-fatal
@@ -618,13 +648,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           courseToUpdateBody({
             title: input.title,
             description: input.description,
+            level: input.level,
           }),
         );
 
         if (input.cover) {
           try {
-            const thumbnailUrl = await uploadCover(courseId, input.cover);
-            await apiUpdateCourse(courseId, { thumbnailUrl });
+            // uploadCover persists thumbnailUrl on the course server-side;
+            // no follow-up PATCH needed.
+            await uploadCover(courseId, input.cover);
           } catch {
             // cover upload is non-fatal
           }
@@ -679,18 +711,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         const quiz = input.quiz;
         if (quiz && quiz.questions.length > 0) {
           try {
+            const quizTitle = quiz.title.trim() || "Final Assessment";
             await replaceAssessment(courseId, {
-              titleEn: quiz.title.trim() || "Final Assessment",
+              titleEn: quizTitle,
+              titleAm: quizTitle,
               passingScore: quiz.passMark,
               maxAttempts: quiz.attemptsAllowed,
-              questions: quiz.questions.map((q) => ({
-                id: q.id,
-                type: "MULTIPLE_CHOICE",
-                question: q.text,
-                options: q.options,
-                correctAnswer: q.correctIndex,
-                points: q.points,
-              })),
+              questions: quiz.questions.map(questionToApi),
             });
           } catch {
             // assessment replacement is non-fatal
@@ -781,6 +808,40 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const unpublishCourse = useCallback(
+    async (courseId: string): Promise<ActionResult> => {
+      const admin = currentUserRef.current;
+      try {
+        await apiUnpublishCourse(courseId);
+        await reloadData(admin);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to unpublish course."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
+  const deleteCourse = useCallback(
+    async (courseId: string): Promise<ActionResult> => {
+      const owner = currentUserRef.current;
+      try {
+        await apiDeleteCourse(courseId);
+        await reloadData(owner);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to delete course."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
   const enrollLearners = useCallback(
     async (courseId: string, learnerIds: string[]): Promise<ActionResult> => {
       const admin = currentUserRef.current;
@@ -815,17 +876,30 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       }
       try {
         await selfEnroll(courseId);
-        await reloadData(learner);
-        return { ok: true };
       } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(
-            err,
-            "Enrollment failed. The course may no longer be available.",
-          ),
-        };
+        const message = errorMessage(
+          err,
+          "Enrollment failed. The course may no longer be available.",
+        );
+        // The backend may say "already enrolled" even though our local
+        // enrollment list is stale/out of sync — that's still the outcome
+        // the learner wants, so settle into the enrolled state instead of
+        // surfacing it as a failure.
+        if (!/already enrolled/i.test(message)) {
+          return { ok: false, message };
+        }
       }
+      // Reflect the enrolled state immediately rather than waiting on a
+      // full reloadData() round trip to update the button.
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === courseId && !course.enrolledLearnerIds.includes(learner.id)
+            ? { ...course, enrolledLearnerIds: [...course.enrolledLearnerIds, learner.id] }
+            : course,
+        ),
+      );
+      await reloadData(learner);
+      return { ok: true };
     },
     [reloadData],
   );
@@ -989,6 +1063,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveCourse,
       rejectCourse,
       publishCourse,
+      unpublishCourse,
+      deleteCourse,
       enrollLearners,
       enrollSelf,
       changeUserRole,
@@ -1017,6 +1093,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveCourse,
       rejectCourse,
       publishCourse,
+      unpublishCourse,
+      deleteCourse,
       enrollLearners,
       enrollSelf,
       changeUserRole,

@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
 import { NAV_ITEMS, ROLE_ICONS } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
@@ -20,31 +21,31 @@ export default function Sidebar() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden bg-sidebar-gradient text-slate-300">
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
-      <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-1/3 h-64 w-64 rounded-full bg-violet-500/15 blur-3xl" />
-
-      <div className="relative flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20">
-          <GraduationCap className="h-5 w-5" />
-        </div>
+    <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600">
+      <div className="relative flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
+        <Image
+          src="/logo.jpg"
+          alt="Ministry of Revenues"
+          width={36}
+          height={36}
+          className="h-9 w-9 rounded-full object-contain"
+        />
         <div className="leading-tight">
-          <p className="font-display text-sm font-bold tracking-tight text-white">
+          <p className="font-display text-sm font-bold tracking-tight text-slate-900">
             ELTMS
           </p>
-          <p className="text-[11px] text-slate-400">MoR Training System</p>
+          <p className="text-[11px] text-slate-500">MoR Training System</p>
         </div>
       </div>
 
-      <div className="relative border-b border-white/10 px-4 py-4">
-        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 backdrop-blur-sm">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600/60 to-slate-700/40 text-white ring-1 ring-white/20">
+      <div className="relative border-b border-slate-200 px-4 py-4">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white ring-1 ring-white/20">
             <RoleIcon className="h-4 w-4" />
           </div>
           <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-medium text-white">{ROLE_LABELS[role]}</p>
-            <p className="truncate text-[11px] text-slate-400">{displayUser?.name}</p>
+            <p className="truncate text-sm font-medium text-slate-900">{ROLE_LABELS[role]}</p>
+            <p className="truncate text-[11px] text-slate-500">{displayUser?.name}</p>
           </div>
         </div>
       </div>
@@ -63,8 +64,8 @@ export default function Sidebar() {
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 active
-                  ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white",
+                  ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
               )}
             >
               <Icon
@@ -72,7 +73,7 @@ export default function Sidebar() {
                   "h-4 w-4 shrink-0 transition-colors",
                   active
                     ? "text-white"
-                    : "text-slate-400 group-hover:text-indigo-300",
+                    : "text-slate-400 group-hover:text-indigo-500",
                 )}
               />
               {item.label}
@@ -84,11 +85,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="relative border-t border-white/10 p-3">
+      <div className="relative border-t border-slate-200 p-3">
         <Link
           href="/login"
           onClick={() => logout()}
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
         >
           <LogOut className="h-4 w-4" />
           Switch role / Sign out

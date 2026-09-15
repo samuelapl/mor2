@@ -15,7 +15,7 @@ export function EditCourseModal({ open, onClose, course }: EditCourseModalProps)
     <Modal
       open={open}
       onClose={onClose}
-      size="xl"
+      size="screen"
       title="Edit Course"
       subtitle="Update the course details, curriculum, materials, and assessment before resubmitting for approval."
     >

@@ -29,6 +29,7 @@ const emptyQuiz = (course: Course): Quiz => ({
 
 const blankQuestion = (): Question => ({
   id: `qn-${Date.now()}`,
+  type: "multiple_choice",
   text: "",
   options: ["", "", "", ""],
   correctIndex: 0,
@@ -60,10 +61,11 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
           attemptsAllowed: detail.maxAttempts,
           questions: detail.questions.map((q) => ({
             id: q.id,
+            type: "multiple_choice" as const,
             text: q.question,
             options: q.options,
-            correctIndex: q.correctAnswer ?? 0,
-            points: q.points,
+            correctIndex: typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+            points: 10,
           })),
         });
       } catch {
@@ -128,7 +130,6 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
         question: question.text,
         options: question.options.filter((option) => option.trim() !== ""),
         correctAnswer: question.correctIndex,
-        points: question.points,
       })),
     };
     try {

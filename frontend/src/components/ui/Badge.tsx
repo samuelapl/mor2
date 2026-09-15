@@ -36,6 +36,26 @@ export function statusBadgeVariant(status: string): BadgeVariant {
   }
 }
 
+const LEVEL_VARIANT: Record<string, BadgeVariant> = {
+  basic: "slate",
+  intermediate: "amber",
+  advanced: "indigo",
+};
+
+const LEVEL_LABEL: Record<string, string> = {
+  basic: "Basic",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
+export function courseLevelVariant(level: string): BadgeVariant {
+  return LEVEL_VARIANT[level] ?? "slate";
+}
+
+export function courseLevelLabel(level: string): string {
+  return LEVEL_LABEL[level] ?? level;
+}
+
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   dot?: boolean;

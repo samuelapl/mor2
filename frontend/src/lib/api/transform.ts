@@ -18,6 +18,7 @@ import type {
   ApiModule,
   ApiUser,
   BackendApprovalStatus,
+  BackendCourseLevel,
   BackendCourseStatus,
   BackendLessonContentType,
   BackendRoleName,
@@ -84,6 +85,22 @@ export function statusFromApi(status: BackendCourseStatus): Course["status"] {
     case "ARCHIVED":
       return "archived";
   }
+}
+
+const LEVEL_API_TO_FE: Record<BackendCourseLevel, Course["level"]> = {
+  BASIC: "basic",
+  INTERMEDIATE: "intermediate",
+  ADVANCED: "advanced",
+};
+
+const LEVEL_FE_TO_API: Record<Course["level"], BackendCourseLevel> = {
+  basic: "BASIC",
+  intermediate: "INTERMEDIATE",
+  advanced: "ADVANCED",
+};
+
+export function levelFromApi(level: BackendCourseLevel | undefined): Course["level"] {
+  return level ? LEVEL_API_TO_FE[level] : "basic";
 }
 
 /* -------------------------------------------------------------------------- */
@@ -153,6 +170,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     ownerId: course.owners?.[0]?.userId ?? "",
     trainerId: null,
     status: statusFromApi(course.status),
+    level: levelFromApi(course.level),
     published: course.status === "PUBLISHED",
     createdAt: course.createdAt,
     cover: course.thumbnailUrl ?? null,
@@ -240,6 +258,7 @@ export function courseToCreateBody(input: {
   category?: string;
   description?: string;
   ownerId?: string;
+  level?: Course["level"];
 }): CreateCourseBody {
   return {
     code: input.code || "TBD-000",
@@ -248,18 +267,21 @@ export function courseToCreateBody(input: {
       ? { en: input.description, am: input.description }
       : undefined,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
+    level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
 }
 
 export function courseToUpdateBody(input: {
   title: string;
   description?: string;
+  level?: Course["level"];
 }): UpdateCourseBody {
   return {
     title: { en: input.title, am: input.title },
     description: input.description
       ? { en: input.description, am: input.description }
       : undefined,
+    level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
 }
 

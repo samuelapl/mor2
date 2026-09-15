@@ -14,7 +14,7 @@ import {
   Video,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { Badge, CourseStatusBadge } from "@/components/ui/Badge";
+import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
 import { useLms } from "@/lib/lms-store";
@@ -46,15 +46,17 @@ export function CourseDetailModal({
     assignTrainerToCourse,
     unassignTrainerFromCourse,
     publishCourse,
+    unpublishCourse,
   } = useLms();
   const course = courseById(courseId);
-  const [assessment, setAssessment] = useState<ApiAssessment | null>(null);
+  const [assessments, setAssessments] = useState<ApiAssessment[]>([]);
   const [assessmentLoading, setAssessmentLoading] = useState(false);
   const [openLesson, setOpenLesson] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [flashError, setFlashError] = useState(false);
 
   const canManageTrainers = currentUser?.role === "system_admin" || currentUser?.role === "training_admin";
+  const canUnpublish = currentUser?.role === "training_admin" || currentUser?.role === "system_admin";
   const trainerOptions = users.filter((u) => u.role === "trainer" && u.status === "active");
   const canPublish =
     canManageTrainers && course?.status === "approved" && !course.published;
@@ -62,7 +64,7 @@ export function CourseDetailModal({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setAssessment(null);
+    setAssessments([]);
     setFlash(null);
     setFlashError(false);
     setAssessmentLoading(true);
@@ -70,8 +72,8 @@ export function CourseDetailModal({
       try {
         const list = await fetchCourseAssessments(courseId);
         if (cancelled || list.length === 0) return;
-        const detail = await fetchAssessment(list[0].id);
-        if (!cancelled) setAssessment(detail);
+        const details = await Promise.all(list.map((item) => fetchAssessment(item.id)));
+        if (!cancelled) setAssessments(details);
       } catch {
         // assessment preview is best-effort
       } finally {
@@ -110,6 +112,16 @@ export function CourseDetailModal({
     notify(result.ok, result.ok ? "Course published. Learners can now enroll." : result.message);
   };
 
+  const doUnpublish = async () => {
+    const result = await unpublishCourse(course.id);
+    notify(
+      result.ok,
+      result.ok
+        ? "Course unpublished. It no longer appears in the learner catalog."
+        : result.message,
+    );
+  };
+
   const lessonCount = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
   const attachmentCount = course.attachments?.length ?? 0;
 
@@ -117,7 +129,7 @@ export function CourseDetailModal({
     <Modal
       open={open}
       onClose={onClose}
-      size="lg"
+      size="screen"
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
     >
@@ -138,6 +150,9 @@ export function CourseDetailModal({
             status={course.published ? "published" : course.status}
           />
           <Badge variant="outline">{course.category}</Badge>
+          <Badge variant={courseLevelVariant(course.level)}>
+            {courseLevelLabel(course.level)}
+          </Badge>
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-xs text-slate-600">
             <UserRound className="h-3.5 w-3.5 text-indigo-500/70" />
             Owner: {userName(course.ownerId)}
@@ -210,6 +225,17 @@ export function CourseDetailModal({
                 >
                   <Globe2 className="h-3.5 w-3.5" />
                   Publish course
+                </Button>
+              ) : null}
+              {canUnpublish && course.published ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void doUnpublish()}
+                  title="Hide this course from the learner catalog"
+                >
+                  <Globe2 className="h-3.5 w-3.5" />
+                  Unpublish course
                 </Button>
               ) : null}
             </div>
@@ -381,53 +407,57 @@ export function CourseDetailModal({
         ) : null}
 
         {assessmentLoading ? (
-          <p className="text-xs text-slate-400">Loading assessment…</p>
-        ) : assessment ? (
-          <div>
-            <h3 className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <span>Final Assessment</span>
+          <p className="text-xs text-slate-400">Loading assessments…</p>
+        ) : assessments.length > 0 ? (
+          <div className="space-y-4">
+            <h3 className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span>{assessments.length > 1 ? "Assessments" : "Final Assessment"}</span>
               <Badge variant="green" dot>
-                Quiz ready
+                {assessments.length} quiz{assessments.length > 1 ? "zes" : ""} ready
               </Badge>
             </h3>
-            <div className="rounded-xl bg-gradient-to-r from-indigo-50/80 to-violet-50/80 px-4 py-3 ring-1 ring-inset ring-indigo-200/50">
-              <p className="text-sm font-semibold text-slate-800">{assessment.titleEn}</p>
-              <p className="text-[11px] text-slate-500">
-                {assessment.questions.length} questions
-                · pass mark {assessment.passingScore}% · {assessment.maxAttempts} attempts
-                {assessment.timeLimitMinutes ? ` · ${assessment.timeLimitMinutes} min` : ""}
-              </p>
-            </div>
-            {assessment.questions.length > 0 ? (
-              <div className="mt-3 space-y-2">
-                {assessment.questions.map((question, index) => (
-                  <div
-                    key={question.id}
-                    className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm"
-                  >
-                    <p className="text-sm font-medium text-slate-800">
-                      {index + 1}. {question.question}
-                    </p>
-                    <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                      {question.options.map((option, optionIndex) => (
-                        <li
-                          key={optionIndex}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs",
-                            question.correctAnswer !== undefined &&
-                              question.correctAnswer === optionIndex
-                              ? "bg-emerald-50 font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200/60"
-                              : "text-slate-500",
-                          )}
-                        >
-                          {option}
-                        </li>
-                      ))}
-                    </ul>
+            {assessments.map((assessment) => (
+              <div key={assessment.id}>
+                <div className="rounded-xl bg-gradient-to-r from-indigo-50/80 to-violet-50/80 px-4 py-3 ring-1 ring-inset ring-indigo-200/50">
+                  <p className="text-sm font-semibold text-slate-800">{assessment.titleEn}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {assessment.questions.length} questions
+                    · pass mark {assessment.passingScore}% · {assessment.maxAttempts} attempts
+                    {assessment.timeLimitMinutes ? ` · ${assessment.timeLimitMinutes} min` : ""}
+                  </p>
+                </div>
+                {assessment.questions.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {assessment.questions.map((question, index) => (
+                      <div
+                        key={question.id}
+                        className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm"
+                      >
+                        <p className="text-sm font-medium text-slate-800">
+                          {index + 1}. {question.question}
+                        </p>
+                        <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                          {question.options.map((option, optionIndex) => (
+                            <li
+                              key={optionIndex}
+                              className={cn(
+                                "rounded-lg px-2.5 py-1 text-xs",
+                                question.correctAnswer !== undefined &&
+                                  question.correctAnswer === optionIndex
+                                  ? "bg-emerald-50 font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200/60"
+                                  : "text-slate-500",
+                              )}
+                            >
+                              {option}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : null}
               </div>
-            ) : null}
+            ))}
           </div>
         ) : (
           <p className="text-xs text-slate-400">No assessment has been attached yet.</p>

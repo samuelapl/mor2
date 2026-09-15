@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Building2, CheckCircle2, GraduationCap, Lock, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, Lock, Mail, Phone, UserRound } from "lucide-react";
 import { isValidEmail, passwordIssues } from "@/constants/auth";
 import { useLms } from "@/lib/lms-store";
 
@@ -62,45 +63,48 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-lg animate-fade-in-up">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           <div className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-2xl shadow-indigo-900/50 ring-1 ring-white/20">
-              <GraduationCap className="h-7 w-7" />
-            </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+            <Image
+              src="/logo.jpg"
+              alt="Ministry of Revenues"
+              width={56}
+              height={56}
+              className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
+            />
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
               Non-staff registration
             </h1>
-            <p className="mt-1.5 text-sm text-slate-400">
+            <p className="mt-1.5 text-sm text-slate-500">
               Create a learner account. Your registration requires administrator approval before
               you can sign in.
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-400">
               Your account is currently awaiting approval — future public guardrails prohibit
               access until it is granted.
             </p>
           </div>
 
           {submitted ? (
-            <div className="mt-7 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
+            <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <h2 className="mt-3 font-display text-lg font-bold text-white">
+              <h2 className="mt-3 font-display text-lg font-bold text-slate-900">
                 Registration submitted
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 Your request has been sent to the learning administration team. Once an
                 administrator approves your account you will be able to sign in and start
                 learning.
               </p>
               <Link
                 href="/login"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110"
               >
                 Back to sign in
                 <ArrowRight className="h-4 w-4" />
@@ -257,7 +261,7 @@ export default function RegisterPage() {
               </p>
 
               {error ? (
-                <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
                   {error}
                 </div>
               ) : null}
@@ -265,16 +269,16 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={!ready || submitting}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 disabled:opacity-50"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 disabled:opacity-50"
               >
                 Submit registration
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
 
-          <p className="mt-4 text-center text-sm text-slate-400">
+          <p className="mt-4 text-center text-sm text-slate-500">
             Already registered?{" "}
-            <Link href="/login" className="font-semibold text-indigo-300 hover:text-white">
+            <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-700">
               Sign in
             </Link>
           </p>

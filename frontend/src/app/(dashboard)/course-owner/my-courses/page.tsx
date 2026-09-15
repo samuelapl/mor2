@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eye, Pencil, Plus, Send } from "lucide-react";
+import { Eye, Pencil, Send, Trash2 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
-import { CreateCourseModal } from "@/components/features/courses/CreateCourseModal";
 import { EditCourseModal } from "@/components/features/courses/EditCourseModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
@@ -18,14 +17,14 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 import type { Course } from "@/types";
 
 export default function MyCoursesPage() {
-  const { courses, submitForApproval } = useLms();
+  const { courses, submitForApproval, deleteCourse } = useLms();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [editCourse, setEditCourse] = useState<Course | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [category, setCategory] = useState("all");
   const [flash, setFlash] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -47,6 +46,14 @@ export default function MyCoursesPage() {
     setFlash(result.ok ? "Course submitted for approval." : result.message);
   };
 
+  const removeDraft = async (courseId: string) => {
+    if (!window.confirm("Delete this draft course? This cannot be undone.")) return;
+    setDeletingId(courseId);
+    const result = await deleteCourse(courseId);
+    setDeletingId(null);
+    setFlash(result.ok ? "Course deleted." : result.message);
+  };
+
   return (
     <PageShell
       role="course_owner"
@@ -58,13 +65,6 @@ export default function MyCoursesPage() {
           {flash}
         </div>
       ) : null}
-
-      <div className="mb-4 flex justify-end">
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Create New Course
-        </Button>
-      </div>
 
       <FilterBar
         search={search}
@@ -140,6 +140,17 @@ export default function MyCoursesPage() {
                   </Button>
                 </>
               ) : null}
+              {course.status === "draft" ? (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  disabled={deletingId === course.id}
+                  onClick={() => void removeDraft(course.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </Button>
+              ) : null}
             </CourseCard>
           ))}
         </div>
@@ -151,7 +162,6 @@ export default function MyCoursesPage() {
         onClose={() => setSelectedId(null)}
         courseId={selectedId ?? ""}
       />
-      <CreateCourseModal open={createOpen} onClose={() => setCreateOpen(false)} />
       <EditCourseModal
         open={editCourse !== null}
         onClose={() => setEditCourse(null)}

@@ -121,6 +121,10 @@ export async function unassignTrainer(
   await api<unknown>(`courses/${courseId}/trainers/${userId}`, { method: "DELETE" });
 }
 
+export async function unpublishCourse(id: string): Promise<ApiCourseListItem> {
+  return api<ApiCourseListItem>(`courses/${id}/unpublish`, { method: "POST" });
+}
+
 export async function archiveCourse(id: string): Promise<ApiCourseListItem> {
   return api<ApiCourseListItem>(`courses/${id}/archive`, { method: "POST" });
 }

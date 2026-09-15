@@ -1,6 +1,10 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Placeholder from "@tiptap/extension-placeholder";
 import {
   Bold,
   Check,
@@ -8,15 +12,21 @@ import {
   ChevronUp,
   FileQuestion,
   FileText,
+  Heading2,
+  Heading3,
   Italic,
   List,
+  ListOrdered,
   MonitorPlay,
   Plus,
+  Quote,
+  Strikethrough,
   Trash2,
+  Underline as UnderlineIcon,
   Upload,
   Video,
 } from "lucide-react";
-import type { Attachment, Course, Question, Quiz } from "@/types";
+import type { Attachment, Course, CourseLevel, Question, QuestionType, Quiz } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
@@ -60,15 +70,82 @@ const uid = (prefix: string) =>
 
 const blankQuestion = (): Question => ({
   id: `qn-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  type: "multiple_choice",
   text: "",
   options: ["", "", "", ""],
   correctIndex: 0,
+  answerText: "",
   points: 10,
 });
 
+const optionsForType = (type: QuestionType): string[] =>
+  type === "true_false" ? ["True", "False"] : ["", "", "", ""];
+
 /* -------------------------------------------------------------------------- */
-/*  Lightweight rich text editor (no external deps)                            */
+/*  Interactive rich text editor (TipTap)                                      */
 /* -------------------------------------------------------------------------- */
+
+const TOOLBAR_BUTTONS: Array<{
+  title: string;
+  icon: typeof Bold;
+  isActive: (editor: Editor) => boolean;
+  run: (editor: Editor) => void;
+}> = [
+  {
+    title: "Bold",
+    icon: Bold,
+    isActive: (editor) => editor.isActive("bold"),
+    run: (editor) => editor.chain().focus().toggleBold().run(),
+  },
+  {
+    title: "Italic",
+    icon: Italic,
+    isActive: (editor) => editor.isActive("italic"),
+    run: (editor) => editor.chain().focus().toggleItalic().run(),
+  },
+  {
+    title: "Underline",
+    icon: UnderlineIcon,
+    isActive: (editor) => editor.isActive("underline"),
+    run: (editor) => editor.chain().focus().toggleUnderline().run(),
+  },
+  {
+    title: "Strikethrough",
+    icon: Strikethrough,
+    isActive: (editor) => editor.isActive("strike"),
+    run: (editor) => editor.chain().focus().toggleStrike().run(),
+  },
+  {
+    title: "Heading",
+    icon: Heading2,
+    isActive: (editor) => editor.isActive("heading", { level: 2 }),
+    run: (editor) => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+  },
+  {
+    title: "Subheading",
+    icon: Heading3,
+    isActive: (editor) => editor.isActive("heading", { level: 3 }),
+    run: (editor) => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+  },
+  {
+    title: "Bullet list",
+    icon: List,
+    isActive: (editor) => editor.isActive("bulletList"),
+    run: (editor) => editor.chain().focus().toggleBulletList().run(),
+  },
+  {
+    title: "Numbered list",
+    icon: ListOrdered,
+    isActive: (editor) => editor.isActive("orderedList"),
+    run: (editor) => editor.chain().focus().toggleOrderedList().run(),
+  },
+  {
+    title: "Quote",
+    icon: Quote,
+    isActive: (editor) => editor.isActive("blockquote"),
+    run: (editor) => editor.chain().focus().toggleBlockquote().run(),
+  },
+];
 
 function RichTextEditor({
   value,
@@ -79,43 +156,60 @@ function RichTextEditor({
   onChange: (html: string) => void;
   placeholder: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+        code: false,
+        horizontalRule: false,
+        heading: { levels: [2, 3] },
+      }),
+      Underline,
+      Placeholder.configure({ placeholder }),
+    ],
+    content: value,
+    onUpdate: ({ editor: current }) => onChange(current.getHTML()),
+    editorProps: {
+      attributes: {
+        class:
+          "rich-content min-h-[96px] w-full rounded-b-xl rounded-tr-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10",
+      },
+    },
+  });
 
-  const exec = (command: string) => {
-    ref.current?.focus();
-    document.execCommand(command);
-    onChange(ref.current?.innerHTML ?? "");
-  };
+  // Keep the editor in sync when switching between lessons (each lesson
+  // reuses the same mounted editor instance via a stable `value` prop).
+  useEffect(() => {
+    if (!editor) return;
+    if (value !== editor.getHTML()) {
+      editor.commands.setContent(value, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, value]);
+
+  if (!editor) return null;
 
   return (
     <div>
-      <div className="mb-1.5 flex items-center gap-1 rounded-t-xl border border-slate-200/90 bg-slate-50/80 px-2 py-1">
-        {[
-          { label: "Bold", command: "bold", icon: Bold, title: "Bold" },
-          { label: "Italic", command: "italic", icon: Italic, title: "Italic" },
-          { label: "List", command: "insertUnorderedList", icon: List, title: "Bullet list" },
-        ].map(({ command, icon: Icon, title }) => (
+      <div className="mb-1.5 flex flex-wrap items-center gap-1 rounded-t-xl border border-slate-200/90 bg-slate-50/80 px-2 py-1">
+        {TOOLBAR_BUTTONS.map(({ title, icon: Icon, isActive, run }) => (
           <button
-            key={command}
+            key={title}
             type="button"
             title={title}
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => exec(command)}
-            className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-200/70 hover:text-slate-800"
+            onClick={() => run(editor)}
+            className={cn(
+              "rounded-md p-1.5 transition-colors hover:bg-slate-200/70 hover:text-slate-800",
+              isActive(editor) ? "bg-indigo-100 text-indigo-700" : "text-slate-500",
+            )}
           >
             <Icon className="h-4 w-4" />
           </button>
         ))}
       </div>
-      <div
-        ref={ref}
-        contentEditable
-        role="textbox"
-        aria-multiline="true"
-        data-placeholder={placeholder}
-        onInput={() => onChange(ref.current?.innerHTML ?? "")}
-        className="min-h-[96px] w-full rounded-b-xl rounded-tr-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 empty:before:text-slate-400"
-      />
+      <EditorContent editor={editor} />
     </div>
   );
 }
@@ -201,6 +295,7 @@ export function CourseCreationWizard({
   const [category, setCategory] = useState(
     editingCourse?.category ?? COURSE_CATEGORIES[0],
   );
+  const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? "basic");
   const [description, setDescription] = useState(editingCourse?.description ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
@@ -245,13 +340,23 @@ export function CourseCreationWizard({
         setPassMark(detail.passingScore);
         setAttemptsAllowed(detail.maxAttempts);
         setQuestions(
-          detail.questions.map((q) => ({
-            id: q.id,
-            text: q.question,
-            options: q.options,
-            correctIndex: q.correctAnswer ?? 0,
-            points: q.points,
-          })),
+          detail.questions.map((q) => {
+            const type: QuestionType =
+              q.type === "TRUE_FALSE"
+                ? "true_false"
+                : q.type === "SHORT_ANSWER"
+                  ? "short_answer"
+                  : "multiple_choice";
+            return {
+              id: q.id,
+              type,
+              text: q.question,
+              options: q.options,
+              correctIndex: typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+              answerText: typeof q.correctAnswer === "string" ? q.correctAnswer : "",
+              points: 10,
+            };
+          }),
         );
       } catch {
         // assessment prefill is best-effort
@@ -353,6 +458,16 @@ export function CourseCreationWizard({
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, ...patch } : q)));
   };
 
+  const setQuestionType = (index: number, type: QuestionType) => {
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === index
+          ? { ...q, type, options: optionsForType(type), correctIndex: 0, answerText: "" }
+          : q,
+      ),
+    );
+  };
+
   const patchOption = (index: number, optionIndex: number, value: string) => {
     setQuestions((prev) =>
       prev.map((q, i) => {
@@ -396,6 +511,7 @@ export function CourseCreationWizard({
         ? await updateCourseFull(editingCourse.id, {
             title: title.trim(),
             category,
+            level,
             description: description.trim(),
             cover: coverFile,
             modules: curriculum,
@@ -406,6 +522,7 @@ export function CourseCreationWizard({
             title: title.trim(),
             code: code.trim().toUpperCase(),
             category,
+            level,
             description: description.trim(),
             cover: coverFile,
             modules: curriculum,
@@ -485,7 +602,7 @@ export function CourseCreationWizard({
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Course code</label>
               <input
@@ -514,6 +631,18 @@ export function CourseCreationWizard({
                     {option}
                   </option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Level</label>
+              <select
+                value={level}
+                onChange={(event) => setLevel(event.target.value as CourseLevel)}
+                className={inputClass}
+              >
+                <option value="basic">Basic</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
               </select>
             </div>
           </div>
@@ -816,7 +945,21 @@ export function CourseCreationWizard({
                         className={inputClass}
                       />
                     </label>
-                    <label className="w-28">
+                    <label className="w-40">
+                      <span className={labelClass}>Type</span>
+                      <select
+                        value={question.type}
+                        onChange={(event) =>
+                          setQuestionType(index, event.target.value as QuestionType)
+                        }
+                        className={inputClass}
+                      >
+                        <option value="multiple_choice">Multiple choice</option>
+                        <option value="true_false">True / False</option>
+                        <option value="short_answer">Short answer</option>
+                      </select>
+                    </label>
+                    <label className="w-24">
                       <span className={labelClass}>Points</span>
                       <input
                         type="number"
@@ -838,33 +981,57 @@ export function CourseCreationWizard({
                     </button>
                   </div>
 
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {question.options.map((option, optionIndex) => (
-                      <div
-                        key={optionIndex}
-                        className={cn(
-                          "flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors",
-                          question.correctIndex === optionIndex
-                            ? "border-indigo-300 bg-indigo-50/50"
-                            : "border-slate-200/80 bg-white",
-                        )}
-                      >
+                  {question.type === "short_answer" ? (
+                    <div className="mt-3">
+                      <label>
+                        <span className={labelClass}>Expected answer</span>
                         <input
-                          type="radio"
-                          name={`correct-${question.id}`}
-                          checked={question.correctIndex === optionIndex}
-                          onChange={() => patchQuestion(index, { correctIndex: optionIndex })}
-                          className="h-4 w-4 accent-indigo-600"
+                          value={question.answerText ?? ""}
+                          onChange={(event) =>
+                            patchQuestion(index, { answerText: event.target.value })
+                          }
+                          placeholder="The exact answer learners must type"
+                          className={inputClass}
                         />
-                        <input
-                          value={option}
-                          onChange={(event) => patchOption(index, optionIndex, event.target.value)}
-                          placeholder={`Option ${optionIndex + 1}${question.correctIndex === optionIndex ? " (correct)" : ""}`}
-                          className="w-full border-transparent bg-transparent px-0.5 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-transparent"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {question.options.map((option, optionIndex) => (
+                        <div
+                          key={optionIndex}
+                          className={cn(
+                            "flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors",
+                            question.correctIndex === optionIndex
+                              ? "border-indigo-300 bg-indigo-50/50"
+                              : "border-slate-200/80 bg-white",
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name={`correct-${question.id}`}
+                            checked={question.correctIndex === optionIndex}
+                            onChange={() => patchQuestion(index, { correctIndex: optionIndex })}
+                            className="h-4 w-4 accent-indigo-600"
+                          />
+                          {question.type === "true_false" ? (
+                            <span className="w-full px-0.5 py-2 text-sm text-slate-700">
+                              {option}
+                            </span>
+                          ) : (
+                            <input
+                              value={option}
+                              onChange={(event) =>
+                                patchOption(index, optionIndex, event.target.value)
+                              }
+                              placeholder={`Option ${optionIndex + 1}${question.correctIndex === optionIndex ? " (correct)" : ""}`}
+                              className="w-full border-transparent bg-transparent px-0.5 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-transparent"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))
             )}

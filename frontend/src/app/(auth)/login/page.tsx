@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, GraduationCap, KeyRound, Lock, Mail } from "lucide-react";
+import { ArrowRight, KeyRound, Lock, Mail } from "lucide-react";
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from "@/constants/auth";
 import { ROLE_LABELS, ROLE_PATHS } from "@/constants/roles";
 import { ROLE_ICONS } from "@/constants/navigation";
@@ -11,7 +12,7 @@ import { useLms } from "@/lib/lms-store";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
 
 const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
 
@@ -39,22 +40,23 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
-      <div className="pointer-events-none absolute -top-24 left-1/3 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/15 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           <div className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-2xl shadow-indigo-900/50 ring-1 ring-white/20">
-              <GraduationCap className="h-7 w-7" />
-            </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+            <Image
+              src="/logo.jpg"
+              alt="Ministry of Revenues"
+              width={56}
+              height={56}
+              className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
+            />
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
               Sign in to ELTMS
             </h1>
-            <p className="mt-1.5 text-sm text-slate-400">
+            <p className="mt-1.5 text-sm text-slate-500">
               Staff demo accounts or a learner registration.
             </p>
           </div>
@@ -82,38 +84,38 @@ export default function LoginPage() {
               </div>
             </div>
 
-<div>
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className={labelClass}>
-                    Password
-                  </label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-[11px] font-semibold text-indigo-300/80 transition-colors hover:text-white"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      setError(null);
-                    }}
-                    placeholder="••••••••"
-                    className={inputClass}
-                  />
-                </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className={labelClass}>
+                  Password
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] font-semibold text-indigo-500 transition-colors hover:text-indigo-700"
+                >
+                  Forgot password?
+                </Link>
               </div>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setError(null);
+                  }}
+                  placeholder="••••••••"
+                  className={inputClass}
+                />
+              </div>
+            </div>
 
             {error ? (
-              <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
                 {error}
               </div>
             ) : null}
@@ -121,28 +123,28 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={!ready}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20 transition-all duration-200 hover:shadow-indigo-700/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             >
               Sign in
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-slate-400">
+          <p className="mt-4 text-center text-sm text-slate-500">
             Non-staff user?{" "}
-            <Link href="/register" className="font-semibold text-indigo-300 hover:text-white">
+            <Link href="/register" className="font-semibold text-indigo-500 hover:text-indigo-700">
               Create an account
             </Link>
           </p>
 
           <div className="mt-7">
             <div className="flex items-center gap-3">
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="h-px flex-1 bg-slate-200" />
               <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <KeyRound className="h-3.5 w-3.5" />
                 Demo accounts
               </span>
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="h-px flex-1 bg-slate-200" />
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-2">
@@ -154,18 +156,18 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => fillAccount(account.email)}
                     className={cn(
-                      "group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition-all duration-200",
-                      "hover:border-indigo-400/40 hover:bg-white/10",
+                      "group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-all duration-200",
+                      "hover:border-indigo-300 hover:bg-indigo-50/60",
                     )}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-700/60 to-slate-800/40 text-white ring-1 ring-white/15 transition-colors duration-200 group-hover:from-indigo-500 group-hover:to-violet-500">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 ring-1 ring-slate-200 transition-colors duration-200 group-hover:from-indigo-500 group-hover:to-violet-500 group-hover:text-white">
                       <Icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-xs font-semibold text-white">
+                      <span className="block truncate text-xs font-semibold text-slate-800">
                         {ROLE_LABELS[account.role]}
                       </span>
-                      <span className="block truncate text-[11px] text-slate-400">
+                      <span className="block truncate text-[11px] text-slate-500">
                         {account.email} · {account.password}
                       </span>
                     </span>
@@ -176,7 +178,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="mt-4 text-center text-[11px] text-slate-500">
+        <p className="mt-4 text-center text-[11px] text-slate-400">
           New registrations require administrator approval before the first sign-in.
         </p>
       </div>

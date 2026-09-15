@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { BookOpen, Clock, FileText, Layers, ListChecks } from "lucide-react";
 import type { Course } from "@/types";
 import { Card } from "@/components/ui/Card";
-import { CourseStatusBadge } from "@/components/ui/Badge";
+import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 interface CourseCardProps {
@@ -10,9 +10,10 @@ interface CourseCardProps {
   extraBadge?: ReactNode;
   progress?: number;
   children?: ReactNode;
+  onClick?: () => void;
 }
 
-export function CourseCard({ course, extraBadge, progress, children }: CourseCardProps) {
+export function CourseCard({ course, extraBadge, progress, children, onClick }: CourseCardProps) {
   const lessonCount = course.modules.reduce(
     (sum, module) => sum + module.lessons.length,
     0,
@@ -27,6 +28,7 @@ export function CourseCard({ course, extraBadge, progress, children }: CourseCar
   return (
     <Card
       interactive
+      onClick={onClick}
       className="group/card flex h-full flex-col transition-all duration-200"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
@@ -53,6 +55,9 @@ export function CourseCard({ course, extraBadge, progress, children }: CourseCar
           <CourseStatusBadge
             status={course.published ? "published" : course.status}
           />
+          <Badge variant={courseLevelVariant(course.level)}>
+            {courseLevelLabel(course.level)}
+          </Badge>
           {extraBadge}
         </div>
       </div>

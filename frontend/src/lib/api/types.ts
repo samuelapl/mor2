@@ -16,6 +16,8 @@ export type BackendCourseStatus =
 
 export type BackendApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+export type BackendCourseLevel = "BASIC" | "INTERMEDIATE" | "ADVANCED";
+
 export type BackendEnrollmentStatus = "ACTIVE" | "DROPPED" | "COMPLETED";
 
 export type BackendLessonContentType =
@@ -137,6 +139,7 @@ export interface ApiCourseListItem {
   version: number;
   thumbnailUrl: string | null;
   status: BackendCourseStatus;
+  level: BackendCourseLevel;
   publishedAt: string | null;
   estimatedHours: number | null;
   createdAt: string;
@@ -229,11 +232,10 @@ export interface ApiEnrollment {
 
 export interface ApiAssessmentQuestion {
   id: string;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
-  correctAnswer?: number;
-  points: number;
+  correctAnswer?: number | string;
 }
 
 export interface ApiAssessment {
@@ -551,6 +553,7 @@ export interface CreateCourseBody {
   estimatedHours?: number;
   ownerIds?: string[];
   thumbnailUrl?: string | null;
+  level?: BackendCourseLevel;
 }
 
 export interface UpdateCourseBody {
@@ -559,6 +562,7 @@ export interface UpdateCourseBody {
   description?: LocalizedText;
   estimatedHours?: number;
   thumbnailUrl?: string | null;
+  level?: BackendCourseLevel;
 }
 
 export interface ReviewCourseBody {

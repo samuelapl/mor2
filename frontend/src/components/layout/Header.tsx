@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, CheckCheck, Search } from "lucide-react";
 import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
@@ -95,12 +96,21 @@ export default function Header() {
   const title = (n: ApiNotificationListItem) => n.titleEn ?? n.titleAm;
 
   return (
-    <header className="glass sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/60 px-6">
-      <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-          ELTMS · Dashboard
-        </p>
-        <h1 className="truncate font-display text-sm font-bold text-slate-900">{roleLabel}</h1>
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <Image
+          src="/logo.jpg"
+          alt="Ministry of Revenues"
+          width={32}
+          height={32}
+          className="h-8 w-8 shrink-0 rounded-full object-contain"
+        />
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            ELTMS · Dashboard
+          </p>
+          <h1 className="truncate font-display text-sm font-bold text-slate-900">{roleLabel}</h1>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

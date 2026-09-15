@@ -11,11 +11,10 @@ import type {
 
 export interface AssessmentQuestionInput {
   id: string;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
-  correctAnswer?: number;
-  points: number;
+  correctAnswer?: number | string;
 }
 
 export interface SaveAssessmentBody {
@@ -38,7 +37,7 @@ export interface StartedAttempt {
 
 export interface SubmitAnswer {
   questionId: string;
-  selectedOption: number;
+  selectedOption: number | string;
 }
 
 export interface GradedResult {

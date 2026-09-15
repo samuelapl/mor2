@@ -17,6 +17,8 @@ export type CourseStatus =
   | "rejected"
   | "archived";
 
+export type CourseLevel = "basic" | "intermediate" | "advanced";
+
 export interface RoleInfo {
   key: Role;
   label: string;
@@ -52,11 +54,15 @@ export interface Module {
   unlocked?: boolean;
 }
 
+export type QuestionType = "multiple_choice" | "true_false" | "short_answer";
+
 export interface Question {
   id: string;
+  type: QuestionType;
   text: string;
   options: string[];
   correctIndex: number;
+  answerText?: string;
   points: number;
 }
 
@@ -89,6 +95,7 @@ export interface Course {
   trainerId: string | null;
   trainerIds?: string[];
   status: CourseStatus;
+  level: CourseLevel;
   published: boolean;
   createdAt: string;
   cover?: string | null;
