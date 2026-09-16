@@ -19,6 +19,7 @@ import {
   BulkCreateUsersDto,
   AdminResetPasswordDto,
   RejectRegistrationDto,
+  CreateActorDto,
 } from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
@@ -88,6 +89,13 @@ export class UsersController {
   @ApiOperation({ summary: 'Bulk-create users from a spreadsheet import (idempotent by email)' })
   async bulkCreate(@Body() dto: BulkCreateUsersDto) {
     return this.usersService.bulkCreate(dto);
+  }
+
+  @Post('actors')
+  @Permissions('user.manage')
+  @ApiOperation({ summary: 'Manually register a single actor (admin-set password, pre-approved)' })
+  async createActor(@Body() dto: CreateActorDto) {
+    return this.usersService.createActor(dto);
   }
 
   @Patch(':id/password')

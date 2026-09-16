@@ -20,7 +20,8 @@
     "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "reseed:courses": "ts-node prisma/seed-courses.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

@@ -1,4 +1,11 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import Redis from 'ioredis';
 import { RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
@@ -95,7 +102,7 @@ export class PermissionsService implements OnModuleDestroy {
   }
 
   /** Invalidate the cache after any grant/revoke — Phase 1 invalidates the whole role at once. */
-  async invalidateRole(role: RoleName): Promise<void> {
+  async invalidateRole(role: string): Promise<void> {
     try {
       await this.ensureConnected();
       await this.redis.del(cacheKeyForRole(role));
@@ -128,6 +135,44 @@ export class PermissionsService implements OnModuleDestroy {
       isSystem: r.isSystem,
       permissionCodes: r.permissions.map((rp) => rp.permission.code),
     }));
+  }
+
+  async createRole(input: { name: string; label: string; description?: string }) {
+    const name = input.name.trim().toUpperCase().replace(/\s+/g, '_');
+    const existing = await this.prisma.role.findUnique({ where: { name } });
+    if (existing) {
+      throw new ConflictException('A role with this name already exists');
+    }
+
+    const role = await this.prisma.role.create({
+      data: {
+        name,
+        label: input.label.trim(),
+        description: input.description?.trim() || null,
+        dashboardPath: '',
+        isSystem: false,
+      },
+    });
+
+    return { ...role, permissionCodes: [] as string[] };
+  }
+
+  async deleteRole(roleId: string) {
+    const role = await this.getRoleOrThrow(roleId);
+    if (role.isSystem) {
+      throw new ForbiddenException('Built-in roles cannot be deleted.');
+    }
+
+    const holders = await this.prisma.userRole.count({ where: { role: role.name } });
+    if (holders > 0) {
+      throw new ConflictException(
+        `${holders} user(s) still hold this role — remove it from them first.`,
+      );
+    }
+
+    await this.prisma.role.delete({ where: { id: roleId } });
+    await this.invalidateRole(role.name);
+    return { message: 'Role deleted' };
   }
 
   private async getRoleOrThrow(roleId: string) {
