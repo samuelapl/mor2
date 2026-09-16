@@ -167,8 +167,15 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     id: course.id,
     code: course.code,
     title: course.titleEn ?? "",
-    category: deriveCategory(course.titleEn, course.descriptionEn),
+    category: course.category || deriveCategory(course.titleEn, course.descriptionEn),
+    department: course.department ?? undefined,
+    targetAudience: course.targetAudience ?? undefined,
+    deliveryMethod: course.deliveryMethod ?? undefined,
+    language: course.language ?? "en",
+    prerequisites: course.prerequisites ?? undefined,
+    objectives: course.objectivesEn || course.objectivesAm || undefined,
     description: course.descriptionEn ?? "",
+    version: course.version,
     ownerId: course.owners?.[0]?.userId ?? "",
     trainerId: null,
     status: statusFromApi(course.status),
@@ -235,6 +242,9 @@ export function moduleFromApi(mod: ApiModule): Module {
   return {
     id: mod.id,
     title: mod.titleEn ?? "",
+    description: mod.descriptionEn ?? undefined,
+    objectives: mod.objectivesEn || mod.objectivesAm || undefined,
+    durationMinutes: mod.durationMinutes ?? undefined,
     unlocked: mod.unlocked,
     lessons: (mod.lessons ?? []).map(lessonFromApi),
   };
@@ -262,6 +272,12 @@ export function courseToCreateBody(input: {
   code: string;
   title: string;
   category?: string;
+  department?: string;
+  targetAudience?: string;
+  deliveryMethod?: string;
+  language?: string;
+  prerequisites?: string;
+  objectives?: string;
   description?: string;
   ownerId?: string;
   level?: Course["level"];
@@ -272,6 +288,15 @@ export function courseToCreateBody(input: {
     description: input.description
       ? { en: input.description, am: input.description }
       : undefined,
+    objectives: input.objectives
+      ? { en: input.objectives, am: input.objectives }
+      : undefined,
+    category: input.category,
+    department: input.department,
+    targetAudience: input.targetAudience,
+    deliveryMethod: input.deliveryMethod,
+    language: input.language,
+    prerequisites: input.prerequisites,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
@@ -280,6 +305,13 @@ export function courseToCreateBody(input: {
 export function courseToUpdateBody(input: {
   title: string;
   description?: string;
+  objectives?: string;
+  category?: string;
+  department?: string;
+  targetAudience?: string;
+  deliveryMethod?: string;
+  language?: string;
+  prerequisites?: string;
   level?: Course["level"];
 }): UpdateCourseBody {
   return {
@@ -287,6 +319,15 @@ export function courseToUpdateBody(input: {
     description: input.description
       ? { en: input.description, am: input.description }
       : undefined,
+    objectives: input.objectives
+      ? { en: input.objectives, am: input.objectives }
+      : undefined,
+    category: input.category,
+    department: input.department,
+    targetAudience: input.targetAudience,
+    deliveryMethod: input.deliveryMethod,
+    language: input.language,
+    prerequisites: input.prerequisites,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
 }
@@ -295,6 +336,9 @@ export function moduleToCreateBody(input: {
   titleEn: string;
   titleAm?: string;
   descriptionEn?: string;
+  objectivesEn?: string;
+  objectivesAm?: string;
+  durationMinutes?: number;
   lessons?: {
     titleEn: string;
     titleAm?: string;
@@ -318,6 +362,9 @@ export function moduleToCreateBody(input: {
     titleAm,
     descriptionEn: input.descriptionEn,
     descriptionAm: input.descriptionEn,
+    objectivesEn: input.objectivesEn,
+    objectivesAm: input.objectivesAm ?? input.objectivesEn,
+    durationMinutes: input.durationMinutes,
     lessons: (input.lessons ?? []).map((l) => ({
       titleEn: l.titleEn,
       titleAm: l.titleAm ?? l.titleEn,

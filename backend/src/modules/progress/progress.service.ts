@@ -20,13 +20,22 @@ export class ProgressService {
       orderBy: { order: 'asc' },
       include: {
         lessons: {
-          where: { deletedAt: null },
+          where: { deletedAt: null, parentId: null },
           orderBy: { order: 'asc' },
-
           include: {
             completions: {
               where: { userId },
               take: 1,
+            },
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+              include: {
+                completions: {
+                  where: { userId },
+                  take: 1,
+                },
+              },
             },
           },
         },
@@ -37,7 +46,9 @@ export class ProgressService {
       },
     });
 
-    const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const allLessonIds = modules.flatMap((m) =>
+      m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
+    );
     const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
       this.prisma,
       userId,
@@ -55,9 +66,22 @@ export class ProgressService {
     let unlockedLessons = 0;
 
     const moduleProgress = modules.map((module) => {
-      const lessonsInModule = module.lessons.length;
-      const completedInModule = module.lessons.filter((l) => l.completions[0]?.completed).length;
-      const unlockedInModule = module.lessons.filter((l) => lessonUnlocked.get(l.id)).length;
+      const lessonsInModule = module.lessons.reduce(
+        (sum, l) => sum + (l.subLessons && l.subLessons.length > 0 ? l.subLessons.length : 1),
+        0,
+      );
+      const completedInModule = module.lessons.reduce((sum, l) => {
+        if (l.subLessons && l.subLessons.length > 0) {
+          return sum + l.subLessons.filter((s) => s.completions[0]?.completed).length;
+        }
+        return sum + (l.completions[0]?.completed ? 1 : 0);
+      }, 0);
+      const unlockedInModule = module.lessons.reduce((sum, l) => {
+        if (l.subLessons && l.subLessons.length > 0) {
+          return sum + l.subLessons.filter((s) => lessonUnlocked.get(s.id)).length;
+        }
+        return sum + (lessonUnlocked.get(l.id) ? 1 : 0);
+      }, 0);
 
       totalLessons += lessonsInModule;
       completedLessons += completedInModule;
@@ -83,6 +107,14 @@ export class ProgressService {
           unlocked: lessonUnlocked.get(lesson.id) ?? false,
           completed: lesson.completions[0]?.completed ?? false,
           lastPosition: lesson.completions[0]?.lastPosition ?? 0,
+          subLessons: (lesson.subLessons ?? []).map((sub) => ({
+            lessonId: sub.id,
+            titleEn: sub.titleEn,
+            titleAm: sub.titleAm,
+            order: sub.order,
+            unlocked: lessonUnlocked.get(sub.id) ?? false,
+            completed: sub.completions[0]?.completed ?? false,
+          })),
         })),
       };
     });
@@ -115,27 +147,39 @@ export class ProgressService {
     if (dto.completed) {
       const modules = await this.prisma.curriculumModule.findMany({
         where: { courseId: lesson.module.courseId, deletedAt: null },
-        include: { lessons: { where: { deletedAt: null } } },
+        orderBy: { order: 'asc' },
+        include: {
+          lessons: {
+            where: { deletedAt: null, parentId: null },
+            orderBy: { order: 'asc' },
+            include: {
+              subLessons: {
+                where: { deletedAt: null },
+                orderBy: { order: 'asc' },
+              },
+            },
+          },
+        },
       });
-      const lessonModule = modules.find((m) => m.id === lesson.moduleId);
-      if (lessonModule) {
-        const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
-        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-          this.prisma,
-          userId,
-          modules.map((m) => m.id),
-          allLessonIds,
+
+      const allLessonIds = modules.flatMap((m) =>
+        m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
+      );
+      const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
+        this.prisma,
+        userId,
+        modules.map((m) => m.id),
+        allLessonIds,
+      );
+      const { lessonUnlocked } = computeSequentialUnlocks(
+        modules,
+        moduleCompletions,
+        lessonCompletions,
+      );
+      if (!(lessonUnlocked.get(lessonId) ?? false)) {
+        throw new ForbiddenException(
+          'This lesson is still locked. Complete the preceding lessons first.',
         );
-        const { lessonUnlocked } = computeSequentialUnlocks(
-          modules,
-          moduleCompletions,
-          lessonCompletions,
-        );
-        if (!(lessonUnlocked.get(lessonId) ?? false)) {
-          throw new ForbiddenException(
-            'This lesson is still locked. Complete the preceding lessons first.',
-          );
-        }
       }
     }
 
@@ -159,6 +203,28 @@ export class ProgressService {
       },
     });
 
+    // If this was a sub-lesson, auto-complete parent lesson when all sub-lessons are completed
+    if (lesson.parentId && dto.completed) {
+      const siblingSubLessons = await this.prisma.lesson.findMany({
+        where: { parentId: lesson.parentId, deletedAt: null },
+        select: { id: true },
+      });
+      const completedSubsCount = await this.prisma.lessonCompletion.count({
+        where: {
+          userId,
+          lessonId: { in: siblingSubLessons.map((s) => s.id) },
+          completed: true,
+        },
+      });
+      if (completedSubsCount === siblingSubLessons.length) {
+        await this.prisma.lessonCompletion.upsert({
+          where: { userId_lessonId: { userId, lessonId: lesson.parentId } },
+          update: { completed: true, completedAt: new Date(), lastAccessed: new Date() },
+          create: { userId, lessonId: lesson.parentId, completed: true, completedAt: new Date() },
+        });
+      }
+    }
+
     // Auto-complete module when all lessons are done
     await this.maybeCompleteModule(userId, lesson.moduleId);
 
@@ -166,24 +232,34 @@ export class ProgressService {
   }
 
   private async maybeCompleteModule(userId: string, moduleId: string) {
-    const module = await this.prisma.curriculumModule.findUnique({
+    const currentModule = await this.prisma.curriculumModule.findUnique({
       where: { id: moduleId },
-      include: { lessons: true },
+      select: { courseId: true },
+    });
+    if (!currentModule) return;
+
+    const activeLessons = await this.prisma.lesson.findMany({
+      where: { moduleId, deletedAt: null },
+      select: { id: true, parentId: true },
     });
 
-    if (!module || module.lessons.length === 0) {
-      return;
-    }
+    if (activeLessons.length === 0) return;
+
+    // Required lessons are sub-lessons and standalone lessons (lessons without sub-lessons)
+    const parentIdsWithSubs = new Set(activeLessons.map((l) => l.parentId).filter(Boolean));
+    const requiredLessonIds = activeLessons
+      .filter((l) => l.parentId !== null || !parentIdsWithSubs.has(l.id))
+      .map((l) => l.id);
 
     const completedLessons = await this.prisma.lessonCompletion.count({
       where: {
         userId,
-        lessonId: { in: module.lessons.map((l) => l.id) },
+        lessonId: { in: requiredLessonIds },
         completed: true,
       },
     });
 
-    const allDone = completedLessons === module.lessons.length;
+    const allDone = completedLessons >= requiredLessonIds.length;
 
     await this.prisma.moduleCompletion.upsert({
       where: {
@@ -202,7 +278,7 @@ export class ProgressService {
     });
 
     if (allDone) {
-      await this.maybeCompleteCourse(userId, module.courseId);
+      await this.maybeCompleteCourse(userId, currentModule.courseId);
     }
   }
 

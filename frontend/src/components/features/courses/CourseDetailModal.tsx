@@ -1,19 +1,19 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
   ClipboardPen,
+  Clock,
   FileText,
   Globe2,
   Lock,
+  Sparkles,
   Trash2,
   UserPlus,
   UserRound,
   Video,
 } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
@@ -29,6 +29,7 @@ interface CourseDetailModalProps {
   reviewActions?: {
     onApprove: () => void;
     onReject: () => void;
+    onRequestChanges?: () => void;
   };
 }
 
@@ -126,29 +127,43 @@ export function CourseDetailModal({
   const attachmentCount = course.attachments?.length ?? 0;
 
   return (
-    <Modal
+    <WorkspaceDetailOverlay
       open={open}
       onClose={onClose}
-      size="screen"
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
+      badge={<CourseStatusBadge status={course.published ? "published" : course.status} />}
+      actions={
+        reviewActions ? (
+          <div className="flex items-center gap-2">
+            {reviewActions.onRequestChanges ? (
+              <Button size="sm" variant="outline" onClick={reviewActions.onRequestChanges}>
+                Request Changes
+              </Button>
+            ) : null}
+            <Button size="sm" variant="danger" onClick={reviewActions.onReject}>
+              Reject
+            </Button>
+            <Button size="sm" variant="success" onClick={reviewActions.onApprove}>
+              Approve
+            </Button>
+          </div>
+        ) : null
+      }
     >
-      <div className="space-y-5">
+      <div className="mx-auto max-w-5xl space-y-6">
         {course.cover ? (
-          <div className="-mx-6 -mt-5 mb-4 overflow-hidden rounded-b-2xl">
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={course.cover}
               alt={`${course.title} cover`}
-              className="h-40 w-full object-cover"
+              className="h-48 w-full object-cover"
             />
           </div>
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
-          <CourseStatusBadge
-            status={course.published ? "published" : course.status}
-          />
           <Badge variant="outline">{course.category}</Badge>
           <Badge variant={courseLevelVariant(course.level)}>
             {courseLevelLabel(course.level)}
@@ -183,13 +198,44 @@ export function CourseDetailModal({
           </div>
         ) : null}
 
-        <p className="text-sm leading-relaxed text-slate-600">
-          {course.description}
-        </p>
+        {/* Course Description */}
+        <div>
+          <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+            Course Description
+          </h3>
+          <p className="text-sm leading-relaxed text-slate-700">
+            {course.description}
+          </p>
+        </div>
+
+        {/* Course Objectives */}
+        {course.objectives ? (
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+            <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-indigo-900">
+              Course Learning Objectives
+            </h3>
+            <p className="text-xs leading-relaxed text-indigo-950/90 whitespace-pre-line">
+              {course.objectives}
+            </p>
+          </div>
+        ) : null}
+
+        {/* Course Metadata Grid */}
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-xs text-slate-600">
+          <div><span className="font-semibold text-slate-800">Department:</span> {course.department || "Ministry of Revenues"}</div>
+          <div><span className="font-semibold text-slate-800">Target Audience:</span> {course.targetAudience || "All Staff"}</div>
+          <div><span className="font-semibold text-slate-800">Delivery:</span> {(course.deliveryMethod || "self_paced").replace("_", " ")}</div>
+          <div><span className="font-semibold text-slate-800">Language:</span> {course.language || "English"}</div>
+          {course.prerequisites ? (
+            <div className="sm:col-span-2 md:col-span-4 border-t border-slate-200/60 pt-2">
+              <span className="font-semibold text-slate-800">Prerequisites:</span> {course.prerequisites}
+            </div>
+          ) : null}
+        </div>
 
         {course.rejectionReason ? (
           <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
-            <p className="font-medium">Admin feedback</p>
+            <p className="font-medium">Admin feedback / Rejection Reason</p>
             <p className="mt-0.5">{course.rejectionReason}</p>
             {course.rejectedBy || course.rejectedAt ? (
               <p className="mt-1 text-[11px] text-red-500/80">
@@ -291,36 +337,57 @@ export function CourseDetailModal({
 
         <div>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Modules & Lessons
+            Curriculum Structure ({course.modules.length} Modules)
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {course.modules.map((module, index) => {
               const lockedModule = module.unlocked === false;
               return (
                 <div
                   key={module.id}
                   className={cn(
-                    "overflow-hidden rounded-xl border bg-white shadow-sm",
+                    "overflow-hidden rounded-xl border bg-white shadow-xs",
                     lockedModule
                       ? "border-slate-200/60 bg-slate-50/40"
                       : "border-slate-200/80",
                   )}
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-2.5">
-                    <p
-                      className={cn(
-                        "text-sm font-semibold",
-                        lockedModule ? "text-slate-500" : "text-slate-800",
-                      )}
-                    >
-                      {lockedModule ? <Lock className="mr-1.5 inline h-3.5 w-3.5" /> : null}
-                      {module.title}
-                    </p>
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-[11px] text-slate-500 ring-1 ring-slate-200/70">
-                      <ClipboardPen className="h-3.5 w-3.5 text-indigo-500/70" />
-                      {module.lessons.length} lessons
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+                    <div>
+                      <p
+                        className={cn(
+                          "text-sm font-bold",
+                          lockedModule ? "text-slate-500" : "text-slate-800",
+                        )}
+                      >
+                        {lockedModule ? <Lock className="mr-1.5 inline h-3.5 w-3.5" /> : null}
+                        Module {index + 1}: {module.title}
+                      </p>
+                      {module.description ? (
+                        <p className="text-xs text-slate-500 mt-0.5">{module.description}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {module.durationMinutes ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                          <Clock className="h-3 w-3" />
+                          {module.durationMinutes} min
+                        </span>
+                      ) : null}
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-[11px] text-slate-500 ring-1 ring-slate-200/70">
+                        <ClipboardPen className="h-3.5 w-3.5 text-indigo-500/70" />
+                        {module.lessons.length} lessons
+                      </span>
+                    </div>
                   </div>
+
+                  {module.objectives ? (
+                    <div className="border-b border-slate-100 bg-indigo-50/40 px-4 py-2 text-xs text-indigo-950">
+                      <span className="font-semibold text-indigo-900">Module Learning Objectives: </span>
+                      {module.objectives}
+                    </div>
+                  ) : null}
+
                   <ul className="divide-y divide-slate-100">
                     {module.lessons.map((lesson, lessonIndex) => {
                       const lockedLesson = lesson.unlocked === false;
@@ -342,26 +409,57 @@ export function CourseDetailModal({
                             <span>
                               {index + 1}.{lessonIndex + 1} · {lesson.title}
                             </span>
-                            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-slate-400">
+                            <span className="inline-flex shrink-0 items-center gap-2 text-[11px] text-slate-400">
                               {lockedLesson ? (
                                 <Lock className="h-3.5 w-3.5" />
                               ) : (
                                 <CalendarDays className="h-3.5 w-3.5" />
                               )}
                               {lockedLesson ? "Locked" : `${lesson.durationMin} min`}
-                              {!lockedLesson && lesson.content ? (
-                                <ChevronDown
-                                  className={cn(
-                                    "ml-1 h-3.5 w-3.5 transition-transform",
-                                    openLessonId ? "rotate-180" : "",
-                                  )}
-                                />
+                              <Badge variant="outline">{lesson.contentType}</Badge>
+                              {lesson.resourceUrl ? (
+                                <span className="text-emerald-600 font-medium">1 file</span>
                               ) : null}
+                              <ChevronDown
+                                className={cn(
+                                  "ml-1 h-3.5 w-3.5 transition-transform",
+                                  openLessonId ? "rotate-180" : "",
+                                )}
+                              />
                             </span>
                           </button>
+
+                          {/* Sub-lessons list if present */}
+                          {lesson.subLessons && lesson.subLessons.length > 0 ? (
+                            <div className="pl-8 pr-4 py-1.5 bg-slate-50/50 border-t border-slate-100 text-xs">
+                              <p className="font-semibold text-slate-500 mb-1 text-[11px]">Sub-lessons:</p>
+                              <ul className="space-y-1">
+                                {lesson.subLessons.map((sub, subIdx) => (
+                                  <li key={sub.id} className="text-slate-600 flex items-center justify-between">
+                                    <span>{index + 1}.{lessonIndex + 1}.{subIdx + 1} {sub.title}</span>
+                                    <span className="text-[11px] text-slate-400">{sub.contentType} · {sub.durationMin}m</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+
                           {openLessonId ? (
-                            <div className="border-t border-slate-100 bg-slate-50/40 px-4 py-3">
-                              <RichContent html={lesson.content} />
+                            <div className="border-t border-slate-100 bg-slate-50/40 px-4 py-3 space-y-3">
+                              {lesson.resourceUrl ? (
+                                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs">
+                                  <span className="font-medium text-slate-700">Attached Resource / Media</span>
+                                  <a
+                                    href={lesson.resourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-indigo-600 hover:underline font-semibold"
+                                  >
+                                    View / Download File
+                                  </a>
+                                </div>
+                              ) : null}
+                              {lesson.content ? <RichContent html={lesson.content} /> : null}
                             </div>
                           ) : null}
                         </li>
@@ -377,7 +475,7 @@ export function CourseDetailModal({
         {attachmentCount > 0 ? (
           <div>
             <h3 className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <span>Attachments</span>
+              <span>Attachments & Resources</span>
               <Badge variant="outline">{attachmentCount}</Badge>
             </h3>
             <ul className="space-y-2">
@@ -390,7 +488,7 @@ export function CourseDetailModal({
                     href={attachment.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-slate-700 hover:text-indigo-600"
+                    className="flex items-center gap-2 text-sm text-slate-700 hover:text-indigo-600 font-medium"
                   >
                     {attachment.type === "video" ? (
                       <Video className="h-4 w-4 text-indigo-500/70" />
@@ -465,6 +563,11 @@ export function CourseDetailModal({
 
         {reviewActions ? (
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+            {reviewActions.onRequestChanges ? (
+              <Button variant="outline" onClick={reviewActions.onRequestChanges}>
+                Request Changes
+              </Button>
+            ) : null}
             <Button variant="danger" onClick={reviewActions.onReject}>
               Reject course
             </Button>
@@ -474,6 +577,6 @@ export function CourseDetailModal({
           </div>
         ) : null}
       </div>
-    </Modal>
+    </WorkspaceDetailOverlay>
   );
 }

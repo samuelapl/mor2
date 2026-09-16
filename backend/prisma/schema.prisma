@@ -126,6 +126,14 @@ model Course {
   level       CourseLevel @default(BASIC)
   publishedAt DateTime? @map("published_at")
   estimatedHours Float? @map("estimated_hours")
+  category    String?  @map("category")
+  department  String?  @map("department")
+  targetAudience String? @map("target_audience")
+  deliveryMethod String? @map("delivery_method")
+  language    String?  @default("en") @map("language")
+  objectivesAm String? @map("objectives_am")
+  objectivesEn String? @map("objectives_en")
+  prerequisites String? @map("prerequisites")
 
   // Ownership & approval
   owners          CourseOwner[]
@@ -229,6 +237,9 @@ model CurriculumModule {
   titleEn     String   @map("title_en")
   descriptionAm String? @map("description_am")
   descriptionEn String? @map("description_en")
+  objectivesAm String? @map("objectives_am")
+  objectivesEn String? @map("objectives_en")
+  durationMinutes Int? @map("duration_minutes")
   order       Int
   passingScore Int?    @map("passing_score")
 

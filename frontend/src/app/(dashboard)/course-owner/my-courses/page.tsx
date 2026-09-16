@@ -7,7 +7,7 @@ import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Pagination } from "@/components/ui/Pagination";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
@@ -170,13 +170,12 @@ export default function MyCoursesPage() {
         <EmptyState
           title="No courses match"
           description="Adjust filters or create a new course using the '+ Create Course' button above."
-          action={
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Create Course
-            </Button>
-          }
-        />
+        >
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 shadow-xs">
+            <Plus className="h-4 w-4" />
+            Create Course
+          </Button>
+        </EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pageItems.map((course) => (
@@ -240,22 +239,23 @@ export default function MyCoursesPage() {
         course={editCourse}
       />
 
-      {/* Create Course Modal (Screen / Workspace Overlay) */}
-      <Modal
+      {/* Create Course (Full Workspace Overlay) */}
+      <WorkspaceDetailOverlay
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        size="screen"
         title="Create Course"
         subtitle="Build your course step-by-step: details, curriculum with content, final assessment, and review."
       >
-        <CourseCreationWizard
-          onDone={() => {
-            setCreateOpen(false);
-            setFlash("Course created successfully!");
-          }}
-          onCancel={() => setCreateOpen(false)}
-        />
-      </Modal>
+        <div className="mx-auto max-w-5xl">
+          <CourseCreationWizard
+            onDone={() => {
+              setCreateOpen(false);
+              setFlash("Course created successfully!");
+            }}
+            onCancel={() => setCreateOpen(false)}
+          />
+        </div>
+      </WorkspaceDetailOverlay>
     </PageShell>
   );
 }

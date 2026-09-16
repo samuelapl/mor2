@@ -84,6 +84,22 @@ export class CreateModuleDto {
   @IsString()
   descriptionAm?: string;
 
+  @ApiPropertyOptional({ example: 'Understand the basic concepts of revenue assessment' })
+  @IsOptional()
+  @IsString()
+  objectivesEn?: string;
+
+  @ApiPropertyOptional({ example: 'የገቢ ግምገማ መሰረታዊ ፅንሰ ሀሳቦችን መረዳት' })
+  @IsOptional()
+  @IsString()
+  objectivesAm?: string;
+
+  @ApiPropertyOptional({ example: 60 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  durationMinutes?: number;
+
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @IsInt()

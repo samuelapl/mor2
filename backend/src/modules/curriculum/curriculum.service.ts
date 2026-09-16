@@ -39,6 +39,9 @@ export class CurriculumService {
             titleEn: mod.titleEn,
             descriptionAm: mod.descriptionAm,
             descriptionEn: mod.descriptionEn,
+            objectivesAm: mod.objectivesAm,
+            objectivesEn: mod.objectivesEn,
+            durationMinutes: mod.durationMinutes,
             order: index,
             passingScore: mod.passingScore,
           },
@@ -163,6 +166,9 @@ export class CurriculumService {
         titleEn: dto.titleEn,
         descriptionAm: dto.descriptionAm,
         descriptionEn: dto.descriptionEn,
+        objectivesAm: dto.objectivesAm,
+        objectivesEn: dto.objectivesEn,
+        durationMinutes: dto.durationMinutes,
         order,
         passingScore: dto.passingScore,
         lessons: dto.lessons?.length
@@ -202,6 +208,9 @@ export class CurriculumService {
         titleEn: dto.titleEn,
         descriptionAm: dto.descriptionAm,
         descriptionEn: dto.descriptionEn,
+        objectivesAm: dto.objectivesAm,
+        objectivesEn: dto.objectivesEn,
+        durationMinutes: dto.durationMinutes,
         order: dto.order,
         passingScore: dto.passingScore,
       },
@@ -325,13 +334,21 @@ export class CurriculumService {
           orderBy: { order: 'asc' },
           include: {
             lessons: {
-              where: { deletedAt: null },
+              where: { deletedAt: null, parentId: null },
               orderBy: { order: 'asc' },
+              include: {
+                subLessons: {
+                  where: { deletedAt: null },
+                  orderBy: { order: 'asc' },
+                },
+              },
             },
           },
         });
 
-        const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+        const allLessonIds = modules.flatMap((m) =>
+          m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
+        );
         const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
           this.prisma,
           user.id,
@@ -345,11 +362,9 @@ export class CurriculumService {
           lessonCompletions,
         );
 
-        // Sub-lessons inherit parent lesson unlock status or checked directly
-        const targetLessonId = lesson.parentId ?? lesson.id;
-        if (!(lessonUnlocked.get(targetLessonId) ?? false)) {
+        if (!(lessonUnlocked.get(lesson.id) ?? false)) {
           throw new ForbiddenException(
-            'This lesson is locked until preceding lessons and module requirements are completed.',
+            'This lesson or sub-lesson is locked. Complete the preceding required modules and activities first.',
           );
         }
       }

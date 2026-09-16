@@ -11,10 +11,21 @@
  * `lessonCompletions` is the set of lessonIds the user has completed.
  */
 
+export interface SubLessonUnlockRow {
+  id: string;
+  order: number;
+}
+
+export interface LessonUnlockRow {
+  id: string;
+  order: number;
+  subLessons?: SubLessonUnlockRow[];
+}
+
 export interface ModuleUnlockRow {
   id: string;
   order: number | null;
-  lessons: { id: string; order: number }[];
+  lessons: LessonUnlockRow[];
 }
 
 export function computeSequentialUnlocks(
@@ -30,21 +41,41 @@ export function computeSequentialUnlocks(
 
   const sortedModules = [...modules].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  for (const mod of sortedModules) {
-    const modOrder = mod.order ?? 0;
+  for (let mIdx = 0; mIdx < sortedModules.length; mIdx++) {
+    const mod = sortedModules[mIdx]!;
     const previousModulesDone = sortedModules
-      .filter((m) => (m.order ?? 0) < modOrder)
+      .slice(0, mIdx)
       .every((m) => moduleCompletions.get(m.id) === true);
 
-    const unlocked = modOrder === 0 ? true : previousModulesDone;
+    const unlocked = mIdx === 0 ? true : previousModulesDone;
     moduleUnlocked.set(mod.id, unlocked);
 
     const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
-    for (const lesson of sortedLessons) {
+    for (let lIdx = 0; lIdx < sortedLessons.length; lIdx++) {
+      const lesson = sortedLessons[lIdx]!;
       const previousLessonsDone = sortedLessons
-        .filter((l) => l.order < lesson.order)
-        .every((l) => lessonCompletions.has(l.id));
-      lessonUnlocked.set(lesson.id, unlocked && (lesson.order === 0 ? true : previousLessonsDone));
+        .slice(0, lIdx)
+        .every((l) => {
+          if (l.subLessons && l.subLessons.length > 0) {
+            return l.subLessons.every((s) => lessonCompletions.has(s.id));
+          }
+          return lessonCompletions.has(l.id);
+        });
+
+      const isLessonUnlocked = unlocked && (lIdx === 0 ? true : previousLessonsDone);
+      lessonUnlocked.set(lesson.id, isLessonUnlocked);
+
+      if (lesson.subLessons && lesson.subLessons.length > 0) {
+        const sortedSubs = [...lesson.subLessons].sort((a, b) => a.order - b.order);
+        for (let sIdx = 0; sIdx < sortedSubs.length; sIdx++) {
+          const sub = sortedSubs[sIdx]!;
+          const previousSubsDone = sortedSubs
+            .slice(0, sIdx)
+            .every((s) => lessonCompletions.has(s.id));
+          const isSubUnlocked = isLessonUnlocked && (sIdx === 0 ? true : previousSubsDone);
+          lessonUnlocked.set(sub.id, isSubUnlocked);
+        }
+      }
     }
   }
 

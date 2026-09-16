@@ -14,7 +14,7 @@ export type BackendCourseStatus =
   | "PUBLISHED"
   | "ARCHIVED";
 
-export type BackendApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type BackendApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "NEEDS_REVISION";
 
 export type BackendCourseLevel = "BASIC" | "INTERMEDIATE" | "ADVANCED";
 
@@ -141,6 +141,14 @@ export interface ApiCourseListItem {
   thumbnailUrl: string | null;
   status: BackendCourseStatus;
   level: BackendCourseLevel;
+  category?: string | null;
+  department?: string | null;
+  targetAudience?: string | null;
+  deliveryMethod?: string | null;
+  language?: string | null;
+  objectivesAm?: string | null;
+  objectivesEn?: string | null;
+  prerequisites?: string | null;
   publishedAt: string | null;
   estimatedHours: number | null;
   createdAt: string;
@@ -197,6 +205,9 @@ export interface ApiModule {
   titleAm: string;
   descriptionEn: string | null;
   descriptionAm: string | null;
+  objectivesEn?: string | null;
+  objectivesAm?: string | null;
+  durationMinutes?: number | null;
   order: number | null;
   passingScore: number | null;
   lessons: ApiLesson[];
@@ -553,6 +564,13 @@ export interface CreateCourseBody {
   code: string;
   title: LocalizedText;
   description?: LocalizedText;
+  objectives?: LocalizedText;
+  category?: string;
+  department?: string;
+  targetAudience?: string;
+  deliveryMethod?: string;
+  language?: string;
+  prerequisites?: string;
   estimatedHours?: number;
   ownerIds?: string[];
   thumbnailUrl?: string | null;
@@ -563,6 +581,13 @@ export interface UpdateCourseBody {
   code?: string;
   title?: LocalizedText;
   description?: LocalizedText;
+  objectives?: LocalizedText;
+  category?: string;
+  department?: string;
+  targetAudience?: string;
+  deliveryMethod?: string;
+  language?: string;
+  prerequisites?: string;
   estimatedHours?: number;
   thumbnailUrl?: string | null;
   level?: BackendCourseLevel;
@@ -582,6 +607,9 @@ export interface CreateModuleBody {
   titleAm: string;
   descriptionEn?: string;
   descriptionAm?: string;
+  objectivesEn?: string;
+  objectivesAm?: string;
+  durationMinutes?: number;
   order?: number;
   passingScore?: number;
   lessons?: CreateInlineLessonBody[];

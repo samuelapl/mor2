@@ -224,7 +224,12 @@ export class CoursesService {
       }
 
       if (course.modules && course.modules.length > 0) {
-        const allLessonIds = course.modules.flatMap((m: any) => (m.lessons ?? []).map((l: any) => l.id));
+        const allLessonIds = course.modules.flatMap((m: any) =>
+          (m.lessons ?? []).flatMap((l: any) => [
+            l.id,
+            ...(l.subLessons ?? []).map((s: any) => s.id),
+          ]),
+        );
         const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
           this.prisma,
           userId,
@@ -251,14 +256,17 @@ export class CoursesService {
                 contentAm: lesUnlocked ? l.contentAm : null,
                 resourceUrl: lesUnlocked ? l.resourceUrl : null,
                 attachments: lesUnlocked ? l.attachments : [],
-                subLessons: (l.subLessons ?? []).map((sub: any) => ({
-                  ...sub,
-                  unlocked: lesUnlocked,
-                  contentEn: lesUnlocked ? sub.contentEn : null,
-                  contentAm: lesUnlocked ? sub.contentAm : null,
-                  resourceUrl: lesUnlocked ? sub.resourceUrl : null,
-                  attachments: lesUnlocked ? sub.attachments : [],
-                })),
+                subLessons: (l.subLessons ?? []).map((sub: any) => {
+                  const subUnlocked = lessonUnlocked.get(sub.id) ?? false;
+                  return {
+                    ...sub,
+                    unlocked: subUnlocked,
+                    contentEn: subUnlocked ? sub.contentEn : null,
+                    contentAm: subUnlocked ? sub.contentAm : null,
+                    resourceUrl: subUnlocked ? sub.resourceUrl : null,
+                    attachments: subUnlocked ? sub.attachments : [],
+                  };
+                }),
               };
             }),
           };
@@ -299,6 +307,14 @@ export class CoursesService {
         titleEn: dto.title.en,
         descriptionAm: dto.description?.am,
         descriptionEn: dto.description?.en,
+        objectivesAm: dto.objectives?.am,
+        objectivesEn: dto.objectives?.en,
+        category: dto.category,
+        department: dto.department,
+        targetAudience: dto.targetAudience,
+        deliveryMethod: dto.deliveryMethod,
+        language: dto.language ?? 'en',
+        prerequisites: dto.prerequisites,
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
         level: dto.level,
@@ -337,6 +353,16 @@ export class CoursesService {
       data.descriptionAm = dto.description.am;
       data.descriptionEn = dto.description.en;
     }
+    if (dto.objectives) {
+      data.objectivesAm = dto.objectives.am;
+      data.objectivesEn = dto.objectives.en;
+    }
+    if (dto.category !== undefined) data.category = dto.category;
+    if (dto.department !== undefined) data.department = dto.department;
+    if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
+    if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
+    if (dto.language !== undefined) data.language = dto.language;
+    if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
     if (dto.level) data.level = dto.level;
