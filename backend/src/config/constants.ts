@@ -1,4 +1,5 @@
 export const ROLES_KEY = 'roles';
+export const PERMISSIONS_KEY = 'permissions';
 export const CURRENT_USER_KEY = 'currentUser';
 export const IS_PUBLIC_KEY = 'isPublic';
 

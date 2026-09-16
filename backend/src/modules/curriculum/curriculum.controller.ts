@@ -9,7 +9,7 @@ import {
   UpdateLessonDto,
   ReplaceModulesDto,
 } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -30,7 +30,7 @@ export class CurriculumController {
   }
 
   @Put('courses/:courseId/curriculum')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Replace the full curriculum (modules + lessons) for a course' })
   @ApiParam({ name: 'courseId', type: String })
   async replaceAll(@Param('courseId') courseId: string, @Body() dto: ReplaceModulesDto) {
@@ -38,7 +38,7 @@ export class CurriculumController {
   }
 
   @Post('courses/:courseId/modules')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Create a module in a course' })
   @ApiParam({ name: 'courseId', type: String })
   async createModule(@Param('courseId') courseId: string, @Body() dto: CreateModuleDto) {
@@ -53,7 +53,7 @@ export class CurriculumController {
   }
 
   @Patch('modules/:moduleId')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Update a module' })
   @ApiParam({ name: 'moduleId', type: String })
   async updateModule(@Param('moduleId') moduleId: string, @Body() dto: UpdateModuleDto) {
@@ -61,7 +61,7 @@ export class CurriculumController {
   }
 
   @Patch('courses/:courseId/modules/reorder')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Reorder modules in a course' })
   @ApiParam({ name: 'courseId', type: String })
   async reorderModules(
@@ -72,7 +72,7 @@ export class CurriculumController {
   }
 
   @Delete('modules/:moduleId')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Soft delete a module' })
   @ApiParam({ name: 'moduleId', type: String })
   async deleteModule(@Param('moduleId') moduleId: string) {
@@ -80,7 +80,7 @@ export class CurriculumController {
   }
 
   @Post('modules/:moduleId/restore')
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Restore a soft-deleted module' })
   @ApiParam({ name: 'moduleId', type: String })
   async restoreModule(@Param('moduleId') moduleId: string) {
@@ -107,7 +107,7 @@ export class CurriculumController {
   }
 
   @Post('modules/:moduleId/lessons')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Create a lesson in a module' })
   @ApiParam({ name: 'moduleId', type: String })
   async createLesson(@Param('moduleId') moduleId: string, @Body() dto: CreateLessonDto) {
@@ -115,7 +115,7 @@ export class CurriculumController {
   }
 
   @Patch('lessons/:lessonId')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Update a lesson' })
   @ApiParam({ name: 'lessonId', type: String })
   async updateLesson(@Param('lessonId') lessonId: string, @Body() dto: UpdateLessonDto) {
@@ -123,7 +123,7 @@ export class CurriculumController {
   }
 
   @Patch('modules/:moduleId/lessons/reorder')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Reorder lessons in a module' })
   @ApiParam({ name: 'moduleId', type: String })
   async reorderLessons(
@@ -134,7 +134,7 @@ export class CurriculumController {
   }
 
   @Delete('lessons/:lessonId')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Soft delete a lesson' })
   @ApiParam({ name: 'lessonId', type: String })
   async deleteLesson(@Param('lessonId') lessonId: string) {
@@ -142,7 +142,7 @@ export class CurriculumController {
   }
 
   @Post('lessons/:lessonId/restore')
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('course.manage_curriculum')
   @ApiOperation({ summary: 'Restore a soft-deleted lesson' })
   @ApiParam({ name: 'lessonId', type: String })
   async restoreLesson(@Param('lessonId') lessonId: string) {

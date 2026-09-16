@@ -11,6 +11,14 @@ const SKIP_OVERRIDES = true;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Strip the IPv4-mapped IPv6 prefix (`::ffff:127.0.0.1` -> `127.0.0.1`) and
+ * normalize the IPv6 loopback address so logged IPs are plain and readable. */
+function normalizeIp(ip: string | undefined): string | undefined {
+  if (!ip) return ip;
+  if (ip === '::1') return '127.0.0.1';
+  return ip.replace(/^::ffff:/, '');
+}
+
 function toActionBase(req: Request): string {
   const segments = req.path
     .replace(/^\/api\/v1\//, '')
@@ -57,7 +65,7 @@ export class AuditInterceptor implements NestInterceptor {
           entity,
           entityId: entityId ?? undefined,
           newValues: (req.body as Record<string, unknown>) ?? {},
-          ipAddress: req.ip,
+          ipAddress: normalizeIp(req.ip),
           userAgent: req.headers['user-agent'],
         })
         .catch((err) => this.logger.error(`Failed to write audit log: ${err.message}`));

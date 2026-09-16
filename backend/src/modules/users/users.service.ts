@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApprovalStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@config/prisma.service';
@@ -11,7 +17,13 @@ import {
   passwordIssues,
 } from '@common/utils';
 import { PaginationQuery } from '@common/interfaces';
-import { UpdateUserDto, ChangePasswordDto, AssignRoleDto, BulkCreateUsersDto } from './dto';
+import {
+  UpdateUserDto,
+  ChangePasswordDto,
+  AssignRoleDto,
+  BulkCreateUsersDto,
+  CreateActorDto,
+} from './dto';
 import { BCRYPT_ROUNDS } from '@config/constants';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { MailService } from '@modules/mail/mail.service';
@@ -139,7 +151,7 @@ export class UsersService {
       lastName: string;
       email: string;
       password: string;
-      role: RoleName;
+      role: string;
     }> = [];
     const skipped: Array<{ email: string; reason: string }> = [];
 
@@ -156,6 +168,11 @@ export class UsersService {
         seenEmails.set(email, true);
 
         const role = row.role ?? RoleName.LEARNER;
+        const roleExists = await tx.role.findUnique({ where: { name: role } });
+        if (!roleExists) {
+          skipped.push({ email, reason: `Role "${role}" does not exist` });
+          continue;
+        }
         const password =
           row.password && row.password.trim() ? row.password : generateTemporaryPassword();
 
@@ -194,8 +211,52 @@ export class UsersService {
     };
   }
 
+  private async assertRoleExists(role: string) {
+    const found = await this.prisma.role.findUnique({ where: { name: role } });
+    if (!found) {
+      throw new BadRequestException(`Role "${role}" does not exist`);
+    }
+  }
+
+  async createActor(dto: CreateActorDto) {
+    const email = dto.email.trim().toLowerCase();
+
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+
+    await this.assertRoleExists(dto.role);
+
+    const policyError = passwordIssues(dto.password);
+    if (policyError) {
+      throw new BadRequestException(policyError);
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        phone: dto.phone,
+        locale: dto.locale || 'en',
+        registrationStatus: ApprovalStatus.APPROVED,
+        isActive: true,
+        roles: {
+          create: { role: dto.role },
+        },
+      },
+    });
+
+    return { message: 'Actor registered', user: this.sanitizeUser(user) };
+  }
+
   async assignRole(dto: AssignRoleDto) {
     await this.findById(dto.userId);
+    await this.assertRoleExists(dto.role);
 
     return this.prisma.userRole.create({
       data: {

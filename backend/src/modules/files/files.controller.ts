@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { FilesService, FilePurpose } from './files.service';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -80,7 +80,7 @@ export class FilesController {
   }
 
   @Post('cover/:courseId')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('course.update.own', 'course.update.all')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a course cover image' })
   @ApiConsumes('multipart/form-data')
@@ -101,7 +101,7 @@ export class FilesController {
   }
 
   @Post('certificate-template')
-  @Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('certificate.manage')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a certificate template background image (PNG/JPG)' })
   @ApiConsumes('multipart/form-data')

@@ -34,7 +34,12 @@ export interface User {
   email: string;
   phone: string;
   password: string;
+  /** Primary/current role — kept as a compatibility field; prefer `roles`/`permissions` for new checks. */
   role: Role;
+  /** Every role the user holds (Phase 1: usually one). */
+  roles: Role[];
+  /** Effective permission codes across all of the user's roles (e.g. "course.publish"). Empty for users other than the signed-in one, since only login/refresh return it. */
+  permissions: string[];
   department: string;
   status: UserStatus;
   createdAt: string;

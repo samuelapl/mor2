@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestj
 import { RoleName } from '@prisma/client';
 import { AssessmentsService } from './assessments.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -24,7 +24,7 @@ export class AssessmentsController {
   }
 
   @Post('courses/:courseId/assessments')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('quiz.create')
   @ApiOperation({ summary: 'Create an assessment for a course' })
   @ApiParam({ name: 'courseId', type: String })
   async create(@Param('courseId') courseId: string, @Body() dto: CreateAssessmentDto) {
@@ -32,7 +32,7 @@ export class AssessmentsController {
   }
 
   @Put('courses/:courseId/assessment')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('quiz.create')
   @ApiOperation({ summary: 'Replace the course assessment (delete-all + create). Only DRAFT/REJECTED' })
   @ApiParam({ name: 'courseId', type: String })
   async replaceForCourse(@Param('courseId') courseId: string, @Body() dto: CreateAssessmentDto) {
@@ -58,7 +58,7 @@ export class AssessmentsController {
   }
 
   @Patch('assessments/:id')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('quiz.create')
   @ApiOperation({ summary: 'Update an assessment' })
   @ApiParam({ name: 'id', type: String })
   async update(@Param('id') id: string, @Body() dto: CreateAssessmentDto) {
@@ -66,6 +66,7 @@ export class AssessmentsController {
   }
 
   @Get('assessments/:id/attempts')
+  @Permissions('result.view.own', 'result.view.all')
   @ApiOperation({ summary: 'List attempts for an assessment (learners see their own)' })
   @ApiParam({ name: 'id', type: String })
   async attempts(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
@@ -73,6 +74,7 @@ export class AssessmentsController {
   }
 
   @Post('assessments/:id/start')
+  @Permissions('assessment.submit')
   @ApiOperation({ summary: 'Start a new assessment attempt' })
   @ApiParam({ name: 'id', type: String })
   async startAttempt(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
@@ -80,6 +82,7 @@ export class AssessmentsController {
   }
 
   @Post('assessments/:id/submit')
+  @Permissions('assessment.submit')
   @ApiOperation({ summary: 'Submit answers and get graded result' })
   @ApiParam({ name: 'id', type: String })
   async submit(
@@ -91,7 +94,7 @@ export class AssessmentsController {
   }
 
   @Get('assessments/:id/grading')
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('quiz.grade')
   @ApiOperation({ summary: 'Get grading summary for an assessment (staff)' })
   @ApiParam({ name: 'id', type: String })
   async grading(@Param('id') id: string) {

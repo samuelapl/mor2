@@ -125,20 +125,27 @@ export function userFromApi(user: ApiUser): User {
     phone: user.phone ?? "",
     password: "",
     role: roleFromApi(primaryRole),
+    // Other users' permissions aren't returned by this endpoint — only login/refresh
+    // return the signed-in user's effective permissions.
+    roles: (user.roles ?? []).map((r) => roleFromApi(r.role)),
+    permissions: [],
     department: "",
     status,
     createdAt: user.createdAt,
   };
 }
 
-export function userFromAuth(payload: {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string | null;
-  roles?: { role: BackendRoleName }[];
-}): User {
+export function userFromAuth(
+  payload: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string | null;
+    roles?: { role: BackendRoleName }[];
+  },
+  permissions: string[] = [],
+): User {
   return {
     id: payload.id,
     firstName: payload.firstName,
@@ -148,6 +155,8 @@ export function userFromAuth(payload: {
     phone: "",
     password: "",
     role: roleFromApi(payload.roles?.[0]?.role ?? "LEARNER"),
+    roles: (payload.roles ?? []).map((r) => roleFromApi(r.role)),
+    permissions,
     department: "",
     status: "active",
     createdAt: new Date().toISOString(),

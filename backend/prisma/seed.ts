@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { PrismaClient, RoleName } from '@prisma/client';
+import { seedPermissions } from './seed-permissions';
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,8 @@ const BCRYPT_ROUNDS = 12;
 
 async function main() {
   console.log('🌱 Seeding database...');
+
+  await seedPermissions(prisma);
 
   const passwordHash = await bcrypt.hash('Password123!', BCRYPT_ROUNDS);
 

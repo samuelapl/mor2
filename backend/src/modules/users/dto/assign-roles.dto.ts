@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { RoleName } from '@prisma/client';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class AssignRoleDto {
-  @ApiProperty({ enum: RoleName })
-  @IsEnum(RoleName)
+  @ApiProperty({ example: 'LEARNER' })
+  @IsString()
   @IsNotEmpty()
-  role: RoleName;
+  role: string;
 
   @ApiProperty()
   @IsString()

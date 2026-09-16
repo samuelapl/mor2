@@ -21,8 +21,10 @@ import { FilesModule } from './modules/files/files.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './modules/mail/mail.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards';
+import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 @Module({
@@ -49,6 +51,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     IntegrationsModule,
     HealthModule,
     MailModule,
+    PermissionsModule,
   ],
   providers: [
     PrismaService,
@@ -59,6 +62,10 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
     {
       provide: APP_INTERCEPTOR,

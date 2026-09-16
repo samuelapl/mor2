@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { RoleName } from '@prisma/client';
 import { ProgressService } from './progress.service';
 import { MarkLessonCompleteDto } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -26,7 +25,7 @@ export class ProgressController {
   }
 
   @Get('courses/:courseId/learners')
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('progress.view')
   @ApiOperation({ summary: 'Get per-learner progress for a course (staff)' })
   @ApiParam({ name: 'courseId', type: String })
   async courseLearners(@Param('courseId') courseId: string) {
@@ -34,6 +33,7 @@ export class ProgressController {
   }
 
   @Patch('lessons/:lessonId/complete')
+  @Permissions('progress.mark_own')
   @ApiOperation({ summary: 'Mark a lesson complete or update last position' })
   @ApiParam({ name: 'lessonId', type: String })
   async markLessonComplete(

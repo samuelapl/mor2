@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, Globe2, UserRoundCog } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import PageSection from "@/components/shared/PageSection";
@@ -15,6 +16,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function PublishCoursesPage() {
   const { courses, users, publishCourse, assignTrainerToCourse } = useLms();
+  const { can } = usePermissions();
+  const canPublish = can("course.publish");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [trainerByCourse, setTrainerByCourse] = useState<Record<string, string>>({});
 
@@ -101,11 +104,17 @@ export default function PublishCoursesPage() {
                     </Button>
                     <Button
                       size="sm"
-                      disabled={!hasTrainers || !(trainerByCourse[course.id] ?? course.trainerId)}
+                      disabled={
+                        !canPublish ||
+                        !hasTrainers ||
+                        !(trainerByCourse[course.id] ?? course.trainerId)
+                      }
                       title={
-                        !hasTrainers
-                          ? "Register a trainer before publishing"
-                          : "A trainer must be assigned before publishing"
+                        !canPublish
+                          ? "You no longer have permission to publish courses"
+                          : !hasTrainers
+                            ? "Register a trainer before publishing"
+                            : "A trainer must be assigned before publishing"
                       }
                       onClick={() => void publishWithTrainer(course.id)}
                     >

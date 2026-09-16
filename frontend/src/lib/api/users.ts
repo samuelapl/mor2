@@ -7,6 +7,8 @@ import type {
   BackendRoleName,
   BulkCreateUserItem,
   BulkCreateUsersResult,
+  CreateActorBody,
+  CreateActorResult,
 } from "./types";
 
 export async function fetchUsers(
@@ -25,6 +27,11 @@ export async function fetchUsers(
       limit: params.limit ?? 100,
     } as Record<string, string | number | boolean | undefined>,
   });
+}
+
+/** Active trainers only, for a trainer-assignment picker — narrower than fetchUsers, callable by anyone holding course.assign_trainer. */
+export async function fetchTrainers(): Promise<ApiPaginated<ApiUser>> {
+  return api<ApiPaginated<ApiUser>>("users/trainers");
 }
 
 export async function approveRegistration(
@@ -69,4 +76,9 @@ export async function bulkCreateUsers(
   rows: BulkCreateUserItem[],
 ): Promise<BulkCreateUsersResult> {
   return api<BulkCreateUsersResult>("users/bulk", { method: "POST", body: { users: rows } });
+}
+
+/** Manually registers a single actor — created pre-approved and active, no queue. */
+export async function createActor(body: CreateActorBody): Promise<CreateActorResult> {
+  return api<CreateActorResult>("users/actors", { method: "POST", body });
 }

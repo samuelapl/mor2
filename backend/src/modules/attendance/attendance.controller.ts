@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { AttendanceStatus, CheckInMethod, RoleName } from '@prisma/client';
+import { AttendanceStatus, CheckInMethod } from '@prisma/client';
 import { AttendanceService } from './attendance.service';
 import { CheckInDto, MarkAttendanceDto, BulkMarkAttendanceDto, OverrideAttendanceDto } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -16,20 +16,21 @@ export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Post()
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('attendance.manage')
   @ApiOperation({ summary: 'Mark attendance for a learner' })
   async mark(@Body() dto: MarkAttendanceDto, @CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.mark(dto, user.id);
   }
 
   @Post('bulk')
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('attendance.manage')
   @ApiOperation({ summary: 'Bulk mark attendance for a session' })
   async bulkMark(@Body() dto: BulkMarkAttendanceDto) {
     return this.attendanceService.bulkMark(dto);
   }
 
   @Post('checkin/:sessionId')
+  @Permissions('attendance.checkin')
   @ApiOperation({
     summary: 'Learner self check-in (virtual/QR/GPS/biometric) — creates an immutable record',
   })
@@ -51,7 +52,7 @@ export class AttendanceController {
   }
 
   @Post(':id/override')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('attendance.override')
   @ApiOperation({ summary: 'Override an attendance record (system admin, audit-logged)' })
   @ApiParam({ name: 'id', type: String })
   async override(
@@ -63,7 +64,7 @@ export class AttendanceController {
   }
 
   @Get('sessions/:sessionId')
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('attendance.view')
   @ApiOperation({ summary: 'Get all attendance for a session' })
   @ApiParam({ name: 'sessionId', type: String })
   async bySession(@Param('sessionId') sessionId: string) {
@@ -71,7 +72,7 @@ export class AttendanceController {
   }
 
   @Get('sessions/:sessionId/summary')
-  @Roles(RoleName.TRAINER, RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('attendance.view')
   @ApiOperation({ summary: 'Get attendance summary for a session' })
   @ApiParam({ name: 'sessionId', type: String })
   async summary(@Param('sessionId') sessionId: string) {

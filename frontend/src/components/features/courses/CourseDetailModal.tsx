@@ -18,8 +18,12 @@ import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
+import { fetchTrainers } from "@/lib/api/users";
+import { userFromApi } from "@/lib/api/transform";
 import type { ApiAssessment } from "@/lib/api/types";
+import type { User } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface CourseDetailModalProps {
@@ -42,8 +46,6 @@ export function CourseDetailModal({
   const {
     courseById,
     userName,
-    currentUser,
-    users,
     assignTrainerToCourse,
     unassignTrainerFromCourse,
     publishCourse,
@@ -55,12 +57,13 @@ export function CourseDetailModal({
   const [openLesson, setOpenLesson] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [flashError, setFlashError] = useState(false);
+  const [trainerOptions, setTrainerOptions] = useState<User[]>([]);
 
-  const canManageTrainers = currentUser?.role === "system_admin" || currentUser?.role === "training_admin";
-  const canUnpublish = currentUser?.role === "training_admin" || currentUser?.role === "system_admin";
-  const trainerOptions = users.filter((u) => u.role === "trainer" && u.status === "active");
-  const canPublish =
-    canManageTrainers && course?.status === "approved" && !course.published;
+  const { can } = usePermissions();
+  const canAssignTrainer = can("course.assign_trainer");
+  const canUnpublish = can("course.unpublish");
+  const canPublish = can("course.publish") && course?.status === "approved" && !course.published;
+  const showTrainerSection = canAssignTrainer || canPublish || (canUnpublish && course?.published);
 
   useEffect(() => {
     if (!open) return;
@@ -85,6 +88,29 @@ export function CourseDetailModal({
       cancelled = true;
     };
   }, [open, courseId]);
+
+  useEffect(() => {
+    if (!open || !canAssignTrainer) {
+      setTrainerOptions([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchTrainers();
+        if (!cancelled) {
+          setTrainerOptions(
+            res.data.map(userFromApi).filter((u) => u.status === "active"),
+          );
+        }
+      } catch {
+        // trainer picker is best-effort; leave empty on failure
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, canAssignTrainer]);
 
   if (!course) return null;
 
@@ -253,7 +279,7 @@ export function CourseDetailModal({
           </div>
         ) : null}
 
-        {canManageTrainers ? (
+        {showTrainerSection ? (
           <div className="rounded-xl border border-slate-200/80 bg-slate-50/40 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -293,14 +319,16 @@ export function CourseDetailModal({
                     className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-sm text-slate-700"
                   >
                     <span>{userName(trainerId)}</span>
-                    <button
-                      type="button"
-                      onClick={() => void removeTrainer(trainerId)}
-                      className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                      aria-label="Remove trainer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {canAssignTrainer ? (
+                      <button
+                        type="button"
+                        onClick={() => void removeTrainer(trainerId)}
+                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        aria-label="Remove trainer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
                   </div>
                 ))
               ) : (
@@ -308,29 +336,26 @@ export function CourseDetailModal({
                   No trainer assigned yet. Publication requires at least one trainer.
                 </p>
               )}
-              <div className="flex items-center gap-2">
-                <select
-                  value=""
-                  onChange={(event) => void addTrainer(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                >
-                  <option value="">{trainerOptions.length ? "Assign a trainer…" : "No trainers available"}</option>
-                  {trainerOptions.map((trainer) => (
-                    <option key={trainer.id} value={trainer.id}>
-                      {trainer.name}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={trainerOptions.length === 0}
-                  title="Assign trainer"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  Assign
-                </Button>
-              </div>
+              {canAssignTrainer ? (
+                <div className="flex items-center gap-2">
+                  <select
+                    value=""
+                    onChange={(event) => void addTrainer(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                  >
+                    <option value="">{trainerOptions.length ? "Assign a trainer…" : "No trainers available"}</option>
+                    {trainerOptions.map((trainer) => (
+                      <option key={trainer.id} value={trainer.id}>
+                        {trainer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button size="sm" variant="outline" disabled={trainerOptions.length === 0} title="Assign trainer">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Assign
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

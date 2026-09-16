@@ -22,7 +22,11 @@ export async function login(email: string, password: string): Promise<AuthResult
     skipAuthRetry: true,
   });
   storeTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken });
-  return { user: userFromAuth(res.user), accessToken: res.accessToken, refreshToken: res.refreshToken };
+  return {
+    user: userFromAuth(res.user, res.permissions),
+    accessToken: res.accessToken,
+    refreshToken: res.refreshToken,
+  };
 }
 
 export async function forgotPassword(email: string): Promise<{ message: string }> {
@@ -69,7 +73,11 @@ export async function refresh(): Promise<AuthResult> {
     skipAuthRetry: true,
   });
   storeTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken });
-  return { user: userFromAuth(res.user), accessToken: res.accessToken, refreshToken: res.refreshToken };
+  return {
+    user: userFromAuth(res.user, res.permissions),
+    accessToken: res.accessToken,
+    refreshToken: res.refreshToken,
+  };
 }
 
 export async function logout(): Promise<void> {

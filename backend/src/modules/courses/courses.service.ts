@@ -495,10 +495,27 @@ export class CoursesService {
     });
   }
 
+  // Course Owners may only archive/delete a course while it's still a DRAFT — Training
+  // Admin/System Admin are unrestricted. Enforced here, not by the permission-code model,
+  // since it depends on the course's current status, not just the actor's role.
+  private assertOwnerCanActOnDraftOnly(actorRoles: string[], course: { status: CourseStatus }) {
+    const isOwnerOnly =
+      actorRoles.includes(RoleName.COURSE_OWNER) &&
+      !actorRoles.includes(RoleName.TRAINING_ADMIN) &&
+      !actorRoles.includes(RoleName.SYSTEM_ADMIN);
+
+    if (isOwnerOnly && course.status !== CourseStatus.DRAFT) {
+      throw new ForbiddenException(
+        'Course Owners can only archive or delete a course while it is still in Draft status.',
+      );
+    }
+  }
+
   async archive(id: string, user: AuthenticatedUser) {
     await this.assertCanWrite(id, user);
     const course = await this.findById(id);
 
+    this.assertOwnerCanActOnDraftOnly(user.roles, course);
     this.stateMachine.assertCanTransition(course.status, CourseStatus.ARCHIVED);
 
     return this.prisma.course.update({
@@ -510,6 +527,8 @@ export class CoursesService {
   async softDelete(id: string, user: AuthenticatedUser) {
     await this.assertCanWrite(id, user);
     const course = await this.findById(id);
+
+    this.assertOwnerCanActOnDraftOnly(user.roles, course);
 
     if (course.status === CourseStatus.PUBLISHED) {
       throw new ForbiddenException('Cannot delete a published course. Archive it instead.');

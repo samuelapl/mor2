@@ -2,7 +2,7 @@ import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { CertificatesService } from './certificates.service';
-import { CurrentUser, Public, Roles } from '@common/decorators';
+import { CurrentUser, Permissions, Public, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -15,7 +15,7 @@ export class CertificatesController {
   @Post('issue')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('certificate.manage')
   @ApiOperation({ summary: 'Issue a certificate (manual/admin)' })
   async issue(@Query('userId') userId: string, @Query('courseId') courseId: string) {
     return this.certificatesService.issue(userId, courseId);
@@ -24,6 +24,7 @@ export class CertificatesController {
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
+  @Permissions('certificate.view')
   @ApiOperation({ summary: 'Get my certificates' })
   async myCertificates(@CurrentUser() user: AuthenticatedUser) {
     return this.certificatesService.findByUser(user.id);
@@ -68,7 +69,7 @@ export class CertificatesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Permissions('certificate.manage')
   @ApiOperation({ summary: 'Revoke a certificate' })
   @ApiParam({ name: 'id', type: String })
   async revoke(@Param('id') id: string) {

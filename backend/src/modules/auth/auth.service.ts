@@ -15,6 +15,7 @@ import { JwtPayload } from '@common/interfaces';
 import { BCRYPT_ROUNDS } from '@config/constants';
 import { passwordIssues } from '@common/utils';
 import { MailService } from '@modules/mail/mail.service';
+import { PermissionsService } from '@modules/permissions/permissions.service';
 import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto } from './dto';
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000; // 60 minutes
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -113,10 +115,15 @@ export class AuthService {
 
     await this.storeRefreshToken(user.id, refreshToken, sid);
 
+    const permissions = await this.permissionsService.effectivePermissions(
+      user.roles.map((r) => r.role),
+    );
+
     return {
       user: this.sanitizeUser(user),
       accessToken,
       refreshToken,
+      permissions,
     };
   }
 
@@ -154,10 +161,15 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.storeRefreshToken(user.id, tokens.refreshToken, tokens.sid);
 
+    const permissions = await this.permissionsService.effectivePermissions(
+      user.roles.map((r) => r.role),
+    );
+
     return {
       user: this.sanitizeUser(user),
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      permissions,
     };
   }
 

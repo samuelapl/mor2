@@ -39,6 +39,7 @@ export default function AuditLogsPage() {
         log.action,
         log.entity,
         log.entityId ?? "",
+        log.ipAddress ?? "",
       ].some((field) => field.toLowerCase().includes(q)),
     );
   }, [logs, query]);
@@ -73,7 +74,7 @@ export default function AuditLogsPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search actor, action or target…"
+            placeholder="Search actor, action, target or IP…"
             className="w-full rounded-xl border border-slate-200/90 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
           />
         </div>
@@ -87,7 +88,7 @@ export default function AuditLogsPage() {
         <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
       ) : null}
 
-      <Table columns={["Timestamp", "Actor", "Action", "Entity"]}>
+      <Table columns={["Timestamp", "Actor", "Action", "Entity", "IP Address"]}>
         {pageItems.map((log) => (
           <tr key={log.id}>
             <Td className="whitespace-nowrap">
@@ -105,11 +106,14 @@ export default function AuditLogsPage() {
                 <span className="block text-[11px] text-slate-400">{log.entityId}</span>
               ) : null}
             </Td>
+            <Td>
+              <span className="font-mono text-[11px] text-slate-500">{log.ipAddress ?? "—"}</span>
+            </Td>
           </tr>
         ))}
         {filtered.length === 0 ? (
           <tr>
-            <Td colSpan={4} className="py-10 text-center text-xs text-slate-400">
+            <Td colSpan={5} className="py-10 text-center text-xs text-slate-400">
               No audit entries match your search.
             </Td>
           </tr>
