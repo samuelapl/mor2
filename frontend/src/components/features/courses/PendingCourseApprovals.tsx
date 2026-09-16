@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Check, Eye, X } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import { Table, Td } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +17,9 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export function PendingCourseApprovals() {
   const { courses, userName, approveCourse, rejectCourse } = useLms();
+  const { can } = usePermissions();
+  const canApprove = can("course.approve");
+  const canReject = can("course.reject");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -119,11 +123,23 @@ export function PendingCourseApprovals() {
                     <Eye className="h-3.5 w-3.5" />
                     Review
                   </Button>
-                  <Button size="sm" variant="success" onClick={() => confirmApprove(course.id)}>
+                  <Button
+                    size="sm"
+                    variant="success"
+                    disabled={!canApprove}
+                    title={!canApprove ? "You no longer have permission to approve courses" : undefined}
+                    onClick={() => confirmApprove(course.id)}
+                  >
                     <Check className="h-3.5 w-3.5" />
                     Approve
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setRejectId(course.id)}>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={!canReject}
+                    title={!canReject ? "You no longer have permission to reject courses" : undefined}
+                    onClick={() => setRejectId(course.id)}
+                  >
                     <X className="h-3.5 w-3.5" />
                     Reject
                   </Button>

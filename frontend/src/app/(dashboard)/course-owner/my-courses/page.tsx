@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eye, Pencil, Send, Trash2 } from "lucide-react";
+import { Eye, Globe2, Pencil, Send, Trash2 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +18,12 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 import type { Course } from "@/types";
 
 export default function MyCoursesPage() {
-  const { courses, submitForApproval, deleteCourse } = useLms();
+  const { courses, submitForApproval, deleteCourse, publishCourse } = useLms();
+  const { can } = usePermissions();
+  const canEdit = can("course.update.own") || can("course.update.all");
+  const canSubmitApproval = can("course.submit_approval");
+  const canDelete = can("course.delete");
+  const canPublish = can("course.publish");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editCourse, setEditCourse] = useState<Course | null>(null);
   const [search, setSearch] = useState("");
@@ -25,6 +31,7 @@ export default function MyCoursesPage() {
   const [category, setCategory] = useState("all");
   const [flash, setFlash] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,6 +51,13 @@ export default function MyCoursesPage() {
   const resubmit = async (courseId: string) => {
     const result = await submitForApproval(courseId);
     setFlash(result.ok ? "Course submitted for approval." : result.message);
+  };
+
+  const publish = async (courseId: string) => {
+    setPublishingId(courseId);
+    const result = await publishCourse(courseId);
+    setPublishingId(null);
+    setFlash(result.ok ? "Course published." : result.message);
   };
 
   const removeDraft = async (courseId: string) => {
@@ -130,17 +144,24 @@ export default function MyCoursesPage() {
               </Button>
               {course.status === "draft" || course.status === "rejected" ? (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => setEditCourse(course)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                    Edit course
-                  </Button>
-                  <Button size="sm" onClick={() => resubmit(course.id)}>
+                  {canEdit ? (
+                    <Button size="sm" variant="outline" onClick={() => setEditCourse(course)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit course
+                    </Button>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    disabled={!canSubmitApproval}
+                    title={!canSubmitApproval ? "You no longer have permission to submit courses" : undefined}
+                    onClick={() => resubmit(course.id)}
+                  >
                     <Send className="h-3.5 w-3.5" />
                     {course.status === "rejected" ? "Resubmit for approval" : "Submit for approval"}
                   </Button>
                 </>
               ) : null}
-              {course.status === "draft" ? (
+              {course.status === "draft" && canDelete ? (
                 <Button
                   size="sm"
                   variant="danger"
@@ -149,6 +170,21 @@ export default function MyCoursesPage() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Delete
+                </Button>
+              ) : null}
+              {course.status === "approved" && !course.published && canPublish ? (
+                <Button
+                  size="sm"
+                  disabled={publishingId === course.id || !course.trainerId}
+                  title={
+                    !course.trainerId
+                      ? "A trainer must be assigned before publishing — ask a Training Administrator"
+                      : undefined
+                  }
+                  onClick={() => void publish(course.id)}
+                >
+                  <Globe2 className="h-3.5 w-3.5" />
+                  Publish
                 </Button>
               ) : null}
             </CourseCard>

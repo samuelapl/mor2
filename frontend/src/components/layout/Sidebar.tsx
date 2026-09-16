@@ -7,14 +7,18 @@ import { LogOut } from "lucide-react";
 import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
 import { NAV_ITEMS, ROLE_ICONS } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { currentUser, logout } = useLms();
+  const { canAny } = usePermissions();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? "learner";
   const RoleIcon = ROLE_ICONS[role];
-  const navItems = NAV_ITEMS[role];
+  const navItems = NAV_ITEMS[role].filter(
+    (item) => !item.permission || canAny([item.permission].flat()),
+  );
   const displayUser = currentUser;
 
   const isActive = (href: string) =>

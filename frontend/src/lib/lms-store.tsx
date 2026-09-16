@@ -184,6 +184,10 @@ function fullName(user: { firstName: string; lastName: string }): string {
   return `${user.firstName} ${user.lastName}`.trim();
 }
 
+function hasPermission(user: User | null, code: string): boolean {
+  return user?.permissions?.includes(code) ?? false;
+}
+
 function questionToApi(q: {
   id: string;
   type: string;
@@ -413,10 +417,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const createCourse: LmsContextValue["createCourse"] = useCallback(
     async (input) => {
       const owner = currentUserRef.current;
-      if (
-        !owner ||
-        !["course_owner", "training_admin", "system_admin"].includes(owner.role)
-      ) {
+      if (!owner || !hasPermission(owner, "course.create")) {
         return { ok: false, message: "You are not allowed to create courses." };
       }
       let created;
@@ -599,8 +600,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const owner = currentUserRef.current;
       const course = coursesRef.current.find((item) => item.id === courseId);
       if (!course) return { ok: false, message: "Course not found." };
-      if (!owner || owner.role !== "course_owner") {
-        return { ok: false, message: "You can only edit your own courses." };
+      if (
+        !owner ||
+        !(hasPermission(owner, "course.update.own") || hasPermission(owner, "course.update.all"))
+      ) {
+        return { ok: false, message: "You are not allowed to edit this course." };
       }
       if (course.status !== "draft" && course.status !== "rejected") {
         return {
@@ -633,8 +637,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const owner = currentUserRef.current;
       const course = coursesRef.current.find((item) => item.id === courseId);
       if (!course) return { ok: false, message: "Course not found." };
-      if (!owner || owner.role !== "course_owner") {
-        return { ok: false, message: "You can only edit your own courses." };
+      if (
+        !owner ||
+        !(hasPermission(owner, "course.update.own") || hasPermission(owner, "course.update.all"))
+      ) {
+        return { ok: false, message: "You are not allowed to edit this course." };
       }
       if (course.status !== "draft" && course.status !== "rejected") {
         return {
@@ -845,17 +852,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const enrollLearners = useCallback(
     async (courseId: string, learnerIds: string[]): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (
-        !admin ||
-        (admin.role !== "training_admin" && admin.role !== "system_admin")
-      ) {
+      if (!admin || !hasPermission(admin, "student.manage")) {
         return {
           ok: false,
           message: "Only training administrators can enroll learners.",
         };
       }
       try {
-        const res = await bulkEnroll(courseId, learnerIds);
+        await bulkEnroll(courseId, learnerIds);
         await reloadData(admin);
         return { ok: true };
       } catch (err) {
@@ -871,7 +875,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const enrollSelf = useCallback(
     async (courseId: string): Promise<ActionResult> => {
       const learner = currentUserRef.current;
-      if (!learner || learner.role !== "learner") {
+      if (!learner || !hasPermission(learner, "enrollment.self")) {
         return { ok: false, message: "Only learners can self-enroll." };
       }
       try {
@@ -907,7 +911,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const changeUserRole = useCallback(
     async (userId: string, role: Role): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || admin.role !== "system_admin") {
+      if (!admin || !hasPermission(admin, "role.manage")) {
         return {
           ok: false,
           message: "Only system administrators can change roles.",
@@ -940,7 +944,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const approveRegistrationRequest = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || admin.role !== "system_admin") {
+      if (!admin || !hasPermission(admin, "user.manage")) {
         return {
           ok: false,
           message: "Only system administrators can manage registrations.",
@@ -963,7 +967,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const rejectRegistrationRequest = useCallback(
     async (userId: string, reason?: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || admin.role !== "system_admin") {
+      if (!admin || !hasPermission(admin, "user.manage")) {
         return {
           ok: false,
           message: "Only system administrators can manage registrations.",

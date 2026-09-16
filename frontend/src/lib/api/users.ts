@@ -27,6 +27,11 @@ export async function fetchUsers(
   });
 }
 
+/** Active trainers only, for a trainer-assignment picker — narrower than fetchUsers, callable by anyone holding course.assign_trainer. */
+export async function fetchTrainers(): Promise<ApiPaginated<ApiUser>> {
+  return api<ApiPaginated<ApiUser>>("users/trainers");
+}
+
 export async function approveRegistration(
   userId: string,
 ): Promise<{ message: string; user: ApiUser }> {

@@ -63,6 +63,7 @@ export interface ApiAuthResponse {
   user: ApiAuthPayload;
   accessToken: string;
   refreshToken: string;
+  permissions: string[];
 }
 
 export interface ApiAuthRegisterResponse {
@@ -633,4 +634,29 @@ export interface BulkCreateUsersResult {
   created: BulkCreateUserResultRow[];
   skipped: BulkCreateUserSkipped[];
   totals: { created: number; skipped: number };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Roles & Permissions (System Admin matrix)                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface ApiPermission {
+  id: string;
+  code: string;
+  resource: string;
+  action: string;
+  scope: "ALL" | "OWN";
+  description: string | null;
+  isSystem: boolean;
+}
+
+export type ApiPermissionsByResource = Record<string, ApiPermission[]>;
+
+export interface ApiRoleWithPermissions {
+  id: string;
+  name: BackendRoleName;
+  label: string;
+  dashboardPath: string;
+  isSystem: boolean;
+  permissionCodes: string[];
 }
