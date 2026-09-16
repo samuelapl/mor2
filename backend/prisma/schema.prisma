@@ -18,6 +18,7 @@ model User {
   firstName String   @map("first_name")
   lastName  String   @map("last_name")
   phone     String?
+  tin       String?
   avatarUrl String?  @map("avatar_url")
   locale    String   @default("en") // en | am
   isActive  Boolean  @default(true) @map("is_active")

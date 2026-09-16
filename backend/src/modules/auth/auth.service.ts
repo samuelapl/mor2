@@ -58,6 +58,7 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         phone: dto.phone,
+        tin: dto.tin?.trim() || null,
         locale: dto.locale || 'en',
         registrationStatus: 'PENDING',
         roles: {

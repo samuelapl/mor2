@@ -21,10 +21,15 @@ export class RegisterDto {
   @MinLength(6)
   password: string;
 
-  @ApiPropertyOptional({ example: '+251911000000' })
+  @ApiProperty({ example: '+251911000000' })
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+
+  @ApiPropertyOptional({ example: '0012345678', description: 'Taxpayer Identification Number (optional)' })
   @IsOptional()
   @IsString()
-  phone?: string;
+  tin?: string;
 
   @ApiPropertyOptional({ enum: ['en', 'am'], default: 'en' })
   @IsOptional()

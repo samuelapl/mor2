@@ -1,5 +1,5 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { CourseStatus, Prisma, RoleName } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ApprovalStatus, CourseStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import {
   buildOrderBy,
@@ -9,18 +9,91 @@ import {
   computeSequentialUnlocks,
   loadUserCompletionState,
 } from '@common/utils';
-import { PaginationQuery } from '@common/interfaces';
+import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
+import { NotificationsService } from '@modules/notifications/notifications.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
 import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
+
+const STAFF_ROLES: RoleName[] = [
+  RoleName.SYSTEM_ADMIN,
+  RoleName.TRAINING_ADMIN,
+  RoleName.CONTENT_APPROVER,
+  RoleName.COURSE_OWNER,
+  RoleName.TRAINER,
+];
 
 @Injectable()
 export class CoursesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stateMachine: CourseStateMachine,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
-  async findAll(query: PaginationQuery & { status?: CourseStatus }) {
+  private roleSet(user: AuthenticatedUser): Set<string> {
+    return new Set(user.roles ?? []);
+  }
+
+  private isBroadStaff(roles: Set<string>): boolean {
+    return (
+      roles.has(RoleName.SYSTEM_ADMIN) ||
+      roles.has(RoleName.TRAINING_ADMIN) ||
+      roles.has(RoleName.CONTENT_APPROVER)
+    );
+  }
+
+  private visibilityWhere(user: AuthenticatedUser, requestedStatus?: CourseStatus): Prisma.CourseWhereInput {
+    const roles = this.roleSet(user);
+    const statusFilter = requestedStatus ? { status: requestedStatus } : {};
+
+    if (this.isBroadStaff(roles)) {
+      return statusFilter;
+    }
+
+    const or: Prisma.CourseWhereInput[] = [];
+    if (roles.has(RoleName.COURSE_OWNER)) {
+      or.push({ owners: { some: { userId: user.id } } });
+    }
+    if (roles.has(RoleName.TRAINER)) {
+      or.push({ trainers: { some: { userId: user.id } } });
+    }
+    if (roles.has(RoleName.LEARNER) || or.length === 0) {
+      or.push({ status: CourseStatus.PUBLISHED });
+    }
+
+    const scope: Prisma.CourseWhereInput = or.length === 1 ? or[0]! : { OR: or };
+    return requestedStatus ? { AND: [scope, statusFilter] } : scope;
+  }
+
+  async assertCanRead(courseId: string, user: AuthenticatedUser): Promise<void> {
+    const course = await this.findById(courseId);
+    const roles = this.roleSet(user);
+
+    if (this.isBroadStaff(roles)) return;
+    if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) return;
+    if (roles.has(RoleName.TRAINER) && course.trainers.some((t) => t.userId === user.id)) return;
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: user.id, courseId } },
+      select: { status: true },
+    });
+    if (enrollment && course.status === CourseStatus.PUBLISHED) return;
+    if (roles.has(RoleName.LEARNER) && course.status === CourseStatus.PUBLISHED) return;
+
+    throw new ForbiddenException('You do not have access to this course');
+  }
+
+  async assertCanWrite(courseId: string, user: AuthenticatedUser): Promise<void> {
+    const roles = this.roleSet(user);
+    if (roles.has(RoleName.SYSTEM_ADMIN) || roles.has(RoleName.TRAINING_ADMIN)) return;
+
+    const course = await this.findById(courseId);
+    if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) return;
+
+    throw new ForbiddenException('You are not allowed to modify this course');
+  }
+
+  async findAll(query: PaginationQuery & { status?: CourseStatus }, user: AuthenticatedUser) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const searchFilter = buildSearchFilter(query.search, ['titleEn', 'titleAm', 'code']);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
@@ -28,7 +101,7 @@ export class CoursesService {
     const where: Prisma.CourseWhereInput = {
       deletedAt: null,
       ...(searchFilter as any),
-      ...(query.status ? { status: query.status } : {}),
+      ...this.visibilityWhere(user, query.status),
     };
 
     const [courses, total] = await Promise.all([
@@ -76,12 +149,13 @@ export class CoursesService {
    *   mutation is also enforced server-side in the progress module).
    * Staff (owners, approvers, trainers, admins) see everything unlocked.
    */
-  async findByIdForUser(id: string, userId: string, role?: string) {
+  async findByIdForUser(id: string, user: AuthenticatedUser) {
+    await this.assertCanRead(id, user);
     const course = await this.findById(id);
-    const { modules, lessons } = await this.attachUnlockState(course, userId, role);
+    const { modules, lessons } = await this.attachUnlockState(course, user.id, user.roles);
 
     const enrollment = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId, courseId: id } },
+      where: { userId_courseId: { userId: user.id, courseId: id } },
       select: { status: true, enrolledAt: true },
     });
 
@@ -106,9 +180,11 @@ export class CoursesService {
       }>;
     },
     userId: string,
-    role?: string,
+    roles?: string[],
   ) {
-    const isLearner = role === RoleName.LEARNER;
+    const roleSet = new Set(roles ?? []);
+    const hasStaffRole = STAFF_ROLES.some((role) => roleSet.has(role));
+    const isLearner = roleSet.has(RoleName.LEARNER) && !hasStaffRole;
 
     if (isLearner && course.modules && course.modules.length > 0) {
       const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
@@ -178,7 +254,8 @@ export class CoursesService {
     return course;
   }
 
-  async update(id: string, dto: UpdateCourseDto) {
+  async update(id: string, dto: UpdateCourseDto, user: AuthenticatedUser) {
+    await this.assertCanWrite(id, user);
     const course = await this.findById(id);
 
     if (course.status === CourseStatus.APPROVED || course.status === CourseStatus.PUBLISHED) {
@@ -208,25 +285,16 @@ export class CoursesService {
     });
   }
 
-  async requestApproval(id: string, currentUserId: string) {
+  async requestApproval(id: string, user: AuthenticatedUser) {
+    await this.assertCanWrite(id, user);
     const course = await this.findById(id);
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PENDING_APPROVAL);
 
-    const updated = await this.prisma.course.update({
+    return this.prisma.course.update({
       where: { id },
       data: { status: CourseStatus.PENDING_APPROVAL },
     });
-
-    await this.prisma.contentApproval.create({
-      data: {
-        courseId: id,
-        approverId: currentUserId,
-        status: 'PENDING',
-      },
-    });
-
-    return updated;
   }
 
   async review(id: string, dto: ReviewCourseDto, approverId: string) {
@@ -236,7 +304,16 @@ export class CoursesService {
       throw new ForbiddenException('Course is not in PENDING_APPROVAL state');
     }
 
-    const targetStatus = dto.status === 'APPROVED' ? CourseStatus.APPROVED : CourseStatus.REJECTED;
+    const isApprove = dto.status === ApprovalStatus.APPROVED;
+    if (!isApprove && !dto.comments?.trim()) {
+      throw new BadRequestException('A reason is required when requesting changes or rejecting a course');
+    }
+
+    const targetStatus = isApprove
+      ? CourseStatus.APPROVED
+      : dto.status === ApprovalStatus.NEEDS_REVISION
+        ? CourseStatus.DRAFT
+        : CourseStatus.REJECTED;
 
     this.stateMachine.assertCanTransition(course.status, targetStatus);
 
@@ -254,6 +331,32 @@ export class CoursesService {
         decidedAt: new Date(),
       },
     });
+
+    const ownerIds = course.owners.map((o) => o.userId).filter((uid) => uid !== approverId);
+    const title = course.titleEn || course.titleAm;
+    if (isApprove) {
+      await this.notificationsService.sendToMany(
+        ownerIds,
+        NotificationType.COURSE_APPROVED,
+        { en: 'Course approved', am: 'ኮርሱ ጸድቋል' },
+        {
+          en: `"${title}" was approved and is awaiting publication.`,
+          am: `"${title}" ጸድቋል እና ለህትመት ይጠብቃል።`,
+        },
+        { courseId: id },
+      );
+    } else {
+      await this.notificationsService.sendToMany(
+        ownerIds,
+        NotificationType.COURSE_REJECTED,
+        { en: 'Course needs changes', am: 'ኮርሱ ማስተካከያ ይፈልጋል' },
+        {
+          en: dto.comments ?? `"${title}" was returned for revision.`,
+          am: dto.comments ?? `"${title}" ለማስተካከያ ተመልሷል።`,
+        },
+        { courseId: id },
+      );
+    }
 
     return updated;
   }
@@ -276,6 +379,19 @@ export class CoursesService {
       },
     });
 
+    const ownerIds = course.owners.map((o) => o.userId);
+    const title = course.titleEn || course.titleAm;
+    await this.notificationsService.sendToMany(
+      ownerIds,
+      NotificationType.COURSE_PUBLISHED,
+      { en: 'Course published', am: 'ኮርሱ ታትሟል' },
+      {
+        en: `"${title}" is now visible to eligible learners.`,
+        am: `"${title}" አሁን ለብቁ ተማሪዎች ይታያል።`,
+      },
+      { courseId: id },
+    );
+
     return updated;
   }
 
@@ -290,7 +406,8 @@ export class CoursesService {
     });
   }
 
-  async archive(id: string) {
+  async archive(id: string, user: AuthenticatedUser) {
+    await this.assertCanWrite(id, user);
     const course = await this.findById(id);
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.ARCHIVED);
@@ -301,7 +418,8 @@ export class CoursesService {
     });
   }
 
-  async softDelete(id: string) {
+  async softDelete(id: string, user: AuthenticatedUser) {
+    await this.assertCanWrite(id, user);
     const course = await this.findById(id);
 
     if (course.status === CourseStatus.PUBLISHED) {

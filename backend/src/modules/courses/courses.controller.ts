@@ -27,15 +27,18 @@ export class CoursesController {
 
   @Get()
   @ApiOperation({ summary: 'List courses (all authenticated users)' })
-  async findAll(@Query() query: PaginationQuery & { status?: CourseStatus }) {
-    return this.coursesService.findAll(query);
+  async findAll(
+    @Query() query: PaginationQuery & { status?: CourseStatus },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get course details by ID (learner-aware: unlock flags + enrollment)' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.coursesService.findByIdForUser(id, user.id, user.roles[0]);
+    return this.coursesService.findByIdForUser(id, user);
   }
 
   @Post()
@@ -49,8 +52,12 @@ export class CoursesController {
   @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Update a course' })
   @ApiParam({ name: 'id', type: String })
-  async update(@Param('id') id: string, @Body() dto: UpdateCourseDto) {
-    return this.coursesService.update(id, dto);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCourseDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.update(id, dto, user);
   }
 
   @Post(':id/request-approval')
@@ -58,7 +65,7 @@ export class CoursesController {
   @ApiOperation({ summary: 'Submit course for content approval' })
   @ApiParam({ name: 'id', type: String })
   async requestApproval(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.coursesService.requestApproval(id, user.id);
+    return this.coursesService.requestApproval(id, user);
   }
 
   @Post(':id/review')
@@ -74,7 +81,7 @@ export class CoursesController {
   }
 
   @Post(':id/publish')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Publish an approved course (version++ per BR-09)' })
   @ApiParam({ name: 'id', type: String })
   async publish(@Param('id') id: string) {
@@ -93,16 +100,16 @@ export class CoursesController {
   @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Archive a course' })
   @ApiParam({ name: 'id', type: String })
-  async archive(@Param('id') id: string) {
-    return this.coursesService.archive(id);
+  async archive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.coursesService.archive(id, user);
   }
 
   @Delete(':id')
   @Roles(RoleName.COURSE_OWNER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Soft delete a course' })
   @ApiParam({ name: 'id', type: String })
-  async remove(@Param('id') id: string) {
-    return this.coursesService.softDelete(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.coursesService.softDelete(id, user);
   }
 
   @Post(':id/trainers')
