@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationType, Prisma } from '@prisma/client';
+import { AssessmentType, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { CERTIFICATE_CONFIG } from '@config/constants';
 import { FilesService } from '@modules/files/files.service';
@@ -211,7 +211,7 @@ export class CertificatesService {
     if (completedLessons !== lessonIds.length) return null;
 
     const assessments = await this.prisma.assessment.findMany({
-      where: { courseId },
+      where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
       select: { id: true },
     });
     if (assessments.length > 0) {
@@ -360,11 +360,7 @@ export class CertificatesService {
     const match = hex.replace('#', '').match(/^([0-9a-fA-F]{6})$/);
     if (!match) return null;
     const value = parseInt(match[1], 16);
-    return rgb(
-      ((value >> 16) & 0xff) / 255,
-      ((value >> 8) & 0xff) / 255,
-      (value & 0xff) / 255,
-    );
+    return rgb(((value >> 16) & 0xff) / 255, ((value >> 8) & 0xff) / 255, (value & 0xff) / 255);
   }
 
   /** Default layout used when no template is configured (consistent with legacy behaviour). */
@@ -455,7 +451,8 @@ export class CertificatesService {
     });
     page.drawText('Verify at ELTMS with your verification code.', {
       x:
-        centreX - helvetica.widthOfTextAtSize('Verify at ELTMS with your verification code.', 9) / 2,
+        centreX -
+        helvetica.widthOfTextAtSize('Verify at ELTMS with your verification code.', 9) / 2,
       y: footerY - 48,
       size: 9,
       font: helvetica,

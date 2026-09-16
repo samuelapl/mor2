@@ -1,5 +1,17 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ApprovalStatus, CourseStatus, EnrollmentStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ApprovalStatus,
+  CourseStatus,
+  EnrollmentStatus,
+  NotificationType,
+  Prisma,
+  RoleName,
+} from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import {
   buildOrderBy,
@@ -42,7 +54,10 @@ export class CoursesService {
     );
   }
 
-  private visibilityWhere(user: AuthenticatedUser, requestedStatus?: CourseStatus): Prisma.CourseWhereInput {
+  private visibilityWhere(
+    user: AuthenticatedUser,
+    requestedStatus?: CourseStatus,
+  ): Prisma.CourseWhereInput {
     const roles = this.roleSet(user);
     const statusFilter = requestedStatus ? { status: requestedStatus } : {};
 
@@ -174,7 +189,12 @@ export class CoursesService {
     });
 
     const isEnrolled = Boolean(enrollment && enrollment.status !== EnrollmentStatus.DROPPED);
-    const { modules, lessons } = await this.attachUnlockState(course, user.id, user.roles, isEnrolled);
+    const { modules, lessons } = await this.attachUnlockState(
+      course,
+      user.id,
+      user.roles,
+      isEnrolled,
+    );
 
     return {
       ...course,
@@ -395,7 +415,9 @@ export class CoursesService {
 
     const isApprove = dto.status === ApprovalStatus.APPROVED;
     if (!isApprove && !dto.comments?.trim()) {
-      throw new BadRequestException('A reason is required when requesting changes or rejecting a course');
+      throw new BadRequestException(
+        'A reason is required when requesting changes or rejecting a course',
+      );
     }
 
     const targetStatus = isApprove

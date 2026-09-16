@@ -33,10 +33,61 @@ export class AssessmentsController {
 
   @Put('courses/:courseId/assessment')
   @Permissions('quiz.create')
-  @ApiOperation({ summary: 'Replace the course assessment (delete-all + create). Only DRAFT/REJECTED' })
+  @ApiOperation({
+    summary: 'Replace the course final assessment (delete-all + create). Only DRAFT/REJECTED',
+  })
   @ApiParam({ name: 'courseId', type: String })
   async replaceForCourse(@Param('courseId') courseId: string, @Body() dto: CreateAssessmentDto) {
     return this.assessmentsService.replaceForCourse(courseId, dto);
+  }
+
+  // ── Module-level assessments (optional knowledge checks) ────────────
+  @Get('modules/:moduleId/assessments')
+  @ApiOperation({ summary: 'List assessments for a module' })
+  @ApiParam({ name: 'moduleId', type: String })
+  async findByModule(@Param('moduleId') moduleId: string, @CurrentUser() user: AuthenticatedUser) {
+    const isLearner = user.roles.includes(RoleName.LEARNER);
+    return this.assessmentsService.findByModule(moduleId, isLearner);
+  }
+
+  @Post('courses/:courseId/modules/:moduleId/assessments')
+  @Permissions('quiz.create')
+  @ApiOperation({ summary: 'Create a module assessment (must be submitted to unlock next module)' })
+  @ApiParam({ name: 'courseId', type: String })
+  @ApiParam({ name: 'moduleId', type: String })
+  async createForModule(
+    @Param('courseId') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @Body() dto: CreateAssessmentDto,
+  ) {
+    return this.assessmentsService.createForModule(courseId, moduleId, dto);
+  }
+
+  // ── Lesson / sub-lesson level assessments ───────────────────────────
+  @Get('lessons/:lessonId/assessments')
+  @ApiOperation({ summary: 'List assessments for a lesson or sub-lesson' })
+  @ApiParam({ name: 'lessonId', type: String })
+  async findByLesson(@Param('lessonId') lessonId: string, @CurrentUser() user: AuthenticatedUser) {
+    const isLearner = user.roles.includes(RoleName.LEARNER);
+    return this.assessmentsService.findByLesson(lessonId, isLearner);
+  }
+
+  @Post('courses/:courseId/modules/:moduleId/lessons/:lessonId/assessments')
+  @Permissions('quiz.create')
+  @ApiOperation({
+    summary:
+      'Create a lesson assessment (or sub-lesson assessment if lessonId is a sub-lesson). Must be submitted to unlock the next content',
+  })
+  @ApiParam({ name: 'courseId', type: String })
+  @ApiParam({ name: 'moduleId', type: String })
+  @ApiParam({ name: 'lessonId', type: String })
+  async createForLesson(
+    @Param('courseId') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @Param('lessonId') lessonId: string,
+    @Body() dto: CreateAssessmentDto,
+  ) {
+    return this.assessmentsService.createForLesson(courseId, moduleId, lessonId, dto);
   }
 
   @Get('assessments/:id')

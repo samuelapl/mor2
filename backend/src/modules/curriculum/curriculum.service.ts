@@ -112,14 +112,28 @@ export class CurriculumService {
           orderBy: { order: 'asc' },
           include: {
             attachments: true,
+            assessments: {
+              where: { type: 'LESSON_ASSESSMENT' },
+              include: { attempts: true },
+            },
             subLessons: {
               where: { deletedAt: null },
               orderBy: { order: 'asc' },
-              include: { attachments: true },
+              include: {
+                attachments: true,
+                assessments: {
+                  where: { type: 'SUB_LESSON_ASSESSMENT' },
+                  include: { attempts: true },
+                },
+              },
             },
           },
         },
         attachments: true,
+        assessments: {
+          where: { type: 'MODULE_ASSESSMENT' },
+          include: { attempts: true },
+        },
       },
     });
   }
@@ -133,14 +147,28 @@ export class CurriculumService {
           orderBy: { order: 'asc' },
           include: {
             attachments: true,
+            assessments: {
+              where: { type: 'LESSON_ASSESSMENT' },
+              include: { attempts: true },
+            },
             subLessons: {
               where: { deletedAt: null },
               orderBy: { order: 'asc' },
-              include: { attachments: true },
+              include: {
+                attachments: true,
+                assessments: {
+                  where: { type: 'SUB_LESSON_ASSESSMENT' },
+                  include: { attempts: true },
+                },
+              },
             },
           },
         },
         attachments: true,
+        assessments: {
+          where: { type: 'MODULE_ASSESSMENT' },
+          include: { attempts: true },
+        },
       },
     });
 
@@ -289,11 +317,23 @@ export class CurriculumService {
       where: { id: lessonId },
       include: {
         attachments: true,
+        assessments: {
+          where: {
+            type: { in: ['LESSON_ASSESSMENT', 'SUB_LESSON_ASSESSMENT'] },
+          },
+          include: { attempts: true },
+        },
         parent: true,
         subLessons: {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
-          include: { attachments: true },
+          include: {
+            attachments: true,
+            assessments: {
+              where: { type: 'SUB_LESSON_ASSESSMENT' },
+              include: { attempts: true },
+            },
+          },
         },
         module: {
           select: { id: true, courseId: true, order: true },

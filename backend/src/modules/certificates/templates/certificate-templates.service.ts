@@ -10,7 +10,9 @@ export class CertificateTemplatesService {
   async findAll() {
     return this.prisma.certificateTemplate.findMany({
       orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
-      include: { createdBy: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      include: {
+        createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
     });
   }
 
@@ -23,7 +25,9 @@ export class CertificateTemplatesService {
   async findById(id: string) {
     const template = await this.prisma.certificateTemplate.findUnique({
       where: { id },
-      include: { createdBy: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      include: {
+        createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
     });
     if (!template) throw new NotFoundException('Certificate template not found');
     return template;

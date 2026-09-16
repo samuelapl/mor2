@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -10,6 +11,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { AssessmentType } from '@prisma/client';
 
 export class AssessmentQuestionDto {
   @ApiProperty({ example: 'q1' })
@@ -47,6 +49,11 @@ export class CreateAssessmentDto {
   @IsString()
   @MinLength(2)
   titleAm: string;
+
+  @ApiPropertyOptional({ enum: AssessmentType, example: AssessmentType.FINAL_ASSESSMENT })
+  @IsOptional()
+  @IsEnum(AssessmentType)
+  type?: AssessmentType;
 
   @ApiPropertyOptional()
   @IsOptional()

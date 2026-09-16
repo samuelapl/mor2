@@ -92,7 +92,9 @@ export class CoursesController {
 
   @Post(':id/unpublish')
   @Permissions('course.unpublish')
-  @ApiOperation({ summary: 'Unpublish a published course (returns to approved, no longer visible to learners)' })
+  @ApiOperation({
+    summary: 'Unpublish a published course (returns to approved, no longer visible to learners)',
+  })
   @ApiParam({ name: 'id', type: String })
   async unpublish(@Param('id') id: string) {
     return this.coursesService.unpublish(id);

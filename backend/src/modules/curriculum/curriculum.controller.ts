@@ -99,10 +99,7 @@ export class CurriculumController {
   @Get('lessons/:lessonId')
   @ApiOperation({ summary: 'Get lesson details' })
   @ApiParam({ name: 'lessonId', type: String })
-  async getLesson(
-    @Param('lessonId') lessonId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async getLesson(@Param('lessonId') lessonId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.curriculumService.getLesson(lessonId, user);
   }
 

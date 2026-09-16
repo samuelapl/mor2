@@ -57,7 +57,10 @@ export class BigBlueButtonProvider {
   /**
    * Build a signed BigBlueButton API URL for a specific call.
    */
-  private buildSignedUrl(callName: string, params: Record<string, string | number | boolean | undefined>): string {
+  private buildSignedUrl(
+    callName: string,
+    params: Record<string, string | number | boolean | undefined>,
+  ): string {
     const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== null) {
@@ -76,8 +79,7 @@ export class BigBlueButtonProvider {
    * Generate an attendee or moderator join URL.
    */
   generateJoinUrl(config: BbbJoinConfig): string {
-    const password =
-      config.password || (config.isModerator ? 'mp' : 'ap');
+    const password = config.password || (config.isModerator ? 'mp' : 'ap');
 
     if (!this.isConfigured()) {
       // Fallback preview URL when BBB server credentials are not yet provisioned
@@ -109,7 +111,9 @@ export class BigBlueButtonProvider {
       name: config.meetingName,
       attendeePW,
       moderatorPW,
-      welcome: config.welcomeMessage || `Welcome to MoR Tele eLMS Live Training Session: ${config.meetingName}`,
+      welcome:
+        config.welcomeMessage ||
+        `Welcome to MoR Tele eLMS Live Training Session: ${config.meetingName}`,
       maxParticipants: config.maxParticipants || 100,
       record: true,
       autoStartRecording: false,

@@ -295,6 +295,7 @@ model CurriculumModule {
   lessons     Lesson[]
   completions ModuleCompletion[]
   attachments Attachment[]
+  assessments Assessment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -321,6 +322,7 @@ model Lesson {
 
   completions LessonCompletion[]
   attachments Attachment[]
+  assessments Assessment[]
 
   parent      Lesson?  @relation("LessonToSubLessons", fields: [parentId], references: [id], onDelete: Cascade)
   subLessons  Lesson[] @relation("LessonToSubLessons")
@@ -439,9 +441,19 @@ enum EnrollmentStatus {
 // 9. Assessments
 // ──────────────────────────────────────────────────────────
 
+enum AssessmentType {
+  FINAL_ASSESSMENT
+  MODULE_ASSESSMENT
+  LESSON_ASSESSMENT
+  SUB_LESSON_ASSESSMENT
+}
+
 model Assessment {
   id            String @id @default(uuid())
   courseId      String @map("course_id")
+  moduleId      String? @map("module_id")
+  lessonId      String? @map("lesson_id")
+  type          AssessmentType @default(FINAL_ASSESSMENT) @map("type")
   titleAm       String @map("title_am")
   titleEn       String @map("title_en")
   descriptionAm String? @map("description_am")
@@ -457,9 +469,13 @@ model Assessment {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course  Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module  CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson  Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+  @@index([moduleId])
+  @@index([lessonId])
   @@map("assessments")
 }
 

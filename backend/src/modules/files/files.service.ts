@@ -6,12 +6,7 @@ import { PrismaService } from '@config/prisma.service';
 import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMITS } from '@config/constants';
 
 export type FilePurpose =
-  | 'avatar'
-  | 'attachment'
-  | 'certificate'
-  | 'scorm'
-  | 'cover'
-  | 'certificate_template';
+  'avatar' | 'attachment' | 'certificate' | 'scorm' | 'cover' | 'certificate_template';
 
 const PURPOSE_PATHS: Record<FilePurpose, string> = {
   avatar: 'avatars',
@@ -271,7 +266,12 @@ export class FilesService implements OnModuleInit {
     } else if (purpose === 'certificate_template') {
       allowedForPurpose = allowed.images;
     } else {
-      allowedForPurpose = [...allowed.documents, ...allowed.video, ...allowed.audio, ...allowed.archives];
+      allowedForPurpose = [
+        ...allowed.documents,
+        ...allowed.video,
+        ...allowed.audio,
+        ...allowed.archives,
+      ];
     }
 
     if (!allowedForPurpose.includes(file.mimetype)) {

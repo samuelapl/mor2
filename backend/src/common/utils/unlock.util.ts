@@ -53,14 +53,12 @@ export function computeSequentialUnlocks(
     const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
     for (let lIdx = 0; lIdx < sortedLessons.length; lIdx++) {
       const lesson = sortedLessons[lIdx]!;
-      const previousLessonsDone = sortedLessons
-        .slice(0, lIdx)
-        .every((l) => {
-          if (l.subLessons && l.subLessons.length > 0) {
-            return l.subLessons.every((s) => lessonCompletions.has(s.id));
-          }
-          return lessonCompletions.has(l.id);
-        });
+      const previousLessonsDone = sortedLessons.slice(0, lIdx).every((l) => {
+        if (l.subLessons && l.subLessons.length > 0) {
+          return l.subLessons.every((s) => lessonCompletions.has(s.id));
+        }
+        return lessonCompletions.has(l.id);
+      });
 
       const isLessonUnlocked = unlocked && (lIdx === 0 ? true : previousLessonsDone);
       lessonUnlocked.set(lesson.id, isLessonUnlocked);

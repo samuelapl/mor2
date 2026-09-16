@@ -26,7 +26,10 @@ export class RegisterDto {
   @IsNotEmpty()
   phone: string;
 
-  @ApiPropertyOptional({ example: '0012345678', description: 'Taxpayer Identification Number (optional)' })
+  @ApiPropertyOptional({
+    example: '0012345678',
+    description: 'Taxpayer Identification Number (optional)',
+  })
   @IsOptional()
   @IsString()
   tin?: string;

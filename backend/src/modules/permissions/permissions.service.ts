@@ -91,7 +91,9 @@ export class PermissionsService implements OnModuleDestroy {
     return Array.from(new Set(perRole.flat()));
   }
 
-  async effectivePermissionsForUser(userId: string): Promise<{ userId: string; roles: string[]; permissions: string[] }> {
+  async effectivePermissionsForUser(
+    userId: string,
+  ): Promise<{ userId: string; roles: string[]; permissions: string[] }> {
     const userRoles = await this.prisma.userRole.findMany({ where: { userId } });
     if (userRoles.length === 0) {
       throw new NotFoundException('User has no roles assigned');
@@ -207,7 +209,9 @@ export class PermissionsService implements OnModuleDestroy {
   async setRolePermissions(roleId: string, permissionIds: string[]) {
     const role = await this.getRoleOrThrow(roleId);
     if (role.name === RoleName.SYSTEM_ADMIN) {
-      throw new ForbiddenException('System Administrator permissions are locked and cannot be edited.');
+      throw new ForbiddenException(
+        'System Administrator permissions are locked and cannot be edited.',
+      );
     }
 
     await this.assertNotLockingOutPermissionManage(roleId, permissionIds);
@@ -227,7 +231,9 @@ export class PermissionsService implements OnModuleDestroy {
   async revokeRolePermission(roleId: string, permissionId: string) {
     const role = await this.getRoleOrThrow(roleId);
     if (role.name === RoleName.SYSTEM_ADMIN) {
-      throw new ForbiddenException('System Administrator permissions are locked and cannot be edited.');
+      throw new ForbiddenException(
+        'System Administrator permissions are locked and cannot be edited.',
+      );
     }
 
     const current = await this.prisma.rolePermission.findMany({
