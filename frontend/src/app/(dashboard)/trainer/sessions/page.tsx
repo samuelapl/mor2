@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, LinkIcon, MonitorPlay } from "lucide-react";
+import { CalendarPlus, LinkIcon, MonitorPlay, Play, Square, ExternalLink } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
-import { fetchLiveSessions } from "@/lib/api/monitoring";
+import { fetchLiveSessions, fetchSessionJoinUrl, setSessionStatus } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
@@ -17,6 +17,7 @@ export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const assignedCourses = courses.filter((c) => c.trainerId === currentUser?.id);
 
@@ -55,6 +56,34 @@ export default function TrainerSessionsPage() {
   const upcomingRows = usePagination(toRows(upcoming), 5);
   const pastRows = usePagination(toRows(past), 5);
 
+  const handleJoin = async (session: ApiLiveSession) => {
+    let url = session.externalUrl;
+    try {
+      const resolved = await fetchSessionJoinUrl(session.id);
+      if (resolved?.joinUrl) {
+        url = resolved.joinUrl;
+      }
+    } catch {
+      // fallback
+    }
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleToggleLive = async (session: ApiLiveSession) => {
+    setStatusUpdatingId(session.id);
+    try {
+      const nextStatus = session.status === "LIVE" ? "COMPLETED" : "LIVE";
+      await setSessionStatus(session.id, nextStatus);
+      loadSessions();
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
   return (
     <PageShell
       role="trainer"
@@ -73,24 +102,49 @@ export default function TrainerSessionsPage() {
       >
         <SessionTable
           sessions={upcomingRows.pageItems}
-          extra={(row) =>
-            row.session.externalUrl ? (
-              <a href={row.session.externalUrl} target="_blank" rel="noreferrer">
-                <Button size="sm">
-                  <MonitorPlay className="h-3.5 w-3.5" />
-                  Join
+          extra={(row) => (
+            <div className="flex items-center justify-end gap-2">
+              {row.session.status === "SCHEDULED" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={statusUpdatingId === row.session.id}
+                  onClick={() => handleToggleLive(row.session)}
+                  className="border-emerald-300 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100 shadow-none"
+                >
+                  <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
+                  Go Live
                 </Button>
-              </a>
-            ) : (
-              <span
-                title="No meeting link was added when this session was scheduled"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-400"
-              >
-                <LinkIcon className="h-3.5 w-3.5" />
-                No link
-              </span>
-            )
-          }
+              ) : row.session.status === "LIVE" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={statusUpdatingId === row.session.id}
+                  onClick={() => handleToggleLive(row.session)}
+                  className="border-red-300 bg-red-50/80 text-red-700 hover:bg-red-100 shadow-none"
+                >
+                  <Square className="h-3 w-3 fill-red-600 text-red-600" />
+                  End Session
+                </Button>
+              ) : null}
+
+              {row.session.externalUrl ? (
+                <Button size="sm" onClick={() => handleJoin(row.session)}>
+                  <MonitorPlay className="h-3.5 w-3.5" />
+                  Join Room
+                  <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
+                </Button>
+              ) : (
+                <span
+                  title="No meeting link was added when this session was scheduled"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-400"
+                >
+                  <LinkIcon className="h-3.5 w-3.5" />
+                  No link
+                </span>
+              )}
+            </div>
+          )}
         />
         <Pagination
           page={upcomingRows.page}

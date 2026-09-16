@@ -44,4 +44,9 @@ export class CreateLessonDto {
   @IsOptional()
   @IsString()
   resourceUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Optional parent lesson ID for sub-lessons' })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
 }

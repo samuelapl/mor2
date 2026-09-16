@@ -33,6 +33,8 @@ export interface StartedAttempt {
   attemptId: string;
   attemptNumber: number;
   startedAt: string;
+  timeLimitMinutes?: number | null;
+  remainingSeconds?: number;
 }
 
 export interface SubmitAnswer {

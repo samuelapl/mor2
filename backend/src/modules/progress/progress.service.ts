@@ -15,13 +15,6 @@ export class ProgressService {
   ) {}
 
   async getCourseProgress(userId: string, courseId: string) {
-    const enrollment = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-    });
-    if (!enrollment || enrollment.status === EnrollmentStatus.DROPPED) {
-      throw new ForbiddenException('You must be enrolled in this course to view progress');
-    }
-
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       orderBy: { order: 'asc' },
@@ -115,13 +108,6 @@ export class ProgressService {
 
     if (!lesson) {
       throw new NotFoundException('Lesson not found');
-    }
-
-    const enrollment = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId, courseId: lesson.module.courseId } },
-    });
-    if (!enrollment || enrollment.status === EnrollmentStatus.DROPPED) {
-      throw new ForbiddenException('You must be enrolled in this course to record progress');
     }
 
     // Sequential-unlock enforcement: a lesson can only be completed when it is

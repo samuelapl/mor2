@@ -23,6 +23,8 @@ export interface ScheduleSessionBody {
   descriptionAm?: string;
   platform?: "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
   externalUrl?: string;
+  meetingId?: string;
+  meetingPassword?: string;
   scheduledAt: string;
   durationMinutes: number;
 }
@@ -41,6 +43,12 @@ export function fetchUpcomingSessions(): Promise<ApiPaginated<ApiLiveSession>> {
 
 export function fetchLiveSession(id: string): Promise<ApiLiveSession> {
   return api<ApiLiveSession>(`live-sessions/${id}`);
+}
+
+export function fetchSessionJoinUrl(
+  id: string,
+): Promise<{ joinUrl: string; platform: string }> {
+  return api<{ joinUrl: string; platform: string }>(`live-sessions/${id}/join-url`);
 }
 
 export function scheduleSession(

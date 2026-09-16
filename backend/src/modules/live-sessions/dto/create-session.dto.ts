@@ -32,6 +32,11 @@ export class CreateSessionDto {
   @IsString()
   externalUrl?: string;
 
+  @ApiPropertyOptional({ example: 'session-room-101' })
+  @IsOptional()
+  @IsString()
+  meetingId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

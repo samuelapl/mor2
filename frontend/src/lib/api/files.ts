@@ -21,11 +21,11 @@ export async function uploadCover(courseId: string, file: File): Promise<string>
   );
 }
 
-/** Uploads a course material (video / pdf) as a course-level attachment. */
+/** Uploads a course material (video / pdf / audio / presentation) as an attachment. */
 export async function uploadAttachment(
   file: File,
   opts: { moduleId?: string; lessonId?: string; courseId?: string } = {},
-): Promise<{ fileUrl: string; id: string }> {
+): Promise<{ fileUrl: string; id: string; fileName: string; sizeBytes: number }> {
   const form = new FormData();
   form.append("file", file);
   form.append("purpose", "attachment");
@@ -33,8 +33,14 @@ export async function uploadAttachment(
   if (opts.moduleId) form.append("moduleId", opts.moduleId);
   if (opts.lessonId) form.append("lessonId", opts.lessonId);
   const text = await postFormText("files/upload", form);
-  const parsed = JSON.parse(text) as { data?: { fileUrl?: string; id?: string } };
-  return { fileUrl: parsed?.data?.fileUrl ?? "", id: parsed?.data?.id ?? "" };
+  const parsed = JSON.parse(text) as any;
+  const data = parsed?.data ?? parsed;
+  return {
+    fileUrl: data?.fileUrl ?? "",
+    id: data?.id ?? "",
+    fileName: data?.fileName ?? file.name,
+    sizeBytes: data?.sizeBytes ?? file.size,
+  };
 }
 
 /** Uploads a certificate template background image. */

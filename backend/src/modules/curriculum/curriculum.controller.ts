@@ -9,7 +9,8 @@ import {
   UpdateLessonDto,
   ReplaceModulesDto,
 } from './dto';
-import { Roles } from '@common/decorators';
+import { CurrentUser, Roles } from '@common/decorators';
+import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
 
@@ -98,8 +99,11 @@ export class CurriculumController {
   @Get('lessons/:lessonId')
   @ApiOperation({ summary: 'Get lesson details' })
   @ApiParam({ name: 'lessonId', type: String })
-  async getLesson(@Param('lessonId') lessonId: string) {
-    return this.curriculumService.getLesson(lessonId);
+  async getLesson(
+    @Param('lessonId') lessonId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumService.getLesson(lessonId, user);
   }
 
   @Post('modules/:moduleId/lessons')

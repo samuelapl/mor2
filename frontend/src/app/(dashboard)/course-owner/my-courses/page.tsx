@@ -1,36 +1,63 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eye, Pencil, Send, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
 import { EditCourseModal } from "@/components/features/courses/EditCourseModal";
+import { CourseCreationWizard } from "@/components/features/courses/CourseCreationWizard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 import type { Course } from "@/types";
+import { cn } from "@/lib/utils";
+
+type StatusTab = "all" | "draft" | "under_review" | "approved" | "published" | "archived";
 
 export default function MyCoursesPage() {
   const { courses, submitForApproval, deleteCourse } = useLms();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editCourse, setEditCourse] = useState<Course | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [statusTab, setStatusTab] = useState<StatusTab>("all");
   const [category, setCategory] = useState("all");
   const [flash, setFlash] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Calculate status counts
+  const counts = useMemo(() => {
+    return {
+      all: courses.length,
+      draft: courses.filter((c) => c.status === "draft").length,
+      under_review: courses.filter((c) => c.status === "under_review").length,
+      approved: courses.filter((c) => c.status === "approved" && !c.published).length,
+      published: courses.filter((c) => c.published || c.status === "published").length,
+      archived: courses.filter((c) => c.status === "archived").length,
+    };
+  }, [courses]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return courses.filter((course) => {
-      if (status !== "all" && course.status !== status) return false;
+      // Status tab filter
+      if (statusTab === "draft" && course.status !== "draft") return false;
+      if (statusTab === "under_review" && course.status !== "under_review") return false;
+      if (statusTab === "approved" && (course.status !== "approved" || course.published)) return false;
+      if (statusTab === "published" && !course.published && course.status !== "published") return false;
+      if (statusTab === "archived" && course.status !== "archived") return false;
+
+      // Category filter
       if (category !== "all" && course.category !== category) return false;
+
+      // Search query
       if (!q) return true;
       return (
         course.title.toLowerCase().includes(q) ||
@@ -38,7 +65,8 @@ export default function MyCoursesPage() {
         (course.rejectionReason ?? "").toLowerCase().includes(q)
       );
     });
-  }, [courses, search, status, category]);
+  }, [courses, search, statusTab, category]);
+
   const { page, totalPages, setPage, pageItems } = usePagination(filtered, 6);
 
   const resubmit = async (courseId: string) => {
@@ -54,11 +82,26 @@ export default function MyCoursesPage() {
     setFlash(result.ok ? "Course deleted." : result.message);
   };
 
+  const tabs: { id: StatusTab; label: string; count: number }[] = [
+    { id: "all", label: "All", count: counts.all },
+    { id: "draft", label: "Draft", count: counts.draft },
+    { id: "under_review", label: "Pending Approval", count: counts.under_review },
+    { id: "approved", label: "Approved", count: counts.approved },
+    { id: "published", label: "Published", count: counts.published },
+    { id: "archived", label: "Archived", count: counts.archived },
+  ];
+
   return (
     <PageShell
       role="course_owner"
       title="My Courses"
       description="Manage your catalog, submit drafts, and review administrator feedback on rejected courses."
+      actions={
+        <Button onClick={() => setCreateOpen(true)} className="shadow-sm">
+          <Plus className="h-4 w-4" />
+          Create Course
+        </Button>
+      }
     >
       {flash ? (
         <div className="mb-4 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700">
@@ -66,47 +109,73 @@ export default function MyCoursesPage() {
         </div>
       ) : null}
 
+      {/* Navigation Tabs inside My Courses */}
+      <div className="mb-5 flex flex-wrap items-center gap-1.5 border-b border-slate-200/80 pb-3">
+        {tabs.map((tab) => {
+          const active = statusTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setStatusTab(tab.id);
+                setPage(1);
+              }}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150",
+                active
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+              )}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                  active ? "bg-slate-700 text-slate-100" : "bg-slate-200/70 text-slate-600",
+                )}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <FilterBar
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search courses…"
         selects={[
           {
-            id: "status",
-            label: "Status",
-            value: status,
-            onChange: setStatus,
-            options: [
-              { value: "all", label: "All" },
-              { value: "draft", label: "Draft" },
-              { value: "under_review", label: "Pending approval" },
-              { value: "approved", label: "Approved" },
-              { value: "rejected", label: "Rejected" },
-            ],
-          },
-          {
             id: "category",
             label: "Category",
             value: category,
             onChange: setCategory,
             options: [
-              { value: "all", label: "All" },
+              { value: "all", label: "All Categories" },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
         ]}
         onClear={() => {
           setSearch("");
-          setStatus("all");
+          setStatusTab("all");
           setCategory("all");
         }}
-        hasActiveFilters={search !== "" || status !== "all" || category !== "all"}
+        hasActiveFilters={search !== "" || statusTab !== "all" || category !== "all"}
       />
 
       {filtered.length === 0 ? (
         <EmptyState
           title="No courses match"
-          description="Adjust filters or create a new course."
+          description="Adjust filters or create a new course using the '+ Create Course' button above."
+          action={
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Create Course
+            </Button>
+          }
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -157,16 +226,36 @@ export default function MyCoursesPage() {
       )}
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
+      {/* Course Detail Modal (Screen / Workspace Overlay) */}
       <CourseDetailModal
         open={selectedId !== null}
         onClose={() => setSelectedId(null)}
         courseId={selectedId ?? ""}
       />
+
+      {/* Edit Course Modal (Screen / Workspace Overlay) */}
       <EditCourseModal
         open={editCourse !== null}
         onClose={() => setEditCourse(null)}
         course={editCourse}
       />
+
+      {/* Create Course Modal (Screen / Workspace Overlay) */}
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        size="screen"
+        title="Create Course"
+        subtitle="Build your course step-by-step: details, curriculum with content, final assessment, and review."
+      >
+        <CourseCreationWizard
+          onDone={() => {
+            setCreateOpen(false);
+            setFlash("Course created successfully!");
+          }}
+          onCancel={() => setCreateOpen(false)}
+        />
+      </Modal>
     </PageShell>
   );
 }

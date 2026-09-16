@@ -89,12 +89,19 @@ interface RegisterInput {
   phone: string;
   password: string;
   confirmPassword: string;
-  department: string;
+  department?: string;
+  tin?: string;
 }
 
 export interface WizardModuleInput {
   title: string;
-  lessons: { title: string; content?: string; durationMin?: number }[];
+  lessons: {
+    title: string;
+    content?: string;
+    durationMin?: number;
+    contentType?: string;
+    resourceUrl?: string;
+  }[];
 }
 
 interface LmsContextValue {
@@ -368,17 +375,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const lastName = input.lastName.trim();
       const email = input.email.trim().toLowerCase();
       const phone = input.phone.trim();
-      const department = input.department.trim();
+      const tin = input.tin?.trim();
 
       if (
         !firstName ||
         !lastName ||
         !email ||
         !phone ||
-        !input.password ||
-        !department
+        !input.password
       ) {
-        return { ok: false, message: "All fields are required." };
+        return { ok: false, message: "Please fill in all required fields." };
       }
       if (!isValidEmail(email)) {
         return { ok: false, message: "Please enter a valid email address." };
@@ -396,6 +402,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           email,
           phone,
           password: input.password,
+          tin: tin || undefined,
         });
         // Public registrations require administrator approval before the
         // account can be used, so we deliberately do NOT create a session.
@@ -474,6 +481,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
+                contentType: (lesson.contentType as any) || "DOCUMENT",
+                resourceUrl: lesson.resourceUrl,
+                subLessons: (lesson.subLessons ?? []).map((sub) => ({
+                  titleEn: sub.title,
+                  contentEn: sub.content,
+                  durationMinutes: sub.durationMin,
+                  contentType: (sub.contentType as any) || "DOCUMENT",
+                  resourceUrl: sub.resourceUrl,
+                })),
               })),
             }),
           );
@@ -498,6 +514,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               titleAm: quizTitle,
               passingScore: input.quiz.passMark,
               maxAttempts: input.quiz.attemptsAllowed,
+              timeLimitMinutes: input.quiz.timeLimitMinutes,
               questions: input.quiz.questions.map(questionToApi),
             });
           } catch {
@@ -693,6 +710,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
+                contentType: (lesson.contentType as any) || "DOCUMENT",
+                resourceUrl: lesson.resourceUrl,
+                subLessons: (lesson.subLessons ?? []).map((sub) => ({
+                  titleEn: sub.title,
+                  contentEn: sub.content,
+                  durationMinutes: sub.durationMin,
+                  contentType: (sub.contentType as any) || "DOCUMENT",
+                  resourceUrl: sub.resourceUrl,
+                })),
               })),
             }),
           ),
@@ -717,6 +743,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               titleAm: quizTitle,
               passingScore: quiz.passMark,
               maxAttempts: quiz.attemptsAllowed,
+              timeLimitMinutes: quiz.timeLimitMinutes,
               questions: quiz.questions.map(questionToApi),
             });
           } catch {

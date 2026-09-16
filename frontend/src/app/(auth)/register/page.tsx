@@ -3,14 +3,14 @@
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Building2, CheckCircle2, Lock, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, CreditCard, Lock, Mail, Phone, UserRound } from "lucide-react";
 import { isValidEmail, passwordIssues } from "@/constants/auth";
 import { useLms } from "@/lib/lms-store";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
 
-const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
+const labelClass = "mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600";
 
 export default function RegisterPage() {
   const { register, ready } = useLms();
@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [tin, setTin] = useState("");
   const [department, setDepartment] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +30,6 @@ export default function RegisterPage() {
     if (!firstName.trim() || !lastName.trim()) return "First name and last name are required.";
     if (!isValidEmail(email)) return "Please enter a valid email address.";
     if (!phone.trim()) return "Phone number is required.";
-    if (!department.trim()) return "Department or organization is required.";
     const pwdError = passwordIssues(password);
     if (pwdError) return pwdError;
     if (password !== confirmPassword) return "Confirm password must match.";
@@ -50,6 +50,7 @@ export default function RegisterPage() {
       lastName,
       email,
       phone,
+      tin: tin.trim() || undefined,
       password,
       confirmPassword,
       department,
@@ -116,13 +117,16 @@ export default function RegisterPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="firstName" className={labelClass}>
-                    First name
+                    <span>First name</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
                     <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
                       id="firstName"
                       required
+                      aria-required="true"
                       value={firstName}
                       onChange={(event) => {
                         setFirstName(event.target.value);
@@ -134,13 +138,16 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label htmlFor="lastName" className={labelClass}>
-                    Last name
+                    <span>Last name</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
                     <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
                       id="lastName"
                       required
+                      aria-required="true"
                       value={lastName}
                       onChange={(event) => {
                         setLastName(event.target.value);
@@ -154,7 +161,9 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="reg-email" className={labelClass}>
-                  Email
+                  <span>Email</span>
+                  <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -162,6 +171,7 @@ export default function RegisterPage() {
                     id="reg-email"
                     type="email"
                     required
+                    aria-required="true"
                     autoComplete="email"
                     value={email}
                     onChange={(event) => {
@@ -173,41 +183,66 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="phone" className={labelClass}>
-                  Phone number
-                </label>
-                <div className="relative">
-                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="phone"
-                    required
-                    value={phone}
-                    onChange={(event) => {
-                      setPhone(event.target.value);
-                      setError(null);
-                    }}
-                    placeholder="+2519…"
-                    className={inputClass}
-                  />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="phone" className={labelClass}>
+                    <span>Phone number</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="phone"
+                      required
+                      aria-required="true"
+                      value={phone}
+                      onChange={(event) => {
+                        setPhone(event.target.value);
+                        setError(null);
+                      }}
+                      placeholder="+2519…"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="tin" className={labelClass}>
+                    <span>TIN</span>
+                    <span className="text-xs font-normal text-slate-400">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <CreditCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="tin"
+                      value={tin}
+                      onChange={(event) => {
+                        setTin(event.target.value);
+                        setError(null);
+                      }}
+                      placeholder="e.g. 0012345678"
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
               </div>
 
               <div>
                 <label htmlFor="department" className={labelClass}>
-                  Department / organization
+                  <span>Department / organization</span>
+                  <span className="text-xs font-normal text-slate-400">(Optional)</span>
                 </label>
                 <div className="relative">
                   <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     id="department"
-                    required
                     value={department}
                     onChange={(event) => {
                       setDepartment(event.target.value);
                       setError(null);
                     }}
-                    placeholder="e.g. External taxpayer"
+                    placeholder="e.g. External taxpayer / Trader"
                     className={inputClass}
                   />
                 </div>
@@ -216,7 +251,9 @@ export default function RegisterPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="reg-password" className={labelClass}>
-                    Password
+                    <span>Password</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -224,6 +261,7 @@ export default function RegisterPage() {
                       id="reg-password"
                       type="password"
                       required
+                      aria-required="true"
                       autoComplete="new-password"
                       value={password}
                       onChange={(event) => {
@@ -236,7 +274,9 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label htmlFor="confirmPassword" className={labelClass}>
-                    Confirm password
+                    <span>Confirm password</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -244,6 +284,7 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       type="password"
                       required
+                      aria-required="true"
                       autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(event) => {
@@ -256,8 +297,7 @@ export default function RegisterPage() {
                 </div>
               </div>
               <p className="text-[11px] text-slate-400">
-                Use at least 8 characters, including one letter and one number. You cannot assign
-                yourself an administrator role.
+                Use at least 8 characters, including one letter and one number.
               </p>
 
               {error ? (

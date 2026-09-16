@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ApprovalStatus, CourseStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
+import { ApprovalStatus, CourseStatus, EnrollmentStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import {
   buildOrderBy,
@@ -128,8 +128,23 @@ export class CoursesService {
         approvals: { include: { approver: true } },
         trainers: { include: { user: true } },
         modules: {
+          where: { deletedAt: null },
           orderBy: { order: 'asc' },
-          include: { lessons: { orderBy: { order: 'asc' } } },
+          include: {
+            attachments: true,
+            lessons: {
+              where: { deletedAt: null, parentId: null },
+              orderBy: { order: 'asc' },
+              include: {
+                attachments: true,
+                subLessons: {
+                  where: { deletedAt: null },
+                  orderBy: { order: 'asc' },
+                  include: { attachments: true },
+                },
+              },
+            },
+          },
         },
         attachments: true,
       },
@@ -152,16 +167,18 @@ export class CoursesService {
   async findByIdForUser(id: string, user: AuthenticatedUser) {
     await this.assertCanRead(id, user);
     const course = await this.findById(id);
-    const { modules, lessons } = await this.attachUnlockState(course, user.id, user.roles);
 
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: user.id, courseId: id } },
       select: { status: true, enrolledAt: true },
     });
 
+    const isEnrolled = Boolean(enrollment && enrollment.status !== EnrollmentStatus.DROPPED);
+    const { modules, lessons } = await this.attachUnlockState(course, user.id, user.roles, isEnrolled);
+
     return {
       ...course,
-      enrolled: Boolean(enrollment),
+      enrolled: isEnrolled,
       enrollmentStatus: enrollment?.status ?? null,
       enrolledAt: enrollment?.enrolledAt ?? null,
       modules,
@@ -169,56 +186,102 @@ export class CoursesService {
     };
   }
 
-  /** Computes `unlocked` per module/lesson for a course payload. */
+  /** Computes `unlocked` per module/lesson for a course payload. Sanitizes locked content for learners. */
   private async attachUnlockState(
-    course: {
-      id: string;
-      modules: Array<{
-        id: string;
-        order: number | null;
-        lessons: Array<{ id: string; order: number }>;
-      }>;
-    },
+    course: any,
     userId: string,
     roles?: string[],
+    isEnrolled = true,
   ) {
     const roleSet = new Set(roles ?? []);
     const hasStaffRole = STAFF_ROLES.some((role) => roleSet.has(role));
     const isLearner = roleSet.has(RoleName.LEARNER) && !hasStaffRole;
 
-    if (isLearner && course.modules && course.modules.length > 0) {
-      const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
-      const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-        this.prisma,
-        userId,
-        course.modules.map((m) => m.id),
-        allLessonIds,
-      );
-      const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
-        course.modules,
-        moduleCompletions,
-        lessonCompletions,
-      );
+    if (isLearner) {
+      // If learner is NOT enrolled, entire curriculum content is locked/restricted
+      if (!isEnrolled) {
+        const modules = (course.modules ?? []).map((m: any) => ({
+          ...m,
+          unlocked: false,
+          lessons: (m.lessons ?? []).map((l: any) => ({
+            ...l,
+            unlocked: false,
+            contentEn: null,
+            contentAm: null,
+            resourceUrl: null,
+            attachments: [],
+            subLessons: (l.subLessons ?? []).map((sub: any) => ({
+              ...sub,
+              unlocked: false,
+              contentEn: null,
+              contentAm: null,
+              resourceUrl: null,
+              attachments: [],
+            })),
+          })),
+        }));
+        return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
+      }
 
-      const modules = course.modules.map((m) => ({
-        ...m,
-        unlocked: moduleUnlocked.get(m.id) ?? false,
-        lessons: m.lessons.map((l) => ({
-          ...l,
-          unlocked: lessonUnlocked.get(l.id) ?? false,
-        })),
-      }));
+      if (course.modules && course.modules.length > 0) {
+        const allLessonIds = course.modules.flatMap((m: any) => (m.lessons ?? []).map((l: any) => l.id));
+        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
+          this.prisma,
+          userId,
+          course.modules.map((m: any) => m.id),
+          allLessonIds,
+        );
+        const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
+          course.modules,
+          moduleCompletions,
+          lessonCompletions,
+        );
 
-      return { modules, lessons: modules.flatMap((m) => m.lessons) };
+        const modules = course.modules.map((m: any) => {
+          const modUnlocked = moduleUnlocked.get(m.id) ?? false;
+          return {
+            ...m,
+            unlocked: modUnlocked,
+            lessons: (m.lessons ?? []).map((l: any) => {
+              const lesUnlocked = lessonUnlocked.get(l.id) ?? false;
+              return {
+                ...l,
+                unlocked: lesUnlocked,
+                contentEn: lesUnlocked ? l.contentEn : null,
+                contentAm: lesUnlocked ? l.contentAm : null,
+                resourceUrl: lesUnlocked ? l.resourceUrl : null,
+                attachments: lesUnlocked ? l.attachments : [],
+                subLessons: (l.subLessons ?? []).map((sub: any) => ({
+                  ...sub,
+                  unlocked: lesUnlocked,
+                  contentEn: lesUnlocked ? sub.contentEn : null,
+                  contentAm: lesUnlocked ? sub.contentAm : null,
+                  resourceUrl: lesUnlocked ? sub.resourceUrl : null,
+                  attachments: lesUnlocked ? sub.attachments : [],
+                })),
+              };
+            }),
+          };
+        });
+
+        return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
+      }
     }
 
     // Non-learner: everything is readable; mark all unlocked for symmetry.
-    const modules = (course.modules ?? []).map((m) => ({
+    const modules = (course.modules ?? []).map((m: any) => ({
       ...m,
       unlocked: true,
-      lessons: m.lessons.map((l) => ({ ...l, unlocked: true })),
+      lessons: (m.lessons ?? []).map((l: any) => ({
+        ...l,
+        unlocked: true,
+        subLessons: (l.subLessons ?? []).map((sub: any) => ({
+          ...sub,
+          unlocked: true,
+        })),
+      })),
     }));
-    return { modules, lessons: modules.flatMap((m) => m.lessons) };
+    return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
   }
 
   async create(dto: CreateCourseDto, currentUserId: string) {

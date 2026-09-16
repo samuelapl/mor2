@@ -41,7 +41,7 @@ export class AttendanceService {
         userId_courseId: { userId, courseId: session.courseId },
       },
     });
-    if (!enrollment || enrollment.status !== 'ACTIVE') {
+    if (!enrollment || (enrollment.status !== 'ACTIVE' && enrollment.status !== 'COMPLETED')) {
       throw new BadRequestException('You are not enrolled in this course');
     }
 

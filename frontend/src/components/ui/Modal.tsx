@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, subtitle, size = "md", children, f
   // dimmed backdrop behind it.
   if (size === "screen") {
     return (
-      <div className="fixed inset-y-16 inset-x-0 z-40 flex animate-fade-in flex-col bg-white md:left-64">
+      <div className="fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex animate-fade-in flex-col bg-white overflow-hidden shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-b from-slate-50/80 to-transparent px-6 py-5">
           <div>
             <h2 className="font-display text-base font-bold tracking-tight text-slate-900">{title}</h2>

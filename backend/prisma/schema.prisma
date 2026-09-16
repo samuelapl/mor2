@@ -249,6 +249,7 @@ model CurriculumModule {
 model Lesson {
   id          String   @id @default(uuid())
   moduleId    String   @map("module_id")
+  parentId    String?  @map("parent_id")
   titleAm     String   @map("title_am")
   titleEn     String   @map("title_en")
   contentAm   String?  @map("content_am")
@@ -261,6 +262,9 @@ model Lesson {
   completions LessonCompletion[]
   attachments Attachment[]
 
+  parent      Lesson?  @relation("LessonToSubLessons", fields: [parentId], references: [id], onDelete: Cascade)
+  subLessons  Lesson[] @relation("LessonToSubLessons")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -268,6 +272,7 @@ model Lesson {
   module CurriculumModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@index([moduleId])
+  @@index([parentId])
   @@map("lessons")
 }
 
@@ -278,6 +283,7 @@ enum LessonContentType {
   INTERACTIVE
   SCORM
   EXTERNAL_LINK
+  AUDIO
 }
 
 model Attachment {

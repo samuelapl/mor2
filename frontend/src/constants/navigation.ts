@@ -46,7 +46,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   course_owner: [
     { label: "Dashboard", href: "/course-owner", icon: LayoutDashboard },
     { label: "My Courses", href: "/course-owner/my-courses", icon: BookOpen },
-    { label: "Create Course", href: "/course-owner/create-course", icon: FilePlus2 },
     { label: "Content Status", href: "/course-owner/content-status", icon: ClipboardList },
   ],
   content_approver: [

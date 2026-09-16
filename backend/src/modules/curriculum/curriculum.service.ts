@@ -1,6 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { CourseStatus } from '@prisma/client';
+import { CourseStatus, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { AuthenticatedUser } from '@common/interfaces';
+import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils/unlock.util';
 import {
   CreateModuleDto,
   UpdateModuleDto,
@@ -9,12 +11,20 @@ import {
   ReplaceModulesDto,
 } from './dto';
 
+const STAFF_ROLES = [
+  RoleName.SYSTEM_ADMIN,
+  RoleName.TRAINING_ADMIN,
+  RoleName.COURSE_OWNER,
+  RoleName.CONTENT_APPROVER,
+  RoleName.TRAINER,
+];
+
 @Injectable()
 export class CurriculumService {
   constructor(private readonly prisma: PrismaService) {}
 
   // ── Modules ────────────────────────────────────────
-  /** Replaces the entire curriculum (modules + lessons) atomically. Only DRAFT/REJECTED courses. */
+  /** Replaces the entire curriculum (modules + lessons + sub-lessons) atomically. Only DRAFT/REJECTED courses. */
   async replaceAll(courseId: string, dto: ReplaceModulesDto) {
     await this.assertCourseEditable(courseId);
 
@@ -22,18 +32,7 @@ export class CurriculumService {
       await tx.curriculumModule.deleteMany({ where: { courseId } });
 
       for (const [index, mod] of dto.modules.entries()) {
-        const lessonData = mod.lessons?.map((lesson, idx) => ({
-          titleAm: lesson.titleAm ?? lesson.titleEn,
-          titleEn: lesson.titleEn,
-          contentAm: lesson.contentAm,
-          contentEn: lesson.contentEn,
-          contentType: (lesson.contentType as any) ?? 'DOCUMENT',
-          durationMinutes: lesson.durationMinutes,
-          order: idx,
-          resourceUrl: lesson.resourceUrl,
-        }));
-
-        await tx.curriculumModule.create({
+        const createdModule = await tx.curriculumModule.create({
           data: {
             courseId,
             titleAm: mod.titleAm,
@@ -42,9 +41,46 @@ export class CurriculumService {
             descriptionEn: mod.descriptionEn,
             order: index,
             passingScore: mod.passingScore,
-            lessons: lessonData?.length ? { create: lessonData } : undefined,
           },
         });
+
+        if (mod.lessons && mod.lessons.length > 0) {
+          for (const [idx, lesson] of mod.lessons.entries()) {
+            const createdLesson = await tx.lesson.create({
+              data: {
+                moduleId: createdModule.id,
+                parentId: null,
+                titleAm: lesson.titleAm ?? lesson.titleEn,
+                titleEn: lesson.titleEn,
+                contentAm: lesson.contentAm,
+                contentEn: lesson.contentEn,
+                contentType: (lesson.contentType as any) ?? 'DOCUMENT',
+                durationMinutes: lesson.durationMinutes,
+                order: idx,
+                resourceUrl: lesson.resourceUrl,
+              },
+            });
+
+            if (lesson.subLessons && lesson.subLessons.length > 0) {
+              for (const [sIdx, sub] of lesson.subLessons.entries()) {
+                await tx.lesson.create({
+                  data: {
+                    moduleId: createdModule.id,
+                    parentId: createdLesson.id,
+                    titleAm: sub.titleAm ?? sub.titleEn,
+                    titleEn: sub.titleEn,
+                    contentAm: sub.contentAm,
+                    contentEn: sub.contentEn,
+                    contentType: (sub.contentType as any) ?? 'DOCUMENT',
+                    durationMinutes: sub.durationMinutes,
+                    order: sIdx,
+                    resourceUrl: sub.resourceUrl,
+                  },
+                });
+              }
+            }
+          }
+        }
       }
     });
 
@@ -62,12 +98,24 @@ export class CurriculumService {
       );
     }
   }
+
   async getModules(courseId: string) {
     return this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       orderBy: { order: 'asc' },
       include: {
-        lessons: { where: { deletedAt: null }, orderBy: { order: 'asc' } },
+        lessons: {
+          where: { deletedAt: null, parentId: null },
+          orderBy: { order: 'asc' },
+          include: {
+            attachments: true,
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+              include: { attachments: true },
+            },
+          },
+        },
         attachments: true,
       },
     });
@@ -77,7 +125,18 @@ export class CurriculumService {
     const module = await this.prisma.curriculumModule.findUnique({
       where: { id: moduleId },
       include: {
-        lessons: { where: { deletedAt: null }, orderBy: { order: 'asc' } },
+        lessons: {
+          where: { deletedAt: null, parentId: null },
+          orderBy: { order: 'asc' },
+          include: {
+            attachments: true,
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+              include: { attachments: true },
+            },
+          },
+        },
         attachments: true,
       },
     });
@@ -216,22 +275,122 @@ export class CurriculumService {
   }
 
   // ── Lessons ────────────────────────────────────────
-  async getLesson(lessonId: string) {
+  async getLesson(lessonId: string, user?: AuthenticatedUser) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
-      include: { attachments: true },
+      include: {
+        attachments: true,
+        parent: true,
+        subLessons: {
+          where: { deletedAt: null },
+          orderBy: { order: 'asc' },
+          include: { attachments: true },
+        },
+        module: {
+          select: { id: true, courseId: true, order: true },
+        },
+      },
     });
 
     if (!lesson || lesson.deletedAt) {
       throw new NotFoundException('Lesson not found');
     }
 
+    // Backend sequential progression & enrollment enforcement for learners
+    if (user) {
+      const roleSet = new Set(user.roles ?? []);
+      const hasStaffRole = STAFF_ROLES.some((role) => roleSet.has(role));
+      const isLearner = roleSet.has(RoleName.LEARNER) && !hasStaffRole;
+
+      if (isLearner) {
+        // 1. Enrollment check
+        const enrollment = await this.prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: {
+              userId: user.id,
+              courseId: lesson.module.courseId,
+            },
+          },
+        });
+
+        if (!enrollment || enrollment.status === 'DROPPED') {
+          throw new ForbiddenException(
+            'You must be actively enrolled in this course to access lesson content.',
+          );
+        }
+
+        // 2. Sequential unlock check
+        const modules = await this.prisma.curriculumModule.findMany({
+          where: { courseId: lesson.module.courseId, deletedAt: null },
+          orderBy: { order: 'asc' },
+          include: {
+            lessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+            },
+          },
+        });
+
+        const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
+          this.prisma,
+          user.id,
+          modules.map((m) => m.id),
+          allLessonIds,
+        );
+
+        const { lessonUnlocked } = computeSequentialUnlocks(
+          modules,
+          moduleCompletions,
+          lessonCompletions,
+        );
+
+        // Sub-lessons inherit parent lesson unlock status or checked directly
+        const targetLessonId = lesson.parentId ?? lesson.id;
+        if (!(lessonUnlocked.get(targetLessonId) ?? false)) {
+          throw new ForbiddenException(
+            'This lesson is locked until preceding lessons and module requirements are completed.',
+          );
+        }
+      }
+    }
+
     return lesson;
   }
 
   async createLesson(moduleId: string, dto: CreateLessonDto) {
+    if (dto.parentId) {
+      const parent = await this.prisma.lesson.findUnique({
+        where: { id: dto.parentId },
+      });
+      if (!parent || parent.deletedAt || parent.moduleId !== moduleId) {
+        throw new NotFoundException('Parent lesson not found in this module');
+      }
+
+      const lastSub = await this.prisma.lesson.findFirst({
+        where: { moduleId, parentId: dto.parentId, deletedAt: null },
+        orderBy: { order: 'desc' },
+      });
+      const order = dto.order ?? (lastSub ? lastSub.order + 1 : 0);
+
+      return this.prisma.lesson.create({
+        data: {
+          moduleId,
+          parentId: dto.parentId,
+          titleAm: dto.titleAm ?? dto.titleEn,
+          titleEn: dto.titleEn,
+          contentAm: dto.contentAm,
+          contentEn: dto.contentEn,
+          contentType: dto.contentType,
+          durationMinutes: dto.durationMinutes,
+          order,
+          resourceUrl: dto.resourceUrl,
+        },
+      });
+    }
+
     const lastLesson = await this.prisma.lesson.findFirst({
-      where: { moduleId, deletedAt: null },
+      where: { moduleId, parentId: null, deletedAt: null },
       orderBy: { order: 'desc' },
     });
 
@@ -240,6 +399,7 @@ export class CurriculumService {
     return this.prisma.lesson.create({
       data: {
         moduleId,
+        parentId: null,
         titleAm: dto.titleAm ?? dto.titleEn,
         titleEn: dto.titleEn,
         contentAm: dto.contentAm,
@@ -272,6 +432,7 @@ export class CurriculumService {
         durationMinutes: dto.durationMinutes,
         order: dto.order,
         resourceUrl: dto.resourceUrl,
+        parentId: dto.parentId !== undefined ? dto.parentId : existing.parentId,
       },
     });
   }

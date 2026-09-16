@@ -67,6 +67,7 @@ const STATUS_FE_TO_API: Record<string, BackendCourseStatus> = {
   draft: "DRAFT",
   under_review: "PENDING_APPROVAL",
   approved: "APPROVED",
+  published: "PUBLISHED",
   rejected: "REJECTED",
   archived: "ARCHIVED",
 };
@@ -78,8 +79,9 @@ export function statusFromApi(status: BackendCourseStatus): Course["status"] {
     case "PENDING_APPROVAL":
       return "under_review";
     case "APPROVED":
-    case "PUBLISHED":
       return "approved";
+    case "PUBLISHED":
+      return "published";
     case "REJECTED":
       return "rejected";
     case "ARCHIVED":
@@ -245,6 +247,10 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
     content: lesson.contentEn ?? "",
     durationMin: lesson.durationMinutes ?? 15,
     unlocked: lesson.unlocked,
+    contentType: lesson.contentType,
+    resourceUrl: lesson.resourceUrl ?? undefined,
+    parentId: lesson.parentId ?? undefined,
+    subLessons: (lesson.subLessons ?? []).map(lessonFromApi),
   };
 }
 
@@ -289,7 +295,22 @@ export function moduleToCreateBody(input: {
   titleEn: string;
   titleAm?: string;
   descriptionEn?: string;
-  lessons?: { titleEn: string; titleAm?: string; contentEn?: string; contentType?: BackendLessonContentType; durationMinutes?: number }[];
+  lessons?: {
+    titleEn: string;
+    titleAm?: string;
+    contentEn?: string;
+    contentType?: BackendLessonContentType;
+    durationMinutes?: number;
+    resourceUrl?: string;
+    subLessons?: {
+      titleEn: string;
+      titleAm?: string;
+      contentEn?: string;
+      contentType?: BackendLessonContentType;
+      durationMinutes?: number;
+      resourceUrl?: string;
+    }[];
+  }[];
 }): CreateModuleBody {
   const titleAm = input.titleAm ?? input.titleEn;
   return {
@@ -303,6 +324,15 @@ export function moduleToCreateBody(input: {
       contentEn: l.contentEn,
       contentType: l.contentType ?? "DOCUMENT",
       durationMinutes: l.durationMinutes,
+      resourceUrl: l.resourceUrl,
+      subLessons: (l.subLessons ?? []).map((sub) => ({
+        titleEn: sub.titleEn,
+        titleAm: sub.titleAm ?? sub.titleEn,
+        contentEn: sub.contentEn,
+        contentType: sub.contentType ?? "DOCUMENT",
+        durationMinutes: sub.durationMinutes,
+        resourceUrl: sub.resourceUrl,
+      })),
     })),
   };
 }

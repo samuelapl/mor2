@@ -50,6 +50,7 @@ export async function register(payload: {
   email: string;
   phone?: string;
   password: string;
+  tin?: string;
 }): Promise<RegisterResult> {
   const res = await api<ApiAuthRegisterResponse>("auth/register", {
     method: "POST",

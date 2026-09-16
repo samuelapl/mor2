@@ -470,7 +470,7 @@ export default function LandingPage() {
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-600">
                 Sign in with any role to experience live sessions, quizzes, progress
-                tracking and certificates — all running on realistic mock data.
+                tracking and certificates — powered by connected backend services and database.
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Link

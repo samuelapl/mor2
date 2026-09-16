@@ -271,7 +271,7 @@ export class FilesService implements OnModuleInit {
     } else if (purpose === 'certificate_template') {
       allowedForPurpose = allowed.images;
     } else {
-      allowedForPurpose = [...allowed.documents, ...allowed.video, ...allowed.archives];
+      allowedForPurpose = [...allowed.documents, ...allowed.video, ...allowed.audio, ...allowed.archives];
     }
 
     if (!allowedForPurpose.includes(file.mimetype)) {

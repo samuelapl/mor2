@@ -76,7 +76,7 @@ export class AssessmentsController {
   @ApiOperation({ summary: 'Start a new assessment attempt' })
   @ApiParam({ name: 'id', type: String })
   async startAttempt(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.assessmentsService.startAttempt(id, user.id);
+    return this.assessmentsService.startAttempt(id, user);
   }
 
   @Post('assessments/:id/submit')

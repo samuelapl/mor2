@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpenCheck, Loader2, PartyPopper, RotateCcw } from "lucide-react";
+import { BookOpenCheck, Clock, Loader2, PartyPopper, RotateCcw } from "lucide-react";
 import type { ApiAssessment } from "@/lib/api/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -72,23 +72,56 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     };
   }, [open, courseId]);
 
+  const [remainingSec, setRemainingSec] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
+
+  // Synchronized countdown timer
+  useEffect(() => {
+    if (!attempt || remainingSec === null || result !== null) return;
+
+    if (remainingSec <= 0) {
+      // Auto-submit when time expires
+      setAutoSubmitted(true);
+      void submit(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRemainingSec((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [attempt, remainingSec, result]);
+
   const start = async () => {
     if (!assessment) return;
     setError(null);
+    setAutoSubmitted(false);
     try {
       const started = await startAttempt(assessment.id);
       setAttempt({ attemptId: started.attemptId, attemptNumber: started.attemptNumber });
       setAnswers({});
       setResult(null);
       setLoading(false);
+
+      // Initialize remaining seconds if time limit is set
+      if (started.remainingSeconds !== undefined && started.remainingSeconds !== null) {
+        setRemainingSec(started.remainingSeconds);
+      } else if (assessment.timeLimitMinutes && assessment.timeLimitMinutes > 0) {
+        setRemainingSec(assessment.timeLimitMinutes * 60);
+      } else {
+        setRemainingSec(null);
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to start the quiz.");
     }
   };
 
-  const submit = async () => {
-    if (!assessment) return;
+  const submit = async (isAuto = false) => {
+    if (!assessment || submitting) return;
     setError(null);
+    setSubmitting(true);
     try {
       const payload: SubmitAnswer[] = Object.entries(answers).map(
         ([questionId, selectedOption]) => ({ questionId, selectedOption }),
@@ -97,7 +130,15 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
       setResult(graded);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to submit the quiz.");
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const answeredCount = Object.keys(answers).length;
@@ -181,6 +222,46 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
         </div>
       ) : (
         <div className="space-y-5">
+          {/* Active Attempt Timer & Status Banner */}
+          <div className="sticky top-0 z-20 -mt-2 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <BookOpenCheck className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-xs font-bold text-slate-800">
+                  Attempt {attempt.attemptNumber} of {assessment.maxAttempts}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Passing score: {assessment.passingScore}%
+                </p>
+              </div>
+            </div>
+
+            {remainingSec !== null ? (
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors",
+                  remainingSec <= 60
+                    ? "animate-pulse bg-red-100 text-red-700 ring-1 ring-red-300"
+                    : remainingSec <= 300
+                    ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                    : "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/70",
+                )}
+              >
+                <Clock className="h-4 w-4" />
+                <span>Time Remaining: {formatTimer(remainingSec)}</span>
+              </div>
+            ) : null}
+          </div>
+
+          {autoSubmitted ? (
+            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+              <span>Time has expired! Submitting your answers automatically...</span>
+            </div>
+          ) : null}
+
           {error ? <p className="text-xs text-red-500">{error}</p> : null}
           {assessment.questions.map((question, index) => (
             <div key={question.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -234,11 +315,25 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
             </div>
           ))}
           <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-md">
-            <p className="text-xs text-slate-500">
-              {answeredCount}/{assessment.questions.length} answered
-            </p>
-            <Button onClick={submit} disabled={!ready}>
-              Submit answers
+            <div>
+              <p className="text-xs font-semibold text-slate-700">
+                {answeredCount}/{assessment.questions.length} answered
+              </p>
+              {answeredCount < assessment.questions.length ? (
+                <p className="text-[10px] text-slate-400">Early submission permitted</p>
+              ) : null}
+            </div>
+            <Button onClick={() => void submit(false)} disabled={submitting || answeredCount === 0}>
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
+              ) : answeredCount < assessment.questions.length ? (
+                "Submit Early"
+              ) : (
+                "Submit Assessment"
+              )}
             </Button>
           </div>
         </div>

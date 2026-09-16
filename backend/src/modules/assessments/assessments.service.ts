@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { CourseStatus, NotificationType, Prisma } from '@prisma/client';
+import { CourseStatus, EnrollmentStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
@@ -145,8 +145,49 @@ export class AssessmentsService {
     });
   }
 
-  async startAttempt(assessmentId: string, userId: string) {
+  async startAttempt(assessmentId: string, userOrId: string | AuthenticatedUser) {
+    const userId = typeof userOrId === 'string' ? userOrId : userOrId.id;
+    const userRoles = typeof userOrId === 'string' ? [] : userOrId.roles;
+
     const assessment = await this.findById(assessmentId, true);
+
+    // Prerequisite & Eligibility checks for learners
+    const roleSet = new Set(userRoles);
+    const hasStaffRole = [
+      RoleName.SYSTEM_ADMIN,
+      RoleName.TRAINING_ADMIN,
+      RoleName.COURSE_OWNER,
+      RoleName.CONTENT_APPROVER,
+      RoleName.TRAINER,
+    ].some((r) => roleSet.has(r));
+    const isLearner = roleSet.has(RoleName.LEARNER) && !hasStaffRole;
+
+    if (isLearner) {
+      // 1. Must be enrolled
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: assessment.courseId } },
+      });
+      if (!enrollment || enrollment.status === EnrollmentStatus.DROPPED) {
+        throw new ForbiddenException('You must be enrolled in this course to take the final assessment');
+      }
+
+      // 2. Prerequisite completion: all course lessons must be completed
+      const modules = await this.prisma.curriculumModule.findMany({
+        where: { courseId: assessment.courseId, deletedAt: null },
+        select: { id: true, lessons: { where: { deletedAt: null }, select: { id: true } } },
+      });
+      const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+      if (lessonIds.length > 0) {
+        const completedCount = await this.prisma.lessonCompletion.count({
+          where: { userId, lessonId: { in: lessonIds }, completed: true },
+        });
+        if (completedCount < lessonIds.length) {
+          throw new ForbiddenException(
+            'Prerequisite course content must be completed before taking the final assessment',
+          );
+        }
+      }
+    }
 
     const pending = await this.prisma.assessmentAttempt.findFirst({
       where: { assessmentId, userId, submittedAt: null },
@@ -154,11 +195,37 @@ export class AssessmentsService {
     });
 
     if (pending) {
-      return {
-        attemptId: pending.id,
-        attemptNumber: pending.attemptNumber,
-        startedAt: pending.startedAt,
-      };
+      if (assessment.timeLimitMinutes) {
+        const elapsedSec = (Date.now() - new Date(pending.startedAt).getTime()) / 1000;
+        const limitSec = assessment.timeLimitMinutes * 60;
+
+        if (elapsedSec > limitSec) {
+          // Time expired! Server-side auto-submission of pending attempt
+          await this.submit(assessmentId, userId, { answers: (pending.answers as any) || {} });
+          const submittedCount = await this.prisma.assessmentAttempt.count({
+            where: { assessmentId, userId, submittedAt: { not: null } },
+          });
+          if (submittedCount >= assessment.maxAttempts) {
+            throw new ForbiddenException(
+              'Time limit expired and maximum attempts reached for this assessment',
+            );
+          }
+        } else {
+          return {
+            attemptId: pending.id,
+            attemptNumber: pending.attemptNumber,
+            startedAt: pending.startedAt,
+            timeLimitMinutes: assessment.timeLimitMinutes,
+            remainingSeconds: Math.max(0, Math.round(limitSec - elapsedSec)),
+          };
+        }
+      } else {
+        return {
+          attemptId: pending.id,
+          attemptNumber: pending.attemptNumber,
+          startedAt: pending.startedAt,
+        };
+      }
     }
 
     const submittedCount = await this.prisma.assessmentAttempt.count({
@@ -185,6 +252,8 @@ export class AssessmentsService {
       attemptId: attempt.id,
       attemptNumber: attempt.attemptNumber,
       startedAt: attempt.startedAt,
+      timeLimitMinutes: assessment.timeLimitMinutes,
+      remainingSeconds: assessment.timeLimitMinutes ? assessment.timeLimitMinutes * 60 : undefined,
     };
   }
 
@@ -215,7 +284,10 @@ export class AssessmentsService {
     );
     const now = new Date();
     const startedAt = pending?.startedAt ?? new Date(now.getTime() - 60000);
-    const timeSpentSeconds = Math.max(0, Math.round((now.getTime() - startedAt.getTime()) / 1000));
+    let timeSpentSeconds = Math.max(0, Math.round((now.getTime() - startedAt.getTime()) / 1000));
+    if (assessment.timeLimitMinutes) {
+      timeSpentSeconds = Math.min(timeSpentSeconds, assessment.timeLimitMinutes * 60);
+    }
 
     let attempt;
 
@@ -267,11 +339,28 @@ export class AssessmentsService {
       // notification failure is non-fatal
     }
 
+    // Apply completion rules: if passed, check if all course lessons are completed and complete course
     if (passed) {
       try {
+        const modules = await this.prisma.curriculumModule.findMany({
+          where: { courseId: assessmentCourseId, deletedAt: null },
+          select: { lessons: { where: { deletedAt: null }, select: { id: true } } },
+        });
+        const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+        const completedLessons = await this.prisma.lessonCompletion.count({
+          where: { userId, lessonId: { in: lessonIds }, completed: true },
+        });
+
+        if (completedLessons === lessonIds.length) {
+          await this.prisma.enrollment.updateMany({
+            where: { userId, courseId: assessmentCourseId, status: { not: EnrollmentStatus.DROPPED } },
+            data: { status: EnrollmentStatus.COMPLETED, completedAt: now },
+          });
+        }
+
         await this.certificatesService.maybeIssueForCompletion(userId, assessmentCourseId);
       } catch {
-        // certificate issuance is opportunistic and non-fatal
+        // completion/certificate issuance is non-fatal
       }
     }
 

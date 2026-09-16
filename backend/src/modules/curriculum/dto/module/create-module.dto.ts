@@ -33,7 +33,7 @@ export class LessonDto {
   contentAm?: string;
 
   @ApiPropertyOptional({
-    enum: ['VIDEO', 'DOCUMENT', 'PRESENTATION', 'INTERACTIVE', 'SCORM', 'EXTERNAL_LINK'],
+    enum: ['VIDEO', 'DOCUMENT', 'PRESENTATION', 'INTERACTIVE', 'SCORM', 'EXTERNAL_LINK', 'AUDIO'],
   })
   @IsOptional()
   @IsString()
@@ -49,6 +49,18 @@ export class LessonDto {
   @IsOptional()
   @IsString()
   resourceUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @ApiPropertyOptional({ type: () => [LessonDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LessonDto)
+  subLessons?: LessonDto[];
 }
 
 export class CreateModuleDto {

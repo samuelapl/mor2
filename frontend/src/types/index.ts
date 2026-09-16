@@ -14,6 +14,7 @@ export type CourseStatus =
   | "draft"
   | "under_review"
   | "approved"
+  | "published"
   | "rejected"
   | "archived";
 
@@ -45,6 +46,10 @@ export interface Lesson {
   content?: string;
   durationMin: number;
   unlocked?: boolean;
+  contentType?: string;
+  resourceUrl?: string;
+  parentId?: string;
+  subLessons?: Lesson[];
 }
 
 export interface Module {
@@ -71,6 +76,7 @@ export interface Quiz {
   title: string;
   passMark: number;
   attemptsAllowed: number;
+  timeLimitMinutes?: number | null;
   questions: Question[];
 }
 

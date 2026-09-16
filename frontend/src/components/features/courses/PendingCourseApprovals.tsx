@@ -59,7 +59,7 @@ export function PendingCourseApprovals() {
     const result = await approveCourse(courseId);
     setFlash(
       result.ok
-        ? "Course approved and published."
+        ? "Course approved. It is now awaiting publication by the Training Administrator."
         : result.message,
     );
   };

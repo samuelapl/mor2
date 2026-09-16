@@ -32,6 +32,7 @@ export const ALLOWED_MIME_TYPES = {
   ],
   images: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
   video: ['video/mp4', 'video/webm', 'video/ogg'],
+  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/aac', 'audio/x-m4a'],
   scorm: ['application/zip'],
   archives: ['application/zip', 'application/x-7z-compressed', 'application/x-rar-compressed'],
 } as const;

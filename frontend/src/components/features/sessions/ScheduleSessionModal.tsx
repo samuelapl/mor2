@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import { Video, Sparkles, Shield, MonitorPlay, Link as LinkIcon, RefreshCw } from "lucide-react";
 import type { Course } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,8 @@ interface ScheduleSessionModalProps {
   courses: Course[];
 }
 
+type PlatformChoice = "JITSI" | "GOOGLE_MEET" | "ZOOM" | "BIGBLUEBUTTON" | "MS_TEAMS" | "CUSTOM";
+
 export function ScheduleSessionModal({
   open,
   onClose,
@@ -21,19 +24,62 @@ export function ScheduleSessionModal({
   courses,
 }: ScheduleSessionModalProps) {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
+  const [platformType, setPlatformType] = useState<PlatformChoice>("JITSI");
   const [titleEn, setTitleEn] = useState("");
   const [titleAm, setTitleAm] = useState("");
-  const [date, setDate] = useState("2026-09-25");
+  const [date, setDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  });
   const [time, setTime] = useState("10:00");
   const [duration, setDuration] = useState(60);
   const [externalUrl, setExternalUrl] = useState("");
+  const [meetingPassword, setMeetingPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // When course changes or modal opens, if courseId is empty set to first course
+  useEffect(() => {
+    if (!courseId && courses.length > 0) {
+      setCourseId(courses[0].id);
+    }
+  }, [courses, courseId]);
+
+  const selectedCourse = courses.find((c) => c.id === courseId);
+
+  const generateJitsiUrl = () => {
+    const code = (selectedCourse?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    return `https://meet.jit.si/MoR-LMS-${code}-${randomSuffix}`;
+  };
+
+  // Automatically pre-populate Jitsi URL when switching to JITSI if empty
+  const handlePlatformChange = (val: PlatformChoice) => {
+    setPlatformType(val);
+    if (val === "JITSI") {
+      setExternalUrl(generateJitsiUrl());
+    } else if (val === "BIGBLUEBUTTON") {
+      const code = (selectedCourse?.code || "session").toLowerCase().replace(/[^a-z0-9]/g, "");
+      setExternalUrl(`https://demo.bigbluebutton.org/gl/join?room=mor-${code}`);
+    } else if (val === "GOOGLE_MEET") {
+      setExternalUrl("https://meet.google.com/");
+    } else if (val === "ZOOM") {
+      setExternalUrl("https://zoom.us/j/");
+    } else {
+      setExternalUrl("");
+    }
+  };
+
+  // Initialize Jitsi URL on initial open if not set
+  useEffect(() => {
+    if (open && platformType === "JITSI" && !externalUrl) {
+      setExternalUrl(generateJitsiUrl());
+    }
+  }, [open, courseId]);
+
   const inputClass =
     "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
-
-  const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -43,18 +89,41 @@ export function ScheduleSessionModal({
     }
     setError(null);
     setSubmitting(true);
+
     try {
+      // Map platform choice to backend Prisma enum
+      let backendPlatform: "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" = "CUSTOM";
+      let meetingId: string | undefined = undefined;
+
+      if (platformType === "ZOOM") {
+        backendPlatform = "ZOOM";
+      } else if (platformType === "GOOGLE_MEET") {
+        backendPlatform = "GOOGLE_MEET";
+      } else if (platformType === "MS_TEAMS") {
+        backendPlatform = "MS_TEAMS";
+      } else if (platformType === "BIGBLUEBUTTON") {
+        backendPlatform = "CUSTOM";
+        const code = (selectedCourse?.code || "session").toLowerCase().replace(/[^a-z0-9]/g, "");
+        meetingId = `bbb-${code}-${Date.now().toString(36)}`;
+      } else {
+        backendPlatform = "CUSTOM";
+      }
+
       await scheduleSession(courseId, {
         titleEn: titleEn.trim(),
         titleAm: titleAm.trim() || titleEn.trim(),
-        platform: "GOOGLE_MEET",
+        platform: backendPlatform,
         externalUrl: externalUrl.trim() || undefined,
+        meetingId,
+        meetingPassword: meetingPassword.trim() || undefined,
         scheduledAt: new Date(`${date}T${time}`).toISOString(),
         durationMinutes: Number(duration),
       });
+
       setTitleEn("");
       setTitleAm("");
       setExternalUrl("");
+      setMeetingPassword("");
       onScheduled?.();
       onClose();
     } catch (err) {
@@ -69,7 +138,7 @@ export function ScheduleSessionModal({
       open={open}
       onClose={onClose}
       title="Schedule Live Session"
-      subtitle="The session will be added to the training calendar."
+      subtitle="Schedule an interactive virtual classroom or live webinar."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -77,7 +146,13 @@ export function ScheduleSessionModal({
           <select
             required
             value={courseId}
-            onChange={(event) => setCourseId(event.target.value)}
+            onChange={(event) => {
+              setCourseId(event.target.value);
+              if (platformType === "JITSI") {
+                const code = (courses.find((c) => c.id === event.target.value)?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
+                setExternalUrl(`https://meet.jit.si/MoR-LMS-${code}-${Math.random().toString(36).substring(2, 8)}`);
+              }
+            }}
             className={inputClass}
           >
             {courses.map((course) => (
@@ -87,32 +162,95 @@ export function ScheduleSessionModal({
             ))}
           </select>
         </div>
+
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-            Session title (English)
+            Session Title (English) *
           </label>
           <input
             required
             value={titleEn}
             onChange={(event) => setTitleEn(event.target.value)}
-            placeholder="e.g. Monthly Q&A Session"
+            placeholder="e.g. Interactive Q&A: Tax Code Fundamentals"
             className={inputClass}
           />
         </div>
+
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-            Session title (አማርኛ)
+            Session Title (አማርኛ)
           </label>
           <input
             value={titleAm}
             onChange={(event) => setTitleAm(event.target.value)}
-            placeholder="e.g. የወርሃዊ ጥያቄና መልስ ክፍለ ጊዜ"
+            placeholder="e.g. የቀጥታ የጥያቄና መልስ ክፍለ ጊዜ"
             className={inputClass}
           />
         </div>
-        <div className="grid grid-cols-3 gap-4">
+
+        {/* Video Platform Selector */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            Virtual Classroom Platform
+          </label>
+          <select
+            value={platformType}
+            onChange={(e) => handlePlatformChange(e.target.value as PlatformChoice)}
+            className={inputClass}
+          >
+            <option value="JITSI">🎥 Jitsi Meet (Open-Source / Instant Web Video)</option>
+            <option value="BIGBLUEBUTTON">🏛️ BigBlueButton (Dedicated Virtual Classroom)</option>
+            <option value="GOOGLE_MEET">🟢 Google Meet</option>
+            <option value="ZOOM">🔵 Zoom Meetings</option>
+            <option value="MS_TEAMS">🟣 Microsoft Teams</option>
+            <option value="CUSTOM">🔗 Other Custom URL</option>
+          </select>
+        </div>
+
+        {/* Platform URL & Generator */}
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-700">
+              Meeting URL {platformType === "JITSI" ? "(Auto-generated)" : ""}
+            </label>
+            {platformType === "JITSI" && (
+              <button
+                type="button"
+                onClick={() => setExternalUrl(generateJitsiUrl())}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition"
+              >
+                <RefreshCw className="h-3 w-3" />
+                New room code
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              required={platformType !== "CUSTOM"}
+              value={externalUrl}
+              onChange={(e) => setExternalUrl(e.target.value)}
+              placeholder="https://meet.jit.si/..."
+              className={inputClass}
+            />
+          </div>
+          {platformType === "JITSI" && (
+            <p className="flex items-center gap-1.5 text-[11px] text-emerald-700">
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
+              Instant, zero-install WebRTC video room with screen sharing and chat.
+            </p>
+          )}
+          {platformType === "BIGBLUEBUTTON" && (
+            <p className="flex items-center gap-1.5 text-[11px] text-indigo-700">
+              <MonitorPlay className="h-3.5 w-3.5 flex-shrink-0 text-indigo-500" />
+              Integrated with MoR LMS BigBlueButton provider checksum security.
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date</label>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date *</label>
             <input
               required
               type="date"
@@ -122,7 +260,7 @@ export function ScheduleSessionModal({
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Start time</label>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Start Time *</label>
             <input
               required
               type="time"
@@ -132,7 +270,7 @@ export function ScheduleSessionModal({
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Duration (min)</label>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Duration (min) *</label>
             <input
               required
               type="number"
@@ -144,27 +282,30 @@ export function ScheduleSessionModal({
             />
           </div>
         </div>
+
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-            Meeting link (optional)
+            Room Passcode (Optional)
           </label>
           <input
-            type="url"
-            value={externalUrl}
-            onChange={(event) => setExternalUrl(event.target.value)}
-            placeholder="e.g. https://meet.example.com/session"
+            type="text"
+            value={meetingPassword}
+            onChange={(event) => setMeetingPassword(event.target.value)}
+            placeholder="e.g. 849201"
             className={inputClass}
           />
         </div>
+
         {error ? (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
         ) : null}
+
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Scheduling…" : "Schedule session"}
+            {submitting ? "Scheduling…" : "Schedule Live Session"}
           </Button>
         </div>
       </form>

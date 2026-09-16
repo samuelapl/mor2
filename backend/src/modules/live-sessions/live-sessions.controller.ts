@@ -44,6 +44,13 @@ export class LiveSessionsController {
     return this.liveSessionsService.findById(id);
   }
 
+  @Get('live-sessions/:id/join-url')
+  @ApiOperation({ summary: 'Get resolved join URL for a live session with participant parameters' })
+  @ApiParam({ name: 'id', type: String })
+  async getJoinUrl(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.liveSessionsService.getJoinUrl(id, user);
+  }
+
   @Post('courses/:courseId/live-sessions')
   @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Schedule a live session for a course' })

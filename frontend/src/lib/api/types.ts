@@ -26,7 +26,8 @@ export type BackendLessonContentType =
   | "PRESENTATION"
   | "INTERACTIVE"
   | "SCORM"
-  | "EXTERNAL_LINK";
+  | "EXTERNAL_LINK"
+  | "AUDIO";
 
 /* -------------------------------------------------------------------------- */
 /*  Paginated response                                                        */
@@ -183,6 +184,8 @@ export interface ApiLesson {
   durationMinutes: number | null;
   order: number;
   resourceUrl: string | null;
+  parentId?: string | null;
+  subLessons?: ApiLesson[];
   createdAt: string;
   updatedAt: string;
   unlocked?: boolean;
@@ -592,6 +595,8 @@ export interface CreateInlineLessonBody {
   contentType?: BackendLessonContentType;
   durationMinutes?: number;
   resourceUrl?: string;
+  parentId?: string;
+  subLessons?: CreateInlineLessonBody[];
 }
 
 export interface ReplaceCurriculumBody {
