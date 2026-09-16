@@ -27,3 +27,15 @@ export async function revokeRolePermission(
     method: "DELETE",
   });
 }
+
+export async function createRole(input: {
+  name: string;
+  label: string;
+  description?: string;
+}): Promise<ApiRoleWithPermissions> {
+  return api<ApiRoleWithPermissions>("admin/roles", { method: "POST", body: input });
+}
+
+export async function deleteRole(roleId: string): Promise<{ message: string }> {
+  return api<{ message: string }>(`admin/roles/${roleId}`, { method: "DELETE" });
+}

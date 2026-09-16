@@ -45,6 +45,7 @@ import {
   approveRegistration,
   assignRole,
   bulkCreateUsers,
+  createActor,
   fetchUsers,
   rejectRegistration,
   removeRole,
@@ -172,6 +173,14 @@ interface LmsContextValue {
       password?: string;
     }>,
   ) => Promise<ActionResult>;
+  registerActor: (input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: Role;
+    phone?: string;
+  }) => Promise<ActionResult>;
 }
 
 const LmsContext = createContext<LmsContextValue | null>(null);
@@ -589,6 +598,29 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         return {
           ok: false,
           message: errorMessage(err, "Failed to register users."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
+  const registerActor: LmsContextValue["registerActor"] = useCallback(
+    async (input) => {
+      try {
+        await createActor({
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email,
+          password: input.password,
+          role: roleToApi(input.role),
+          phone: input.phone || undefined,
+        });
+        await reloadData(currentUserRef.current);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to register actor."),
         };
       }
     },
@@ -1075,6 +1107,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveRegistrationRequest,
       rejectRegistrationRequest,
       bulkRegisterUsers,
+      registerActor,
     }),
     [
       ready,
@@ -1105,6 +1138,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveRegistrationRequest,
       rejectRegistrationRequest,
       bulkRegisterUsers,
+      registerActor,
     ],
   );
 

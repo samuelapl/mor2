@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Lock, RotateCcw, Save, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Lock, Plus, RotateCcw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import PageShell from "@/components/shared/PageShell";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Modal } from "@/components/ui/Modal";
 import {
+  createRole,
+  deleteRole,
   fetchPermissionsRegistry,
   fetchRolesWithPermissions,
   setRolePermissions,
@@ -38,6 +41,11 @@ export default function RolesPermissionsPage() {
   const [draftIds, setDraftIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [flash, setFlash] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [showNewRole, setShowNewRole] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleLabel, setNewRoleLabel] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const allPermissions = useMemo<ApiPermission[]>(
     () => Object.values(registry).flat(),
@@ -46,6 +54,15 @@ export default function RolesPermissionsPage() {
   const idByCode = useMemo(
     () => new Map(allPermissions.map((p) => [p.code, p.id])),
     [allPermissions],
+  );
+  const sortedRoles = useMemo(
+    () =>
+      [...roles].sort((a, b) => {
+        if (a.name === "SYSTEM_ADMIN") return 1;
+        if (b.name === "SYSTEM_ADMIN") return -1;
+        return a.label.localeCompare(b.label);
+      }),
+    [roles],
   );
 
   const load = async () => {
@@ -126,6 +143,46 @@ export default function RolesPermissionsPage() {
     setFlash(null);
   };
 
+  const handleCreateRole = async () => {
+    if (!newRoleName.trim() || !newRoleLabel.trim()) return;
+    setCreating(true);
+    setFlash(null);
+    try {
+      const role = await createRole({ name: newRoleName.trim(), label: newRoleLabel.trim() });
+      setRoles((prev) => [...prev, role]);
+      setSelectedRoleId(role.id);
+      setNewRoleName("");
+      setNewRoleLabel("");
+      setShowNewRole(false);
+      setFlash({ type: "success", message: `${role.label} created with 0 permissions.` });
+    } catch (err) {
+      setFlash({
+        type: "error",
+        message: err instanceof ApiError ? err.message : "Failed to create role.",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteRole = async (role: ApiRoleWithPermissions) => {
+    setDeletingId(role.id);
+    setFlash(null);
+    try {
+      await deleteRole(role.id);
+      setRoles((prev) => prev.filter((r) => r.id !== role.id));
+      setSelectedRoleId((current) => (current === role.id ? null : current));
+      setFlash({ type: "success", message: `${role.label} deleted.` });
+    } catch (err) {
+      setFlash({
+        type: "error",
+        message: err instanceof ApiError ? err.message : "Failed to delete role.",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <PageShell
@@ -181,37 +238,50 @@ export default function RolesPermissionsPage() {
             <CardTitle>Roles</CardTitle>
             <CardDescription>Select a role to view or edit its permissions.</CardDescription>
           </div>
+
           <div className="flex flex-col p-2">
-            {roles.map((role) => {
+            {sortedRoles.map((role) => {
               const locked = role.name === "SYSTEM_ADMIN";
               const active = role.id === selectedRoleId;
               return (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => setSelectedRoleId(role.id)}
-                  className={cn(
-                    "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                    active
-                      ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-md shadow-indigo-500/20"
-                      : "text-slate-600 hover:bg-slate-50",
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    {locked ? (
-                      <Lock className={cn("h-3.5 w-3.5", active ? "text-white/80" : "text-slate-400")} />
-                    ) : null}
-                    {role.label}
-                  </span>
-                  <span
+                <div key={role.id} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRoleId(role.id)}
                     className={cn(
-                      "text-[11px] tabular-nums",
-                      active ? "text-white/80" : "text-slate-400",
+                      "flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                      active
+                        ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-md shadow-indigo-500/20"
+                        : "text-slate-600 hover:bg-slate-50",
                     )}
                   >
-                    {role.permissionCodes.length}/{allPermissions.length}
-                  </span>
-                </button>
+                    <span className="flex items-center gap-2">
+                      {locked ? (
+                        <Lock className={cn("h-3.5 w-3.5", active ? "text-white/80" : "text-slate-400")} />
+                      ) : null}
+                      {role.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[11px] tabular-nums",
+                        active ? "text-white/80" : "text-slate-400",
+                      )}
+                    >
+                      {role.permissionCodes.length}/{allPermissions.length}
+                    </span>
+                  </button>
+                  {!role.isSystem ? (
+                    <button
+                      type="button"
+                      title="Delete role"
+                      disabled={deletingId === role.id}
+                      onClick={() => handleDeleteRole(role)}
+                      className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                </div>
               );
             })}
           </div>
@@ -220,32 +290,37 @@ export default function RolesPermissionsPage() {
         {/* Permission matrix panel */}
         {selectedRole ? (
           <Card padded={false} className="overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
               <div>
                 <CardTitle>{selectedRole.label}</CardTitle>
                 <CardDescription>
                   Landing dashboard: <code className="text-slate-500">{selectedRole.dashboardPath}</code>
                 </CardDescription>
               </div>
-              {isLocked ? (
-                <Badge variant="slate">
-                  <Lock className="h-3 w-3" /> Locked — superuser, always all permissions
-                </Badge>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleReset}
-                    disabled={!isDirty || saving}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Reset
-                  </Button>
-                  <Button size="sm" onClick={handleSave} disabled={!isDirty || saving}>
-                    <Save className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save changes"}
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col items-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowNewRole(true)}>
+                  <Plus className="h-3.5 w-3.5" /> Add Role
+                </Button>
+                {isLocked ? (
+                  <Badge variant="slate">
+                    <Lock className="h-3 w-3" /> Locked — superuser, always all permissions
+                  </Badge>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReset}
+                      disabled={!isDirty || saving}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Reset
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={!isDirty || saving}>
+                      <Save className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save changes"}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="max-h-[65vh] divide-y divide-slate-100/80 overflow-y-auto">
@@ -304,6 +379,48 @@ export default function RolesPermissionsPage() {
           <EmptyState title="No role selected" description="Choose a role from the list." />
         )}
       </div>
+
+      <Modal
+        open={showNewRole}
+        onClose={() => setShowNewRole(false)}
+        title="Add role"
+        subtitle="Starts with zero permissions granted — build it up in the matrix after creating it."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setShowNewRole(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={creating || !newRoleName.trim() || !newRoleLabel.trim()}
+              onClick={handleCreateRole}
+            >
+              {creating ? "Creating…" : "Create role"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Name</label>
+            <input
+              className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+              placeholder="e.g. REGIONAL_COORDINATOR"
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Display label</label>
+            <input
+              className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+              placeholder="e.g. Regional Coordinator"
+              value={newRoleLabel}
+              onChange={(e) => setNewRoleLabel(e.target.value)}
+            />
+          </div>
+        </div>
+      </Modal>
     </PageShell>
   );
 }

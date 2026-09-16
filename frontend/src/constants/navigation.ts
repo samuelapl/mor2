@@ -24,16 +24,19 @@ import {
   UploadCloud,
   Users,
   UserPlus,
+  UserCog,
   Video,
 } from "lucide-react";
 import type { Role } from "@/types";
 
 export interface NavItem {
   label: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
   /** Permission code(s) required to see this item (OR semantics). Omit for always-visible items. */
   permission?: string | string[];
+  /** Present for a collapsible group instead of a direct link. */
+  children?: NavItem[];
 }
 
 export const ROLE_ICONS: Record<Role, LucideIcon> = {
@@ -86,8 +89,30 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   system_admin: [
     { label: "Dashboard", href: "/system-admin", icon: LayoutDashboard },
     { label: "Users & Roles", href: "/system-admin/users", icon: Users, permission: ["user.manage", "role.manage"] },
-    { label: "Registration", href: "/system-admin/pending-registrations", icon: UserPlus, permission: "user.manage" },
-    { label: "Bulk Register", href: "/system-admin/bulk-register", icon: UploadCloud, permission: "user.manage" },
+    {
+      label: "Registration",
+      icon: UserPlus,
+      children: [
+        {
+          label: "Approve Registration",
+          href: "/system-admin/pending-registrations",
+          icon: UserPlus,
+          permission: "user.manage",
+        },
+        {
+          label: "Actor Registration",
+          href: "/system-admin/register-actor",
+          icon: UserCog,
+          permission: "user.manage",
+        },
+        {
+          label: "Bulk Register",
+          href: "/system-admin/bulk-register",
+          icon: UploadCloud,
+          permission: "user.manage",
+        },
+      ],
+    },
     {
       label: "Pending Course Approvals",
       href: "/system-admin/pending-course-approvals",

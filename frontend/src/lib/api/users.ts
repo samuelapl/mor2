@@ -7,6 +7,8 @@ import type {
   BackendRoleName,
   BulkCreateUserItem,
   BulkCreateUsersResult,
+  CreateActorBody,
+  CreateActorResult,
 } from "./types";
 
 export async function fetchUsers(
@@ -74,4 +76,9 @@ export async function bulkCreateUsers(
   rows: BulkCreateUserItem[],
 ): Promise<BulkCreateUsersResult> {
   return api<BulkCreateUsersResult>("users/bulk", { method: "POST", body: { users: rows } });
+}
+
+/** Manually registers a single actor — created pre-approved and active, no queue. */
+export async function createActor(body: CreateActorBody): Promise<CreateActorResult> {
+  return api<CreateActorResult>("users/actors", { method: "POST", body });
 }

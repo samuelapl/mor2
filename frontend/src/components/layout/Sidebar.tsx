@@ -1,14 +1,28 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
-import { NAV_ITEMS, ROLE_ICONS } from "@/constants/navigation";
+import { NAV_ITEMS, ROLE_ICONS, type NavItem } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { cn } from "@/lib/utils";
+
+function filterNavItems(items: NavItem[], canAny: (codes: string[]) => boolean): NavItem[] {
+  return items
+    .map((item) =>
+      item.children
+        ? { ...item, children: filterNavItems(item.children, canAny) }
+        : item,
+    )
+    .filter((item) => {
+      if (item.children) return item.children.length > 0;
+      return !item.permission || canAny([item.permission].flat());
+    });
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -16,13 +30,20 @@ export default function Sidebar() {
   const { canAny } = usePermissions();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? "learner";
   const RoleIcon = ROLE_ICONS[role];
-  const navItems = NAV_ITEMS[role].filter(
-    (item) => !item.permission || canAny([item.permission].flat()),
-  );
+  const navItems = filterNavItems(NAV_ITEMS[role], canAny);
   const displayUser = currentUser;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
+
+  const isGroupActive = (item: NavItem): boolean =>
+    item.children?.some((child) => (child.href ? isActive(child.href) : false)) ?? false;
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const isGroupOpen = (item: NavItem) =>
+    openGroups[item.label] ?? isGroupActive(item);
+  const toggleGroup = (label: string) =>
+    setOpenGroups((prev) => ({ ...prev, [label]: !(prev[label] ?? false) }));
 
   return (
     <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600">
@@ -60,11 +81,65 @@ export default function Sidebar() {
       <nav className="relative flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.href);
+
+          if (item.children) {
+            const open = isGroupOpen(item);
+            const groupActive = isGroupActive(item);
+            return (
+              <div key={item.label}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(item.label)}
+                  className={cn(
+                    "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    groupActive
+                      ? "text-indigo-600"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-indigo-500" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <ChevronDown
+                    className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
+                  />
+                </button>
+                {open ? (
+                  <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                    {item.children.map((child) => {
+                      const ChildIcon = child.icon;
+                      const active = child.href ? isActive(child.href) : false;
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href ?? "#"}
+                          className={cn(
+                            "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
+                            active
+                              ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20"
+                              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+                          )}
+                        >
+                          <ChildIcon
+                            className={cn(
+                              "h-4 w-4 shrink-0 transition-colors",
+                              active ? "text-white" : "text-slate-400 group-hover:text-indigo-500",
+                            )}
+                          />
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            );
+          }
+
+          const active = item.href ? isActive(item.href) : false;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href ?? "#"}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 active

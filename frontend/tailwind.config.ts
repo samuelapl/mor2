@@ -7,7 +7,11 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['"Inter"', ...defaultTheme.fontFamily.sans],
-        display: ['"Plus Jakarta Sans"', '"Inter"', ...defaultTheme.fontFamily.sans],
+        display: [
+          '"Plus Jakarta Sans"',
+          '"Inter"',
+          ...defaultTheme.fontFamily.sans,
+        ],
       },
       boxShadow: {
         soft: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.08)",

@@ -630,6 +630,21 @@ export interface BulkCreateUserSkipped {
   reason: string;
 }
 
+export interface CreateActorBody {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: BackendRoleName;
+  phone?: string;
+  locale?: "en" | "am";
+}
+
+export interface CreateActorResult {
+  message: string;
+  user: ApiUser;
+}
+
 export interface BulkCreateUsersResult {
   created: BulkCreateUserResultRow[];
   skipped: BulkCreateUserSkipped[];
