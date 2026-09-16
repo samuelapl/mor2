@@ -20,7 +20,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -192,12 +192,22 @@ export function LearnCourseModal({
   };
 
   return (
-    <Modal
+    <WorkspaceDetailOverlay
       open={open}
       onClose={onClose}
-      size="screen"
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
+      badge={
+        isCourseComplete ? (
+          <Badge variant="green" dot>
+            Course Completed
+          </Badge>
+        ) : (
+          <Badge variant="blue" dot>
+            {Math.round(overall)}% Progress
+          </Badge>
+        )
+      }
     >
       <div className="space-y-6 max-w-5xl mx-auto pb-8">
         {/* Breadcrumbs & Overview Banner */}
@@ -230,6 +240,12 @@ export function LearnCourseModal({
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600 max-w-3xl">
                 {course.description}
               </p>
+            ) : null}
+            {course.objectives ? (
+              <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 text-xs">
+                <p className="font-bold text-indigo-900 mb-1">Course Learning Objectives:</p>
+                <p className="text-indigo-950/90 whitespace-pre-line leading-relaxed">{course.objectives}</p>
+              </div>
             ) : null}
           </div>
 
@@ -348,6 +364,12 @@ export function LearnCourseModal({
                 {/* Module Body — Lessons and Activities List */}
                 {isExpanded && !moduleLocked ? (
                   <div className="p-4 space-y-3 bg-slate-50/30">
+                    {module.objectives ? (
+                      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs text-indigo-950">
+                        <span className="font-bold text-indigo-900">Module Learning Objectives: </span>
+                        {module.objectives}
+                      </div>
+                    ) : null}
                     {module.lessons.map((lesson, lessonIndex) => {
                       const lessonProgress = moduleProgress?.lessons.find(
                         (l) => l.lessonId === lesson.id,
@@ -651,6 +673,6 @@ export function LearnCourseModal({
           courseTitle={courseTitle}
         />
       ) : null}
-    </Modal>
+    </WorkspaceDetailOverlay>
   );
 }

@@ -93,15 +93,21 @@ interface RegisterInput {
   tin?: string;
 }
 
+export interface WizardLessonInput {
+  title: string;
+  content?: string;
+  durationMin?: number;
+  contentType?: string;
+  resourceUrl?: string;
+  subLessons?: WizardLessonInput[];
+}
+
 export interface WizardModuleInput {
   title: string;
-  lessons: {
-    title: string;
-    content?: string;
-    durationMin?: number;
-    contentType?: string;
-    resourceUrl?: string;
-  }[];
+  description?: string;
+  objectives?: string;
+  durationMinutes?: number;
+  lessons: WizardLessonInput[];
 }
 
 interface LmsContextValue {
@@ -120,6 +126,12 @@ interface LmsContextValue {
     code: string;
     title: string;
     category: string;
+    department?: string;
+    targetAudience?: string;
+    deliveryMethod?: string;
+    language?: string;
+    prerequisites?: string;
+    objectives?: string;
     description: string;
     level?: CourseLevel;
     cover?: File | null;
@@ -136,6 +148,12 @@ interface LmsContextValue {
     input: {
       title: string;
       category: string;
+      department?: string;
+      targetAudience?: string;
+      deliveryMethod?: string;
+      language?: string;
+      prerequisites?: string;
+      objectives?: string;
       description: string;
       level?: CourseLevel;
       cover?: File | null;
@@ -156,6 +174,7 @@ interface LmsContextValue {
   submitForApproval: (courseId: string) => Promise<ActionResult>;
   approveCourse: (courseId: string) => Promise<ActionResult>;
   rejectCourse: (courseId: string, reason: string) => Promise<ActionResult>;
+  requestChangesCourse: (courseId: string, reason: string) => Promise<ActionResult>;
   publishCourse: (courseId: string) => Promise<ActionResult>;
   unpublishCourse: (courseId: string) => Promise<ActionResult>;
   deleteCourse: (courseId: string) => Promise<ActionResult>;
@@ -432,6 +451,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           courseToCreateBody({
             code: input.code,
             title: input.title,
+            category: input.category,
+            department: input.department,
+            targetAudience: input.targetAudience,
+            deliveryMethod: input.deliveryMethod,
+            language: input.language,
+            prerequisites: input.prerequisites,
+            objectives: input.objectives,
             description: input.description,
             ownerId: owner.id,
             level: input.level,
@@ -450,22 +476,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
         // Curriculum: create a module per entered module (falls back to a
         // default "Module 1" when the owner left the curriculum empty).
-        const modulesToCreate =
+        const modulesToCreate: WizardModuleInput[] =
           input.modules && input.modules.length > 0
             ? input.modules
             : [
                 {
                   title: "Module 1: Introduction",
+                  description: "Course module",
+                  objectives: "Introduction to course concepts",
+                  durationMinutes: 35,
                   lessons: [
                     {
                       title: "Welcome and course overview",
                       content: "",
                       durationMin: 15,
+                      subLessons: [],
                     },
                     {
                       title: "Key concepts and definitions",
                       content: "",
                       durationMin: 20,
+                      subLessons: [],
                     },
                   ],
                 },
@@ -476,7 +507,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             created.id,
             moduleToCreateBody({
               titleEn: mod.title,
-              descriptionEn: "Course module",
+              descriptionEn: mod.description || "Course module",
+              objectivesEn: mod.objectives,
+              durationMinutes: mod.durationMinutes,
               lessons: mod.lessons.map((lesson) => ({
                 titleEn: lesson.title,
                 contentEn: lesson.content,
@@ -664,6 +697,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           courseId,
           courseToUpdateBody({
             title: input.title,
+            category: input.category,
+            department: input.department,
+            targetAudience: input.targetAudience,
+            deliveryMethod: input.deliveryMethod,
+            language: input.language,
+            prerequisites: input.prerequisites,
+            objectives: input.objectives,
             description: input.description,
             level: input.level,
           }),
@@ -679,22 +719,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        const modulesToReplace =
+        const modulesToReplace: WizardModuleInput[] =
           input.modules && input.modules.length > 0
             ? input.modules
             : [
                 {
                   title: "Module 1: Introduction",
+                  description: "Course module",
+                  objectives: "Introduction to course concepts",
+                  durationMinutes: 35,
                   lessons: [
                     {
                       title: "Welcome and course overview",
                       content: "",
                       durationMin: 15,
+                      subLessons: [],
                     },
                     {
                       title: "Key concepts and definitions",
                       content: "",
                       durationMin: 20,
+                      subLessons: [],
                     },
                   ],
                 },
@@ -705,7 +750,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           modulesToReplace.map((mod) =>
             moduleToCreateBody({
               titleEn: mod.title,
-              descriptionEn: "Course module",
+              descriptionEn: mod.description || "Course module",
+              objectivesEn: mod.objectives,
+              durationMinutes: mod.durationMinutes,
               lessons: mod.lessons.map((lesson) => ({
                 titleEn: lesson.title,
                 contentEn: lesson.content,
@@ -812,6 +859,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         return {
           ok: false,
           message: errorMessage(err, "Failed to reject course."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
+  const requestChangesCourse = useCallback(
+    async (courseId: string, reason: string): Promise<ActionResult> => {
+      const approver = currentUserRef.current;
+      const trimmed = reason.trim();
+      if (!trimmed) {
+        return { ok: false, message: "A reason is required when requesting changes." };
+      }
+      try {
+        await reviewCourse(courseId, { status: "NEEDS_REVISION", comments: trimmed });
+        await reloadData(approver);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to request changes on course."),
         };
       }
     },
@@ -1089,6 +1157,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       submitForApproval,
       approveCourse,
       rejectCourse,
+      requestChangesCourse,
       publishCourse,
       unpublishCourse,
       deleteCourse,
@@ -1119,6 +1188,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       submitForApproval,
       approveCourse,
       rejectCourse,
+      requestChangesCourse,
       publishCourse,
       unpublishCourse,
       deleteCourse,

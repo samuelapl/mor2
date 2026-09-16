@@ -84,6 +84,9 @@ export interface LessonDraft {
 export interface ModuleDraft {
   id: string;
   title: string;
+  description?: string;
+  objectives?: string;
+  durationMinutes?: number;
   lessons: LessonDraft[];
 }
 
@@ -119,75 +122,70 @@ const optionsForType = (type: QuestionType): string[] =>
 /*  Interactive rich text editor (TipTap)                                     */
 /* -------------------------------------------------------------------------- */
 
-const TOOLBAR_BUTTONS: Array<{
-  title: string;
-  icon: typeof Bold;
-  isActive: (editor: Editor) => boolean;
-  run: (editor: Editor) => void;
-}> = [
+const TOOLBAR_BUTTONS = [
   {
-    title: "Bold",
     icon: Bold,
-    isActive: (editor) => editor.isActive("bold"),
-    run: (editor) => editor.chain().focus().toggleBold().run(),
+    title: "Bold",
+    run: (e: Editor) => e.chain().focus().toggleBold().run(),
+    isActive: (e: Editor) => e.isActive("bold"),
   },
   {
-    title: "Italic",
     icon: Italic,
-    isActive: (editor) => editor.isActive("italic"),
-    run: (editor) => editor.chain().focus().toggleItalic().run(),
+    title: "Italic",
+    run: (e: Editor) => e.chain().focus().toggleItalic().run(),
+    isActive: (e: Editor) => e.isActive("italic"),
   },
   {
-    title: "Underline",
     icon: UnderlineIcon,
-    isActive: (editor) => editor.isActive("underline"),
-    run: (editor) => editor.chain().focus().toggleUnderline().run(),
+    title: "Underline",
+    run: (e: Editor) => e.chain().focus().toggleUnderline().run(),
+    isActive: (e: Editor) => e.isActive("underline"),
   },
   {
-    title: "Strikethrough",
     icon: Strikethrough,
-    isActive: (editor) => editor.isActive("strike"),
-    run: (editor) => editor.chain().focus().toggleStrike().run(),
+    title: "Strikethrough",
+    run: (e: Editor) => e.chain().focus().toggleStrike().run(),
+    isActive: (e: Editor) => e.isActive("strike"),
   },
   {
-    title: "Heading 2",
     icon: Heading2,
-    isActive: (editor) => editor.isActive("heading", { level: 2 }),
-    run: (editor) => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+    title: "Heading 2",
+    run: (e: Editor) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+    isActive: (e: Editor) => e.isActive("heading", { level: 2 }),
   },
   {
-    title: "Heading 3",
     icon: Heading3,
-    isActive: (editor) => editor.isActive("heading", { level: 3 }),
-    run: (editor) => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    title: "Heading 3",
+    run: (e: Editor) => e.chain().focus().toggleHeading({ level: 3 }).run(),
+    isActive: (e: Editor) => e.isActive("heading", { level: 3 }),
   },
   {
-    title: "Bullet list",
     icon: List,
-    isActive: (editor) => editor.isActive("bulletList"),
-    run: (editor) => editor.chain().focus().toggleBulletList().run(),
+    title: "Bullet List",
+    run: (e: Editor) => e.chain().focus().toggleBulletList().run(),
+    isActive: (e: Editor) => e.isActive("bulletList"),
   },
   {
-    title: "Numbered list",
     icon: ListOrdered,
-    isActive: (editor) => editor.isActive("orderedList"),
-    run: (editor) => editor.chain().focus().toggleOrderedList().run(),
+    title: "Ordered List",
+    run: (e: Editor) => e.chain().focus().toggleOrderedList().run(),
+    isActive: (e: Editor) => e.isActive("orderedList"),
   },
   {
-    title: "Blockquote",
     icon: Quote,
-    isActive: (editor) => editor.isActive("blockquote"),
-    run: (editor) => editor.chain().focus().toggleBlockquote().run(),
+    title: "Blockquote",
+    run: (e: Editor) => e.chain().focus().toggleBlockquote().run(),
+    isActive: (e: Editor) => e.isActive("blockquote"),
   },
 ];
 
 function RichEditor({
   value,
   onChange,
-  placeholder = "Write lesson content, notes, and guidelines here…",
+  placeholder = "Enter lesson content here…",
 }: {
   value: string;
-  onChange: (html: string) => void;
+  onChange: (value: string) => void;
   placeholder?: string;
 }) {
   const editor = useEditor({
@@ -196,7 +194,11 @@ function RichEditor({
         heading: { levels: [2, 3] },
       }),
       Underline,
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({
+        placeholder,
+        emptyEditorClass:
+          "before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none",
+      }),
     ],
     content: value,
     editorProps: {
@@ -264,7 +266,7 @@ export function CourseCreationWizard({
 
   const isEdit = Boolean(editingCourse);
 
-  // Step 1: Course Details
+  // Step 1: Course Details & Objectives
   const [title, setTitle] = useState(editingCourse?.title ?? "");
   const [code, setCode] = useState(editingCourse?.code ?? "");
   const [category, setCategory] = useState(
@@ -272,6 +274,12 @@ export function CourseCreationWizard({
   );
   const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? "basic");
   const [description, setDescription] = useState(editingCourse?.description ?? "");
+  const [objectives, setObjectives] = useState(editingCourse?.objectives ?? "");
+  const [department, setDepartment] = useState(editingCourse?.department ?? "Ministry of Revenues");
+  const [targetAudience, setTargetAudience] = useState(editingCourse?.targetAudience ?? "Tax Officers & Revenue Staff");
+  const [deliveryMethod, setDeliveryMethod] = useState(editingCourse?.deliveryMethod ?? "self_paced");
+  const [language, setLanguage] = useState(editingCourse?.language ?? "English");
+  const [prerequisites, setPrerequisites] = useState(editingCourse?.prerequisites ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
     editingCourse?.cover ?? null,
@@ -283,6 +291,9 @@ export function CourseCreationWizard({
       ? editingCourse.modules.map((mod) => ({
           id: mod.id,
           title: mod.title,
+          description: mod.description ?? "",
+          objectives: mod.objectives ?? "",
+          durationMinutes: mod.durationMinutes || 60,
           lessons: mod.lessons.map((lesson) => ({
             id: lesson.id,
             title: lesson.title,
@@ -304,6 +315,9 @@ export function CourseCreationWizard({
           {
             id: uid("mod"),
             title: "Module 1: Introduction",
+            description: "Foundation and introductory concepts",
+            objectives: "Understand the core concepts, policies, and regulatory framework.",
+            durationMinutes: 60,
             lessons: [
               {
                 id: uid("les"),
@@ -372,7 +386,11 @@ export function CourseCreationWizard({
     };
   }, [editingCourse?.id]);
 
-  const detailsValid = title.trim() !== "" && code.trim() !== "" && description.trim() !== "";
+  const detailsValid =
+    title.trim() !== "" &&
+    code.trim() !== "" &&
+    description.trim() !== "" &&
+    objectives.trim().length >= 10;
 
   /* ── Curriculum Helpers ─────────────────────────────────────────── */
 
@@ -383,6 +401,9 @@ export function CourseCreationWizard({
       {
         id,
         title: `Module ${prev.length + 1}`,
+        description: "",
+        objectives: "",
+        durationMinutes: 60,
         lessons: [
           {
             id: uid("les"),
@@ -656,6 +677,9 @@ export function CourseCreationWizard({
       .filter((m) => m.title.trim() !== "" || m.lessons.some((l) => l.title.trim() !== ""))
       .map((m) => ({
         title: m.title.trim() || "Module",
+        description: m.description?.trim() || undefined,
+        objectives: m.objectives?.trim() || undefined,
+        durationMinutes: m.durationMinutes || undefined,
         lessons: m.lessons
           .filter((l) => l.title.trim() !== "")
           .map((l) => ({
@@ -704,6 +728,12 @@ export function CourseCreationWizard({
           category,
           level,
           description: description.trim(),
+          objectives: objectives.trim(),
+          department: department.trim(),
+          targetAudience: targetAudience.trim(),
+          deliveryMethod: deliveryMethod.trim(),
+          language: language.trim(),
+          prerequisites: prerequisites.trim(),
           cover: coverFile,
           modules: curriculum,
           quiz,
@@ -716,6 +746,12 @@ export function CourseCreationWizard({
           category,
           level,
           description: description.trim(),
+          objectives: objectives.trim(),
+          department: department.trim(),
+          targetAudience: targetAudience.trim(),
+          deliveryMethod: deliveryMethod.trim(),
+          language: language.trim(),
+          prerequisites: prerequisites.trim(),
           cover: coverFile,
           modules: curriculum,
           quiz,
@@ -1095,10 +1131,96 @@ export function CourseCreationWizard({
           <div>
             <label className={labelClass}>Course Description *</label>
             <textarea
-              rows={4}
+              rows={3}
               value={description}
               placeholder="Provide a comprehensive summary of this course, target competencies, and expectations…"
               onChange={(e) => setDescription(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={labelClass}>Course Learning Objectives *</label>
+              <span className="text-[11px] text-slate-400">Min. 10 characters</span>
+            </div>
+            <textarea
+              rows={4}
+              value={objectives}
+              placeholder="Upon completing this course, learners will be able to:
+1. Explain core revenue and tax compliance regulations.
+2. Apply operational auditing standards to everyday workflows.
+3. Utilize automated declaration and reporting tools."
+              onChange={(e) => setObjectives(e.target.value)}
+              className={cn(
+                inputClass,
+                objectives.trim().length > 0 && objectives.trim().length < 10
+                  ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
+                  : "",
+              )}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Owning Department</label>
+              <input
+                type="text"
+                value={department}
+                placeholder="e.g. Tax Audit Division, Ministry of Revenues"
+                onChange={(e) => setDepartment(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Target Audience</label>
+              <input
+                type="text"
+                value={targetAudience}
+                placeholder="e.g. Junior Tax Auditors, Revenue Enforcement Staff"
+                onChange={(e) => setTargetAudience(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Delivery Method</label>
+              <select
+                value={deliveryMethod}
+                onChange={(e) => setDeliveryMethod(e.target.value)}
+                className={inputClass}
+              >
+                <option value="self_paced">Self-Paced Online</option>
+                <option value="instructor_led">Instructor-Led Virtual</option>
+                <option value="blended">Blended Learning</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelClass}>Language</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className={inputClass}
+              >
+                <option value="English">English</option>
+                <option value="Amharic">Amharic (አማርኛ)</option>
+                <option value="Afaan_Oromoo">Afaan Oromoo</option>
+                <option value="Tigrinya">Tigrinya (ትግርኛ)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Prerequisites (Optional)</label>
+            <input
+              type="text"
+              value={prerequisites}
+              placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service"
+              onChange={(e) => setPrerequisites(e.target.value)}
               className={inputClass}
             />
           </div>
@@ -1196,6 +1318,54 @@ export function CourseCreationWizard({
                   {/* Module Lessons Body */}
                   {isModExpanded ? (
                     <div className="p-5 space-y-4">
+                      {/* Module Metadata & Objectives */}
+                      <div className="grid gap-3 sm:grid-cols-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 text-xs">
+                        <div className="sm:col-span-2 space-y-2">
+                          <div>
+                            <label className={labelClass}>Module Learning Objectives *</label>
+                            <textarea
+                              rows={2}
+                              value={mod.objectives ?? ""}
+                              placeholder="Specify the key learning competencies and objectives for this module…"
+                              onChange={(e) => patchModule(mod.id, { objectives: e.target.value })}
+                              className={inputClass}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Module Description (Optional)</label>
+                            <input
+                              type="text"
+                              value={mod.description ?? ""}
+                              placeholder="Brief summary of module scope and focus"
+                              onChange={(e) => patchModule(mod.id, { description: e.target.value })}
+                              className={inputClass}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className={labelClass}>Est. Module Duration (min)</label>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-slate-400" />
+                            <input
+                              type="number"
+                              min={5}
+                              step={5}
+                              value={mod.durationMinutes ?? 60}
+                              onChange={(e) =>
+                                patchModule(mod.id, {
+                                  durationMinutes: parseInt(e.target.value) || 60,
+                                })
+                              }
+                              className={inputClass}
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500">
+                            Estimated study or instructional minutes.
+                          </p>
+                        </div>
+                      </div>
+
                       {mod.lessons.map((lesson, lesIdx) => {
                         const isLesExpanded = expandedLesson === lesson.id;
 
@@ -1414,7 +1584,7 @@ export function CourseCreationWizard({
 
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outline"
                         onClick={() => addLesson(mod.id)}
                         className="w-full gap-1.5 border-dashed"
                       >
@@ -1681,12 +1851,14 @@ export function CourseCreationWizard({
           {/* Course Summary Card */}
           <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
+              <div className="space-y-1">
                 <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{code}</span>
-                <h3 className="text-lg font-bold text-slate-900 mt-0.5">{title}</h3>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="outline">{category}</Badge>
                   <Badge variant="slate">{level.toUpperCase()}</Badge>
+                  <Badge variant="outline">{deliveryMethod.replace("_", " ")}</Badge>
+                  <Badge variant="outline">{language}</Badge>
                 </div>
               </div>
 
@@ -1696,9 +1868,25 @@ export function CourseCreationWizard({
               ) : null}
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-              {description}
-            </p>
+            <div className="border-t border-slate-100 pt-3 space-y-3 text-xs">
+              <div>
+                <p className="font-semibold text-slate-700">Course Description</p>
+                <p className="text-slate-600 mt-0.5 leading-relaxed">{description}</p>
+              </div>
+
+              {objectives ? (
+                <div className="rounded-xl bg-indigo-50/60 p-3 border border-indigo-100/70">
+                  <p className="font-semibold text-indigo-900">Course Learning Objectives</p>
+                  <p className="text-indigo-800/90 mt-1 whitespace-pre-line leading-relaxed">{objectives}</p>
+                </div>
+              ) : null}
+
+              <div className="grid gap-2 sm:grid-cols-3 text-[11px] text-slate-500 pt-1">
+                <div><span className="font-medium text-slate-700">Department:</span> {department || "N/A"}</div>
+                <div><span className="font-medium text-slate-700">Target Audience:</span> {targetAudience || "N/A"}</div>
+                <div><span className="font-medium text-slate-700">Prerequisites:</span> {prerequisites || "None"}</div>
+              </div>
+            </div>
           </div>
 
           {/* Curriculum Breakdown */}
@@ -1721,11 +1909,24 @@ export function CourseCreationWizard({
 
             <div className="space-y-3">
               {modules.map((m, mIdx) => (
-                <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
-                  <p className="font-bold text-slate-800">
-                    Module {mIdx + 1}: {m.title}
-                  </p>
-                  <ul className="mt-2 space-y-1.5 pl-3">
+                <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-bold text-slate-800">
+                      Module {mIdx + 1}: {m.title}
+                    </p>
+                    <span className="text-[11px] text-slate-500">
+                      {m.durationMinutes ? `${m.durationMinutes} min` : "60 min"} · {m.lessons.length} lessons
+                    </span>
+                  </div>
+
+                  {m.objectives ? (
+                    <p className="text-slate-600 bg-white/80 rounded-lg p-2 border border-slate-100">
+                      <span className="font-semibold text-slate-700">Module Objectives: </span>
+                      {m.objectives}
+                    </p>
+                  ) : null}
+
+                  <ul className="space-y-1.5 pl-2">
                     {m.lessons.map((l, lIdx) => (
                       <li key={l.id} className="text-slate-600">
                         <span className="font-medium text-slate-700">
@@ -1805,7 +2006,7 @@ export function CourseCreationWizard({
           ) : (
             <div className="flex items-center gap-2.5">
               <Button
-                variant="secondary"
+                variant="outline"
                 disabled={saving}
                 onClick={() => handleSave(false)}
                 className="shadow-xs"

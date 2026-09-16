@@ -23,7 +23,7 @@ export default function LearnerCatalogPage() {
   const available = useMemo(() => {
     const q = search.trim().toLowerCase();
     return courses.filter((course) => {
-      if (!course.published || course.status !== "approved") return false;
+      if (!course.published && course.status !== "published") return false;
       if (category !== "all" && course.category !== category) return false;
       if (!q) return true;
       return (
@@ -93,15 +93,15 @@ export default function LearnerCatalogPage() {
                 onClick={() => setOpenCourseId(course.id)}
               >
                 {enrolled ? (
-                  <Button size="sm" variant="outline" disabled>
-                    Already enrolled
+                  <Button size="sm" variant="outline" onClick={() => setOpenCourseId(course.id)}>
+                    View Course
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     onClick={(event) => {
                       event.stopPropagation();
-                      void enroll(course.id);
+                      setOpenCourseId(course.id);
                     }}
                   >
                     <BookPlus className="h-3.5 w-3.5" />

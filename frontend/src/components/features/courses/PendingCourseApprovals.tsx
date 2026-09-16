@@ -15,9 +15,10 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export function PendingCourseApprovals() {
-  const { courses, userName, approveCourse, rejectCourse } = useLms();
+  const { courses, userName, approveCourse, rejectCourse, requestChangesCourse } = useLms();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
+  const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
@@ -40,7 +41,9 @@ export function PendingCourseApprovals() {
   }, [courses, userName, search, category]);
 
   const { page, totalPages, setPage, pageItems } = usePagination(pending, 5);
-  const rejectCourseData = courses.find((c) => c.id === rejectId);
+  const targetCourseData = courses.find(
+    (c) => c.id === (rejectId || requestChangesId),
+  );
 
   const confirmReject = async () => {
     if (!rejectId) return;
@@ -51,6 +54,19 @@ export function PendingCourseApprovals() {
     }
     setFlash("Course rejected. The owner can review your feedback and resubmit.");
     setRejectId(null);
+    setReason("");
+    setReasonError(null);
+  };
+
+  const confirmRequestChanges = async () => {
+    if (!requestChangesId) return;
+    const result = await requestChangesCourse(requestChangesId, reason);
+    if (!result.ok) {
+      setReasonError(result.message);
+      return;
+    }
+    setFlash("Changes requested. The course owner has been notified to revise the content.");
+    setRequestChangesId(null);
     setReason("");
     setReasonError(null);
   };
@@ -123,7 +139,26 @@ export function PendingCourseApprovals() {
                     <Check className="h-3.5 w-3.5" />
                     Approve
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setRejectId(course.id)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setRequestChangesId(course.id);
+                      setReason("");
+                      setReasonError(null);
+                    }}
+                  >
+                    Request Changes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => {
+                      setRejectId(course.id);
+                      setReason("");
+                      setReasonError(null);
+                    }}
+                  >
                     <X className="h-3.5 w-3.5" />
                     Reject
                   </Button>
@@ -146,15 +181,24 @@ export function PendingCourseApprovals() {
                   confirmApprove(selectedId);
                   setSelectedId(null);
                 },
+                onRequestChanges: () => {
+                  setRequestChangesId(selectedId);
+                  setSelectedId(null);
+                  setReason("");
+                  setReasonError(null);
+                },
                 onReject: () => {
                   setRejectId(selectedId);
                   setSelectedId(null);
+                  setReason("");
+                  setReasonError(null);
                 },
               }
             : undefined
         }
       />
 
+      {/* Reject Course Modal */}
       <Modal
         open={rejectId !== null}
         onClose={() => {
@@ -162,8 +206,8 @@ export function PendingCourseApprovals() {
           setReason("");
           setReasonError(null);
         }}
-        title="Reject course"
-        subtitle={rejectCourseData ? `${rejectCourseData.code} — ${rejectCourseData.title}` : ""}
+        title="Reject Course"
+        subtitle={targetCourseData ? `${targetCourseData.code} — ${targetCourseData.title}` : ""}
         footer={
           <>
             <Button
@@ -176,13 +220,13 @@ export function PendingCourseApprovals() {
               Cancel
             </Button>
             <Button variant="danger" onClick={confirmReject} disabled={!reason.trim()}>
-              Reject course
+              Confirm Reject
             </Button>
           </>
         }
       >
         <label htmlFor="rejectionReason" className="mb-1.5 block text-xs font-semibold text-slate-600">
-          Reason for rejection
+          Reason for rejection *
         </label>
         <textarea
           id="rejectionReason"
@@ -193,7 +237,52 @@ export function PendingCourseApprovals() {
             setReason(event.target.value);
             setReasonError(null);
           }}
-          placeholder="Please explain why this course needs revision..."
+          placeholder="Specify why this course is rejected and cannot be approved..."
+          className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+        />
+        {reasonError ? <p className="mt-2 text-xs text-red-600">{reasonError}</p> : null}
+      </Modal>
+
+      {/* Request Changes Modal */}
+      <Modal
+        open={requestChangesId !== null}
+        onClose={() => {
+          setRequestChangesId(null);
+          setReason("");
+          setReasonError(null);
+        }}
+        title="Request Changes"
+        subtitle={targetCourseData ? `${targetCourseData.code} — ${targetCourseData.title}` : ""}
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setRequestChangesId(null);
+                setReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={confirmRequestChanges} disabled={!reason.trim()}>
+              Send Revision Request
+            </Button>
+          </>
+        }
+      >
+        <label htmlFor="changeReason" className="mb-1.5 block text-xs font-semibold text-slate-600">
+          Required changes and feedback *
+        </label>
+        <textarea
+          id="changeReason"
+          required
+          rows={4}
+          value={reason}
+          onChange={(event) => {
+            setReason(event.target.value);
+            setReasonError(null);
+          }}
+          placeholder="Describe the required updates, missing materials, or corrections the course owner needs to make before approval..."
           className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
         />
         {reasonError ? <p className="mt-2 text-xs text-red-600">{reasonError}</p> : null}

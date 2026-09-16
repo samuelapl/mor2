@@ -46,7 +46,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   course_owner: [
     { label: "Dashboard", href: "/course-owner", icon: LayoutDashboard },
     { label: "My Courses", href: "/course-owner/my-courses", icon: BookOpen },
-    { label: "Content Status", href: "/course-owner/content-status", icon: ClipboardList },
   ],
   content_approver: [
     { label: "Dashboard", href: "/content-approver", icon: LayoutDashboard },
@@ -55,9 +54,9 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   ],
   training_admin: [
     { label: "Dashboard", href: "/training-admin", icon: LayoutDashboard },
-    { label: "Course Management", href: "/training-admin/courses", icon: BookOpenCheck },
-    { label: "Enrollments", href: "/training-admin/enrollments", icon: Users },
-    { label: "Publish Courses", href: "/training-admin/publish", icon: Send },
+    { label: "Pending to Publish", href: "/training-admin/publish", icon: Hourglass },
+    { label: "View Published Course", href: "/training-admin/courses", icon: BookOpenCheck },
+    { label: "Training Sessions", href: "/training-admin/sessions", icon: Presentation },
     { label: "Calendar", href: "/training-admin/calendar", icon: CalendarDays },
   ],
   trainer: [

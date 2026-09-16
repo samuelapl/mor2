@@ -41,12 +41,12 @@ export default function PublishCoursesPage() {
   return (
     <PageShell
       role="training_admin"
-      title="Publish Courses"
-      description="Release approved courses so learners can enroll and begin training."
+      title="Pending to Publish"
+      description="Approved courses awaiting publication. Assign a trainer to publish them to the learner catalog."
     >
       <PageSection
-        title="Ready to publish"
-        description="Approved courses that have not been released yet. Assign a trainer first — publication requires at least one trainer."
+        title="Courses Awaiting Publication"
+        description="These courses have passed content review and approval and are ready to be published to learners."
       >
         {ready.length === 0 ? (
           <EmptyState

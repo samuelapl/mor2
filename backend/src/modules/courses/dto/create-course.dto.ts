@@ -41,6 +41,42 @@ export class CreateCourseDto {
   @Type(() => LocalizedTextDto)
   description?: LocalizedTextDto;
 
+  @ApiPropertyOptional({ type: LocalizedTextDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedTextDto)
+  objectives?: LocalizedTextDto;
+
+  @ApiPropertyOptional({ example: 'Tax' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ example: 'Revenue Audit' })
+  @IsOptional()
+  @IsString()
+  department?: string;
+
+  @ApiPropertyOptional({ example: 'Tax Officers and Auditors' })
+  @IsOptional()
+  @IsString()
+  targetAudience?: string;
+
+  @ApiPropertyOptional({ example: 'Online / Self-Paced' })
+  @IsOptional()
+  @IsString()
+  deliveryMethod?: string;
+
+  @ApiPropertyOptional({ example: 'en' })
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  @ApiPropertyOptional({ example: 'Basic knowledge of Ethiopian tax laws' })
+  @IsOptional()
+  @IsString()
+  prerequisites?: string;
+
   @ApiPropertyOptional({ example: 20 })
   @IsOptional()
   @IsNumber()

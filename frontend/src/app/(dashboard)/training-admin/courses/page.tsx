@@ -15,12 +15,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export default function CourseManagementPage() {
-  const { courses, publishCourse, userName } = useLms();
+  const { courses, publishCourse, unpublishCourse, userName } = useLms();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("published");
   const [category, setCategory] = useState("all");
   const [owner, setOwner] = useState("all");
+  const [flash, setFlash] = useState<string | null>(null);
 
   const owners = useMemo(() => {
     const ids = Array.from(new Set(courses.map((course) => course.ownerId)));
@@ -30,7 +31,7 @@ export default function CourseManagementPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return courses.filter((course) => {
-      if (status === "published" && !course.published) return false;
+      if (status === "published" && !course.published && course.status !== "published") return false;
       if (status !== "all" && status !== "published" && course.status !== status) return false;
       if (category !== "all" && course.category !== category) return false;
       if (owner !== "all" && course.ownerId !== owner) return false;
@@ -44,16 +45,28 @@ export default function CourseManagementPage() {
   }, [courses, userName, search, status, category, owner]);
   const { page, totalPages, setPage, pageItems } = usePagination(filtered, 5);
 
+  const handleUnpublish = async (courseId: string) => {
+    if (!window.confirm("Are you sure you want to unpublish this course? Learners will no longer see it in the catalog.")) return;
+    const res = await unpublishCourse(courseId);
+    setFlash(res.ok ? "Course unpublished successfully." : res.message);
+  };
+
   return (
     <PageShell
       role="training_admin"
-      title="Course Management"
-      description="All courses in the catalog with their approval and publication status."
+      title="View Published Course"
+      description="Inspect active published courses in the institutional catalog, view curriculum structures, and manage publication availability."
     >
+      {flash ? (
+        <div className="mb-4 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700">
+          {flash}
+        </div>
+      ) : null}
+
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search courses..."
+        searchPlaceholder="Search published courses..."
         selects={[
           {
             id: "status",
@@ -61,12 +74,11 @@ export default function CourseManagementPage() {
             value: status,
             onChange: setStatus,
             options: [
-              { value: "all", label: "All" },
+              { value: "published", label: "Published Courses" },
+              { value: "all", label: "All Courses" },
               { value: "draft", label: "Draft" },
               { value: "under_review", label: "Pending approval" },
               { value: "approved", label: "Approved" },
-              { value: "rejected", label: "Rejected" },
-              { value: "published", label: "Published" },
             ],
           },
           {
@@ -75,7 +87,7 @@ export default function CourseManagementPage() {
             value: category,
             onChange: setCategory,
             options: [
-              { value: "all", label: "All" },
+              { value: "all", label: "All Categories" },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
@@ -85,24 +97,24 @@ export default function CourseManagementPage() {
             value: owner,
             onChange: setOwner,
             options: [
-              { value: "all", label: "All" },
+              { value: "all", label: "All Owners" },
               ...owners.map((item) => ({ value: item.id, label: item.name })),
             ],
           },
         ]}
         onClear={() => {
           setSearch("");
-          setStatus("all");
+          setStatus("published");
           setCategory("all");
           setOwner("all");
         }}
-        hasActiveFilters={search !== "" || status !== "all" || category !== "all" || owner !== "all"}
+        hasActiveFilters={search !== "" || status !== "published" || category !== "all" || owner !== "all"}
       />
 
       {filtered.length === 0 ? (
-        <EmptyState title="No courses match" description="Clear filters to see the full catalog." />
+        <EmptyState title="No published courses found" description="Adjust filters to explore other courses or publish courses from the Pending to Publish queue." />
       ) : (
-        <Table columns={["Course", "Owner", "Status", "Publish", "Learners", ""]}>
+        <Table columns={["Course", "Owner", "Status", "Publish State", "Learners", "Actions"]}>
           {pageItems.map((course) => (
             <tr key={course.id}>
               <Td>
@@ -127,7 +139,11 @@ export default function CourseManagementPage() {
                     <Eye className="h-3.5 w-3.5" />
                     Details
                   </Button>
-                  {!course.published && course.status === "approved" ? (
+                  {course.published ? (
+                    <Button size="sm" variant="danger" onClick={() => void handleUnpublish(course.id)}>
+                      Unpublish
+                    </Button>
+                  ) : course.status === "approved" ? (
                     <Button size="sm" onClick={() => void publishCourse(course.id)}>
                       <Globe2 className="h-3.5 w-3.5" />
                       Publish

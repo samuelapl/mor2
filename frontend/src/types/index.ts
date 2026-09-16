@@ -55,6 +55,9 @@ export interface Lesson {
 export interface Module {
   id: string;
   title: string;
+  description?: string;
+  objectives?: string;
+  durationMinutes?: number;
   lessons: Lesson[];
   unlocked?: boolean;
 }
@@ -96,7 +99,14 @@ export interface Course {
   code: string;
   title: string;
   category: string;
+  department?: string;
+  targetAudience?: string;
+  deliveryMethod?: string;
+  language?: string;
+  prerequisites?: string;
+  objectives?: string;
   description: string;
+  version?: number;
   ownerId: string;
   trainerId: string | null;
   trainerIds?: string[];

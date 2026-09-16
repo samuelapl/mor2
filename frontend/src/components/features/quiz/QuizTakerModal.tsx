@@ -230,7 +230,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
               </span>
               <div>
                 <p className="text-xs font-bold text-slate-800">
-                  Attempt {attempt.attemptNumber} of {assessment.maxAttempts}
+                  Attempt {attempt?.attemptNumber ?? 1} of {assessment.maxAttempts}
                 </p>
                 <p className="text-[11px] text-slate-500">
                   Passing score: {assessment.passingScore}%
