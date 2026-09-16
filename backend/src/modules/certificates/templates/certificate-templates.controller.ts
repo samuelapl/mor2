@@ -9,10 +9,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { RoleName } from '@prisma/client';
 import { CertificateTemplatesService } from './certificate-templates.service';
 import { CreateCertificateTemplateDto, UpdateCertificateTemplateDto } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -20,7 +19,7 @@ import { RolesGuard } from '@common/guards';
 @ApiTags('certificate-templates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+@Permissions('certificate.manage')
 @Controller('certificate-templates')
 export class CertificateTemplatesController {
   constructor(private readonly certificateTemplatesService: CertificateTemplatesService) {}

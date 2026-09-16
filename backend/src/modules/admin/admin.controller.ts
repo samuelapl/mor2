@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { AdminService } from './admin.service';
 import { DateRangeDto } from './dto';
-import { Roles } from '@common/decorators';
+import { Permissions, Roles } from '@common/decorators';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
 
@@ -15,14 +15,14 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('dashboard/stats')
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('dashboard.stats')
   @ApiOperation({ summary: 'Get dashboard statistics (system/training admin)' })
   async stats(@Query() dto: DateRangeDto) {
     return this.adminService.getDashboardStats(dto);
   }
 
   @Get('roles/distribution')
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('dashboard.stats')
   @ApiOperation({ summary: 'Get user role distribution' })
   async roleDistribution() {
     return this.adminService.getRoleDistribution();

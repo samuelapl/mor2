@@ -94,6 +94,55 @@ model UserRole {
   @@map("user_roles")
 }
 
+// ──────────────────────────────────────────────────────────
+// 2b. Runtime-editable permission matrix (additive — does not
+// touch UserRole/RoleName; a role is still just a RoleName value)
+// ──────────────────────────────────────────────────────────
+
+model Role {
+  id            String   @id @default(uuid())
+  name          RoleName @unique
+  label         String
+  description   String?
+  dashboardPath String   @map("dashboard_path")
+  isSystem      Boolean  @default(true) @map("is_system")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  resource    String
+  action      String
+  scope       String  @default("ALL")
+  description String?
+  isSystem    Boolean @default(true) @map("is_system")
+
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  grantedAt    DateTime @default(now()) @map("granted_at")
+  grantedBy    String?  @map("granted_by")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
 model PasswordReset {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")

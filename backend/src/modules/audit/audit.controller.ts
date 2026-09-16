@@ -1,9 +1,8 @@
 import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { RoleName } from '@prisma/client';
 import { AuditService } from './audit.service';
-import { Roles } from '@common/decorators';
+import { Permissions } from '@common/decorators';
 import { PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -11,7 +10,7 @@ import { RolesGuard } from '@common/guards';
 @ApiTags('audit')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(RoleName.SYSTEM_ADMIN)
+@Permissions('audit.view')
 @Controller('audit')
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}

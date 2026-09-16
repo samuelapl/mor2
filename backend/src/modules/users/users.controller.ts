@@ -20,7 +20,7 @@ import {
   AdminResetPasswordDto,
   RejectRegistrationDto,
 } from './dto';
-import { CurrentUser, Roles } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -33,7 +33,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('user.view')
   @ApiOperation({ summary: 'List all users (admin only)' })
   @ApiQuery({ name: 'registrationStatus', enum: ApprovalStatus, required: false })
   async findAll(
@@ -48,8 +48,15 @@ export class UsersController {
     return this.usersService.findById(user.id);
   }
 
+  @Get('trainers')
+  @Permissions('course.assign_trainer')
+  @ApiOperation({ summary: 'List active trainers (for trainer-assignment pickers only)' })
+  async findTrainers() {
+    return this.usersService.findAll({ role: RoleName.TRAINER, limit: 100 });
+  }
+
   @Get(':id')
-  @Roles(RoleName.SYSTEM_ADMIN, RoleName.TRAINING_ADMIN)
+  @Permissions('user.view')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string) {
@@ -63,7 +70,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Update user by ID (admin)' })
   @ApiParam({ name: 'id', type: String })
   async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
@@ -77,14 +84,14 @@ export class UsersController {
   }
 
   @Post('bulk')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Bulk-create users from a spreadsheet import (idempotent by email)' })
   async bulkCreate(@Body() dto: BulkCreateUsersDto) {
     return this.usersService.bulkCreate(dto);
   }
 
   @Patch(':id/password')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Force a password reset for a user (system admin)' })
   @ApiParam({ name: 'id', type: String })
   async adminResetPassword(@Param('id') id: string, @Body() dto: AdminResetPasswordDto) {
@@ -92,14 +99,14 @@ export class UsersController {
   }
 
   @Post('assign-role')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('role.manage')
   @ApiOperation({ summary: 'Assign a role to a user' })
   async assignRole(@Body() dto: AssignRoleDto) {
     return this.usersService.assignRole(dto);
   }
 
   @Delete(':id/roles/:role')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('role.manage')
   @ApiOperation({ summary: 'Remove a role from a user' })
   @ApiParam({ name: 'id', type: String })
   @ApiParam({ name: 'role', enum: RoleName })
@@ -108,7 +115,7 @@ export class UsersController {
   }
 
   @Post(':id/approve-registration')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Approve a pending registration' })
   @ApiParam({ name: 'id', type: String })
   async approveRegistration(@Param('id') id: string) {
@@ -116,7 +123,7 @@ export class UsersController {
   }
 
   @Post(':id/reject-registration')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Reject a pending registration with an optional reason' })
   @ApiParam({ name: 'id', type: String })
   async rejectRegistration(@Param('id') id: string, @Body() dto: RejectRegistrationDto) {
@@ -124,7 +131,7 @@ export class UsersController {
   }
 
   @Post(':id/deactivate')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Deactivate a user' })
   @ApiParam({ name: 'id', type: String })
   async deactivate(@Param('id') id: string) {
@@ -132,7 +139,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(RoleName.SYSTEM_ADMIN)
+  @Permissions('user.manage')
   @ApiOperation({ summary: 'Soft delete a user' })
   @ApiParam({ name: 'id', type: String })
   async remove(@Param('id') id: string) {
