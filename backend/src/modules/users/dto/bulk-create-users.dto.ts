@@ -3,13 +3,11 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { RoleName } from '@prisma/client';
 
 export class BulkCreateUserItemDto {
   @ApiProperty({ example: 'John' })
@@ -31,10 +29,10 @@ export class BulkCreateUserItemDto {
   @IsString()
   password?: string;
 
-  @ApiPropertyOptional({ enum: RoleName, default: RoleName.LEARNER })
+  @ApiPropertyOptional({ example: 'LEARNER', default: 'LEARNER' })
   @IsOptional()
-  @IsEnum(RoleName)
-  role?: RoleName;
+  @IsString()
+  role?: string;
 }
 
 export class BulkCreateUsersDto {

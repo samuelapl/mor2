@@ -83,7 +83,7 @@ enum RoleName {
 model UserRole {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  role      RoleName
+  role      String
   grantedAt DateTime @default(now()) @map("granted_at")
   grantedBy String?  @map("granted_by")
 
@@ -101,7 +101,7 @@ model UserRole {
 
 model Role {
   id            String   @id @default(uuid())
-  name          RoleName @unique
+  name          String   @unique
   label         String
   description   String?
   dashboardPath String   @map("dashboard_path")

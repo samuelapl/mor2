@@ -10,6 +10,10 @@ import { AppValidationPipe } from './common/pipes';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Trust one reverse-proxy hop so req.ip reflects the real client address
+  // (X-Forwarded-For) once this sits behind nginx/a load balancer.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // ── Security ──────────────────────────────────────
   app.use(helmet());
   app.enableCors({

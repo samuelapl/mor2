@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/c
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { PermissionsService } from './permissions.service';
-import { SetRolePermissionsDto } from './dto';
+import { SetRolePermissionsDto, CreateRoleDto } from './dto';
 import { Permissions, Roles } from '@common/decorators';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -27,6 +27,21 @@ export class PermissionsController {
   @ApiOperation({ summary: 'List the 6 roles with their granted permission codes' })
   async listRoles() {
     return this.permissionsService.listRolesWithPermissions();
+  }
+
+  @Post('roles')
+  @Permissions('permission.manage')
+  @ApiOperation({ summary: 'Create a new role (starts with zero permissions)' })
+  async createRole(@Body() dto: CreateRoleDto) {
+    return this.permissionsService.createRole(dto);
+  }
+
+  @Delete('roles/:id')
+  @Permissions('permission.manage')
+  @ApiOperation({ summary: 'Delete a non-built-in role (rejected if any user still holds it)' })
+  @ApiParam({ name: 'id', type: String })
+  async deleteRole(@Param('id') id: string) {
+    return this.permissionsService.deleteRole(id);
   }
 
   @Post('roles/:id/permissions')
