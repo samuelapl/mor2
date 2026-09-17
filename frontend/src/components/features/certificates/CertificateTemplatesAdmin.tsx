@@ -12,7 +12,7 @@ import {
   Wand2,
   X,
 } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -343,14 +343,29 @@ export function CertificateTemplatesAdmin() {
         </div>
       )}
 
-      <Modal
+      <WorkspaceDetailOverlay
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
-        size="xl"
-        title={editing ? "Edit template" : "New certificate template"}
-        subtitle="Arrange the fields that will be rendered onto the certificate."
+        title={editing ? "Edit Certificate Template" : "New Certificate Template"}
+        subtitle="Arrange the fields and background that will be rendered onto the certificate."
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" disabled={busy} onClick={() => void save()}>
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : editing ? (
+                "Save changes"
+              ) : (
+                "Create template"
+              )}
+            </Button>
+          </div>
+        }
       >
-        <div className="space-y-5">
+        <div className="w-full space-y-6 pb-12">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Template name</label>
@@ -558,22 +573,8 @@ export function CertificateTemplatesAdmin() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <Button variant="ghost" onClick={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button disabled={busy} onClick={() => void save()}>
-              {busy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : editing ? (
-                "Save changes"
-              ) : (
-                "Create template"
-              )}
-            </Button>
-          </div>
         </div>
-      </Modal>
+      </WorkspaceDetailOverlay>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function PageShell({
   children,
 }: PageShellProps) {
   return (
-    <div className="mx-auto max-w-6xl animate-fade-in-up px-6 py-8 lg:px-8">
+    <div className="w-full animate-fade-in px-6 py-8 lg:px-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 bg-white/70 px-3 py-1 shadow-sm backdrop-blur-sm">

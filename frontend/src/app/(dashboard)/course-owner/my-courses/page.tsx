@@ -282,7 +282,7 @@ export default function MyCoursesPage() {
         title="Create Course"
         subtitle="Build your course step-by-step: details, curriculum with content, final assessment, and review."
       >
-        <div className="mx-auto max-w-5xl">
+        <div className="w-full">
           <CourseCreationWizard
             onDone={() => {
               setCreateOpen(false);

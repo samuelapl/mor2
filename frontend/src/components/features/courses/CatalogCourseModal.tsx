@@ -66,7 +66,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
         </Button>
       }
     >
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="w-full space-y-6">
         {course.cover ? (
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}

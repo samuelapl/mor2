@@ -6,16 +6,26 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  Award,
   Bold,
   Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
+  ClipboardList,
   Clock,
+  Code,
+  Copy,
   ExternalLink,
+  FileCheck,
   FileQuestion,
+  FileSpreadsheet,
   FileText,
+  GripVertical,
   Headphones,
   Heading2,
   Heading3,
@@ -25,7 +35,10 @@ import {
   Link as LinkIcon,
   List,
   ListOrdered,
+  Lock,
   Loader2,
+  Minus,
+  Music,
   Plus,
   Presentation,
   Quote,
@@ -38,6 +51,7 @@ import {
   Underline as UnderlineIcon,
   Upload,
   Video,
+  X,
 } from "lucide-react";
 import type { Attachment, Course, CourseLevel, Question, QuestionType, Quiz } from "@/types";
 import { Button } from "@/components/ui/Button";
@@ -65,7 +79,10 @@ export type WizardContentType =
   | "AUDIO"
   | "PRESENTATION"
   | "INTERACTIVE"
-  | "EXTERNAL_LINK";
+  | "EXTERNAL_LINK"
+  | "ASSIGNMENT"
+  | "QUIZ"
+  | "ASSESSMENT";
 
 export interface LessonDraft {
   id: string;
@@ -79,6 +96,21 @@ export interface LessonDraft {
   uploading?: boolean;
   uploadError?: string | null;
   subLessons?: LessonDraft[];
+  required?: boolean;
+  /** Assignment-specific fields */
+  assignmentInstructions?: string;
+  assignmentMaxMarks?: number;
+  assignmentDueDate?: string;
+  assignmentFileTypes?: string[];
+  assignmentMaxFileSizeMb?: number;
+  /** Quiz / Assessment specific fields */
+  quizQuestions?: Question[];
+  quizPassMark?: number;
+  quizTimeLimitMinutes?: number | null;
+  quizAttemptsAllowed?: number;
+  quizShuffle?: boolean;
+  assessmentAllowEarlySubmit?: boolean;
+  assessmentAutoSubmitOnExpire?: boolean;
 }
 
 export interface ModuleDraft {
@@ -182,11 +214,13 @@ const TOOLBAR_BUTTONS = [
 function RichEditor({
   value,
   onChange,
-  placeholder = "Enter lesson content here…",
+  placeholder = "Enter content here…",
+  minHeight = 140,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  minHeight?: number;
 }) {
   const editor = useEditor({
     extensions: [
@@ -203,8 +237,8 @@ function RichEditor({
     content: value,
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm max-w-none px-4 py-3 min-h-[140px] text-slate-800 focus:outline-none",
+        class: `prose prose-sm max-w-none px-4 py-3 text-slate-800 focus:outline-none`,
+        style: `min-height: ${minHeight}px`,
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -249,6 +283,124 @@ function RichEditor({
   );
 }
 
+function CompactRichEditor({
+  value,
+  onChange,
+  placeholder = "Enter question statement, prompt, or scenario…",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: false,
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder,
+        emptyEditorClass:
+          "before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none",
+      }),
+    ],
+    content: value,
+    editorProps: {
+      attributes: {
+        class: "prose prose-sm max-w-none px-3 py-2 text-slate-800 focus:outline-none min-h-[48px]",
+      },
+    },
+    onUpdate: ({ editor: ed }) => {
+      onChange(ed.getHTML());
+    },
+    immediatelyRender: false,
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    if (editor.getHTML() !== value) {
+      editor.commands.setContent(value);
+    }
+  }, [value, editor]);
+
+  if (!editor) return null;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/10">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50/70 px-2 py-1">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("bold") && "bg-indigo-100 text-indigo-700 font-bold",
+          )}
+          title="Bold"
+        >
+          <Bold className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("italic") && "bg-indigo-100 text-indigo-700",
+          )}
+          title="Italic"
+        >
+          <Italic className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("underline") && "bg-indigo-100 text-indigo-700",
+          )}
+          title="Underline"
+        >
+          <UnderlineIcon className="h-3.5 w-3.5" />
+        </button>
+        <span className="h-3 w-px bg-slate-200 mx-0.5" />
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("bulletList") && "bg-indigo-100 text-indigo-700",
+          )}
+          title="Bullet List"
+        >
+          <List className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("orderedList") && "bg-indigo-100 text-indigo-700",
+          )}
+          title="Numbered List"
+        >
+          <ListOrdered className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          className={cn(
+            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
+            editor.isActive("code") && "bg-indigo-100 text-indigo-700",
+          )}
+          title="Code"
+        >
+          <Code className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Wizard Component                                                          */
 /* -------------------------------------------------------------------------- */
@@ -258,7 +410,7 @@ export function CourseCreationWizard({
   onCancel,
   editingCourse,
 }: CourseCreationWizardProps) {
-  const { createCourse, updateCourseFull, submitForApproval } = useLms();
+  const { courses, createCourse, updateCourseFull, submitForApproval } = useLms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -275,10 +427,10 @@ export function CourseCreationWizard({
   const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? "basic");
   const [description, setDescription] = useState(editingCourse?.description ?? "");
   const [objectives, setObjectives] = useState(editingCourse?.objectives ?? "");
-  const [department, setDepartment] = useState(editingCourse?.department ?? "Ministry of Revenues");
-  const [targetAudience, setTargetAudience] = useState(editingCourse?.targetAudience ?? "Tax Officers & Revenue Staff");
-  const [deliveryMethod, setDeliveryMethod] = useState(editingCourse?.deliveryMethod ?? "self_paced");
-  const [language, setLanguage] = useState(editingCourse?.language ?? "English");
+  const [department, setDepartment] = useState(editingCourse?.department ?? "");
+  const [targetAudience, setTargetAudience] = useState(editingCourse?.targetAudience ?? "");
+  const [deliveryMethod] = useState(editingCourse?.deliveryMethod ?? "self_paced");
+  const [language] = useState(editingCourse?.language ?? "English");
   const [prerequisites, setPrerequisites] = useState(editingCourse?.prerequisites ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
@@ -286,54 +438,71 @@ export function CourseCreationWizard({
   );
 
   // Step 2: Curriculum
-  const [modules, setModules] = useState<ModuleDraft[]>(() =>
-    editingCourse?.modules && editingCourse.modules.length > 0
-      ? editingCourse.modules.map((mod) => ({
-          id: mod.id,
-          title: mod.title,
-          description: mod.description ?? "",
-          objectives: mod.objectives ?? "",
-          durationMinutes: mod.durationMinutes || 60,
-          lessons: mod.lessons.map((lesson) => ({
-            id: lesson.id,
-            title: lesson.title,
-            content: lesson.content ?? "",
-            durationMin: lesson.durationMin || 15,
-            contentType: (lesson.contentType as WizardContentType) || "DOCUMENT",
-            resourceUrl: lesson.resourceUrl || "",
-            subLessons: (lesson.subLessons ?? []).map((sub) => ({
-              id: sub.id,
-              title: sub.title,
-              content: sub.content ?? "",
-              durationMin: sub.durationMin || 15,
-              contentType: (sub.contentType as WizardContentType) || "DOCUMENT",
-              resourceUrl: sub.resourceUrl || "",
-            })),
+  const [modules, setModules] = useState<ModuleDraft[]>(() => {
+    if (editingCourse?.modules && editingCourse.modules.length > 0) {
+      return editingCourse.modules.map((mod) => ({
+        id: mod.id,
+        title: mod.title,
+        description: mod.description ?? "",
+        objectives: mod.objectives ?? "",
+        durationMinutes: mod.durationMinutes || 60,
+        lessons: mod.lessons.map((lesson) => ({
+          id: lesson.id,
+          title: lesson.title,
+          content: lesson.content ?? "",
+          durationMin: lesson.durationMin || 15,
+          contentType: (lesson.contentType as WizardContentType) || "DOCUMENT",
+          resourceUrl: lesson.resourceUrl || "",
+          required: true,
+          assignmentInstructions:
+            lesson.contentType === "ASSIGNMENT" ? lesson.content ?? "" : undefined,
+          assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
+          assignmentMaxMarks: 100,
+          subLessons: (lesson.subLessons ?? []).map((sub) => ({
+            id: sub.id,
+            title: sub.title,
+            content: sub.content ?? "",
+            durationMin: sub.durationMin || 15,
+            contentType: (sub.contentType as WizardContentType) || "DOCUMENT",
+            resourceUrl: sub.resourceUrl || "",
+            required: true,
+            assignmentInstructions:
+              sub.contentType === "ASSIGNMENT" ? sub.content ?? "" : undefined,
+            assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
+            assignmentMaxMarks: 100,
           })),
-        }))
-      : [
-          {
-            id: uid("mod"),
-            title: "Module 1: Introduction",
-            description: "Foundation and introductory concepts",
-            objectives: "Understand the core concepts, policies, and regulatory framework.",
-            durationMinutes: 60,
-            lessons: [
-              {
-                id: uid("les"),
-                title: "Lesson 1: Overview and Objectives",
-                content: "",
-                durationMin: 15,
-                contentType: "DOCUMENT",
-                resourceUrl: "",
-                subLessons: [],
-              },
-            ],
-          },
-        ],
-  );
-  const [expandedModule, setExpandedModule] = useState<string | null>(null);
-  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+        })),
+      }));
+    }
+    // New course — start empty, no dummy content
+    return [];
+  });
+
+  // Expand/collapse: use Sets for multi-open support
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  const [expandedSubLessons, setExpandedSubLessons] = useState<Set<string>>(new Set());
+
+  const toggleModule = (id: string) =>
+    setExpandedModules((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleLesson = (id: string) =>
+    setExpandedLessons((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleSubLesson = (id: string) =>
+    setExpandedSubLessons((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   // Step 3: Final Assessment & Completion Rules
   const [quizTitle, setQuizTitle] = useState("Final Assessment");
@@ -343,6 +512,44 @@ export function CourseCreationWizard({
   const [allowEarlySubmission, setAllowEarlySubmission] = useState(true);
   const [autoSubmitOnExpire, setAutoSubmitOnExpire] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [bankQuestions, setBankQuestions] = useState<Question[]>([]);
+
+  // Load course / question bank questions
+  useEffect(() => {
+    const targetCourseId = editingCourse?.id || courses[0]?.id;
+    if (!targetCourseId) return;
+
+    fetchCourseAssessments(targetCourseId)
+      .then(async (assessments) => {
+        const loaded: Question[] = [];
+        for (const ass of assessments) {
+          try {
+            const detail = await fetchAssessmentWithAnswers(ass.id);
+            if (detail?.questions && Array.isArray(detail.questions)) {
+              for (const q of detail.questions as any[]) {
+                const type: QuestionType =
+                  q.type === "TRUE_FALSE"
+                    ? "true_false"
+                    : q.type === "SHORT_ANSWER"
+                      ? "short_answer"
+                      : "multiple_choice";
+                loaded.push({
+                  id: q.id || uid("bank"),
+                  type,
+                  text: q.question || "",
+                  options: Array.isArray(q.options) ? q.options : ["True", "False"],
+                  correctIndex: typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+                  answerText: typeof q.correctAnswer === "string" ? q.correctAnswer : "",
+                  points: q.points || 10,
+                });
+              }
+            }
+          } catch {}
+        }
+        if (loaded.length > 0) setBankQuestions(loaded);
+      })
+      .catch(() => {});
+  }, [courses, editingCourse?.id]);
 
   // Prefill assessment if editing
   useEffect(() => {
@@ -386,11 +593,14 @@ export function CourseCreationWizard({
     };
   }, [editingCourse?.id]);
 
+  // Validation
+  const descriptionText = description.replace(/<[^>]+>/g, "").trim();
+  const objectivesText = objectives.replace(/<[^>]+>/g, "").trim();
   const detailsValid =
     title.trim() !== "" &&
     code.trim() !== "" &&
-    description.trim() !== "" &&
-    objectives.trim().length >= 10;
+    descriptionText !== "" &&
+    objectivesText.length >= 10;
 
   /* ── Curriculum Helpers ─────────────────────────────────────────── */
 
@@ -400,24 +610,14 @@ export function CourseCreationWizard({
       ...prev,
       {
         id,
-        title: `Module ${prev.length + 1}`,
+        title: "",
         description: "",
         objectives: "",
         durationMinutes: 60,
-        lessons: [
-          {
-            id: uid("les"),
-            title: "Lesson 1",
-            content: "",
-            durationMin: 15,
-            contentType: "DOCUMENT",
-            resourceUrl: "",
-            subLessons: [],
-          },
-        ],
+        lessons: [],
       },
     ]);
-    setExpandedModule(id);
+    setExpandedModules((prev) => new Set(Array.from(prev).concat(id)));
   };
 
   const patchModule = (id: string, patch: Partial<ModuleDraft>) => {
@@ -437,11 +637,28 @@ export function CourseCreationWizard({
 
   const removeModule = (id: string) => {
     setModules((prev) => prev.filter((m) => m.id !== id));
-    setExpandedModule((prev) => (prev === id ? null : prev));
+    setExpandedModules((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
-  const addLesson = (moduleId: string) => {
+  const addLesson = (
+    moduleId: string,
+    type: WizardContentType = "DOCUMENT",
+    presetTitle = "",
+  ) => {
     const lessonId = uid("les");
+    const defaultTitle =
+      presetTitle ||
+      (type === "ASSIGNMENT"
+        ? "Module Assignment"
+        : type === "QUIZ"
+          ? "Module Quiz"
+          : type === "ASSESSMENT"
+            ? "Module Assessment"
+            : "");
     setModules((prev) =>
       prev.map((m) =>
         m.id === moduleId
@@ -451,19 +668,32 @@ export function CourseCreationWizard({
                 ...m.lessons,
                 {
                   id: lessonId,
-                  title: `Lesson ${m.lessons.length + 1}`,
+                  title: defaultTitle,
                   content: "",
-                  durationMin: 15,
-                  contentType: "DOCUMENT",
+                  durationMin: type === "ASSIGNMENT" ? 30 : type === "ASSESSMENT" ? 45 : 15,
+                  contentType: type,
                   resourceUrl: "",
+                  required: true,
                   subLessons: [],
+                  assignmentMaxMarks: type === "ASSIGNMENT" ? 100 : undefined,
+                  assignmentInstructions: type === "ASSIGNMENT" ? "" : undefined,
+                  assignmentFileTypes: type === "ASSIGNMENT" ? ["PDF", "DOCX", "PPTX"] : undefined,
+                  assignmentMaxFileSizeMb: type === "ASSIGNMENT" ? 10 : undefined,
+                  quizQuestions:
+                    type === "QUIZ" || type === "ASSESSMENT" ? [blankQuestion()] : undefined,
+                  quizPassMark: type === "QUIZ" || type === "ASSESSMENT" ? 70 : undefined,
+                  quizTimeLimitMinutes: type === "QUIZ" ? 20 : type === "ASSESSMENT" ? 45 : undefined,
+                  quizAttemptsAllowed: type === "QUIZ" ? 3 : type === "ASSESSMENT" ? 2 : undefined,
+                  quizShuffle: false,
+                  assessmentAllowEarlySubmit: true,
+                  assessmentAutoSubmitOnExpire: true,
                 },
               ],
             }
           : m,
       ),
     );
-    setExpandedLesson(lessonId);
+    setExpandedLessons((prev) => new Set(Array.from(prev).concat(lessonId)));
   };
 
   const patchLesson = (moduleId: string, lessonId: string, patch: Partial<LessonDraft>) => {
@@ -501,8 +731,12 @@ export function CourseCreationWizard({
     );
   };
 
-  // Sub-lesson helpers
-  const addSubLesson = (moduleId: string, lessonId: string) => {
+  const addSubLesson = (
+    moduleId: string,
+    lessonId: string,
+    type: WizardContentType = "DOCUMENT",
+    presetTitle = "",
+  ) => {
     setModules((prev) =>
       prev.map((m) => {
         if (m.id !== moduleId) return m;
@@ -511,17 +745,40 @@ export function CourseCreationWizard({
           lessons: m.lessons.map((l) => {
             if (l.id !== lessonId) return l;
             const subs = l.subLessons ?? [];
+            const subId = uid("sub");
+            const defaultTitle =
+              presetTitle ||
+              (type === "ASSIGNMENT"
+                ? "Lesson Assignment"
+                : type === "QUIZ"
+                  ? "Lesson Quiz"
+                  : type === "ASSESSMENT"
+                    ? "Lesson Assessment"
+                    : "");
             return {
               ...l,
               subLessons: [
                 ...subs,
                 {
-                  id: uid("sub"),
-                  title: `Sub-lesson ${subs.length + 1}`,
+                  id: subId,
+                  title: defaultTitle,
                   content: "",
-                  durationMin: 10,
-                  contentType: "DOCUMENT",
+                  durationMin: type === "ASSIGNMENT" ? 30 : type === "ASSESSMENT" ? 30 : 10,
+                  contentType: type,
                   resourceUrl: "",
+                  required: true,
+                  assignmentMaxMarks: type === "ASSIGNMENT" ? 100 : undefined,
+                  assignmentInstructions: type === "ASSIGNMENT" ? "" : undefined,
+                  assignmentFileTypes: type === "ASSIGNMENT" ? ["PDF", "DOCX", "PPTX"] : undefined,
+                  assignmentMaxFileSizeMb: type === "ASSIGNMENT" ? 10 : undefined,
+                  quizQuestions:
+                    type === "QUIZ" || type === "ASSESSMENT" ? [blankQuestion()] : undefined,
+                  quizPassMark: type === "QUIZ" || type === "ASSESSMENT" ? 70 : undefined,
+                  quizTimeLimitMinutes: type === "QUIZ" ? 15 : type === "ASSESSMENT" ? 30 : undefined,
+                  quizAttemptsAllowed: type === "QUIZ" ? 3 : type === "ASSESSMENT" ? 2 : undefined,
+                  quizShuffle: false,
+                  assessmentAllowEarlySubmit: true,
+                  assessmentAutoSubmitOnExpire: true,
                 },
               ],
             };
@@ -529,6 +786,103 @@ export function CourseCreationWizard({
         };
       }),
     );
+  };
+
+  const addQuizQuestionToLesson = (
+    moduleId: string,
+    lessonId: string,
+    subLessonId?: string,
+  ) => {
+    const newQ = blankQuestion();
+    if (subLessonId) {
+      const sub = modules
+        .find((m) => m.id === moduleId)
+        ?.lessons.find((l) => l.id === lessonId)
+        ?.subLessons?.find((s) => s.id === subLessonId);
+      const curr = sub?.quizQuestions && sub.quizQuestions.length > 0 ? sub.quizQuestions : [];
+      patchSubLesson(moduleId, lessonId, subLessonId, { quizQuestions: [...curr, newQ] });
+    } else {
+      const les = modules.find((m) => m.id === moduleId)?.lessons.find((l) => l.id === lessonId);
+      const curr = les?.quizQuestions && les.quizQuestions.length > 0 ? les.quizQuestions : [];
+      patchLesson(moduleId, lessonId, { quizQuestions: [...curr, newQ] });
+    }
+  };
+
+  const patchQuizQuestion = (
+    moduleId: string,
+    lessonId: string,
+    subLessonId: string | undefined,
+    questionIndex: number,
+    patch: Partial<Question>,
+  ) => {
+    const updateList = (curr: Question[] = []) => {
+      const next = [...curr];
+      if (next[questionIndex]) {
+        next[questionIndex] = { ...next[questionIndex], ...patch };
+      }
+      return next;
+    };
+    if (subLessonId) {
+      const sub = modules
+        .find((m) => m.id === moduleId)
+        ?.lessons.find((l) => l.id === lessonId)
+        ?.subLessons?.find((s) => s.id === subLessonId);
+      patchSubLesson(moduleId, lessonId, subLessonId, {
+        quizQuestions: updateList(sub?.quizQuestions),
+      });
+    } else {
+      const les = modules.find((m) => m.id === moduleId)?.lessons.find((l) => l.id === lessonId);
+      patchLesson(moduleId, lessonId, { quizQuestions: updateList(les?.quizQuestions) });
+    }
+  };
+
+  const removeQuizQuestion = (
+    moduleId: string,
+    lessonId: string,
+    subLessonId: string | undefined,
+    questionIndex: number,
+  ) => {
+    const updateList = (curr: Question[] = []) => curr.filter((_, idx) => idx !== questionIndex);
+    if (subLessonId) {
+      const sub = modules
+        .find((m) => m.id === moduleId)
+        ?.lessons.find((l) => l.id === lessonId)
+        ?.subLessons?.find((s) => s.id === subLessonId);
+      patchSubLesson(moduleId, lessonId, subLessonId, {
+        quizQuestions: updateList(sub?.quizQuestions),
+      });
+    } else {
+      const les = modules.find((m) => m.id === moduleId)?.lessons.find((l) => l.id === lessonId);
+      patchLesson(moduleId, lessonId, { quizQuestions: updateList(les?.quizQuestions) });
+    }
+  };
+
+  const moveQuizQuestion = (
+    moduleId: string,
+    lessonId: string,
+    subLessonId: string | undefined,
+    questionIndex: number,
+    direction: -1 | 1,
+  ) => {
+    const updateList = (curr: Question[] = []) => {
+      const target = questionIndex + direction;
+      if (target < 0 || target >= curr.length) return curr;
+      const next = [...curr];
+      [next[questionIndex], next[target]] = [next[target], next[questionIndex]];
+      return next;
+    };
+    if (subLessonId) {
+      const sub = modules
+        .find((m) => m.id === moduleId)
+        ?.lessons.find((l) => l.id === lessonId)
+        ?.subLessons?.find((s) => s.id === subLessonId);
+      patchSubLesson(moduleId, lessonId, subLessonId, {
+        quizQuestions: updateList(sub?.quizQuestions),
+      });
+    } else {
+      const les = modules.find((m) => m.id === moduleId)?.lessons.find((l) => l.id === lessonId);
+      patchLesson(moduleId, lessonId, { quizQuestions: updateList(les?.quizQuestions) });
+    }
   };
 
   const patchSubLesson = (
@@ -650,6 +1004,16 @@ export function CourseCreationWizard({
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, ...patch } : q)));
   };
 
+  const moveQuestion = (index: number, dir: -1 | 1) => {
+    setQuestions((prev) => {
+      const target = index + dir;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
   const setQuestionType = (index: number, type: QuestionType) => {
     setQuestions((prev) =>
       prev.map((q, i) =>
@@ -684,7 +1048,10 @@ export function CourseCreationWizard({
           .filter((l) => l.title.trim() !== "")
           .map((l) => ({
             title: l.title.trim(),
-            content: l.content,
+            content:
+              l.contentType === "ASSIGNMENT"
+                ? l.assignmentInstructions || l.content || ""
+                : l.content || "",
             durationMin: l.durationMin || 15,
             contentType: l.contentType,
             resourceUrl: l.resourceUrl?.trim() || undefined,
@@ -692,7 +1059,10 @@ export function CourseCreationWizard({
               .filter((sub) => sub.title.trim() !== "")
               .map((sub) => ({
                 title: sub.title.trim(),
-                content: sub.content,
+                content:
+                  sub.contentType === "ASSIGNMENT"
+                    ? sub.assignmentInstructions || sub.content || ""
+                    : sub.content || "",
                 durationMin: sub.durationMin || 15,
                 contentType: sub.contentType,
                 resourceUrl: sub.resourceUrl?.trim() || undefined,
@@ -777,20 +1147,26 @@ export function CourseCreationWizard({
 
   /* ── Content Type Icon Helper ──────────────────────────────────── */
 
-  const renderTypeIcon = (type: WizardContentType) => {
+  const renderTypeIcon = (type: WizardContentType, size = "h-4 w-4") => {
     switch (type) {
       case "VIDEO":
-        return <Video className="h-4 w-4 text-rose-600" />;
+        return <Video className={cn(size, "text-rose-600")} />;
       case "AUDIO":
-        return <Headphones className="h-4 w-4 text-emerald-600" />;
+        return <Headphones className={cn(size, "text-emerald-600")} />;
       case "PRESENTATION":
-        return <Presentation className="h-4 w-4 text-amber-600" />;
+        return <Presentation className={cn(size, "text-amber-600")} />;
       case "INTERACTIVE":
-        return <Sparkles className="h-4 w-4 text-violet-600" />;
+        return <Sparkles className={cn(size, "text-violet-600")} />;
       case "EXTERNAL_LINK":
-        return <ExternalLink className="h-4 w-4 text-blue-600" />;
+        return <ExternalLink className={cn(size, "text-blue-600")} />;
+      case "ASSIGNMENT":
+        return <ClipboardList className={cn(size, "text-orange-600")} />;
+      case "QUIZ":
+        return <FileQuestion className={cn(size, "text-indigo-600")} />;
+      case "ASSESSMENT":
+        return <Award className={cn(size, "text-emerald-600")} />;
       default:
-        return <FileText className="h-4 w-4 text-indigo-600" />;
+        return <FileText className={cn(size, "text-indigo-600")} />;
     }
   };
 
@@ -802,6 +1178,646 @@ export function CourseCreationWizard({
     subLessonId?: string,
   ) => {
     const isSub = Boolean(subLessonId);
+
+    // Assignment-specific form
+    if (lesson.contentType === "ASSIGNMENT") {
+      const allowedTypes = lesson.assignmentFileTypes ?? ["PDF", "DOCX", "PPTX"];
+      const fileOptions = [
+        { id: "PDF", label: "PDF (.pdf)", icon: "📄" },
+        { id: "DOCX", label: "Word (.docx, .doc)", icon: "📝" },
+        { id: "PPTX", label: "PowerPoint (.pptx, .ppt)", icon: "📊" },
+        { id: "TXT", label: "Text / Markdown (.txt)", icon: "📋" },
+        { id: "XLSX", label: "Spreadsheet (.xlsx, .xls)", icon: "📈" },
+        { id: "TEXT_ENTRY", label: "Online Rich Text Entry", icon: "✍️" },
+      ];
+
+      const toggleFileType = (typeId: string) => {
+        const next = allowedTypes.includes(typeId)
+          ? allowedTypes.filter((t) => t !== typeId)
+          : [...allowedTypes, typeId];
+        const val = { assignmentFileTypes: next.length > 0 ? next : ["PDF"] };
+        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+        else patchLesson(moduleId, lesson.id, val);
+      };
+
+      const setAllFileTypes = () => {
+        const val = { assignmentFileTypes: fileOptions.map((o) => o.id) };
+        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+        else patchLesson(moduleId, lesson.id, val);
+      };
+
+      return (
+        <div className="mt-3 rounded-2xl border border-orange-200/90 bg-orange-50/40 p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 pb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-orange-800 flex items-center gap-1.5">
+              <ClipboardList className="h-4 w-4 text-orange-600" /> Assignment Details & Submission Setup
+            </span>
+            <Badge variant="amber">Assignment</Badge>
+          </div>
+
+          <div>
+            <label className={labelClass}>Assignment Instructions & Prompt *</label>
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              Use rich text formatting (bold, italic, lists, headings) to clearly explain the assignment requirements, deliverables, and evaluation criteria.
+            </p>
+            <RichEditor
+              value={lesson.assignmentInstructions || lesson.content || ""}
+              placeholder="Describe what the learner must research, prepare, write, and submit…"
+              onChange={(html) => {
+                const val = { assignmentInstructions: html, content: html };
+                if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                else patchLesson(moduleId, lesson.id, val);
+              }}
+            />
+          </div>
+
+          {/* Supported Submission Formats */}
+          <div className="space-y-2 rounded-xl border border-orange-200/70 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className={labelClass}>Supported Submission Formats *</label>
+                <p className="text-[11px] text-slate-500">
+                  Select which file types learners can upload or allow direct text response.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={setAllFileTypes}
+                className="text-xs font-semibold text-orange-700 hover:text-orange-900 underline"
+              >
+                Allow All Formats
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {fileOptions.map((opt) => {
+                const isSelected = allowedTypes.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => toggleFileType(opt.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all shadow-2xs",
+                      isSelected
+                        ? "border-orange-500 bg-orange-500 text-white shadow-xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50/50",
+                    )}
+                  >
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                    {isSelected && <Check className="h-3 w-3 ml-0.5" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className={labelClass}>Maximum Marks / Points</label>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={lesson.assignmentMaxMarks ?? 100}
+                onChange={(e) => {
+                  const val = { assignmentMaxMarks: parseInt(e.target.value) || 100 };
+                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                  else patchLesson(moduleId, lesson.id, val);
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Maximum Upload File Size</label>
+              <select
+                value={lesson.assignmentMaxFileSizeMb ?? 10}
+                onChange={(e) => {
+                  const val = { assignmentMaxFileSizeMb: parseInt(e.target.value) || 10 };
+                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                  else patchLesson(moduleId, lesson.id, val);
+                }}
+                className={inputClass}
+              >
+                <option value={5}>5 MB (Small documents)</option>
+                <option value={10}>10 MB (Standard documents)</option>
+                <option value={25}>25 MB (Presentations / Worksheets)</option>
+                <option value={50}>50 MB (Large portfolios)</option>
+                <option value={100}>100 MB (Maximum)</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Due Date (Optional)</label>
+              <input
+                type="date"
+                value={lesson.assignmentDueDate ?? ""}
+                onChange={(e) => {
+                  const val = { assignmentDueDate: e.target.value };
+                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                  else patchLesson(moduleId, lesson.id, val);
+                }}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          {/* Reference Material / Template attachment */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+            <label className={labelClass}>Starter Template / Worksheet File for Learners (Optional)</label>
+            <p className="text-[11px] text-slate-500">
+              Upload a template, problem sheet, or assignment brief that learners can download.
+            </p>
+            {lesson.resourceUrl ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span className="font-semibold">{lesson.fileName || "Template file uploaded"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={lesson.resourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
+                  >
+                    <ExternalLink className="h-3 w-3" /> View / Download
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = { resourceUrl: "", fileName: "", fileSize: 0 };
+                      if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                      else patchLesson(moduleId, lesson.id, val);
+                    }}
+                    className="p-1 text-slate-400 hover:text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="file"
+                  id={`assign-file-${lesson.id}-${subLessonId || "parent"}`}
+                  className="sr-only"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, subLessonId);
+                  }}
+                />
+                <label
+                  htmlFor={`assign-file-${lesson.id}-${subLessonId || "parent"}`}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-orange-300 bg-orange-50/20 px-4 py-3 text-xs font-semibold text-orange-700 hover:bg-orange-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Starter Template or Assignment PDF/Word/PPT file</span>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Quiz and Assessment interactive builder
+    if (lesson.contentType === "QUIZ" || lesson.contentType === "ASSESSMENT") {
+      const isQuiz = lesson.contentType === "QUIZ";
+      const qList =
+        lesson.quizQuestions && lesson.quizQuestions.length > 0
+          ? lesson.quizQuestions
+          : [blankQuestion()];
+      const totalPoints = qList.reduce((sum, q) => sum + (q.points || 10), 0);
+
+      const importBankQuestions = () => {
+        if (bankQuestions.length === 0) return;
+        const next = [...qList, ...bankQuestions.map((q) => ({ ...q, id: uid("q") }))];
+        const val = { quizQuestions: next };
+        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+        else patchLesson(moduleId, lesson.id, val);
+      };
+
+      return (
+        <div
+          className={cn(
+            "mt-3 rounded-2xl border p-5 space-y-5 shadow-2xs",
+            isQuiz ? "border-indigo-200/90 bg-indigo-50/30" : "border-emerald-200/90 bg-emerald-50/30",
+          )}
+        >
+          {/* Header Bar */}
+          <div
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-2 border-b pb-3",
+              isQuiz ? "border-indigo-100" : "border-emerald-100",
+            )}
+          >
+            <div className="flex items-center gap-2">
+              {isQuiz ? (
+                <FileQuestion className="h-4 w-4 text-indigo-600" />
+              ) : (
+                <Award className="h-4 w-4 text-emerald-600" />
+              )}
+              <span
+                className={cn(
+                  "text-xs font-bold uppercase tracking-wider",
+                  isQuiz ? "text-indigo-900" : "text-emerald-900",
+                )}
+              >
+                {isQuiz ? "Interactive Quiz Builder" : "Module / Lesson Assessment Exam"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500 bg-white border px-2 py-0.5 rounded-md shadow-2xs">
+                Total Marks:{" "}
+                <strong className={isQuiz ? "text-indigo-600" : "text-emerald-600"}>
+                  {totalPoints} Pts
+                </strong>
+              </span>
+              <Badge variant={isQuiz ? "blue" : "green"}>{isQuiz ? "Quiz" : "Assessment"}</Badge>
+            </div>
+          </div>
+
+          {/* Guidelines / Overview with RichTextEditor */}
+          <div>
+            <label className={labelClass}>
+              {isQuiz ? "Quiz Instructions & Guidelines" : "Assessment Overview & Exam Instructions"}
+            </label>
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              Format text with bold, italic, bullet lists, and headings for clear guidelines.
+            </p>
+            <RichEditor
+              value={lesson.content || ""}
+              placeholder={
+                isQuiz
+                  ? "Enter quiz instructions, topics covered, and advice for learners…"
+                  : "Enter comprehensive assessment instructions, honor code, rules…"
+              }
+              onChange={(html) => {
+                if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, { content: html });
+                else patchLesson(moduleId, lesson.id, { content: html });
+              }}
+            />
+          </div>
+
+          {/* Settings Card */}
+          <div className="rounded-xl border border-slate-200/90 bg-white p-4 space-y-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              {isQuiz ? "Quiz Settings & Grading" : "Assessment Rules & Time Limits"}
+            </h5>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className={labelClass}>Passing Score (% minimum)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={lesson.quizPassMark ?? 70}
+                  onChange={(e) => {
+                    const val = {
+                      quizPassMark: Math.max(1, Math.min(100, parseInt(e.target.value) || 70)),
+                    };
+                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                    else patchLesson(moduleId, lesson.id, val);
+                  }}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Time Limit (Minutes)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={300}
+                  value={lesson.quizTimeLimitMinutes ?? (isQuiz ? 20 : 45)}
+                  onChange={(e) => {
+                    const val = { quizTimeLimitMinutes: parseInt(e.target.value) || null };
+                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                    else patchLesson(moduleId, lesson.id, val);
+                  }}
+                  placeholder="0 for untimed"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Max Attempts Allowed</label>
+                <select
+                  value={lesson.quizAttemptsAllowed ?? (isQuiz ? 3 : 2)}
+                  onChange={(e) => {
+                    const val = { quizAttemptsAllowed: parseInt(e.target.value) || 1 };
+                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                    else patchLesson(moduleId, lesson.id, val);
+                  }}
+                  className={inputClass}
+                >
+                  <option value={1}>1 Attempt (Strict Exam)</option>
+                  <option value={2}>2 Attempts</option>
+                  <option value={3}>3 Attempts (Standard)</option>
+                  <option value={5}>5 Attempts</option>
+                  <option value={10}>Unlimited Practice</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={Boolean(lesson.quizShuffle)}
+                  onChange={(e) => {
+                    const val = { quizShuffle: e.target.checked };
+                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                    else patchLesson(moduleId, lesson.id, val);
+                  }}
+                  className="h-4 w-4 rounded text-indigo-600"
+                />
+                <span>Shuffle question order per attempt</span>
+              </label>
+
+              {!isQuiz && (
+                <>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={lesson.assessmentAllowEarlySubmit ?? true}
+                      onChange={(e) => {
+                        const val = { assessmentAllowEarlySubmit: e.target.checked };
+                        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                        else patchLesson(moduleId, lesson.id, val);
+                      }}
+                      className="h-4 w-4 rounded text-emerald-600"
+                    />
+                    <span>Allow early submission</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={lesson.assessmentAutoSubmitOnExpire ?? true}
+                      onChange={(e) => {
+                        const val = { assessmentAutoSubmitOnExpire: e.target.checked };
+                        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
+                        else patchLesson(moduleId, lesson.id, val);
+                      }}
+                      className="h-4 w-4 rounded text-emerald-600"
+                    />
+                    <span>Auto-submit when timer expires</span>
+                  </label>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Questions Builder */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                Questions ({qList.length})
+              </h5>
+              <div className="flex items-center gap-2">
+                {bankQuestions.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={importBankQuestions}
+                    className="text-xs gap-1.5 shadow-2xs"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Import from Bank ({bankQuestions.length})
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  type="button"
+                  onClick={() => addQuizQuestionToLesson(moduleId, lesson.id, subLessonId)}
+                  className="text-xs gap-1.5 shadow-2xs"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Question
+                </Button>
+              </div>
+            </div>
+
+            {qList.map((q, qIdx) => (
+              <div
+                key={q.id || qIdx}
+                className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                      {qIdx + 1}
+                    </span>
+                    <select
+                      value={q.type}
+                      onChange={(e) => {
+                        const newType = e.target.value as QuestionType;
+                        patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                          type: newType,
+                          options: optionsForType(newType),
+                          correctIndex: 0,
+                          answerText: "",
+                        });
+                      }}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                    >
+                      <option value="multiple_choice">Multiple Choice</option>
+                      <option value="true_false">True / False</option>
+                      <option value="short_answer">Short Answer</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                      <span>Points:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={q.points || 10}
+                        onChange={(e) => {
+                          patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                            points: parseInt(e.target.value) || 10,
+                          });
+                        }}
+                        className="w-12 rounded border border-slate-200 px-1.5 py-0.5 text-center text-xs font-bold text-indigo-700"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={qIdx === 0}
+                      onClick={() => moveQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, -1)}
+                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      title="Move Up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={qIdx === qList.length - 1}
+                      onClick={() => moveQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, 1)}
+                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      title="Move Down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={qList.length <= 1}
+                      onClick={() => removeQuizQuestion(moduleId, lesson.id, subLessonId, qIdx)}
+                      className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30"
+                      title="Delete Question"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Question Prompt * (Interactive Rich Text)</label>
+                  <CompactRichEditor
+                    value={q.text || ""}
+                    placeholder="Enter question statement, scenario, or prompt (format with bold, italic, bullets)…"
+                    onChange={(html) => {
+                      patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                        text: html,
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Multiple Choice Options */}
+                {q.type === "multiple_choice" && (
+                  <div className="space-y-2">
+                    <label className={labelClass}>Options (Select the correct radio option)</label>
+                    {q.options.map((opt, optIdx) => (
+                      <div key={optIdx} className="flex items-center gap-2.5">
+                        <input
+                          type="radio"
+                          name={`quiz-correct-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          checked={q.correctIndex === optIdx}
+                          onChange={() => {
+                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                              correctIndex: optIdx,
+                            });
+                          }}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                          title="Mark as correct answer"
+                        />
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
+                          {String.fromCharCode(65 + optIdx)}
+                        </span>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const nextOpts = [...q.options];
+                            nextOpts[optIdx] = e.target.value;
+                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                              options: nextOpts,
+                            });
+                          }}
+                          placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                          className={inputClass}
+                        />
+                        {q.options.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextOpts = q.options.filter((_, i) => i !== optIdx);
+                              const nextCorrect =
+                                q.correctIndex >= nextOpts.length ? 0 : q.correctIndex;
+                              patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                                options: nextOpts,
+                                correctIndex: nextCorrect,
+                              });
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-500"
+                            title="Remove option"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {q.options.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                            options: [...q.options, ""],
+                          });
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add Option
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* True / False */}
+                {q.type === "true_false" && (
+                  <div>
+                    <label className={labelClass}>Correct Answer</label>
+                    <div className="flex gap-4 mt-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 flex-1 hover:bg-slate-50">
+                        <input
+                          type="radio"
+                          name={`quiz-tf-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          checked={q.correctIndex === 0}
+                          onChange={() => {
+                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                              correctIndex: 0,
+                            });
+                          }}
+                          className="h-4 w-4 text-indigo-600"
+                        />
+                        <span className="text-xs font-bold text-slate-800">True</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 flex-1 hover:bg-slate-50">
+                        <input
+                          type="radio"
+                          name={`quiz-tf-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          checked={q.correctIndex === 1}
+                          onChange={() => {
+                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                              correctIndex: 1,
+                            });
+                          }}
+                          className="h-4 w-4 text-indigo-600"
+                        />
+                        <span className="text-xs font-bold text-slate-800">False</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Short Answer */}
+                {q.type === "short_answer" && (
+                  <div>
+                    <label className={labelClass}>Expected Correct Answer / Key Phrase</label>
+                    <input
+                      type="text"
+                      value={q.answerText || ""}
+                      onChange={(e) => {
+                        patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                          answerText: e.target.value,
+                        });
+                      }}
+                      placeholder="e.g. Value Added Tax"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 space-y-3">
@@ -816,7 +1832,6 @@ export function CourseCreationWizard({
           )}
         </div>
 
-        {/* Dynamic upload interface based on real content type */}
         {lesson.contentType === "EXTERNAL_LINK" ? (
           <div>
             <label className={labelClass}>External Resource URL</label>
@@ -940,7 +1955,7 @@ export function CourseCreationWizard({
                   className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-slate-50/80"
                 >
                   <Upload className="h-4 w-4 text-indigo-500" />
-                  <span>Choose file to upload to MinIO storage</span>
+                  <span>Choose file to upload to storage</span>
                 </label>
               </div>
             )}
@@ -951,7 +1966,7 @@ export function CourseCreationWizard({
           </div>
         )}
 
-        {/* Lesson Notes / Content */}
+        {/* Lesson Notes / Content — not for assignments */}
         <div>
           <label className={labelClass}>Lesson Notes / Detailed Reading Content</label>
           <RichEditor
@@ -968,6 +1983,14 @@ export function CourseCreationWizard({
         </div>
       </div>
     );
+  };
+
+  /* ── Curriculum position counter ──────────────────────────────── */
+  // Flat sequential index across the whole curriculum
+  let seqCounter = 0;
+  const nextSeq = () => {
+    seqCounter += 1;
+    return seqCounter;
   };
 
   return (
@@ -1028,11 +2051,11 @@ export function CourseCreationWizard({
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Course Title (English) *</label>
+              <label className={labelClass}>Course Title *</label>
               <input
                 type="text"
                 value={title}
-                placeholder="e.g. Tax Compliance & Auditing Fundamentals"
+                placeholder="Enter course title"
                 onChange={(e) => setTitle(e.target.value)}
                 className={inputClass}
               />
@@ -1130,12 +2153,11 @@ export function CourseCreationWizard({
 
           <div>
             <label className={labelClass}>Course Description *</label>
-            <textarea
-              rows={3}
+            <RichEditor
               value={description}
-              placeholder="Provide a comprehensive summary of this course, target competencies, and expectations…"
-              onChange={(e) => setDescription(e.target.value)}
-              className={inputClass}
+              placeholder="Describe what learners will learn in this course…"
+              onChange={setDescription}
+              minHeight={120}
             />
           </div>
 
@@ -1144,21 +2166,15 @@ export function CourseCreationWizard({
               <label className={labelClass}>Course Learning Objectives *</label>
               <span className="text-[11px] text-slate-400">Min. 10 characters</span>
             </div>
-            <textarea
-              rows={4}
+            <RichEditor
               value={objectives}
-              placeholder="Upon completing this course, learners will be able to:
-1. Explain core revenue and tax compliance regulations.
-2. Apply operational auditing standards to everyday workflows.
-3. Utilize automated declaration and reporting tools."
-              onChange={(e) => setObjectives(e.target.value)}
-              className={cn(
-                inputClass,
-                objectives.trim().length > 0 && objectives.trim().length < 10
-                  ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
-                  : "",
-              )}
+              placeholder="Enter the learning objectives for this course…"
+              onChange={setObjectives}
+              minHeight={120}
             />
+            {objectivesText.length > 0 && objectivesText.length < 10 ? (
+              <p className="mt-1 text-xs text-amber-600">Please enter at least 10 characters.</p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1167,7 +2183,7 @@ export function CourseCreationWizard({
               <input
                 type="text"
                 value={department}
-                placeholder="e.g. Tax Audit Division, Ministry of Revenues"
+                placeholder="e.g. Tax Audit Division"
                 onChange={(e) => setDepartment(e.target.value)}
                 className={inputClass}
               />
@@ -1178,39 +2194,10 @@ export function CourseCreationWizard({
               <input
                 type="text"
                 value={targetAudience}
-                placeholder="e.g. Junior Tax Auditors, Revenue Enforcement Staff"
+                placeholder="e.g. Junior Tax Auditors, Revenue Staff"
                 onChange={(e) => setTargetAudience(e.target.value)}
                 className={inputClass}
               />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Delivery Method</label>
-              <select
-                value={deliveryMethod}
-                onChange={(e) => setDeliveryMethod(e.target.value)}
-                className={inputClass}
-              >
-                <option value="self_paced">Self-Paced Online</option>
-                <option value="instructor_led">Instructor-Led Virtual</option>
-                <option value="blended">Blended Learning</option>
-              </select>
-            </div>
-
-            <div>
-              <label className={labelClass}>Language</label>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className={inputClass}
-              >
-                <option value="English">English</option>
-                <option value="Amharic">Amharic (አማርኛ)</option>
-                <option value="Afaan_Oromoo">Afaan Oromoo</option>
-                <option value="Tigrinya">Tigrinya (ትግርኛ)</option>
-              </select>
             </div>
           </div>
 
@@ -1229,14 +2216,14 @@ export function CourseCreationWizard({
 
       {/* ── STEP 2: Curriculum (Modules, Lessons, Sub-lessons & Media) ─ */}
       {step === 1 ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-display text-base font-bold text-slate-900">
-                Curriculum Structure
+                Curriculum Builder
               </h3>
-              <p className="text-xs text-slate-500">
-                Structure modules, lessons, and nested sub-lessons. Attach media directly to each lesson.
+              <p className="text-xs text-slate-500 mt-0.5">
+                Build your course hierarchy: Modules → Lessons → Sub-lessons. Add assignments, media, and rich content.
               </p>
             </div>
             <Button size="sm" onClick={addModule} className="gap-1.5 shadow-xs">
@@ -1244,45 +2231,76 @@ export function CourseCreationWizard({
             </Button>
           </div>
 
-          <div className="space-y-4">
-            {modules.map((mod, modIdx) => {
-              const isModExpanded = expandedModule === mod.id || expandedModule === null;
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-indigo-500" /> Module
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-sky-400" /> Lesson
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-violet-400" /> Sub-lesson
+            </span>
+            <span className="flex items-center gap-1.5">
+              <ClipboardList className="h-3 w-3 text-orange-500" /> Assignment
+            </span>
+            <span className="ml-auto flex items-center gap-1 text-[11px]">
+              <Lock className="h-3 w-3 text-slate-400" /> = blocked until previous complete
+            </span>
+          </div>
 
+          {/* Empty state */}
+          {modules.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 py-16 text-center">
+              <Layers className="h-10 w-10 text-slate-300 mb-3" />
+              <p className="text-sm font-semibold text-slate-600">No modules yet</p>
+              <p className="mt-1 text-xs text-slate-400 max-w-xs">
+                Click "Add Module" to start building your course curriculum.
+              </p>
+              <Button size="sm" onClick={addModule} className="mt-5 gap-1.5">
+                <Plus className="h-4 w-4" /> Add your first module
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="space-y-3">
+            {modules.map((mod, modIdx) => {
+              const isModExpanded = expandedModules.has(mod.id);
+              // Reset seq counter at the start of each module render pass
+              // Actually we need global seq — reset before the map
               return (
                 <div
                   key={mod.id}
                   className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs"
                 >
                   {/* Module Header */}
-                  <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-5 py-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-indigo-50/80 to-slate-50/40 px-4 py-3">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          setExpandedModule(expandedModule === mod.id ? "" : mod.id)
-                        }
-                        className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700"
+                        onClick={() => toggleModule(mod.id)}
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 transition hover:bg-indigo-200"
+                        title={isModExpanded ? "Collapse module" : "Expand module"}
                       >
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform",
-                            isModExpanded ? "rotate-180" : "",
-                          )}
-                        />
+                        {isModExpanded ? (
+                          <Minus className="h-3.5 w-3.5" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5" />
+                        )}
                       </button>
 
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-xs font-bold text-indigo-700">
-                          {modIdx + 1}
-                        </span>
-                        <input
-                          type="text"
-                          value={mod.title}
-                          placeholder="Module Title"
-                          onChange={(e) => patchModule(mod.id, { title: e.target.value })}
-                          className="w-full max-w-md rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-bold text-slate-800 focus:border-indigo-400 focus:bg-white focus:outline-none"
-                        />
-                      </div>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-[11px] font-bold text-white">
+                        {modIdx + 1}
+                      </span>
+
+                      <input
+                        type="text"
+                        value={mod.title}
+                        placeholder="Module title…"
+                        onChange={(e) => patchModule(mod.id, { title: e.target.value })}
+                        className="w-full max-w-md rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-bold text-slate-800 focus:border-indigo-400 focus:bg-white focus:outline-none"
+                      />
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -1315,20 +2333,19 @@ export function CourseCreationWizard({
                     </div>
                   </div>
 
-                  {/* Module Lessons Body */}
+                  {/* Module Body */}
                   {isModExpanded ? (
-                    <div className="p-5 space-y-4">
-                      {/* Module Metadata & Objectives */}
-                      <div className="grid gap-3 sm:grid-cols-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 text-xs">
-                        <div className="sm:col-span-2 space-y-2">
+                    <div className="p-4 space-y-4">
+                      {/* Module Metadata */}
+                      <div className="grid gap-3 sm:grid-cols-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+                        <div className="sm:col-span-2 space-y-3">
                           <div>
-                            <label className={labelClass}>Module Learning Objectives *</label>
-                            <textarea
-                              rows={2}
+                            <label className={labelClass}>Module Learning Objectives</label>
+                            <RichEditor
                               value={mod.objectives ?? ""}
-                              placeholder="Specify the key learning competencies and objectives for this module…"
-                              onChange={(e) => patchModule(mod.id, { objectives: e.target.value })}
-                              className={inputClass}
+                              placeholder="Specify the key learning objectives for this module…"
+                              onChange={(html) => patchModule(mod.id, { objectives: html })}
+                              minHeight={80}
                             />
                           </div>
                           <div>
@@ -1343,10 +2360,10 @@ export function CourseCreationWizard({
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className={labelClass}>Est. Module Duration (min)</label>
+                        <div>
+                          <label className={labelClass}>Est. Duration (min)</label>
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-slate-400" />
+                            <Clock className="h-4 w-4 text-slate-400 shrink-0" />
                             <input
                               type="number"
                               min={5}
@@ -1360,242 +2377,368 @@ export function CourseCreationWizard({
                               className={inputClass}
                             />
                           </div>
-                          <p className="text-[11px] text-slate-500">
-                            Estimated study or instructional minutes.
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            Estimated study minutes.
                           </p>
                         </div>
                       </div>
 
-                      {mod.lessons.map((lesson, lesIdx) => {
-                        const isLesExpanded = expandedLesson === lesson.id;
+                      {/* Lessons */}
+                      {mod.lessons.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/40 px-4 py-6 text-center text-xs text-slate-400">
+                          No lessons yet — add your first lesson below.
+                        </div>
+                      ) : null}
 
-                        return (
-                          <div
-                            key={lesson.id}
-                            className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs"
-                          >
-                            {/* Lesson Header Row */}
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setExpandedLesson(isLesExpanded ? null : lesson.id)
-                                  }
-                                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition"
-                                >
-                                  {renderTypeIcon(lesson.contentType)}
-                                </button>
+                      <div className="space-y-2 pl-0">
+                        {mod.lessons.map((lesson, lesIdx) => {
+                          const isLesExpanded = expandedLessons.has(lesson.id);
+                          const hasSubLessons = (lesson.subLessons ?? []).length > 0;
+                          const lessonSeq = modIdx * 100 + lesIdx + 1;
 
-                                <div className="min-w-0 flex-1">
+                          return (
+                            <div
+                              key={lesson.id}
+                              className="rounded-xl border border-sky-100/80 bg-white pl-0 shadow-2xs"
+                            >
+                              {/* Lesson Header Row */}
+                              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 bg-sky-50/50 rounded-t-xl">
+                                <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleLesson(lesson.id)}
+                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 hover:bg-sky-200 transition"
+                                    title={isLesExpanded ? "Collapse lesson" : "Expand lesson"}
+                                  >
+                                    {isLesExpanded ? (
+                                      <Minus className="h-3 w-3" />
+                                    ) : (
+                                      <Plus className="h-3 w-3" />
+                                    )}
+                                  </button>
+
+                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-sky-500 text-[10px] font-bold text-white">
+                                    {modIdx + 1}.{lesIdx + 1}
+                                  </span>
+
+                                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200">
+                                    {renderTypeIcon(lesson.contentType, "h-3.5 w-3.5")}
+                                  </div>
+
                                   <input
                                     type="text"
                                     value={lesson.title}
-                                    placeholder="Lesson Title"
+                                    placeholder="Lesson title…"
                                     onChange={(e) =>
                                       patchLesson(mod.id, lesson.id, { title: e.target.value })
                                     }
-                                    className="w-full font-semibold text-slate-800 text-sm border-b border-transparent focus:border-indigo-400 focus:outline-none"
+                                    className="w-full font-semibold text-slate-800 text-sm border-b border-transparent focus:border-indigo-400 focus:outline-none bg-transparent"
                                   />
                                 </div>
-                              </div>
 
-                              <div className="flex flex-wrap items-center gap-2">
-                                {/* Content Type Selector */}
-                                <select
-                                  value={lesson.contentType}
-                                  onChange={(e) =>
-                                    patchLesson(mod.id, lesson.id, {
-                                      contentType: e.target.value as WizardContentType,
-                                    })
-                                  }
-                                  className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 outline-none"
-                                >
-                                  <option value="DOCUMENT">PDF / Document</option>
-                                  <option value="VIDEO">Video</option>
-                                  <option value="AUDIO">Audio</option>
-                                  <option value="PRESENTATION">Presentation</option>
-                                  <option value="INTERACTIVE">Interactive Activity</option>
-                                  <option value="EXTERNAL_LINK">External Link</option>
-                                </select>
-
-                                {/* Duration Input */}
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={lesson.durationMin}
+                                <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                                  {/* Content Type */}
+                                  <select
+                                    value={lesson.contentType}
                                     onChange={(e) =>
                                       patchLesson(mod.id, lesson.id, {
-                                        durationMin: parseInt(e.target.value) || 15,
+                                        contentType: e.target.value as WizardContentType,
                                       })
                                     }
-                                    className="w-12 rounded border border-slate-200 px-1 py-0.5 text-center text-xs"
-                                  />
-                                  <span>min</span>
+                                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 outline-none"
+                                  >
+                                    <option value="DOCUMENT">PDF / Document</option>
+                                    <option value="VIDEO">Video</option>
+                                    <option value="AUDIO">Audio</option>
+                                    <option value="PRESENTATION">Presentation</option>
+                                    <option value="QUIZ">Quiz (Interactive)</option>
+                                    <option value="ASSIGNMENT">Assignment</option>
+                                    <option value="ASSESSMENT">Assessment (Exam)</option>
+                                    <option value="INTERACTIVE">Interactive Activity</option>
+                                    <option value="EXTERNAL_LINK">External Link</option>
+                                  </select>
+
+                                  {/* Duration */}
+                                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={lesson.durationMin}
+                                      onChange={(e) =>
+                                        patchLesson(mod.id, lesson.id, {
+                                          durationMin: parseInt(e.target.value) || 15,
+                                        })
+                                      }
+                                      className="w-12 rounded border border-slate-200 px-1 py-0.5 text-center text-xs"
+                                    />
+                                    <span>min</span>
+                                  </div>
+
+                                  {/* Required toggle */}
+                                  <label className="flex items-center gap-1 cursor-pointer text-xs text-slate-600" title="Required for progression">
+                                    <input
+                                      type="checkbox"
+                                      checked={lesson.required !== false}
+                                      onChange={(e) =>
+                                        patchLesson(mod.id, lesson.id, { required: e.target.checked })
+                                      }
+                                      className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600"
+                                    />
+                                    <Lock className="h-3 w-3 text-slate-400" />
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => moveLesson(mod.id, lesson.id, -1)}
+                                    disabled={lesIdx === 0}
+                                    className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                  >
+                                    <ChevronUp className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveLesson(mod.id, lesson.id, 1)}
+                                    disabled={lesIdx === mod.lessons.length - 1}
+                                    className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                  >
+                                    <ChevronDown className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeLesson(mod.id, lesson.id)}
+                                    className="rounded p-1 text-slate-400 hover:text-red-600 transition"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
                                 </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => moveLesson(mod.id, lesson.id, -1)}
-                                  disabled={lesIdx === 0}
-                                  className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
-                                >
-                                  <ChevronUp className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveLesson(mod.id, lesson.id, 1)}
-                                  disabled={lesIdx === mod.lessons.length - 1}
-                                  className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
-                                >
-                                  <ChevronDown className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeLesson(mod.id, lesson.id)}
-                                  className="rounded p-1 text-slate-400 hover:text-red-600 transition"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Direct Lesson Content Upload / Input Form */}
-                            {renderContentInput(lesson, mod.id)}
-
-                            {/* ── Sub-lessons Section ── */}
-                            <div className="mt-4 border-t border-slate-100 pt-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold text-slate-600">
-                                  Sub-lessons ({lesson.subLessons?.length ?? 0})
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => addSubLesson(mod.id, lesson.id)}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                                >
-                                  <Plus className="h-3.5 w-3.5" /> Add Sub-lesson
-                                </button>
                               </div>
 
-                              {lesson.subLessons && lesson.subLessons.length > 0 ? (
-                                <div className="space-y-3 pl-4 border-l-2 border-indigo-200">
-                                  {lesson.subLessons.map((sub, subIdx) => (
-                                    <div
-                                      key={sub.id}
-                                      className="rounded-xl border border-slate-200/90 bg-slate-50/40 p-3.5 shadow-2xs"
-                                    >
-                                      <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
-                                            {lesIdx + 1}.{subIdx + 1}
-                                          </span>
-                                          <input
-                                            type="text"
-                                            value={sub.title}
-                                            placeholder="Sub-lesson Title"
-                                            onChange={(e) =>
-                                              patchSubLesson(mod.id, lesson.id, sub.id, {
-                                                title: e.target.value,
-                                              })
-                                            }
-                                            className="w-full text-xs font-semibold text-slate-800 border-b border-transparent focus:border-indigo-400 focus:outline-none"
-                                          />
-                                        </div>
+                              {/* Lesson Expanded Content */}
+                              {isLesExpanded ? (
+                                <div className="px-3 pb-3">
+                                  {renderContentInput(lesson, mod.id)}
 
-                                        <div className="flex items-center gap-2">
-                                          <select
-                                            value={sub.contentType}
-                                            onChange={(e) =>
-                                              patchSubLesson(mod.id, lesson.id, sub.id, {
-                                                contentType: e.target.value as WizardContentType,
-                                              })
-                                            }
-                                            className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-700"
-                                          >
-                                            <option value="DOCUMENT">PDF / Document</option>
-                                            <option value="VIDEO">Video</option>
-                                            <option value="AUDIO">Audio</option>
-                                            <option value="PRESENTATION">Presentation</option>
-                                            <option value="INTERACTIVE">Interactive Activity</option>
-                                            <option value="EXTERNAL_LINK">External Link</option>
-                                          </select>
-
-                                          <div className="flex items-center gap-1 text-xs text-slate-500">
-                                            <Clock className="h-3 w-3" />
-                                            <input
-                                              type="number"
-                                              min={1}
-                                              value={sub.durationMin}
-                                              onChange={(e) =>
-                                                patchSubLesson(mod.id, lesson.id, sub.id, {
-                                                  durationMin: parseInt(e.target.value) || 10,
-                                                })
-                                              }
-                                              className="w-10 rounded border border-slate-200 px-1 py-0.5 text-center text-xs"
-                                            />
-                                            <span>m</span>
-                                          </div>
-
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              moveSubLesson(mod.id, lesson.id, sub.id, -1)
-                                            }
-                                            disabled={subIdx === 0}
-                                            className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
-                                          >
-                                            <ChevronUp className="h-3 w-3" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              moveSubLesson(mod.id, lesson.id, sub.id, 1)
-                                            }
-                                            disabled={subIdx === lesson.subLessons!.length - 1}
-                                            className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
-                                          >
-                                            <ChevronDown className="h-3 w-3" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              removeSubLesson(mod.id, lesson.id, sub.id)
-                                            }
-                                            className="rounded p-1 text-slate-400 hover:text-red-600 transition"
-                                          >
-                                            <Trash2 className="h-3 w-3" />
-                                          </button>
-                                        </div>
-                                      </div>
-
-                                      {/* Sub-lesson Upload & Content */}
-                                      {renderContentInput(sub, mod.id, sub.id)}
+                                  {/* Sub-lessons Section */}
+                                  <div className="mt-3 border-t border-slate-100 pt-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleSubLesson(lesson.id)}
+                                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition"
+                                      >
+                                        {expandedSubLessons.has(lesson.id) ? (
+                                          <Minus className="h-3.5 w-3.5 text-violet-500" />
+                                        ) : (
+                                          <Plus className="h-3.5 w-3.5 text-violet-500" />
+                                        )}
+                                        Sub-lessons ({lesson.subLessons?.length ?? 0})
+                                      </button>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addSubLesson(mod.id, lesson.id, "DOCUMENT");
+                          setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-white px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-50 transition shadow-2xs"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Sub-lesson
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addSubLesson(mod.id, lesson.id, "QUIZ", "Lesson Quiz");
+                          setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition shadow-2xs"
+                      >
+                        <FileQuestion className="h-3.5 w-3.5" /> Quiz
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addSubLesson(mod.id, lesson.id, "ASSIGNMENT", "Lesson Assignment");
+                          setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-50 transition shadow-2xs"
+                      >
+                        <ClipboardList className="h-3.5 w-3.5" /> Assignment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addSubLesson(mod.id, lesson.id, "ASSESSMENT", "Lesson Assessment");
+                          setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Assessment
+                      </button>
+                    </div>
                                     </div>
-                                  ))}
+
+                                    {expandedSubLessons.has(lesson.id) && lesson.subLessons && lesson.subLessons.length > 0 ? (
+                                      <div className="space-y-2 pl-4 border-l-2 border-violet-200">
+                                        {lesson.subLessons.map((sub, subIdx) => (
+                                          <div
+                                            key={sub.id}
+                                            className="rounded-xl border border-violet-100/80 bg-violet-50/30 p-3 shadow-2xs"
+                                          >
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                              <div className="flex min-w-0 flex-1 items-center gap-2">
+                                                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-violet-500 px-1 text-[10px] font-bold text-white">
+                                                  {modIdx + 1}.{lesIdx + 1}.{subIdx + 1}
+                                                </span>
+                                                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white border border-slate-200">
+                                                  {renderTypeIcon(sub.contentType, "h-3 w-3")}
+                                                </div>
+                                                <input
+                                                  type="text"
+                                                  value={sub.title}
+                                                  placeholder="Sub-lesson title…"
+                                                  onChange={(e) =>
+                                                    patchSubLesson(mod.id, lesson.id, sub.id, {
+                                                      title: e.target.value,
+                                                    })
+                                                  }
+                                                  className="w-full text-xs font-semibold text-slate-800 border-b border-transparent focus:border-indigo-400 focus:outline-none bg-transparent"
+                                                />
+                                              </div>
+
+                                              <div className="flex items-center gap-1.5 shrink-0">
+                                                <select
+                                                  value={sub.contentType}
+                                                  onChange={(e) =>
+                                                    patchSubLesson(mod.id, lesson.id, sub.id, {
+                                                      contentType: e.target.value as WizardContentType,
+                                                    })
+                                                  }
+                                                  className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-700"
+                                                >
+                                                  <option value="DOCUMENT">PDF / Doc</option>
+                                                  <option value="VIDEO">Video</option>
+                                                  <option value="AUDIO">Audio</option>
+                                                  <option value="PRESENTATION">Slides</option>
+                                                  <option value="QUIZ">Quiz (Interactive)</option>
+                                                  <option value="ASSIGNMENT">Assignment</option>
+                                                  <option value="ASSESSMENT">Assessment (Exam)</option>
+                                                  <option value="INTERACTIVE">Interactive Activity</option>
+                                                  <option value="EXTERNAL_LINK">Link</option>
+                                                </select>
+
+                                                <div className="flex items-center gap-0.5 text-xs text-slate-500">
+                                                  <Clock className="h-3 w-3" />
+                                                  <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={sub.durationMin}
+                                                    onChange={(e) =>
+                                                      patchSubLesson(mod.id, lesson.id, sub.id, {
+                                                        durationMin: parseInt(e.target.value) || 10,
+                                                      })
+                                                    }
+                                                    className="w-10 rounded border border-slate-200 px-1 py-0.5 text-center text-xs"
+                                                  />
+                                                  <span>m</span>
+                                                </div>
+
+                                                <button
+                                                  type="button"
+                                                  onClick={() => moveSubLesson(mod.id, lesson.id, sub.id, -1)}
+                                                  disabled={subIdx === 0}
+                                                  className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                                >
+                                                  <ChevronUp className="h-3 w-3" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => moveSubLesson(mod.id, lesson.id, sub.id, 1)}
+                                                  disabled={subIdx === lesson.subLessons!.length - 1}
+                                                  className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                                >
+                                                  <ChevronDown className="h-3 w-3" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => removeSubLesson(mod.id, lesson.id, sub.id)}
+                                                  className="rounded p-1 text-slate-400 hover:text-red-600 transition"
+                                                >
+                                                  <Trash2 className="h-3 w-3" />
+                                                </button>
+                                              </div>
+                                            </div>
+
+                                            {/* Sub-lesson Content */}
+                                            {renderContentInput(sub, mod.id, sub.id)}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
                                 </div>
                               ) : null}
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addLesson(mod.id)}
-                        className="w-full gap-1.5 border-dashed"
-                      >
-                        <Plus className="h-4 w-4" /> Add Lesson to {mod.title}
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addLesson(mod.id, "DOCUMENT")}
+                          className="gap-1.5 text-sky-700 border-sky-300 hover:bg-sky-50 shadow-2xs"
+                        >
+                          <Plus className="h-4 w-4" /> Add Lesson
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addLesson(mod.id, "QUIZ", "Module Quiz")}
+                          className="gap-1.5 text-indigo-700 border-indigo-300 hover:bg-indigo-50 shadow-2xs"
+                        >
+                          <FileQuestion className="h-4 w-4" /> Add Quiz
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addLesson(mod.id, "ASSIGNMENT", "Module Assignment")}
+                          className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50 shadow-2xs"
+                        >
+                          <ClipboardList className="h-4 w-4" /> Add Assignment
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addLesson(mod.id, "ASSESSMENT", "Module Assessment")}
+                          className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 shadow-2xs"
+                        >
+                          <Sparkles className="h-4 w-4" /> Add Assessment
+                        </Button>
+                      </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    // Collapsed module summary
+                    <div className="px-4 py-2 flex items-center gap-3 text-xs text-slate-500">
+                      <span>{mod.lessons.length} lesson{mod.lessons.length !== 1 ? "s" : ""}</span>
+                      {mod.durationMinutes ? (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {mod.durationMinutes} min
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {modules.length > 0 ? (
+            <Button size="sm" variant="outline" onClick={addModule} className="gap-1.5 border-dashed">
+              <Plus className="h-4 w-4" /> Add Another Module
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -1720,13 +2863,34 @@ export function CourseCreationWizard({
 
           {/* Questions List */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Question Bank ({questions.length} questions)
+                Question Bank ({questions.length} question{questions.length !== 1 ? "s" : ""})
               </h4>
-              <Button size="sm" onClick={addQuestion} className="gap-1.5 shadow-xs">
-                <Plus className="h-4 w-4" /> Add Question
-              </Button>
+              <div className="flex items-center gap-2">
+                {bankQuestions.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={() => {
+                      setQuestions((prev) => [
+                        ...prev,
+                        ...bankQuestions.map((bq) => ({
+                          ...bq,
+                          id: uid("q"),
+                        })),
+                      ]);
+                    }}
+                    className="gap-1.5 shadow-xs"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Import from Bank ({bankQuestions.length})
+                  </Button>
+                )}
+                <Button size="sm" onClick={addQuestion} className="gap-1.5 shadow-xs">
+                  <Plus className="h-4 w-4" /> Add Question
+                </Button>
+              </div>
             </div>
 
             {questions.length === 0 ? (
@@ -1745,7 +2909,9 @@ export function CourseCreationWizard({
                   className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <span className="text-xs font-bold text-indigo-700">Question {qIdx + 1}</span>
+                    <span className="text-xs font-bold text-indigo-700">
+                      Question {qIdx + 1}
+                    </span>
 
                     <div className="flex items-center gap-2">
                       <select
@@ -1758,6 +2924,41 @@ export function CourseCreationWizard({
                         <option value="short_answer">Short Answer</option>
                       </select>
 
+                      {/* Points per question */}
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <span className="font-medium text-slate-600">Pts:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={q.points}
+                          onChange={(e) =>
+                            patchQuestion(qIdx, { points: parseInt(e.target.value) || 10 })
+                          }
+                          className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-xs text-center"
+                        />
+                      </div>
+
+                      {/* Reorder */}
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(qIdx, -1)}
+                        disabled={qIdx === 0}
+                        className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        title="Move question up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(qIdx, 1)}
+                        disabled={qIdx === questions.length - 1}
+                        className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        title="Move question down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => removeQuestion(qIdx)}
@@ -1769,13 +2970,11 @@ export function CourseCreationWizard({
                   </div>
 
                   <div>
-                    <label className={labelClass}>Question Prompt</label>
-                    <input
-                      type="text"
-                      value={q.text}
-                      onChange={(e) => patchQuestion(qIdx, { text: e.target.value })}
-                      placeholder="Enter the question text…"
-                      className={inputClass}
+                    <label className={labelClass}>Question Prompt * (Interactive Rich Text)</label>
+                    <CompactRichEditor
+                      value={q.text || ""}
+                      placeholder="Enter question statement, scenario, or prompt (format with bold, italic, bullets)…"
+                      onChange={(html) => patchQuestion(qIdx, { text: html })}
                     />
                   </div>
 
@@ -1857,8 +3056,6 @@ export function CourseCreationWizard({
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="outline">{category}</Badge>
                   <Badge variant="slate">{level.toUpperCase()}</Badge>
-                  <Badge variant="outline">{deliveryMethod.replace("_", " ")}</Badge>
-                  <Badge variant="outline">{language}</Badge>
                 </div>
               </div>
 
@@ -1871,13 +3068,19 @@ export function CourseCreationWizard({
             <div className="border-t border-slate-100 pt-3 space-y-3 text-xs">
               <div>
                 <p className="font-semibold text-slate-700">Course Description</p>
-                <p className="text-slate-600 mt-0.5 leading-relaxed">{description}</p>
+                <div
+                  className="text-slate-600 mt-0.5 leading-relaxed prose prose-xs max-w-none"
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
               </div>
 
               {objectives ? (
                 <div className="rounded-xl bg-indigo-50/60 p-3 border border-indigo-100/70">
                   <p className="font-semibold text-indigo-900">Course Learning Objectives</p>
-                  <p className="text-indigo-800/90 mt-1 whitespace-pre-line leading-relaxed">{objectives}</p>
+                  <div
+                    className="text-indigo-800/90 mt-1 leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: objectives }}
+                  />
                 </div>
               ) : null}
 
@@ -1896,7 +3099,7 @@ export function CourseCreationWizard({
                 Curriculum Breakdown
               </h4>
               <span className="text-xs text-slate-500">
-                {modules.length} Modules ·{" "}
+                {modules.length} Module{modules.length !== 1 ? "s" : ""} ·{" "}
                 {modules.reduce((sum, m) => sum + m.lessons.length, 0)} Lessons ·{" "}
                 {modules.reduce(
                   (sum, m) =>
@@ -1908,48 +3111,46 @@ export function CourseCreationWizard({
             </div>
 
             <div className="space-y-3">
-              {modules.map((m, mIdx) => (
-                <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-bold text-slate-800">
-                      Module {mIdx + 1}: {m.title}
-                    </p>
-                    <span className="text-[11px] text-slate-500">
-                      {m.durationMinutes ? `${m.durationMinutes} min` : "60 min"} · {m.lessons.length} lessons
-                    </span>
+              {modules.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No modules added.</p>
+              ) : (
+                modules.map((m, mIdx) => (
+                  <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-bold text-slate-800">
+                        Module {mIdx + 1}: {m.title}
+                      </p>
+                      <span className="text-[11px] text-slate-500">
+                        {m.durationMinutes ? `${m.durationMinutes} min` : "60 min"} · {m.lessons.length} lessons
+                      </span>
+                    </div>
+
+                    <ul className="space-y-1.5 pl-2">
+                      {m.lessons.map((l, lIdx) => (
+                        <li key={l.id} className="text-slate-600">
+                          <span className="font-medium text-slate-700">
+                            {mIdx + 1}.{lIdx + 1} {l.title}
+                          </span>{" "}
+                          <span className="text-[11px] text-slate-400">
+                            ({l.contentType}, {l.durationMin}m
+                            {l.required === false ? " · optional" : " · required"}
+                            {l.resourceUrl ? " · 1 file" : ""})
+                          </span>
+                          {l.subLessons && l.subLessons.length > 0 ? (
+                            <ul className="pl-4 mt-1 space-y-1 text-slate-500">
+                              {l.subLessons.map((sub, sIdx) => (
+                                <li key={sub.id}>
+                                  ↳ {mIdx + 1}.{lIdx + 1}.{sIdx + 1} {sub.title} ({sub.contentType})
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-
-                  {m.objectives ? (
-                    <p className="text-slate-600 bg-white/80 rounded-lg p-2 border border-slate-100">
-                      <span className="font-semibold text-slate-700">Module Objectives: </span>
-                      {m.objectives}
-                    </p>
-                  ) : null}
-
-                  <ul className="space-y-1.5 pl-2">
-                    {m.lessons.map((l, lIdx) => (
-                      <li key={l.id} className="text-slate-600">
-                        <span className="font-medium text-slate-700">
-                          {mIdx + 1}.{lIdx + 1} {l.title}
-                        </span>{" "}
-                        <span className="text-[11px] text-slate-400">
-                          ({l.contentType}, {l.durationMin}m
-                          {l.resourceUrl ? " · 1 file attached" : ""})
-                        </span>
-                        {l.subLessons && l.subLessons.length > 0 ? (
-                          <ul className="pl-4 mt-1 space-y-1 text-slate-500">
-                            {l.subLessons.map((sub, sIdx) => (
-                              <li key={sub.id}>
-                                ↳ {mIdx + 1}.{lIdx + 1}.{sIdx + 1} {sub.title} ({sub.contentType})
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

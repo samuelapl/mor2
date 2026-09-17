@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +20,10 @@ export interface WorkspaceDetailOverlayProps {
 
 /**
  * Reusable full-workspace detail overlay.
- * Fits precisely into the main workspace area between the global sidebar (left)
- * and the global header (top) without covering either of them.
+ * Uses createPortal to mount directly to document.body, eliminating all ancestor
+ * CSS transforms, stacking contexts, and padding offsets.
+ * Snaps flush to the sidebar (left-0 md:left-64) and header (top-16) to occupy
+ * the 100% full LMS workspace area without gaps or space.
  */
 export function WorkspaceDetailOverlay({
   open,
@@ -34,6 +37,12 @@ export function WorkspaceDetailOverlay({
   className,
   contentClassName,
 }: WorkspaceDetailOverlayProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const handler = (event: KeyboardEvent) => {
@@ -43,14 +52,14 @@ export function WorkspaceDetailOverlay({
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       className={cn(
-        "fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex flex-col bg-slate-50 overflow-hidden animate-fade-in shadow-2xl",
+        "fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex flex-col bg-slate-50 overflow-hidden shadow-2xl animate-fade-in",
         className,
       )}
     >
@@ -103,6 +112,7 @@ export function WorkspaceDetailOverlay({
           {footer}
         </div>
       ) : null}
-    </div>
+    </div>,
+    document.body,
   );
 }

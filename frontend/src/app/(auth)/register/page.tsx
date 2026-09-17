@@ -185,6 +185,58 @@ export default function RegisterPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
+                  <label htmlFor="reg-password" className={labelClass}>
+                    <span>Password</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="reg-password"
+                      type="password"
+                      required
+                      aria-required="true"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        setError(null);
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className={labelClass}>
+                    <span>Confirm password</span>
+                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      required
+                      aria-required="true"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        setError(null);
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Use at least 8 characters, including one letter and one number.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
                   <label htmlFor="phone" className={labelClass}>
                     <span>Phone number</span>
                     <span className="text-red-500 font-bold" aria-hidden="true">*</span>
@@ -247,58 +299,6 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="reg-password" className={labelClass}>
-                    <span>Password</span>
-                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
-                    <span className="sr-only">(required)</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      id="reg-password"
-                      type="password"
-                      required
-                      aria-required="true"
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(event) => {
-                        setPassword(event.target.value);
-                        setError(null);
-                      }}
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="confirmPassword" className={labelClass}>
-                    <span>Confirm password</span>
-                    <span className="text-red-500 font-bold" aria-hidden="true">*</span>
-                    <span className="sr-only">(required)</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      id="confirmPassword"
-                      type="password"
-                      required
-                      aria-required="true"
-                      autoComplete="new-password"
-                      value={confirmPassword}
-                      onChange={(event) => {
-                        setConfirmPassword(event.target.value);
-                        setError(null);
-                      }}
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Use at least 8 characters, including one letter and one number.
-              </p>
 
               {error ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">

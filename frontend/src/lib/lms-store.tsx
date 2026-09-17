@@ -111,6 +111,22 @@ export interface WizardModuleInput {
   lessons: WizardLessonInput[];
 }
 
+function normalizeLessonContentType(
+  type?: string,
+): "DOCUMENT" | "INTERACTIVE" | "VIDEO" | "AUDIO" | "PRESENTATION" | "EXTERNAL_LINK" | "SCORM" {
+  if (!type) return "DOCUMENT";
+  if (type === "ASSIGNMENT") return "DOCUMENT";
+  if (type === "QUIZ" || type === "ASSESSMENT") return "INTERACTIVE";
+  if (
+    ["DOCUMENT", "INTERACTIVE", "VIDEO", "AUDIO", "PRESENTATION", "EXTERNAL_LINK", "SCORM"].includes(
+      type,
+    )
+  ) {
+    return type as any;
+  }
+  return "DOCUMENT";
+}
+
 interface LmsContextValue {
   ready: boolean;
   courses: Course[];
@@ -524,13 +540,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
-                contentType: (lesson.contentType as any) || "DOCUMENT",
+                contentType: normalizeLessonContentType(lesson.contentType),
                 resourceUrl: lesson.resourceUrl,
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
                   titleEn: sub.title,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
-                  contentType: (sub.contentType as any) || "DOCUMENT",
+                  contentType: normalizeLessonContentType(sub.contentType),
                   resourceUrl: sub.resourceUrl,
                 })),
               })),
@@ -796,13 +812,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
-                contentType: (lesson.contentType as any) || "DOCUMENT",
+                contentType: normalizeLessonContentType(lesson.contentType),
                 resourceUrl: lesson.resourceUrl,
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
                   titleEn: sub.title,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
-                  contentType: (sub.contentType as any) || "DOCUMENT",
+                  contentType: normalizeLessonContentType(sub.contentType),
                   resourceUrl: sub.resourceUrl,
                 })),
               })),

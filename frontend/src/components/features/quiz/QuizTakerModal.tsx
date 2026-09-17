@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BookOpenCheck, Clock, Loader2, PartyPopper, RotateCcw } from "lucide-react";
 import type { ApiAssessment } from "@/lib/api/types";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ApiError } from "@/lib/api/client";
@@ -146,13 +146,13 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     answeredCount === assessment!.questions.length;
 
   return (
-    <Modal
+    <WorkspaceDetailOverlay
       open={open}
       onClose={onClose}
-      size="lg"
-      title={assessment?.titleEn ?? "Quiz"}
-      subtitle={assessment ? `${courseTitle} · pass mark ${assessment.passingScore}% · ${assessment.maxAttempts} attempts` : courseTitle}
+      title={assessment?.titleEn ?? "Assessment / Quiz"}
+      subtitle={assessment ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts` : courseTitle}
     >
+      <div className="w-full space-y-6 pb-12">
       {loading ? (
         <div className="flex flex-col items-center py-10 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
@@ -338,6 +338,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
           </div>
         </div>
       )}
-    </Modal>
+      </div>
+    </WorkspaceDetailOverlay>
   );
 }

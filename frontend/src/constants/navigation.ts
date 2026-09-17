@@ -50,6 +50,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   course_owner: [
     { label: "Dashboard", href: "/course-owner", icon: LayoutDashboard },
     { label: "My Courses", href: "/course-owner/my-courses", icon: BookOpen },
+    { label: "Question Bank", href: "/course-owner/question-bank", icon: FileQuestion },
   ],
   content_approver: [
     { label: "Dashboard", href: "/content-approver", icon: LayoutDashboard },
@@ -67,12 +68,11 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "View Published Course", href: "/training-admin/courses", icon: BookOpenCheck },
     { label: "Enrollments", href: "/training-admin/enrollments", icon: Users, permission: "student.manage" },
     { label: "Training Sessions", href: "/training-admin/sessions", icon: Presentation },
-    { label: "Calendar", href: "/training-admin/calendar", icon: CalendarDays },
   ],
   trainer: [
     { label: "Dashboard", href: "/trainer", icon: LayoutDashboard },
     { label: "My Sessions", href: "/trainer/sessions", icon: Presentation },
-    { label: "Create Quiz", href: "/trainer/create-quiz", icon: FileQuestion, permission: "quiz.create" },
+    { label: "Question Bank", href: "/trainer/question-bank", icon: FileQuestion, permission: "quiz.create" },
     { label: "Attendance", href: "/trainer/attendance", icon: ClipboardCheck, permission: "attendance.manage" },
   ],
   learner: [

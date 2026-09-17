@@ -177,7 +177,7 @@ export function CourseDetailModal({
         ) : null
       }
     >
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="w-full space-y-6">
         {course.cover ? (
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -229,9 +229,9 @@ export function CourseDetailModal({
           <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">
             Course Description
           </h3>
-          <p className="text-sm leading-relaxed text-slate-700">
-            {course.description}
-          </p>
+          <div className="text-sm leading-relaxed text-slate-700 prose prose-sm max-w-none">
+            <RichContent html={course.description} />
+          </div>
         </div>
 
         {/* Course Objectives */}
@@ -240,9 +240,9 @@ export function CourseDetailModal({
             <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-indigo-900">
               Course Learning Objectives
             </h3>
-            <p className="text-xs leading-relaxed text-indigo-950/90 whitespace-pre-line">
-              {course.objectives}
-            </p>
+            <div className="text-xs leading-relaxed text-indigo-950/90 prose prose-xs max-w-none">
+              <RichContent html={course.objectives} />
+            </div>
           </div>
         ) : null}
 

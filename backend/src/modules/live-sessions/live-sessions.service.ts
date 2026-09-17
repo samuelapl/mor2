@@ -176,7 +176,6 @@ export class LiveSessionsService {
 
     const where: Prisma.LiveSessionWhereInput = {
       courseId: { in: courseIds },
-      scheduledAt: { gte: new Date() },
       status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
       deletedAt: null,
     };

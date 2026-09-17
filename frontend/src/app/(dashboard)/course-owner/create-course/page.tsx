@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FilePenLine, PackageOpen } from "lucide-react";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import PageShell from "@/components/shared/PageShell";
 import { CourseCreationWizard } from "@/components/features/courses/CourseCreationWizard";
 import { cn } from "@/lib/utils";
@@ -13,31 +14,75 @@ export default function CreateCoursePage() {
   const router = useRouter();
   const [mode, setMode] = useState<CreationMode>(null);
 
-  if (mode === "manual") {
-    return (
+  return (
+    <>
       <PageShell
         role="course_owner"
         title="Create New Course"
-        description="Add course details, attach materials, and build the final assessment in a few steps."
+        description="Choose how you'd like to build this course."
       >
-        <div className="max-w-5xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
+        <div className="grid w-full gap-4 sm:grid-cols-2">
+          {[
+            {
+              key: "manual" as const,
+              icon: FilePenLine,
+              title: "Create manually",
+              description:
+                "Build the course step by step — details, curriculum, materials and a final assessment.",
+            },
+            {
+              key: "scorm" as const,
+              icon: PackageOpen,
+              title: "Upload SCORM",
+              description: "Import a ready-made SCORM package as a course.",
+            },
+          ].map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => setMode(option.key)}
+              className={cn(
+                "group flex flex-col items-start rounded-2xl border border-slate-200/80 bg-white p-6 text-left shadow-soft ring-super-soft transition-all duration-200",
+                "hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lift",
+              )}
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-110">
+                <option.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">
+                {option.title}
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                {option.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      </PageShell>
+
+      {/* Manual creation — full-screen workspace overlay */}
+      <WorkspaceDetailOverlay
+        open={mode === "manual"}
+        onClose={() => setMode(null)}
+        title="Create New Course"
+        subtitle="Add course details, build your curriculum, attach content, and set up the final assessment."
+      >
+        <div className="w-full">
           <CourseCreationWizard
             onDone={() => router.push("/course-owner/my-courses")}
             onCancel={() => setMode(null)}
           />
         </div>
-      </PageShell>
-    );
-  }
+      </WorkspaceDetailOverlay>
 
-  if (mode === "scorm") {
-    return (
-      <PageShell
-        role="course_owner"
-        title="Create New Course"
-        description="Upload a SCORM package to create a course."
+      {/* SCORM placeholder */}
+      <WorkspaceDetailOverlay
+        open={mode === "scorm"}
+        onClose={() => setMode(null)}
+        title="Upload SCORM Package"
+        subtitle="Import a ready-made SCORM package as a course."
       >
-        <div className="max-w-3xl rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-soft ring-super-soft">
+        <div className="w-full rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-soft">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
             <PackageOpen className="h-7 w-7" />
           </div>
@@ -57,53 +102,7 @@ export default function CreateCoursePage() {
             Back
           </button>
         </div>
-      </PageShell>
-    );
-  }
-
-  return (
-    <PageShell
-      role="course_owner"
-      title="Create New Course"
-      description="Choose how you'd like to build this course."
-    >
-      <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
-        {[
-          {
-            key: "manual" as const,
-            icon: FilePenLine,
-            title: "Create manually",
-            description:
-              "Build the course step by step — details, curriculum, materials and a final assessment.",
-          },
-          {
-            key: "scorm" as const,
-            icon: PackageOpen,
-            title: "Upload SCORM",
-            description: "Import a ready-made SCORM package as a course.",
-          },
-        ].map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            onClick={() => setMode(option.key)}
-            className={cn(
-              "group flex flex-col items-start rounded-2xl border border-slate-200/80 bg-white p-6 text-left shadow-soft ring-super-soft transition-all duration-200",
-              "hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lift",
-            )}
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-110">
-              <option.icon className="h-5 w-5" />
-            </div>
-            <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">
-              {option.title}
-            </h3>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              {option.description}
-            </p>
-          </button>
-        ))}
-      </div>
-    </PageShell>
+      </WorkspaceDetailOverlay>
+    </>
   );
 }

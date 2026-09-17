@@ -3,7 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Video, Sparkles, Shield, MonitorPlay, Link as LinkIcon, RefreshCw } from "lucide-react";
 import type { Course } from "@/types";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { ApiError } from "@/lib/api/client";
 import { scheduleSession } from "@/lib/api/monitoring";
@@ -39,9 +39,9 @@ export function ScheduleSessionModal({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // When course changes or modal opens, if courseId is empty set to first course
+  // Sync courseId when courses load
   useEffect(() => {
-    if (!courseId && courses.length > 0) {
+    if (!courseId && courses.length > 0 && courses[0]?.id) {
       setCourseId(courses[0].id);
     }
   }, [courses, courseId]);
@@ -49,9 +49,9 @@ export function ScheduleSessionModal({
   const selectedCourse = courses.find((c) => c.id === courseId);
 
   const generateJitsiUrl = () => {
-    const code = (selectedCourse?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
-    const randomSuffix = Math.random().toString(36).substring(2, 8);
-    return `https://meet.jit.si/MoR-LMS-${code}-${randomSuffix}`;
+    const course = courses.find((c) => c.id === courseId);
+    const code = (course?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
+    return `https://meet.jit.si/MoR-LMS-${code}-${Math.random().toString(36).substring(2, 8)}`;
   };
 
   // Automatically pre-populate Jitsi URL when switching to JITSI if empty
@@ -60,12 +60,11 @@ export function ScheduleSessionModal({
     if (val === "JITSI") {
       setExternalUrl(generateJitsiUrl());
     } else if (val === "BIGBLUEBUTTON") {
-      const code = (selectedCourse?.code || "session").toLowerCase().replace(/[^a-z0-9]/g, "");
-      setExternalUrl(`https://demo.bigbluebutton.org/gl/join?room=mor-${code}`);
+      setExternalUrl("https://demo.bigbluebutton.org/gl/");
     } else if (val === "GOOGLE_MEET") {
-      setExternalUrl("https://meet.google.com/");
+      setExternalUrl("https://meet.google.com/new");
     } else if (val === "ZOOM") {
-      setExternalUrl("https://zoom.us/j/");
+      setExternalUrl("");
     } else {
       setExternalUrl("");
     }
@@ -76,37 +75,25 @@ export function ScheduleSessionModal({
     if (open && platformType === "JITSI" && !externalUrl) {
       setExternalUrl(generateJitsiUrl());
     }
-  }, [open, courseId]);
+  }, [open, platformType, courseId]);
 
   const inputClass =
     "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!courseId) {
-      setError("Please choose a course.");
-      return;
-    }
     setError(null);
     setSubmitting(true);
 
     try {
-      // Map platform choice to backend Prisma enum
       let backendPlatform: "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" = "CUSTOM";
-      let meetingId: string | undefined = undefined;
+      if (platformType === "ZOOM") backendPlatform = "ZOOM";
+      else if (platformType === "GOOGLE_MEET") backendPlatform = "GOOGLE_MEET";
+      else if (platformType === "MS_TEAMS") backendPlatform = "MS_TEAMS";
 
-      if (platformType === "ZOOM") {
-        backendPlatform = "ZOOM";
-      } else if (platformType === "GOOGLE_MEET") {
-        backendPlatform = "GOOGLE_MEET";
-      } else if (platformType === "MS_TEAMS") {
-        backendPlatform = "MS_TEAMS";
-      } else if (platformType === "BIGBLUEBUTTON") {
-        backendPlatform = "CUSTOM";
-        const code = (selectedCourse?.code || "session").toLowerCase().replace(/[^a-z0-9]/g, "");
-        meetingId = `bbb-${code}-${Date.now().toString(36)}`;
-      } else {
-        backendPlatform = "CUSTOM";
+      let meetingId: string | undefined = undefined;
+      if (platformType === "BIGBLUEBUTTON") {
+        meetingId = `bbb-${Date.now()}`;
       }
 
       await scheduleSession(courseId, {
@@ -134,13 +121,14 @@ export function ScheduleSessionModal({
   };
 
   return (
-    <Modal
+    <WorkspaceDetailOverlay
       open={open}
       onClose={onClose}
-      title="Schedule Live Session"
-      subtitle="Schedule an interactive virtual classroom or live webinar."
+      title="Schedule Live Training Session"
+      subtitle="Schedule an interactive virtual classroom or live webinar. Sessions will be visible to assigned trainers and enrolled learners."
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="w-full py-4">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600">Course</label>
           <select
@@ -309,6 +297,7 @@ export function ScheduleSessionModal({
           </Button>
         </div>
       </form>
-    </Modal>
+    </div>
+  </WorkspaceDetailOverlay>
   );
 }

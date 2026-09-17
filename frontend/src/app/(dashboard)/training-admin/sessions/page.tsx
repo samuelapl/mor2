@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
 import { ScheduleSessionModal } from "@/components/features/sessions/ScheduleSessionModal";
+import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
+import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function TrainingAdminSessionsPage() {
@@ -22,6 +24,8 @@ export default function TrainingAdminSessionsPage() {
   const [loading, setLoading] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
+  const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
 
   const loadSessions = () => {
     setLoading(true);
@@ -69,19 +73,8 @@ export default function TrainingAdminSessionsPage() {
   const upcomingRows = usePagination(toRows(upcoming), 6);
   const pastRows = usePagination(toRows(past), 6);
 
-  const handleJoin = async (session: ApiLiveSession) => {
-    let url = session.externalUrl;
-    try {
-      const resolved = await fetchSessionJoinUrl(session.id);
-      if (resolved?.joinUrl) {
-        url = resolved.joinUrl;
-      }
-    } catch {
-      // fallback to externalUrl
-    }
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
+  const handleJoin = (session: ApiLiveSession) => {
+    setActiveJoinSession(session);
   };
 
   const handleToggleLive = async (session: ApiLiveSession) => {
@@ -137,6 +130,15 @@ export default function TrainingAdminSessionsPage() {
                 sessions={upcomingRows.pageItems}
                 extra={(row) => (
                   <div className="flex items-center justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedDetailId(row.session.id)}
+                      className="gap-1 text-slate-600 hover:text-slate-900"
+                    >
+                      Details
+                    </Button>
+
                     {row.session.status === "SCHEDULED" ? (
                       <Button
                         size="sm"
@@ -161,21 +163,14 @@ export default function TrainingAdminSessionsPage() {
                       </Button>
                     ) : null}
 
-                    {row.session.externalUrl ? (
-                      <Button size="sm" onClick={() => handleJoin(row.session)}>
-                        <MonitorPlay className="h-3.5 w-3.5" />
-                        Join Room
-                        <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
-                      </Button>
-                    ) : (
-                      <span
-                        title="No meeting link was added when this session was scheduled"
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-400"
-                      >
-                        <LinkIcon className="h-3.5 w-3.5" />
-                        No link
-                      </span>
-                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => handleJoin(row.session)}
+                      className="gap-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+                    >
+                      <MonitorPlay className="h-3.5 w-3.5" />
+                      Join Room
+                    </Button>
                   </div>
                 )}
               />
@@ -195,14 +190,18 @@ export default function TrainingAdminSessionsPage() {
           >
             <SessionTable
               sessions={pastRows.pageItems}
-              extra={(row) =>
-                row.session.externalUrl ? (
-                  <Button size="sm" variant="ghost" onClick={() => handleJoin(row.session)}>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Recording / Link
+              extra={(row) => (
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedDetailId(row.session.id)}
+                    className="gap-1 text-slate-600"
+                  >
+                    Details & Attendees
                   </Button>
-                ) : null
-              }
+                </div>
+              )}
             />
             <Pagination
               page={pastRows.page}
@@ -223,6 +222,31 @@ export default function TrainingAdminSessionsPage() {
         }}
         courses={courses}
       />
+
+      {activeJoinSession && (
+        <LiveSessionWorkspace
+          open={Boolean(activeJoinSession)}
+          onClose={() => setActiveJoinSession(null)}
+          session={activeJoinSession}
+          courseTitle={courseMap.get(activeJoinSession.courseId)?.title}
+          courseCode={courseMap.get(activeJoinSession.courseId)?.code}
+          userRole="training_admin"
+        />
+      )}
+
+      {selectedDetailId && (
+        <SessionDetailModal
+          open={Boolean(selectedDetailId)}
+          onClose={() => setSelectedDetailId(null)}
+          sessionId={selectedDetailId}
+          userRole="training_admin"
+          onJoin={() => {
+            const found = sessions.find((s) => s.id === selectedDetailId);
+            if (found) setActiveJoinSession(found);
+            setSelectedDetailId(null);
+          }}
+        />
+      )}
     </PageShell>
   );
 }

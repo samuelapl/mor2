@@ -18,7 +18,7 @@ export function EditCourseModal({ open, onClose, course }: EditCourseModalProps)
       title={`Edit Course: ${course?.title ?? ""}`}
       subtitle={`${course?.code ?? ""} · Update curriculum, objectives, materials, and assessment`}
     >
-      <div className="mx-auto max-w-5xl">
+      <div className="w-full">
         {course ? (
           <CourseCreationWizard
             key={course.id}

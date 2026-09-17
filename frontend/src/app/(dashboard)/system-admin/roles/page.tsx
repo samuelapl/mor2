@@ -7,7 +7,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Modal } from "@/components/ui/Modal";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import {
   createRole,
   deleteRole,
@@ -380,13 +380,13 @@ export default function RolesPermissionsPage() {
         )}
       </div>
 
-      <Modal
+      <WorkspaceDetailOverlay
         open={showNewRole}
         onClose={() => setShowNewRole(false)}
-        title="Add role"
-        subtitle="Starts with zero permissions granted — build it up in the matrix after creating it."
-        footer={
-          <>
+        title="Create New Role"
+        subtitle="Configure custom role identifiers and assign granular RBAC permissions."
+        actions={
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowNewRole(false)}>
               Cancel
             </Button>
@@ -397,30 +397,34 @@ export default function RolesPermissionsPage() {
             >
               {creating ? "Creating…" : "Create role"}
             </Button>
-          </>
+          </div>
         }
       >
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Name</label>
-            <input
-              className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-              placeholder="e.g. REGIONAL_COORDINATOR"
-              value={newRoleName}
-              onChange={(e) => setNewRoleName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Display label</label>
-            <input
-              className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-              placeholder="e.g. Regional Coordinator"
-              value={newRoleLabel}
-              onChange={(e) => setNewRoleLabel(e.target.value)}
-            />
+        <div className="w-full space-y-6">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">Role Code Name *</label>
+              <input
+                className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-mono"
+                placeholder="e.g. REGIONAL_COORDINATOR"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+              />
+              <p className="mt-1 text-[11px] text-slate-400">Unique uppercase identifier used by backend authorization guards.</p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">Display Label *</label>
+              <input
+                className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                placeholder="e.g. Regional Coordinator"
+                value={newRoleLabel}
+                onChange={(e) => setNewRoleLabel(e.target.value)}
+              />
+              <p className="mt-1 text-[11px] text-slate-400">Human-readable title shown in user directory and role badges.</p>
+            </div>
           </div>
         </div>
-      </Modal>
+      </WorkspaceDetailOverlay>
     </PageShell>
   );
 }

@@ -1,0 +1,979 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowDown,
+  ArrowUp,
+  Award,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Copy,
+  Edit2,
+  FileCheck,
+  FileQuestion,
+  Filter,
+  HelpCircle,
+  Layers,
+  ListChecks,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useLms } from "@/lib/lms-store";
+import PageShell from "@/components/shared/PageShell";
+import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  createCourseAssessment,
+  fetchAssessmentWithAnswers,
+  fetchCourseAssessments,
+  updateAssessment,
+  type AssessmentQuestionInput,
+  type SaveAssessmentBody,
+} from "@/lib/api/quiz";
+import type { Course, QuestionType, Role } from "@/types";
+
+export interface BankQuestion {
+  id: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  question: string;
+  options: string[];
+  correctAnswer?: number | string;
+  points: number;
+  courseId: string;
+  category?: string;
+}
+
+const inputClass =
+  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+const labelClass = "mb-1.5 block text-xs font-semibold text-slate-700";
+
+interface QuestionBankWorkspaceProps {
+  role: "trainer" | "course_owner";
+}
+
+export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
+  const { courses, currentUser } = useLms();
+
+  const relevantCourses = useMemo(() => {
+    if (role === "course_owner") {
+      return courses;
+    }
+    const assigned = courses.filter(
+      (c) =>
+        c.trainerId === currentUser?.id ||
+        ((c as any).trainerIds && (c as any).trainerIds.includes(currentUser?.id)),
+    );
+    return assigned.length > 0 ? assigned : courses;
+  }, [courses, currentUser, role]);
+
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"questions" | "quizzes">("questions");
+
+  useEffect(() => {
+    if (relevantCourses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(relevantCourses[0].id);
+    }
+  }, [relevantCourses, selectedCourseId]);
+
+  const currentCourse = useMemo(
+    () => relevantCourses.find((c) => c.id === selectedCourseId) ?? relevantCourses[0],
+    [relevantCourses, selectedCourseId],
+  );
+
+  const [questions, setQuestions] = useState<BankQuestion[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("ALL");
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<BankQuestion | null>(null);
+
+  const [qType, setQType] = useState<"MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER">("MULTIPLE_CHOICE");
+  const [qText, setQText] = useState("");
+  const [qOptions, setQOptions] = useState<string[]>(["", "", "", ""]);
+  const [qCorrectIndex, setQCorrectIndex] = useState(0);
+  const [qAnswerText, setQAnswerText] = useState("");
+  const [qPoints, setQPoints] = useState(10);
+  const [qCategory, setQCategory] = useState("General");
+
+  const [quizBuilderOpen, setQuizBuilderOpen] = useState(false);
+  const [quizTitle, setQuizTitle] = useState("Course Quiz");
+  const [quizDescription, setQuizDescription] = useState("");
+  const [passingScore, setPassingScore] = useState(70);
+  const [maxAttempts, setMaxAttempts] = useState(3);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(45);
+  const [shuffleQuestions, setShuffleQuestions] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<BankQuestion[]>([]);
+  const [savingQuiz, setSavingQuiz] = useState(false);
+  const [quizFlash, setQuizFlash] = useState<string | null>(null);
+
+  const [courseAssessments, setCourseAssessments] = useState<any[]>([]);
+  const [loadingAssessments, setLoadingAssessments] = useState(false);
+
+  const loadAssessments = async (cId: string) => {
+    if (!cId) return;
+    setLoadingAssessments(true);
+    try {
+      const list = await fetchCourseAssessments(cId);
+      setCourseAssessments(list);
+
+      const bank: BankQuestion[] = [];
+      for (const asm of list) {
+        try {
+          const detail = await fetchAssessmentWithAnswers(asm.id);
+          if (detail && Array.isArray(detail.questions)) {
+            detail.questions.forEach((q: any) => {
+              bank.push({
+                id: q.id || `q-${Math.random().toString(36).slice(2, 7)}`,
+                type: q.type || "MULTIPLE_CHOICE",
+                question: q.question || "",
+                options: Array.isArray(q.options) ? q.options : [],
+                correctAnswer: q.correctAnswer,
+                points: q.points || 10,
+                courseId: cId,
+                category: asm.titleEn || "Assessment",
+              });
+            });
+          }
+        } catch {
+          // best-effort
+        }
+      }
+
+      setQuestions((prev) => {
+        const others = prev.filter((p) => p.courseId !== cId);
+        return [...others, ...bank];
+      });
+    } catch {
+      setCourseAssessments([]);
+    } finally {
+      setLoadingAssessments(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      loadAssessments(selectedCourseId);
+    }
+  }, [selectedCourseId]);
+
+  const courseQuestions = useMemo(() => {
+    return questions.filter((q) => !q.courseId || q.courseId === selectedCourseId);
+  }, [questions, selectedCourseId]);
+
+  const filteredQuestions = useMemo(() => {
+    return courseQuestions.filter((q) => {
+      const matchesSearch =
+        !searchQuery ||
+        q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q.options.some((o) => o.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesType = filterType === "ALL" || q.type === filterType;
+      return matchesSearch && matchesType;
+    });
+  }, [courseQuestions, searchQuery, filterType]);
+
+  const openCreateQuestion = () => {
+    setEditingQuestion(null);
+    setQType("MULTIPLE_CHOICE");
+    setQText("");
+    setQOptions(["", "", "", ""]);
+    setQCorrectIndex(0);
+    setQAnswerText("");
+    setQPoints(10);
+    setQCategory("General");
+    setEditorOpen(true);
+  };
+
+  const openEditQuestion = (q: BankQuestion) => {
+    setEditingQuestion(q);
+    setQType(q.type);
+    setQText(q.question);
+    setQOptions(q.options.length > 0 ? q.options : ["", "", "", ""]);
+    setQCorrectIndex(typeof q.correctAnswer === "number" ? q.correctAnswer : 0);
+    setQAnswerText(typeof q.correctAnswer === "string" ? q.correctAnswer : "");
+    setQPoints(q.points || 10);
+    setQCategory(q.category || "General");
+    setEditorOpen(true);
+  };
+
+  const handleSaveQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qText.trim()) return;
+
+    const newQuestion: BankQuestion = {
+      id: editingQuestion ? editingQuestion.id : `bank-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: qType,
+      question: qText.trim(),
+      options: qType === "TRUE_FALSE" ? ["True", "False"] : qType === "SHORT_ANSWER" ? [] : qOptions.filter((o) => o.trim() !== ""),
+      correctAnswer: qType === "SHORT_ANSWER" ? qAnswerText.trim() : qCorrectIndex,
+      points: qPoints,
+      courseId: selectedCourseId,
+      category: qCategory,
+    };
+
+    setQuestions((prev) => {
+      if (editingQuestion) {
+        return prev.map((item) => (item.id === editingQuestion.id ? newQuestion : item));
+      }
+      return [newQuestion, ...prev];
+    });
+
+    setEditorOpen(false);
+  };
+
+  const handleDeleteQuestion = (id: string) => {
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
+    setSelectedQuestionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const handleDuplicateQuestion = (q: BankQuestion) => {
+    const dup: BankQuestion = {
+      ...q,
+      id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      question: `${q.question} (Copy)`,
+    };
+    setQuestions((prev) => [dup, ...prev]);
+  };
+
+  const toggleSelectQuestion = (id: string) => {
+    setSelectedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedQuestionIds.size === filteredQuestions.length) {
+      setSelectedQuestionIds(new Set());
+    } else {
+      setSelectedQuestionIds(new Set(filteredQuestions.map((q) => q.id)));
+    }
+  };
+
+  const openQuizBuilderWithSelected = () => {
+    const selected = courseQuestions.filter((q) => selectedQuestionIds.has(q.id));
+    setQuizQuestions(selected.length > 0 ? selected : courseQuestions.slice(0, 5));
+    setQuizTitle(`${currentCourse?.title || "Course"} Quiz`);
+    setQuizDescription("Answer all questions to demonstrate your mastery of this training material.");
+    setPassingScore(70);
+    setMaxAttempts(3);
+    setTimeLimitMinutes(30);
+    setShuffleQuestions(false);
+    setQuizFlash(null);
+    setQuizBuilderOpen(true);
+  };
+
+  const handleSaveQuiz = async () => {
+    if (!selectedCourseId || quizQuestions.length === 0) return;
+    setSavingQuiz(true);
+    setQuizFlash(null);
+
+    try {
+      const questionsPayload: AssessmentQuestionInput[] = quizQuestions.map((q) => ({
+        id: q.id,
+        type: q.type,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer ?? 0,
+        points: q.points,
+      }));
+
+      const body: SaveAssessmentBody = {
+        titleEn: quizTitle,
+        titleAm: quizTitle,
+        descriptionEn: quizDescription,
+        descriptionAm: quizDescription,
+        passingScore,
+        maxAttempts,
+        timeLimitMinutes,
+        shuffleQuestions,
+        questions: questionsPayload,
+      };
+
+      await createCourseAssessment(selectedCourseId, body);
+      setQuizFlash("Quiz successfully saved and published for learners!");
+      await loadAssessments(selectedCourseId);
+
+      setTimeout(() => {
+        setQuizBuilderOpen(false);
+        setActiveTab("quizzes");
+      }, 1200);
+    } catch (err: any) {
+      setQuizFlash(`Error saving quiz: ${err?.message || "Please verify quiz settings."}`);
+    } finally {
+      setSavingQuiz(false);
+    }
+  };
+
+  const moveQuizQuestion = (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= quizQuestions.length) return;
+    setQuizQuestions((prev) => {
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[target];
+      next[target] = temp;
+      return next;
+    });
+  };
+
+  const removeQuizQuestion = (index: number) => {
+    setQuizQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  return (
+    <PageShell
+      role={role}
+      title="Question Bank & Quiz Builder"
+      description="Create reusable question repositories, organize questions by topic, and assemble quizzes in a dedicated full-screen workspace."
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => loadAssessments(selectedCourseId)}
+            disabled={loadingAssessments}
+          >
+            <RefreshCw className={`h-4 w-4 ${loadingAssessments ? "animate-spin" : ""}`} />
+            Sync Bank
+          </Button>
+          <Button size="sm" onClick={openCreateQuestion}>
+            <Plus className="h-4 w-4" />
+            Add Question
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={openQuizBuilderWithSelected}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <FileQuestion className="h-4 w-4" />
+            Assemble Quiz ({selectedQuestionIds.size > 0 ? selectedQuestionIds.size : "All"})
+          </Button>
+        </div>
+      }
+    >
+      {/* Course Filter Bar */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Active Course:
+          </label>
+          <select
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
+          >
+            {relevantCourses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} · {c.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* View Switcher Tabs */}
+        <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("questions")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === "questions"
+                ? "bg-white text-indigo-700 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            Questions ({courseQuestions.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("quizzes")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === "quizzes"
+                ? "bg-white text-indigo-700 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Award className="h-3.5 w-3.5" />
+            Published Quizzes ({courseAssessments.length})
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "questions" ? (
+        <div className="space-y-4">
+          {/* Search, Filter & Bulk Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search questions or answer options…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none"
+                />
+              </div>
+
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none"
+              >
+                <option value="ALL">All Question Types</option>
+                <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                <option value="TRUE_FALSE">True / False</option>
+                <option value="SHORT_ANSWER">Short Answer</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={toggleSelectAll}
+                className="text-xs"
+              >
+                {selectedQuestionIds.size === filteredQuestions.length && filteredQuestions.length > 0
+                  ? "Deselect All"
+                  : `Select All (${filteredQuestions.length})`}
+              </Button>
+            </div>
+          </div>
+
+          {/* Question List */}
+          {filteredQuestions.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
+              <FileQuestion className="mx-auto h-12 w-12 text-slate-300" />
+              <h3 className="mt-3 text-sm font-semibold text-slate-800">No questions in this bank</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Click &quot;Add Question&quot; above to create your first question for this course.
+              </p>
+              <Button size="sm" onClick={openCreateQuestion} className="mt-4">
+                <Plus className="h-4 w-4" /> Add Question
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredQuestions.map((q, idx) => {
+                const isSelected = selectedQuestionIds.has(q.id);
+                return (
+                  <div
+                    key={q.id}
+                    className={`group relative overflow-hidden rounded-2xl border transition-all duration-150 p-5 ${
+                      isSelected
+                        ? "border-indigo-400 bg-indigo-50/20 shadow-sm ring-2 ring-indigo-500/10"
+                        : "border-slate-200/90 bg-white hover:border-slate-300 shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectQuestion(q.id)}
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-slate-400">
+                              #{idx + 1}
+                            </span>
+                            <Badge variant={q.type === "MULTIPLE_CHOICE" ? "blue" : q.type === "TRUE_FALSE" ? "green" : "amber"}>
+                              {q.type.replace("_", " ")}
+                            </Badge>
+                            <span className="text-xs font-semibold text-slate-500">
+                              {q.points} pts
+                            </span>
+                            {q.category && (
+                              <span className="text-xs text-slate-400">· {q.category}</span>
+                            )}
+                          </div>
+
+                          <h4 className="mt-2 text-sm font-bold text-slate-900 leading-relaxed">
+                            {q.question}
+                          </h4>
+
+                          {/* Options breakdown */}
+                          {q.type === "MULTIPLE_CHOICE" && q.options.length > 0 && (
+                            <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+                              {q.options.map((opt, optIdx) => {
+                                const isCorrect = q.correctAnswer === optIdx;
+                                return (
+                                  <div
+                                    key={optIdx}
+                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium ${
+                                      isCorrect
+                                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold"
+                                        : "bg-slate-50 text-slate-600 border border-slate-100"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                                        isCorrect ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+                                      }`}
+                                    >
+                                      {String.fromCharCode(65 + optIdx)}
+                                    </span>
+                                    <span className="truncate">{opt}</span>
+                                    {isCorrect && (
+                                      <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {q.type === "TRUE_FALSE" && (
+                            <div className="mt-2 flex items-center gap-3 text-xs">
+                              <span
+                                className={`px-2.5 py-1 rounded-lg font-semibold ${
+                                  q.correctAnswer === 0 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                True {q.correctAnswer === 0 ? "✓ (Correct)" : ""}
+                              </span>
+                              <span
+                                className={`px-2.5 py-1 rounded-lg font-semibold ${
+                                  q.correctAnswer === 1 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                False {q.correctAnswer === 1 ? "✓ (Correct)" : ""}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDuplicateQuestion(q)}
+                          title="Duplicate Question"
+                        >
+                          <Copy className="h-3.5 w-3.5 text-slate-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEditQuestion(q)}
+                          title="Edit Question"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 text-slate-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          title="Delete Question"
+                          className="hover:text-red-600"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Published Quizzes View */
+        <div className="space-y-4">
+          {courseAssessments.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
+              <Award className="mx-auto h-12 w-12 text-slate-300" />
+              <h3 className="mt-3 text-sm font-semibold text-slate-800">No quizzes assembled yet</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Select questions from the Question Bank and click &quot;Assemble Quiz&quot; to publish an assessment.
+              </p>
+              <Button size="sm" onClick={openQuizBuilderWithSelected} className="mt-4">
+                <FileQuestion className="h-4 w-4" /> Assemble Quiz
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {courseAssessments.map((asm) => (
+                <div
+                  key={asm.id}
+                  className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <Badge variant="blue">Passing: {asm.passingScore}%</Badge>
+                    <span className="text-xs text-slate-400">
+                      {asm.questionsCount || (asm.questions ? asm.questions.length : "Multi")} questions
+                    </span>
+                  </div>
+
+                  <h4 className="font-display text-sm font-bold text-slate-900 line-clamp-1">
+                    {asm.titleEn}
+                  </h4>
+                  <p className="text-xs text-slate-500 line-clamp-2">
+                    {asm.descriptionEn || "No description provided."}
+                  </p>
+
+                  <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      {asm.timeLimitMinutes ? `${asm.timeLimitMinutes} min` : "No limit"}
+                    </span>
+                    <span>Max {asm.maxAttempts} attempts</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FULL-SCREEN QUESTION EDITOR OVERLAY */}
+      {editorOpen && (
+        <WorkspaceDetailOverlay
+          open={editorOpen}
+          onClose={() => setEditorOpen(false)}
+          title={editingQuestion ? "Edit Question" : "Add Question to Bank"}
+          subtitle={`Assign to ${currentCourse?.title || "Course"} Question Bank`}
+        >
+          <div className="w-full py-4">
+            <form onSubmit={handleSaveQuestion} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Question Type</label>
+                  <select
+                    value={qType}
+                    onChange={(e) => setQType(e.target.value as any)}
+                    className={inputClass}
+                  >
+                    <option value="MULTIPLE_CHOICE">Multiple Choice (Single Answer)</option>
+                    <option value="TRUE_FALSE">True / False</option>
+                    <option value="SHORT_ANSWER">Short Answer (Exact Match)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Points / Marks</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={qPoints}
+                    onChange={(e) => setQPoints(parseInt(e.target.value) || 10)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Question Prompt *</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Type your question statement or problem clearly…"
+                  value={qText}
+                  onChange={(e) => setQText(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              {/* Options based on type */}
+              {qType === "MULTIPLE_CHOICE" && (
+                <div className="space-y-3">
+                  <label className={labelClass}>
+                    Answer Choices (Select the radio button for the correct option)
+                  </label>
+                  {qOptions.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="correctAnswerOption"
+                        checked={qCorrectIndex === idx}
+                        onChange={() => setQCorrectIndex(idx)}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-500 w-5">
+                        {String.fromCharCode(65 + idx)}.
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        placeholder={`Option ${String.fromCharCode(65 + idx)} text…`}
+                        value={opt}
+                        onChange={(e) => {
+                          const next = [...qOptions];
+                          next[idx] = e.target.value;
+                          setQOptions(next);
+                        }}
+                        className={inputClass}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {qType === "TRUE_FALSE" && (
+                <div className="space-y-2">
+                  <label className={labelClass}>Correct Answer</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+                      <input
+                        type="radio"
+                        name="tfAnswer"
+                        checked={qCorrectIndex === 0}
+                        onChange={() => setQCorrectIndex(0)}
+                        className="h-4 w-4 text-indigo-600"
+                      />
+                      True
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+                      <input
+                        type="radio"
+                        name="tfAnswer"
+                        checked={qCorrectIndex === 1}
+                        onChange={() => setQCorrectIndex(1)}
+                        className="h-4 w-4 text-indigo-600"
+                      />
+                      False
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {qType === "SHORT_ANSWER" && (
+                <div>
+                  <label className={labelClass}>Accepted Answer Text *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter the correct term or phrase (case-insensitive)"
+                    value={qAnswerText}
+                    onChange={(e) => setQAnswerText(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                <Button variant="outline" type="button" onClick={() => setEditorOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingQuestion ? "Update Question" : "Save to Bank"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </WorkspaceDetailOverlay>
+      )}
+
+      {/* FULL-SCREEN QUIZ BUILDER WORKSPACE OVERLAY */}
+      {quizBuilderOpen && (
+        <WorkspaceDetailOverlay
+          open={quizBuilderOpen}
+          onClose={() => setQuizBuilderOpen(false)}
+          title={`Quiz Builder: ${quizTitle}`}
+          subtitle={`Configuring assessment for ${currentCourse?.title || "Course"} (${quizQuestions.length} Questions)`}
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setQuizBuilderOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveQuiz}
+                disabled={savingQuiz || quizQuestions.length === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                {savingQuiz ? "Publishing…" : "Save & Publish Quiz"}
+              </Button>
+            </div>
+          }
+        >
+          <div className="w-full py-4 space-y-6 pb-12">
+            {quizFlash && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                {quizFlash}
+              </div>
+            )}
+
+            {/* Quiz Configuration Card */}
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Settings className="h-4 w-4 text-indigo-600" />
+                Assessment Settings & Rules
+              </h3>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Quiz Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={quizTitle}
+                    onChange={(e) => setQuizTitle(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Passing Score (%)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={passingScore}
+                    onChange={(e) => setPassingScore(parseInt(e.target.value) || 70)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Instructions for Learners</label>
+                <textarea
+                  rows={2}
+                  value={quizDescription}
+                  onChange={(e) => setQuizDescription(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className={labelClass}>Max Attempts</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={maxAttempts}
+                    onChange={(e) => setMaxAttempts(parseInt(e.target.value) || 3)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Time Limit (Minutes)</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={300}
+                    value={timeLimitMinutes}
+                    onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 45)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={shuffleQuestions}
+                      onChange={(e) => setShuffleQuestions(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    Shuffle questions on attempt
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Assembled Questions Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <ListChecks className="h-4 w-4 text-indigo-600" />
+                    Quiz Questions ({quizQuestions.length})
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Total Marks: {quizQuestions.reduce((s, q) => s + (q.points || 10), 0)} pts
+                  </p>
+                </div>
+              </div>
+
+              {quizQuestions.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-400">
+                  No questions in this quiz. Select questions from the Question Bank.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {quizQuestions.map((q, qIdx) => (
+                    <div
+                      key={q.id || qIdx}
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-xs font-bold text-indigo-700">
+                          {qIdx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">{q.question}</p>
+                          <p className="text-[11px] text-slate-400">
+                            {q.type} · {q.points || 10} pts · {q.options.length} choices
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => moveQuizQuestion(qIdx, -1)}
+                          disabled={qIdx === 0}
+                          className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveQuizQuestion(qIdx, 1)}
+                          disabled={qIdx === quizQuestions.length - 1}
+                          className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeQuizQuestion(qIdx)}
+                          className="rounded p-1 text-slate-400 hover:text-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </WorkspaceDetailOverlay>
+      )}
+    </PageShell>
+  );
+}

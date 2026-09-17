@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Video, MonitorPlay, ExternalLink, CheckCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, ExternalLink, MonitorPlay, RefreshCw, Video } from "lucide-react";
+import { fetchUpcomingSessions, selfCheckIn } from "@/lib/api/monitoring";
 import type { ApiLiveSession } from "@/lib/api/types";
-import {
-  fetchUpcomingSessions,
-  selfCheckIn,
-  fetchSessionJoinUrl,
-  fetchMyAttendance,
-} from "@/lib/api/monitoring";
 import { ApiError } from "@/lib/api/client";
 import { useLms } from "@/lib/lms-store";
 import { tr } from "@/constants/labels";
@@ -18,31 +13,23 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 
-export default function LiveSessionsPage() {
-  const { lang, currentUser } = useLms();
+export default function LearnerLiveSessionsPage() {
+  const { lang, courses } = useLms();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
-  const [joined, setJoined] = useState<string[]>([]);
   const [loadingJoinId, setLoadingJoinId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [joined, setJoined] = useState<string[]>([]);
+  const [activeSession, setActiveSession] = useState<ApiLiveSession | null>(null);
 
-  const load = async () => {
-    try {
-      const res = await fetchUpcomingSessions();
-      setSessions(res.data);
-    } catch {
-      setSessions([]);
-    }
-
-    // Load past attendance to mark previously joined sessions
-    try {
-      const myAtt = await fetchMyAttendance();
-      const attendedSessionIds = myAtt.map((a) => a.sessionId);
-      setJoined((prev) => Array.from(new Set([...prev, ...attendedSessionIds])));
-    } catch {
-      // ignore
-    }
+  const load = () => {
+    fetchUpcomingSessions()
+      .then((res) => setSessions(res.data))
+      .catch((err) =>
+        setError(err instanceof ApiError ? err.message : "Failed to load live sessions."),
+      );
   };
 
   useEffect(() => {
@@ -56,45 +43,11 @@ export default function LiveSessionsPage() {
     trainerName: "Assigned Trainer",
   }));
 
-  const handleJoin = async (session: ApiLiveSession) => {
+  const handleJoin = (session: ApiLiveSession) => {
     setError(null);
     setSuccessMsg(null);
-    setLoadingJoinId(session.id);
-
-    try {
-      // 1. Record self check-in (attendance)
-      try {
-        await selfCheckIn(session.id, "VIRTUAL");
-        setJoined((prev) => (prev.includes(session.id) ? prev : [...prev, session.id]));
-        setSuccessMsg(`Attendance recorded successfully for "${session.titleEn}". Opening room...`);
-      } catch (checkinErr) {
-        // If already checked in, that's completely fine
-        console.info("Check-in notice:", checkinErr);
-        setJoined((prev) => (prev.includes(session.id) ? prev : [...prev, session.id]));
-      }
-
-      // 2. Resolve join URL (with Jitsi name embedding or BBB signed URL)
-      let targetUrl = session.externalUrl;
-      try {
-        const resolved = await fetchSessionJoinUrl(session.id);
-        if (resolved?.joinUrl) {
-          targetUrl = resolved.joinUrl;
-        }
-      } catch {
-        // Fallback to session.externalUrl
-      }
-
-      // 3. Open session room in new window
-      if (targetUrl) {
-        window.open(targetUrl, "_blank", "noopener,noreferrer");
-      } else {
-        setError("This session does not have an active meeting link yet.");
-      }
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unable to join this live session.");
-    } finally {
-      setLoadingJoinId(null);
-    }
+    setActiveSession(session);
+    setJoined((prev) => (prev.includes(session.id) ? prev : [...prev, session.id]));
   };
 
   return (
@@ -165,11 +118,22 @@ export default function LiveSessionsPage() {
         />
       )}
 
+      {activeSession ? (
+        <LiveSessionWorkspace
+          open={Boolean(activeSession)}
+          onClose={() => setActiveSession(null)}
+          session={activeSession}
+          courseTitle={activeSession.course?.titleEn || "Course Training"}
+          courseCode={activeSession.course?.code || "TRAINING"}
+          userRole="learner"
+        />
+      ) : null}
+
       <div className="mt-5 flex items-center gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-500 border border-slate-200/60">
         <Video className="h-4 w-4 text-indigo-600 flex-shrink-0" />
         <span>
           Clicking <strong>Join</strong> automatically logs your attendance check-in into the Ministry of Revenues
-          official audit log and opens your live classroom session.
+          official audit log and opens your live classroom session directly inside the LMS.
         </span>
       </div>
     </PageShell>
