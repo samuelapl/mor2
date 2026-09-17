@@ -425,6 +425,17 @@ export interface ApiNotification {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Public landing page stats                                                  */
+/* -------------------------------------------------------------------------- */
+
+export interface ApiLandingStats {
+  courses: number;
+  staff: number;
+  sessions: number;
+  certificates: number;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Admin dashboard stats                                                       */
 /* -------------------------------------------------------------------------- */
 

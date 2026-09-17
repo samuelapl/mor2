@@ -7,12 +7,14 @@ import type { ApiLiveSession } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { useLms } from "@/lib/lms-store";
 import { tr } from "@/constants/labels";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 
 export default function LearnerLiveSessionsPage() {
@@ -42,6 +44,8 @@ export default function LearnerLiveSessionsPage() {
     courseCode: session.course?.code || "TRAINING",
     trainerName: "Assigned Trainer",
   }));
+
+  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
 
   const handleJoin = (session: ApiLiveSession) => {
     setError(null);
@@ -85,37 +89,40 @@ export default function LearnerLiveSessionsPage() {
           description="Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here."
         />
       ) : (
-        <SessionTable
-          sessions={rows}
-          extra={(row) => {
-            const isCheckedIn = joined.includes(row.session.id);
-            const isLoading = loadingJoinId === row.session.id;
+        <>
+          <SessionTable
+            sessions={pageItems}
+            extra={(row) => {
+              const isCheckedIn = joined.includes(row.session.id);
+              const isLoading = loadingJoinId === row.session.id;
 
-            return (
-              <div className="flex items-center justify-end gap-2">
-                {isCheckedIn && (
-                  <Badge variant="green" dot>
-                    Present
-                  </Badge>
-                )}
-                <Button
-                  size="sm"
-                  disabled={isLoading}
-                  onClick={() => handleJoin(row.session)}
-                  className={isCheckedIn ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200" : ""}
-                >
-                  <MonitorPlay className="h-3.5 w-3.5" />
-                  {isLoading
-                    ? "Connecting…"
-                    : isCheckedIn
-                    ? "Enter Room"
-                    : tr(lang, "join")}
-                  <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
-                </Button>
-              </div>
-            );
-          }}
-        />
+              return (
+                <div className="flex items-center justify-end gap-2">
+                  {isCheckedIn && (
+                    <Badge variant="green" dot>
+                      Present
+                    </Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    disabled={isLoading}
+                    onClick={() => handleJoin(row.session)}
+                    className={isCheckedIn ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200" : ""}
+                  >
+                    <MonitorPlay className="h-3.5 w-3.5" />
+                    {isLoading
+                      ? "Connecting…"
+                      : isCheckedIn
+                      ? "Enter Room"
+                      : tr(lang, "join")}
+                    <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
+                  </Button>
+                </div>
+              );
+            }}
+          />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
 
       {activeSession ? (

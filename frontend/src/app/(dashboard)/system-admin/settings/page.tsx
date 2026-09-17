@@ -43,7 +43,7 @@ export default function SystemSettingsPage() {
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">System name</label>
-            <input value="Ministry of Revenues — ELTMS" readOnly className={cn(inputClass, "bg-slate-50")} />
+            <input value="Ministry of Revenues — Learning Management System" readOnly className={cn(inputClass, "bg-slate-50")} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

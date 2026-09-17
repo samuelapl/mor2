@@ -5,10 +5,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "ELTMS",
-    template: "%s | ELTMS",
+    default: "MoR Learning Management System",
+    template: "%s | MoR Learning Management System",
   },
-  description: "Tele E-Learning Training Management System",
+  description: "MoR Learning Management System",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

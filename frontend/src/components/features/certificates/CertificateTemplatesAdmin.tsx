@@ -12,10 +12,12 @@ import {
   Wand2,
   X,
 } from "lucide-react";
+import { usePagination } from "@/lib/usePagination";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import {
   activateCertificateTemplate,
   createCertificateTemplate,
@@ -101,6 +103,8 @@ export function CertificateTemplatesAdmin() {
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [fields, setFields] = useState<FieldsDraft[]>([]);
+
+  const { page, totalPages, setPage, pageItems } = usePagination(templates, 6);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -280,7 +284,7 @@ export function CertificateTemplatesAdmin() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((template) => (
+          {pageItems.map((template) => (
             <div
               key={template.id}
               className={cn(
@@ -342,6 +346,7 @@ export function CertificateTemplatesAdmin() {
           ))}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <WorkspaceDetailOverlay
         open={editorOpen}

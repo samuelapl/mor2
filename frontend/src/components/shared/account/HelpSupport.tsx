@@ -104,7 +104,7 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
           </div>
         </section>
 
-        <p className="text-center text-xs text-slate-400">ELTMS · MoR Training System · v1.0.0</p>
+        <p className="text-center text-xs text-slate-400">MoR Learning Management System · v1.0.0</p>
       </div>
     </Modal>
   );

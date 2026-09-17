@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { fetchMyCertificates } from "@/lib/api/certificates";
 import type { ApiCertificate } from "@/lib/api/types";
 import { tr } from "@/constants/labels";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { CertificateCard } from "@/components/features/cert/CertificateCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<ApiCertificate[] | null>(null);
@@ -28,6 +30,7 @@ export default function CertificatesPage() {
   }, []);
 
   const learnerName = "Learner";
+  const { page, totalPages, setPage, pageItems } = usePagination(certificates ?? [], 6);
 
   return (
     <PageShell
@@ -49,17 +52,20 @@ export default function CertificatesPage() {
           description="Finish a course to earn your certificate."
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {certificates.map((certificate) => (
-            <CertificateCard
-              key={certificate.id}
-              certificate={certificate}
-              learnerName={certificate.user
-                ? `${certificate.user.firstName} ${certificate.user.lastName}`
-                : learnerName}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {pageItems.map((certificate) => (
+              <CertificateCard
+                key={certificate.id}
+                certificate={certificate}
+                learnerName={certificate.user
+                  ? `${certificate.user.firstName} ${certificate.user.lastName}`
+                  : learnerName}
+              />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
     </PageShell>
   );

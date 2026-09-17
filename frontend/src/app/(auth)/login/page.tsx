@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, KeyRound, Lock, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, KeyRound, Lock, Mail } from "lucide-react";
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from "@/constants/auth";
 import { ROLE_LABELS, ROLE_PATHS } from "@/constants/roles";
 import { ROLE_ICONS } from "@/constants/navigation";
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [demoAccountsOpen, setDemoAccountsOpen] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -44,17 +45,27 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
+        <Link
+          href="/"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to home
+        </Link>
+
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           <div className="text-center">
-            <Image
-              src="/logo.jpg"
-              alt="Ministry of Revenues"
-              width={56}
-              height={56}
-              className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
-            />
+            <Link href="/" title="Back to home" className="inline-block transition-opacity hover:opacity-80">
+              <Image
+                src="/logo.jpg"
+                alt="Ministry of Revenues"
+                width={56}
+                height={56}
+                className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
+              />
+            </Link>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-              Sign in to ELTMS
+              Sign in to MoR LMS
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
               Staff demo accounts or a learner registration.
@@ -138,42 +149,62 @@ export default function LoginPage() {
           </p>
 
           <div className="mt-7">
-            <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setDemoAccountsOpen((prev) => !prev)}
+              aria-expanded={demoAccountsOpen}
+              className="flex w-full items-center gap-3"
+            >
               <span className="h-px flex-1 bg-slate-200" />
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:text-indigo-500">
                 <KeyRound className="h-3.5 w-3.5" />
                 Demo accounts
+                <ChevronDown
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    demoAccountsOpen && "rotate-180",
+                  )}
+                />
               </span>
               <span className="h-px flex-1 bg-slate-200" />
-            </div>
+            </button>
 
-            <div className="mt-4 grid grid-cols-1 gap-2">
-              {MOCK_ACCOUNTS.map((account) => {
-                const Icon = ROLE_ICONS[account.role];
-                return (
-                  <button
-                    key={account.role}
-                    type="button"
-                    onClick={() => fillAccount(account.email)}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-all duration-200",
-                      "hover:border-indigo-300 hover:bg-indigo-50/60",
-                    )}
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 ring-1 ring-slate-200 transition-colors duration-200 group-hover:from-indigo-500 group-hover:to-violet-500 group-hover:text-white">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-xs font-semibold text-slate-800">
-                        {ROLE_LABELS[account.role]}
-                      </span>
-                      <span className="block truncate text-[11px] text-slate-500">
-                        {account.email} · {account.password}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
+            <div
+              className={cn(
+                "grid transition-all duration-200 ease-out",
+                demoAccountsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="mt-4 grid grid-cols-1 gap-2">
+                  {MOCK_ACCOUNTS.map((account) => {
+                    const Icon = ROLE_ICONS[account.role];
+                    return (
+                      <button
+                        key={account.role}
+                        type="button"
+                        onClick={() => fillAccount(account.email)}
+                        className={cn(
+                          "group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-all duration-200",
+                          "hover:border-indigo-300 hover:bg-indigo-50/60",
+                        )}
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 ring-1 ring-slate-200 transition-colors duration-200 group-hover:from-indigo-500 group-hover:to-violet-500 group-hover:text-white">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-semibold text-slate-800">
+                            {ROLE_LABELS[account.role]}
+                          </span>
+                          <span className="block truncate text-[11px] text-slate-500">
+                            {account.email} · {account.password}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

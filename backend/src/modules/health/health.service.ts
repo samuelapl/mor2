@@ -73,6 +73,16 @@ export class HealthService implements OnModuleDestroy {
     }
   }
 
+  async landingStats() {
+    const [courses, staff, sessions, certificates] = await Promise.all([
+      this.prisma.course.count({ where: { status: 'PUBLISHED', deletedAt: null } }),
+      this.prisma.user.count({ where: { isActive: true, deletedAt: null } }),
+      this.prisma.liveSession.count({ where: { deletedAt: null } }),
+      this.prisma.certificate.count(),
+    ]);
+    return { courses, staff, sessions, certificates };
+  }
+
   async status() {
     const [database, minio, redis] = await Promise.allSettled([
       this.checkDatabase(),

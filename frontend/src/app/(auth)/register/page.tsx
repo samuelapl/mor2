@@ -78,7 +78,7 @@ export default function RegisterPage() {
               className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
             />
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-              Non-staff registration
+              Registration
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
               Create a learner account. Your registration requires administrator approval before
@@ -280,25 +280,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="department" className={labelClass}>
-                  <span>Department / organization</span>
-                  <span className="text-xs font-normal text-slate-400">(Optional)</span>
-                </label>
-                <div className="relative">
-                  <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="department"
-                    value={department}
-                    onChange={(event) => {
-                      setDepartment(event.target.value);
-                      setError(null);
-                    }}
-                    placeholder="e.g. External taxpayer / Trader"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
 
               {error ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">

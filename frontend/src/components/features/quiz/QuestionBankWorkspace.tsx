@@ -28,11 +28,13 @@ import {
   X,
 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import {
   createCourseAssessment,
   fetchAssessmentWithAnswers,
@@ -182,6 +184,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       return matchesSearch && matchesType;
     });
   }, [courseQuestions, searchQuery, filterType]);
+
+  const questionsPage = usePagination(filteredQuestions, 10);
+  const assessmentsPage = usePagination(courseAssessments, 6);
 
   const openCreateQuestion = () => {
     setEditingQuestion(null);
@@ -477,7 +482,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredQuestions.map((q, idx) => {
+              {questionsPage.pageItems.map((q, idx) => {
                 const isSelected = selectedQuestionIds.has(q.id);
                 return (
                   <div
@@ -500,7 +505,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-mono text-xs font-bold text-slate-400">
-                              #{idx + 1}
+                              #{(questionsPage.page - 1) * 10 + idx + 1}
                             </span>
                             <Badge variant={q.type === "MULTIPLE_CHOICE" ? "blue" : q.type === "TRUE_FALSE" ? "green" : "amber"}>
                               {q.type.replace("_", " ")}
@@ -603,6 +608,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               })}
             </div>
           )}
+          <Pagination
+            page={questionsPage.page}
+            totalPages={questionsPage.totalPages}
+            onPageChange={questionsPage.setPage}
+          />
         </div>
       ) : (
         /* Published Quizzes View */
@@ -619,8 +629,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               </Button>
             </div>
           ) : (
+            <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {courseAssessments.map((asm) => (
+              {assessmentsPage.pageItems.map((asm) => (
                 <div
                   key={asm.id}
                   className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3"
@@ -649,6 +660,12 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 </div>
               ))}
             </div>
+            <Pagination
+              page={assessmentsPage.page}
+              totalPages={assessmentsPage.totalPages}
+              onPageChange={assessmentsPage.setPage}
+            />
+            </>
           )}
         </div>
       )}

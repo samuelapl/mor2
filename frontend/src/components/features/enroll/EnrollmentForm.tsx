@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { useLms } from "@/lib/lms-store";
+import { usePagination } from "@/lib/usePagination";
 import { cn } from "@/lib/utils";
 
 export function EnrollmentForm() {
@@ -15,6 +17,10 @@ export function EnrollmentForm() {
 
   const course = courses.find((c) => c.id === courseId);
   const learners = useMemo(() => users.filter((user) => user.role === "learner"), [users]);
+  const { page, totalPages, setPage, pageItems } = usePagination(
+    course?.enrolledLearnerIds ?? [],
+    12,
+  );
 
   const toggle = (id: string) => {
     setSelected((prev) =>
@@ -112,21 +118,24 @@ export function EnrollmentForm() {
           Current learner roster for the selected course.
         </p>
         {course ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {course.enrolledLearnerIds.length === 0 ? (
-              <p className="text-xs text-slate-400">No learners enrolled yet.</p>
-            ) : (
-              course.enrolledLearnerIds.map((id) => {
-                const learner = users.find((user) => user.id === id);
-                return (
-                  <Badge key={id} variant="outline">
-                    {learner?.name ?? id} · {learner?.department ?? ""} ·{" "}
-                    {course.progress[id] ?? 0}%
-                  </Badge>
-                );
-              })
-            )}
-          </div>
+          <>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {course.enrolledLearnerIds.length === 0 ? (
+                <p className="text-xs text-slate-400">No learners enrolled yet.</p>
+              ) : (
+                pageItems.map((id) => {
+                  const learner = users.find((user) => user.id === id);
+                  return (
+                    <Badge key={id} variant="outline">
+                      {learner?.name ?? id} · {learner?.department ?? ""} ·{" "}
+                      {course.progress[id] ?? 0}%
+                    </Badge>
+                  );
+                })
+              )}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         ) : null}
         {success ? (
           <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700 ring-1 ring-inset ring-emerald-600/10">

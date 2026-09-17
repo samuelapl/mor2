@@ -5,12 +5,14 @@ import { ChevronDown, Lock, PlayCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Table, Td } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Pagination } from "@/components/ui/Pagination";
 import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -31,6 +33,8 @@ export default function ProgressPage() {
     }))
     .sort((a, b) => a.percent - b.percent);
 
+  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+
   return (
     <PageShell
       role="learner"
@@ -47,7 +51,7 @@ export default function ProgressPage() {
         <EmptyState title="No courses" description="Enrolled courses will appear here." />
       ) : (
         <div className="space-y-3">
-          {rows.map(({ course, data, percent }) => {
+          {pageItems.map(({ course, data, percent }) => {
             const done = percent >= 100;
             const open = Boolean(expanded[course.id]);
             return (
@@ -151,6 +155,7 @@ export default function ProgressPage() {
           })}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       {learnCourse ? (
         <LearnCourseModal
           open={learnCourse !== null}

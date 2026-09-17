@@ -61,21 +61,30 @@ export default function Sidebar() {
           collapsed && "justify-center px-3",
         )}
       >
-        <Image
-          src="/logo.jpg"
-          alt="Ministry of Revenues"
-          width={36}
-          height={36}
-          className="h-9 w-9 shrink-0 rounded-full object-contain"
-        />
-        {!collapsed ? (
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900">
-              ELTMS
-            </p>
-            <p className="truncate text-[11px] text-slate-500">MoR Training System</p>
-          </div>
-        ) : null}
+        <Link
+          href="/"
+          title="Back to home"
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2 rounded-lg transition-opacity hover:opacity-80",
+            collapsed && "flex-none justify-center",
+          )}
+        >
+          <Image
+            src="/logo.jpg"
+            alt="Ministry of Revenues"
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-full object-contain"
+          />
+          {!collapsed ? (
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900">
+                MoR LMS
+              </p>
+              <p className="truncate text-[11px] text-slate-500">Learning Management System</p>
+            </div>
+          ) : null}
+        </Link>
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}

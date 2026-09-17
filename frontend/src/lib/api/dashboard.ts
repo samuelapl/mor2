@@ -1,5 +1,13 @@
 import { api } from "./client";
-import type { ApiDashboardStats } from "./types";
+import type { ApiDashboardStats, ApiLandingStats } from "./types";
+
+/* -------------------------------------------------------------------------- */
+/*  Public landing page                                                         */
+/* -------------------------------------------------------------------------- */
+
+export async function fetchLandingStats(): Promise<ApiLandingStats> {
+  return api<ApiLandingStats>("public/landing-stats");
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Admin dashboard                                                             */

@@ -6,6 +6,7 @@ import { Award, BookOpenCheck, PlayCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,7 @@ import { CourseCard } from "@/components/features/courses/CourseCard";
 import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { QuizTakerModal } from "@/components/features/quiz/QuizTakerModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function LearnerCoursesPage() {
   const { courses, lang, currentUser } = useLms();
@@ -35,6 +37,8 @@ export default function LearnerCoursesPage() {
     [enrolled, progress],
   );
 
+  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+
   return (
     <PageShell
       role="learner"
@@ -52,7 +56,7 @@ export default function LearnerCoursesPage() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map(({ course, percent, done }) => (
+          {pageItems.map(({ course, percent, done }) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -94,6 +98,7 @@ export default function LearnerCoursesPage() {
           ))}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {learnCourse ? (
         <LearnCourseModal

@@ -5,12 +5,14 @@ import { CheckCircle2, Eye, ShieldCheck, ShieldOff, XCircle } from "lucide-react
 import { ROLES, ROLE_LABELS } from "@/constants/roles";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Table, Td } from "@/components/ui/Table";
 import { Badge, UserStatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { UserDetailModal } from "@/components/features/users/UserDetailModal";
 import type { Role, User } from "@/types";
@@ -83,6 +85,8 @@ export default function UsersPage() {
       );
     });
   }, [users, search, role, status, department]);
+
+  const { page, totalPages, setPage, pageItems } = usePagination(filtered, 10);
 
   const detailUser = detailUserId ? (users.find((u) => u.id === detailUserId) ?? null) : null;
 
@@ -223,8 +227,9 @@ export default function UsersPage() {
       {filtered.length === 0 ? (
         <EmptyState title="No users match" description="Clear filters to see the full directory." />
       ) : view === "table" ? (
+        <>
         <Table columns={["User", "Email", "Department", "Status", "Role", "Actions"]}>
-          {filtered.map((user) => (
+          {pageItems.map((user) => (
             <Fragment key={user.id}>
               <tr>
                 <Td>
@@ -297,9 +302,12 @@ export default function UsersPage() {
             </Fragment>
           ))}
         </Table>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((user) => (
+          {pageItems.map((user) => (
             <div
               key={user.id}
               className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft ring-super-soft"
@@ -359,6 +367,8 @@ export default function UsersPage() {
             </div>
           ))}
         </div>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
 
       <UserDetailModal

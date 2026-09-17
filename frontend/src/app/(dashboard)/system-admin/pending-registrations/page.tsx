@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Table, Td } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function PendingRegistrationsPage() {
   const { currentUser, users, approveRegistrationRequest, rejectRegistrationRequest } = useLms();
@@ -22,6 +24,7 @@ export default function PendingRegistrationsPage() {
   }
 
   const pending = users.filter((user) => user.status === "pending");
+  const { page, totalPages, setPage, pageItems } = usePagination(pending, 10);
 
   const approve = async (userId: string) => {
     setBusy(true);
@@ -68,8 +71,9 @@ export default function PendingRegistrationsPage() {
           description="All registration requests have been reviewed."
         />
       ) : (
+        <>
         <Table columns={["Applicant", "Email", "Phone", "Submitted", "Actions"]}>
-          {pending.map((user) => (
+          {pageItems.map((user) => (
             <tr key={user.id}>
               <Td>
                 <span className="font-medium text-slate-900">{user.name}</span>
@@ -133,6 +137,8 @@ export default function PendingRegistrationsPage() {
             </tr>
           ))}
         </Table>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
     </PageShell>
   );

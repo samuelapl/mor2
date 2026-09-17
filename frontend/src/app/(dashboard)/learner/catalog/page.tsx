@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BookPlus } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +11,7 @@ import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CatalogCourseModal } from "@/components/features/courses/CatalogCourseModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { Pagination } from "@/components/ui/Pagination";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export default function LearnerCatalogPage() {
@@ -33,6 +35,8 @@ export default function LearnerCatalogPage() {
       );
     });
   }, [courses, search, category]);
+
+  const { page, totalPages, setPage, pageItems } = usePagination(available, 6);
 
   const enroll = async (courseId: string) => {
     const result = await enrollSelf(courseId);
@@ -84,7 +88,7 @@ export default function LearnerCatalogPage() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {available.map((course) => {
+          {pageItems.map((course) => {
             const enrolled = me ? course.enrolledLearnerIds.includes(me) : false;
             return (
               <CourseCard
@@ -113,6 +117,7 @@ export default function LearnerCatalogPage() {
           })}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {openCourseId ? (
         <CatalogCourseModal

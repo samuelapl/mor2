@@ -14,4 +14,11 @@ export class HealthController {
   async health(): Promise<unknown> {
     return this.healthService.status();
   }
+
+  @Get('public/landing-stats')
+  @Public()
+  @ApiOperation({ summary: 'Live platform counters shown on the public landing page' })
+  async landingStats(): Promise<unknown> {
+    return this.healthService.landingStats();
+  }
 }

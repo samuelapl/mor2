@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,11 +19,9 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
+import { fetchLandingStats } from "@/lib/api/dashboard";
+import type { ApiLandingStats as LandingStats } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-
-const DEMO_COURSES = 8;
-const DEMO_USERS = 14;
-const DEMO_SESSIONS = 12;
 
 const NAV_LINKS = [
   { label: "How it works", href: "#how-it-works" },
@@ -102,14 +100,14 @@ const ROLES_BRIEF = [
 
 const FAQS = [
   {
-    question: "Is ELTMS a real production system?",
+    question: "What is the MoR Learning Management System?",
     answer:
-      "No — ELTMS is a demonstration platform. It combines an interactive front-end with a live local API and database so you can try realistic workflows end-to-end. Data persists in the demo database on the machine running the app.",
+      "It is the Ministry of Revenues' training platform — a connected front-end backed by a live API and database that runs course creation, approval, scheduling, live sessions, quizzes, progress tracking and certification end-to-end.",
   },
   {
     question: "How do I sign in?",
     answer:
-      "Every role has a demo account. Use the email for the role you want to try (e.g. learner@gmail.com) with the password “password”, or tap a demo account chip on the sign-in page to auto-fill the credentials.",
+      "Sign in with your staff account email and password. If you're evaluating the platform, demo accounts for every role are available on the sign-in page — expand the “Demo accounts” panel and tap one to auto-fill its credentials.",
   },
   {
     question: "How do role-based dashboards work?",
@@ -122,9 +120,9 @@ const FAQS = [
       "Start with the learner account (learner@gmail.com) to explore course progress, live sessions and certificates, then try the trainer or training administrator to see how content gets built and published.",
   },
   {
-    question: "Are the courses and progress real?",
+    question: "Is course and progress data really saved?",
     answer:
-      "The courses, sessions and user data are mock records. Actions like advancing progress, scheduling sessions and marking attendance are simulated for demonstration purposes.",
+      "Yes. Courses, enrollments, live sessions, attendance and certificates are stored in the platform's database — advancing progress, scheduling sessions and marking attendance all persist for real.",
   },
   {
     question: "Can I switch between languages?",
@@ -133,7 +131,7 @@ const FAQS = [
   },
 ];
 
-function DashboardPreview() {
+function DashboardPreview({ stats }: { stats: LandingStats | null }) {
   return (
     <div className="relative mx-auto w-full max-w-3xl">
       <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-gradient-to-r from-indigo-500/20 via-violet-500/15 to-fuchsia-500/15 blur-2xl" />
@@ -145,15 +143,15 @@ function DashboardPreview() {
             <span className="h-3 w-3 rounded-full bg-emerald-400/80" />
           </div>
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] text-slate-300">
-            ELTMS · Instructor Dashboard
+            MoR LMS · Instructor Dashboard
           </span>
         </div>
         <div className="grid gap-3 p-5 sm:grid-cols-4">
           {[
-            { label: "Courses", value: String(DEMO_COURSES), icon: BookOpen },
-            { label: "Staff", value: String(DEMO_USERS), icon: UsersRound },
-            { label: "Sessions", value: String(DEMO_SESSIONS), icon: CalendarRange },
-            { label: "Modules", value: "24", icon: Layers },
+            { label: "Courses", value: stats ? String(stats.courses) : "—", icon: BookOpen },
+            { label: "Staff", value: stats ? String(stats.staff) : "—", icon: UsersRound },
+            { label: "Sessions", value: stats ? String(stats.sessions) : "—", icon: CalendarRange },
+            { label: "Certificates", value: stats ? String(stats.certificates) : "—", icon: Layers },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -202,6 +200,19 @@ function DashboardPreview() {
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [stats, setStats] = useState<LandingStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchLandingStats()
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-white text-slate-600">
@@ -219,8 +230,8 @@ export default function LandingPage() {
               className="h-9 w-9 rounded-full object-contain"
             />
             <div className="leading-tight">
-              <p className="font-display text-sm font-bold tracking-tight text-slate-900">ELTMS</p>
-              <p className="text-[10px] text-slate-500">MoR Training System</p>
+              <p className="font-display text-sm font-bold tracking-tight text-slate-900">MoR LMS</p>
+              <p className="text-[10px] text-slate-500">Learning Management System</p>
             </div>
           </Link>
           <div className="hidden items-center gap-6 md:flex">
@@ -265,9 +276,9 @@ export default function LandingPage() {
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-500 sm:text-lg">
-            ELTMS brings course creation, content approval, live sessions, quizzes,
-            progress tracking and certificates into one connected training platform —
-            built around the way the Ministry of Revenues actually works.
+            The MoR Learning Management System brings course creation, content approval,
+            live sessions, quizzes, progress tracking and certificates into one connected
+            training platform — built around the way the Ministry of Revenues actually works.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -287,11 +298,11 @@ export default function LandingPage() {
           <div className="mx-auto mt-10 flex max-w-lg flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
             <span className="inline-flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-500" />
-              {DEMO_COURSES} courses in the catalog
+              {stats ? `${stats.courses} courses in the catalog` : "Growing course catalog"}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-500" />
-              {DEMO_USERS} staff accounts
+              {stats ? `${stats.staff} staff accounts` : "Staff accounts across every role"}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -305,7 +316,7 @@ export default function LandingPage() {
         </div>
 
         <div className="mt-16">
-          <DashboardPreview />
+          <DashboardPreview stats={stats} />
         </div>
       </section>
 
@@ -466,7 +477,7 @@ export default function LandingPage() {
                 <GraduationCap className="h-6 w-6" />
               </div>
               <h2 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Ready to explore ELTMS?
+                Ready to get started?
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-600">
                 Sign in with any role to experience live sessions, quizzes, progress
@@ -507,9 +518,9 @@ export default function LandingPage() {
               className="h-8 w-8 rounded-full object-contain"
             />
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-slate-900">ELTMS</p>
+              <p className="text-sm font-semibold text-slate-900">MoR LMS</p>
               <p className="text-[10px] text-slate-500">
-                Tele E-Learning Training Management System
+                Learning Management System
               </p>
             </div>
           </div>
@@ -526,7 +537,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="text-[11px] text-slate-400">
-            © {new Date().getFullYear()} ELTMS · Demo prototype
+            © {new Date().getFullYear()} MoR Learning Management System
           </p>
         </div>
       </footer>

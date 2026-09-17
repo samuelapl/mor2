@@ -33,12 +33,14 @@ import {
   overrideAttendance,
 } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
+import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Td } from "@/components/ui/Table";
+import { Pagination } from "@/components/ui/Pagination";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-US", {
@@ -182,6 +184,8 @@ export default function TrainerAttendancePage() {
       return matchesSearch && matchesStatus;
     });
   }, [studentRoster, searchQuery, statusFilter]);
+
+  const { page, totalPages, setPage, pageItems } = usePagination(filteredRoster, 10);
 
   // Stats calculation
   const totalStudents = studentRoster.length;
@@ -461,7 +465,7 @@ export default function TrainerAttendancePage() {
             </div>
           ) : (
             <Table columns={["Learner Name", "Account / Email", "Check-in Details", "Current Status", "Manage Attendance"]}>
-              {filteredRoster.map((learner) => {
+              {pageItems.map((learner) => {
                 const isLoading = actionLoadingId === learner.userId;
 
                 return (
@@ -590,6 +594,9 @@ export default function TrainerAttendancePage() {
             </Table>
           )}
         </div>
+        {!loadingAttendance && filteredRoster.length > 0 ? (
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        ) : null}
       </div>
 
       {/* Override Modal */}
