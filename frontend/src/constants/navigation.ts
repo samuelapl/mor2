@@ -85,7 +85,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   ],
   system_admin: [
     { label: "Dashboard", href: "/system-admin", icon: LayoutDashboard },
-    { label: "Users & Roles", href: "/system-admin/users", icon: Users, permission: ["user.manage", "role.manage"] },
+    { label: "Users & Roles", href: "/system-admin/users", icon: Users, permission: ["user.manage", "user.view"] },
     {
       label: "Registration",
       icon: UserPlus,
@@ -126,9 +126,45 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: "Roles & Permissions",
       href: "/system-admin/roles",
       icon: Lock,
-      permission: "permission.manage",
+      permission: ["role.manage", "permission.manage"],
     },
     { label: "System Settings", href: "/system-admin/settings", icon: Settings },
     { label: "Audit Logs", href: "/system-admin/audit-logs", icon: ScrollText, permission: "audit.view" },
   ],
 };
+
+/**
+ * Permission-gated pages that any role can reach once granted the permission — access to
+ * these is NOT restricted to the role whose path segment they happen to live under.
+ * `DashboardShell` bypasses its normal role-redirect for these exact paths and checks the
+ * listed permissions (OR semantics) instead.
+ */
+export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
+  "/system-admin/users": ["user.manage", "user.view"],
+  "/system-admin/roles": ["role.manage", "permission.manage"],
+};
+
+/**
+ * Nav entries for permission-gated pages, injected into every role's sidebar (not just
+ * System Admin's) so a role granted the permission at runtime sees the entry immediately —
+ * `filterNavItems` still hides it for anyone lacking the permission.
+ */
+const CROSS_ROLE_ADMIN_ITEMS: NavItem[] = [
+  {
+    label: "Users & Roles",
+    href: "/system-admin/users",
+    icon: Users,
+    permission: PERMISSION_GATED_PATHS["/system-admin/users"],
+  },
+  {
+    label: "Roles & Permissions",
+    href: "/system-admin/roles",
+    icon: Lock,
+    permission: PERMISSION_GATED_PATHS["/system-admin/roles"],
+  },
+];
+
+export function navItemsForRole(role: Role): NavItem[] {
+  if (role === "system_admin") return NAV_ITEMS[role];
+  return [...NAV_ITEMS[role], ...CROSS_ROLE_ADMIN_ITEMS];
+}

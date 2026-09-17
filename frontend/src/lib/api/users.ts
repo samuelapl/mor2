@@ -7,9 +7,28 @@ import type {
   BackendRoleName,
   BulkCreateUserItem,
   BulkCreateUsersResult,
+  ChangeMyPasswordBody,
   CreateActorBody,
   CreateActorResult,
+  UpdateMyProfileBody,
 } from "./types";
+
+/** Fetches the signed-in user's own full profile (includes phone/tin/locale/avatar, not returned by login). */
+export async function fetchMyProfile(): Promise<ApiUser> {
+  return api<ApiUser>("users/me");
+}
+
+/** Updates the signed-in user's own profile. */
+export async function updateMyProfile(body: UpdateMyProfileBody): Promise<ApiUser> {
+  return api<ApiUser>("users/me", { method: "PATCH", body });
+}
+
+/** Changes the signed-in user's own password; the backend revokes existing sessions on success. */
+export async function changeMyPassword(
+  body: ChangeMyPasswordBody,
+): Promise<{ message: string }> {
+  return api<{ message: string }>("users/me/change-password", { method: "POST", body });
+}
 
 export async function fetchUsers(
   params: {
@@ -69,6 +88,10 @@ export async function removeRole(
 
 export async function deactivateUser(userId: string): Promise<unknown> {
   return api<unknown>(`users/${userId}/deactivate`, { method: "POST" });
+}
+
+export async function reactivateUser(userId: string): Promise<unknown> {
+  return api<unknown>(`users/${userId}/reactivate`, { method: "POST" });
 }
 
 /** Bulk-creates users from a spreadsheet import (idempotent by email). */

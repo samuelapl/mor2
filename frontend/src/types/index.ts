@@ -33,6 +33,9 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  tin?: string | null;
+  avatarUrl?: string | null;
+  locale?: Lang;
   password: string;
   /** Primary/current role — kept as a compatibility field; prefer `roles`/`permissions` for new checks. */
   role: Role;
@@ -43,6 +46,8 @@ export interface User {
   department: string;
   status: UserStatus;
   createdAt: string;
+  updatedAt?: string;
+  lastLogin?: string | null;
 }
 
 export interface Lesson {

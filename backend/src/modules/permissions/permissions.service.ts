@@ -133,6 +133,7 @@ export class PermissionsService implements OnModuleDestroy {
       id: r.id,
       name: r.name,
       label: r.label,
+      description: r.description,
       dashboardPath: r.dashboardPath,
       isSystem: r.isSystem,
       permissionCodes: r.permissions.map((rp) => rp.permission.code),

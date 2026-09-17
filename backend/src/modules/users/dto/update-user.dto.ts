@@ -22,6 +22,11 @@ export class UpdateUserDto {
   @IsEnum(['en', 'am'])
   locale?: 'en' | 'am';
 
+  @ApiPropertyOptional({ example: '9000123456' })
+  @IsOptional()
+  @IsString()
+  tin?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

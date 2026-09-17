@@ -90,6 +90,7 @@ export interface ApiUser {
   firstName: string;
   lastName: string;
   phone: string | null;
+  tin: string | null;
   avatarUrl: string | null;
   locale: string;
   isActive: boolean;
@@ -638,6 +639,24 @@ export interface AssignRoleBody {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Account settings (self-service)                                            */
+/* -------------------------------------------------------------------------- */
+
+export interface UpdateMyProfileBody {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  tin?: string;
+  locale?: "en" | "am";
+  avatarUrl?: string;
+}
+
+export interface ChangeMyPasswordBody {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Bulk user registration (spreadsheet import)                                */
 /* -------------------------------------------------------------------------- */
 
@@ -704,6 +723,7 @@ export interface ApiRoleWithPermissions {
   id: string;
   name: BackendRoleName;
   label: string;
+  description?: string | null;
   dashboardPath: string;
   isSystem: boolean;
   permissionCodes: string[];

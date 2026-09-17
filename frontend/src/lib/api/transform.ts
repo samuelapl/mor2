@@ -123,6 +123,9 @@ export function userFromApi(user: ApiUser): User {
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
     phone: user.phone ?? "",
+    tin: user.tin ?? null,
+    avatarUrl: user.avatarUrl ?? null,
+    locale: user.locale === "am" ? "am" : "en",
     password: "",
     role: roleFromApi(primaryRole),
     // Other users' permissions aren't returned by this endpoint — only login/refresh
@@ -132,6 +135,8 @@ export function userFromApi(user: ApiUser): User {
     department: "",
     status,
     createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    lastLogin: user.lastLogin ?? null,
   };
 }
 
@@ -153,6 +158,7 @@ export function userFromAuth(
     name: `${payload.firstName} ${payload.lastName}`,
     email: payload.email,
     phone: "",
+    avatarUrl: payload.avatarUrl ?? null,
     password: "",
     role: roleFromApi(payload.roles?.[0]?.role ?? "LEARNER"),
     roles: (payload.roles ?? []).map((r) => roleFromApi(r.role)),

@@ -380,6 +380,17 @@ export class UsersService {
     return { message: 'User deactivated successfully' };
   }
 
+  async reactivate(id: string) {
+    await this.findById(id);
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { isActive: true },
+    });
+
+    return { message: 'User reactivated successfully' };
+  }
+
   async softDelete(id: string) {
     await this.findById(id);
 
