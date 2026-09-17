@@ -146,6 +146,14 @@ export class UsersController {
     return this.usersService.deactivate(id);
   }
 
+  @Post(':id/reactivate')
+  @Permissions('user.manage')
+  @ApiOperation({ summary: 'Reactivate a previously deactivated user' })
+  @ApiParam({ name: 'id', type: String })
+  async reactivate(@Param('id') id: string) {
+    return this.usersService.reactivate(id);
+  }
+
   @Delete(':id')
   @Permissions('user.manage')
   @ApiOperation({ summary: 'Soft delete a user' })

@@ -5,7 +5,7 @@ import { useLms } from "@/lib/lms-store";
 import { cn } from "@/lib/utils";
 
 export default function LanguageToggle() {
-  const { lang, setLang } = useLms();
+  const { lang, updateLocale } = useLms();
 
   return (
     <div className="flex items-center gap-2">
@@ -15,7 +15,7 @@ export default function LanguageToggle() {
           <button
             key={option}
             type="button"
-            onClick={() => setLang(option)}
+            onClick={() => void updateLocale(option)}
             className={cn(
               "rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200",
               lang === option

@@ -45,10 +45,14 @@ import {
   approveRegistration,
   assignRole,
   bulkCreateUsers,
+  changeMyPassword,
   createActor,
+  deactivateUser as apiDeactivateUser,
   fetchUsers,
+  reactivateUser as apiReactivateUser,
   rejectRegistration,
   removeRole,
+  updateMyProfile,
 } from "@/lib/api/users";
 import {
   getStoredAccessToken,
@@ -206,6 +210,8 @@ interface LmsContextValue {
     userId: string,
     reason?: string,
   ) => Promise<ActionResult>;
+  deactivateUser: (userId: string) => Promise<ActionResult>;
+  reactivateUser: (userId: string) => Promise<ActionResult>;
   bulkRegisterUsers: (
     rows: Array<{
       firstName: string;
@@ -223,6 +229,21 @@ interface LmsContextValue {
     role: Role;
     phone?: string;
   }) => Promise<ActionResult>;
+  updateProfile: (input: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    tin?: string;
+    avatarUrl?: string;
+  }) => Promise<ActionResult>;
+  changePassword: (input: {
+    currentPassword: string;
+    newPassword: string;
+  }) => Promise<ActionResult>;
+  updateLocale: (locale: Lang) => Promise<ActionResult>;
+  /** Re-fetches the signed-in user's own permissions/roles (e.g. after editing a role's
+   * permission matrix) so the sidebar and permission-gated pages react without a re-login. */
+  refreshPermissions: () => Promise<void>;
 }
 
 const LmsContext = createContext<LmsContextValue | null>(null);
@@ -411,6 +432,17 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     },
     [reloadData],
   );
+
+  const refreshPermissions = useCallback(async (): Promise<void> => {
+    try {
+      const res = await apiRefresh();
+      setAccessToken(res.accessToken);
+      setCurrentUser(res.user);
+      currentUserRef.current = res.user;
+    } catch {
+      // best-effort — keep the existing session if the refresh call fails
+    }
+  }, []);
 
   const logout = useCallback(() => {
     void apiLogout();
@@ -691,6 +723,72 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       }
     },
     [reloadData],
+  );
+
+  const updateProfile: LmsContextValue["updateProfile"] = useCallback(
+    async (input) => {
+      const current = currentUserRef.current;
+      if (!current) return { ok: false, message: "You must be signed in." };
+      try {
+        const updated = await updateMyProfile(input);
+        const merged: User = {
+          ...current,
+          firstName: updated.firstName,
+          lastName: updated.lastName,
+          name: `${updated.firstName} ${updated.lastName}`,
+          phone: updated.phone ?? "",
+          tin: updated.tin ?? null,
+          avatarUrl: updated.avatarUrl ?? current.avatarUrl ?? null,
+          locale: updated.locale === "am" ? "am" : "en",
+        };
+        setCurrentUser(merged);
+        currentUserRef.current = merged;
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to update profile."),
+        };
+      }
+    },
+    [],
+  );
+
+  const changePassword: LmsContextValue["changePassword"] = useCallback(
+    async (input) => {
+      try {
+        await changeMyPassword(input);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to change password."),
+        };
+      }
+    },
+    [],
+  );
+
+  const updateLocale: LmsContextValue["updateLocale"] = useCallback(
+    async (locale) => {
+      try {
+        await updateMyProfile({ locale });
+        setLang(locale);
+        const current = currentUserRef.current;
+        if (current) {
+          const merged = { ...current, locale };
+          setCurrentUser(merged);
+          currentUserRef.current = merged;
+        }
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to update language preference."),
+        };
+      }
+    },
+    [],
   );
 
   const updateCourse: LmsContextValue["updateCourse"] = useCallback(
@@ -1130,6 +1228,46 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const deactivateUser = useCallback(
+    async (userId: string): Promise<ActionResult> => {
+      const admin = currentUserRef.current;
+      if (!admin || !hasPermission(admin, "user.manage")) {
+        return { ok: false, message: "You are not allowed to manage users." };
+      }
+      try {
+        await apiDeactivateUser(userId);
+        await reloadData(admin);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to deactivate user."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
+  const reactivateUser = useCallback(
+    async (userId: string): Promise<ActionResult> => {
+      const admin = currentUserRef.current;
+      if (!admin || !hasPermission(admin, "user.manage")) {
+        return { ok: false, message: "You are not allowed to manage users." };
+      }
+      try {
+        await apiReactivateUser(userId);
+        await reloadData(admin);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to reactivate user."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
   const courseById = useCallback(
     (courseId: string) => courses.find((course) => course.id === courseId),
     [courses],
@@ -1218,8 +1356,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       changeUserRole,
       approveRegistrationRequest,
       rejectRegistrationRequest,
+      deactivateUser,
+      reactivateUser,
       bulkRegisterUsers,
       registerActor,
+      updateProfile,
+      changePassword,
+      updateLocale,
+      refreshPermissions,
     }),
     [
       ready,
@@ -1250,8 +1394,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       changeUserRole,
       approveRegistrationRequest,
       rejectRegistrationRequest,
+      deactivateUser,
+      reactivateUser,
       bulkRegisterUsers,
       registerActor,
+      updateProfile,
+      changePassword,
+      updateLocale,
+      refreshPermissions,
     ],
   );
 

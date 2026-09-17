@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Lock, Plus, RotateCcw, Save, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  CheckCircle2,
+  Lock,
+  Plus,
+  RotateCcw,
+  Save,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
+import { useLms } from "@/lib/lms-store";
 import PageShell from "@/components/shared/PageShell";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
+import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import {
   createRole,
   deleteRole,
@@ -32,6 +43,7 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
 }
 
 export default function RolesPermissionsPage() {
+  const { currentUser, refreshPermissions } = useLms();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [roles, setRoles] = useState<ApiRoleWithPermissions[]>([]);
@@ -46,6 +58,8 @@ export default function RolesPermissionsPage() {
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>("table");
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const allPermissions = useMemo<ApiPermission[]>(
     () => Object.values(registry).flat(),
@@ -124,6 +138,9 @@ export default function RolesPermissionsPage() {
     try {
       const updated = await setRolePermissions(selectedRole.id, Array.from(draftIds));
       setRoles((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      // Refresh our own session too, in case the edited role is the signed-in admin's own —
+      // the sidebar and gated pages should react without a re-login.
+      void refreshPermissions();
       setFlash({
         type: "success",
         message: `${selectedRole.label} updated — changes take effect for signed-in users within about 15 seconds, no re-login needed.`,
@@ -186,7 +203,7 @@ export default function RolesPermissionsPage() {
   if (loading) {
     return (
       <PageShell
-        role="system_admin"
+        role={currentUser?.role ?? "system_admin"}
         title="Roles & Permissions"
         description="Control what each role can see and do, live."
       >
@@ -198,7 +215,7 @@ export default function RolesPermissionsPage() {
   if (loadError) {
     return (
       <PageShell
-        role="system_admin"
+        role={currentUser?.role ?? "system_admin"}
         title="Roles & Permissions"
         description="Control what each role can see and do, live."
       >
@@ -209,9 +226,10 @@ export default function RolesPermissionsPage() {
 
   return (
     <PageShell
-      role="system_admin"
+      role={currentUser?.role ?? "system_admin"}
       title="Roles & Permissions"
       description="Toggle exactly what each of the 6 roles can do. Changes apply to everyone with that role within ~15 seconds — no redeploy, no re-login."
+      actions={<ViewToggle view={view} onChange={setView} />}
     >
       {flash ? (
         <div
@@ -231,6 +249,78 @@ export default function RolesPermissionsPage() {
         </div>
       ) : null}
 
+      {view === "grid" ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {sortedRoles.map((role) => {
+            const locked = role.name === "SYSTEM_ADMIN";
+            const expanded = expandedCardId === role.id;
+            return (
+              <Card key={role.id} className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 font-display text-sm font-semibold text-slate-900">
+                      {locked ? <Lock className="h-3.5 w-3.5 text-slate-400" /> : null}
+                      {role.label}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {role.description || "No description provided."}
+                    </p>
+                  </div>
+                  {!role.isSystem ? (
+                    <button
+                      type="button"
+                      title="Delete role"
+                      disabled={deletingId === role.id}
+                      onClick={() => handleDeleteRole(role)}
+                      className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setExpandedCardId(expanded ? null : role.id)}
+                  className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                >
+                  <span>
+                    {role.permissionCodes.length} of {allPermissions.length} permissions
+                  </span>
+                  <ChevronDown
+                    className={cn("h-3.5 w-3.5 shrink-0 transition-transform", expanded && "rotate-180")}
+                  />
+                </button>
+                {expanded ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {role.permissionCodes.length === 0 ? (
+                      <span className="text-xs text-slate-400">No permissions granted.</span>
+                    ) : (
+                      role.permissionCodes.map((code) => (
+                        <Badge key={code} variant="slate" className="font-mono text-[10px]">
+                          {code}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-auto justify-center"
+                  onClick={() => {
+                    setSelectedRoleId(role.id);
+                    setView("table");
+                  }}
+                >
+                  Edit permissions
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
         {/* Role list panel */}
         <Card padded={false} className="h-fit overflow-hidden">
@@ -379,6 +469,7 @@ export default function RolesPermissionsPage() {
           <EmptyState title="No role selected" description="Choose a role from the list." />
         )}
       </div>
+      )}
 
       <WorkspaceDetailOverlay
         open={showNewRole}

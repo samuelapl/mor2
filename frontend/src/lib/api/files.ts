@@ -43,6 +43,15 @@ export async function uploadAttachment(
   };
 }
 
+/** Uploads a profile avatar for the signed-in user; persists avatarUrl server-side. */
+export async function uploadAvatar(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  return postForm("files/avatar", form, (data) =>
+    typeof data.avatarUrl === "string" ? data.avatarUrl : "",
+  );
+}
+
 /** Uploads a certificate template background image. */
 export async function uploadCertificateTemplate(
   file: File,

@@ -4,12 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
-import { NAV_ITEMS, ROLE_ICONS, type NavItem } from "@/constants/navigation";
+import { navItemsForRole, ROLE_ICONS, type NavItem } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { cn } from "@/lib/utils";
+import AccountMenu from "@/components/shared/account/AccountMenu";
 
 function filterNavItems(items: NavItem[], canAny: (codes: string[]) => boolean): NavItem[] {
   return items
@@ -30,7 +31,7 @@ export default function Sidebar() {
   const { canAny } = usePermissions();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? "learner";
   const RoleIcon = ROLE_ICONS[role];
-  const navItems = filterNavItems(NAV_ITEMS[role], canAny);
+  const navItems = filterNavItems(navItemsForRole(role), canAny);
   const displayUser = currentUser;
 
   const isActive = (href: string) =>
@@ -45,40 +46,87 @@ export default function Sidebar() {
   const toggleGroup = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !(prev[label] ?? false) }));
 
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600">
-      <div className="relative flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
+    <aside
+      className={cn(
+        "relative flex shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600 transition-[width] duration-200",
+        collapsed ? "w-[76px]" : "w-64",
+      )}
+    >
+      <div
+        className={cn(
+          "relative flex h-16 items-center gap-2 border-b border-slate-200 px-5",
+          collapsed && "justify-center px-3",
+        )}
+      >
         <Image
           src="/logo.jpg"
           alt="Ministry of Revenues"
           width={36}
           height={36}
-          className="h-9 w-9 rounded-full object-contain"
+          className="h-9 w-9 shrink-0 rounded-full object-contain"
         />
-        <div className="leading-tight">
-          <p className="font-display text-sm font-bold tracking-tight text-slate-900">
-            ELTMS
-          </p>
-          <p className="text-[11px] text-slate-500">MoR Training System</p>
+        {!collapsed ? (
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900">
+              ELTMS
+            </p>
+            <p className="truncate text-[11px] text-slate-500">MoR Training System</p>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+        >
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
+      </div>
+
+      <div className={cn("relative border-b border-slate-200 px-4 py-4", collapsed && "px-2")}>
+        <div
+          title={collapsed ? `${ROLE_LABELS[role]} — ${displayUser?.name ?? ""}` : undefined}
+          className={cn(
+            "flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          {displayUser?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={displayUser.avatarUrl}
+              alt="Avatar"
+              className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
+            />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white ring-1 ring-white/20">
+              <RoleIcon className="h-4 w-4" />
+            </div>
+          )}
+          {!collapsed ? (
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-sm font-medium text-slate-900">{ROLE_LABELS[role]}</p>
+              <p className="truncate text-[11px] text-slate-500">{displayUser?.name}</p>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="relative border-b border-slate-200 px-4 py-4">
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white ring-1 ring-white/20">
-            <RoleIcon className="h-4 w-4" />
-          </div>
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-medium text-slate-900">{ROLE_LABELS[role]}</p>
-            <p className="truncate text-[11px] text-slate-500">{displayUser?.name}</p>
-          </div>
-        </div>
-      </div>
-
-      <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-        Navigation
-      </p>
-      <nav className="relative flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+      {!collapsed ? (
+        <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Navigation
+        </p>
+      ) : null}
+      <nav
+        className={cn(
+          "relative flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4",
+          collapsed && "pt-4",
+        )}
+      >
+        {/* overflow-x-hidden prevents label bleed during the width transition */}
         {navItems.map((item) => {
           const Icon = item.icon;
 
@@ -90,21 +138,30 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(item.label)}
+                  title={collapsed ? item.label : undefined}
                   className={cn(
                     "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    collapsed && "justify-center px-0",
                     groupActive
                       ? "text-indigo-600"
                       : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-indigo-500" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  <ChevronDown
-                    className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
-                  />
+                  {!collapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+                  {!collapsed ? (
+                    <ChevronDown
+                      className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
+                    />
+                  ) : null}
                 </button>
                 {open ? (
-                  <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                  <div
+                    className={cn(
+                      "mt-1 space-y-1",
+                      collapsed ? "" : "ml-4 border-l border-slate-200 pl-3",
+                    )}
+                  >
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
                       const active = child.href ? isActive(child.href) : false;
@@ -112,8 +169,10 @@ export default function Sidebar() {
                         <Link
                           key={child.href}
                           href={child.href ?? "#"}
+                          title={collapsed ? child.label : undefined}
                           className={cn(
                             "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
+                            collapsed && "justify-center px-0",
                             active
                               ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20"
                               : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
@@ -125,7 +184,7 @@ export default function Sidebar() {
                               active ? "text-white" : "text-slate-400 group-hover:text-indigo-500",
                             )}
                           />
-                          {child.label}
+                          {!collapsed ? child.label : null}
                         </Link>
                       );
                     })}
@@ -140,8 +199,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href ?? "#"}
+              title={collapsed ? item.label : undefined}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                collapsed && "justify-center px-0",
                 active
                   ? "bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
@@ -155,8 +216,8 @@ export default function Sidebar() {
                     : "text-slate-400 group-hover:text-indigo-500",
                 )}
               />
-              {item.label}
-              {active ? (
+              {!collapsed ? item.label : null}
+              {active && !collapsed ? (
                 <span className="absolute right-3 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgb(255_255_255/0.8)]" />
               ) : null}
             </Link>
@@ -164,14 +225,19 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="relative border-t border-slate-200 p-3">
+      <div className="relative border-t border-slate-200 p-3 space-y-1">
+        <AccountMenu collapsed={collapsed} />
         <Link
           href="/login"
           onClick={() => logout()}
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          title={collapsed ? "Switch role / Sign out" : undefined}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900",
+            collapsed && "justify-center px-0",
+          )}
         >
-          <LogOut className="h-4 w-4" />
-          Switch role / Sign out
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed ? "Switch role / Sign out" : null}
         </Link>
       </div>
     </aside>
