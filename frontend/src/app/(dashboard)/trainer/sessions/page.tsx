@@ -35,6 +35,8 @@ export default function TrainerSessionsPage() {
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [filterScope, setFilterScope] = useState<"all" | "assigned">("all");
+
   const assignedCourses = useMemo(
     () =>
       courses.filter(
@@ -57,14 +59,18 @@ export default function TrainerSessionsPage() {
     loadSessions();
   }, []);
 
-  // Filter sessions: if assigned to specific courses, filter by those; otherwise if trainer has sessions scheduled, show them
+  // Filter sessions: show all sessions (including institutional sessions scheduled by Training Admin) or filter by assigned courses
   const mySessions = useMemo(() => {
-    if (assignedCourses.length > 0) {
-      return sessions.filter((s) => assignedCourses.some((c) => c.id === s.courseId));
+    if (filterScope === "assigned" && assignedCourses.length > 0) {
+      return sessions.filter(
+        (s) =>
+          assignedCourses.some((c) => c.id === s.courseId) ||
+          (s as any).trainerId === currentUser?.id,
+      );
     }
-    // Fallback: all sessions if assigned courses not yet linked in seed data
+    // "all" shows all scheduled sessions across courses & institutional sessions
     return sessions;
-  }, [sessions, assignedCourses]);
+  }, [sessions, assignedCourses, filterScope, currentUser?.id]);
 
   const upcoming = useMemo(
     () => mySessions.filter((s) => s.status === "SCHEDULED" || s.status === "LIVE"),
@@ -78,11 +84,14 @@ export default function TrainerSessionsPage() {
   const toRows = (items: ApiLiveSession[]): SessionRow[] =>
     items.map((session) => {
       const course = courses.find((c) => c.id === session.courseId);
+      const isMyCourse = assignedCourses.some((c) => c.id === session.courseId);
       return {
         session,
         courseTitle: course?.title ?? session.course?.titleEn ?? session.titleEn ?? "Training Session",
         courseCode: course?.code ?? session.course?.code ?? "TRAINING",
-        trainerName: currentUser?.name ?? "Assigned Trainer",
+        trainerName: isMyCourse
+          ? (currentUser?.name ?? "Assigned Trainer")
+          : (session.course?.titleEn ? "Institutional Trainer" : (currentUser?.name ?? "Assigned Trainer")),
       };
     });
 
@@ -109,11 +118,38 @@ export default function TrainerSessionsPage() {
       description="Your scheduled live training sessions. Join directly in the LMS and manage attendance."
     >
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading}>
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh Sessions
+            Refresh
           </Button>
+
+          {assignedCourses.length > 0 && (
+            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setFilterScope("all")}
+                className={`rounded-md px-2.5 py-1 font-medium transition ${
+                  filterScope === "all"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                All Sessions ({sessions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterScope("assigned")}
+                className={`rounded-md px-2.5 py-1 font-medium transition ${
+                  filterScope === "assigned"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                My Courses ({sessions.filter((s) => assignedCourses.some((c) => c.id === s.courseId)).length})
+              </button>
+            </div>
+          )}
         </div>
         <Link href="/trainer/attendance">
           <Button size="sm" variant="outline" className="gap-1.5">

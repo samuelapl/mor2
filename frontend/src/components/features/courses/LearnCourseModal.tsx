@@ -8,6 +8,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ClipboardList,
   Download,
   ExternalLink,
@@ -152,6 +153,33 @@ export function LearnCourseModal({
     try {
       await markLessonComplete(lessonId, { completed, lastPosition: 0 });
       await refresh();
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const toggleCompleteAndAdvance = async (
+    lessonId: string,
+    modIndex: number,
+    lessonIndex: number,
+  ) => {
+    setTogglingId(lessonId);
+    try {
+      await markLessonComplete(lessonId, { completed: true, lastPosition: 0 });
+      await refresh();
+
+      // Automatically unlock and advance to next activity
+      const currMod = course?.modules[modIndex];
+      if (currMod && lessonIndex + 1 < currMod.lessons.length) {
+        const nextLesson = currMod.lessons[lessonIndex + 1];
+        setOpenLesson(nextLesson.id);
+      } else if (course?.modules && modIndex + 1 < course.modules.length) {
+        const nextMod = course.modules[modIndex + 1];
+        setExpandedModules((prev) => ({ ...prev, [nextMod.id]: true }));
+        if (nextMod.lessons && nextMod.lessons.length > 0) {
+          setOpenLesson(nextMod.lessons[0].id);
+        }
+      }
     } finally {
       setTogglingId(null);
     }
@@ -348,7 +376,7 @@ export function LearnCourseModal({
         <div className="space-y-4">
           {course.modules.map((module, moduleIndex) => {
             const moduleProgress = progress?.modules.find((m) => m.moduleId === module.id);
-            const moduleLocked = !isModuleUnlocked(moduleIndex) || module.unlocked === false;
+            const moduleLocked = !isModuleUnlocked(moduleIndex);
             const completedCount = moduleProgress?.completedLessons ?? 0;
             const totalCount = moduleProgress?.totalLessons ?? module.lessons.length;
             const modulePercent = moduleProgress?.progressPercent ?? 0;
@@ -430,8 +458,7 @@ export function LearnCourseModal({
                         );
                         const lessonLocked =
                           moduleLocked ||
-                          !isLessonUnlocked(moduleIndex, lessonIndex) ||
-                          lesson.unlocked === false;
+                          !isLessonUnlocked(moduleIndex, lessonIndex);
                         const completedFlag =
                           completedLessonIds.has(lesson.id) || (lessonProgress?.completed ?? false);
                         const isOpen = openLesson === lesson.id;
@@ -679,22 +706,58 @@ export function LearnCourseModal({
                                 ) : null}
 
                                 {/* Footer Action */}
-                                <div className="flex justify-end pt-2 border-t border-slate-200/60">
+                                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/60">
                                   {!completedFlag ? (
-                                    <Button
-                                      size="sm"
-                                      variant="success"
-                                      disabled={togglingId === lesson.id}
-                                      onClick={() => void toggleComplete(lesson.id, true)}
-                                    >
-                                      <Check className="h-3.5 w-3.5 mr-1.5" />
-                                      I have completed this activity
-                                    </Button>
+                                    <div className="flex items-center gap-2 ml-auto">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={togglingId === lesson.id}
+                                        onClick={() => void toggleComplete(lesson.id, true)}
+                                        className="h-8 text-xs"
+                                      >
+                                        <Check className="h-3.5 w-3.5 mr-1" />
+                                        Mark as Complete
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="success"
+                                        disabled={togglingId === lesson.id}
+                                        onClick={() => void toggleCompleteAndAdvance(lesson.id, moduleIndex, lessonIndex)}
+                                        className="h-8 text-xs gap-1 shadow-xs"
+                                      >
+                                        <span>Complete & Next Activity</span>
+                                        <ChevronRight className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                                      Activity completed
-                                    </span>
+                                    <div className="flex items-center justify-between w-full">
+                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                        Activity completed
+                                      </span>
+                                      {(lessonIndex + 1 < module.lessons.length || moduleIndex + 1 < course.modules.length) && (
+                                        <Button
+                                          size="sm"
+                                          variant="primary"
+                                          onClick={() => {
+                                            if (lessonIndex + 1 < module.lessons.length) {
+                                              setOpenLesson(module.lessons[lessonIndex + 1].id);
+                                            } else if (moduleIndex + 1 < course.modules.length) {
+                                              const nextMod = course.modules[moduleIndex + 1];
+                                              setExpandedModules((prev) => ({ ...prev, [nextMod.id]: true }));
+                                              if (nextMod.lessons && nextMod.lessons.length > 0) {
+                                                setOpenLesson(nextMod.lessons[0].id);
+                                              }
+                                            }
+                                          }}
+                                          className="h-8 text-xs gap-1 shadow-xs"
+                                        >
+                                          <span>Next Activity</span>
+                                          <ChevronRight className="h-3.5 w-3.5" />
+                                        </Button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               </div>

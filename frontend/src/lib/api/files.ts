@@ -75,7 +75,17 @@ async function postForm(
     body: form,
     credentials: "include",
   });
-  if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    let errorMsg = `Upload failed (${res.status})`;
+    try {
+      const json = JSON.parse(errorText);
+      if (json.message) {
+        errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
+      }
+    } catch {}
+    throw new Error(errorMsg);
+  }
   const body = (await res.json()) as { data?: Record<string, unknown> };
   return pick(body?.data ?? {});
 }
@@ -87,6 +97,16 @@ async function postFormText(path: string, form: FormData): Promise<string> {
     body: form,
     credentials: "include",
   });
-  if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    let errorMsg = `Upload failed (${res.status})`;
+    try {
+      const json = JSON.parse(errorText);
+      if (json.message) {
+        errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
+      }
+    } catch {}
+    throw new Error(errorMsg);
+  }
   return res.text();
 }

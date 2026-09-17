@@ -58,6 +58,12 @@ export function LiveSessionWorkspace({
     setLoading(true);
     setError(null);
 
+    const formatJitsiUrl = (url: string, name: string) => {
+      if (!url || (!url.includes("meet.jit.si") && !url.includes("jitsi"))) return url;
+      const baseUrl = url.split("#")[0];
+      return `${baseUrl}#userInfo.displayName="${encodeURIComponent(name)}"&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableWelcomePage=false&config.disableDeepLinking=true`;
+    };
+
     const init = async () => {
       // 1. Record self check-in for learners
       if (userRole === "learner") {
@@ -70,19 +76,23 @@ export function LiveSessionWorkspace({
       }
 
       // 2. Fetch resolved join URL with displayName injected
+      const displayName =
+        currentUser?.name ||
+        currentUser?.firstName ||
+        (userRole === "trainer" ? "Trainer" : "Participant");
+
       try {
         const res = await fetchSessionJoinUrl(session.id);
         if (cancelled) return;
-        if (res?.joinUrl) {
-          setJoinUrl(res.joinUrl);
-        } else if (session.externalUrl) {
-          setJoinUrl(session.externalUrl);
+        const rawUrl = res?.joinUrl || session.externalUrl;
+        if (rawUrl) {
+          setJoinUrl(formatJitsiUrl(rawUrl, displayName));
         } else {
           setError("No active meeting URL is configured for this session.");
         }
       } catch {
         if (session.externalUrl) {
-          if (!cancelled) setJoinUrl(session.externalUrl);
+          if (!cancelled) setJoinUrl(formatJitsiUrl(session.externalUrl, displayName));
         } else {
           if (!cancelled) setError("Could not resolve meeting URL for this session.");
         }
