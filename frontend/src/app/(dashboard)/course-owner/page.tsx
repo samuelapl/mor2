@@ -182,7 +182,7 @@ export default function CourseOwnerDashboardPage() {
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>Total courses created: {owned.length}</span>
-            <Link href="/course-owner/my-courses" className="font-semibold text-indigo-600 hover:underline">
+            <Link href="/courses" className="font-semibold text-indigo-600 hover:underline">
               View all courses →
             </Link>
           </div>
@@ -194,7 +194,7 @@ export default function CourseOwnerDashboardPage() {
         title="My Courses"
         description="Your course catalog with editing access and approval status."
         action={
-          <Link href="/course-owner/my-courses">
+          <Link href="/courses">
             <Button variant="outline" size="sm">
               View all courses
               <ArrowRight className="h-3.5 w-3.5" />
@@ -205,7 +205,7 @@ export default function CourseOwnerDashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {ownedPage.pageItems.map((course) => (
             <CourseCard key={course.id} course={course}>
-              <Link href={`/course-owner/my-courses`}>
+              <Link href={`/courses`}>
                 <Button size="sm" variant="outline">
                   Manage Curriculum
                 </Button>

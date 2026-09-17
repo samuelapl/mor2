@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Clock,
   Globe2,
-  Send,
   UsersRound,
   Video,
 } from "lucide-react";
@@ -29,9 +28,9 @@ import { DonutChart, BarChart } from "@/components/ui/charts";
 
 const QUICK_LINKS = [
   {
-    href: "/training-admin/courses",
-    title: "Course Management",
-    description: "Inspect every course and monitor lifecycle states.",
+    href: "/courses",
+    title: "Courses",
+    description: "Inspect every course, publish approved ones, and manage lifecycle states.",
     icon: BookOpenCheck,
   },
   {
@@ -39,12 +38,6 @@ const QUICK_LINKS = [
     title: "Learner Enrollments",
     description: "Assign learners to courses individually or in batches.",
     icon: UsersRound,
-  },
-  {
-    href: "/training-admin/publish",
-    title: "Publishing Queue",
-    description: "Release approved courses to the active catalog.",
-    icon: Send,
   },
   {
     href: "/training-admin/sessions",
@@ -179,7 +172,7 @@ export default function TrainingAdminDashboardPage() {
                 </h4>
                 <p className="text-xs text-slate-500">Distribution across publishing states</p>
               </div>
-              <Link href="/training-admin/publish">
+              <Link href="/courses">
                 <Button variant="outline" size="sm">
                   Publishing queue
                   <ArrowRight className="h-3 w-3" />
@@ -363,7 +356,7 @@ export default function TrainingAdminDashboardPage() {
         title="Ready to publish"
         description="Courses approved by content reviewers awaiting public release."
         action={
-          <Link href="/training-admin/publish">
+          <Link href="/courses">
             <Button variant="outline" size="sm">
               Publishing center
               <ArrowRight className="h-3.5 w-3.5" />
@@ -391,7 +384,7 @@ export default function TrainingAdminDashboardPage() {
                   </p>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                     <span className="text-xs text-slate-400">{course.category}</span>
-                    <Link href="/training-admin/publish">
+                    <Link href="/courses">
                       <Button size="sm" variant="outline">
                         Publish course
                       </Button>

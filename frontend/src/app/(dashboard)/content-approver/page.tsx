@@ -109,7 +109,7 @@ export default function ContentApproverDashboardPage() {
                 </h4>
                 <p className="text-xs text-slate-500">Distribution of courses across review stages</p>
               </div>
-              <Link href="/content-approver/pending-approvals">
+              <Link href="/courses">
                 <Button variant="outline" size="sm">
                   Review queue
                   <ArrowRight className="h-3 w-3" />
@@ -156,7 +156,7 @@ export default function ContentApproverDashboardPage() {
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>Categories represented: {categoryBars.length}</span>
             <Link
-              href="/content-approver/approved-courses"
+              href="/courses"
               className="font-semibold text-indigo-600 hover:underline"
             >
               Approved library →
@@ -171,7 +171,7 @@ export default function ContentApproverDashboardPage() {
           title="Pending approvals"
           description="Courses submitted by Course Owners awaiting review and approval."
           action={
-            <Link href="/content-approver/pending-approvals">
+            <Link href="/courses">
               <Button variant="outline" size="sm">
                 Review queue
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -183,7 +183,7 @@ export default function ContentApproverDashboardPage() {
             {pendingPage.pageItems.map((course) => (
               <CourseCard key={course.id} course={course}>
                 <Badge variant="blue">Pending review</Badge>
-                <Link href="/content-approver/pending-approvals">
+                <Link href="/courses">
                   <Button size="sm" variant="outline">
                     Review Curriculum
                   </Button>
@@ -216,7 +216,7 @@ export default function ContentApproverDashboardPage() {
         title="Recently approved content"
         description="Courses certified for public release and training facilitation."
         action={
-          <Link href="/content-approver/approved-courses">
+          <Link href="/courses">
             <Button variant="outline" size="sm">
               View full library
               <ArrowRight className="h-3.5 w-3.5" />

@@ -69,7 +69,7 @@ export default function CreateCoursePage() {
       >
         <div className="w-full">
           <CourseCreationWizard
-            onDone={() => router.push("/course-owner/my-courses")}
+            onDone={() => router.push("/courses")}
             onCancel={() => setMode(null)}
           />
         </div>

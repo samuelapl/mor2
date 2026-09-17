@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   BarChart3,
   BookOpen,
-  BookOpenCheck,
   CalendarDays,
   CalendarRange,
   ClipboardCheck,
@@ -49,28 +48,22 @@ export const ROLE_ICONS: Record<Role, LucideIcon> = {
 export const NAV_ITEMS: Record<Role, NavItem[]> = {
   course_owner: [
     { label: "Dashboard", href: "/course-owner", icon: LayoutDashboard },
-    { label: "My Courses", href: "/course-owner/my-courses", icon: BookOpen },
+    { label: "Courses", href: "/courses", icon: BookOpen, permission: "course.view.own" },
     { label: "Question Bank", href: "/course-owner/question-bank", icon: FileQuestion },
   ],
   content_approver: [
     { label: "Dashboard", href: "/content-approver", icon: LayoutDashboard },
-    {
-      label: "Pending Approvals",
-      href: "/content-approver/pending-approvals",
-      icon: Hourglass,
-      permission: ["course.approve", "course.reject"],
-    },
-    { label: "Approved Courses", href: "/content-approver/approved-courses", icon: BadgeCheck },
+    { label: "Courses", href: "/courses", icon: BookOpen, permission: "course.view.all" },
   ],
   training_admin: [
     { label: "Dashboard", href: "/training-admin", icon: LayoutDashboard },
-    { label: "Pending to Publish", href: "/training-admin/publish", icon: Hourglass, permission: "course.publish" },
-    { label: "View Published Course", href: "/training-admin/courses", icon: BookOpenCheck },
+    { label: "Courses", href: "/courses", icon: BookOpen, permission: "course.view.all" },
     { label: "Enrollments", href: "/training-admin/enrollments", icon: Users, permission: "student.manage" },
     { label: "Training Sessions", href: "/training-admin/sessions", icon: Presentation },
   ],
   trainer: [
     { label: "Dashboard", href: "/trainer", icon: LayoutDashboard },
+    { label: "Courses", href: "/courses", icon: BookOpen, permission: "course.view.assigned" },
     { label: "My Sessions", href: "/trainer/sessions", icon: Presentation },
     { label: "Question Bank", href: "/trainer/question-bank", icon: FileQuestion, permission: "quiz.create" },
     { label: "Attendance", href: "/trainer/attendance", icon: ClipboardCheck, permission: "attendance.manage" },
@@ -86,6 +79,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   system_admin: [
     { label: "Dashboard", href: "/system-admin", icon: LayoutDashboard },
     { label: "Users & Roles", href: "/system-admin/users", icon: Users, permission: ["user.manage", "user.view"] },
+    { label: "Courses", href: "/courses", icon: BookOpen, permission: "course.view.all" },
     {
       label: "Registration",
       icon: UserPlus,
@@ -142,6 +136,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
 export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/system-admin/users": ["user.manage", "user.view"],
   "/system-admin/roles": ["role.manage", "permission.manage"],
+  "/courses": ["course.view.own", "course.view.all", "course.view.assigned", "course.create"],
 };
 
 /**

@@ -63,6 +63,7 @@ import {
   assignTrainer as apiAssignTrainer,
   unassignTrainer,
   deleteCourse as apiDeleteCourse,
+  archiveCourse as apiArchiveCourse,
 } from "@/lib/api/courses";
 import { uploadAttachment, uploadCover } from "@/lib/api/files";
 import { createCourseAssessment, replaceAssessment } from "@/lib/api/quiz";
@@ -198,6 +199,7 @@ interface LmsContextValue {
   requestChangesCourse: (courseId: string, reason: string) => Promise<ActionResult>;
   publishCourse: (courseId: string) => Promise<ActionResult>;
   unpublishCourse: (courseId: string) => Promise<ActionResult>;
+  archiveCourse: (courseId: string) => Promise<ActionResult>;
   deleteCourse: (courseId: string) => Promise<ActionResult>;
   enrollLearners: (
     courseId: string,
@@ -1073,6 +1075,23 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const archiveCourse = useCallback(
+    async (courseId: string): Promise<ActionResult> => {
+      const actor = currentUserRef.current;
+      try {
+        await apiArchiveCourse(courseId);
+        await reloadData(actor);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to archive course."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
   const deleteCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
       const owner = currentUserRef.current;
@@ -1350,6 +1369,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       requestChangesCourse,
       publishCourse,
       unpublishCourse,
+      archiveCourse,
       deleteCourse,
       enrollLearners,
       enrollSelf,
@@ -1388,6 +1408,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       requestChangesCourse,
       publishCourse,
       unpublishCourse,
+      archiveCourse,
       deleteCourse,
       enrollLearners,
       enrollSelf,

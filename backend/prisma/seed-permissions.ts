@@ -31,6 +31,7 @@ export const PERMISSIONS: PermissionDef[] = [
   { code: 'course.update.all', resource: 'course', action: 'update', scope: 'ALL', description: 'Update any course' },
   { code: 'course.view.own', resource: 'course', action: 'view', scope: 'OWN', description: 'View created courses' },
   { code: 'course.view.all', resource: 'course', action: 'view', scope: 'ALL', description: 'View all courses' },
+  { code: 'course.view.assigned', resource: 'course', action: 'view', scope: 'OWN', description: 'View courses assigned to me (trainers)' },
   { code: 'course.browse', resource: 'course', action: 'browse', scope: 'ALL', description: 'Browse published catalog' },
   { code: 'course.submit_approval', resource: 'course', action: 'submit_approval', scope: 'ALL', description: 'Request approval' },
   { code: 'course.approve', resource: 'course', action: 'approve', scope: 'ALL', description: 'Approve course' },
@@ -131,7 +132,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'dashboard.stats',
   ],
   [RoleName.TRAINER]: [
-    'course.view.all',
+    'course.view.assigned',
     'quiz.create',
     'quiz.grade',
     'attendance.view',
@@ -200,6 +201,14 @@ export async function seedPermissions(prisma: PrismaClient) {
       });
     }
   }
+
+  // TRAINER used to hold 'course.view.all'; it now holds the narrower 'course.view.assigned'.
+  // The matrix seed above is additive-only, so drop that stale grant explicitly.
+  const trainerRoleId = roleIdByName.get(RoleName.TRAINER)!;
+  const viewAllPermissionId = permissionIdByCode.get('course.view.all')!;
+  await prisma.rolePermission.deleteMany({
+    where: { roleId: trainerRoleId, permissionId: viewAllPermissionId },
+  });
 
   console.log('  ✓ Permission registry + matrix seeded');
 }
