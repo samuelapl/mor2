@@ -21,6 +21,8 @@ import {
   Code,
   Copy,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileCheck,
   FileQuestion,
   FileSpreadsheet,
@@ -42,6 +44,7 @@ import {
   Plus,
   Presentation,
   Quote,
+  Save,
   Send,
   ShieldCheck,
   Sparkles,
@@ -415,6 +418,9 @@ export function CourseCreationWizard({
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [showReviewDetails, setShowReviewDetails] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const savedCourseIdRef = useRef<string | undefined>(editingCourse?.id);
 
   const isEdit = Boolean(editingCourse);
 
@@ -601,6 +607,95 @@ export function CourseCreationWizard({
     code.trim() !== "" &&
     descriptionText !== "" &&
     objectivesText.length >= 10;
+
+  // Restore unfinished course draft on initial mount
+  useEffect(() => {
+    if (isEdit) return;
+    try {
+      const raw = localStorage.getItem("mor_draft_new_course");
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft && (draft.title?.trim() || (Array.isArray(draft.modules) && draft.modules.length > 0) || draft.description?.trim())) {
+        if (draft.title) setTitle(draft.title);
+        if (draft.code) setCode(draft.code);
+        if (draft.category) setCategory(draft.category);
+        if (draft.level) setLevel(draft.level);
+        if (draft.description) setDescription(draft.description);
+        if (draft.objectives) setObjectives(draft.objectives);
+        if (draft.department) setDepartment(draft.department);
+        if (draft.targetAudience) setTargetAudience(draft.targetAudience);
+        if (draft.prerequisites) setPrerequisites(draft.prerequisites);
+        if (Array.isArray(draft.modules) && draft.modules.length > 0) setModules(draft.modules);
+        if (draft.quizTitle) setQuizTitle(draft.quizTitle);
+        if (typeof draft.passMark === "number") setPassMark(draft.passMark);
+        if (typeof draft.timeLimitMinutes === "number") setTimeLimitMinutes(draft.timeLimitMinutes);
+        if (typeof draft.attemptsAllowed === "number") setAttemptsAllowed(draft.attemptsAllowed);
+        if (Array.isArray(draft.questions) && draft.questions.length > 0) setQuestions(draft.questions);
+        if (draft.savedCourseId) savedCourseIdRef.current = draft.savedCourseId;
+        if (typeof draft.step === "number" && draft.step >= 0 && draft.step < STEPS.length) {
+          setStep(draft.step);
+        }
+        setDraftRestored(true);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
+
+  // Persist course draft to localStorage whenever fields change
+  useEffect(() => {
+    if (isEdit) return;
+    if (!title.trim() && modules.length === 0 && !description.trim()) return;
+
+    try {
+      const draftData = {
+        step,
+        title,
+        code,
+        category,
+        level,
+        description,
+        objectives,
+        department,
+        targetAudience,
+        deliveryMethod,
+        language,
+        prerequisites,
+        modules,
+        quizTitle,
+        passMark,
+        timeLimitMinutes,
+        attemptsAllowed,
+        questions,
+        savedCourseId: savedCourseIdRef.current,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem("mor_draft_new_course", JSON.stringify(draftData));
+    } catch {
+      // ignore storage errors
+    }
+  }, [
+    step,
+    title,
+    code,
+    category,
+    level,
+    description,
+    objectives,
+    department,
+    targetAudience,
+    deliveryMethod,
+    language,
+    prerequisites,
+    modules,
+    quizTitle,
+    passMark,
+    timeLimitMinutes,
+    attemptsAllowed,
+    questions,
+    isEdit,
+  ]);
 
   /* ── Curriculum Helpers ─────────────────────────────────────────── */
 
@@ -1082,6 +1177,104 @@ export function CourseCreationWizard({
         }
       : undefined;
 
+  // Auto-save draft to backend when owner closes/navigates away before finishing
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (title.trim() || modules.length > 0) {
+        const quiz = buildQuizPayload();
+        const curriculum = buildCurriculumPayload();
+        if (savedCourseIdRef.current) {
+          updateCourseFull(savedCourseIdRef.current, {
+            title: title.trim() || "Draft Course",
+            category,
+            level,
+            description: description.trim(),
+            objectives: objectives.trim(),
+            department: department.trim(),
+            targetAudience: targetAudience.trim(),
+            deliveryMethod: deliveryMethod.trim(),
+            language: language.trim(),
+            prerequisites: prerequisites.trim(),
+            cover: coverFile,
+            modules: curriculum,
+            quiz,
+          }).catch(() => {});
+        } else if (title.trim()) {
+          createCourse({
+            title: title.trim(),
+            code: code.trim().toUpperCase() || "DRAFT",
+            category,
+            level,
+            description: description.trim(),
+            objectives: objectives.trim(),
+            department: department.trim(),
+            targetAudience: targetAudience.trim(),
+            deliveryMethod: deliveryMethod.trim(),
+            language: language.trim(),
+            prerequisites: prerequisites.trim(),
+            cover: coverFile,
+            modules: curriculum,
+            quiz,
+          }).then((res: any) => {
+            if (res?.courseId) savedCourseIdRef.current = res.courseId;
+          }).catch(() => {});
+        }
+        e.preventDefault();
+        e.returnValue = "Your course draft will be saved automatically.";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, code, modules, description, objectives, department, targetAudience, prerequisites, coverFile, questions, quizTitle, passMark]);
+
+  const handleCancelWithSave = async () => {
+    if (title.trim() || modules.length > 0) {
+      try {
+        const quiz = buildQuizPayload();
+        const curriculum = buildCurriculumPayload();
+        if (savedCourseIdRef.current) {
+          await updateCourseFull(savedCourseIdRef.current, {
+            title: title.trim() || "Draft Course",
+            category,
+            level,
+            description: description.trim(),
+            objectives: objectives.trim(),
+            department: department.trim(),
+            targetAudience: targetAudience.trim(),
+            deliveryMethod: deliveryMethod.trim(),
+            language: language.trim(),
+            prerequisites: prerequisites.trim(),
+            cover: coverFile,
+            modules: curriculum,
+            quiz,
+          });
+        } else if (title.trim()) {
+          const res = await createCourse({
+            title: title.trim(),
+            code: code.trim().toUpperCase() || "DRAFT",
+            category,
+            level,
+            description: description.trim(),
+            objectives: objectives.trim(),
+            department: department.trim(),
+            targetAudience: targetAudience.trim(),
+            deliveryMethod: deliveryMethod.trim(),
+            language: language.trim(),
+            prerequisites: prerequisites.trim(),
+            cover: coverFile,
+            modules: curriculum,
+            quiz,
+          });
+          if (res?.courseId) savedCourseIdRef.current = res.courseId;
+        }
+      } catch {
+        // silent draft save
+      }
+    }
+    onCancel();
+  };
+
   const handleSave = async (andSubmit = false) => {
     setSaving(true);
     setFlash(null);
@@ -1090,10 +1283,11 @@ export function CourseCreationWizard({
     const curriculum = buildCurriculumPayload();
 
     try {
-      let savedCourseId = editingCourse?.id;
+      let savedCourseId = savedCourseIdRef.current || editingCourse?.id;
 
-      if (editingCourse) {
-        const result = await updateCourseFull(editingCourse.id, {
+      if (editingCourse || savedCourseIdRef.current) {
+        const courseId = savedCourseIdRef.current || editingCourse!.id;
+        const result = await updateCourseFull(courseId, {
           title: title.trim(),
           category,
           level,
@@ -1128,6 +1322,7 @@ export function CourseCreationWizard({
         });
         if (!result.ok) throw new Error(result.message);
         savedCourseId = result.courseId;
+        savedCourseIdRef.current = result.courseId;
       }
 
       if (andSubmit && savedCourseId) {
@@ -1136,6 +1331,10 @@ export function CourseCreationWizard({
           throw new Error(submitRes.message || "Failed to submit course for approval.");
         }
       }
+
+      try {
+        localStorage.removeItem("mor_draft_new_course");
+      } catch {}
 
       onDone();
     } catch (err) {
@@ -2040,6 +2239,42 @@ export function CourseCreationWizard({
         </div>
       </div>
 
+      {draftRestored ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-4 py-3 text-xs text-indigo-950 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
+            <div>
+              <p className="font-semibold text-indigo-900">Restored unfinished course draft</p>
+              <p className="text-[11px] text-indigo-700">Continuing from where you left off. All your entered details, curriculum, and settings are preserved.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                localStorage.removeItem("mor_draft_new_course");
+              } catch {}
+              setDraftRestored(false);
+              setTitle("");
+              setCode("");
+              setDescription("");
+              setObjectives("");
+              setDepartment("");
+              setTargetAudience("");
+              setPrerequisites("");
+              setModules([]);
+              setQuestions([]);
+              setStep(0);
+            }}
+            className="rounded-lg border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 shadow-2xs transition"
+          >
+            Discard Draft
+          </button>
+        </div>
+      ) : null}
+
       {flash ? (
         <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
           {flash}
@@ -2350,12 +2585,10 @@ export function CourseCreationWizard({
                           </div>
                           <div>
                             <label className={labelClass}>Module Description (Optional)</label>
-                            <input
-                              type="text"
+                            <CompactRichEditor
                               value={mod.description ?? ""}
-                              placeholder="Brief summary of module scope and focus"
-                              onChange={(e) => patchModule(mod.id, { description: e.target.value })}
-                              className={inputClass}
+                              placeholder="Brief summary of module scope and focus — supports bold, italic, and bullets"
+                              onChange={(html) => patchModule(mod.id, { description: html })}
                             />
                           </div>
                         </div>
@@ -3040,11 +3273,23 @@ export function CourseCreationWizard({
       {/* ── STEP 4: Review & Submit ───────────────────────────────── */}
       {step === 3 ? (
         <div className="space-y-6">
-          <div>
-            <h3 className="font-display text-base font-bold text-slate-900">Review & Submit</h3>
-            <p className="text-xs text-slate-500">
-              Verify your course configuration before saving or requesting approval.
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-display text-base font-bold text-slate-900">Review & Submit</h3>
+              <p className="text-xs text-slate-500">
+                Verify your course configuration before saving or requesting approval.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReviewDetails(!showReviewDetails)}
+              className="gap-1.5 text-xs font-semibold text-indigo-700 border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 shadow-2xs transition"
+            >
+              {showReviewDetails ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {showReviewDetails ? "Collapse Details" : "Show Learner View & Details"}
+            </Button>
           </div>
 
           {/* Course Summary Card */}
@@ -3068,13 +3313,19 @@ export function CourseCreationWizard({
             <div className="border-t border-slate-100 pt-3 space-y-3 text-xs">
               <div>
                 <p className="font-semibold text-slate-700">Course Description</p>
-                <div
-                  className="text-slate-600 mt-0.5 leading-relaxed prose prose-xs max-w-none"
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
+                {description && description.replace(/<[^>]+>/g, "").trim() ? (
+                  <div
+                    className="text-slate-600 mt-0.5 leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                  />
+                ) : (
+                  <p className="mt-1 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2 text-amber-700 italic">
+                    ⚠ No description added yet — go back to Step 1 and fill in the Course Description.
+                  </p>
+                )}
               </div>
 
-              {objectives ? (
+              {objectives && objectives.replace(/<[^>]+>/g, "").trim() ? (
                 <div className="rounded-xl bg-indigo-50/60 p-3 border border-indigo-100/70">
                   <p className="font-semibold text-indigo-900">Course Learning Objectives</p>
                   <div
@@ -3082,11 +3333,16 @@ export function CourseCreationWizard({
                     dangerouslySetInnerHTML={{ __html: objectives }}
                   />
                 </div>
-              ) : null}
+              ) : (
+                <div className="rounded-xl bg-amber-50/60 p-3 border border-amber-100/70">
+                  <p className="font-semibold text-amber-800">⚠ No Learning Objectives added</p>
+                  <p className="text-amber-700 mt-0.5 text-[11px]">Go back to Step 1 and add what learners will achieve from this course.</p>
+                </div>
+              )}
 
               <div className="grid gap-2 sm:grid-cols-3 text-[11px] text-slate-500 pt-1">
-                <div><span className="font-medium text-slate-700">Department:</span> {department || "N/A"}</div>
-                <div><span className="font-medium text-slate-700">Target Audience:</span> {targetAudience || "N/A"}</div>
+                <div><span className="font-medium text-slate-700">Department:</span> {department || <span className="text-amber-600 italic">Not specified</span>}</div>
+                <div><span className="font-medium text-slate-700">Target Audience:</span> {targetAudience || <span className="text-amber-600 italic">Not specified</span>}</div>
                 <div><span className="font-medium text-slate-700">Prerequisites:</span> {prerequisites || "None"}</div>
               </div>
             </div>
@@ -3112,42 +3368,98 @@ export function CourseCreationWizard({
 
             <div className="space-y-3">
               {modules.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No modules added.</p>
+                <p className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-4 text-xs text-amber-700 italic">
+                  ⚠ No modules added yet — go back to Step 2 to build your course curriculum.
+                </p>
               ) : (
                 modules.map((m, mIdx) => (
-                  <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-bold text-slate-800">
-                        Module {mIdx + 1}: {m.title}
-                      </p>
-                      <span className="text-[11px] text-slate-500">
+                  <div key={m.id} className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 text-xs space-y-3 shadow-2xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">
+                          Module {mIdx + 1}: {m.title.trim() || <span className="text-amber-600 italic font-normal">Untitled Module (needs title in Step 2)</span>}
+                        </p>
+                        {m.description && m.description.replace(/<[^>]+>/g, "").trim() ? (
+                          <div
+                            className="mt-1 text-xs text-slate-600 leading-relaxed prose prose-xs max-w-none"
+                            dangerouslySetInnerHTML={{ __html: m.description }}
+                          />
+                        ) : (
+                          <p className="mt-1 text-[11px] text-amber-700/80 italic rounded-md bg-amber-50/80 px-2.5 py-1 border border-dashed border-amber-200">
+                            ⚠ No module description — learners will not see an overview for this module.
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
                         {m.durationMinutes ? `${m.durationMinutes} min` : "60 min"} · {m.lessons.length} lessons
                       </span>
                     </div>
 
-                    <ul className="space-y-1.5 pl-2">
-                      {m.lessons.map((l, lIdx) => (
-                        <li key={l.id} className="text-slate-600">
-                          <span className="font-medium text-slate-700">
-                            {mIdx + 1}.{lIdx + 1} {l.title}
-                          </span>{" "}
-                          <span className="text-[11px] text-slate-400">
-                            ({l.contentType}, {l.durationMin}m
-                            {l.required === false ? " · optional" : " · required"}
-                            {l.resourceUrl ? " · 1 file" : ""})
-                          </span>
-                          {l.subLessons && l.subLessons.length > 0 ? (
-                            <ul className="pl-4 mt-1 space-y-1 text-slate-500">
-                              {l.subLessons.map((sub, sIdx) => (
-                                <li key={sub.id}>
-                                  ↳ {mIdx + 1}.{lIdx + 1}.{sIdx + 1} {sub.title} ({sub.contentType})
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
+                    {m.lessons.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-700 italic">
+                        ⚠ No lessons in this module. Learners will have no content to study. Go back to Step 2 to add lessons.
+                      </p>
+                    ) : (
+                      <ul className="space-y-2.5">
+                        {m.lessons.map((l, lIdx) => (
+                          <li key={l.id} className="rounded-lg border border-slate-200/70 bg-white p-3 space-y-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-indigo-100 font-mono text-[10px] font-bold text-indigo-700">
+                                  {mIdx + 1}.{lIdx + 1}
+                                </span>
+                                <span className="font-semibold text-slate-800 text-xs">
+                                  {l.title.trim() || <span className="text-amber-600 italic font-normal">Untitled Lesson</span>}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                                <Badge variant="slate">{l.contentType}</Badge>
+                                <span>{l.durationMin || 15}m</span>
+                                <span>{l.required === false ? "· Optional" : "· Required"}</span>
+                                {l.resourceUrl ? <Badge variant="blue">1 File Attached</Badge> : null}
+                              </div>
+                            </div>
+
+                            {/* Show Details (Learner View) */}
+                            {showReviewDetails && (
+                              <div className="mt-2 pt-2 border-t border-slate-100 space-y-2 text-xs">
+                                {l.resourceUrl ? (
+                                  <div className="flex items-center gap-2 rounded-lg bg-indigo-50/60 p-2 text-[11px] text-indigo-900 border border-indigo-100">
+                                    <FileText className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                                    <span className="font-medium">Attached Material:</span>
+                                    <span className="truncate max-w-xs">{l.fileName || l.resourceUrl}</span>
+                                  </div>
+                                ) : null}
+
+                                {l.content && l.content.replace(/<[^>]+>/g, "").trim() ? (
+                                  <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lesson Reading Notes / Instructions:</p>
+                                    <div
+                                      className="mt-0.5 rounded-lg bg-slate-50 p-2.5 text-slate-700 leading-relaxed prose prose-xs max-w-none border border-slate-100"
+                                      dangerouslySetInnerHTML={{ __html: l.content }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-amber-600/90 italic">⚠ No reading notes or instructions written for this lesson.</p>
+                                )}
+
+                                {l.subLessons && l.subLessons.length > 0 ? (
+                                  <div className="mt-2 space-y-1 pl-3 border-l-2 border-indigo-200">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Sub-Lessons ({l.subLessons.length})</p>
+                                    {l.subLessons.map((sub, sIdx) => (
+                                      <div key={sub.id} className="text-[11px] text-slate-600 flex items-center justify-between">
+                                        <span>↳ {mIdx + 1}.{lIdx + 1}.{sIdx + 1} {sub.title} ({sub.contentType})</span>
+                                        <span className="text-slate-400">{sub.durationMin}m</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))
               )}
@@ -3155,31 +3467,134 @@ export function CourseCreationWizard({
           </div>
 
           {/* Assessment & Rules Breakdown */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-3">
-              Final Assessment & Completion Rules
-            </h4>
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Final Assessment & Completion Rules
+              </h4>
+              <span className="text-xs font-semibold text-indigo-600">
+                {questions.length} Question{questions.length !== 1 ? "s" : ""}
+              </span>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-4 text-xs">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-slate-500">Passing Score</p>
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                <p className="text-slate-500 font-medium">Passing Score</p>
                 <p className="text-base font-bold text-slate-900 mt-1">{passMark}%</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-slate-500">Time Limit</p>
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                <p className="text-slate-500 font-medium">Time Limit</p>
                 <p className="text-base font-bold text-slate-900 mt-1">
                   {timeLimitMinutes ? `${timeLimitMinutes} min` : "No limit"}
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-slate-500">Attempts Allowed</p>
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                <p className="text-slate-500 font-medium">Attempts Allowed</p>
                 <p className="text-base font-bold text-slate-900 mt-1">{attemptsAllowed}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-slate-500">Questions</p>
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                <p className="text-slate-500 font-medium">Total Questions</p>
                 <p className="text-base font-bold text-slate-900 mt-1">{questions.length}</p>
               </div>
             </div>
+
+            {/* Questions Preview */}
+            {questions.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-amber-800 text-xs">
+                ⚠ No assessment questions added yet. Learners will not be tested before completion. Go back to Step 3 to add questions.
+              </div>
+            ) : (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Assessment Questions Preview ({questions.length})
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReviewDetails(!showReviewDetails)}
+                    className="text-xs text-indigo-600 hover:text-indigo-700 h-7"
+                  >
+                    {showReviewDetails ? "Hide Question Details" : "Show All Questions"}
+                  </Button>
+                </div>
+
+                {showReviewDetails && (
+                  <div className="space-y-3">
+                    {questions.map((q, qIdx) => (
+                      <div key={q.id || qIdx} className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5 text-xs space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                              {qIdx + 1}
+                            </span>
+                            <Badge variant="slate">
+                              {q.type === "multiple_choice" ? "Multiple Choice" : q.type === "true_false" ? "True / False" : "Short Answer"}
+                            </Badge>
+                          </div>
+                          <span className="font-semibold text-slate-600 text-[11px]">{q.points || 10} Points</span>
+                        </div>
+
+                        <div
+                          className="font-medium text-slate-800 text-xs prose prose-xs max-w-none"
+                          dangerouslySetInnerHTML={{ __html: q.text || "<em>No question prompt</em>" }}
+                        />
+
+                        {q.type === "multiple_choice" && (
+                          <div className="space-y-1.5 pt-1">
+                            {q.options.map((opt, optIdx) => (
+                              <div
+                                key={optIdx}
+                                className={cn(
+                                  "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs",
+                                  q.correctIndex === optIdx
+                                    ? "bg-emerald-50 border-emerald-300 font-semibold text-emerald-900"
+                                    : "bg-white border-slate-200 text-slate-600"
+                                )}
+                              >
+                                <span className="font-mono text-[10px] text-slate-500">{String.fromCharCode(65 + optIdx)}.</span>
+                                <span>{opt}</span>
+                                {q.correctIndex === optIdx && (
+                                  <Badge variant="green" className="ml-auto text-[10px] py-0 px-1.5">
+                                    Correct Answer
+                                  </Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {q.type === "true_false" && (
+                          <div className="flex items-center gap-3 pt-1">
+                            {["True", "False"].map((opt, optIdx) => (
+                              <span
+                                key={opt}
+                                className={cn(
+                                  "px-3 py-1 rounded-lg border text-xs font-semibold",
+                                  q.correctIndex === optIdx
+                                    ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                                    : "bg-white border-slate-200 text-slate-500"
+                                )}
+                              >
+                                {opt} {q.correctIndex === optIdx ? "✓ (Correct)" : ""}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {q.type === "short_answer" && (
+                          <p className="text-[11px] text-slate-600 bg-white p-2 rounded border border-slate-200">
+                            <span className="font-semibold text-slate-700">Expected Keywords / Rubric: </span>
+                            {q.answerText || <span className="italic text-slate-400">None specified</span>}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
@@ -3188,14 +3603,25 @@ export function CourseCreationWizard({
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/90 pt-5">
         <button
           type="button"
-          onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
+          onClick={() => (step === 0 ? handleCancelWithSave() : setStep(step - 1))}
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           {step === 0 ? "Cancel" : "Back"}
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={saving}
+            onClick={() => handleSave(false)}
+            className="gap-1.5 shadow-xs text-xs"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save as Draft
+          </Button>
+
           {step < STEPS.length - 1 ? (
             <Button
               onClick={() => setStep(step + 1)}
@@ -3205,30 +3631,20 @@ export function CourseCreationWizard({
               Next <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           ) : (
-            <div className="flex items-center gap-2.5">
-              <Button
-                variant="outline"
-                disabled={saving}
-                onClick={() => handleSave(false)}
-                className="shadow-xs"
-              >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
-              </Button>
-              <Button
-                variant="primary"
-                disabled={saving}
-                onClick={() => handleSave(true)}
-                className="gap-1.5 shadow-sm bg-indigo-600 hover:bg-indigo-700"
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" /> Submit for Approval
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              disabled={saving}
+              onClick={() => handleSave(true)}
+              className="gap-1.5 shadow-sm bg-indigo-600 hover:bg-indigo-700"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="h-4 w-4" /> Submit for Approval
+                </>
+              )}
+            </Button>
           )}
         </div>
       </div>

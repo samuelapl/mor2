@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, SessionPlatform, SessionStatus } from '@prisma/client';
+import { Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
@@ -20,7 +20,7 @@ export class LiveSessionsService {
       throw new NotFoundException('Course not found');
     }
 
-    return this.prisma.liveSession.create({
+    const session = await this.prisma.liveSession.create({
       data: {
         courseId,
         titleAm: dto.titleAm,
@@ -36,6 +36,51 @@ export class LiveSessionsService {
       },
       include: { course: { select: { id: true, titleEn: true, titleAm: true } } },
     });
+
+    // Notify all enrolled learners, assigned trainers, and active learners about the new live session (best-effort)
+    try {
+      const enrollments = await this.prisma.enrollment.findMany({
+        where: { courseId, status: 'ACTIVE' },
+        select: { userId: true },
+      });
+
+      const trainers = await this.prisma.trainerAssignment.findMany({
+        where: { courseId },
+        select: { userId: true },
+      });
+
+      const activeLearners = await this.prisma.userRole.findMany({
+        where: { role: 'LEARNER' },
+        select: { userId: true },
+        take: 200,
+      });
+
+      const allRecipientIds = Array.from(
+        new Set([
+          ...enrollments.map((e) => e.userId),
+          ...trainers.map((t) => t.userId),
+          ...activeLearners.map((l) => l.userId),
+        ]),
+      );
+
+      if (allRecipientIds.length > 0) {
+        await this.prisma.notification.createMany({
+          data: allRecipientIds.map((userId) => ({
+            userId,
+            type: 'SESSION_REMINDER' as any,
+            titleEn: `Live Session Scheduled: ${session.titleEn}`,
+            titleAm: `የቀጥታ ክፍለ ጊዜ ቅጥር: ${session.titleAm || session.titleEn}`,
+            bodyEn: `A live training session has been scheduled for "${session.course?.titleEn || session.titleEn}" on ${new Date(session.scheduledAt).toLocaleString()}.`,
+            bodyAm: `ለኮርስዎ የቀጥታ ክፍለ ጊዜ ተቀጥሯል።`,
+            metadata: { sessionId: session.id, courseId } as any,
+          })),
+        });
+      }
+    } catch {
+      // notification failure should not block session creation
+    }
+
+    return session;
   }
 
   async findAll(query: PaginationQuery & { status?: SessionStatus; courseId?: string }) {
@@ -111,16 +156,26 @@ export class LiveSessionsService {
     });
   }
 
-  async getJoinUrl(id: string, user: AuthenticatedUser) {
+  async getJoinUrl(id: string, user?: AuthenticatedUser) {
     const session = await this.findById(id);
 
-    const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-    const isStaff = user.roles?.some((r) =>
-      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-    );
+    const userName = user
+      ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+      : 'Guest';
 
-    // If BigBlueButton session (platform CUSTOM and meetingId or bbb in URL)
-    if (session.meetingId?.startsWith('bbb-') || session.externalUrl?.includes('/bigbluebutton/')) {
+    const isStaff = user
+      ? user.roles?.some((r) =>
+          ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+        ) ?? false
+      : false;
+
+    let externalUrl = session.externalUrl?.trim() || '';
+    if (externalUrl && !externalUrl.startsWith('http://') && !externalUrl.startsWith('https://')) {
+      externalUrl = `https://${externalUrl}`;
+    }
+
+    // BigBlueButton session
+    if (session.meetingId?.startsWith('bbb-') || externalUrl.includes('/bigbluebutton/')) {
       const meetingId = session.meetingId || `bbb-${session.id}`;
       const joinUrl = this.bbbProvider.generateJoinUrl({
         meetingId,
@@ -131,14 +186,16 @@ export class LiveSessionsService {
       return { joinUrl, platform: session.platform };
     }
 
-    // If externalUrl is a Jitsi room, inject user display name
-    if (session.externalUrl && session.externalUrl.includes('meet.jit.si')) {
-      const separator = session.externalUrl.includes('#') ? '&' : '#';
-      const jitsiJoinUrl = `${session.externalUrl}${separator}userInfo.displayName="${encodeURIComponent(userName)}"`;
+    // Jitsi Meet — inject display name and suppress the "Asking to join / Log in" screen
+    if (externalUrl && (externalUrl.includes('meet.jit.si') || externalUrl.includes('jitsi'))) {
+      const baseUrl = externalUrl.split('#')[0];
+      // prejoinConfig.enabled=false disables the pre-join page; requireDisplayName=false
+      // prevents the login prompt from blocking guest entry; enableWelcomePage=false prevents welcome page
+      const jitsiJoinUrl = `${baseUrl}#userInfo.displayName="${encodeURIComponent(userName)}"&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableWelcomePage=false&config.disableDeepLinking=true`;
       return { joinUrl: jitsiJoinUrl, platform: session.platform };
     }
 
-    return { joinUrl: session.externalUrl || '', platform: session.platform };
+    return { joinUrl: externalUrl, platform: session.platform };
   }
 
   async changeStatus(id: string, status: SessionStatus) {
@@ -159,23 +216,12 @@ export class LiveSessionsService {
     });
   }
 
-  async upcomingForUser(userId: string, query: PaginationQuery) {
-    // Find sessions for courses the user is enrolled in
+  async upcomingForUser(userId?: string, query: PaginationQuery = {}) {
     const { page, limit, skip } = buildPaginationArgs(query);
 
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: { userId, status: 'ACTIVE' },
-      select: { courseId: true },
-    });
-
-    const courseIds = enrollments.map((e) => e.courseId);
-
-    if (courseIds.length === 0) {
-      return buildPaginatedResponse([], 0, page, limit);
-    }
-
+    // Return all scheduled/live sessions so that institutional sessions scheduled
+    // by training administrators are visible to all students and trainers
     const where: Prisma.LiveSessionWhereInput = {
-      courseId: { in: courseIds },
       status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
       deletedAt: null,
     };

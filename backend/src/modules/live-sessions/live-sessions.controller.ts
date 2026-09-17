@@ -7,13 +7,14 @@ import {
   Patch,
   Post,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { LiveSessionsService } from './live-sessions.service';
 import { CreateSessionDto, UpdateSessionDto } from './dto';
-import { CurrentUser, Permissions } from '@common/decorators';
+import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -26,18 +27,21 @@ export class LiveSessionsController {
   constructor(private readonly liveSessionsService: LiveSessionsService) {}
 
   @Get('live-sessions')
+  @Public()
   @ApiOperation({ summary: 'List live sessions' })
   async findAll(@Query() query: PaginationQuery & { status?: SessionStatus; courseId?: string }) {
     return this.liveSessionsService.findAll(query);
   }
 
   @Get('live-sessions/upcoming/me')
+  @Public()
   @ApiOperation({ summary: 'Upcoming sessions for my enrolled courses' })
-  async upcoming(@CurrentUser() user: AuthenticatedUser, @Query() query: PaginationQuery) {
-    return this.liveSessionsService.upcomingForUser(user.id, query);
+  async upcoming(@CurrentUser() user: AuthenticatedUser | undefined, @Query() query: PaginationQuery) {
+    return this.liveSessionsService.upcomingForUser(user?.id, query);
   }
 
   @Get('live-sessions/:id')
+  @Public()
   @ApiOperation({ summary: 'Get live session details' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string) {
@@ -45,9 +49,12 @@ export class LiveSessionsController {
   }
 
   @Get('live-sessions/:id/join-url')
-  @ApiOperation({ summary: 'Get resolved join URL for a live session with participant parameters' })
+  @Public()
+  @ApiOperation({ summary: 'Get resolved join URL — no authentication required' })
   @ApiParam({ name: 'id', type: String })
-  async getJoinUrl(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async getJoinUrl(@Param('id') id: string, @Request() req: any) {
+    // User may be undefined if not authenticated — guests still get the join URL
+    const user: AuthenticatedUser | undefined = req?.user;
     return this.liveSessionsService.getJoinUrl(id, user);
   }
 
