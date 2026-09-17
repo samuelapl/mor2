@@ -32,7 +32,14 @@ export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
-  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @Roles(
+    RoleName.COURSE_OWNER,
+    RoleName.TRAINER,
+    RoleName.TRAINING_ADMIN,
+    RoleName.SYSTEM_ADMIN,
+    RoleName.LEARNER,
+    RoleName.CONTENT_APPROVER,
+  )
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a file (attachment/SCORM/document/video)' })
   @ApiConsumes('multipart/form-data')

@@ -203,24 +203,56 @@ export class ProgressService {
       },
     });
 
-    // If this was a sub-lesson, auto-complete parent lesson when all sub-lessons are completed
-    if (lesson.parentId && dto.completed) {
-      const siblingSubLessons = await this.prisma.lesson.findMany({
-        where: { parentId: lesson.parentId, deletedAt: null },
-        select: { id: true },
-      });
-      const completedSubsCount = await this.prisma.lessonCompletion.count({
-        where: {
-          userId,
-          lessonId: { in: siblingSubLessons.map((s) => s.id) },
-          completed: true,
-        },
-      });
-      if (completedSubsCount === siblingSubLessons.length) {
+    // If this is a parent lesson with sub-lessons, cascade completion status to all its sub-lessons
+    const childSubLessons = await this.prisma.lesson.findMany({
+      where: { parentId: lesson.id, deletedAt: null },
+      select: { id: true },
+    });
+    if (childSubLessons.length > 0) {
+      for (const sub of childSubLessons) {
+        await this.prisma.lessonCompletion.upsert({
+          where: { userId_lessonId: { userId, lessonId: sub.id } },
+          update: {
+            completed: dto.completed,
+            completedAt: dto.completed ? new Date() : null,
+            lastAccessed: new Date(),
+          },
+          create: {
+            userId,
+            lessonId: sub.id,
+            completed: dto.completed,
+            completedAt: dto.completed ? new Date() : null,
+          },
+        });
+      }
+    }
+
+    // If this was a sub-lesson, auto-complete/incomplete parent lesson
+    if (lesson.parentId) {
+      if (dto.completed) {
+        const siblingSubLessons = await this.prisma.lesson.findMany({
+          where: { parentId: lesson.parentId, deletedAt: null },
+          select: { id: true },
+        });
+        const completedSubsCount = await this.prisma.lessonCompletion.count({
+          where: {
+            userId,
+            lessonId: { in: siblingSubLessons.map((s) => s.id) },
+            completed: true,
+          },
+        });
+        if (completedSubsCount === siblingSubLessons.length) {
+          await this.prisma.lessonCompletion.upsert({
+            where: { userId_lessonId: { userId, lessonId: lesson.parentId } },
+            update: { completed: true, completedAt: new Date(), lastAccessed: new Date() },
+            create: { userId, lessonId: lesson.parentId, completed: true, completedAt: new Date() },
+          });
+        }
+      } else {
         await this.prisma.lessonCompletion.upsert({
           where: { userId_lessonId: { userId, lessonId: lesson.parentId } },
-          update: { completed: true, completedAt: new Date(), lastAccessed: new Date() },
-          create: { userId, lessonId: lesson.parentId, completed: true, completedAt: new Date() },
+          update: { completed: false, completedAt: null, lastAccessed: new Date() },
+          create: { userId, lessonId: lesson.parentId, completed: false, completedAt: null },
         });
       }
     }
@@ -245,21 +277,34 @@ export class ProgressService {
 
     if (activeLessons.length === 0) return;
 
-    // Required lessons are sub-lessons and standalone lessons (lessons without sub-lessons)
-    const parentIdsWithSubs = new Set(activeLessons.map((l) => l.parentId).filter(Boolean));
-    const requiredLessonIds = activeLessons
-      .filter((l) => l.parentId !== null || !parentIdsWithSubs.has(l.id))
-      .map((l) => l.id);
+    const topLevelLessons = activeLessons.filter((l) => l.parentId === null);
+    const subLessons = activeLessons.filter((l) => l.parentId !== null);
+    const subLessonsByParent = new Map<string, string[]>();
+    for (const sub of subLessons) {
+      if (!sub.parentId) continue;
+      const arr = subLessonsByParent.get(sub.parentId) ?? [];
+      arr.push(sub.id);
+      subLessonsByParent.set(sub.parentId, arr);
+    }
 
-    const completedLessons = await this.prisma.lessonCompletion.count({
+    const completedRows = await this.prisma.lessonCompletion.findMany({
       where: {
         userId,
-        lessonId: { in: requiredLessonIds },
+        lessonId: { in: activeLessons.map((l) => l.id) },
         completed: true,
       },
+      select: { lessonId: true },
     });
+    const completedSet = new Set(completedRows.map((r) => r.lessonId));
 
-    const allDone = completedLessons >= requiredLessonIds.length;
+    const allDone = topLevelLessons.every((top) => {
+      if (completedSet.has(top.id)) return true;
+      const subs = subLessonsByParent.get(top.id);
+      if (subs && subs.length > 0) {
+        return subs.every((subId) => completedSet.has(subId));
+      }
+      return false;
+    });
 
     await this.prisma.moduleCompletion.upsert({
       where: {

@@ -83,12 +83,43 @@ export class FilesService implements OnModuleInit {
       }/${this.bucket}/${key}`,
     );
 
+    // UUID format check helper: prevent invalid uuid string crashes on temporary client IDs
+    const isUuid = (val?: string): boolean =>
+      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val));
+
+    // Verify foreign keys exist in DB before linking, otherwise leave null to gracefully support new/draft entities
+    let validCourseId: string | null = null;
+    let validModuleId: string | null = null;
+    let validLessonId: string | null = null;
+
+    if (isUuid(metadata.courseId)) {
+      const exists = await this.prisma.course.findUnique({
+        where: { id: metadata.courseId },
+        select: { id: true },
+      });
+      if (exists) validCourseId = exists.id;
+    }
+    if (isUuid(metadata.moduleId)) {
+      const exists = await this.prisma.curriculumModule.findUnique({
+        where: { id: metadata.moduleId },
+        select: { id: true },
+      });
+      if (exists) validModuleId = exists.id;
+    }
+    if (isUuid(metadata.lessonId)) {
+      const exists = await this.prisma.lesson.findUnique({
+        where: { id: metadata.lessonId },
+        select: { id: true },
+      });
+      if (exists) validLessonId = exists.id;
+    }
+
     // Record in DB
     const record = await this.prisma.attachment.create({
       data: {
-        moduleId: metadata.moduleId,
-        lessonId: metadata.lessonId,
-        courseId: metadata.courseId,
+        moduleId: validModuleId,
+        lessonId: validLessonId,
+        courseId: validCourseId,
         fileName: file.originalname,
         fileKey: key,
         fileUrl: objectUrl.toString(),
@@ -268,6 +299,7 @@ export class FilesService implements OnModuleInit {
     } else {
       allowedForPurpose = [
         ...allowed.documents,
+        ...allowed.images,
         ...allowed.video,
         ...allowed.audio,
         ...allowed.archives,

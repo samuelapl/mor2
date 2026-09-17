@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { CourseStatus, RoleName } from '@prisma/client';
+import { CourseStatus, LessonContentType, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { AuthenticatedUser } from '@common/interfaces';
 import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils/unlock.util';
@@ -18,6 +18,21 @@ const STAFF_ROLES = [
   RoleName.CONTENT_APPROVER,
   RoleName.TRAINER,
 ];
+
+const VALID_LESSON_CONTENT_TYPES = new Set(Object.values(LessonContentType));
+
+function sanitizeLessonContentType(type?: any): LessonContentType {
+  if (type && VALID_LESSON_CONTENT_TYPES.has(type)) {
+    return type;
+  }
+  const upper = typeof type === 'string' ? type.toUpperCase() : '';
+  if (VALID_LESSON_CONTENT_TYPES.has(upper as any)) {
+    return upper as LessonContentType;
+  }
+  if (upper === 'ASSIGNMENT') return LessonContentType.DOCUMENT;
+  if (upper === 'QUIZ' || upper === 'ASSESSMENT') return LessonContentType.INTERACTIVE;
+  return LessonContentType.DOCUMENT;
+}
 
 @Injectable()
 export class CurriculumService {
@@ -57,7 +72,7 @@ export class CurriculumService {
                 titleEn: lesson.titleEn,
                 contentAm: lesson.contentAm,
                 contentEn: lesson.contentEn,
-                contentType: (lesson.contentType as any) ?? 'DOCUMENT',
+                contentType: sanitizeLessonContentType(lesson.contentType),
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
                 resourceUrl: lesson.resourceUrl,
@@ -74,7 +89,7 @@ export class CurriculumService {
                     titleEn: sub.titleEn,
                     contentAm: sub.contentAm,
                     contentEn: sub.contentEn,
-                    contentType: (sub.contentType as any) ?? 'DOCUMENT',
+                    contentType: sanitizeLessonContentType(sub.contentType),
                     durationMinutes: sub.durationMinutes,
                     order: sIdx,
                     resourceUrl: sub.resourceUrl,
@@ -436,7 +451,7 @@ export class CurriculumService {
           titleEn: dto.titleEn,
           contentAm: dto.contentAm,
           contentEn: dto.contentEn,
-          contentType: dto.contentType,
+          contentType: sanitizeLessonContentType(dto.contentType),
           durationMinutes: dto.durationMinutes,
           order,
           resourceUrl: dto.resourceUrl,
@@ -459,7 +474,7 @@ export class CurriculumService {
         titleEn: dto.titleEn,
         contentAm: dto.contentAm,
         contentEn: dto.contentEn,
-        contentType: dto.contentType,
+        contentType: sanitizeLessonContentType(dto.contentType),
         durationMinutes: dto.durationMinutes,
         order,
         resourceUrl: dto.resourceUrl,

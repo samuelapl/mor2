@@ -194,6 +194,8 @@ export interface ApiLesson {
   durationMinutes: number | null;
   order: number;
   resourceUrl: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   parentId?: string | null;
   subLessons?: ApiLesson[];
   createdAt: string;
@@ -212,6 +214,9 @@ export interface ApiModule {
   durationMinutes?: number | null;
   order: number | null;
   passingScore: number | null;
+  resourceUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   lessons: ApiLesson[];
   unlocked?: boolean;
   completedLessons?: number;
@@ -251,6 +256,7 @@ export interface ApiAssessmentQuestion {
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
+  imageUrl?: string | null;
   correctAnswer?: number | string;
 }
 
@@ -265,6 +271,9 @@ export interface ApiAssessment {
   maxAttempts: number;
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
+  resourceUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   questions: ApiAssessmentQuestion[];
   attempts: ApiAssessmentAttempt[];
   createdAt: string;

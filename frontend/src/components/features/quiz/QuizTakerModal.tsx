@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpenCheck, Clock, Loader2, PartyPopper, RotateCcw } from "lucide-react";
+import { BookOpenCheck, Clock, Download, FileText, Loader2, PartyPopper, RotateCcw } from "lucide-react";
 import type { ApiAssessment } from "@/lib/api/types";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
@@ -179,6 +179,29 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
             This quiz has {assessment.questions.length} questions.
             You need at least {assessment.passingScore}% to pass.
           </p>
+          {assessment.resourceUrl ? (
+            <div className="mt-4 flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 text-left shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileText className="h-5 w-5 text-indigo-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-indigo-950 truncate">
+                    {assessment.fileName || "Assessment Reference Sheet / Study Material"}
+                  </p>
+                  <p className="text-[11px] text-indigo-700">Reference material provided for this exam</p>
+                </div>
+              </div>
+              <a
+                href={assessment.resourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-xs hover:bg-indigo-700 transition shrink-0"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download
+              </a>
+            </div>
+          ) : null}
           {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
           <Button className="mt-6" onClick={start}>
             Start quiz
@@ -255,6 +278,31 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
             ) : null}
           </div>
 
+          {/* Reference Material if attached */}
+          {assessment.resourceUrl ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-indigo-900 truncate">
+                    {assessment.fileName || "Exam Reference Document / Study Formula Sheet"}
+                  </p>
+                  <p className="text-[10px] text-indigo-700">Official reference material permitted during assessment</p>
+                </div>
+              </div>
+              <a
+                href={assessment.resourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 shadow-2xs transition shrink-0"
+              >
+                <Download className="h-3 w-3" />
+                View Reference
+              </a>
+            </div>
+          ) : null}
+
           {autoSubmitted ? (
             <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
               <Loader2 className="h-4 w-4 animate-spin text-red-600" />
@@ -271,6 +319,17 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
                 </span>
                 {question.question}
               </p>
+
+              {question.imageUrl ? (
+                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+                  <img
+                    src={question.imageUrl}
+                    alt={`Question ${index + 1} Diagram`}
+                    className="max-h-72 w-full object-contain rounded-lg bg-white"
+                  />
+                </div>
+              ) : null}
+
               {question.type === "SHORT_ANSWER" ? (
                 <input
                   value={typeof answers[question.id] === "string" ? (answers[question.id] as string) : ""}
