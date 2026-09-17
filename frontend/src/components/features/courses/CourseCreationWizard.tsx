@@ -122,6 +122,11 @@ export interface ModuleDraft {
   description?: string;
   objectives?: string;
   durationMinutes?: number;
+  resourceUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  uploading?: boolean;
+  uploadError?: string | null;
   lessons: LessonDraft[];
 }
 
@@ -519,6 +524,26 @@ export function CourseCreationWizard({
   const [autoSubmitOnExpire, setAutoSubmitOnExpire] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [bankQuestions, setBankQuestions] = useState<Question[]>([]);
+  const [assessmentFileUrl, setAssessmentFileUrl] = useState<string>("");
+  const [assessmentFileName, setAssessmentFileName] = useState<string>("");
+  const [assessmentFileSize, setAssessmentFileSize] = useState<number>(0);
+  const [assessmentUploading, setAssessmentUploading] = useState<boolean>(false);
+  const [assessmentUploadError, setAssessmentUploadError] = useState<string | null>(null);
+
+  const handleFinalAssessmentFileUpload = async (file: File) => {
+    setAssessmentUploading(true);
+    setAssessmentUploadError(null);
+    try {
+      const res = await uploadAttachment(file, { courseId: editingCourse?.id });
+      setAssessmentFileUrl(res.fileUrl);
+      setAssessmentFileName(res.fileName);
+      setAssessmentFileSize(res.sizeBytes);
+    } catch (err) {
+      setAssessmentUploadError(err instanceof Error ? err.message : "Failed to upload reference file");
+    } finally {
+      setAssessmentUploading(false);
+    }
+  };
 
   // Load course / question bank questions
   useEffect(() => {
@@ -992,7 +1017,8 @@ export function CourseCreationWizard({
         return {
           ...m,
           lessons: m.lessons.map((l) => {
-            if (l.id !== lessonId) return l;
+            const containsSub = (l.subLessons ?? []).some((s) => s.id === subLessonId);
+            if (l.id !== lessonId && !containsSub) return l;
             return {
               ...l,
               subLessons: (l.subLessons ?? []).map((s) =>
@@ -1017,7 +1043,8 @@ export function CourseCreationWizard({
         return {
           ...m,
           lessons: m.lessons.map((l) => {
-            if (l.id !== lessonId) return l;
+            const containsSub = (l.subLessons ?? []).some((s) => s.id === subLessonId);
+            if (l.id !== lessonId && !containsSub) return l;
             const subs = [...(l.subLessons ?? [])];
             const index = subs.findIndex((s) => s.id === subLessonId);
             const target = index + dir;
@@ -1037,7 +1064,8 @@ export function CourseCreationWizard({
         return {
           ...m,
           lessons: m.lessons.map((l) => {
-            if (l.id !== lessonId) return l;
+            const containsSub = (l.subLessons ?? []).some((s) => s.id === subLessonId);
+            if (l.id !== lessonId && !containsSub) return l;
             return {
               ...l,
               subLessons: (l.subLessons ?? []).filter((s) => s.id !== subLessonId),
@@ -1048,18 +1076,43 @@ export function CourseCreationWizard({
     );
   };
 
-  // Real backend file upload for lesson content
+  // Real backend file upload for module content (syllabus, overview, guide)
+  const handleModuleFileUpload = async (file: File, moduleId: string) => {
+    patchModule(moduleId, { uploading: true, uploadError: null });
+
+    try {
+      const res = await uploadAttachment(file, {
+        moduleId,
+        courseId: editingCourse?.id,
+      });
+
+      patchModule(moduleId, {
+        uploading: false,
+        resourceUrl: res.fileUrl,
+        fileName: res.fileName,
+        fileSize: res.sizeBytes,
+        uploadError: null,
+      });
+    } catch (err) {
+      patchModule(moduleId, {
+        uploading: false,
+        uploadError: err instanceof Error ? err.message : "Failed to upload module file",
+      });
+    }
+  };
+
+  // Real backend file upload for lesson / sub-lesson content
   const handleLessonFileUpload = async (
     file: File,
     moduleId: string,
-    lessonId: string,
-    subLessonId?: string,
+    targetLessonId: string,
+    parentLessonId?: string,
   ) => {
     const updateTarget = (patch: Partial<LessonDraft>) => {
-      if (subLessonId) {
-        patchSubLesson(moduleId, lessonId, subLessonId, patch);
+      if (parentLessonId) {
+        patchSubLesson(moduleId, parentLessonId, targetLessonId, patch);
       } else {
-        patchLesson(moduleId, lessonId, patch);
+        patchLesson(moduleId, targetLessonId, patch);
       }
     };
 
@@ -1068,7 +1121,7 @@ export function CourseCreationWizard({
     try {
       const res = await uploadAttachment(file, {
         moduleId,
-        lessonId: subLessonId || lessonId,
+        lessonId: targetLessonId,
         courseId: editingCourse?.id,
       });
 
@@ -1084,6 +1137,22 @@ export function CourseCreationWizard({
         uploading: false,
         uploadError: err instanceof Error ? err.message : "Failed to upload file",
       });
+    }
+  };
+
+  // Upload question diagram / formula image
+  const handleQuestionImageUpload = async (
+    file: File,
+    onSuccess: (url: string) => void,
+    onError: (err: string) => void,
+  ) => {
+    try {
+      const res = await uploadAttachment(file, {
+        courseId: editingCourse?.id,
+      });
+      onSuccess(res.fileUrl);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to upload image");
     }
   };
 
@@ -1139,6 +1208,9 @@ export function CourseCreationWizard({
         description: m.description?.trim() || undefined,
         objectives: m.objectives?.trim() || undefined,
         durationMinutes: m.durationMinutes || undefined,
+        resourceUrl: m.resourceUrl?.trim() || undefined,
+        fileName: m.fileName || undefined,
+        fileSize: m.fileSize || undefined,
         lessons: m.lessons
           .filter((l) => l.title.trim() !== "")
           .map((l) => ({
@@ -1150,6 +1222,8 @@ export function CourseCreationWizard({
             durationMin: l.durationMin || 15,
             contentType: l.contentType,
             resourceUrl: l.resourceUrl?.trim() || undefined,
+            fileName: l.fileName || undefined,
+            fileSize: l.fileSize || undefined,
             subLessons: (l.subLessons ?? [])
               .filter((sub) => sub.title.trim() !== "")
               .map((sub) => ({
@@ -1161,6 +1235,8 @@ export function CourseCreationWizard({
                 durationMin: sub.durationMin || 15,
                 contentType: sub.contentType,
                 resourceUrl: sub.resourceUrl?.trim() || undefined,
+                fileName: sub.fileName || undefined,
+                fileSize: sub.fileSize || undefined,
               })),
           })),
       }));
@@ -1174,6 +1250,8 @@ export function CourseCreationWizard({
           attemptsAllowed,
           timeLimitMinutes: timeLimitMinutes || null,
           questions,
+          resourceUrl: assessmentFileUrl || undefined,
+          fileName: assessmentFileName || undefined,
         }
       : undefined;
 
@@ -1374,9 +1452,17 @@ export function CourseCreationWizard({
   const renderContentInput = (
     lesson: LessonDraft,
     moduleId: string,
-    subLessonId?: string,
+    parentLessonId?: string,
   ) => {
-    const isSub = Boolean(subLessonId);
+    const isSub = Boolean(parentLessonId);
+
+    const applyPatch = (val: Partial<LessonDraft>) => {
+      if (parentLessonId) {
+        patchSubLesson(moduleId, parentLessonId, lesson.id, val);
+      } else {
+        patchLesson(moduleId, lesson.id, val);
+      }
+    };
 
     // Assignment-specific form
     if (lesson.contentType === "ASSIGNMENT") {
@@ -1386,7 +1472,7 @@ export function CourseCreationWizard({
         { id: "DOCX", label: "Word (.docx, .doc)", icon: "📝" },
         { id: "PPTX", label: "PowerPoint (.pptx, .ppt)", icon: "📊" },
         { id: "TXT", label: "Text / Markdown (.txt)", icon: "📋" },
-        { id: "XLSX", label: "Spreadsheet (.xlsx, .xls)", icon: "📈" },
+        { id: "XLSX", label: "Spreadsheet (.xlsx, .xls, .csv)", icon: "📈" },
         { id: "TEXT_ENTRY", label: "Online Rich Text Entry", icon: "✍️" },
       ];
 
@@ -1394,15 +1480,11 @@ export function CourseCreationWizard({
         const next = allowedTypes.includes(typeId)
           ? allowedTypes.filter((t) => t !== typeId)
           : [...allowedTypes, typeId];
-        const val = { assignmentFileTypes: next.length > 0 ? next : ["PDF"] };
-        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-        else patchLesson(moduleId, lesson.id, val);
+        applyPatch({ assignmentFileTypes: next.length > 0 ? next : ["PDF"] });
       };
 
       const setAllFileTypes = () => {
-        const val = { assignmentFileTypes: fileOptions.map((o) => o.id) };
-        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-        else patchLesson(moduleId, lesson.id, val);
+        applyPatch({ assignmentFileTypes: fileOptions.map((o) => o.id) });
       };
 
       return (
@@ -1422,11 +1504,7 @@ export function CourseCreationWizard({
             <RichEditor
               value={lesson.assignmentInstructions || lesson.content || ""}
               placeholder="Describe what the learner must research, prepare, write, and submit…"
-              onChange={(html) => {
-                const val = { assignmentInstructions: html, content: html };
-                if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                else patchLesson(moduleId, lesson.id, val);
-              }}
+              onChange={(html) => applyPatch({ assignmentInstructions: html, content: html })}
             />
           </div>
 
@@ -1480,11 +1558,7 @@ export function CourseCreationWizard({
                 min={1}
                 max={1000}
                 value={lesson.assignmentMaxMarks ?? 100}
-                onChange={(e) => {
-                  const val = { assignmentMaxMarks: parseInt(e.target.value) || 100 };
-                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                  else patchLesson(moduleId, lesson.id, val);
-                }}
+                onChange={(e) => applyPatch({ assignmentMaxMarks: parseInt(e.target.value) || 100 })}
                 className={inputClass}
               />
             </div>
@@ -1492,11 +1566,7 @@ export function CourseCreationWizard({
               <label className={labelClass}>Maximum Upload File Size</label>
               <select
                 value={lesson.assignmentMaxFileSizeMb ?? 10}
-                onChange={(e) => {
-                  const val = { assignmentMaxFileSizeMb: parseInt(e.target.value) || 10 };
-                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                  else patchLesson(moduleId, lesson.id, val);
-                }}
+                onChange={(e) => applyPatch({ assignmentMaxFileSizeMb: parseInt(e.target.value) || 10 })}
                 className={inputClass}
               >
                 <option value={5}>5 MB (Small documents)</option>
@@ -1511,11 +1581,7 @@ export function CourseCreationWizard({
               <input
                 type="date"
                 value={lesson.assignmentDueDate ?? ""}
-                onChange={(e) => {
-                  const val = { assignmentDueDate: e.target.value };
-                  if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                  else patchLesson(moduleId, lesson.id, val);
-                }}
+                onChange={(e) => applyPatch({ assignmentDueDate: e.target.value })}
                 className={inputClass}
               />
             </div>
@@ -1523,7 +1589,14 @@ export function CourseCreationWizard({
 
           {/* Reference Material / Template attachment */}
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-            <label className={labelClass}>Starter Template / Worksheet File for Learners (Optional)</label>
+            <div className="flex items-center justify-between">
+              <label className={labelClass}>Starter Template / Worksheet File for Learners (Optional)</label>
+              {lesson.uploading && (
+                <span className="flex items-center gap-1.5 text-xs text-orange-600 font-medium">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading starter template…
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-slate-500">
               Upload a template, problem sheet, or assignment brief that learners can download.
             </p>
@@ -1532,6 +1605,9 @@ export function CourseCreationWizard({
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-emerald-600" />
                   <span className="font-semibold">{lesson.fileName || "Template file uploaded"}</span>
+                  {lesson.fileSize ? (
+                    <span className="text-emerald-600">({(lesson.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <a
@@ -1544,12 +1620,9 @@ export function CourseCreationWizard({
                   </a>
                   <button
                     type="button"
-                    onClick={() => {
-                      const val = { resourceUrl: "", fileName: "", fileSize: 0 };
-                      if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                      else patchLesson(moduleId, lesson.id, val);
-                    }}
-                    className="p-1 text-slate-400 hover:text-red-600"
+                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
+                    className="p-1 text-slate-400 hover:text-red-600 transition"
+                    title="Remove template file"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -1559,22 +1632,25 @@ export function CourseCreationWizard({
               <div className="relative">
                 <input
                   type="file"
-                  id={`assign-file-${lesson.id}-${subLessonId || "parent"}`}
+                  id={`assign-file-${lesson.id}-${parentLessonId || "parent"}`}
                   className="sr-only"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, subLessonId);
+                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
                   }}
                 />
                 <label
-                  htmlFor={`assign-file-${lesson.id}-${subLessonId || "parent"}`}
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-orange-300 bg-orange-50/20 px-4 py-3 text-xs font-semibold text-orange-700 hover:bg-orange-50"
+                  htmlFor={`assign-file-${lesson.id}-${parentLessonId || "parent"}`}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-orange-300 bg-orange-50/20 px-4 py-3 text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"
                 >
                   <Upload className="h-4 w-4" />
-                  <span>Upload Starter Template or Assignment PDF/Word/PPT file</span>
+                  <span>Upload Starter Template or Assignment PDF/Word/Excel/PPT file</span>
                 </label>
               </div>
+            )}
+            {lesson.uploadError && (
+              <p className="mt-1 text-xs text-red-600 font-medium">{lesson.uploadError}</p>
             )}
           </div>
         </div>
@@ -1590,12 +1666,33 @@ export function CourseCreationWizard({
           : [blankQuestion()];
       const totalPoints = qList.reduce((sum, q) => sum + (q.points || 10), 0);
 
+      const setQList = (next: Question[]) => applyPatch({ quizQuestions: next });
+
       const importBankQuestions = () => {
         if (bankQuestions.length === 0) return;
         const next = [...qList, ...bankQuestions.map((q) => ({ ...q, id: uid("q") }))];
-        const val = { quizQuestions: next };
-        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-        else patchLesson(moduleId, lesson.id, val);
+        setQList(next);
+      };
+
+      const addQuestionToQuiz = () => {
+        setQList([...qList, blankQuestion()]);
+      };
+
+      const patchQ = (qIdx: number, patch: Partial<Question>) => {
+        setQList(qList.map((q, i) => (i === qIdx ? { ...q, ...patch } : q)));
+      };
+
+      const removeQ = (qIdx: number) => {
+        if (qList.length <= 1) return;
+        setQList(qList.filter((_, i) => i !== qIdx));
+      };
+
+      const moveQ = (qIdx: number, dir: -1 | 1) => {
+        const target = qIdx + dir;
+        if (target < 0 || target >= qList.length) return;
+        const next = [...qList];
+        [next[qIdx], next[target]] = [next[target], next[qIdx]];
+        setQList(next);
       };
 
       return (
@@ -1653,10 +1750,7 @@ export function CourseCreationWizard({
                   ? "Enter quiz instructions, topics covered, and advice for learners…"
                   : "Enter comprehensive assessment instructions, honor code, rules…"
               }
-              onChange={(html) => {
-                if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, { content: html });
-                else patchLesson(moduleId, lesson.id, { content: html });
-              }}
+              onChange={(html) => applyPatch({ content: html })}
             />
           </div>
 
@@ -1673,13 +1767,11 @@ export function CourseCreationWizard({
                   min={1}
                   max={100}
                   value={lesson.quizPassMark ?? 70}
-                  onChange={(e) => {
-                    const val = {
+                  onChange={(e) =>
+                    applyPatch({
                       quizPassMark: Math.max(1, Math.min(100, parseInt(e.target.value) || 70)),
-                    };
-                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                    else patchLesson(moduleId, lesson.id, val);
-                  }}
+                    })
+                  }
                   className={inputClass}
                 />
               </div>
@@ -1691,11 +1783,9 @@ export function CourseCreationWizard({
                   min={0}
                   max={300}
                   value={lesson.quizTimeLimitMinutes ?? (isQuiz ? 20 : 45)}
-                  onChange={(e) => {
-                    const val = { quizTimeLimitMinutes: parseInt(e.target.value) || null };
-                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                    else patchLesson(moduleId, lesson.id, val);
-                  }}
+                  onChange={(e) =>
+                    applyPatch({ quizTimeLimitMinutes: parseInt(e.target.value) || null })
+                  }
                   placeholder="0 for untimed"
                   className={inputClass}
                 />
@@ -1705,11 +1795,9 @@ export function CourseCreationWizard({
                 <label className={labelClass}>Max Attempts Allowed</label>
                 <select
                   value={lesson.quizAttemptsAllowed ?? (isQuiz ? 3 : 2)}
-                  onChange={(e) => {
-                    const val = { quizAttemptsAllowed: parseInt(e.target.value) || 1 };
-                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                    else patchLesson(moduleId, lesson.id, val);
-                  }}
+                  onChange={(e) =>
+                    applyPatch({ quizAttemptsAllowed: parseInt(e.target.value) || 1 })
+                  }
                   className={inputClass}
                 >
                   <option value={1}>1 Attempt (Strict Exam)</option>
@@ -1726,11 +1814,7 @@ export function CourseCreationWizard({
                 <input
                   type="checkbox"
                   checked={Boolean(lesson.quizShuffle)}
-                  onChange={(e) => {
-                    const val = { quizShuffle: e.target.checked };
-                    if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                    else patchLesson(moduleId, lesson.id, val);
-                  }}
+                  onChange={(e) => applyPatch({ quizShuffle: e.target.checked })}
                   className="h-4 w-4 rounded text-indigo-600"
                 />
                 <span>Shuffle question order per attempt</span>
@@ -1742,11 +1826,7 @@ export function CourseCreationWizard({
                     <input
                       type="checkbox"
                       checked={lesson.assessmentAllowEarlySubmit ?? true}
-                      onChange={(e) => {
-                        const val = { assessmentAllowEarlySubmit: e.target.checked };
-                        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                        else patchLesson(moduleId, lesson.id, val);
-                      }}
+                      onChange={(e) => applyPatch({ assessmentAllowEarlySubmit: e.target.checked })}
                       className="h-4 w-4 rounded text-emerald-600"
                     />
                     <span>Allow early submission</span>
@@ -1755,11 +1835,7 @@ export function CourseCreationWizard({
                     <input
                       type="checkbox"
                       checked={lesson.assessmentAutoSubmitOnExpire ?? true}
-                      onChange={(e) => {
-                        const val = { assessmentAutoSubmitOnExpire: e.target.checked };
-                        if (isSub) patchSubLesson(moduleId, lesson.id, subLessonId!, val);
-                        else patchLesson(moduleId, lesson.id, val);
-                      }}
+                      onChange={(e) => applyPatch({ assessmentAutoSubmitOnExpire: e.target.checked })}
                       className="h-4 w-4 rounded text-emerald-600"
                     />
                     <span>Auto-submit when timer expires</span>
@@ -1767,6 +1843,73 @@ export function CourseCreationWizard({
                 </>
               )}
             </div>
+          </div>
+
+          {/* Reference Material / Exam Sheet Attachment */}
+          <div className="rounded-xl border border-slate-200/90 bg-white p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className={labelClass}>Reference Document / Formula Sheet / Case Study (Optional)</label>
+              {lesson.uploading && (
+                <span className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading reference document…
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Attach reference materials, case studies, formula sheets, or instructions that learners can download or view during this {isQuiz ? "quiz" : "assessment"}.
+            </p>
+            {lesson.resourceUrl ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span className="font-semibold">{lesson.fileName || "Reference document uploaded"}</span>
+                  {lesson.fileSize ? (
+                    <span className="text-emerald-600">({(lesson.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={lesson.resourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
+                  >
+                    <ExternalLink className="h-3 w-3" /> View / Download
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
+                    className="p-1 text-slate-400 hover:text-red-600 transition"
+                    title="Remove reference file"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="file"
+                  id={`quiz-file-${lesson.id}-${parentLessonId || "parent"}`}
+                  className="sr-only"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
+                  }}
+                />
+                <label
+                  htmlFor={`quiz-file-${lesson.id}-${parentLessonId || "parent"}`}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/20 px-4 py-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
+                >
+                  <Upload className="h-4 w-4 text-indigo-500" />
+                  <span>Upload Reference Document, Formula Sheet, or Case Study File</span>
+                </label>
+              </div>
+            )}
+            {lesson.uploadError && (
+              <p className="mt-1 text-xs text-red-600 font-medium">{lesson.uploadError}</p>
+            )}
           </div>
 
           {/* Interactive Questions Builder */}
@@ -1790,7 +1933,7 @@ export function CourseCreationWizard({
                 <Button
                   size="sm"
                   type="button"
-                  onClick={() => addQuizQuestionToLesson(moduleId, lesson.id, subLessonId)}
+                  onClick={addQuestionToQuiz}
                   className="text-xs gap-1.5 shadow-2xs"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add Question
@@ -1812,7 +1955,7 @@ export function CourseCreationWizard({
                       value={q.type}
                       onChange={(e) => {
                         const newType = e.target.value as QuestionType;
-                        patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                        patchQ(qIdx, {
                           type: newType,
                           options: optionsForType(newType),
                           correctIndex: 0,
@@ -1836,7 +1979,7 @@ export function CourseCreationWizard({
                         max={100}
                         value={q.points || 10}
                         onChange={(e) => {
-                          patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
+                          patchQ(qIdx, {
                             points: parseInt(e.target.value) || 10,
                           });
                         }}
@@ -1847,7 +1990,7 @@ export function CourseCreationWizard({
                     <button
                       type="button"
                       disabled={qIdx === 0}
-                      onClick={() => moveQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, -1)}
+                      onClick={() => moveQ(qIdx, -1)}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
                       title="Move Up"
                     >
@@ -1856,7 +1999,7 @@ export function CourseCreationWizard({
                     <button
                       type="button"
                       disabled={qIdx === qList.length - 1}
-                      onClick={() => moveQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, 1)}
+                      onClick={() => moveQ(qIdx, 1)}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
                       title="Move Down"
                     >
@@ -1865,7 +2008,7 @@ export function CourseCreationWizard({
                     <button
                       type="button"
                       disabled={qList.length <= 1}
-                      onClick={() => removeQuizQuestion(moduleId, lesson.id, subLessonId, qIdx)}
+                      onClick={() => removeQ(qIdx)}
                       className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30"
                       title="Delete Question"
                     >
@@ -1880,11 +2023,56 @@ export function CourseCreationWizard({
                     value={q.text || ""}
                     placeholder="Enter question statement, scenario, or prompt (format with bold, italic, bullets)…"
                     onChange={(html) => {
-                      patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                        text: html,
-                      });
+                      patchQ(qIdx, { text: html });
                     }}
                   />
+                </div>
+
+                {/* Question Diagram / Image Attachment */}
+                <div className="pt-1 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-slate-600">Question Diagram / Reference Image (Optional)</span>
+                    {q.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => patchQ(qIdx, { imageUrl: undefined })}
+                        className="text-[11px] text-red-500 hover:text-red-700 underline"
+                      >
+                        Remove Image
+                      </button>
+                    )}
+                  </div>
+                  {q.imageUrl ? (
+                    <div className="relative inline-block rounded-xl border border-slate-200 overflow-hidden bg-slate-50 p-1">
+                      <img src={q.imageUrl} alt="Question diagram" className="max-h-40 max-w-full rounded-lg object-contain" />
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        id={`q-img-${lesson.id}-${parentLessonId || "p"}-${qIdx}`}
+                        className="sr-only"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) {
+                            handleQuestionImageUpload(
+                              f,
+                              (url) => patchQ(qIdx, { imageUrl: url }),
+                              (err) => alert(err),
+                            );
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`q-img-${lesson.id}-${parentLessonId || "p"}-${qIdx}`}
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 px-2.5 py-1.5 text-xs text-slate-600 hover:border-indigo-400 hover:bg-indigo-50/30 transition"
+                      >
+                        <Upload className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Attach Diagram, Chart, or Problem Screenshot</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 {/* Multiple Choice Options */}
@@ -1895,46 +2083,33 @@ export function CourseCreationWizard({
                       <div key={optIdx} className="flex items-center gap-2.5">
                         <input
                           type="radio"
-                          name={`quiz-correct-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          name={`quiz-correct-${lesson.id}-${parentLessonId || "p"}-${qIdx}`}
                           checked={q.correctIndex === optIdx}
-                          onChange={() => {
-                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                              correctIndex: optIdx,
-                            });
-                          }}
+                          onChange={() => patchQ(qIdx, { correctIndex: optIdx })}
                           className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                          title="Mark as correct answer"
                         />
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
-                          {String.fromCharCode(65 + optIdx)}
-                        </span>
                         <input
                           type="text"
                           value={opt}
+                          placeholder={`Option ${optIdx + 1}`}
                           onChange={(e) => {
-                            const nextOpts = [...q.options];
-                            nextOpts[optIdx] = e.target.value;
-                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                              options: nextOpts,
-                            });
+                            const newOpts = [...q.options];
+                            newOpts[optIdx] = e.target.value;
+                            patchQ(qIdx, { options: newOpts });
                           }}
-                          placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
                           className={inputClass}
                         />
                         {q.options.length > 2 && (
                           <button
                             type="button"
                             onClick={() => {
-                              const nextOpts = q.options.filter((_, i) => i !== optIdx);
-                              const nextCorrect =
-                                q.correctIndex >= nextOpts.length ? 0 : q.correctIndex;
-                              patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                                options: nextOpts,
-                                correctIndex: nextCorrect,
+                              const newOpts = q.options.filter((_, idx) => idx !== optIdx);
+                              patchQ(qIdx, {
+                                options: newOpts,
+                                correctIndex: Math.min(q.correctIndex, newOpts.length - 1),
                               });
                             }}
-                            className="p-1 text-slate-400 hover:text-red-500"
-                            title="Remove option"
+                            className="p-1 text-slate-400 hover:text-red-600"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -1945,9 +2120,7 @@ export function CourseCreationWizard({
                       <button
                         type="button"
                         onClick={() => {
-                          patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                            options: [...q.options, ""],
-                          });
+                          patchQ(qIdx, { options: [...q.options, ""] });
                         }}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1"
                       >
@@ -1965,13 +2138,9 @@ export function CourseCreationWizard({
                       <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 flex-1 hover:bg-slate-50">
                         <input
                           type="radio"
-                          name={`quiz-tf-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          name={`quiz-tf-${lesson.id}-${parentLessonId || "p"}-${qIdx}`}
                           checked={q.correctIndex === 0}
-                          onChange={() => {
-                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                              correctIndex: 0,
-                            });
-                          }}
+                          onChange={() => patchQ(qIdx, { correctIndex: 0 })}
                           className="h-4 w-4 text-indigo-600"
                         />
                         <span className="text-xs font-bold text-slate-800">True</span>
@@ -1979,13 +2148,9 @@ export function CourseCreationWizard({
                       <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 flex-1 hover:bg-slate-50">
                         <input
                           type="radio"
-                          name={`quiz-tf-${lesson.id}-${subLessonId || "p"}-${qIdx}`}
+                          name={`quiz-tf-${lesson.id}-${parentLessonId || "p"}-${qIdx}`}
                           checked={q.correctIndex === 1}
-                          onChange={() => {
-                            patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                              correctIndex: 1,
-                            });
-                          }}
+                          onChange={() => patchQ(qIdx, { correctIndex: 1 })}
                           className="h-4 w-4 text-indigo-600"
                         />
                         <span className="text-xs font-bold text-slate-800">False</span>
@@ -2001,11 +2166,7 @@ export function CourseCreationWizard({
                     <input
                       type="text"
                       value={q.answerText || ""}
-                      onChange={(e) => {
-                        patchQuizQuestion(moduleId, lesson.id, subLessonId, qIdx, {
-                          answerText: e.target.value,
-                        });
-                      }}
+                      onChange={(e) => patchQ(qIdx, { answerText: e.target.value })}
                       placeholder="e.g. Value Added Tax"
                       className={inputClass}
                     />
@@ -2039,15 +2200,7 @@ export function CourseCreationWizard({
                 type="url"
                 value={lesson.resourceUrl ?? ""}
                 placeholder="https://example.com/training-content"
-                onChange={(e) => {
-                  if (isSub) {
-                    patchSubLesson(moduleId, lesson.id, subLessonId!, {
-                      resourceUrl: e.target.value,
-                    });
-                  } else {
-                    patchLesson(moduleId, lesson.id, { resourceUrl: e.target.value });
-                  }
-                }}
+                onChange={(e) => applyPatch({ resourceUrl: e.target.value })}
                 className={cn(inputClass, "pl-9")}
               />
               <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -2060,13 +2213,7 @@ export function CourseCreationWizard({
               rows={3}
               value={lesson.content}
               placeholder="Describe instructions, quiz references, or interactive prompts for learners…"
-              onChange={(e) => {
-                if (isSub) {
-                  patchSubLesson(moduleId, lesson.id, subLessonId!, { content: e.target.value });
-                } else {
-                  patchLesson(moduleId, lesson.id, { content: e.target.value });
-                }
-              }}
+              onChange={(e) => applyPatch({ content: e.target.value })}
               className={inputClass}
             />
           </div>
@@ -2079,7 +2226,7 @@ export function CourseCreationWizard({
                   ? "Audio Recording File (MP3, WAV, AAC, M4A)"
                   : lesson.contentType === "PRESENTATION"
                     ? "Presentation Slides (PPT, PPTX, PDF)"
-                    : "Course Document (PDF, Word DOC/DOCX)"}
+                    : "Course Document (PDF, Word DOC/DOCX, Spreadsheets, Text)"}
             </label>
 
             {lesson.resourceUrl ? (
@@ -2107,21 +2254,7 @@ export function CourseCreationWizard({
                   </a>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (isSub) {
-                        patchSubLesson(moduleId, lesson.id, subLessonId!, {
-                          resourceUrl: "",
-                          fileName: "",
-                          fileSize: 0,
-                        });
-                      } else {
-                        patchLesson(moduleId, lesson.id, {
-                          resourceUrl: "",
-                          fileName: "",
-                          fileSize: 0,
-                        });
-                      }
-                    }}
+                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
                     className="rounded-lg p-1 text-slate-400 hover:text-red-600 transition"
                     title="Remove file"
                   >
@@ -2133,7 +2266,7 @@ export function CourseCreationWizard({
               <div className="relative">
                 <input
                   type="file"
-                  id={`file-${lesson.id}-${subLessonId || "parent"}`}
+                  id={`file-${lesson.id}-${parentLessonId || "parent"}`}
                   className="sr-only"
                   accept={
                     lesson.contentType === "VIDEO"
@@ -2142,15 +2275,15 @@ export function CourseCreationWizard({
                         ? "audio/*"
                         : lesson.contentType === "PRESENTATION"
                           ? ".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-                          : ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          : ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   }
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, subLessonId);
+                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
                   }}
                 />
                 <label
-                  htmlFor={`file-${lesson.id}-${subLessonId || "parent"}`}
+                  htmlFor={`file-${lesson.id}-${parentLessonId || "parent"}`}
                   className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-slate-50/80"
                 >
                   <Upload className="h-4 w-4 text-indigo-500" />
@@ -2171,13 +2304,7 @@ export function CourseCreationWizard({
           <RichEditor
             value={lesson.content}
             placeholder="Detailed instruction text, reading guide, or reference materials…"
-            onChange={(html) => {
-              if (isSub) {
-                patchSubLesson(moduleId, lesson.id, subLessonId!, { content: html });
-              } else {
-                patchLesson(moduleId, lesson.id, { content: html });
-              }
-            }}
+            onChange={(html) => applyPatch({ content: html })}
           />
         </div>
       </div>
@@ -2616,6 +2743,70 @@ export function CourseCreationWizard({
                         </div>
                       </div>
 
+                      {/* Module Syllabus / Resource File */}
+                      <div className="rounded-xl border border-slate-100 bg-white p-3.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className={labelClass}>Module Syllabus & Reference Materials (Optional)</label>
+                          {mod.uploading && (
+                            <span className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading module file…
+                            </span>
+                          )}
+                        </div>
+                        {mod.resourceUrl ? (
+                          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2 text-xs text-emerald-800">
+                            <div className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span className="font-semibold truncate max-w-xs">{mod.fileName || "Module resource uploaded"}</span>
+                              {mod.fileSize ? (
+                                <span className="text-emerald-600 shrink-0">({(mod.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
+                              ) : null}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={mod.resourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
+                              >
+                                <ExternalLink className="h-3 w-3" /> View / Download
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => patchModule(mod.id, { resourceUrl: "", fileName: "", fileSize: 0 })}
+                                className="p-1 text-slate-400 hover:text-red-600 transition"
+                                title="Remove file"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <input
+                              type="file"
+                              id={`module-file-${mod.id}`}
+                              className="sr-only"
+                              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleModuleFileUpload(f, mod.id);
+                              }}
+                            />
+                            <label
+                              htmlFor={`module-file-${mod.id}`}
+                              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/20 transition"
+                            >
+                              <Upload className="h-3.5 w-3.5 text-indigo-500" />
+                              <span>Upload Module Syllabus, Overview Document, or Reference Slides</span>
+                            </label>
+                          </div>
+                        )}
+                        {mod.uploadError && (
+                          <p className="text-xs text-red-600 mt-1">{mod.uploadError}</p>
+                        )}
+                      </div>
+
                       {/* Lessons */}
                       {mod.lessons.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/40 px-4 py-6 text-center text-xs text-slate-400">
@@ -2903,7 +3094,7 @@ export function CourseCreationWizard({
                                             </div>
 
                                             {/* Sub-lesson Content */}
-                                            {renderContentInput(sub, mod.id, sub.id)}
+                                            {renderContentInput(sub, mod.id, lesson.id)}
                                           </div>
                                         ))}
                                       </div>
@@ -3094,6 +3285,82 @@ export function CourseCreationWizard({
             />
           </div>
 
+          {/* Final Assessment Reference Document / Case Study Attachment */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Assessment Reference Document / Exam Briefing (Optional)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Upload an exam scenario, reference formula sheet, case study document, or dataset for the final assessment.
+                </p>
+              </div>
+              {assessmentUploading && (
+                <span className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading to storage…
+                </span>
+              )}
+            </div>
+
+            {assessmentFileUrl ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span className="font-semibold">{assessmentFileName || "Exam reference file uploaded"}</span>
+                  {assessmentFileSize ? (
+                    <span className="text-emerald-600">({(assessmentFileSize / 1024 / 1024).toFixed(2)} MB)</span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={assessmentFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
+                  >
+                    <ExternalLink className="h-3 w-3" /> View / Download
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssessmentFileUrl("");
+                      setAssessmentFileName("");
+                      setAssessmentFileSize(0);
+                    }}
+                    className="p-1 text-slate-400 hover:text-red-600 transition"
+                    title="Remove file"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="file"
+                  id="final-assessment-file"
+                  className="sr-only"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFinalAssessmentFileUpload(f);
+                  }}
+                />
+                <label
+                  htmlFor="final-assessment-file"
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/20 px-4 py-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
+                >
+                  <Upload className="h-4 w-4 text-indigo-500" />
+                  <span>Upload Final Assessment Brief, Reference Sheet, or Case Study File</span>
+                </label>
+              </div>
+            )}
+            {assessmentUploadError && (
+              <p className="text-xs text-red-600 mt-1">{assessmentUploadError}</p>
+            )}
+          </div>
+
           {/* Questions List */}
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -3209,6 +3476,53 @@ export function CourseCreationWizard({
                       placeholder="Enter question statement, scenario, or prompt (format with bold, italic, bullets)…"
                       onChange={(html) => patchQuestion(qIdx, { text: html })}
                     />
+                  </div>
+
+                  {/* Question Diagram / Image Attachment */}
+                  <div className="pt-1 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-slate-600">Question Diagram / Reference Image (Optional)</span>
+                      {q.imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => patchQuestion(qIdx, { imageUrl: undefined })}
+                          className="text-[11px] text-red-500 hover:text-red-700 underline"
+                        >
+                          Remove Image
+                        </button>
+                      )}
+                    </div>
+                    {q.imageUrl ? (
+                      <div className="relative inline-block rounded-xl border border-slate-200 overflow-hidden bg-slate-50 p-1">
+                        <img src={q.imageUrl} alt="Question diagram" className="max-h-40 max-w-full rounded-lg object-contain" />
+                      </div>
+                    ) : (
+                      <div>
+                        <input
+                          type="file"
+                          id={`step3-q-img-${q.id || qIdx}`}
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              handleQuestionImageUpload(
+                                f,
+                                (url) => patchQuestion(qIdx, { imageUrl: url }),
+                                (err) => alert(err),
+                              );
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`step3-q-img-${q.id || qIdx}`}
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 px-2.5 py-1.5 text-xs text-slate-600 hover:border-indigo-400 hover:bg-indigo-50/30 transition"
+                        >
+                          <Upload className="h-3.5 w-3.5 text-slate-400" />
+                          <span>Attach Diagram, Chart, or Problem Screenshot</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
 
                   {q.type === "multiple_choice" ? (

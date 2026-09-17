@@ -21,17 +21,20 @@ export async function uploadCover(courseId: string, file: File): Promise<string>
   );
 }
 
-/** Uploads a course material (video / pdf / audio / presentation) as an attachment. */
+const isUuid = (val?: string): boolean =>
+  Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val));
+
+/** Uploads a course material (video / pdf / audio / presentation / document) as an attachment. */
 export async function uploadAttachment(
   file: File,
-  opts: { moduleId?: string; lessonId?: string; courseId?: string } = {},
+  opts: { moduleId?: string; lessonId?: string; courseId?: string; purpose?: string } = {},
 ): Promise<{ fileUrl: string; id: string; fileName: string; sizeBytes: number }> {
   const form = new FormData();
   form.append("file", file);
-  form.append("purpose", "attachment");
-  if (opts.courseId) form.append("courseId", opts.courseId);
-  if (opts.moduleId) form.append("moduleId", opts.moduleId);
-  if (opts.lessonId) form.append("lessonId", opts.lessonId);
+  form.append("purpose", opts.purpose || "attachment");
+  if (opts.courseId && isUuid(opts.courseId)) form.append("courseId", opts.courseId);
+  if (opts.moduleId && isUuid(opts.moduleId)) form.append("moduleId", opts.moduleId);
+  if (opts.lessonId && isUuid(opts.lessonId)) form.append("lessonId", opts.lessonId);
   const text = await postFormText("files/upload", form);
   const parsed = JSON.parse(text) as any;
   const data = parsed?.data ?? parsed;
@@ -83,7 +86,9 @@ async function postForm(
       if (json.message) {
         errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
     throw new Error(errorMsg);
   }
   const body = (await res.json()) as { data?: Record<string, unknown> };
@@ -105,7 +110,9 @@ async function postFormText(path: string, form: FormData): Promise<string> {
       if (json.message) {
         errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
     throw new Error(errorMsg);
   }
   return res.text();

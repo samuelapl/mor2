@@ -58,6 +58,8 @@ export interface Lesson {
   unlocked?: boolean;
   contentType?: string;
   resourceUrl?: string;
+  fileName?: string;
+  fileSize?: number;
   parentId?: string;
   subLessons?: Lesson[];
 }
@@ -68,6 +70,9 @@ export interface Module {
   description?: string;
   objectives?: string;
   durationMinutes?: number;
+  resourceUrl?: string;
+  fileName?: string;
+  fileSize?: number;
   lessons: Lesson[];
   unlocked?: boolean;
 }
@@ -82,6 +87,7 @@ export interface Question {
   correctIndex: number;
   answerText?: string;
   points: number;
+  imageUrl?: string;
 }
 
 export interface Quiz {
@@ -91,6 +97,8 @@ export interface Quiz {
   attemptsAllowed: number;
   timeLimitMinutes?: number | null;
   questions: Question[];
+  resourceUrl?: string;
+  fileName?: string;
 }
 
 export type AttachmentType = "video" | "pdf";

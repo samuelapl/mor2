@@ -39,13 +39,27 @@ export function computeSequentialUnlocks(
   const moduleUnlocked = new Map<string, boolean>();
   const lessonUnlocked = new Map<string, boolean>();
 
+  const isLessonComplete = (l: LessonUnlockRow): boolean => {
+    if (lessonCompletions.has(l.id)) return true;
+    if (l.subLessons && l.subLessons.length > 0) {
+      return l.subLessons.every((s) => lessonCompletions.has(s.id));
+    }
+    return false;
+  };
+
+  const isModuleDone = (m: ModuleUnlockRow): boolean => {
+    if (moduleCompletions.get(m.id) === true) return true;
+    if (!m.lessons || m.lessons.length === 0) return true;
+    return m.lessons.every((l) => isLessonComplete(l));
+  };
+
   const sortedModules = [...modules].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   for (let mIdx = 0; mIdx < sortedModules.length; mIdx++) {
     const mod = sortedModules[mIdx]!;
     const previousModulesDone = sortedModules
       .slice(0, mIdx)
-      .every((m) => moduleCompletions.get(m.id) === true);
+      .every((m) => isModuleDone(m));
 
     const unlocked = mIdx === 0 ? true : previousModulesDone;
     moduleUnlocked.set(mod.id, unlocked);
@@ -53,12 +67,9 @@ export function computeSequentialUnlocks(
     const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
     for (let lIdx = 0; lIdx < sortedLessons.length; lIdx++) {
       const lesson = sortedLessons[lIdx]!;
-      const previousLessonsDone = sortedLessons.slice(0, lIdx).every((l) => {
-        if (l.subLessons && l.subLessons.length > 0) {
-          return l.subLessons.every((s) => lessonCompletions.has(s.id));
-        }
-        return lessonCompletions.has(l.id);
-      });
+      const previousLessonsDone = sortedLessons
+        .slice(0, lIdx)
+        .every((l) => isLessonComplete(l));
 
       const isLessonUnlocked = unlocked && (lIdx === 0 ? true : previousLessonsDone);
       lessonUnlocked.set(lesson.id, isLessonUnlocked);
@@ -70,7 +81,9 @@ export function computeSequentialUnlocks(
           const previousSubsDone = sortedSubs
             .slice(0, sIdx)
             .every((s) => lessonCompletions.has(s.id));
-          const isSubUnlocked = isLessonUnlocked && (sIdx === 0 ? true : previousSubsDone);
+          const isSubUnlocked =
+            isLessonUnlocked &&
+            (sIdx === 0 || previousSubsDone || lessonCompletions.has(lesson.id));
           lessonUnlocked.set(sub.id, isSubUnlocked);
         }
       }

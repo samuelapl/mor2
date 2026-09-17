@@ -83,33 +83,30 @@ export class FilesService implements OnModuleInit {
       }/${this.bucket}/${key}`,
     );
 
-    // Validate foreign keys to avoid UUID conversion errors or FK constraint violations
-    // for unsaved drafts or client-generated IDs
-    const isUuid = (val?: string) =>
-      typeof val === 'string' &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+    // UUID format check helper: prevent invalid uuid string crashes on temporary client IDs
+    const isUuid = (val?: string): boolean =>
+      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val));
 
-    let validCourseId: string | undefined = undefined;
-    let validModuleId: string | undefined = undefined;
-    let validLessonId: string | undefined = undefined;
+    // Verify foreign keys exist in DB before linking, otherwise leave null to gracefully support new/draft entities
+    let validCourseId: string | null = null;
+    let validModuleId: string | null = null;
+    let validLessonId: string | null = null;
 
-    if (metadata.courseId && isUuid(metadata.courseId)) {
+    if (isUuid(metadata.courseId)) {
       const exists = await this.prisma.course.findUnique({
         where: { id: metadata.courseId },
         select: { id: true },
       });
       if (exists) validCourseId = exists.id;
     }
-
-    if (metadata.moduleId && isUuid(metadata.moduleId)) {
+    if (isUuid(metadata.moduleId)) {
       const exists = await this.prisma.curriculumModule.findUnique({
         where: { id: metadata.moduleId },
         select: { id: true },
       });
       if (exists) validModuleId = exists.id;
     }
-
-    if (metadata.lessonId && isUuid(metadata.lessonId)) {
+    if (isUuid(metadata.lessonId)) {
       const exists = await this.prisma.lesson.findUnique({
         where: { id: metadata.lessonId },
         select: { id: true },
@@ -302,6 +299,7 @@ export class FilesService implements OnModuleInit {
     } else {
       allowedForPurpose = [
         ...allowed.documents,
+        ...allowed.images,
         ...allowed.video,
         ...allowed.audio,
         ...allowed.archives,

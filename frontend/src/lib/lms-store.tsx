@@ -105,6 +105,8 @@ export interface WizardLessonInput {
   durationMin?: number;
   contentType?: string;
   resourceUrl?: string;
+  fileName?: string;
+  fileSize?: number;
   subLessons?: WizardLessonInput[];
 }
 
@@ -113,6 +115,9 @@ export interface WizardModuleInput {
   description?: string;
   objectives?: string;
   durationMinutes?: number;
+  resourceUrl?: string;
+  fileName?: string;
+  fileSize?: number;
   lessons: WizardLessonInput[];
 }
 
