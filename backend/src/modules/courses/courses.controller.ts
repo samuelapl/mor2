@@ -71,7 +71,7 @@ export class CoursesController {
   }
 
   @Post(':id/review')
-  @Permissions('course.approve', 'course.reject')
+  @Permissions('course.approve_reject')
   @ApiOperation({ summary: 'Approve or reject a course after review' })
   @ApiParam({ name: 'id', type: String })
   async review(

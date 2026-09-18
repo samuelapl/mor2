@@ -8,6 +8,20 @@ datasource db {
 }
 
 // ──────────────────────────────────────────────────────────
+// 0. Course policy (dynamic, admin-editable)
+// ──────────────────────────────────────────────────────────
+
+model CoursePolicySettings {
+  id                    String   @id @default("default")
+  timeSpentPercent      Float    @default(50) @map("time_spent_percent")
+  retakeCooldownMinutes Int      @default(0) @map("retake_cooldown_minutes")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  updatedBy             String?  @map("updated_by")
+
+  @@map("course_policy_settings")
+}
+
+// ──────────────────────────────────────────────────────────
 // 1. Users & Roles
 // ──────────────────────────────────────────────────────────
 
@@ -397,6 +411,7 @@ model LessonCompletion {
   completedAt DateTime? @map("completed_at")
   lastPosition Int?  @map("last_position") // video progress in seconds
   lastAccessed DateTime? @map("last_accessed")
+  timeSpentSeconds Int @default(0) @map("time_spent_seconds")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

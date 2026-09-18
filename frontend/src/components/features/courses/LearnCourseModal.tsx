@@ -1,16 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
-  ArrowRight,
   Award,
   BookOpenCheck,
   Check,
   CheckCircle2,
-  ChevronDown,
   ClipboardList,
+  Clock,
   Download,
   ExternalLink,
   FileCheck,
@@ -20,7 +19,6 @@ import {
   Loader2,
   Lock,
   PlayCircle,
-  RotateCcw,
   Sparkles,
   Trash2,
   UploadCloud,
@@ -33,9 +31,15 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RichContent } from "@/components/ui/RichContent";
 import { QuizTakerModal } from "@/components/features/quiz/QuizTakerModal";
 import { useLms } from "@/lib/lms-store";
-import { fetchCourseProgress, markLessonComplete } from "@/lib/api/progress";
+import { addLessonTime, fetchCourseProgress, markLessonComplete } from "@/lib/api/progress";
 import { uploadAttachment } from "@/lib/api/files";
-import type { ApiCourseProgress } from "@/lib/api/types";
+import { ApiError } from "@/lib/api/client";
+import type {
+  ApiCourseProgress,
+  ApiProgressLesson,
+  ApiProgressModule,
+  ApiProgressSubLesson,
+} from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 interface LearnCourseModalProps {
@@ -53,11 +57,26 @@ interface AssignmentSubmission {
   submittedAt: string;
 }
 
+interface ActiveQuizContext {
+  assessmentId: string;
+  kind: "lesson" | "module" | "final";
+  moduleIndex: number;
+  lessonIndex?: number;
+  subIndex?: number;
+}
+
 function formatFileSize(bytes?: number): string {
   if (!bytes || bytes <= 0) return "";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatMMSS(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
 export function LearnCourseModal({
@@ -71,13 +90,16 @@ export function LearnCourseModal({
   const course = courseById(courseId);
   const [progress, setProgress] = useState<ApiCourseProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<Record<string, string>>({});
   const [openLesson, setOpenLesson] = useState<string | null>(null);
   const [openSubLesson, setOpenSubLesson] = useState<string | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [expandedSubLessons, setExpandedSubLessons] = useState<Record<string, boolean>>({});
-  const [quizOpen, setQuizOpen] = useState(false);
-  const [optimisticCompleted, setOptimisticCompleted] = useState<Set<string>>(new Set());
+  const [activeQuiz, setActiveQuiz] = useState<ActiveQuizContext | null>(null);
+  const [liveTime, setLiveTime] = useState<Record<string, number>>({});
+  const quizPassedRef = useRef(false);
+  const lastFlushRef = useRef<{ itemId: string; at: number } | null>(null);
 
   // Assignment submissions state
   const [assignmentFiles, setAssignmentFiles] = useState<Record<string, AssignmentSubmission>>({});
@@ -159,10 +181,28 @@ export function LearnCourseModal({
 
   useEffect(() => {
     setOpenLesson(null);
-    setQuizOpen(false);
-    setOptimisticCompleted(new Set());
+    setOpenSubLesson(null);
+    setActiveQuiz(null);
+    setActionError({});
     void refresh();
   }, [refresh]);
+
+  // Auto-open the first unlocked, incomplete lesson once progress loads —
+  // otherwise the learner can sit on a fully-collapsed view where no
+  // heartbeat ever runs, and "Next" looks permanently stuck.
+  useEffect(() => {
+    if (!progress || openLesson) return;
+    for (const mod of progress.modules) {
+      if (!mod.unlocked) break;
+      for (const lesson of mod.lessons) {
+        if (lesson.completed) continue;
+        if (!lesson.unlocked) break;
+        setExpandedModules((prev) => ({ ...prev, [mod.moduleId]: true }));
+        setOpenLesson(lesson.lessonId);
+        return;
+      }
+    }
+  }, [progress, openLesson]);
 
   // Expand first module by default
   useEffect(() => {
@@ -176,88 +216,93 @@ export function LearnCourseModal({
     }
   }, [course]);
 
-  // Set of all completed lesson IDs across the course
-  const completedLessonIds = useMemo(() => {
-    const set = new Set<string>(optimisticCompleted);
-    if (!progress) return set;
-    for (const m of progress.modules) {
-      for (const l of m.lessons) {
-        if (l.completed) set.add(l.lessonId);
-      }
+  // Flushes the REAL wall-clock time elapsed since the item was opened (or last
+  // flushed) — not a flat 30s — so a click on "Next" always checks against
+  // up-to-date, accurate spent time instead of waiting for the next periodic
+  // tick. No-ops if `itemId` isn't the currently-open item (nothing to add).
+  const flushHeartbeat = useCallback(async (itemId: string) => {
+    const ref = lastFlushRef.current;
+    if (!ref || ref.itemId !== itemId) return null;
+    if (document.visibilityState !== "visible") return null;
+
+    const now = Date.now();
+    const deltaSeconds = Math.min(300, Math.round((now - ref.at) / 1000));
+    if (deltaSeconds <= 0) return null;
+    lastFlushRef.current = { itemId, at: now };
+
+    try {
+      const res = await addLessonTime(itemId, deltaSeconds);
+      setLiveTime((prev) => ({ ...prev, [itemId]: res.timeSpentSeconds }));
+      return res;
+    } catch {
+      // heartbeat failures are non-fatal; retried on the next tick
+      return null;
     }
-    return set;
-  }, [progress, optimisticCompleted]);
+  }, []);
 
-  // A lesson is done if it is completed directly, or if all its sub-lessons are completed
-  const isLessonDone = useCallback(
-    (lesson: any): boolean => {
-      if (!lesson) return true;
-      if (completedLessonIds.has(lesson.id)) return true;
-      if (lesson.subLessons && lesson.subLessons.length > 0) {
-        return lesson.subLessons.every((s: any) => completedLessonIds.has(s.id));
-      }
-      return false;
-    },
-    [completedLessonIds],
-  );
+  // Heartbeat: while a lesson/sub-lesson is open and the tab is visible, accumulate time server-side.
+  useEffect(() => {
+    const activeItemId = openSubLesson ?? openLesson;
+    if (!open || !activeItemId) return;
 
-  const isModuleCompleted = useCallback(
-    (mod: any): boolean => {
-      if (!mod || !mod.lessons || mod.lessons.length === 0) return true;
-      return mod.lessons.every((l: any) => isLessonDone(l));
-    },
-    [isLessonDone],
-  );
+    lastFlushRef.current = { itemId: activeItemId, at: Date.now() };
 
-  // Module unlocks when EVERY previous module is completed (first module is always unlocked)
-  const isModuleUnlocked = useCallback(
-    (modIndex: number): boolean => {
-      if (modIndex === 0) return true;
-      if (!course?.modules) return true;
-      for (let i = 0; i < modIndex; i++) {
-        if (!isModuleCompleted(course.modules[i])) return false;
-      }
-      return true;
-    },
-    [course?.modules, isModuleCompleted],
-  );
-
-  // Lesson unlocks within module when EVERY preceding lesson in the module is completed
-  const isLessonUnlocked = useCallback(
-    (modIndex: number, lessonIndex: number): boolean => {
-      if (!isModuleUnlocked(modIndex)) return false;
-      if (lessonIndex === 0) return true;
-      if (!course?.modules[modIndex]?.lessons) return true;
-      for (let i = 0; i < lessonIndex; i++) {
-        if (!isLessonDone(course.modules[modIndex].lessons[i])) return false;
-      }
-      return true;
-    },
-    [course?.modules, isLessonDone, isModuleUnlocked],
-  );
-
-  // Sub-lesson unlocks when preceding sub-lesson is completed or parent is completed
-  const isSubLessonUnlocked = useCallback(
-    (modIndex: number, lessonIndex: number, subLessonIndex: number): boolean => {
-      if (!isLessonUnlocked(modIndex, lessonIndex)) return false;
-      if (subLessonIndex === 0) return true;
-      const parent = course?.modules[modIndex]?.lessons[lessonIndex];
-      if (!parent?.subLessons) return true;
-      if (completedLessonIds.has(parent.id)) return true;
-      for (let i = 0; i < subLessonIndex; i++) {
-        if (!completedLessonIds.has(parent.subLessons[i].id)) return false;
-      }
-      return true;
-    },
-    [completedLessonIds, course?.modules, isLessonUnlocked],
-  );
-
-  const areAllLessonsCompleted = useMemo(() => {
-    if (!course || course.modules.length === 0) return true;
-    return course.modules.every((m) => isModuleCompleted(m));
-  }, [course, isModuleCompleted]);
+    const interval = setInterval(() => {
+      void flushHeartbeat(activeItemId).then((res) => {
+        if (res?.satisfied) void refresh();
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [open, openLesson, openSubLesson, refresh, flushHeartbeat]);
 
   if (!course) return null;
+
+  const findModuleProgress = (moduleId: string): ApiProgressModule | undefined =>
+    progress?.modules.find((m) => m.moduleId === moduleId);
+
+  const findLessonProgress = (
+    moduleProg: ApiProgressModule | undefined,
+    lessonId: string,
+  ): ApiProgressLesson | undefined => moduleProg?.lessons.find((l) => l.lessonId === lessonId);
+
+  const clearActionError = (itemId: string) =>
+    setActionError((prev) => {
+      if (!(itemId in prev)) return prev;
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
+
+  const applyActionError = (itemId: string, err: unknown) => {
+    if (err instanceof ApiError) {
+      if (err.reason === "TIME_NOT_MET") {
+        const remaining = err.remainingSeconds ?? 0;
+        setActionError((prev) => ({
+          ...prev,
+          [itemId]: `Spend ${formatMMSS(remaining)} more on this activity before continuing.`,
+        }));
+        return;
+      }
+      if (err.reason === "ASSESSMENT_NOT_PASSED" || err.reason === "ASSESSMENT_REQUIRED") {
+        setActionError((prev) => ({
+          ...prev,
+          [itemId]: "You must pass the assessment for this activity before continuing.",
+        }));
+        return;
+      }
+      if (err.reason === "LOCKED") {
+        setActionError((prev) => ({
+          ...prev,
+          [itemId]: "This activity is locked. Refreshing your progress…",
+        }));
+        void refresh();
+        return;
+      }
+      setActionError((prev) => ({ ...prev, [itemId]: err.message }));
+      return;
+    }
+    setActionError((prev) => ({ ...prev, [itemId]: "Something went wrong. Please try again." }));
+  };
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => ({
@@ -274,60 +319,146 @@ export function LearnCourseModal({
   };
 
   const overall = progress?.stats.overallPercent ?? 0;
-  const isCourseComplete = overall >= 100;
+  const courseCompletion = progress?.courseCompletion;
+  const certificateEligible = courseCompletion?.certificateEligible ?? false;
+  const contentCompleted = courseCompletion?.contentCompleted ?? false;
+  const finalAssessment = courseCompletion?.finalAssessment ?? null;
 
-  const toggleComplete = async (lessonId: string, completed: boolean) => {
-    setTogglingId(lessonId);
-
-    // Optimistically update set to unlock next lesson/module immediately
-    setOptimisticCompleted((prev) => {
-      const next = new Set(prev);
-      if (completed) {
-        next.add(lessonId);
-        const found = course.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
-        if (found?.subLessons) {
-          found.subLessons.forEach((s) => next.add(s.id));
-        }
-      } else {
-        next.delete(lessonId);
-        const found = course.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
-        if (found?.subLessons) {
-          found.subLessons.forEach((s) => next.delete(s.id));
-        }
-      }
-      return next;
-    });
-
-    try {
-      await markLessonComplete(lessonId, { completed, lastPosition: 0 });
-      await refresh();
-    } catch (err) {
-      console.error("Failed to update lesson completion:", err);
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
-  const toggleCompleteAndAdvance = async (moduleIndex: number, lessonIndex: number) => {
-    const currentLesson = course.modules[moduleIndex]?.lessons[lessonIndex];
-    if (!currentLesson) return;
-
-    await toggleComplete(currentLesson.id, true);
-
-    // Determine next activity to open
-    const nextLessonInModule = course.modules[moduleIndex]?.lessons[lessonIndex + 1];
-    if (nextLessonInModule) {
-      setOpenLesson(nextLessonInModule.id);
-      return;
-    }
-
-    // Next module
+  const advanceToNextModule = (moduleIndex: number) => {
     const nextModule = course.modules[moduleIndex + 1];
     if (nextModule) {
       setExpandedModules((prev) => ({ ...prev, [nextModule.id]: true }));
       if (nextModule.lessons && nextModule.lessons.length > 0) {
         setOpenLesson(nextModule.lessons[0].id);
+        setOpenSubLesson(null);
       }
+    }
+  };
+
+  const advanceAfter = (moduleIndex: number, lessonIndex: number, subIndex?: number) => {
+    const mod = course.modules[moduleIndex];
+    const lesson = mod?.lessons[lessonIndex];
+    if (subIndex !== undefined && lesson?.subLessons) {
+      const nextSub = lesson.subLessons[subIndex + 1];
+      if (nextSub) {
+        setOpenSubLesson(nextSub.id);
+        return;
+      }
+      // All sub-lessons visited; the parent lesson auto-completes server-side
+      // once every sub-lesson is done — the learner clicks the lesson-level
+      // Next button next.
+      setOpenSubLesson(null);
+      return;
+    }
+
+    const nextLessonInModule = mod?.lessons[lessonIndex + 1];
+    if (nextLessonInModule) {
+      setOpenLesson(nextLessonInModule.id);
+      setOpenSubLesson(null);
+      return;
+    }
+
+    advanceToNextModule(moduleIndex);
+  };
+
+  const handleNext = async (moduleIndex: number, lessonIndex: number, subIndex?: number) => {
+    const mod = course.modules[moduleIndex];
+    const lesson = mod?.lessons[lessonIndex];
+    const item = subIndex !== undefined ? lesson?.subLessons?.[subIndex] : lesson;
+    if (!mod || !lesson || !item) return;
+
+    const moduleProg = findModuleProgress(mod.id);
+    const lessonProg = findLessonProgress(moduleProg, lesson.id);
+    const itemProg =
+      subIndex !== undefined
+        ? lessonProg?.subLessons?.find((s) => s.lessonId === item.id)
+        : lessonProg;
+
+    if (!itemProg) return;
+    clearActionError(item.id);
+
+    // Sync the true wall-clock elapsed time now, instead of trusting the last
+    // periodic (30s) heartbeat snapshot — otherwise a click made between two
+    // ticks always sees the same stale "spent" value, however long was
+    // actually waited.
+    const freshHeartbeat = await flushHeartbeat(item.id);
+    const spent = freshHeartbeat?.timeSpentSeconds ?? liveTime[item.id] ?? itemProg.timeSpentSeconds;
+    const required = freshHeartbeat?.requiredSeconds ?? itemProg.requiredSeconds;
+    if (spent < required) {
+      const remaining = Math.max(required - spent, 0);
+      // Time only accumulates while the item is expanded/open — the heartbeat
+      // isn't running at all for a collapsed row, so waiting does nothing.
+      // Open it here so the next tick (or next click) actually counts time.
+      const isCurrentlyOpen = subIndex !== undefined ? openSubLesson === item.id : openLesson === item.id;
+      if (!isCurrentlyOpen) {
+        if (subIndex !== undefined) {
+          setOpenLesson(lesson.id);
+          setOpenSubLesson(item.id);
+        } else {
+          setOpenLesson(item.id);
+        }
+        setActionError((prev) => ({
+          ...prev,
+          [item.id]: `Open this activity to start tracking time — spend ${formatMMSS(remaining)} more before continuing.`,
+        }));
+        return;
+      }
+      setActionError((prev) => ({
+        ...prev,
+        [item.id]: `Spend ${formatMMSS(remaining)} more on this activity before continuing.`,
+      }));
+      return;
+    }
+
+    if (itemProg.assessment && !itemProg.assessment.passed) {
+      quizPassedRef.current = false;
+      setActiveQuiz({
+        assessmentId: itemProg.assessment.id,
+        kind: "lesson",
+        moduleIndex,
+        lessonIndex,
+        subIndex,
+      });
+      return;
+    }
+
+    setActionBusyId(item.id);
+    try {
+      await markLessonComplete(item.id, { completed: true, lastPosition: 0 });
+      await refresh();
+      advanceAfter(moduleIndex, lessonIndex, subIndex);
+    } catch (err) {
+      applyActionError(item.id, err);
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
+  const openModuleAssessment = (moduleIndex: number) => {
+    const mod = course.modules[moduleIndex];
+    const moduleProg = findModuleProgress(mod.id);
+    if (!moduleProg?.assessment) return;
+    quizPassedRef.current = false;
+    setActiveQuiz({ assessmentId: moduleProg.assessment.id, kind: "module", moduleIndex });
+  };
+
+  const openFinalAssessment = () => {
+    if (!finalAssessment) return;
+    quizPassedRef.current = false;
+    setActiveQuiz({ assessmentId: finalAssessment.id, kind: "final", moduleIndex: -1 });
+  };
+
+  const closeActiveQuiz = () => {
+    const ctx = activeQuiz;
+    const passed = quizPassedRef.current;
+    quizPassedRef.current = false;
+    setActiveQuiz(null);
+    void refresh();
+    if (!passed || !ctx) return;
+    if (ctx.kind === "lesson" && ctx.lessonIndex !== undefined) {
+      advanceAfter(ctx.moduleIndex, ctx.lessonIndex, ctx.subIndex);
+    } else if (ctx.kind === "module") {
+      advanceToNextModule(ctx.moduleIndex);
     }
   };
 
@@ -416,16 +547,74 @@ export function LearnCourseModal({
     );
   };
 
+  const renderTimeIndicator = (spent: number, required: number, satisfied: boolean) => {
+    if (required <= 0) return null;
+    const pct = Math.min(100, Math.round((spent / required) * 100));
+    return (
+      <div className="flex items-center gap-2 text-[11px] text-slate-500">
+        <Clock className="h-3 w-3 shrink-0" />
+        <span className={cn("font-medium", satisfied ? "text-emerald-600" : "text-slate-500")}>
+          {formatMMSS(spent)} / {formatMMSS(required)}
+        </span>
+        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className={cn("h-full rounded-full", satisfied ? "bg-emerald-500" : "bg-indigo-400")}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {satisfied ? <Badge variant="green">Time requirement met</Badge> : null}
+      </div>
+    );
+  };
+
+  const renderNextButton = (
+    itemId: string,
+    itemProg: ApiProgressLesson | ApiProgressSubLesson | undefined,
+    onClick: () => void,
+    size: "sm" = "sm",
+  ) => {
+    if (!itemProg) return null;
+    const spent = liveTime[itemId] ?? itemProg.timeSpentSeconds;
+    const timeSatisfied = itemProg.requiredSeconds <= 0 || spent >= itemProg.requiredSeconds;
+    const needsAssessment = !!itemProg.assessment && !itemProg.assessment.passed && timeSatisfied;
+
+    return (
+      <Button
+        size={size}
+        variant={needsAssessment ? "primary" : "success"}
+        disabled={actionBusyId === itemId}
+        onClick={onClick}
+        className="shadow-xs font-medium"
+      >
+        {actionBusyId === itemId ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : needsAssessment ? (
+          <BookOpenCheck className="h-3.5 w-3.5" />
+        ) : (
+          <Check className="h-3.5 w-3.5" />
+        )}
+        {needsAssessment ? "Take Assessment" : "Next"}
+      </Button>
+    );
+  };
+
   const renderAssignmentSection = (
     item: any,
     moduleIndex: number,
     lessonIndex: number,
-    isSub = false,
+    subIndex?: number,
   ) => {
     const submission = assignmentFiles[item.id];
     const isUploading = assignmentUploading[item.id] ?? false;
     const uploadErr = assignmentError[item.id];
-    const isCompleted = completedLessonIds.has(item.id);
+    const mod = course.modules[moduleIndex];
+    const lesson = mod?.lessons[lessonIndex];
+    const moduleProg = mod ? findModuleProgress(mod.id) : undefined;
+    const lessonProg = lesson ? findLessonProgress(moduleProg, lesson.id) : undefined;
+    const itemProg =
+      subIndex !== undefined ? lessonProg?.subLessons?.find((s) => s.lessonId === item.id) : lessonProg;
+    const isCompleted = itemProg?.completed ?? false;
+    const error = actionError[item.id];
 
     return (
       <div className="space-y-4 rounded-2xl border border-orange-200/90 bg-orange-50/40 p-4 sm:p-5">
@@ -513,16 +702,18 @@ export function LearnCourseModal({
                   <Download className="h-3 w-3" />
                   View File
                 </a>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-200"
-                  onClick={() => removeSubmission(item.id)}
-                  title="Remove and re-upload"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Remove
-                </Button>
+                {!isCompleted ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-200"
+                    onClick={() => removeSubmission(item.id)}
+                    title="Remove and re-upload"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Remove
+                  </Button>
+                ) : null}
               </div>
             </div>
           ) : (
@@ -566,16 +757,23 @@ export function LearnCourseModal({
             </div>
           ) : null}
 
+          {error ? (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+              <span>{error}</span>
+            </div>
+          ) : null}
+
           {/* Submit & Complete Lesson Button */}
           {!isCompleted ? (
             <Button
               size="sm"
               variant="success"
-              disabled={togglingId === item.id || !submission}
-              onClick={() => void toggleComplete(item.id, true)}
+              disabled={actionBusyId === item.id || !submission}
+              onClick={() => void handleNext(moduleIndex, lessonIndex, subIndex)}
               className="w-full mt-2 shadow-xs font-semibold"
             >
-              <Check className="mr-1.5 h-4 w-4" />
+              {actionBusyId === item.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}
               {submission ? "Submit Assignment & Complete Activity" : "Attach File Above to Complete"}
             </Button>
           ) : (
@@ -584,14 +782,6 @@ export function LearnCourseModal({
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 Assignment Submitted & Activity Completed
               </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 text-[11px] px-2"
-                onClick={() => void toggleComplete(item.id, false)}
-              >
-                Mark Incomplete
-              </Button>
             </div>
           )}
         </div>
@@ -606,7 +796,7 @@ export function LearnCourseModal({
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
       badge={
-        isCourseComplete ? (
+        certificateEligible ? (
           <Badge variant="green" dot>
             Course Completed
           </Badge>
@@ -630,7 +820,7 @@ export function LearnCourseModal({
             </nav>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{course.level.toUpperCase()}</Badge>
-              {isCourseComplete ? (
+              {certificateEligible ? (
                 <Badge variant="green" dot>
                   Course Completed
                 </Badge>
@@ -671,28 +861,6 @@ export function LearnCourseModal({
           </div>
         </div>
 
-        {/* Certificate Ready Alert Banner */}
-        {isCourseComplete ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">Congratulations! You completed this course.</p>
-                <p className="text-xs text-emerald-700">
-                  You have fulfilled all curriculum requirements. Your official certificate is ready.
-                </p>
-              </div>
-            </div>
-            <Link href="/learner/certificates">
-              <Button size="sm" variant="success" className="shadow-md">
-                <Award className="h-4 w-4" />
-                View & Download Certificate
-              </Button>
-            </Link>
-          </div>
-        ) : null}
 
         {loading && !progress ? (
           <div className="flex items-center justify-center py-8 text-xs text-slate-400">
@@ -704,12 +872,16 @@ export function LearnCourseModal({
         {/* Modules Hierarchy with + / − Tree Navigation */}
         <div className="space-y-4">
           {course.modules.map((module, moduleIndex) => {
-            const moduleProgress = progress?.modules.find((m) => m.moduleId === module.id);
-            const moduleLocked = !isModuleUnlocked(moduleIndex);
+            const moduleProgress = findModuleProgress(module.id);
+            const moduleLocked = !(moduleProgress?.unlocked ?? false);
+            const moduleCompleted = moduleProgress?.moduleCompleted ?? false;
+            const moduleAssessment = moduleProgress?.assessment ?? null;
             const completedCount = moduleProgress?.completedLessons ?? 0;
             const totalCount = moduleProgress?.totalLessons ?? module.lessons.length;
             const modulePercent = moduleProgress?.progressPercent ?? 0;
             const isExpanded = expandedModules[module.id] ?? false;
+            const moduleContentDone = totalCount > 0 && completedCount === totalCount;
+            const moduleTimeSatisfied = moduleProgress?.timeSatisfied ?? true;
 
             return (
               <div
@@ -754,9 +926,14 @@ export function LearnCourseModal({
                         <Lock className="mr-1 h-3 w-3" />
                         Locked (Complete Module {moduleIndex})
                       </Badge>
-                    ) : modulePercent >= 100 ? (
+                    ) : moduleCompleted ? (
                       <Badge variant="green" dot>
                         Completed
+                      </Badge>
+                    ) : moduleAssessment && moduleContentDone && !moduleAssessment.passed ? (
+                      <Badge variant="amber">
+                        <BookOpenCheck className="mr-1 h-3 w-3" />
+                        Assessment Required
                       </Badge>
                     ) : (
                       <Badge variant="blue">
@@ -808,15 +985,15 @@ export function LearnCourseModal({
                     {/* Lesson Tree Branch */}
                     <div className="space-y-3 border-l-2 border-indigo-200 ml-4 pl-4">
                       {module.lessons.map((lesson, lessonIndex) => {
-                        const lessonProgress = moduleProgress?.lessons.find(
-                          (l) => l.lessonId === lesson.id,
-                        );
-                        const lessonLocked =
-                          moduleLocked || !isLessonUnlocked(moduleIndex, lessonIndex);
-                        const completedFlag =
-                          completedLessonIds.has(lesson.id) || (lessonProgress?.completed ?? false);
+                        const lessonProgress = findLessonProgress(moduleProgress, lesson.id);
+                        const lessonLocked = moduleLocked || !(lessonProgress?.unlocked ?? false);
+                        const completedFlag = lessonProgress?.completed ?? false;
                         const isOpen = openLesson === lesson.id;
                         const subLessonsGroupOpen = expandedSubLessons[lesson.id] ?? false;
+                        const spent = liveTime[lesson.id] ?? lessonProgress?.timeSpentSeconds ?? 0;
+                        const required = lessonProgress?.requiredSeconds ?? 0;
+                        const timeSatisfied = required <= 0 || spent >= required;
+                        const lessonError = actionError[lesson.id];
 
                         return (
                           <div
@@ -853,10 +1030,13 @@ export function LearnCourseModal({
                                   <p className="text-[11px] text-slate-400">
                                     {lesson.durationMin || 15} min · {lesson.contentType || "DOCUMENT"}
                                   </p>
+                                  {!lessonLocked && !completedFlag
+                                    ? renderTimeIndicator(spent, required, timeSatisfied)
+                                    : null}
                                 </div>
                               </button>
 
-                              {/* Progression Status & Complete Button */}
+                              {/* Progression Status & Next Button */}
                               <div className="flex items-center gap-2">
                                 {lessonLocked ? (
                                   <Badge variant="slate">
@@ -864,41 +1044,31 @@ export function LearnCourseModal({
                                     Locked
                                   </Badge>
                                 ) : completedFlag ? (
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="green" dot>
-                                      Completed
-                                    </Badge>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={togglingId === lesson.id}
-                                      onClick={() => void toggleComplete(lesson.id, false)}
-                                      title="Mark incomplete"
-                                      className="h-7 px-2 text-xs"
-                                    >
-                                      <RotateCcw className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                                  <Badge variant="green" dot>
+                                    Completed
+                                  </Badge>
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     <Badge variant="blue">
                                       <PlayCircle className="h-3 w-3 mr-1" />
                                       Available
                                     </Badge>
-                                    <Button
-                                      size="sm"
-                                      variant="success"
-                                      disabled={togglingId === lesson.id}
-                                      onClick={() => void toggleComplete(lesson.id, true)}
-                                      className="h-8 shadow-xs"
-                                    >
-                                      <Check className="h-3.5 w-3.5 mr-1" />
-                                      Mark Complete
-                                    </Button>
+                                    {renderNextButton(lesson.id, lessonProgress, () =>
+                                      void handleNext(moduleIndex, lessonIndex),
+                                    )}
                                   </div>
                                 )}
                               </div>
                             </div>
+
+                            {lessonError && !isOpen ? (
+                              <div className="px-4 pb-3 -mt-1">
+                                <p className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                                  <AlertCircle className="h-3 w-3 shrink-0" />
+                                  {lessonError}
+                                </p>
+                              </div>
+                            ) : null}
 
                             {/* Expanded Lesson Content Viewer */}
                             {isOpen && !lessonLocked ? (
@@ -955,7 +1125,7 @@ export function LearnCourseModal({
 
                                 {/* Assignment display */}
                                 {lesson.contentType === "ASSIGNMENT" ? (
-                                  renderAssignmentSection(lesson, moduleIndex, lessonIndex, false)
+                                  renderAssignmentSection(lesson, moduleIndex, lessonIndex, undefined)
                                 ) : null}
 
                                 {/* Generic resource link for other types */}
@@ -995,10 +1165,16 @@ export function LearnCourseModal({
                                     {subLessonsGroupOpen && (
                                       <div className="space-y-2 border-l-2 border-violet-300 ml-3 pl-3">
                                         {lesson.subLessons.map((sub, subIdx) => {
-                                          const subLocked =
-                                            !isSubLessonUnlocked(moduleIndex, lessonIndex, subIdx);
-                                          const subComplete = completedLessonIds.has(sub.id);
+                                          const subProgress = lessonProgress?.subLessons?.find(
+                                            (s) => s.lessonId === sub.id,
+                                          );
+                                          const subLocked = lessonLocked || !(subProgress?.unlocked ?? false);
+                                          const subComplete = subProgress?.completed ?? false;
                                           const isSubOpen = openSubLesson === sub.id;
+                                          const subSpent = liveTime[sub.id] ?? subProgress?.timeSpentSeconds ?? 0;
+                                          const subRequired = subProgress?.requiredSeconds ?? 0;
+                                          const subTimeSatisfied = subRequired <= 0 || subSpent >= subRequired;
+                                          const subError = actionError[sub.id];
 
                                           return (
                                             <div
@@ -1018,13 +1194,16 @@ export function LearnCourseModal({
                                                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold border border-violet-200 bg-violet-50 text-violet-800 group-hover:border-violet-400">
                                                     {subLocked ? "•" : isSubOpen ? "−" : "+"}
                                                   </span>
-                                                  <div className="min-w-0">
+                                                  <div className="min-w-0 flex-1">
                                                     <p className="text-xs font-semibold text-slate-800 group-hover:text-violet-700 truncate">
                                                       {sub.title}
                                                     </p>
                                                     <p className="text-[10px] text-slate-400">
                                                       {sub.durationMin || 5} min · {sub.contentType}
                                                     </p>
+                                                    {!subLocked && !subComplete
+                                                      ? renderTimeIndicator(subSpent, subRequired, subTimeSatisfied)
+                                                      : null}
                                                   </div>
                                                 </button>
                                                 <div className="flex items-center gap-2">
@@ -1034,41 +1213,31 @@ export function LearnCourseModal({
                                                       Locked
                                                     </Badge>
                                                   ) : subComplete ? (
-                                                    <div className="flex items-center gap-1.5">
-                                                      <Badge variant="green" dot>
-                                                        Done
-                                                      </Badge>
-                                                      <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        disabled={togglingId === sub.id}
-                                                        onClick={() => void toggleComplete(sub.id, false)}
-                                                        title="Mark incomplete"
-                                                        className="h-6 w-6 p-0 text-[10px]"
-                                                      >
-                                                        <RotateCcw className="h-2.5 w-2.5" />
-                                                      </Button>
-                                                    </div>
+                                                    <Badge variant="green" dot>
+                                                      Done
+                                                    </Badge>
                                                   ) : (
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      disabled={togglingId === sub.id}
-                                                      onClick={() => void toggleComplete(sub.id, true)}
-                                                      className="h-7 text-xs"
-                                                    >
-                                                      <Check className="h-3 w-3 mr-1" />
-                                                      Complete
-                                                    </Button>
+                                                    renderNextButton(sub.id, subProgress, () =>
+                                                      void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                    )
                                                   )}
                                                 </div>
                                               </div>
+
+                                              {subError && !isSubOpen ? (
+                                                <div className="px-3 pb-2.5 -mt-1">
+                                                  <p className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                                                    <AlertCircle className="h-3 w-3 shrink-0" />
+                                                    {subError}
+                                                  </p>
+                                                </div>
+                                              ) : null}
 
                                               {/* Expanded Sub-lesson content */}
                                               {isSubOpen && !subLocked && (
                                                 <div className="border-t border-violet-100 bg-slate-50/50 p-3.5 space-y-3">
                                                   {sub.contentType === "ASSIGNMENT" ? (
-                                                    renderAssignmentSection(sub, moduleIndex, lessonIndex, true)
+                                                    renderAssignmentSection(sub, moduleIndex, lessonIndex, subIdx)
                                                   ) : (
                                                     <>
                                                       {sub.contentType === "VIDEO" && sub.resourceUrl ? (
@@ -1133,6 +1302,22 @@ export function LearnCourseModal({
                                                           <RichContent html={sub.content} />
                                                         </div>
                                                       ) : null}
+
+                                                      {!subComplete ? (
+                                                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-violet-100/80">
+                                                          {subError ? (
+                                                            <p className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                                                              <AlertCircle className="h-3 w-3 shrink-0" />
+                                                              {subError}
+                                                            </p>
+                                                          ) : (
+                                                            <span />
+                                                          )}
+                                                          {renderNextButton(sub.id, subProgress, () =>
+                                                            void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                          )}
+                                                        </div>
+                                                      ) : null}
                                                     </>
                                                   )}
                                                 </div>
@@ -1145,62 +1330,27 @@ export function LearnCourseModal({
                                   </div>
                                 ) : null}
 
-                                {/* Footer Actions: Mark Complete & Advance */}
+                                {/* Footer Actions: Next */}
                                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/60 mt-4">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
                                     {completedFlag ? (
                                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
                                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                                         Activity completed
                                       </span>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={togglingId === lesson.id}
-                                        onClick={() => void toggleComplete(lesson.id, true)}
-                                        className="text-xs"
-                                      >
-                                        <Check className="h-3.5 w-3.5 mr-1" />
-                                        Mark Complete
-                                      </Button>
-                                    )}
+                                    ) : lessonError ? (
+                                      <p className="flex items-center gap-1.5 text-xs text-amber-700">
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                        {lessonError}
+                                      </p>
+                                    ) : null}
                                   </div>
 
-                                  <div className="flex items-center gap-2">
-                                    {!completedFlag ? (
-                                      <Button
-                                        size="sm"
-                                        variant="success"
-                                        disabled={togglingId === lesson.id}
-                                        onClick={() => void toggleCompleteAndAdvance(moduleIndex, lessonIndex)}
-                                        className="shadow-xs font-medium"
-                                      >
-                                        Complete & Next Activity
-                                        <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                                      </Button>
-                                    ) : (
-                                      (lessonIndex + 1 < module.lessons.length || moduleIndex + 1 < course.modules.length) && (
-                                        <Button
-                                          size="sm"
-                                          variant="primary"
-                                          onClick={() => {
-                                            if (lessonIndex + 1 < module.lessons.length) {
-                                              setOpenLesson(module.lessons[lessonIndex + 1].id);
-                                            } else if (moduleIndex + 1 < course.modules.length) {
-                                              const nextMod = course.modules[moduleIndex + 1];
-                                              setExpandedModules((prev) => ({ ...prev, [nextMod.id]: true }));
-                                              if (nextMod.lessons?.[0]) setOpenLesson(nextMod.lessons[0].id);
-                                            }
-                                          }}
-                                          className="shadow-xs font-medium"
-                                        >
-                                          Next Activity
-                                          <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                                        </Button>
-                                      )
-                                    )}
-                                  </div>
+                                  {!completedFlag && lesson.contentType !== "ASSIGNMENT" ? (
+                                    renderNextButton(lesson.id, lessonProgress, () =>
+                                      void handleNext(moduleIndex, lessonIndex),
+                                    )
+                                  ) : null}
                                 </div>
                               </div>
                             ) : null}
@@ -1213,6 +1363,46 @@ export function LearnCourseModal({
                       <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-xs text-slate-400">
                         No activities have been published in this module yet.
                       </p>
+                    ) : null}
+
+                    {/* Module time / assessment summary */}
+                    {!moduleCompleted ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-slate-700">Module Progress</p>
+                          {moduleProgress?.requiredSeconds ? (
+                            renderTimeIndicator(
+                              moduleProgress.timeSpentSeconds,
+                              moduleProgress.requiredSeconds,
+                              moduleTimeSatisfied,
+                            )
+                          ) : (
+                            <p className="text-[11px] text-slate-400">No minimum time requirement.</p>
+                          )}
+                        </div>
+                        {moduleAssessment ? (
+                          <Button
+                            size="sm"
+                            variant={moduleAssessment.passed ? "outline" : "primary"}
+                            disabled={!moduleContentDone || !moduleTimeSatisfied || moduleAssessment.passed}
+                            onClick={() => openModuleAssessment(moduleIndex)}
+                          >
+                            {moduleAssessment.passed ? (
+                              <>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Assessment Passed
+                              </>
+                            ) : (
+                              <>
+                                <BookOpenCheck className="h-3.5 w-3.5" />
+                                {moduleContentDone && moduleTimeSatisfied
+                                  ? "Take Module Assessment"
+                                  : "Complete Lessons First"}
+                              </>
+                            )}
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
                 ) : null}
@@ -1250,22 +1440,23 @@ export function LearnCourseModal({
         ) : null}
 
         {/* Final Assessment Card with Progression Gate */}
-        {showQuiz ? (
+        {showQuiz && finalAssessment ? (
           <div className={cn(
             "rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all",
-            areAllLessonsCompleted
+            contentCompleted
               ? "border-indigo-200 bg-gradient-to-br from-indigo-50/50 to-violet-50/50"
               : "border-slate-200 bg-slate-50/70 opacity-80"
           )}>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 font-mono text-sm font-bold text-indigo-800">
-                  {quizOpen ? "−" : "+"}
-                </span>
                 <BookOpenCheck className="h-5 w-5 text-indigo-600" />
                 <h3 className="text-sm font-bold text-slate-900">Final Course Assessment</h3>
-                {areAllLessonsCompleted ? (
-                  <Badge variant="blue">Unlocked · Passing Score: 60%</Badge>
+                {finalAssessment.passed ? (
+                  <Badge variant="green" dot>
+                    Passed
+                  </Badge>
+                ) : contentCompleted ? (
+                  <Badge variant="blue">Unlocked · Passing Score: {finalAssessment.passingScore}%</Badge>
                 ) : (
                   <Badge variant="slate">
                     <Lock className="h-3 w-3 mr-1" />
@@ -1278,27 +1469,74 @@ export function LearnCourseModal({
               </p>
             </div>
 
-            <Button
-              disabled={!areAllLessonsCompleted}
-              onClick={() => setQuizOpen(true)}
-              className={cn("shadow-md gap-1.5", !areAllLessonsCompleted && "opacity-50 cursor-not-allowed")}
-            >
-              {areAllLessonsCompleted ? <BookOpenCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-              {areAllLessonsCompleted ? "Take Assessment" : "Locked"}
-            </Button>
+            {!finalAssessment.passed ? (
+              <Button
+                disabled={!contentCompleted}
+                onClick={openFinalAssessment}
+                className={cn("shadow-md gap-1.5", !contentCompleted && "opacity-50 cursor-not-allowed")}
+              >
+                {contentCompleted ? <BookOpenCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                {contentCompleted ? "Take Assessment" : "Locked"}
+              </Button>
+            ) : null}
           </div>
         ) : null}
+
+        {/* Certificate — locked until the course is actually completed */}
+        {certificateEligible ? (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Congratulations! You completed this course.</p>
+                <p className="text-xs text-emerald-700">
+                  You have fulfilled all curriculum requirements. Your official certificate is ready.
+                </p>
+              </div>
+            </div>
+            <Link href="/learner/certificates">
+              <Button size="sm" variant="success" className="shadow-md">
+                <Award className="h-4 w-4" />
+                View & Download Certificate
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-slate-600 shadow-sm opacity-80">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-500 shadow-sm">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-700">Certificate — Locked</p>
+                <p className="text-xs text-slate-500">
+                  {contentCompleted && finalAssessment && !finalAssessment.passed
+                    ? "Pass the Final Assessment above to unlock your certificate."
+                    : "Complete every lesson and pass the Final Assessment to unlock your certificate."}
+                </p>
+              </div>
+            </div>
+            <Badge variant="slate">
+              <Lock className="mr-1 h-3 w-3" />
+              Not yet earned
+            </Badge>
+          </div>
+        )}
       </div>
 
-      {showQuiz ? (
+      {activeQuiz ? (
         <QuizTakerModal
-          open={quizOpen}
-          onClose={() => {
-            setQuizOpen(false);
-            void refresh();
-          }}
+          open
+          onClose={closeActiveQuiz}
           courseId={courseId}
           courseTitle={courseTitle}
+          assessmentId={activeQuiz.assessmentId}
+          onPassed={() => {
+            quizPassedRef.current = true;
+            void refresh();
+          }}
         />
       ) : null}
     </WorkspaceDetailOverlay>

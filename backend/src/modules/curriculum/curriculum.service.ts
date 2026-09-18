@@ -3,6 +3,7 @@ import { CourseStatus, LessonContentType, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { AuthenticatedUser } from '@common/interfaces';
 import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils/unlock.util';
+import { ProgressService } from '@modules/progress/progress.service';
 import {
   CreateModuleDto,
   UpdateModuleDto,
@@ -36,7 +37,10 @@ function sanitizeLessonContentType(type?: any): LessonContentType {
 
 @Injectable()
 export class CurriculumService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progressService: ProgressService,
+  ) {}
 
   // ── Modules ────────────────────────────────────────
   /** Replaces the entire curriculum (modules + lessons + sub-lessons) atomically. Only DRAFT/REJECTED courses. */
@@ -403,6 +407,10 @@ export class CurriculumService {
 
         const allLessonIds = modules.flatMap((m) =>
           m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
+        );
+        await this.progressService.reconcileModuleCompletions(
+          user.id,
+          modules.map((m) => m.id),
         );
         const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
           this.prisma,

@@ -47,19 +47,20 @@ export function computeSequentialUnlocks(
     return false;
   };
 
+  // `ModuleCompletion` is authoritative (it also captures the module's time
+  // and assessment policy, which lesson completion alone cannot express).
+  // Callers must reconcile `ModuleCompletion` rows (see
+  // `ProgressService.reconcileModuleCompletions`) before computing unlocks.
   const isModuleDone = (m: ModuleUnlockRow): boolean => {
     if (moduleCompletions.get(m.id) === true) return true;
-    if (!m.lessons || m.lessons.length === 0) return true;
-    return m.lessons.every((l) => isLessonComplete(l));
+    return (!m.lessons || m.lessons.length === 0) && moduleCompletions.get(m.id) !== false;
   };
 
   const sortedModules = [...modules].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   for (let mIdx = 0; mIdx < sortedModules.length; mIdx++) {
     const mod = sortedModules[mIdx]!;
-    const previousModulesDone = sortedModules
-      .slice(0, mIdx)
-      .every((m) => isModuleDone(m));
+    const previousModulesDone = sortedModules.slice(0, mIdx).every((m) => isModuleDone(m));
 
     const unlocked = mIdx === 0 ? true : previousModulesDone;
     moduleUnlocked.set(mod.id, unlocked);
@@ -67,9 +68,7 @@ export function computeSequentialUnlocks(
     const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
     for (let lIdx = 0; lIdx < sortedLessons.length; lIdx++) {
       const lesson = sortedLessons[lIdx]!;
-      const previousLessonsDone = sortedLessons
-        .slice(0, lIdx)
-        .every((l) => isLessonComplete(l));
+      const previousLessonsDone = sortedLessons.slice(0, lIdx).every((l) => isLessonComplete(l));
 
       const isLessonUnlocked = unlocked && (lIdx === 0 ? true : previousLessonsDone);
       lessonUnlocked.set(lesson.id, isLessonUnlocked);

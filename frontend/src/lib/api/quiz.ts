@@ -3,6 +3,7 @@ import type {
   ApiAssessment,
   ApiAssessmentAttempt,
   ApiAssessmentListing,
+  AssessmentReviewItem,
 } from "./types";
 
 /* -------------------------------------------------------------------------- */
@@ -51,6 +52,7 @@ export interface GradedResult {
   totalQuestions: number;
   submittedAt: string;
   timeSpentSeconds: number;
+  review: AssessmentReviewItem[];
 }
 
 /**
@@ -61,6 +63,20 @@ export async function fetchCourseAssessments(
   courseId: string,
 ): Promise<ApiAssessmentListing[]> {
   return api<ApiAssessmentListing[]>(`courses/${courseId}/assessments`);
+}
+
+/** Fetches the module assessment (knowledge check) for a module, if any. */
+export async function fetchModuleAssessments(
+  moduleId: string,
+): Promise<ApiAssessmentListing[]> {
+  return api<ApiAssessmentListing[]>(`modules/${moduleId}/assessments`);
+}
+
+/** Fetches the lesson / sub-lesson assessment for a lesson, if any. */
+export async function fetchLessonAssessments(
+  lessonId: string,
+): Promise<ApiAssessmentListing[]> {
+  return api<ApiAssessmentListing[]>(`lessons/${lessonId}/assessments`);
 }
 
 /** Fetches a single assessment. Learners get questions without correctAnswer. */

@@ -3,11 +3,20 @@ export interface ApiEnvelope<T> {
   timestamp: string;
 }
 
+/** Policy-gating reason codes the backend attaches to some 403 responses. */
+export type ApiErrorReason =
+  | "TIME_NOT_MET"
+  | "ASSESSMENT_REQUIRED"
+  | "ASSESSMENT_NOT_PASSED"
+  | "LOCKED";
+
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
     public readonly code?: string,
+    public readonly reason?: ApiErrorReason,
+    public readonly remainingSeconds?: number,
   ) {
     super(message);
     this.name = "ApiError";
@@ -99,19 +108,25 @@ export async function api<T>(
 
     let message = `Request failed (${res.status})`;
     let code: string | undefined;
+    let reason: ApiErrorReason | undefined;
+    let remainingSeconds: number | undefined;
     try {
       const body = (await res.json()) as {
         message?: string | string[];
         code?: string;
+        reason?: ApiErrorReason;
+        remainingSeconds?: number;
       };
       message = Array.isArray(body.message)
         ? body.message.join("; ")
         : (body.message ?? message);
       code = body.code;
+      reason = body.reason;
+      remainingSeconds = body.remainingSeconds;
     } catch {
       // non-JSON error body
     }
-    throw new ApiError(message, res.status, code);
+    throw new ApiError(message, res.status, code, reason, remainingSeconds);
   };
 
   try {

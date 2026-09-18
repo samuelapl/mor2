@@ -221,7 +221,18 @@ describe('Wave 2 e2e: assessments → progress → certificates → notification
     expect([403, 400]).toContain(third.status);
 
     // 5. Complete every lesson → course 100% → certificate issues with PDF
+    // Lessons are time-gated (must spend ≥50% of their configured duration
+    // before they can be marked complete) — send heartbeats until satisfied.
     for (const lessonId of lessonIds) {
+      let satisfied = false;
+      for (let i = 0; i < 20 && !satisfied; i++) {
+        const heartbeat = await api<{ satisfied: boolean }>(
+          `/progress/lessons/${lessonId}/time`,
+          { method: 'PATCH', token: learnerToken, body: { secondsDelta: 300 } },
+        );
+        satisfied = heartbeat.data?.satisfied ?? true;
+      }
+
       const done = await api(`/progress/lessons/${lessonId}/complete`, {
         method: 'PATCH',
         token: learnerToken,

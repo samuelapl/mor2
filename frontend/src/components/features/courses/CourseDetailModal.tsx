@@ -272,9 +272,9 @@ export function CourseDetailModal({
     (course.status === "draft" || course.status === "rejected");
   const canSubmit =
     can("course.submit_approval") && (course.status === "draft" || course.status === "rejected");
-  const canRequestChanges = can("course.reject") && course.status === "under_review";
-  const canRejectAction = can("course.reject") && course.status === "under_review";
-  const canApproveAction = can("course.approve") && course.status === "under_review";
+  const canRequestChanges = can("course.approve_reject") && course.status === "under_review";
+  const canRejectAction = can("course.approve_reject") && course.status === "under_review";
+  const canApproveAction = can("course.approve_reject") && course.status === "under_review";
   const canArchiveAction =
     can("course.archive") &&
     course.status !== "archived" &&

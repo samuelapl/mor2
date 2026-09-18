@@ -23,6 +23,7 @@ import {
 } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { NotificationsService } from '@modules/notifications/notifications.service';
+import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
 import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
 
@@ -40,6 +41,7 @@ export class CoursesService {
     private readonly prisma: PrismaService,
     private readonly stateMachine: CourseStateMachine,
     private readonly notificationsService: NotificationsService,
+    private readonly progressService: ProgressService,
   ) {}
 
   private roleSet(user: AuthenticatedUser): Set<string> {
@@ -249,6 +251,10 @@ export class CoursesService {
             l.id,
             ...(l.subLessons ?? []).map((s: any) => s.id),
           ]),
+        );
+        await this.progressService.reconcileModuleCompletions(
+          userId,
+          course.modules.map((m: any) => m.id),
         );
         const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
           this.prisma,

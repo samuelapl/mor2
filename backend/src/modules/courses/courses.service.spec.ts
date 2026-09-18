@@ -11,7 +11,7 @@ describe('CoursesService.visibilityWhere', () => {
   let service: CoursesService;
 
   beforeEach(() => {
-    service = new CoursesService({} as any, new CourseStateMachine(), {} as any);
+    service = new CoursesService({} as any, new CourseStateMachine(), {} as any, {} as any);
   });
 
   function visibilityWhere(user: AuthenticatedUser, status?: CourseStatus) {

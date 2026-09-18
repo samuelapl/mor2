@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpenCheck, Clock, Download, FileText, Loader2, PartyPopper, RotateCcw } from "lucide-react";
-import type { ApiAssessment } from "@/lib/api/types";
+import {
+  BookOpenCheck,
+  Check,
+  Clock,
+  Download,
+  FileText,
+  Loader2,
+  PartyPopper,
+  RotateCcw,
+  X,
+} from "lucide-react";
+import type { ApiAssessment, AssessmentReviewItem } from "@/lib/api/types";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -21,6 +31,10 @@ interface QuizTakerModalProps {
   onClose: () => void;
   courseId: string;
   courseTitle: string;
+  /** When provided, loads this specific (module/lesson/final) assessment instead of the course's first/final one. */
+  assessmentId?: string;
+  /** Called once the learner passes. The parent is responsible for refreshing progress / advancing. */
+  onPassed?: () => void;
 }
 
 interface AttemptInfo {
@@ -28,14 +42,25 @@ interface AttemptInfo {
   attemptNumber: number;
 }
 
-export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTakerModalProps) {
+export function QuizTakerModal({
+  open,
+  onClose,
+  courseId,
+  courseTitle,
+  assessmentId,
+  onPassed,
+}: QuizTakerModalProps) {
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(true);
   const [assessment, setAssessment] = useState<ApiAssessment | null>(null);
   const [attempt, setAttempt] = useState<AttemptInfo | null>(null);
-  const [answers, setAnswers] = useState<Record<string, number | string>>({});
+  // Keyed by question INDEX, not question.id — legacy assessments can contain
+  // duplicate question ids, which previously caused selecting an option on one
+  // question to also select it on another sharing the same id.
+  const [answers, setAnswers] = useState<Record<number, number | string>>({});
   const [result, setResult] = useState<GradedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passedNotified, setPassedNotified] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -47,9 +72,15 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     setAnswers({});
     setResult(null);
     setError(null);
+    setPassedNotified(false);
 
     (async () => {
       try {
+        if (assessmentId) {
+          const detail = await fetchAssessment(assessmentId);
+          if (!cancelled) setAssessment(detail);
+          return;
+        }
         const list = await fetchCourseAssessments(courseId);
         if (cancelled) return;
         if (!list || list.length === 0) {
@@ -70,7 +101,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     return () => {
       cancelled = true;
     };
-  }, [open, courseId]);
+  }, [open, courseId, assessmentId]);
 
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -94,6 +125,14 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     return () => clearInterval(interval);
   }, [attempt, remainingSec, result]);
 
+  // Notify the parent exactly once when a passing result arrives.
+  useEffect(() => {
+    if (result?.passed && !passedNotified) {
+      setPassedNotified(true);
+      onPassed?.();
+    }
+  }, [result, passedNotified, onPassed]);
+
   const start = async () => {
     if (!assessment) return;
     setError(null);
@@ -103,6 +142,7 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
       setAttempt({ attemptId: started.attemptId, attemptNumber: started.attemptNumber });
       setAnswers({});
       setResult(null);
+      setPassedNotified(false);
       setLoading(false);
 
       // Initialize remaining seconds if time limit is set
@@ -124,7 +164,10 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
     setSubmitting(true);
     try {
       const payload: SubmitAnswer[] = Object.entries(answers).map(
-        ([questionId, selectedOption]) => ({ questionId, selectedOption }),
+        ([index, selectedOption]) => ({
+          questionId: assessment.questions[Number(index)].id,
+          selectedOption,
+        }),
       );
       const graded = await submitAttempt(assessment.id, payload);
       setResult(graded);
@@ -142,8 +185,10 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
   };
 
   const answeredCount = Object.keys(answers).length;
-  const ready = (assessment?.questions ?? []).length > 0 &&
-    answeredCount === assessment!.questions.length;
+
+  const reviewByQuestionId = new Map<string, AssessmentReviewItem>(
+    (result?.review ?? []).map((r) => [r.questionId, r]),
+  );
 
   return (
     <WorkspaceDetailOverlay
@@ -208,41 +253,166 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
           </Button>
         </div>
       ) : result ? (
-        <div className="flex flex-col items-center py-8 text-center">
-          <div
-            className={cn(
-              "relative flex h-20 w-20 animate-scale-in items-center justify-center rounded-full font-display text-2xl font-bold shadow-lg",
-              result.passed
-                ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-emerald-500/40"
-                : "bg-gradient-to-br from-red-400 to-rose-500 text-white shadow-red-500/40",
-            )}
-          >
-            {result.passed ? (
-              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-amber-500 shadow-md">
-                <PartyPopper className="h-3.5 w-3.5" />
-              </span>
-            ) : null}
-            {result.score}%
+        (() => {
+          // Hide correct answers (and per-question correctness) while a retry
+          // is still available — otherwise a learner could read off the
+          // correct answers here and simply reuse them on the next attempt.
+          // Once passed, or once attempts are exhausted, the full review
+          // (right/wrong + correct answers) is shown.
+          const canRetry = !result.passed && result.attemptNumber < assessment.maxAttempts;
+          const showCorrectAnswers = !canRetry;
+          return (
+        <div className="space-y-6">
+          <div className="flex flex-col items-center py-4 text-center">
+            <div
+              className={cn(
+                "relative flex h-20 w-20 animate-scale-in items-center justify-center rounded-full font-display text-2xl font-bold shadow-lg",
+                result.passed
+                  ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-emerald-500/40"
+                  : "bg-gradient-to-br from-red-400 to-rose-500 text-white shadow-red-500/40",
+              )}
+            >
+              {result.passed ? (
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-amber-500 shadow-md">
+                  <PartyPopper className="h-3.5 w-3.5" />
+                </span>
+              ) : null}
+              {result.score}%
+            </div>
+            <Badge variant={result.passed ? "green" : "red"} dot className="mt-4">
+              {result.passed
+                ? `Passed! ${result.correctCount}/${result.totalQuestions} correct`
+                : `Not passed · ${result.correctCount}/${result.totalQuestions} correct`}
+            </Badge>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+              {result.passed
+                ? "Congratulations! You passed the quiz. Review your answers below."
+                : `You need at least ${assessment.passingScore}% to continue. Review the answers below and try again.`}
+            </p>
+            {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
+            <div className="mt-6 flex gap-2">
+              {result.passed ? (
+                <Button onClick={onClose}>Continue</Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={() => void start()}>
+                    <RotateCcw className="h-4 w-4" />
+                    Retry
+                  </Button>
+                  <Button variant="ghost" onClick={onClose}>
+                    Close
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          <Badge variant={result.passed ? "green" : "red"} dot className="mt-4">
-            {result.passed
-              ? `Passed! ${result.correctCount}/${result.totalQuestions} correct`
-              : `Not passed · ${result.correctCount}/${result.totalQuestions} correct`}
-          </Badge>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
-            {result.passed
-              ? "Congratulations! You passed the quiz."
-              : "Review the material and try again."}
-          </p>
-          {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
-          <div className="mt-6 flex gap-2">
-            <Button variant="outline" onClick={start}>
-              <RotateCcw className="h-4 w-4" />
-              Retake
-            </Button>
-            <Button onClick={onClose}>Close</Button>
+
+          {/* Per-question review */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Answer Review
+              </h4>
+              {!showCorrectAnswers ? (
+                <span className="text-[11px] text-slate-400">
+                  Correct answers are hidden while a retry is available
+                </span>
+              ) : null}
+            </div>
+            {assessment.questions.map((question, index) => {
+              const review = reviewByQuestionId.get(question.id);
+              const isCorrect = review?.isCorrect ?? false;
+              const isShortAnswer = question.type === "SHORT_ANSWER";
+
+              return (
+                <div
+                  key={question.id}
+                  className={cn(
+                    "rounded-2xl border p-4 shadow-sm",
+                    !showCorrectAnswers
+                      ? "border-slate-200/80 bg-white"
+                      : isCorrect
+                      ? "border-emerald-200 bg-emerald-50/40"
+                      : "border-rose-200 bg-rose-50/40",
+                  )}
+                >
+                  <p className="flex items-start gap-2 text-sm font-semibold text-slate-800">
+                    <span
+                      className={cn(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white shadow-sm",
+                        !showCorrectAnswers ? "bg-slate-400" : isCorrect ? "bg-emerald-500" : "bg-rose-500",
+                      )}
+                    >
+                      {!showCorrectAnswers ? (
+                        index + 1
+                      ) : isCorrect ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                    </span>
+                    {index + 1}. {question.question}
+                  </p>
+
+                  {isShortAnswer ? (
+                    <div className="mt-3 space-y-1.5 pl-8 text-xs">
+                      <p>
+                        <span className="font-semibold text-slate-600">Your answer: </span>
+                        <span className={!showCorrectAnswers ? "text-slate-700" : isCorrect ? "text-emerald-700" : "text-rose-700"}>
+                          {String(review?.selectedOption ?? "—")}
+                        </span>
+                      </p>
+                      {showCorrectAnswers && !isCorrect ? (
+                        <p>
+                          <span className="font-semibold text-slate-600">Correct answer: </span>
+                          <span className="text-emerald-700">{String(review?.correctAnswer ?? "—")}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-1.5 pl-8">
+                      {question.options.map((option, optionIndex) => {
+                        const isSelected = review?.selectedOption === optionIndex;
+                        const isCorrectOption = showCorrectAnswers && review?.correctAnswer === optionIndex;
+                        return (
+                          <div
+                            key={optionIndex}
+                            className={cn(
+                              "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs",
+                              isCorrectOption
+                                ? "border-emerald-300 bg-emerald-100/70 text-emerald-900 font-medium"
+                                : isSelected
+                                ? showCorrectAnswers
+                                  ? "border-rose-300 bg-rose-100/70 text-rose-900"
+                                  : "border-indigo-300 bg-indigo-50 text-indigo-900"
+                                : "border-slate-200 bg-white text-slate-600",
+                            )}
+                          >
+                            {isCorrectOption ? (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                            ) : isSelected && showCorrectAnswers ? (
+                              <X className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                            ) : (
+                              <span className="h-3.5 w-3.5 shrink-0" />
+                            )}
+                            {option}
+                            {isSelected ? (
+                              <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                                Your pick
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
+          );
+        })()
       ) : (
         <div className="space-y-5">
           {/* Active Attempt Timer & Status Banner */}
@@ -332,9 +502,9 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
 
               {question.type === "SHORT_ANSWER" ? (
                 <input
-                  value={typeof answers[question.id] === "string" ? (answers[question.id] as string) : ""}
+                  value={typeof answers[index] === "string" ? (answers[index] as string) : ""}
                   onChange={(event) =>
-                    setAnswers((prev) => ({ ...prev, [question.id]: event.target.value }))
+                    setAnswers((prev) => ({ ...prev, [index]: event.target.value }))
                   }
                   placeholder="Type your answer…"
                   className="mt-3 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
@@ -342,13 +512,13 @@ export function QuizTakerModal({ open, onClose, courseId, courseTitle }: QuizTak
               ) : (
                 <div className="mt-3 space-y-2">
                   {question.options.map((option, optionIndex) => {
-                    const selected = answers[question.id] === optionIndex;
+                    const selected = answers[index] === optionIndex;
                     return (
                       <button
                         key={optionIndex}
                         type="button"
                         onClick={() =>
-                          setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }))
+                          setAnswers((prev) => ({ ...prev, [index]: optionIndex }))
                         }
                         className={cn(
                           "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150",

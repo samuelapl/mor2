@@ -16,6 +16,7 @@ import {
   Presentation,
   ScrollText,
   Settings,
+  SlidersHorizontal,
   ShieldCheck,
   Store,
   UploadCloud,
@@ -108,7 +109,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: "Pending Course Approvals",
       href: "/system-admin/pending-course-approvals",
       icon: Hourglass,
-      permission: ["course.approve", "course.reject"],
+      permission: "course.approve_reject",
     },
     {
       label: "Certificate Templates",
@@ -121,6 +122,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: "/system-admin/roles",
       icon: Lock,
       permission: ["role.manage", "permission.manage"],
+    },
+    {
+      label: "Policies",
+      href: "/system-admin/policies",
+      icon: SlidersHorizontal,
+      permission: "course_policy.manage",
     },
     { label: "System Settings", href: "/system-admin/settings", icon: Settings },
     { label: "Audit Logs", href: "/system-admin/audit-logs", icon: ScrollText, permission: "audit.view" },
@@ -136,6 +143,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
 export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/system-admin/users": ["user.manage", "user.view"],
   "/system-admin/roles": ["role.manage", "permission.manage"],
+  "/system-admin/policies": ["course_policy.manage"],
   "/courses": ["course.view.own", "course.view.all", "course.view.assigned", "course.create"],
 };
 
@@ -156,6 +164,12 @@ const CROSS_ROLE_ADMIN_ITEMS: NavItem[] = [
     href: "/system-admin/roles",
     icon: Lock,
     permission: PERMISSION_GATED_PATHS["/system-admin/roles"],
+  },
+  {
+    label: "Policies",
+    href: "/system-admin/policies",
+    icon: SlidersHorizontal,
+    permission: PERMISSION_GATED_PATHS["/system-admin/policies"],
   },
 ];
 

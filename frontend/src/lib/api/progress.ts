@@ -24,6 +24,23 @@ export async function markLessonComplete(
   return api<unknown>(`progress/lessons/${lessonId}/complete`, { method: "PATCH", body });
 }
 
+export interface LessonTimeResult {
+  lessonId: string;
+  timeSpentSeconds: number;
+  requiredSeconds: number;
+  satisfied: boolean;
+}
+
+export async function addLessonTime(
+  lessonId: string,
+  secondsDelta: number,
+): Promise<LessonTimeResult> {
+  return api<LessonTimeResult>(`progress/lessons/${lessonId}/time`, {
+    method: "PATCH",
+    body: { secondsDelta },
+  });
+}
+
 export async function fetchLessonProgress(lessonId: string): Promise<unknown> {
   return api<unknown>(`progress/lessons/${lessonId}`);
 }

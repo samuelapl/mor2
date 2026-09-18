@@ -18,8 +18,8 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 export function PendingCourseApprovals() {
   const { courses, userName, approveCourse, rejectCourse, requestChangesCourse } = useLms();
   const { can } = usePermissions();
-  const canApprove = can("course.approve");
-  const canReject = can("course.reject");
+  const canApprove = can("course.approve_reject");
+  const canReject = can("course.approve_reject");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [requestChangesId, setRequestChangesId] = useState<string | null>(null);

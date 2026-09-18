@@ -26,6 +26,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let errorType = 'InternalServerError';
+    let extra: Record<string, unknown> | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -37,6 +38,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const exObj = exResponse as Record<string, unknown>;
         message = (exObj.message as string | string[]) || message;
         errorType = (exObj.error as string) || errorType;
+        // Forward any extra structured fields (e.g. `reason`, `remainingSeconds`
+        // on policy-gating exceptions) so callers can branch on them.
+        const { message: _m, error: _e, statusCode: _s, ...rest } = exObj;
+        if (Object.keys(rest).length > 0) extra = rest;
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -53,6 +58,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       locale,
       path: request.url,
       timestamp: new Date().toISOString(),
+      ...extra,
     });
   }
 }

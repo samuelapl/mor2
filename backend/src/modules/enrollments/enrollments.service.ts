@@ -35,32 +35,45 @@ export class EnrollmentsService {
       },
     });
 
-    if (existing && existing.status === EnrollmentStatus.ACTIVE) {
+    if (existing?.status === EnrollmentStatus.ACTIVE) {
       throw new BadRequestException('Already enrolled in this course');
     }
 
-    if (existing && existing.status === EnrollmentStatus.DROPPED) {
-      // Re-enroll
-      await this.prisma.enrollment.update({
-        where: { id: existing.id },
-        data: { status: EnrollmentStatus.ACTIVE, droppedAt: null, droppedReason: null },
-      });
-      await this.notifyEnrollment(userId, dto.courseId, course.titleEn || course.titleAm, true);
-      return this.prisma.enrollment.findUnique({ where: { id: existing.id } });
+    if (existing?.status === EnrollmentStatus.COMPLETED) {
+      throw new BadRequestException('You have already completed this course');
     }
 
-    const enrollment = await this.prisma.enrollment.create({
-      data: {
-        userId,
-        courseId: dto.courseId,
-        status: EnrollmentStatus.ACTIVE,
-      },
-      include: { course: true },
-    });
+    try {
+      // `upsert` (re)activates an existing DROPPED row or creates a new one
+      // atomically — a plain findUnique-then-create here raced two concurrent
+      // enroll requests (or missed the COMPLETED case above) straight into
+      // the (user_id, course_id) unique constraint.
+      const enrollment = await this.prisma.enrollment.upsert({
+        where: { userId_courseId: { userId, courseId: dto.courseId } },
+        update: {
+          status: EnrollmentStatus.ACTIVE,
+          droppedAt: null,
+          droppedReason: null,
+          droppedBy: null,
+        },
+        create: {
+          userId,
+          courseId: dto.courseId,
+          status: EnrollmentStatus.ACTIVE,
+        },
+        include: { course: true },
+      });
 
-    await this.notifyEnrollment(userId, dto.courseId, course.titleEn || course.titleAm, false);
+      await this.notifyEnrollment(userId, dto.courseId, course.titleEn || course.titleAm, !!existing);
 
-    return enrollment;
+      return enrollment;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        // Lost a race with a concurrent enroll request for the same course.
+        throw new BadRequestException('Already enrolled in this course');
+      }
+      throw err;
+    }
   }
 
   async findAll(query: PaginationQuery & { status?: EnrollmentStatus }) {

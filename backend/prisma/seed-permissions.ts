@@ -34,8 +34,7 @@ export const PERMISSIONS: PermissionDef[] = [
   { code: 'course.view.assigned', resource: 'course', action: 'view', scope: 'OWN', description: 'View courses assigned to me (trainers)' },
   { code: 'course.browse', resource: 'course', action: 'browse', scope: 'ALL', description: 'Browse published catalog' },
   { code: 'course.submit_approval', resource: 'course', action: 'submit_approval', scope: 'ALL', description: 'Request approval' },
-  { code: 'course.approve', resource: 'course', action: 'approve', scope: 'ALL', description: 'Approve course' },
-  { code: 'course.reject', resource: 'course', action: 'reject', scope: 'ALL', description: 'Reject course' },
+  { code: 'course.approve_reject', resource: 'course', action: 'approve_reject', scope: 'ALL', description: 'Approve or reject a course under review' },
   { code: 'course.publish', resource: 'course', action: 'publish', scope: 'ALL', description: 'Publish course' },
   { code: 'course.unpublish', resource: 'course', action: 'unpublish', scope: 'ALL', description: 'Unpublish course' },
   { code: 'course.archive', resource: 'course', action: 'archive', scope: 'ALL', description: 'Archive course (Owner: DRAFT only, enforced in service layer)' },
@@ -82,6 +81,9 @@ export const PERMISSIONS: PermissionDef[] = [
   { code: 'permission.manage', resource: 'permission', action: 'manage', scope: 'ALL', description: 'Edit permission matrix' },
   { code: 'dashboard.stats', resource: 'dashboard', action: 'stats', scope: 'ALL', description: 'View admin dashboard stats' },
   { code: 'audit.view', resource: 'audit', action: 'view', scope: 'ALL', description: 'View audit logs' },
+
+  // Course policy (time-spent %, retake cooldown)
+  { code: 'course_policy.manage', resource: 'course_policy', action: 'manage', scope: 'ALL', description: 'Manage course completion policy (time-spent %, retake cooldown)' },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).
@@ -105,7 +107,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'live_session.manage',
     'progress.view',
   ],
-  [RoleName.CONTENT_APPROVER]: ['course.view.all', 'course.approve', 'course.reject'],
+  [RoleName.CONTENT_APPROVER]: ['course.view.all', 'course.approve_reject'],
   [RoleName.TRAINING_ADMIN]: [
     'course.create',
     'course.update.all',
@@ -130,6 +132,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'progress.view',
     'user.view',
     'dashboard.stats',
+    'course_policy.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',
@@ -208,6 +211,14 @@ export async function seedPermissions(prisma: PrismaClient) {
   const viewAllPermissionId = permissionIdByCode.get('course.view.all')!;
   await prisma.rolePermission.deleteMany({
     where: { roleId: trainerRoleId, permissionId: viewAllPermissionId },
+  });
+
+  // 'course.approve' + 'course.reject' were merged into a single
+  // 'course.approve_reject' permission (the /courses/:id/review endpoint
+  // always granted either one interchangeably). Delete the old rows —
+  // cascades to their role_permissions grants.
+  await prisma.permission.deleteMany({
+    where: { code: { in: ['course.approve', 'course.reject'] } },
   });
 
   console.log('  ✓ Permission registry + matrix seeded');

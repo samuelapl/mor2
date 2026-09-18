@@ -309,6 +309,25 @@ export interface ApiAssessmentListing {
 /*  Progress                                                                   */
 /* -------------------------------------------------------------------------- */
 
+export interface ApiAttachedAssessment {
+  id: string;
+  titleEn: string;
+  titleAm: string;
+  passingScore: number;
+  passed: boolean;
+}
+
+export interface AssessmentReviewItem {
+  questionId: string;
+  type?: string;
+  question?: string;
+  options?: string[];
+  imageUrl?: string | null;
+  selectedOption?: number | string;
+  correctAnswer?: number | string;
+  isCorrect: boolean;
+}
+
 export interface ApiProgressLesson {
   lessonId: string;
   titleEn: string;
@@ -317,6 +336,26 @@ export interface ApiProgressLesson {
   completed: boolean;
   unlocked?: boolean;
   lastPosition: number;
+  durationMinutes?: number | null;
+  timeSpentSeconds: number;
+  requiredSeconds: number;
+  timeSatisfied: boolean;
+  assessment?: ApiAttachedAssessment | null;
+  subLessons?: ApiProgressSubLesson[];
+}
+
+export interface ApiProgressSubLesson {
+  lessonId: string;
+  titleEn: string;
+  titleAm: string;
+  order: number;
+  completed: boolean;
+  unlocked?: boolean;
+  durationMinutes?: number | null;
+  timeSpentSeconds: number;
+  requiredSeconds: number;
+  timeSatisfied: boolean;
+  assessment?: ApiAttachedAssessment | null;
 }
 
 export interface ApiProgressModule {
@@ -330,7 +369,20 @@ export interface ApiProgressModule {
   unlockedLessons?: number;
   moduleCompleted: boolean;
   progressPercent: number;
+  durationMinutes?: number | null;
+  timeSpentSeconds: number;
+  requiredSeconds: number;
+  timeSatisfied: boolean;
+  assessment?: ApiAttachedAssessment | null;
   lessons: ApiProgressLesson[];
+}
+
+export interface ApiCourseCompletion {
+  contentCompleted: boolean;
+  finalAssessmentRequired: boolean;
+  finalAssessmentPassed: boolean;
+  certificateEligible: boolean;
+  finalAssessment: ApiAttachedAssessment | null;
 }
 
 export interface ApiCourseProgress {
@@ -343,6 +395,7 @@ export interface ApiCourseProgress {
     overallPercent: number;
   };
   modules: ApiProgressModule[];
+  courseCompletion: ApiCourseCompletion;
 }
 
 export interface ApiLearnerProgress {

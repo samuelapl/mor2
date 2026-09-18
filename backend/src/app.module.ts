@@ -22,6 +22,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './modules/mail/mail.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { PolicyModule } from './modules/policy/policy.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards';
 import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
@@ -52,6 +53,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     HealthModule,
     MailModule,
     PermissionsModule,
+    PolicyModule,
   ],
   providers: [
     PrismaService,

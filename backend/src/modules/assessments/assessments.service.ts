@@ -12,8 +12,9 @@ import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
-import { computeResult, gradeAnswers, GradableQuestion } from './grading.util';
-import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils';
+import { ProgressService } from '@modules/progress/progress.service';
+import { PolicyService } from '@modules/policy/policy.service';
+import { computeResult, gradeAnswers, GradableQuestion, GradedAnswer } from './grading.util';
 
 const STAFF_ROLES = [
   RoleName.SYSTEM_ADMIN,
@@ -36,7 +37,46 @@ export class AssessmentsService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly certificatesService: CertificatesService,
+    private readonly progressService: ProgressService,
+    private readonly policyService: PolicyService,
   ) {}
+
+  /**
+   * Throws when the max-attempts ceiling is hit AND (the retake-cooldown
+   * policy is off, or the cooldown since the last submitted attempt hasn't
+   * elapsed yet). A configured cooldown > 0 lets a learner retake the
+   * assessment once enough time has passed, instead of being locked out
+   * forever.
+   */
+  private async assertRetakeAllowed(assessmentId: string, userId: string, maxAttempts: number) {
+    const submittedCount = await this.prisma.assessmentAttempt.count({
+      where: { assessmentId, userId, submittedAt: { not: null } },
+    });
+    if (submittedCount < maxAttempts) return;
+
+    const cooldownMinutes = await this.policyService.getRetakeCooldownMinutes();
+    if (cooldownMinutes <= 0) {
+      throw new ForbiddenException('Maximum attempts reached for this assessment');
+    }
+
+    const lastAttempt = await this.prisma.assessmentAttempt.findFirst({
+      where: { assessmentId, userId, submittedAt: { not: null } },
+      orderBy: { submittedAt: 'desc' },
+    });
+    const elapsedMinutes = lastAttempt?.submittedAt
+      ? (Date.now() - new Date(lastAttempt.submittedAt).getTime()) / 60000
+      : Infinity;
+
+    if (elapsedMinutes < cooldownMinutes) {
+      const remainingMinutes = Math.ceil(cooldownMinutes - elapsedMinutes);
+      throw new ForbiddenException({
+        reason: 'RETAKE_COOLDOWN',
+        message: `Maximum attempts reached. You can retake this assessment in ${remainingMinutes} minute(s).`,
+        remainingMinutes,
+      });
+    }
+    // Cooldown elapsed — fall through and allow a new attempt.
+  }
 
   private stripAnswers(assessment: { questions: Prisma.JsonValue | null; [key: string]: unknown }) {
     if (!assessment.questions) return assessment;
@@ -104,10 +144,22 @@ export class AssessmentsService {
   /*  Creation & editing                                                 */
   /* ------------------------------------------------------------------ */
 
+  /** Duplicate question ids break per-question answer independence on the client. */
+  private assertUniqueQuestionIds(questions: CreateAssessmentDto['questions']) {
+    const seen = new Set<string>();
+    for (const q of questions) {
+      if (seen.has(q.id)) {
+        throw new ForbiddenException(`Duplicate question id "${q.id}" — question ids must be unique`);
+      }
+      seen.add(q.id);
+    }
+  }
+
   private dataFor(
     dto: CreateAssessmentDto,
     overrides: Partial<Prisma.AssessmentUncheckedCreateInput>,
   ): Prisma.AssessmentUncheckedCreateInput {
+    this.assertUniqueQuestionIds(dto.questions);
     return {
       titleAm: dto.titleAm,
       titleEn: dto.titleEn,
@@ -282,33 +334,9 @@ export class AssessmentsService {
     },
     userId: string,
   ) {
-    const modules = await this.prisma.curriculumModule.findMany({
-      where: { courseId: assessment.courseId, deletedAt: null },
-      orderBy: { order: 'asc' },
-      include: {
-        lessons: {
-          where: { deletedAt: null, parentId: null },
-          orderBy: { order: 'asc' },
-          include: {
-            subLessons: { where: { deletedAt: null }, orderBy: { order: 'asc' } },
-          },
-        },
-      },
-    });
-
-    const allLessonIds = modules.flatMap((m) =>
-      m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
-    );
-    const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-      this.prisma,
+    const { moduleUnlocked, lessonUnlocked } = await this.progressService.getUnlockState(
       userId,
-      modules.map((m) => m.id),
-      allLessonIds,
-    );
-    const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
-      modules,
-      moduleCompletions,
-      lessonCompletions,
+      assessment.courseId,
     );
 
     if (assessment.type === AssessmentType.MODULE_ASSESSMENT && assessment.moduleId) {
@@ -366,14 +394,7 @@ export class AssessmentsService {
         if (elapsedSec > limitSec) {
           // Time expired! Server-side auto-submission of pending attempt
           await this.submit(assessmentId, userId, { answers: (pending.answers as any) || {} });
-          const submittedCount = await this.prisma.assessmentAttempt.count({
-            where: { assessmentId, userId, submittedAt: { not: null } },
-          });
-          if (submittedCount >= assessment.maxAttempts) {
-            throw new ForbiddenException(
-              'Time limit expired and maximum attempts reached for this assessment',
-            );
-          }
+          await this.assertRetakeAllowed(assessmentId, userId, assessment.maxAttempts);
         } else {
           return {
             attemptId: pending.id,
@@ -392,13 +413,10 @@ export class AssessmentsService {
       }
     }
 
+    await this.assertRetakeAllowed(assessmentId, userId, assessment.maxAttempts);
     const submittedCount = await this.prisma.assessmentAttempt.count({
       where: { assessmentId, userId, submittedAt: { not: null } },
     });
-
-    if (submittedCount >= assessment.maxAttempts) {
-      throw new ForbiddenException('Maximum attempts reached for this assessment');
-    }
 
     const attempt = await this.prisma.assessmentAttempt.create({
       data: {
@@ -419,14 +437,6 @@ export class AssessmentsService {
       timeLimitMinutes: assessment.timeLimitMinutes,
       remainingSeconds: assessment.timeLimitMinutes ? assessment.timeLimitMinutes * 60 : undefined,
     };
-  }
-
-  private async completeModuleOnSubmission(userId: string, moduleId: string) {
-    await this.prisma.moduleCompletion.upsert({
-      where: { userId_moduleId: { userId, moduleId } },
-      update: { completed: true, completedAt: new Date() },
-      create: { userId, moduleId, completed: true, completedAt: new Date() },
-    });
   }
 
   private async completeLessonOnSubmission(userId: string, lessonId: string, moduleId: string) {
@@ -476,7 +486,11 @@ export class AssessmentsService {
       }
     }
 
-    await this.completeModuleOnSubmission(userId, moduleId);
+    // The module completion / certificate cascade is the single shared
+    // implementation on ProgressService — it re-checks the module's own
+    // time and (if present) module-assessment policy rather than
+    // unconditionally marking the module complete.
+    await this.progressService.maybeCompleteModule(userId, moduleId);
   }
 
   async submit(assessmentId: string, userId: string, dto: SubmitAssessmentDto) {
@@ -491,12 +505,7 @@ export class AssessmentsService {
     });
 
     if (!pending) {
-      const submittedCount = await this.prisma.assessmentAttempt.count({
-        where: { assessmentId, userId, submittedAt: { not: null } },
-      });
-      if (submittedCount >= assessment.maxAttempts) {
-        throw new ForbiddenException('Maximum attempts reached for this assessment');
-      }
+      await this.assertRetakeAllowed(assessmentId, userId, assessment.maxAttempts);
     }
 
     const gradedAnswers = gradeAnswers(questions, dto.answers);
@@ -566,12 +575,13 @@ export class AssessmentsService {
       // notification failure is non-fatal
     }
 
-    // Non-final assessments are knowledge checks: simply submitting them unlocks
-    // the next content (no pass required). Completion is recorded regardless of score.
-    if (!isFinal) {
+    // Non-final assessments gate content progression: only a PASS completes
+    // the lesson/module. A fail leaves the item locked so the learner must
+    // review and retry.
+    if (!isFinal && passed) {
       try {
         if (assessment.type === AssessmentType.MODULE_ASSESSMENT && assessment.moduleId) {
-          await this.completeModuleOnSubmission(userId, assessment.moduleId);
+          await this.progressService.maybeCompleteModule(userId, assessment.moduleId);
         }
         if (
           (assessment.type === AssessmentType.LESSON_ASSESSMENT ||
@@ -586,34 +596,22 @@ export class AssessmentsService {
       }
     }
 
-    // Final assessment drives course completion + certificate (pass required)
+    // Final assessment drives course completion + certificate (pass required).
+    // `maybeCompleteCourse` re-checks that all lessons are complete and the
+    // final assessment is passed before marking the enrollment COMPLETED and
+    // issuing the certificate.
     if (isFinal && passed) {
       try {
-        const modules = await this.prisma.curriculumModule.findMany({
-          where: { courseId: assessmentCourseId, deletedAt: null },
-          select: { lessons: { where: { deletedAt: null }, select: { id: true } } },
-        });
-        const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
-        const completedLessons = await this.prisma.lessonCompletion.count({
-          where: { userId, lessonId: { in: lessonIds }, completed: true },
-        });
-
-        if (completedLessons === lessonIds.length) {
-          await this.prisma.enrollment.updateMany({
-            where: {
-              userId,
-              courseId: assessmentCourseId,
-              status: { not: EnrollmentStatus.DROPPED },
-            },
-            data: { status: EnrollmentStatus.COMPLETED, completedAt: now },
-          });
-        }
-
-        await this.certificatesService.maybeIssueForCompletion(userId, assessmentCourseId);
+        await this.progressService.maybeCompleteCourse(userId, assessmentCourseId);
       } catch {
         // completion/certificate issuance is non-fatal
       }
     }
+
+    const review = this.buildReview(
+      questions as unknown as Array<Record<string, any>>,
+      gradedAnswers,
+    );
 
     return {
       attemptId: attempt.id,
@@ -622,7 +620,37 @@ export class AssessmentsService {
       passed,
       correctCount,
       totalQuestions: questions.length,
+      review,
     };
+  }
+
+  private buildReview(
+    questions: Array<Record<string, any>>,
+    graded: GradedAnswer[],
+  ): Array<{
+    questionId: string;
+    type?: string;
+    question?: string;
+    options?: string[];
+    imageUrl?: string | null;
+    selectedOption?: number | string;
+    correctAnswer?: number | string;
+    isCorrect: boolean;
+  }> {
+    const byId = new Map(graded.map((g) => [g.questionId, g]));
+    return questions.map((q) => {
+      const g = byId.get(q.id);
+      return {
+        questionId: q.id,
+        type: q.type,
+        question: q.question,
+        options: q.options,
+        imageUrl: q.imageUrl ?? null,
+        selectedOption: g?.selectedOption,
+        correctAnswer: q.correctAnswer,
+        isCorrect: g?.isCorrect ?? false,
+      };
+    });
   }
 
   async gradingSummary(assessmentId: string) {

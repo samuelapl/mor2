@@ -1,10 +1,25 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { EnrollmentStatus } from '@prisma/client';
+import { AssessmentType, EnrollmentStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils';
+import {
+  computeSequentialUnlocks,
+  isTimeSatisfied,
+  loadUserCompletionState,
+  requiredSeconds,
+  sumLessonTime,
+} from '@common/utils';
 import { MarkLessonCompleteDto } from './dto';
 import { EnrollmentsService } from '@modules/enrollments/enrollments.service';
 import { CertificatesService } from '@modules/certificates/certificates.service';
+import { PolicyService } from '@modules/policy/policy.service';
+
+export interface AttachedAssessmentInfo {
+  id: string;
+  titleEn: string;
+  titleAm: string;
+  passingScore: number;
+  passed: boolean;
+}
 
 @Injectable()
 export class ProgressService {
@@ -12,9 +27,11 @@ export class ProgressService {
     private readonly prisma: PrismaService,
     private readonly enrollmentsService: EnrollmentsService,
     private readonly certificatesService: CertificatesService,
+    private readonly policyService: PolicyService,
   ) {}
 
   async getCourseProgress(userId: string, courseId: string) {
+    const ratio = await this.policyService.getTimeRatio();
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       orderBy: { order: 'asc' },
@@ -46,6 +63,14 @@ export class ProgressService {
       },
     });
 
+    // Bring `ModuleCompletion` rows up to date (lesson completions, time
+    // policy, and module assessment) before it is used as the source of
+    // truth for sequential unlocking.
+    await this.reconcileModuleCompletions(
+      userId,
+      modules.map((m) => m.id),
+    );
+
     const allLessonIds = modules.flatMap((m) =>
       m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
     );
@@ -60,6 +85,38 @@ export class ProgressService {
       moduleCompletions,
       lessonCompletions,
     );
+
+    // Load every assessment attached to this course (module / lesson /
+    // sub-lesson / final) along with whether the learner has passed it.
+    const assessments = await this.prisma.assessment.findMany({
+      where: { courseId },
+      include: {
+        attempts: { where: { userId, passed: true }, take: 1 },
+      },
+    });
+    const toAssessmentInfo = (a: (typeof assessments)[number]): AttachedAssessmentInfo => ({
+      id: a.id,
+      titleEn: a.titleEn,
+      titleAm: a.titleAm,
+      passingScore: a.passingScore,
+      passed: a.attempts.length > 0,
+    });
+    const moduleAssessmentByModuleId = new Map<string, AttachedAssessmentInfo>();
+    const lessonAssessmentByLessonId = new Map<string, AttachedAssessmentInfo>();
+    let finalAssessment: AttachedAssessmentInfo | null = null;
+    for (const a of assessments) {
+      if (a.type === AssessmentType.MODULE_ASSESSMENT && a.moduleId) {
+        moduleAssessmentByModuleId.set(a.moduleId, toAssessmentInfo(a));
+      } else if (
+        (a.type === AssessmentType.LESSON_ASSESSMENT ||
+          a.type === AssessmentType.SUB_LESSON_ASSESSMENT) &&
+        a.lessonId
+      ) {
+        lessonAssessmentByLessonId.set(a.lessonId, toAssessmentInfo(a));
+      } else if (a.type === AssessmentType.FINAL_ASSESSMENT) {
+        finalAssessment = toAssessmentInfo(a);
+      }
+    }
 
     let totalLessons = 0;
     let completedLessons = 0;
@@ -87,6 +144,15 @@ export class ProgressService {
       completedLessons += completedInModule;
       unlockedLessons += unlockedInModule;
 
+      const moduleTimeSpent = sumLessonTime(
+        module.lessons.flatMap((l) => [
+          { timeSpentSeconds: l.completions[0]?.timeSpentSeconds ?? 0 },
+          ...(l.subLessons ?? []).map((s) => ({
+            timeSpentSeconds: s.completions[0]?.timeSpentSeconds ?? 0,
+          })),
+        ]),
+      );
+
       return {
         moduleId: module.id,
         titleEn: module.titleEn,
@@ -99,25 +165,50 @@ export class ProgressService {
         moduleCompleted: module.completions[0]?.completed ?? false,
         progressPercent:
           lessonsInModule > 0 ? Math.round((completedInModule / lessonsInModule) * 100) : 0,
-        lessons: module.lessons.map((lesson) => ({
-          lessonId: lesson.id,
-          titleEn: lesson.titleEn,
-          titleAm: lesson.titleAm,
-          order: lesson.order,
-          unlocked: lessonUnlocked.get(lesson.id) ?? false,
-          completed: lesson.completions[0]?.completed ?? false,
-          lastPosition: lesson.completions[0]?.lastPosition ?? 0,
-          subLessons: (lesson.subLessons ?? []).map((sub) => ({
-            lessonId: sub.id,
-            titleEn: sub.titleEn,
-            titleAm: sub.titleAm,
-            order: sub.order,
-            unlocked: lessonUnlocked.get(sub.id) ?? false,
-            completed: sub.completions[0]?.completed ?? false,
-          })),
-        })),
+        durationMinutes: module.durationMinutes,
+        timeSpentSeconds: moduleTimeSpent,
+        requiredSeconds: requiredSeconds(module.durationMinutes, ratio),
+        timeSatisfied: isTimeSatisfied(moduleTimeSpent, module.durationMinutes, ratio),
+        assessment: moduleAssessmentByModuleId.get(module.id) ?? null,
+        lessons: module.lessons.map((lesson) => {
+          const timeSpentSeconds = lesson.completions[0]?.timeSpentSeconds ?? 0;
+          return {
+            lessonId: lesson.id,
+            titleEn: lesson.titleEn,
+            titleAm: lesson.titleAm,
+            order: lesson.order,
+            unlocked: lessonUnlocked.get(lesson.id) ?? false,
+            completed: lesson.completions[0]?.completed ?? false,
+            lastPosition: lesson.completions[0]?.lastPosition ?? 0,
+            durationMinutes: lesson.durationMinutes,
+            timeSpentSeconds,
+            requiredSeconds: requiredSeconds(lesson.durationMinutes, ratio),
+            timeSatisfied: isTimeSatisfied(timeSpentSeconds, lesson.durationMinutes, ratio),
+            assessment: lessonAssessmentByLessonId.get(lesson.id) ?? null,
+            subLessons: (lesson.subLessons ?? []).map((sub) => {
+              const subTimeSpentSeconds = sub.completions[0]?.timeSpentSeconds ?? 0;
+              return {
+                lessonId: sub.id,
+                titleEn: sub.titleEn,
+                titleAm: sub.titleAm,
+                order: sub.order,
+                unlocked: lessonUnlocked.get(sub.id) ?? false,
+                completed: sub.completions[0]?.completed ?? false,
+                durationMinutes: sub.durationMinutes,
+                timeSpentSeconds: subTimeSpentSeconds,
+                requiredSeconds: requiredSeconds(sub.durationMinutes, ratio),
+                timeSatisfied: isTimeSatisfied(subTimeSpentSeconds, sub.durationMinutes, ratio),
+                assessment: lessonAssessmentByLessonId.get(sub.id) ?? null,
+              };
+            }),
+          };
+        }),
       };
     });
+
+    const contentCompleted = totalLessons > 0 && completedLessons === totalLessons;
+    const finalAssessmentRequired = finalAssessment !== null;
+    const finalAssessmentPassed = finalAssessment?.passed ?? false;
 
     return {
       courseId,
@@ -129,58 +220,186 @@ export class ProgressService {
         overallPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
       },
       modules: moduleProgress,
+      courseCompletion: {
+        contentCompleted,
+        finalAssessmentRequired,
+        finalAssessmentPassed,
+        certificateEligible:
+          contentCompleted && (!finalAssessmentRequired || finalAssessmentPassed),
+        finalAssessment,
+      },
+    };
+  }
+
+  /**
+   * Runs `maybeCompleteModule` for every module so `ModuleCompletion` rows
+   * reflect the current lesson/time/assessment state before they are used
+   * as the source of truth for sequential unlocking.
+   */
+  async reconcileModuleCompletions(userId: string, moduleIds: string[]) {
+    for (const moduleId of moduleIds) {
+      await this.maybeCompleteModule(userId, moduleId);
+    }
+  }
+
+  private async loadUnlockContext(userId: string, courseId: string) {
+    const modules = await this.prisma.curriculumModule.findMany({
+      where: { courseId, deletedAt: null },
+      orderBy: { order: 'asc' },
+      include: {
+        lessons: {
+          where: { deletedAt: null, parentId: null },
+          orderBy: { order: 'asc' },
+          include: {
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
+      },
+    });
+
+    await this.reconcileModuleCompletions(
+      userId,
+      modules.map((m) => m.id),
+    );
+
+    const allLessonIds = modules.flatMap((m) =>
+      m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
+    );
+    const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
+      this.prisma,
+      userId,
+      modules.map((m) => m.id),
+      allLessonIds,
+    );
+    return computeSequentialUnlocks(modules, moduleCompletions, lessonCompletions);
+  }
+
+  private async assertLessonUnlocked(
+    userId: string,
+    lesson: { id: string; moduleId: string; module: { courseId: string } },
+  ) {
+    const { lessonUnlocked } = await this.loadUnlockContext(userId, lesson.module.courseId);
+    if (!(lessonUnlocked.get(lesson.id) ?? false)) {
+      throw new ForbiddenException({
+        reason: 'LOCKED',
+        message: 'This lesson is still locked. Complete the preceding lessons first.',
+      });
+    }
+  }
+
+  /** Public: used by AssessmentsService to gate module/lesson assessment access. */
+  async getUnlockState(userId: string, courseId: string) {
+    return this.loadUnlockContext(userId, courseId);
+  }
+
+  private async assertLessonPolicySatisfied(
+    userId: string,
+    lesson: {
+      id: string;
+      durationMinutes: number | null;
+      subLessons?: Array<{ id: string; durationMinutes: number | null }>;
+    },
+  ) {
+    const ratio = await this.policyService.getTimeRatio();
+    const subLessons = lesson.subLessons ?? [];
+    const targetIds = [lesson.id, ...subLessons.map((s) => s.id)];
+
+    const rows = await this.prisma.lessonCompletion.findMany({
+      where: { userId, lessonId: { in: targetIds } },
+      select: { timeSpentSeconds: true },
+    });
+    const spent = sumLessonTime(rows);
+    const required = lesson.durationMinutes
+      ? requiredSeconds(lesson.durationMinutes, ratio)
+      : subLessons.reduce((sum, s) => sum + requiredSeconds(s.durationMinutes, ratio), 0);
+
+    if (spent < required) {
+      throw new ForbiddenException({
+        reason: 'TIME_NOT_MET',
+        message: 'Please spend more time on this activity before continuing.',
+        remainingSeconds: required - spent,
+      });
+    }
+
+    const assessments = await this.prisma.assessment.findMany({
+      where: {
+        lessonId: { in: targetIds },
+        type: { in: [AssessmentType.LESSON_ASSESSMENT, AssessmentType.SUB_LESSON_ASSESSMENT] },
+      },
+      select: { id: true },
+    });
+
+    for (const assessment of assessments) {
+      const passed = await this.prisma.assessmentAttempt.findFirst({
+        where: { assessmentId: assessment.id, userId, passed: true },
+      });
+      if (!passed) {
+        throw new ForbiddenException({
+          reason: 'ASSESSMENT_NOT_PASSED',
+          message: 'You must pass the assessment for this activity before continuing.',
+        });
+      }
+    }
+  }
+
+  async addLessonTime(userId: string, lessonId: string, secondsDelta: number) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { module: true },
+    });
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    await this.assertLessonUnlocked(userId, lesson);
+
+    const cappedDelta = Math.min(Math.max(secondsDelta, 0), 300);
+
+    const completion = await this.prisma.lessonCompletion.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      update: {
+        timeSpentSeconds: { increment: cappedDelta },
+        lastAccessed: new Date(),
+      },
+      create: {
+        userId,
+        lessonId,
+        timeSpentSeconds: cappedDelta,
+        lastAccessed: new Date(),
+      },
+    });
+
+    const ratio = await this.policyService.getTimeRatio();
+    return {
+      lessonId,
+      timeSpentSeconds: completion.timeSpentSeconds,
+      requiredSeconds: requiredSeconds(lesson.durationMinutes, ratio),
+      satisfied: isTimeSatisfied(completion.timeSpentSeconds, lesson.durationMinutes, ratio),
     };
   }
 
   async markLessonComplete(userId: string, lessonId: string, dto: MarkLessonCompleteDto) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
-      include: { module: true },
+      include: {
+        module: true,
+        subLessons: { where: { deletedAt: null } },
+      },
     });
 
     if (!lesson) {
       throw new NotFoundException('Lesson not found');
     }
 
-    // Sequential-unlock enforcement: a lesson can only be completed when it is
-    // actually unlocked (previous module + previous lessons done).
+    // Sequential-unlock + time + assessment policy enforcement: a lesson can
+    // only be completed when unlocked, enough time has been spent on it, and
+    // any lesson/sub-lesson assessment attached to it has been passed.
     if (dto.completed) {
-      const modules = await this.prisma.curriculumModule.findMany({
-        where: { courseId: lesson.module.courseId, deletedAt: null },
-        orderBy: { order: 'asc' },
-        include: {
-          lessons: {
-            where: { deletedAt: null, parentId: null },
-            orderBy: { order: 'asc' },
-            include: {
-              subLessons: {
-                where: { deletedAt: null },
-                orderBy: { order: 'asc' },
-              },
-            },
-          },
-        },
-      });
-
-      const allLessonIds = modules.flatMap((m) =>
-        m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
-      );
-      const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-        this.prisma,
-        userId,
-        modules.map((m) => m.id),
-        allLessonIds,
-      );
-      const { lessonUnlocked } = computeSequentialUnlocks(
-        modules,
-        moduleCompletions,
-        lessonCompletions,
-      );
-      if (!(lessonUnlocked.get(lessonId) ?? false)) {
-        throw new ForbiddenException(
-          'This lesson is still locked. Complete the preceding lessons first.',
-        );
-      }
+      await this.assertLessonUnlocked(userId, lesson);
+      await this.assertLessonPolicySatisfied(userId, lesson);
     }
 
     const completion = await this.prisma.lessonCompletion.upsert({
@@ -257,16 +476,17 @@ export class ProgressService {
       }
     }
 
-    // Auto-complete module when all lessons are done
+    // Auto-complete module when all lessons are done (and its own policy is satisfied)
     await this.maybeCompleteModule(userId, lesson.moduleId);
 
     return completion;
   }
 
-  private async maybeCompleteModule(userId: string, moduleId: string) {
+  /** Public: also used by AssessmentsService after a module/lesson assessment is passed. */
+  async maybeCompleteModule(userId: string, moduleId: string) {
     const currentModule = await this.prisma.curriculumModule.findUnique({
       where: { id: moduleId },
-      select: { courseId: true },
+      select: { courseId: true, durationMinutes: true },
     });
     if (!currentModule) return;
 
@@ -287,17 +507,13 @@ export class ProgressService {
       subLessonsByParent.set(sub.parentId, arr);
     }
 
-    const completedRows = await this.prisma.lessonCompletion.findMany({
-      where: {
-        userId,
-        lessonId: { in: activeLessons.map((l) => l.id) },
-        completed: true,
-      },
-      select: { lessonId: true },
+    const completionRows = await this.prisma.lessonCompletion.findMany({
+      where: { userId, lessonId: { in: activeLessons.map((l) => l.id) } },
+      select: { lessonId: true, completed: true, timeSpentSeconds: true },
     });
-    const completedSet = new Set(completedRows.map((r) => r.lessonId));
+    const completedSet = new Set(completionRows.filter((r) => r.completed).map((r) => r.lessonId));
 
-    const allDone = topLevelLessons.every((top) => {
+    const lessonsAllDone = topLevelLessons.every((top) => {
       if (completedSet.has(top.id)) return true;
       const subs = subLessonsByParent.get(top.id);
       if (subs && subs.length > 0) {
@@ -305,6 +521,25 @@ export class ProgressService {
       }
       return false;
     });
+
+    const ratio = await this.policyService.getTimeRatio();
+    const moduleTimeOk = isTimeSatisfied(
+      sumLessonTime(completionRows),
+      currentModule.durationMinutes,
+      ratio,
+    );
+
+    const moduleAssessment = await this.prisma.assessment.findFirst({
+      where: { moduleId, type: AssessmentType.MODULE_ASSESSMENT },
+      select: { id: true },
+    });
+    const assessmentOk = moduleAssessment
+      ? !!(await this.prisma.assessmentAttempt.findFirst({
+          where: { assessmentId: moduleAssessment.id, userId, passed: true },
+        }))
+      : true;
+
+    const allDone = lessonsAllDone && moduleTimeOk && assessmentOk;
 
     await this.prisma.moduleCompletion.upsert({
       where: {
@@ -327,7 +562,8 @@ export class ProgressService {
     }
   }
 
-  private async maybeCompleteCourse(userId: string, courseId: string) {
+  /** Public: also used by AssessmentsService after a final assessment is passed. */
+  async maybeCompleteCourse(userId: string, courseId: string) {
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       select: { id: true, lessons: { where: { deletedAt: null }, select: { id: true } } },
@@ -341,6 +577,17 @@ export class ProgressService {
     });
 
     if (completedLessons !== lessonIds.length) return;
+
+    const finalAssessment = await this.prisma.assessment.findFirst({
+      where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
+      select: { id: true },
+    });
+    if (finalAssessment) {
+      const passed = await this.prisma.assessmentAttempt.findFirst({
+        where: { assessmentId: finalAssessment.id, userId, passed: true },
+      });
+      if (!passed) return;
+    }
 
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },

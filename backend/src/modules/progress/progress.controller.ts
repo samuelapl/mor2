@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ProgressService } from './progress.service';
-import { MarkLessonCompleteDto } from './dto';
+import { AddLessonTimeDto, MarkLessonCompleteDto } from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -42,6 +42,18 @@ export class ProgressController {
     @Body() dto: MarkLessonCompleteDto,
   ) {
     return this.progressService.markLessonComplete(user.id, lessonId, dto);
+  }
+
+  @Patch('lessons/:lessonId/time')
+  @Permissions('progress.mark_own')
+  @ApiOperation({ summary: 'Accumulate time spent on a lesson (heartbeat)' })
+  @ApiParam({ name: 'lessonId', type: String })
+  async addLessonTime(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('lessonId') lessonId: string,
+    @Body() dto: AddLessonTimeDto,
+  ) {
+    return this.progressService.addLessonTime(user.id, lessonId, dto.secondsDelta);
   }
 
   @Get('lessons/:lessonId')
