@@ -2421,40 +2421,44 @@ export function CourseCreationWizard({
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <RichTextArea
-                label="Course Title (English)"
+              <label className={labelClass}>
+                Course Title (English) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
                 required
                 value={title}
-                onChange={setTitle}
-                placeholder="Enter interactive course title (supports bold, bullets, etc.)"
-                compact
-                rows={2}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter course title"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <RichTextArea
-                label="Course Title (Amharic / አማርኛ)"
+              <label className={labelClass}>Course Title (Amharic / አማርኛ)</label>
+              <input
+                type="text"
                 value={titleAm}
-                onChange={setTitleAm}
+                onChange={(e) => setTitleAm(e.target.value)}
                 placeholder="የኮርስ ርዕስ በአማርኛ ያስገቡ (አማራጭ)"
-                compact
-                rows={2}
+                className={inputClass}
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <RichTextArea
-                label="Course Code"
+              <label className={labelClass}>
+                Course Code <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
                 required
                 value={code}
-                onChange={setCode}
+                onChange={(e) => setCode(e.target.value)}
                 placeholder="e.g. TAX-201"
                 disabled={isEdit}
-                compact
-                rows={2}
+                className={cn(inputClass, isEdit && "opacity-75 cursor-not-allowed bg-slate-50")}
               />
               {isEdit ? (
                 <p className="mt-1 text-[11px] text-slate-400">Course code cannot be changed once created.</p>
@@ -2564,36 +2568,36 @@ export function CourseCreationWizard({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <RichTextArea
-                label="Owning Department"
+              <label className={labelClass}>Owning Department</label>
+              <input
+                type="text"
                 value={department}
-                onChange={setDepartment}
-                placeholder="e.g. Tax Audit Division (supports bullets, bold, headings, etc.)"
-                compact
-                rows={2}
+                onChange={(e) => setDepartment(e.target.value)}
+                placeholder="e.g. Tax Audit Division"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <RichTextArea
-                label="Target Audience"
+              <label className={labelClass}>Target Audience</label>
+              <input
+                type="text"
                 value={targetAudience}
-                onChange={setTargetAudience}
-                placeholder="e.g. Junior Tax Auditors, Revenue Staff (supports bullets, bold, headings, etc.)"
-                compact
-                rows={2}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder="e.g. Junior Tax Auditors, Revenue Staff"
+                className={inputClass}
               />
             </div>
           </div>
 
           <div>
-            <RichTextArea
-              label="Prerequisites (Optional)"
+            <label className={labelClass}>Prerequisites (Optional)</label>
+            <textarea
               value={prerequisites}
-              onChange={setPrerequisites}
-              placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service (supports bullets, bold, headings, etc.)"
-              compact
+              onChange={(e) => setPrerequisites(e.target.value)}
+              placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service"
               rows={2}
+              className={inputClass}
             />
           </div>
         </div>
