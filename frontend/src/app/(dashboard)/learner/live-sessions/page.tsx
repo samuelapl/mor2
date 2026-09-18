@@ -16,6 +16,8 @@ import { SessionTable, type SessionRow } from "@/components/features/sessions/Se
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
+import { DynamicAttendanceModal } from "@/components/features/sessions/DynamicAttendanceModal";
+import { Users } from "lucide-react";
 
 export default function LearnerLiveSessionsPage() {
   const { lang, courses } = useLms();
@@ -25,6 +27,7 @@ export default function LearnerLiveSessionsPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [joined, setJoined] = useState<string[]>([]);
   const [activeSession, setActiveSession] = useState<ApiLiveSession | null>(null);
+  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
 
   const load = () => {
     fetchUpcomingSessions()
@@ -98,6 +101,17 @@ export default function LearnerLiveSessionsPage() {
 
               return (
                 <div className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedAttendanceSessionId(row.session.id)}
+                    className="gap-1 text-slate-600 border-slate-200 hover:bg-slate-50 text-xs"
+                    title="View session attendees and verification status (governed by admin permission)"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    Attendees
+                  </Button>
+
                   {isCheckedIn && (
                     <Badge variant="green" dot>
                       Present
@@ -132,6 +146,20 @@ export default function LearnerLiveSessionsPage() {
           session={activeSession}
           courseTitle={activeSession.course?.titleEn || "Course Training"}
           courseCode={activeSession.course?.code || "TRAINING"}
+          trainerName={
+            activeSession.trainer
+              ? `${activeSession.trainer.firstName} ${activeSession.trainer.lastName}`
+              : undefined
+          }
+          userRole="learner"
+        />
+      ) : null}
+
+      {selectedAttendanceSessionId ? (
+        <DynamicAttendanceModal
+          open={Boolean(selectedAttendanceSessionId)}
+          onClose={() => setSelectedAttendanceSessionId(null)}
+          sessionId={selectedAttendanceSessionId}
           userRole="learner"
         />
       ) : null}

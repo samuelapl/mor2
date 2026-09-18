@@ -4,6 +4,7 @@ import type { Course } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { RichContent } from "@/components/ui/RichContent";
 
 interface CourseCardProps {
   course: Course;
@@ -45,10 +46,10 @@ export function CourseCard({ course, extraBadge, progress, children, onClick }: 
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500/80">
-            {course.code}
+            <RichContent inline html={course.code} />
           </p>
           <h3 className="mt-1 font-display text-base font-bold tracking-tight text-slate-900">
-            {course.title}
+            <RichContent inline html={course.title} />
           </h3>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -61,9 +62,9 @@ export function CourseCard({ course, extraBadge, progress, children, onClick }: 
           {extraBadge}
         </div>
       </div>
-      <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
-        {course.description}
-      </p>
+      <div className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
+        <RichContent inline html={course.description} />
+      </div>
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
           <BookOpen className="h-3.5 w-3.5 text-indigo-500/70" />

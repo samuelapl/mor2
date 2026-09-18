@@ -23,6 +23,7 @@ import {
   Users,
   UserX,
   X,
+  Send,
 } from "lucide-react";
 import type { ApiAttendance, ApiLiveSession, BackendAttendanceStatus } from "@/lib/api/types";
 import {
@@ -31,8 +32,10 @@ import {
   fetchSessionAttendance,
   markAttendance,
   overrideAttendance,
+  sendSessionAttendanceReport,
 } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +58,7 @@ const formatTime = (value: string) =>
 
 export default function TrainerAttendancePage() {
   const { courses, currentUser, users, userName } = useLms();
+  const { can } = usePermissions();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const [attendanceRecords, setAttendanceRecords] = useState<ApiAttendance[]>([]);
@@ -71,6 +75,7 @@ export default function TrainerAttendancePage() {
   const [overrideTarget, setOverrideTarget] = useState<{ id: string; name: string } | null>(null);
   const [overrideStatus, setOverrideStatus] = useState<BackendAttendanceStatus>("PRESENT");
   const [overrideSubmitting, setOverrideSubmitting] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
 
   // Filter courses assigned to trainer
   const assignedCourses = useMemo(
@@ -158,6 +163,10 @@ export default function TrainerAttendancePage() {
         ? `${userObj.firstName || ""} ${userObj.lastName || ""}`.trim() || userObj.email
         : userName(userId);
 
+      const sessionDur = activeSession?.durationMinutes || 30;
+      const stayMin = record?.durationMinutes ?? Math.floor((record?.activeSeconds || 0) / 60);
+      const pct = record?.percentage ?? Math.min(100, Math.round((stayMin / sessionDur) * 100));
+
       return {
         userId,
         name: displayName,
@@ -167,10 +176,13 @@ export default function TrainerAttendancePage() {
         checkInMethod: record?.checkInMethod,
         joinedAt: record?.joinedAt,
         leftAt: record?.leftAt,
-        durationMinutes: record?.durationMinutes,
+        durationMinutes: stayMin,
+        activeSeconds: record?.activeSeconds ?? 0,
+        rejoinCount: record?.rejoinCount ?? 0,
+        percentage: pct,
       };
     });
-  }, [enrolledStudentIds, attendanceRecords, attendanceByUser, users, userName]);
+  }, [enrolledStudentIds, attendanceRecords, attendanceByUser, users, userName, activeSession]);
 
   // Filtered Roster
   const filteredRoster = useMemo(() => {
@@ -263,6 +275,22 @@ export default function TrainerAttendancePage() {
     }
   };
 
+  const handleSendReport = async () => {
+    if (!selectedSessionId) return;
+    setSendingReport(true);
+    setErrorMessage(null);
+    try {
+      await sendSessionAttendanceReport(selectedSessionId);
+      setFlashMessage("Attendance report calculated and official notification delivered to trainer!");
+      await loadAttendanceForSession(selectedSessionId);
+      setTimeout(() => setFlashMessage(null), 4000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to dispatch attendance report.");
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   return (
     <PageShell
       role="trainer"
@@ -306,6 +334,17 @@ export default function TrainerAttendancePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSendReport}
+                disabled={sendingReport || !selectedSessionId}
+                className="text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              >
+                <Send className="h-3.5 w-3.5" />
+                {sendingReport ? "Generating…" : "Send Report to Trainer"}
+              </Button>
+
               <Button
                 size="sm"
                 variant="ghost"
@@ -423,28 +462,30 @@ export default function TrainerAttendancePage() {
             </div>
 
             {/* Quick Bulk Actions */}
-            <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleBulkMarkAll("PRESENT")}
-                disabled={loadingAttendance || studentRoster.length === 0}
-                className="text-xs text-emerald-700 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100"
-              >
-                <UserCheck className="h-3.5 w-3.5 mr-1" />
-                Mark All Present
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleBulkMarkAll("ABSENT")}
-                disabled={loadingAttendance || studentRoster.length === 0}
-                className="text-xs text-slate-600 hover:text-red-700"
-              >
-                <UserX className="h-3.5 w-3.5 mr-1" />
-                Reset All Absent
-              </Button>
-            </div>
+            {can("attendance.manage") ? (
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkMarkAll("PRESENT")}
+                  disabled={loadingAttendance || studentRoster.length === 0}
+                  className="text-xs text-emerald-700 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100"
+                >
+                  <UserCheck className="h-3.5 w-3.5 mr-1" />
+                  Mark All Present
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkMarkAll("ABSENT")}
+                  disabled={loadingAttendance || studentRoster.length === 0}
+                  className="text-xs text-slate-600 hover:text-red-700"
+                >
+                  <UserX className="h-3.5 w-3.5 mr-1" />
+                  Reset All Absent
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -464,9 +505,10 @@ export default function TrainerAttendancePage() {
               </p>
             </div>
           ) : (
-            <Table columns={["Learner Name", "Account / Email", "Check-in Details", "Current Status", "Manage Attendance"]}>
+            <Table columns={["Learner Name", "Account / Email", "Check-in Details", "Stay & %", "Current Status", "Manage Attendance"]}>
               {pageItems.map((learner) => {
                 const isLoading = actionLoadingId === learner.userId;
+                const sessionDur = activeSession?.durationMinutes || 30;
 
                 return (
                   <tr key={learner.userId} className="hover:bg-slate-50/70 transition-colors">
@@ -502,10 +544,27 @@ export default function TrainerAttendancePage() {
                               Joined: {formatTime(learner.joinedAt)}
                             </p>
                           )}
+                          {learner.rejoinCount > 0 && (
+                            <p className="text-[10px] font-semibold text-amber-700">
+                              Rejoined {learner.rejoinCount}x
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <span className="text-slate-400 text-xs italic">Manual tracking</span>
                       )}
+                    </Td>
+
+                    <Td className="text-xs">
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <span className="font-semibold text-slate-800">
+                          {learner.durationMinutes}m / {sessionDur}m
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-sans">
+                          ({learner.percentage}%)
+                        </span>
+                      </div>
                     </Td>
 
                     <Td>
@@ -527,55 +586,59 @@ export default function TrainerAttendancePage() {
 
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant={learner.status === "PRESENT" ? "primary" : "outline"}
-                          disabled={isLoading}
-                          onClick={() => handleMarkStatus(learner.userId, "PRESENT")}
-                          className={`h-7 px-2.5 text-xs ${
-                            learner.status === "PRESENT" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-                          }`}
-                        >
-                          Present
-                        </Button>
+                        {can("attendance.manage") ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant={learner.status === "PRESENT" ? "primary" : "outline"}
+                              disabled={isLoading}
+                              onClick={() => handleMarkStatus(learner.userId, "PRESENT")}
+                              className={`h-7 px-2.5 text-xs ${
+                                learner.status === "PRESENT" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                              }`}
+                            >
+                              Present
+                            </Button>
 
-                        <Button
-                          size="sm"
-                          variant={learner.status === "LATE" ? "primary" : "outline"}
-                          disabled={isLoading}
-                          onClick={() => handleMarkStatus(learner.userId, "LATE")}
-                          className={`h-7 px-2.5 text-xs ${
-                            learner.status === "LATE" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
-                          }`}
-                        >
-                          Late
-                        </Button>
+                            <Button
+                              size="sm"
+                              variant={learner.status === "LATE" ? "primary" : "outline"}
+                              disabled={isLoading}
+                              onClick={() => handleMarkStatus(learner.userId, "LATE")}
+                              className={`h-7 px-2.5 text-xs ${
+                                learner.status === "LATE" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
+                              }`}
+                            >
+                              Late
+                            </Button>
 
-                        <Button
-                          size="sm"
-                          variant={learner.status === "ABSENT" ? "primary" : "outline"}
-                          disabled={isLoading}
-                          onClick={() => handleMarkStatus(learner.userId, "ABSENT")}
-                          className={`h-7 px-2.5 text-xs ${
-                            learner.status === "ABSENT" ? "bg-slate-700 text-white" : ""
-                          }`}
-                        >
-                          Absent
-                        </Button>
+                            <Button
+                              size="sm"
+                              variant={learner.status === "ABSENT" ? "primary" : "outline"}
+                              disabled={isLoading}
+                              onClick={() => handleMarkStatus(learner.userId, "ABSENT")}
+                              className={`h-7 px-2.5 text-xs ${
+                                learner.status === "ABSENT" ? "bg-slate-700 text-white" : ""
+                              }`}
+                            >
+                              Absent
+                            </Button>
 
-                        <Button
-                          size="sm"
-                          variant={learner.status === "EXCUSED" ? "primary" : "outline"}
-                          disabled={isLoading}
-                          onClick={() => handleMarkStatus(learner.userId, "EXCUSED")}
-                          className={`h-7 px-2.5 text-xs ${
-                            learner.status === "EXCUSED" ? "bg-sky-600 text-white" : ""
-                          }`}
-                        >
-                          Excused
-                        </Button>
+                            <Button
+                              size="sm"
+                              variant={learner.status === "EXCUSED" ? "primary" : "outline"}
+                              disabled={isLoading}
+                              onClick={() => handleMarkStatus(learner.userId, "EXCUSED")}
+                              className={`h-7 px-2.5 text-xs ${
+                                learner.status === "EXCUSED" ? "bg-sky-600 text-white" : ""
+                              }`}
+                            >
+                              Excused
+                            </Button>
+                          </>
+                        ) : null}
 
-                        {learner.record?.id && (
+                        {can("attendance.override") && learner.record?.id ? (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -585,7 +648,11 @@ export default function TrainerAttendancePage() {
                           >
                             <ShieldAlert className="h-3 w-3" />
                           </Button>
-                        )}
+                        ) : null}
+
+                        {!can("attendance.manage") && !can("attendance.override") ? (
+                          <span className="text-xs text-slate-400 italic">View only</span>
+                        ) : null}
                       </div>
                     </Td>
                   </tr>

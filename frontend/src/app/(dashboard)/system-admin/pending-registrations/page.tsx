@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
+import { RichTextArea } from "@/components/ui/RichTextArea";
 
 export default function PendingRegistrationsPage() {
   const { currentUser, users, approveRegistrationRequest, rejectRegistrationRequest } = useLms();
@@ -115,22 +116,34 @@ export default function PendingRegistrationsPage() {
                   </Button>
                 </div>
                 {rejectTarget === user.id ? (
-                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-2">
-                    <textarea
+                  <div className="mt-2 flex flex-col gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-3">
+                    <RichTextArea
                       rows={2}
                       value={rejectReason}
-                      onChange={(event) => setRejectReason(event.target.value)}
-                      placeholder="Reason (optional) — emailed to the applicant"
-                      className="w-full rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 outline-none focus:border-red-300"
+                      onChange={(val) => setRejectReason(val)}
+                      placeholder="Reason (optional) — emailed to the applicant (supports formatting, bold, bullet points)…"
+                      compact
                     />
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      disabled={busy}
-                      onClick={() => void reject(user.id)}
-                    >
-                      Confirm
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setRejectTarget(null);
+                          setRejectReason("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={busy}
+                        onClick={() => void reject(user.id)}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
                   </div>
                 ) : null}
               </Td>

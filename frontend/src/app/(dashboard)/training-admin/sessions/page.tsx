@@ -5,6 +5,7 @@ import { CalendarPlus, ExternalLink, Link as LinkIcon, MonitorPlay, Play, Presen
 import type { ApiLiveSession } from "@/lib/api/types";
 import { fetchLiveSessions, fetchSessionJoinUrl, setSessionStatus } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import PageSection from "@/components/shared/PageSection";
@@ -19,6 +20,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function TrainingAdminSessionsPage() {
   const { courses, users } = useLms();
+  const { can } = usePermissions();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,34 +60,45 @@ export default function TrainingAdminSessionsPage() {
 
   const toRows = (items: ApiLiveSession[]): SessionRow[] =>
     items.map((session) => {
-      const course = courseMap.get(session.courseId);
-      const trainerName = course?.trainerId
-        ? userMap.get(course.trainerId) ?? "Assigned Trainer"
-        : "Unassigned";
+      const course = session.courseId ? courseMap.get(session.courseId) : undefined;
+      const trainerName = session.trainerId ? userMap.get(session.trainerId) : undefined;
       return {
         session,
-        courseTitle: course?.title ?? session.titleEn ?? "Training Session",
-        courseCode: course?.code ?? "MoR-TRN",
-        trainerName,
+        courseTitle: course?.title ?? "General Training",
+        courseCode: course?.code ?? "GENERAL",
+        trainerName:
+          trainerName ??
+          (session.trainer
+            ? `${session.trainer.firstName} ${session.trainer.lastName}`
+            : "Assigned Trainer"),
       };
     });
 
-  const upcomingRows = usePagination(toRows(upcoming), 6);
-  const pastRows = usePagination(toRows(past), 6);
+  const upcomingRows = usePagination(toRows(upcoming), 10);
+  const pastRows = usePagination(toRows(past), 10);
 
-  const handleJoin = (session: ApiLiveSession) => {
-    setActiveJoinSession(session);
+  const handleJoin = async (session: ApiLiveSession) => {
+    try {
+      const { joinUrl } = await fetchSessionJoinUrl(session.id);
+      setActiveJoinSession(session);
+    } catch (err) {
+      console.error("Failed to fetch join URL:", err);
+      setActiveJoinSession(session);
+    }
   };
 
   const handleToggleLive = async (session: ApiLiveSession) => {
     setStatusUpdatingId(session.id);
+    const newStatus = session.status === "SCHEDULED" ? "LIVE" : "COMPLETED";
     try {
-      const nextStatus = session.status === "LIVE" ? "COMPLETED" : "LIVE";
-      await setSessionStatus(session.id, nextStatus);
-      setFlash(`Session status updated to ${nextStatus}.`);
-      loadSessions();
-    } catch (err) {
-      setFlash(err instanceof Error ? err.message : "Failed to update status.");
+      await setSessionStatus(session.id, newStatus);
+      setSessions((prev) =>
+        prev.map((s) => (s.id === session.id ? { ...s, status: newStatus } : s)),
+      );
+      setFlash(`Session status updated to ${newStatus}.`);
+      setTimeout(() => setFlash(null), 4000);
+    } catch {
+      setFlash("Failed to update session status.");
     } finally {
       setStatusUpdatingId(null);
     }
@@ -97,10 +110,12 @@ export default function TrainingAdminSessionsPage() {
       title="Training Sessions"
       description="Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses."
       actions={
-        <Button onClick={() => setScheduleOpen(true)} className="shadow-sm">
-          <CalendarPlus className="h-4 w-4" />
-          Schedule Session
-        </Button>
+        can("live_session.manage") ? (
+          <Button onClick={() => setScheduleOpen(true)} className="shadow-sm">
+            <CalendarPlus className="h-4 w-4" />
+            Schedule Session
+          </Button>
+        ) : undefined
       }
     >
       {flash ? (
@@ -117,12 +132,14 @@ export default function TrainingAdminSessionsPage() {
           {upcoming.length === 0 ? (
             <EmptyState
               title="No upcoming sessions scheduled"
-              description="Click '+ Schedule Session' to arrange a new live training session for any course."
+              description="Arrange a new live training session for any course."
             >
-              <Button size="sm" onClick={() => setScheduleOpen(true)}>
-                <CalendarPlus className="h-4 w-4" />
-                Schedule Session
-              </Button>
+              {can("live_session.manage") ? (
+                <Button size="sm" onClick={() => setScheduleOpen(true)}>
+                  <CalendarPlus className="h-4 w-4" />
+                  Schedule Session
+                </Button>
+              ) : null}
             </EmptyState>
           ) : (
             <>
@@ -230,6 +247,15 @@ export default function TrainingAdminSessionsPage() {
           session={activeJoinSession}
           courseTitle={courseMap.get(activeJoinSession.courseId)?.title}
           courseCode={courseMap.get(activeJoinSession.courseId)?.code}
+          trainerName={
+            activeJoinSession.trainer
+              ? `${activeJoinSession.trainer.firstName} ${activeJoinSession.trainer.lastName}`
+              : activeJoinSession.trainerId
+              ? userMap.get(activeJoinSession.trainerId)
+              : courseMap.get(activeJoinSession.courseId)?.trainerId
+              ? userMap.get(courseMap.get(activeJoinSession.courseId)!.trainerId!)
+              : "Assigned Trainer"
+          }
           userRole="training_admin"
         />
       )}

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   FileCheck,
+  UserCheck,
 } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { fetchLiveSession } from "@/lib/api/monitoring";
@@ -22,7 +23,9 @@ import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table, Td } from "@/components/ui/Table";
+import { RichContent } from "@/components/ui/RichContent";
 import { LiveSessionWorkspace } from "./LiveSessionWorkspace";
+import { DynamicAttendanceModal } from "./DynamicAttendanceModal";
 
 interface SessionDetailModalProps {
   open: boolean;
@@ -62,6 +65,7 @@ export function SessionDetailModal({
 }: SessionDetailModalProps) {
   const [session, setSession] = useState<ApiLiveSession | null>(null);
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !sessionId) {
@@ -101,11 +105,21 @@ export function SessionDetailModal({
         }
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setAttendanceModalOpen(true)}
+              className="gap-1.5"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Attendees &amp; Stay
+            </Button>
+
             {userRole === "trainer" && (
               <Link href={`/trainer/attendance`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <FileCheck className="h-3.5 w-3.5" />
-                  Manage Attendance
+                  Full Attendance Sheet
                 </Button>
               </Link>
             )}
@@ -144,9 +158,10 @@ export function SessionDetailModal({
                 <Video className="h-4 w-4 text-indigo-600" />
                 Platform: {session.platform || "JITSI"}
               </span>
-              {session.meetingId && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs text-slate-600">
-                  Meeting ID: {session.meetingId}
+              {session.trainer && (
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200/70 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-xs">
+                  <UserCheck className="h-4 w-4 text-amber-600" />
+                  Trainer: {session.trainer.firstName} {session.trainer.lastName} ({session.trainer.email})
                 </span>
               )}
             </div>
@@ -156,11 +171,11 @@ export function SessionDetailModal({
             ) : null}
 
             {session.descriptionEn ? (
-              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-600">
-                <p className="font-semibold text-slate-800 text-xs uppercase tracking-wider mb-1">
-                  Session Description / Agenda:
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-700">
+                <p className="font-semibold text-slate-800 text-xs uppercase tracking-wider mb-2">
+                  Session Description &amp; Agenda:
                 </p>
-                {session.descriptionEn}
+                <RichContent html={session.descriptionEn} />
               </div>
             ) : null}
           </div>
@@ -272,6 +287,22 @@ export function SessionDetailModal({
           session={session}
           courseTitle={session.course.titleEn}
           courseCode={session.course.code}
+          trainerName={
+            session.trainer
+              ? `${session.trainer.firstName} ${session.trainer.lastName}`
+              : undefined
+          }
+          userRole={userRole}
+        />
+      )}
+
+      {/* Dynamic Attendance Modal */}
+      {attendanceModalOpen && (
+        <DynamicAttendanceModal
+          open={attendanceModalOpen}
+          onClose={() => setAttendanceModalOpen(false)}
+          sessionId={sessionId}
+          sessionTitle={session.titleEn}
           userRole={userRole}
         />
       )}
