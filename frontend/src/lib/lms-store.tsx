@@ -1349,6 +1349,30 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     };
   }, [clearSession, reloadData]);
 
+  // Live permission sync: whenever permissions change or every ~10s, sync current user permissions
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const timer = setInterval(() => {
+      void refreshPermissions();
+    }, 10000);
+
+    const handlePermissionsEvent = () => {
+      void refreshPermissions();
+    };
+
+    window.addEventListener("mor_permissions_updated", handlePermissionsEvent);
+    window.addEventListener("storage", handlePermissionsEvent);
+    window.addEventListener("focus", handlePermissionsEvent);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("mor_permissions_updated", handlePermissionsEvent);
+      window.removeEventListener("storage", handlePermissionsEvent);
+      window.removeEventListener("focus", handlePermissionsEvent);
+    };
+  }, [currentUser, refreshPermissions]);
+
   const value = useMemo<LmsContextValue>(
     () => ({
       ready,

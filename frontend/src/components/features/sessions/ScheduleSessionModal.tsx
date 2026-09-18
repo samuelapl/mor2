@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { Video, Sparkles, Shield, MonitorPlay, Link as LinkIcon, RefreshCw } from "lucide-react";
+import { Video, Sparkles, Shield, MonitorPlay, Link as LinkIcon, RefreshCw, UserCheck } from "lucide-react";
 import type { Course } from "@/types";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
+import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ApiError } from "@/lib/api/client";
 import { scheduleSession } from "@/lib/api/monitoring";
+import { fetchTrainers } from "@/lib/api/users";
+import type { ApiUser } from "@/lib/api/types";
 
 interface ScheduleSessionModalProps {
   open: boolean;
@@ -24,9 +27,13 @@ export function ScheduleSessionModal({
   courses,
 }: ScheduleSessionModalProps) {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
+  const [trainerId, setTrainerId] = useState("");
+  const [availableTrainers, setAvailableTrainers] = useState<ApiUser[]>([]);
+  const [trainersLoading, setTrainersLoading] = useState(false);
   const [platformType, setPlatformType] = useState<PlatformChoice>("JITSI");
   const [titleEn, setTitleEn] = useState("");
   const [titleAm, setTitleAm] = useState("");
+  const [descriptionEn, setDescriptionEn] = useState("");
   const [date, setDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -36,6 +43,8 @@ export function ScheduleSessionModal({
   const [duration, setDuration] = useState(60);
   const [externalUrl, setExternalUrl] = useState("");
   const [meetingPassword, setMeetingPassword] = useState("");
+  const [allowViewAttendance, setAllowViewAttendance] = useState(false);
+  const [attendanceThreshold, setAttendanceThreshold] = useState(60);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,7 +55,36 @@ export function ScheduleSessionModal({
     }
   }, [courses, courseId]);
 
+  // Load qualified trainers when modal opens
+  useEffect(() => {
+    if (!open) return;
+    setTrainersLoading(true);
+    fetchTrainers()
+      .then((res) => {
+        setAvailableTrainers(res.data || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load trainers for session schedule:", err);
+        setAvailableTrainers([]);
+      })
+      .finally(() => setTrainersLoading(false));
+  }, [open]);
+
+  // When courseId changes, auto-select the course's default trainer if available
+  useEffect(() => {
+    const selectedCourse = courses.find((c) => c.id === courseId);
+    if (selectedCourse?.trainerId) {
+      setTrainerId(selectedCourse.trainerId);
+    }
+  }, [courseId, courses]);
+
   const selectedCourse = courses.find((c) => c.id === courseId);
+  const courseTrainerIds = new Set(
+    [selectedCourse?.trainerId, ...(selectedCourse?.trainerIds || [])].filter(Boolean) as string[],
+  );
+
+  const courseTrainers = availableTrainers.filter((t) => courseTrainerIds.has(t.id));
+  const otherTrainers = availableTrainers.filter((t) => !courseTrainerIds.has(t.id));
 
   const generateJitsiUrl = () => {
     const course = courses.find((c) => c.id === courseId);
@@ -99,16 +137,22 @@ export function ScheduleSessionModal({
       await scheduleSession(courseId, {
         titleEn: titleEn.trim(),
         titleAm: titleAm.trim() || titleEn.trim(),
+        descriptionEn: descriptionEn.trim() || undefined,
+        trainerId: trainerId || undefined,
         platform: backendPlatform,
         externalUrl: externalUrl.trim() || undefined,
         meetingId,
         meetingPassword: meetingPassword.trim() || undefined,
         scheduledAt: new Date(`${date}T${time}`).toISOString(),
         durationMinutes: Number(duration),
+        allowViewAttendance,
+        attendanceThreshold: Number(attendanceThreshold),
       });
 
       setTitleEn("");
       setTitleAm("");
+      setDescriptionEn("");
+      setTrainerId("");
       setExternalUrl("");
       setMeetingPassword("");
       onScheduled?.();
@@ -130,7 +174,7 @@ export function ScheduleSessionModal({
       <div className="w-full py-4">
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-600">Course</label>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600">Course *</label>
           <select
             required
             value={courseId}
@@ -149,6 +193,52 @@ export function ScheduleSessionModal({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Assigned Trainer Selection */}
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <UserCheck className="h-4 w-4 text-indigo-600" />
+              Assigned Trainer (Instructor &amp; Host) *
+            </label>
+            {trainersLoading ? (
+              <span className="text-[11px] font-medium text-indigo-600 animate-pulse">Loading trainers…</span>
+            ) : availableTrainers.length > 0 ? (
+              <span className="text-[11px] text-slate-500 font-medium">
+                {availableTrainers.length} qualified trainers available
+              </span>
+            ) : null}
+          </div>
+
+          <select
+            required
+            value={trainerId}
+            onChange={(event) => setTrainerId(event.target.value)}
+            className="w-full rounded-xl border border-indigo-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-xs outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
+          >
+            <option value="">Select Trainer to Lead this Session…</option>
+            {courseTrainers.length > 0 && (
+              <optgroup label="── Recommended: Assigned Course Trainers ──">
+                {courseTrainers.map((trainer) => (
+                  <option key={trainer.id} value={trainer.id}>
+                    ⭐ {trainer.firstName} {trainer.lastName} ({trainer.email}) — Course Trainer
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            <optgroup label="── All LMS Qualified Trainers ──">
+              {otherTrainers.map((trainer) => (
+                <option key={trainer.id} value={trainer.id}>
+                  👤 {trainer.firstName} {trainer.lastName} ({trainer.email})
+                </option>
+              ))}
+            </optgroup>
+          </select>
+
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            The assigned trainer will be designated as the session speaker, appear with verified host credentials in the video classroom, and receive direct scheduling reminders.
+          </p>
         </div>
 
         <div>
@@ -173,6 +263,17 @@ export function ScheduleSessionModal({
             onChange={(event) => setTitleAm(event.target.value)}
             placeholder="e.g. የቀጥታ የጥያቄና መልስ ክፍለ ጊዜ"
             className={inputClass}
+          />
+        </div>
+
+        {/* Interactive Rich Text for Agenda & Description */}
+        <div>
+          <RichTextArea
+            label="Session Description & Agenda (Interactive Rich Text)"
+            placeholder="Outline objectives, key discussion topics, required preparation, or session notes (supports bold, lists, headings)…"
+            value={descriptionEn}
+            onChange={setDescriptionEn}
+            rows={3}
           />
         </div>
 
@@ -282,6 +383,36 @@ export function ScheduleSessionModal({
             placeholder="e.g. 849201"
             className={inputClass}
           />
+        </div>
+
+        {/* Live Attendance Configuration */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+          <p className="text-xs font-bold text-slate-800">Live Session Attendance Policy</p>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-600">
+              Minimum active stay threshold for Present status
+            </label>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={10}
+                max={100}
+                value={attendanceThreshold}
+                onChange={(e) => setAttendanceThreshold(Number(e.target.value))}
+                className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-center font-bold text-slate-800"
+              />
+              <span className="text-xs text-slate-500 font-semibold">%</span>
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer pt-1">
+            <input
+              type="checkbox"
+              checked={allowViewAttendance}
+              onChange={(e) => setAllowViewAttendance(e.target.checked)}
+              className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+            />
+            <span>Permit participants (all actors) to view attendees and attendance modal for this session</span>
+          </label>
         </div>
 
         {error ? (

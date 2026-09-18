@@ -58,6 +58,9 @@ import {
 } from "lucide-react";
 import type { Attachment, Course, CourseLevel, Question, QuestionType, Quiz } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { RichTextArea } from "@/components/ui/RichTextArea";
+import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { useLms } from "@/lib/lms-store";
@@ -431,6 +434,7 @@ export function CourseCreationWizard({
 
   // Step 1: Course Details & Objectives
   const [title, setTitle] = useState(editingCourse?.title ?? "");
+  const [titleAm, setTitleAm] = useState((editingCourse as any)?.titleAm ?? "");
   const [code, setCode] = useState(editingCourse?.code ?? "");
   const [category, setCategory] = useState(
     editingCourse?.category ?? COURSE_CATEGORIES[0],
@@ -625,11 +629,13 @@ export function CourseCreationWizard({
   }, [editingCourse?.id]);
 
   // Validation
-  const descriptionText = description.replace(/<[^>]+>/g, "").trim();
-  const objectivesText = objectives.replace(/<[^>]+>/g, "").trim();
+  const titleText = stripHtmlTags(title);
+  const codeText = stripHtmlTags(code);
+  const descriptionText = stripHtmlTags(description);
+  const objectivesText = stripHtmlTags(objectives);
   const detailsValid =
-    title.trim() !== "" &&
-    code.trim() !== "" &&
+    titleText !== "" &&
+    codeText !== "" &&
     descriptionText !== "" &&
     objectivesText.length >= 10;
 
@@ -642,6 +648,7 @@ export function CourseCreationWizard({
       const draft = JSON.parse(raw);
       if (draft && (draft.title?.trim() || (Array.isArray(draft.modules) && draft.modules.length > 0) || draft.description?.trim())) {
         if (draft.title) setTitle(draft.title);
+        if (draft.titleAm) setTitleAm(draft.titleAm);
         if (draft.code) setCode(draft.code);
         if (draft.category) setCategory(draft.category);
         if (draft.level) setLevel(draft.level);
@@ -671,12 +678,13 @@ export function CourseCreationWizard({
   // Persist course draft to localStorage whenever fields change
   useEffect(() => {
     if (isEdit) return;
-    if (!title.trim() && modules.length === 0 && !description.trim()) return;
+    if (!stripHtmlTags(title) && modules.length === 0 && !stripHtmlTags(description)) return;
 
     try {
       const draftData = {
         step,
         title,
+        titleAm,
         code,
         category,
         level,
@@ -703,6 +711,7 @@ export function CourseCreationWizard({
   }, [
     step,
     title,
+    titleAm,
     code,
     category,
     level,
@@ -2208,13 +2217,12 @@ export function CourseCreationWizard({
           </div>
         ) : lesson.contentType === "INTERACTIVE" ? (
           <div>
-            <label className={labelClass}>Interactive Activity Instructions & Guide</label>
-            <textarea
+            <RichTextArea
+              label="Interactive Activity Instructions & Guide"
               rows={3}
               value={lesson.content}
               placeholder="Describe instructions, quiz references, or interactive prompts for learners…"
-              onChange={(e) => applyPatch({ content: e.target.value })}
-              className={inputClass}
+              onChange={(val) => applyPatch({ content: val })}
             />
           </div>
         ) : (
@@ -2413,59 +2421,74 @@ export function CourseCreationWizard({
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Course Title *</label>
-              <input
-                type="text"
+              <RichTextArea
+                label="Course Title (English)"
+                required
                 value={title}
-                placeholder="Enter course title"
-                onChange={(e) => setTitle(e.target.value)}
-                className={inputClass}
+                onChange={setTitle}
+                placeholder="Enter interactive course title (supports bold, bullets, etc.)"
+                compact
+                rows={2}
               />
             </div>
 
             <div>
-              <label className={labelClass}>Course Code *</label>
-              <input
-                type="text"
-                value={code}
-                placeholder="e.g. TAX-201"
-                disabled={isEdit}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className={cn(inputClass, isEdit && "cursor-not-allowed bg-slate-100/80")}
+              <RichTextArea
+                label="Course Title (Amharic / አማርኛ)"
+                value={titleAm}
+                onChange={setTitleAm}
+                placeholder="የኮርስ ርዕስ በአማርኛ ያስገቡ (አማራጭ)"
+                compact
+                rows={2}
               />
-              {isEdit ? (
-                <p className="mt-1 text-[11px] text-slate-400">Course code cannot be changed once created.</p>
-              ) : null}
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={inputClass}
-              >
-                {COURSE_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <RichTextArea
+                label="Course Code"
+                required
+                value={code}
+                onChange={setCode}
+                placeholder="e.g. TAX-201"
+                disabled={isEdit}
+                compact
+                rows={2}
+              />
+              {isEdit ? (
+                <p className="mt-1 text-[11px] text-slate-400">Course code cannot be changed once created.</p>
+              ) : null}
             </div>
 
-            <div>
-              <label className={labelClass}>Difficulty Level</label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value as CourseLevel)}
-                className={inputClass}
-              >
-                <option value="basic">Basic</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </select>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className={inputClass}
+                >
+                  {COURSE_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Difficulty Level</label>
+                <select
+                  value={level}
+                  onChange={(e) => setLevel(e.target.value as CourseLevel)}
+                  className={inputClass}
+                >
+                  <option value="basic">Basic</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -2541,36 +2564,36 @@ export function CourseCreationWizard({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Owning Department</label>
-              <input
-                type="text"
+              <RichTextArea
+                label="Owning Department"
                 value={department}
-                placeholder="e.g. Tax Audit Division"
-                onChange={(e) => setDepartment(e.target.value)}
-                className={inputClass}
+                onChange={setDepartment}
+                placeholder="e.g. Tax Audit Division (supports bullets, bold, headings, etc.)"
+                compact
+                rows={2}
               />
             </div>
 
             <div>
-              <label className={labelClass}>Target Audience</label>
-              <input
-                type="text"
+              <RichTextArea
+                label="Target Audience"
                 value={targetAudience}
-                placeholder="e.g. Junior Tax Auditors, Revenue Staff"
-                onChange={(e) => setTargetAudience(e.target.value)}
-                className={inputClass}
+                onChange={setTargetAudience}
+                placeholder="e.g. Junior Tax Auditors, Revenue Staff (supports bullets, bold, headings, etc.)"
+                compact
+                rows={2}
               />
             </div>
           </div>
 
           <div>
-            <label className={labelClass}>Prerequisites (Optional)</label>
-            <input
-              type="text"
+            <RichTextArea
+              label="Prerequisites (Optional)"
               value={prerequisites}
-              placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service"
-              onChange={(e) => setPrerequisites(e.target.value)}
-              className={inputClass}
+              onChange={setPrerequisites}
+              placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service (supports bullets, bold, headings, etc.)"
+              compact
+              rows={2}
             />
           </div>
         </div>
@@ -3610,8 +3633,17 @@ export function CourseCreationWizard({
           <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{code}</span>
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+                  <RichContent inline html={code} />
+                </span>
+                <h3 className="text-lg font-bold text-slate-900">
+                  <RichContent inline html={title} />
+                </h3>
+                {titleAm ? (
+                  <p className="text-xs text-slate-500 font-medium">
+                    የስልጠና ርዕስ (አማርኛ): <RichContent inline html={titleAm} />
+                  </p>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="outline">{category}</Badge>
                   <Badge variant="slate">{level.toUpperCase()}</Badge>
@@ -3655,9 +3687,18 @@ export function CourseCreationWizard({
               )}
 
               <div className="grid gap-2 sm:grid-cols-3 text-[11px] text-slate-500 pt-1">
-                <div><span className="font-medium text-slate-700">Department:</span> {department || <span className="text-amber-600 italic">Not specified</span>}</div>
-                <div><span className="font-medium text-slate-700">Target Audience:</span> {targetAudience || <span className="text-amber-600 italic">Not specified</span>}</div>
-                <div><span className="font-medium text-slate-700">Prerequisites:</span> {prerequisites || "None"}</div>
+                <div>
+                  <span className="font-medium text-slate-700">Department: </span>
+                  <RichContent inline html={department} placeholder="Not specified" />
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">Target Audience: </span>
+                  <RichContent inline html={targetAudience} placeholder="Not specified" />
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">Prerequisites: </span>
+                  <RichContent inline html={prerequisites} placeholder="None" />
+                </div>
               </div>
             </div>
           </div>

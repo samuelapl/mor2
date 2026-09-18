@@ -13,6 +13,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { RichTextArea } from "@/components/ui/RichTextArea";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export function PendingCourseApprovals() {
@@ -239,22 +240,19 @@ export function PendingCourseApprovals() {
           </>
         }
       >
-        <label htmlFor="rejectionReason" className="mb-1.5 block text-xs font-semibold text-slate-600">
-          Reason for rejection *
-        </label>
-        <textarea
+        <RichTextArea
           id="rejectionReason"
+          label="Reason for rejection"
           required
-          rows={4}
+          rows={3}
           value={reason}
-          onChange={(event) => {
-            setReason(event.target.value);
+          onChange={(val) => {
+            setReason(val);
             setReasonError(null);
           }}
-          placeholder="Specify why this course is rejected and cannot be approved..."
-          className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+          placeholder="Specify why this course is rejected and cannot be approved (supports bold, lists, headings)…"
+          error={reasonError}
         />
-        {reasonError ? <p className="mt-2 text-xs text-red-600">{reasonError}</p> : null}
       </Modal>
 
       {/* Request Changes Modal */}
@@ -284,22 +282,19 @@ export function PendingCourseApprovals() {
           </>
         }
       >
-        <label htmlFor="changeReason" className="mb-1.5 block text-xs font-semibold text-slate-600">
-          Required changes and feedback *
-        </label>
-        <textarea
+        <RichTextArea
           id="changeReason"
+          label="Required changes and feedback"
           required
-          rows={4}
+          rows={3}
           value={reason}
-          onChange={(event) => {
-            setReason(event.target.value);
+          onChange={(val) => {
+            setReason(val);
             setReasonError(null);
           }}
-          placeholder="Describe the required updates, missing materials, or corrections the course owner needs to make before approval..."
-          className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+          placeholder="Describe the required updates, missing materials, or corrections the course owner needs to make before approval…"
+          error={reasonError}
         />
-        {reasonError ? <p className="mt-2 text-xs text-red-600">{reasonError}</p> : null}
       </Modal>
     </>
   );

@@ -46,22 +46,39 @@ export function sanitizeRichContent(html: string): string {
   });
 }
 
+export function stripHtmlTags(html?: string | null): string {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+}
+
 interface RichContentProps {
   html?: string | null;
   className?: string;
   placeholder?: string;
+  inline?: boolean;
 }
 
-export function RichContent({ html, className, placeholder }: RichContentProps) {
+export function RichContent({ html, className, placeholder, inline = false }: RichContentProps) {
   const sanitized = sanitizeRichContent(html ?? "");
   if (!sanitized.trim()) {
-    return (
+    if (!placeholder) return null;
+    return inline ? (
+      <span className={cn("text-xs italic text-slate-400", className)}>
+        {placeholder}
+      </span>
+    ) : (
       <p className={cn("text-xs italic text-slate-400", className)}>
-        {placeholder ?? "No written content for this lesson yet."}
+        {placeholder}
       </p>
     );
   }
-  return (
+  return inline ? (
+    <span
+      className={cn("rich-content rich-content-inline inline [&_p]:inline [&_p]:m-0", className)}
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: sanitized }}
+    />
+  ) : (
     // eslint-disable-next-line react/no-danger
     <div className={cn("rich-content", className)} dangerouslySetInnerHTML={{ __html: sanitized }} />
   );

@@ -141,9 +141,15 @@ export default function RolesPermissionsPage() {
       // Refresh our own session too, in case the edited role is the signed-in admin's own —
       // the sidebar and gated pages should react without a re-login.
       void refreshPermissions();
+      try {
+        window.dispatchEvent(new CustomEvent("mor_permissions_updated"));
+        localStorage.setItem("mor_permissions_updated_at", String(Date.now()));
+      } catch {
+        // storage fallback
+      }
       setFlash({
         type: "success",
-        message: `${selectedRole.label} updated — changes take effect for signed-in users within about 15 seconds, no re-login needed.`,
+        message: `${selectedRole.label} updated — sidebars and capabilities updated live across the workspace.`,
       });
     } catch (err) {
       setFlash({

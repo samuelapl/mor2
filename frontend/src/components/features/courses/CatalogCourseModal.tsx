@@ -5,6 +5,7 @@ import { BookOpen, ClipboardPen, Layers, Lock, UserRound } from "lucide-react";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { RichContent } from "@/components/ui/RichContent";
 import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { useLms } from "@/lib/lms-store";
 
@@ -112,13 +113,26 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
         {/* Course Metadata Grid */}
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-xs text-slate-600">
-          <div><span className="font-semibold text-slate-800">Department:</span> {course.department || "Ministry of Revenues"}</div>
-          <div><span className="font-semibold text-slate-800">Target Audience:</span> {course.targetAudience || "All Staff"}</div>
-          <div><span className="font-semibold text-slate-800">Delivery:</span> {(course.deliveryMethod || "self_paced").replace("_", " ")}</div>
-          <div><span className="font-semibold text-slate-800">Language:</span> {course.language || "English"}</div>
+          <div>
+            <span className="font-semibold text-slate-800">Department: </span>
+            <RichContent inline html={course.department} placeholder="Ministry of Revenues" />
+          </div>
+          <div>
+            <span className="font-semibold text-slate-800">Target Audience: </span>
+            <RichContent inline html={course.targetAudience} placeholder="All Staff" />
+          </div>
+          <div>
+            <span className="font-semibold text-slate-800">Delivery: </span>
+            {(course.deliveryMethod || "self_paced").replace("_", " ")}
+          </div>
+          <div>
+            <span className="font-semibold text-slate-800">Language: </span>
+            {course.language || "English"}
+          </div>
           {course.prerequisites ? (
             <div className="sm:col-span-2 md:col-span-4 border-t border-slate-200/60 pt-2">
-              <span className="font-semibold text-slate-800">Prerequisites:</span> {course.prerequisites}
+              <span className="font-semibold text-slate-800">Prerequisites: </span>
+              <RichContent inline html={course.prerequisites} />
             </div>
           ) : null}
         </div>

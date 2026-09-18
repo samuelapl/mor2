@@ -1,7 +1,9 @@
 import { api, apiText } from "./client";
 import type {
   ApiAttendance,
+  ApiAttendanceReport,
   ApiAttendanceSummary,
+  ApiAttendanceVisibility,
   ApiAuditLog,
   ApiAuditStats,
   ApiHealth,
@@ -27,6 +29,9 @@ export interface ScheduleSessionBody {
   meetingPassword?: string;
   scheduledAt: string;
   durationMinutes: number;
+  allowViewAttendance?: boolean;
+  attendanceThreshold?: number;
+  trainerId?: string;
 }
 
 export function fetchLiveSessions(
@@ -122,6 +127,67 @@ export function selfCheckIn(
   });
 }
 
+export function recordSessionJoin(sessionId: string): Promise<ApiAttendance> {
+  return api<ApiAttendance>(`attendance/sessions/${sessionId}/join`, {
+    method: "POST",
+  });
+}
+
+export function recordSessionHeartbeat(
+  sessionId: string,
+  activeSeconds = 15,
+): Promise<{
+  activeSeconds: number;
+  durationMinutes: number;
+  percentage: number;
+  status: BackendAttendanceStatus;
+  threshold: number;
+  sessionDurationMinutes: number;
+}> {
+  return api<{
+    activeSeconds: number;
+    durationMinutes: number;
+    percentage: number;
+    status: BackendAttendanceStatus;
+    threshold: number;
+    sessionDurationMinutes: number;
+  }>(`attendance/sessions/${sessionId}/heartbeat`, {
+    method: "POST",
+    body: { activeSeconds },
+  });
+}
+
+export function recordSessionLeave(sessionId: string): Promise<ApiAttendance | null> {
+  return api<ApiAttendance | null>(`attendance/sessions/${sessionId}/leave`, {
+    method: "POST",
+  });
+}
+
+export function sendSessionAttendanceReport(sessionId: string): Promise<ApiAttendanceReport> {
+  return api<ApiAttendanceReport>(`attendance/sessions/${sessionId}/send-report`, {
+    method: "POST",
+  });
+}
+
+export function fetchSessionAttendanceReport(sessionId: string): Promise<ApiAttendanceReport> {
+  return api<ApiAttendanceReport>(`attendance/sessions/${sessionId}/report`);
+}
+
+export function fetchSessionAttendanceVisibility(sessionId: string): Promise<ApiAttendanceVisibility> {
+  return api<ApiAttendanceVisibility>(`attendance/sessions/${sessionId}/visibility`);
+}
+
+export function fetchSystemSettings(): Promise<Record<string, string>> {
+  return api<Record<string, string>>("admin/settings");
+}
+
+export function updateSystemSettings(body: Record<string, string>): Promise<Record<string, string>> {
+  return api<Record<string, string>>("admin/settings", {
+    method: "PATCH",
+    body,
+  });
+}
+
 export function overrideAttendance(
   attendanceId: string,
   status: BackendAttendanceStatus,
@@ -131,6 +197,7 @@ export function overrideAttendance(
     body: { status },
   });
 }
+
 
 /* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */

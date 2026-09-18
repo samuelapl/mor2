@@ -163,4 +163,25 @@
     pointer-events: none;
     color: rgb(148 163 184);
   }
+
+  /* Inline mode for metadata badges, card headers, and compact tags */
+  .rich-content-inline {
+    display: inline;
+  }
+  .rich-content-inline p {
+    display: inline;
+    margin: 0;
+  }
+  .rich-content-inline ul,
+  .rich-content-inline ol {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-left: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .rich-content-inline li {
+    display: inline;
+  }
 }

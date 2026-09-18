@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
+import { RichTextArea } from "@/components/ui/RichTextArea";
 import {
   createCourseAssessment,
   fetchAssessmentWithAnswers,
@@ -708,14 +709,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               </div>
 
               <div>
-                <label className={labelClass}>Question Prompt *</label>
-                <textarea
-                  rows={3}
+                <RichTextArea
+                  label="Question Prompt"
                   required
-                  placeholder="Type your question statement or problem clearly…"
+                  placeholder="Type your interactive question statement, code snippet, or scenario…"
                   value={qText}
-                  onChange={(e) => setQText(e.target.value)}
-                  className={inputClass}
+                  onChange={(val) => setQText(val)}
+                  compact
+                  rows={3}
                 />
               </div>
 
@@ -873,12 +874,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               </div>
 
               <div>
-                <label className={labelClass}>Instructions for Learners</label>
-                <textarea
-                  rows={2}
+                <RichTextArea
+                  label="Instructions for Learners"
+                  placeholder="Type instructions, guidelines, or passing criteria for learners…"
                   value={quizDescription}
-                  onChange={(e) => setQuizDescription(e.target.value)}
-                  className={inputClass}
+                  onChange={(val) => setQuizDescription(val)}
+                  compact
+                  rows={2}
                 />
               </div>
 

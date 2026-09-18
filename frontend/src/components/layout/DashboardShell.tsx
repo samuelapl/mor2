@@ -8,16 +8,28 @@ import { PERMISSION_GATED_PATHS } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 
+function getGatedPermissions(pathname: string): string[] | undefined {
+  if (PERMISSION_GATED_PATHS[pathname]) {
+    return PERMISSION_GATED_PATHS[pathname];
+  }
+  for (const [route, perms] of Object.entries(PERMISSION_GATED_PATHS)) {
+    if (pathname.startsWith(`${route}/`)) {
+      return perms;
+    }
+  }
+  return undefined;
+}
+
 export default function DashboardShell({ children }: { children: ReactNode }) {
   const { ready, currentUser } = useLms();
   const { canAny } = usePermissions();
   const pathname = usePathname();
   const router = useRouter();
   const pathRole = getRoleFromPath(pathname);
-  const gatedPermissions = PERMISSION_GATED_PATHS[pathname];
+  const gatedPermissions = getGatedPermissions(pathname);
   const isGated = Boolean(gatedPermissions);
-  const gatedAllowed = isGated && canAny(gatedPermissions);
-  // Purely permission-based pages (Users & Roles) ignore the normal role/path match —
+  const gatedAllowed = Boolean(gatedPermissions && canAny(gatedPermissions));
+  // Purely permission-based pages ignore the normal role/path match —
   // any role holding the permission may open them, so the usual redirect is skipped here.
   const blocked = isGated ? !gatedAllowed : Boolean(pathRole && currentUser?.role !== pathRole);
 

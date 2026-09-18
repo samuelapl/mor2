@@ -545,8 +545,20 @@ export interface ApiLiveSession {
   durationMinutes: number;
   status: BackendSessionStatus;
   recordingUrl: string | null;
+  allowViewAttendance?: boolean;
+  attendanceThreshold?: number;
+  actualStartedAt?: string | null;
+  actualEndedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  trainerId?: string | null;
+  trainer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatarUrl?: string | null;
+  } | null;
   course: { id: string; titleEn: string; titleAm: string; code: string };
   attendees?: ApiAttendance[];
 }
@@ -554,6 +566,15 @@ export interface ApiLiveSession {
 /* -------------------------------------------------------------------------- */
 /*  Attendance                                                               */
 /* -------------------------------------------------------------------------- */
+
+export interface ApiAttendanceLog {
+  id: string;
+  sessionId: string;
+  userId: string;
+  eventType: "JOIN" | "LEAVE" | "REJOIN" | "HEARTBEAT";
+  durationSeconds?: number | null;
+  timestamp: string;
+}
 
 export interface ApiAttendance {
   id: string;
@@ -563,6 +584,9 @@ export interface ApiAttendance {
   joinedAt: string | null;
   leftAt: string | null;
   durationMinutes: number | null;
+  activeSeconds?: number;
+  percentage?: number | null;
+  rejoinCount?: number;
   notes: string | null;
   checkInMethod: BackendCheckInMethod | null;
   latitude: number | null;
@@ -574,6 +598,7 @@ export interface ApiAttendance {
   updatedAt: string;
   user?: { id: string; firstName: string; lastName: string; email: string };
   session?: { id: string; course: { id: string; titleEn: string; titleAm: string; code: string } };
+  logs?: ApiAttendanceLog[];
 }
 
 export interface ApiAttendanceSummary {
@@ -586,6 +611,33 @@ export interface ApiAttendanceSummary {
   excused: number;
   attendanceRate: number;
 }
+
+export interface ApiAttendanceReport {
+  session: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    courseCode: string;
+    courseTitle: string;
+    scheduledAt: string;
+    durationMinutes: number;
+    actualStartedAt?: string | null;
+    actualEndedAt?: string | null;
+    status: BackendSessionStatus;
+    attendanceThreshold: number;
+  };
+  summary: ApiAttendanceSummary;
+  attendees: ApiAttendance[];
+}
+
+export interface ApiAttendanceVisibility {
+  canView: boolean;
+  globalPermitted: boolean;
+  sessionPermitted: boolean;
+  isStaff: boolean;
+  reason?: string;
+}
+
 
 /* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */
