@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AttendanceStatus, CheckInMethod, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { AuditService } from '@modules/audit/audit.service';
+import { AuthenticatedUser } from '@common/interfaces';
 import { MarkAttendanceDto, BulkMarkAttendanceDto } from './dto';
 
 @Injectable()
@@ -257,6 +258,33 @@ export class AttendanceService {
       late,
       excused,
       attendanceRate: totalEnrolled > 0 ? Math.round(((present + late) / totalEnrolled) * 100) : 0,
+    };
+  }
+
+  async getVisibility(sessionId: string, user?: AuthenticatedUser) {
+    const session = await this.prisma.liveSession.findUnique({
+      where: { id: sessionId },
+      select: { allowViewAttendance: true, trainerId: true, courseId: true },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Live session not found');
+    }
+
+    const isStaff =
+      user?.roles?.some((r) =>
+        ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+      ) ?? false;
+
+    const isSessionTrainer = Boolean(user?.id && session.trainerId === user.id);
+    const sessionPermitted = Boolean(session.allowViewAttendance);
+    const canView = isStaff || isSessionTrainer || sessionPermitted;
+
+    return {
+      canView,
+      globalPermitted: true,
+      sessionPermitted,
+      isStaff: isStaff || isSessionTrainer,
     };
   }
 }

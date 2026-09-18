@@ -49,6 +49,8 @@ model User {
   moduleCompletions       ModuleCompletion[]
   lessonCompletions       LessonCompletion[]
   attendanceRecords       Attendance[]
+  liveSessionsTaught      LiveSession[] @relation("LiveSessionTrainer")
+  attendanceLogs          AttendanceLog[]
   certificatesEarned      Certificate[]
   certificateTemplatesCreated CertificateTemplate[]
   notifications           Notification[]
@@ -521,31 +523,39 @@ model AssessmentAttempt {
 // ──────────────────────────────────────────────────────────
 
 model LiveSession {
-  id           String            @id @default(uuid())
-  courseId      String            @map("course_id")
-  titleAm      String            @map("title_am")
-  titleEn      String            @map("title_en")
-  descriptionAm String?          @map("description_am")
-  descriptionEn String?          @map("description_en")
-  platform     SessionPlatform
-  externalUrl  String?           @map("external_url")
-  meetingId    String?           @map("meeting_id")
-  meetingPassword String?        @map("meeting_password")
-  scheduledAt  DateTime          @map("scheduled_at")
-  durationMinutes Int            @map("duration_minutes")
-  status       SessionStatus    @default(SCHEDULED)
-  recordingUrl String?           @map("recording_url")
+  id              String            @id @default(uuid())
+  courseId        String            @map("course_id")
+  trainerId       String?           @map("trainer_id")
+  titleAm         String            @map("title_am")
+  titleEn         String            @map("title_en")
+  descriptionAm   String?           @map("description_am")
+  descriptionEn   String?           @map("description_en")
+  platform        SessionPlatform
+  externalUrl     String?           @map("external_url")
+  meetingId       String?           @map("meeting_id")
+  meetingPassword String?           @map("meeting_password")
+  scheduledAt     DateTime          @map("scheduled_at")
+  durationMinutes Int               @map("duration_minutes")
+  status          SessionStatus     @default(SCHEDULED)
+  recordingUrl    String?           @map("recording_url")
+  allowViewAttendance Boolean       @default(false) @map("allow_view_attendance")
+  attendanceThreshold Int           @default(60) @map("attendance_threshold")
+  actualStartedAt DateTime?         @map("actual_started_at")
+  actualEndedAt   DateTime?         @map("actual_ended_at")
 
-  attendees    Attendance[]
+  attendees       Attendance[]
+  attendanceLogs  AttendanceLog[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  trainer User?  @relation("LiveSessionTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
 
   @@index([courseId])
   @@index([scheduledAt])
+  @@index([trainerId])
   @@map("live_sessions")
 }
 
@@ -568,25 +578,29 @@ enum SessionStatus {
 // ──────────────────────────────────────────────────────────
 
 model Attendance {
-  id           String           @id @default(uuid())
-  sessionId    String           @map("session_id")
-  userId       String           @map("user_id")
-  status       AttendanceStatus @default(ABSENT)
-  joinedAt     DateTime?        @map("joined_at")
-  leftAt       DateTime?        @map("left_at")
-  durationMinutes Int?          @map("duration_minutes")
-  notes        String?
+  id              String           @id @default(uuid())
+  sessionId       String           @map("session_id")
+  userId          String           @map("user_id")
+  status          AttendanceStatus @default(ABSENT)
+  joinedAt        DateTime?        @map("joined_at")
+  leftAt          DateTime?        @map("left_at")
+  durationMinutes Int?             @map("duration_minutes")
+  activeSeconds   Int              @default(0) @map("active_seconds")
+  percentage      Float?           @map("percentage")
+  rejoinCount     Int              @default(0) @map("rejoin_count")
+  notes           String?
   // Wave 3 — check-in method + geo/biometric stubs
-  checkInMethod CheckInMethod?  @map("check_in_method")
-  latitude     Float?           @map("latitude")
-  longitude    Float?           @map("longitude")
-  biometricVerified Boolean      @default(false) @map("biometric_verified")
+  checkInMethod   CheckInMethod?   @map("check_in_method")
+  latitude        Float?           @map("latitude")
+  longitude       Float?           @map("longitude")
+  biometricVerified Boolean        @default(false) @map("biometric_verified")
   // Immutability override (system_admin)
-  overriddenBy String?          @map("overridden_by")
-  overriddenAt DateTime?        @map("overridden_at")
+  overriddenBy    String?          @map("overridden_by")
+  overriddenAt    DateTime?        @map("overridden_at")
 
-  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session        LiveSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendanceLogs AttendanceLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -594,6 +608,34 @@ model Attendance {
   @@unique([sessionId, userId])
   @@index([userId])
   @@map("attendance")
+}
+
+model AttendanceLog {
+  id              String      @id @default(uuid())
+  sessionId       String      @map("session_id")
+  attendanceId    String?     @map("attendance_id")
+  userId          String      @map("user_id")
+  eventType       String      @map("event_type")
+  durationSeconds Int?        @map("duration_seconds")
+  timestamp       DateTime    @default(now())
+  metadata        Json?
+
+  session    LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  attendance Attendance? @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, userId])
+  @@index([sessionId])
+  @@map("attendance_logs")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
 
 enum AttendanceStatus {

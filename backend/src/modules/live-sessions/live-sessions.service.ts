@@ -33,8 +33,14 @@ export class LiveSessionsService {
         meetingPassword: dto.meetingPassword,
         scheduledAt: new Date(dto.scheduledAt),
         durationMinutes: dto.durationMinutes,
+        trainerId: dto.trainerId || null,
+        allowViewAttendance: dto.allowViewAttendance ?? false,
+        attendanceThreshold: dto.attendanceThreshold ?? 60,
       },
-      include: { course: { select: { id: true, titleEn: true, titleAm: true } } },
+      include: {
+        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+      },
     });
 
     // Notify all enrolled learners, assigned trainers, and active learners about the new live session (best-effort)
@@ -60,6 +66,7 @@ export class LiveSessionsService {
           ...enrollments.map((e) => e.userId),
           ...trainers.map((t) => t.userId),
           ...activeLearners.map((l) => l.userId),
+          ...(session.trainerId ? [session.trainerId] : []),
         ]),
       );
 
@@ -101,6 +108,7 @@ export class LiveSessionsService {
         orderBy,
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
           attendees: true,
         },
       }),
@@ -115,6 +123,7 @@ export class LiveSessionsService {
       where: { id },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
         attendees: {
           include: {
             user: {
@@ -152,6 +161,13 @@ export class LiveSessionsService {
         meetingPassword: dto.meetingPassword,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         durationMinutes: dto.durationMinutes,
+        trainerId: dto.trainerId !== undefined ? (dto.trainerId || null) : undefined,
+        allowViewAttendance: dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
+        attendanceThreshold: dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
+      },
+      include: {
+        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
       },
     });
   }
@@ -234,6 +250,7 @@ export class LiveSessionsService {
         orderBy: { scheduledAt: 'asc' },
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
         },
       }),
       this.prisma.liveSession.count({ where }),

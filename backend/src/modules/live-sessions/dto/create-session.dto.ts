@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { SessionPlatform } from '@prisma/client';
 
 export class CreateSessionDto {
@@ -50,4 +60,21 @@ export class CreateSessionDto {
   @IsInt()
   @Min(5)
   durationMinutes: number;
+
+  @ApiPropertyOptional({ example: 'uuid-of-trainer', description: 'Assigned trainer ID' })
+  @IsOptional()
+  @IsString()
+  trainerId?: string;
+
+  @ApiPropertyOptional({ example: false, description: 'Whether participants can view the attendance list' })
+  @IsOptional()
+  @IsBoolean()
+  allowViewAttendance?: boolean;
+
+  @ApiPropertyOptional({ example: 60, description: 'Minimum active stay threshold (%) for Present status' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  attendanceThreshold?: number;
 }

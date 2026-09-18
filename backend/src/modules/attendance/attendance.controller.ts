@@ -71,6 +71,16 @@ export class AttendanceController {
     return this.attendanceService.findBySession(sessionId);
   }
 
+  @Get('sessions/:sessionId/visibility')
+  @ApiOperation({ summary: 'Get session attendance visibility for current user' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async visibility(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.attendanceService.getVisibility(sessionId, user);
+  }
+
   @Get('sessions/:sessionId/summary')
   @Permissions('attendance.view')
   @ApiOperation({ summary: 'Get attendance summary for a session' })

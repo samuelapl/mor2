@@ -1,6 +1,6 @@
 # MoR Tele eLMS --- Combined Implementation Plan & Verification
 
-## 1. Dynamic Permission-Driven Access
+## 1.Dynamic Permission-Driven Access
 
 Transform LMS navigation and page accessibility into a permission-driven
 system based on permissions configured by the System Administrator in
@@ -845,5 +845,5 @@ permission architecture:
 
 1.  Identify the conflict.
 2.  Explain the exact file/model/API involved.
-3.  Make the smallest compatible change.
+3.Make the smallest compatible change.
 4.  Do not perform destructive migrations or database resets.
