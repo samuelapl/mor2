@@ -93,7 +93,7 @@ export class LiveSessionsService {
     return session;
   }
 
-  async findAll(query: PaginationQuery & { status?: SessionStatus; courseId?: string }) {
+  async findAll(query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string }) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
@@ -101,6 +101,7 @@ export class LiveSessionsService {
       deletedAt: null,
       ...(query.status ? { status: query.status } : {}),
       ...(query.courseId ? { courseId: query.courseId } : {}),
+      ...(query.trainerId ? { trainerId: query.trainerId } : {}),
     };
 
     const [sessions, total] = await Promise.all([
@@ -147,8 +148,8 @@ export class LiveSessionsService {
   async update(id: string, dto: UpdateSessionDto) {
     const existing = await this.findById(id);
 
-    if (existing.status === SessionStatus.COMPLETED) {
-      throw new BadRequestException('Cannot update a completed session');
+    if (existing.status === SessionStatus.COMPLETED && !dto.status && !dto.scheduledAt) {
+      throw new BadRequestException('Cannot update a completed session without rescheduling');
     }
 
     return this.prisma.liveSession.update({
@@ -164,6 +165,7 @@ export class LiveSessionsService {
         meetingPassword: dto.meetingPassword,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         durationMinutes: dto.durationMinutes,
+        status: dto.status !== undefined ? dto.status : dto.scheduledAt ? SessionStatus.SCHEDULED : undefined,
         trainerId: dto.trainerId !== undefined ? (dto.trainerId || null) : undefined,
         allowViewAttendance: dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
         attendanceThreshold: dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,

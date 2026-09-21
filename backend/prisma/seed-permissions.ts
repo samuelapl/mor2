@@ -66,8 +66,7 @@ export const PERMISSIONS: PermissionDef[] = [
 
   // Live Sessions
   { code: 'live_session.manage_all', resource: 'live_session', action: 'manage_all', scope: 'ALL', description: 'Manage all sessions' },
-  { code: 'live_session.view_own', resource: 'live_session', action: 'view_own', scope: 'OWN', description: 'View own sessions' },
-  { code: 'live_session.manage', resource: 'live_session', action: 'manage', scope: 'ALL', description: 'Schedule / manage sessions' },
+  { code: 'live_session.manage_own', resource: 'live_session', action: 'manage_own', scope: 'OWN', description: 'Manage own sessions' },
 
   // Progress
   { code: 'progress.view', resource: 'progress', action: 'view', scope: 'ALL', description: "View learners' progress" },
@@ -108,7 +107,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'attendance.view',
     'result.view.all',
     'student.view',
-    'live_session.view_own',
+    'live_session.manage_own',
     'progress.view',
   ],
   [RoleName.CONTENT_APPROVER]: ['course.view.all', 'course.approve_reject'],
@@ -133,9 +132,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'attendance.manage',
     'result.view.all',
     'student.view',
-    'live_session.manage_all',
-    'live_session.manage',
-    'live_session.view_own',
+    'live_session.manage_own',
     'progress.view',
     'user.view',
     'dashboard.stats',
@@ -149,7 +146,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'attendance.view',
     'result.view.all',
     'student.view',
-    'live_session.view_own',
+    'live_session.manage_own',
     'progress.view',
   ],
   [RoleName.LEARNER]: [
@@ -228,15 +225,22 @@ export async function seedPermissions(prisma: PrismaClient) {
     where: { code: { in: ['course.approve', 'course.reject'] } },
   });
 
-  // TRAINER and COURSE_OWNER now default to 'live_session.view_own';
-  // drop any old 'live_session.manage' grants from them so they only manage if admin explicitly grants it.
-  const liveSessionManagePerm = permissionIdByCode.get('live_session.manage');
-  if (liveSessionManagePerm) {
-    const courseOwnerRoleId = roleIdByName.get(RoleName.COURSE_OWNER);
+  // 'live_session.manage' and 'live_session.view_own' were replaced by
+  // 'live_session.manage_all' and 'live_session.manage_own'.
+  // Delete the old rows — cascades to their role_permissions grants.
+  await prisma.permission.deleteMany({
+    where: { code: { in: ['live_session.manage', 'live_session.view_own'] } },
+  });
+
+  // TRAINING_ADMIN now defaults to 'live_session.manage_own' instead of 'live_session.manage_all'.
+  // Drop any old 'live_session.manage_all' grant from TRAINING_ADMIN so it only sees its assigned sessions by default.
+  const trainingAdminRoleId = roleIdByName.get(RoleName.TRAINING_ADMIN);
+  const liveSessionManageAllPerm = permissionIdByCode.get('live_session.manage_all');
+  if (trainingAdminRoleId && liveSessionManageAllPerm) {
     await prisma.rolePermission.deleteMany({
       where: {
-        roleId: { in: [trainerRoleId, courseOwnerRoleId].filter((id): id is string => Boolean(id)) },
-        permissionId: liveSessionManagePerm,
+        roleId: trainingAdminRoleId,
+        permissionId: liveSessionManageAllPerm,
       },
     });
   }

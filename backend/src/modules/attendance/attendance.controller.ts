@@ -2,7 +2,13 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/co
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AttendanceStatus, CheckInMethod } from '@prisma/client';
 import { AttendanceService } from './attendance.service';
-import { CheckInDto, MarkAttendanceDto, BulkMarkAttendanceDto, OverrideAttendanceDto } from './dto';
+import {
+  CheckInDto,
+  MarkAttendanceDto,
+  BulkMarkAttendanceDto,
+  OverrideAttendanceDto,
+  HeartbeatDto,
+} from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -89,9 +95,58 @@ export class AttendanceController {
     return this.attendanceService.summaryForSession(sessionId);
   }
 
+  @Post('sessions/:sessionId/join')
+  @ApiOperation({ summary: 'Record participant session join event' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async recordJoin(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.attendanceService.recordJoin(sessionId, user.id);
+  }
+
+  @Post('sessions/:sessionId/heartbeat')
+  @ApiOperation({ summary: 'Record presence heartbeat and compute stay percentage' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async heartbeat(
+    @Param('sessionId') sessionId: string,
+    @Body() dto: HeartbeatDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.attendanceService.recordHeartbeat(sessionId, user.id, dto?.activeSeconds ?? 15);
+  }
+
+  @Post('sessions/:sessionId/leave')
+  @ApiOperation({ summary: 'Record participant session leave event' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async recordLeave(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.attendanceService.recordLeave(sessionId, user.id);
+  }
+
+  @Get('sessions/:sessionId/report')
+  @ApiOperation({ summary: 'Get full attendance report and calculations for a session' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async getReport(@Param('sessionId') sessionId: string) {
+    return this.attendanceService.getReport(sessionId);
+  }
+
+  @Post('sessions/:sessionId/send-report')
+  @ApiOperation({ summary: 'Calculate final session attendance report and notify trainer' })
+  @ApiParam({ name: 'sessionId', type: String })
+  async sendReport(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.attendanceService.sendReport(sessionId, user.id);
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Get my attendance history' })
   async myAttendance(@CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.findByUser(user.id);
   }
 }
+

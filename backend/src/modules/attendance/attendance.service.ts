@@ -21,8 +21,25 @@ export class AttendanceService {
   }
 
   /**
-   * Learner virtual/QR/GPS/biometric check-in. Produces an immutable attendance
-   * record (checkInMethod set) that only a system-admin override can change.
+   * Institutional attendance threshold configured in System Admin Policies
+   * (key: 'default_attendance_threshold'). Defaults to 60 if not configured.
+   */
+  async getDefaultAttendanceThreshold(): Promise<number> {
+    const setting = await this.prisma.systemSetting.findUnique({
+      where: { key: 'default_attendance_threshold' },
+    });
+    if (setting?.value) {
+      const parsed = parseInt(setting.value, 10);
+      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+        return parsed;
+      }
+    }
+    return 60;
+  }
+
+  /**
+   * Learner virtual/QR/GPS/biometric check-in. Produces an attendance record
+   * with checkInMethod set. Uses upsert so concurrent room joins never crash with unique constraint.
    */
   async checkin(
     sessionId: string,
@@ -54,16 +71,29 @@ export class AttendanceService {
       if (existing.checkInMethod) {
         return existing;
       }
-      throw new BadRequestException(
-        'Attendance for this session was already recorded by a trainer and is immutable',
-      );
+      return this.prisma.attendance.update({
+        where: { sessionId_userId: { sessionId, userId } },
+        data: {
+          checkInMethod: method,
+          ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
+          ...(method === CheckInMethod.BIOMETRIC ? { biometricVerified: true } : {}),
+          notes: existing.notes ? `${existing.notes} | Self check-in via ${method}` : `Self check-in via ${method}`,
+        },
+      });
     }
 
-    return this.prisma.attendance.create({
-      data: {
+    return this.prisma.attendance.upsert({
+      where: { sessionId_userId: { sessionId, userId } },
+      update: {
+        checkInMethod: method,
+        ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
+        ...(method === CheckInMethod.BIOMETRIC ? { biometricVerified: true } : {}),
+        notes: `Self check-in via ${method}`,
+      },
+      create: {
         sessionId,
         userId,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.ABSENT,
         joinedAt: new Date(),
         checkInMethod: method,
         ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
@@ -73,7 +103,7 @@ export class AttendanceService {
     });
   }
 
-  async mark(dto: MarkAttendanceDto, _markedById: string) {
+  async mark(dto: MarkAttendanceDto, markedById: string) {
     await this.getSessionOrFail(dto.sessionId);
 
     const user = await this.prisma.user.findUnique({ where: { id: dto.userId } });
@@ -85,14 +115,7 @@ export class AttendanceService {
       where: { sessionId_userId: { sessionId: dto.sessionId, userId: dto.userId } },
     });
 
-    // Immutability: learner check-in records cannot be edited by trainers.
-    if (existing?.checkInMethod) {
-      throw new BadRequestException(
-        'Attendance recorded via learner check-in is immutable; use system-admin override to change it',
-      );
-    }
-
-    return this.prisma.attendance.upsert({
+    const updated = await this.prisma.attendance.upsert({
       where: {
         sessionId_userId: {
           sessionId: dto.sessionId,
@@ -101,9 +124,12 @@ export class AttendanceService {
       },
       update: {
         status: dto.status,
-        durationMinutes: dto.durationMinutes,
-        joinedAt: dto.status === AttendanceStatus.PRESENT ? new Date() : undefined,
-        notes: dto.notes,
+        durationMinutes: dto.durationMinutes !== undefined ? dto.durationMinutes : existing?.durationMinutes,
+        joinedAt:
+          dto.status === AttendanceStatus.PRESENT
+            ? (existing?.joinedAt ?? new Date())
+            : (dto.status === AttendanceStatus.ABSENT ? null : existing?.joinedAt),
+        notes: dto.notes !== undefined ? dto.notes : existing?.notes,
       },
       create: {
         sessionId: dto.sessionId,
@@ -114,6 +140,17 @@ export class AttendanceService {
         notes: dto.notes,
       },
     });
+
+    await this.auditService.record({
+      userId: markedById,
+      action: 'ATTENDANCE_MARK',
+      entity: 'attendance',
+      entityId: updated.id,
+      oldValues: { status: existing?.status } as Prisma.InputJsonObject,
+      newValues: { status: updated.status, by: markedById } as Prisma.InputJsonObject,
+    });
+
+    return updated;
   }
 
   async bulkMark(dto: BulkMarkAttendanceDto) {
@@ -129,18 +166,6 @@ export class AttendanceService {
       throw new BadRequestException('One or more users not found');
     }
 
-    const existing = await this.prisma.attendance.findMany({
-      where: { sessionId: dto.sessionId, checkInMethod: { not: null } },
-      select: { userId: true },
-    });
-    const checkInUserIds = new Set(existing.map((e) => e.userId));
-    const immutableConflict = dto.records.find((r) => checkInUserIds.has(r.userId));
-    if (immutableConflict) {
-      throw new BadRequestException(
-        `Attendance for a user recorded via learner check-in is immutable`,
-      );
-    }
-
     await this.prisma.$transaction(
       dto.records.map((record) =>
         this.prisma.attendance.upsert({
@@ -152,9 +177,9 @@ export class AttendanceService {
           },
           update: {
             status: record.status,
-            durationMinutes: record.durationMinutes,
+            durationMinutes: record.durationMinutes !== undefined ? record.durationMinutes : undefined,
             joinedAt: record.status === AttendanceStatus.PRESENT ? new Date() : undefined,
-            notes: record.notes,
+            notes: record.notes !== undefined ? record.notes : undefined,
           },
           create: {
             sessionId: dto.sessionId,
@@ -293,6 +318,175 @@ export class AttendanceService {
   }
 
   // ──────────────────────────────────────────────────────────────────────────────
+  // Client-side presence tracking (Join, Heartbeat, Leave)
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  async recordJoin(sessionId: string, userId: string) {
+    const session = await this.getSessionOrFail(sessionId);
+
+    const attendance = await this.prisma.attendance.upsert({
+      where: { sessionId_userId: { sessionId, userId } },
+      update: {
+        rejoinCount: { increment: 1 },
+      },
+      create: {
+        sessionId,
+        userId,
+        status: AttendanceStatus.ABSENT,
+        joinedAt: new Date(),
+        rejoinCount: 0,
+      },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+
+    await this.prisma.attendanceLog.create({
+      data: {
+        sessionId,
+        userId,
+        attendanceId: attendance.id,
+        eventType: 'JOIN',
+        timestamp: new Date(),
+        metadata: { source: 'client_api' },
+      },
+    });
+
+    const threshold = await this.getDefaultAttendanceThreshold();
+
+    return {
+      ...attendance,
+      threshold,
+      sessionDurationMinutes: session.durationMinutes ?? 60,
+    };
+  }
+
+  async recordHeartbeat(sessionId: string, userId: string, elapsedSeconds = 15) {
+    const session = await this.getSessionOrFail(sessionId);
+    const sessionTotalSeconds = (session.durationMinutes ?? 60) * 60;
+    const threshold = await this.getDefaultAttendanceThreshold();
+
+    const existing = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+
+    const addSeconds = Math.max(1, Math.min(120, elapsedSeconds));
+    const newActiveSeconds = (existing?.activeSeconds ?? 0) + addSeconds;
+    const rawPercentage = sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
+    const percentage = Math.min(100, Math.round(rawPercentage));
+
+    const newStatus =
+      percentage >= threshold ? AttendanceStatus.PRESENT : (existing?.status ?? AttendanceStatus.ABSENT);
+
+    const updated = await this.prisma.attendance.upsert({
+      where: { sessionId_userId: { sessionId, userId } },
+      update: {
+        activeSeconds: newActiveSeconds,
+        durationMinutes: Math.floor(newActiveSeconds / 60),
+        percentage,
+        status: newStatus,
+      },
+      create: {
+        sessionId,
+        userId,
+        status: newStatus,
+        activeSeconds: newActiveSeconds,
+        durationMinutes: Math.floor(newActiveSeconds / 60),
+        percentage,
+        joinedAt: new Date(),
+        rejoinCount: 0,
+      },
+    });
+
+    return {
+      activeSeconds: updated.activeSeconds,
+      durationMinutes: updated.durationMinutes,
+      percentage: updated.percentage,
+      status: updated.status,
+      threshold,
+      sessionDurationMinutes: session.durationMinutes ?? 60,
+    };
+  }
+
+  async recordLeave(sessionId: string, userId: string) {
+    const existing = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+    if (!existing) return null;
+
+    const updated = await this.prisma.attendance.update({
+      where: { sessionId_userId: { sessionId, userId } },
+      data: {
+        leftAt: new Date(),
+      },
+    });
+
+    await this.prisma.attendanceLog.create({
+      data: {
+        sessionId,
+        userId,
+        attendanceId: existing.id,
+        eventType: 'LEAVE',
+        timestamp: new Date(),
+        metadata: { percentage: existing.percentage, status: existing.status, source: 'client_api' },
+      },
+    });
+
+    return updated;
+  }
+
+  async getReport(sessionId: string) {
+    const session = await this.prisma.liveSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        course: { select: { code: true, titleEn: true } },
+      },
+    });
+    if (!session || session.deletedAt) {
+      throw new NotFoundException('Live session not found');
+    }
+
+    const threshold = await this.getDefaultAttendanceThreshold();
+    const summary = await this.summaryForSession(sessionId);
+    const attendees = await this.findBySession(sessionId);
+
+    return {
+      session: {
+        id: session.id,
+        titleEn: session.titleEn,
+        titleAm: session.titleAm,
+        courseCode: session.course?.code || '',
+        courseTitle: session.course?.titleEn || '',
+        scheduledAt: session.scheduledAt.toISOString(),
+        durationMinutes: session.durationMinutes,
+        actualStartedAt: session.actualStartedAt?.toISOString() || null,
+        actualEndedAt: session.actualEndedAt?.toISOString() || null,
+        status: session.status,
+        attendanceThreshold: threshold,
+      },
+      summary,
+      attendees,
+    };
+  }
+
+  async sendReport(sessionId: string, currentUserId: string) {
+    const report = await this.getReport(sessionId);
+
+    await this.auditService.record({
+      userId: currentUserId,
+      action: 'ATTENDANCE_REPORT_DISPATCH',
+      entity: 'live_session',
+      entityId: sessionId,
+      newValues: {
+        totalAttendees: report.attendees.length,
+        attendanceRate: report.summary.attendanceRate,
+      } as Prisma.InputJsonObject,
+    });
+
+    return report;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
   // LiveKit server-side webhook handlers (tamper-proof, called from the controller)
   // ──────────────────────────────────────────────────────────────────────────────
 
@@ -302,38 +496,26 @@ export class AttendanceService {
    * Increments rejoinCount on re-join.
    */
   async handleParticipantJoined(sessionId: string, userId: string): Promise<void> {
-    const existing = await this.prisma.attendance.findUnique({
+    const attendance = await this.prisma.attendance.upsert({
       where: { sessionId_userId: { sessionId, userId } },
+      update: {
+        rejoinCount: { increment: 1 },
+      },
+      create: {
+        sessionId,
+        userId,
+        status: AttendanceStatus.ABSENT,
+        joinedAt: new Date(),
+        rejoinCount: 0,
+      },
     });
-
-    if (existing) {
-      // Re-join — increment counter
-      await this.prisma.attendance.update({
-        where: { sessionId_userId: { sessionId, userId } },
-        data: { rejoinCount: { increment: 1 } },
-      });
-    } else {
-      // First join — create record with ABSENT (will be promoted on leave if threshold is met)
-      await this.prisma.attendance.create({
-        data: {
-          sessionId,
-          userId,
-          status: AttendanceStatus.ABSENT,
-          joinedAt: new Date(),
-          rejoinCount: 0,
-        },
-      });
-    }
 
     // Create immutable JOIN log
-    const attendance = await this.prisma.attendance.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
-    });
     await this.prisma.attendanceLog.create({
       data: {
         sessionId,
         userId,
-        attendanceId: attendance?.id ?? null,
+        attendanceId: attendance.id,
         eventType: 'JOIN',
         timestamp: new Date(),
         metadata: { source: 'livekit_webhook' },
@@ -366,7 +548,7 @@ export class AttendanceService {
       ? (newActiveSeconds / sessionTotalSeconds) * 100
       : 0;
     const percentage = Math.min(100, Math.round(rawPercentage));
-    const threshold = session.attendanceThreshold ?? 60;
+    const threshold = await this.getDefaultAttendanceThreshold();
     const newStatus =
       percentage >= threshold ? AttendanceStatus.PRESENT : (existing?.status ?? AttendanceStatus.ABSENT);
 

@@ -80,6 +80,10 @@ export function updateLiveSession(
   return api<ApiLiveSession>(`live-sessions/${id}`, { method: "PATCH", body });
 }
 
+export function deleteLiveSession(id: string): Promise<ApiLiveSession> {
+  return api<ApiLiveSession>(`live-sessions/${id}`, { method: "DELETE" });
+}
+
 export function setSessionStatus(
   id: string,
   status: BackendSessionStatus,

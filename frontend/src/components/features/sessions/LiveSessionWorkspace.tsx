@@ -39,10 +39,12 @@ import {
   recordSessionLeave,
   selfCheckIn,
   fetchLiveKitToken,
+  fetchSystemSettings,
 } from "@/lib/api/monitoring";
 import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from "@/lib/api/types";
 import { useLms } from "@/lib/lms-store";
 import { DynamicAttendanceModal } from "./DynamicAttendanceModal";
+import { DisconnectReason } from "livekit-client";
 
 // LiveKit — only imported when session.platform === "LIVEKIT"
 import "@livekit/components-styles";
@@ -131,8 +133,20 @@ export function LiveSessionWorkspace({
   const [attendancePercentage, setAttendancePercentage] = useState(0);
   const [attendanceStatus, setAttendanceStatus] = useState<"PRESENT" | "ABSENT">("ABSENT");
   const [rejoinDetected, setRejoinDetected] = useState(false);
-  const threshold = session.attendanceThreshold ?? 60;
+  const [policyThreshold, setPolicyThreshold] = useState<number>(session.attendanceThreshold ?? 60);
   const sessionDurationMinutes = session.durationMinutes > 0 ? session.durationMinutes : 30;
+
+  // Load institutional attendance policy threshold from system settings
+  useEffect(() => {
+    fetchSystemSettings()
+      .then((settings) => {
+        if (settings?.default_attendance_threshold) {
+          const t = parseInt(settings.default_attendance_threshold, 10);
+          if (!isNaN(t) && t > 0) setPolicyThreshold(t);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Dynamic attendance modal visibility
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
@@ -144,7 +158,7 @@ export function LiveSessionWorkspace({
     {
       id: "1",
       sender: trainerName || "Trainer",
-      text: `Welcome to "${session.titleEn || "Live Session"}". Real-time audience stay tracking is active (>= ${threshold}% required for Present status). Feel free to ask questions here!`,
+      text: `Welcome to "${session.titleEn || "Live Session"}". Real-time audience stay tracking is active (>= ${policyThreshold}% required for Present status). Feel free to ask questions here!`,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       isSelf: false,
     },
@@ -208,8 +222,9 @@ export function LiveSessionWorkspace({
 
         // 3. Optional audience Join / Rejoin sync (best-effort, non-blocking)
         recordSessionJoin(session.id)
-          .then((joinRecord) => {
+          .then((joinRecord: any) => {
             if (!cancelled && joinRecord) {
+              if (joinRecord.threshold) setPolicyThreshold(joinRecord.threshold);
               if ((joinRecord.rejoinCount ?? 0) > 0) setRejoinDetected(true);
               if (joinRecord.activeSeconds) setStaySeconds(joinRecord.activeSeconds);
               if (joinRecord.percentage) setAttendancePercentage(joinRecord.percentage);
@@ -237,6 +252,7 @@ export function LiveSessionWorkspace({
       try {
         const update = await recordSessionHeartbeat(session.id, 15);
         if (!cancelled && update) {
+          if (update.threshold) setPolicyThreshold(update.threshold);
           setStaySeconds(update.activeSeconds);
           setAttendancePercentage(update.percentage);
           setAttendanceStatus(update.status === "PRESENT" ? "PRESENT" : "ABSENT");
@@ -338,10 +354,23 @@ export function LiveSessionWorkspace({
     onClose();
   };
 
+  const handleLiveKitDisconnect = (reason?: DisconnectReason) => {
+    if (
+      reason === DisconnectReason.CLIENT_INITIATED ||
+      reason === DisconnectReason.ROOM_CLOSED ||
+      reason === DisconnectReason.ROOM_DELETED
+    ) {
+      void handleLeaveSession();
+    } else {
+      console.warn("LiveKit disconnect reason:", reason);
+      setError("Disconnected from LiveKit room. Click Retry Connection to rejoin.");
+    }
+  };
+
   if (!open) return null;
 
   const currentStayMinutes = Math.floor(staySeconds / 60);
-  const isPresent = attendanceStatus === "PRESENT" || attendancePercentage >= threshold;
+  const isPresent = attendanceStatus === "PRESENT" || attendancePercentage >= policyThreshold;
   const trainerDisplayName =
     trainerName ||
     (session.trainer
@@ -386,7 +415,7 @@ export function LiveSessionWorkspace({
                   : "border-amber-200 bg-amber-50 text-amber-800"
               }`}
               title={`Total stay duration: ${currentStayMinutes}m / ${sessionDurationMinutes}m (${attendancePercentage}%). ${
-                isPresent ? "Verified Present (>= " + threshold + "%)" : "Stay >= " + threshold + "% to be marked Present"
+                isPresent ? "Verified Present (>= " + policyThreshold + "%)" : "Stay >= " + policyThreshold + "% to be marked Present"
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
@@ -518,7 +547,7 @@ export function LiveSessionWorkspace({
                   connect={true}
                   video={false}
                   audio={false}
-                  onDisconnected={handleLeaveSession}
+                  onDisconnected={handleLiveKitDisconnect}
                   className="flex-1 flex flex-col h-full overflow-hidden"
                 >
                   {/* Renders all remote participant audio tracks automatically */}

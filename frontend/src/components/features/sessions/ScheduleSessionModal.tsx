@@ -44,7 +44,6 @@ export function ScheduleSessionModal({
   const [externalUrl, setExternalUrl] = useState("");
   const [meetingPassword, setMeetingPassword] = useState("");
   const [allowViewAttendance, setAllowViewAttendance] = useState(false);
-  const [attendanceThreshold, setAttendanceThreshold] = useState(60);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -150,7 +149,6 @@ export function ScheduleSessionModal({
         scheduledAt: new Date(`${date}T${time}`).toISOString(),
         durationMinutes: Number(duration),
         allowViewAttendance,
-        attendanceThreshold: Number(attendanceThreshold),
       });
 
       setTitleEn("");
@@ -403,24 +401,11 @@ export function ScheduleSessionModal({
         </div>
 
         {/* Live Attendance Configuration */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2.5">
           <p className="text-xs font-bold text-slate-800">Live Session Attendance Policy</p>
-          <div className="flex items-center justify-between">
-            <label className="text-xs text-slate-600">
-              Minimum active stay threshold for Present status
-            </label>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="number"
-                min={10}
-                max={100}
-                value={attendanceThreshold}
-                onChange={(e) => setAttendanceThreshold(Number(e.target.value))}
-                className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-center font-bold text-slate-800"
-              />
-              <span className="text-xs text-slate-500 font-semibold">%</span>
-            </div>
-          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Attendance calculation and Minimum Active Stay Threshold for &quot;Present&quot; status are governed centrally by institutional policy configured in System Admin Policies.
+          </p>
           <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer pt-1">
             <input
               type="checkbox"

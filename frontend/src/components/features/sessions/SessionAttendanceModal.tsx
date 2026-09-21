@@ -198,8 +198,8 @@ export function SessionAttendanceModal({
       });
       setFlash(`Attendance marked as ${status}.`);
       setTimeout(() => setFlash(null), 3000);
-    } catch {
-      setFlash("Failed to update attendance status.");
+    } catch (err: any) {
+      setFlash(err?.message || "Failed to update attendance status.");
     } finally {
       setUpdatingUserId(null);
     }
@@ -217,8 +217,8 @@ export function SessionAttendanceModal({
       await loadData();
       setFlash("All enrolled learners marked as Present.");
       setTimeout(() => setFlash(null), 4000);
-    } catch {
-      setFlash("Failed to bulk mark attendance.");
+    } catch (err: any) {
+      setFlash(err?.message || "Failed to bulk mark attendance.");
     } finally {
       setBulkUpdating(false);
     }

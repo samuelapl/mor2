@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
+  Edit3,
   Filter,
   Info,
   LinkIcon,
@@ -14,11 +15,12 @@ import {
   RefreshCw,
   Search,
   Square,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
-import { fetchLiveSessions, setSessionStatus, sendSessionAttendanceReport } from "@/lib/api/monitoring";
+import { deleteLiveSession, fetchLiveSessions, setSessionStatus, sendSessionAttendanceReport } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
@@ -29,6 +31,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
+import { EditSessionModal } from "@/components/features/sessions/EditSessionModal";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
 import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
@@ -37,6 +40,8 @@ export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
   const { can, canAny } = usePermissions();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
+  const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
@@ -48,7 +53,7 @@ export default function TrainerSessionsPage() {
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
 
-  const canManageAll = can("live_session.manage_all") || can("live_session.manage");
+  const canManageAll = can("live_session.manage_all");
 
   const assignedCourses = useMemo(
     () =>
@@ -154,7 +159,22 @@ export default function TrainerSessionsPage() {
     }
   };
 
-  const canConductSession = canAny(["live_session.manage_all", "live_session.manage", "live_session.view_own"]);
+  const handleDeleteSession = async (session: ApiLiveSession) => {
+    if (!window.confirm(`Are you sure you want to delete "${session.titleEn}"? This cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(session.id);
+    try {
+      await deleteLiveSession(session.id);
+      loadSessions();
+    } catch (err) {
+      console.error("Failed to delete session:", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const canConductSession = canAny(["live_session.manage_all", "live_session.manage_own"]);
   const canViewAttendance = canAny(["attendance.view", "attendance.manage"]);
 
   const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL" || selectedStatusFilter !== "ALL";
@@ -299,6 +319,32 @@ export default function TrainerSessionsPage() {
                       Details
                     </Button>
 
+                    {canManageAll && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingSession(row.session)}
+                          className="gap-1 text-slate-700 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 text-xs"
+                          title="Edit details or reschedule date/time"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          Edit / Reschedule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={deletingId === row.session.id}
+                          onClick={() => handleDeleteSession(row.session)}
+                          className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                          title="Delete session"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
+                      </>
+                    )}
+
                     {canConductSession && row.session.status === "SCHEDULED" ? (
                       <Button
                         size="sm"
@@ -381,6 +427,32 @@ export default function TrainerSessionsPage() {
                       <Info className="h-3.5 w-3.5" />
                       Details
                     </Button>
+
+                    {canManageAll && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingSession(row.session)}
+                          className="gap-1 text-slate-700 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 text-xs"
+                          title="Edit details or reschedule date/time"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          Edit / Reschedule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={deletingId === row.session.id}
+                          onClick={() => handleDeleteSession(row.session)}
+                          className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                          title="Delete session"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
+                      </>
+                    )}
                   </div>
                 )}
               />
@@ -434,6 +506,18 @@ export default function TrainerSessionsPage() {
           sessionId={selectedAttendanceSessionId}
         />
       )}
+
+      {/* Edit / Reschedule Modal (when canManageAll) */}
+      <EditSessionModal
+        open={Boolean(editingSession)}
+        session={editingSession}
+        onClose={() => setEditingSession(null)}
+        onUpdated={() => {
+          setEditingSession(null);
+          loadSessions();
+        }}
+        courses={courses}
+      />
     </PageShell>
   );
 }

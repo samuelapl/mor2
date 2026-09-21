@@ -1,11 +1,12 @@
 port: 7880
 bind_addresses:
-  - ""
+  - "0.0.0.0"
 rtc:
   tcp_port: 7881
   udp_port: 7882
-  use_external_ip: false
-  node_ip: "127.0.0.1"
+  use_external_ip: true
+  advertise_internal_ip: true
+  skip_external_ip_validation: true
 room:
   empty_timeout: 3600
   departure_timeout: 300
@@ -14,4 +15,4 @@ keys:
 webhook:
   api_key: devkey
   urls:
-    - http://host.docker.internal:3000/api/v1/live-sessions/webhook
+    - http://127.0.0.1:3001/api/v1/live-sessions/webhook

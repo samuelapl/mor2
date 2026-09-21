@@ -99,13 +99,13 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
           label: "All Sessions",
           href: "/training-admin/sessions",
           icon: Presentation,
-          permission: ["live_session.manage_all", "live_session.manage"],
+          permission: ["live_session.manage_all"],
         },
         {
           label: "My Sessions",
           href: "/trainer/sessions",
           icon: CalendarDays,
-          permission: ["live_session.view_own"],
+          permission: ["live_session.manage_own", "live_session.manage_all"],
         },
       ],
     },
@@ -126,13 +126,13 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
           label: "All Sessions",
           href: "/training-admin/sessions",
           icon: Presentation,
-          permission: ["live_session.manage_all", "live_session.manage"],
+          permission: ["live_session.manage_all"],
         },
         {
           label: "My Sessions",
           href: "/trainer/sessions",
           icon: CalendarDays,
-          permission: ["live_session.view_own"],
+          permission: ["live_session.manage_own", "live_session.manage_all"],
         },
       ],
     },
@@ -161,7 +161,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: "Live Sessions",
       href: "/learner/live-sessions",
       icon: Video,
-      permission: ["live_session.manage", "attendance.checkin", "course.browse"],
+      permission: ["attendance.checkin", "course.browse"],
     },
     {
       label: "Certificates",
@@ -267,9 +267,9 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/course-owner/create-course": ["course.create"],
   "/course-owner/question-bank": ["question_bank.manage"],
   "/trainer/attendance": ["attendance.view", "attendance.manage", "attendance.override"],
-  "/training-admin/sessions": ["live_session.manage_all", "live_session.manage"],
-  "/trainer/sessions": ["live_session.view_own", "live_session.manage_all", "live_session.manage"],
-  "/learner/live-sessions": ["live_session.manage", "attendance.checkin", "course.browse"],
+  "/training-admin/sessions": ["live_session.manage_all"],
+  "/trainer/sessions": ["live_session.manage_own", "live_session.manage_all"],
+  "/learner/live-sessions": ["attendance.checkin", "course.browse"],
   "/training-admin/enrollments": ["student.manage", "student.view", "enrollment.view_all"],
   "/trainer/question-bank": ["question_bank.manage"],
   "/trainer/create-quiz": ["quiz.create"],
@@ -290,7 +290,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
 /**
  * Dynamic cross-role capability items.
  * If the System Admin grants an actor (e.g. Content Approver, Course Owner, Training Admin)
- * permissions like `live_session.manage_all`, `live_session.view_own`, `quiz.create`, etc.,
+ * permissions like `live_session.manage_all`, `live_session.manage_own`, `quiz.create`, etc.,
  * these nav items automatically appear in their sidebar navigation!
  */
 export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
@@ -302,13 +302,13 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
         label: "All Sessions",
         href: "/training-admin/sessions",
         icon: Presentation,
-        permission: ["live_session.manage_all", "live_session.manage"],
+        permission: ["live_session.manage_all"],
       },
       {
         label: "My Sessions",
         href: "/trainer/sessions",
         icon: CalendarDays,
-        permission: ["live_session.view_own"],
+        permission: ["live_session.manage_own", "live_session.manage_all"],
       },
     ],
   },

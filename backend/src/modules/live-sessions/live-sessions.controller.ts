@@ -40,7 +40,7 @@ export class LiveSessionsController {
   @Get('live-sessions')
   @Public()
   @ApiOperation({ summary: 'List live sessions' })
-  async findAll(@Query() query: PaginationQuery & { status?: SessionStatus; courseId?: string }) {
+  async findAll(@Query() query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string }) {
     return this.liveSessionsService.findAll(query);
   }
 
@@ -141,7 +141,7 @@ export class LiveSessionsController {
   }
 
   @Post('courses/:courseId/live-sessions')
-  @Permissions('live_session.manage_all', 'live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Schedule a live session for a course' })
   @ApiParam({ name: 'courseId', type: String })
   async create(@Param('courseId') courseId: string, @Body() dto: CreateSessionDto) {
@@ -149,15 +149,15 @@ export class LiveSessionsController {
   }
 
   @Patch('live-sessions/:id')
-  @Permissions('live_session.manage_all', 'live_session.manage')
-  @ApiOperation({ summary: 'Update a live session' })
+  @Permissions('live_session.manage_all')
+  @ApiOperation({ summary: 'Update or reschedule a live session' })
   @ApiParam({ name: 'id', type: String })
   async update(@Param('id') id: string, @Body() dto: UpdateSessionDto) {
     return this.liveSessionsService.update(id, dto);
   }
 
   @Patch('live-sessions/:id/status')
-  @Permissions('live_session.manage_all', 'live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Change session status (start, complete, cancel)' })
   @ApiParam({ name: 'id', type: String })
   async changeStatus(@Param('id') id: string, @Body('status') status: SessionStatus) {
@@ -165,7 +165,7 @@ export class LiveSessionsController {
   }
 
   @Delete('live-sessions/:id')
-  @Permissions('live_session.manage_all', 'live_session.manage')
+  @Permissions('live_session.manage_all')
   @ApiOperation({ summary: 'Soft delete a live session' })
   @ApiParam({ name: 'id', type: String })
   async remove(@Param('id') id: string) {
