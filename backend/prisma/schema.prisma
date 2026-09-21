@@ -594,6 +594,7 @@ model LiveSession {
 }
 
 enum SessionPlatform {
+  LIVEKIT
   ZOOM
   GOOGLE_MEET
   MS_TEAMS

@@ -1,0 +1,17 @@
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  use_external_ip: false
+  node_ip: "127.0.0.1"
+room:
+  empty_timeout: 3600
+  departure_timeout: 300
+keys:
+  devkey: secret
+webhook:
+  api_key: devkey
+  urls:
+    - http://host.docker.internal:3000/api/v1/live-sessions/webhook

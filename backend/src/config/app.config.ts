@@ -29,3 +29,9 @@ export const MinioConfig = {
 export const DatabaseConfig = {
   url: process.env.DATABASE_URL,
 } as const;
+
+export const LiveKitConfig = {
+  url: process.env.LIVEKIT_URL || 'ws://localhost:7880',
+  apiKey: process.env.LIVEKIT_API_KEY || 'devkey',
+  apiSecret: process.env.LIVEKIT_API_SECRET || 'secret',
+} as const;

@@ -1,16 +1,19 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { CreateSessionDto, UpdateSessionDto } from './dto';
 import { BigBlueButtonProvider } from './providers/bigbluebutton.provider';
+import { LiveKitProvider } from './providers/livekit.provider';
+import { LiveKitConfig } from '@config/app.config';
 
 @Injectable()
 export class LiveSessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bbbProvider: BigBlueButtonProvider,
+    private readonly liveKitProvider: LiveKitProvider,
   ) {}
 
   async create(courseId: string, dto: CreateSessionDto) {
@@ -230,6 +233,61 @@ export class LiveSessionsService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  /**
+   * Generate a LiveKit access token for a participant joining a LIVEKIT-platform session.
+   * Verifies that the session exists and is active, and that learners are enrolled.
+   */
+  async getLiveKitToken(
+    sessionId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ token: string; wsUrl: string; roomName: string }> {
+    const session = await this.findById(sessionId);
+
+    const isStaff = user.roles?.some((r) =>
+      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+    ) ?? false;
+    const isSessionTrainer = session.trainerId === user.id;
+    const isAuthorizedStaff = isStaff || isSessionTrainer;
+
+    if (session.status !== SessionStatus.SCHEDULED && session.status !== SessionStatus.LIVE) {
+      if (isAuthorizedStaff) {
+        await this.prisma.liveSession.update({
+          where: { id: sessionId },
+          data: { status: SessionStatus.LIVE, actualEndedAt: null },
+        });
+      } else {
+        throw new BadRequestException('Session is not scheduled or live');
+      }
+    } else if (session.status === SessionStatus.SCHEDULED && isAuthorizedStaff) {
+      await this.prisma.liveSession.update({
+        where: { id: sessionId },
+        data: { status: SessionStatus.LIVE, actualStartedAt: new Date() },
+      });
+    }
+
+    // Learners must be actively enrolled in the course
+    if (!isAuthorizedStaff) {
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
+      });
+      if (!enrollment || enrollment.status !== 'ACTIVE') {
+        throw new ForbiddenException('You must be actively enrolled in this course to join');
+      }
+    }
+
+    const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+    const roomName = session.id;
+
+    const token = await this.liveKitProvider.generateToken(roomName, {
+      identity: user.id,
+      name: displayName,
+      isTrainer: isAuthorizedStaff,
+      metadata: { role: isAuthorizedStaff ? 'trainer' : 'learner', sessionId },
+    });
+
+    return { token, wsUrl: LiveKitConfig.url, roomName };
   }
 
   async upcomingForUser(userId?: string, query: PaginationQuery = {}) {

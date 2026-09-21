@@ -18,7 +18,7 @@ interface ScheduleSessionModalProps {
   courses: Course[];
 }
 
-type PlatformChoice = "JITSI" | "GOOGLE_MEET" | "ZOOM" | "BIGBLUEBUTTON" | "MS_TEAMS" | "CUSTOM";
+type PlatformChoice = "LIVEKIT" | "JITSI" | "GOOGLE_MEET" | "ZOOM" | "BIGBLUEBUTTON" | "MS_TEAMS" | "CUSTOM";
 
 export function ScheduleSessionModal({
   open,
@@ -30,7 +30,7 @@ export function ScheduleSessionModal({
   const [trainerId, setTrainerId] = useState("");
   const [availableTrainers, setAvailableTrainers] = useState<ApiUser[]>([]);
   const [trainersLoading, setTrainersLoading] = useState(false);
-  const [platformType, setPlatformType] = useState<PlatformChoice>("JITSI");
+  const [platformType, setPlatformType] = useState<PlatformChoice>("LIVEKIT");
   const [titleEn, setTitleEn] = useState("");
   const [titleAm, setTitleAm] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
@@ -95,7 +95,9 @@ export function ScheduleSessionModal({
   // Automatically pre-populate Jitsi URL when switching to JITSI if empty
   const handlePlatformChange = (val: PlatformChoice) => {
     setPlatformType(val);
-    if (val === "JITSI") {
+    if (val === "LIVEKIT") {
+      setExternalUrl("");
+    } else if (val === "JITSI") {
       setExternalUrl(generateJitsiUrl());
     } else if (val === "BIGBLUEBUTTON") {
       setExternalUrl("https://demo.bigbluebutton.org/gl/");
@@ -124,10 +126,12 @@ export function ScheduleSessionModal({
     setSubmitting(true);
 
     try {
-      let backendPlatform: "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" = "CUSTOM";
-      if (platformType === "ZOOM") backendPlatform = "ZOOM";
+      let backendPlatform: "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" = "LIVEKIT";
+      if (platformType === "LIVEKIT") backendPlatform = "LIVEKIT";
+      else if (platformType === "ZOOM") backendPlatform = "ZOOM";
       else if (platformType === "GOOGLE_MEET") backendPlatform = "GOOGLE_MEET";
       else if (platformType === "MS_TEAMS") backendPlatform = "MS_TEAMS";
+      else backendPlatform = "CUSTOM";
 
       let meetingId: string | undefined = undefined;
       if (platformType === "BIGBLUEBUTTON") {
@@ -287,6 +291,7 @@ export function ScheduleSessionModal({
             onChange={(e) => handlePlatformChange(e.target.value as PlatformChoice)}
             className={inputClass}
           >
+            <option value="LIVEKIT">⚡ LiveKit (Native In-App WebRTC Classroom)</option>
             <option value="JITSI">🎥 Jitsi Meet (Open-Source / Instant Web Video)</option>
             <option value="BIGBLUEBUTTON">🏛️ BigBlueButton (Dedicated Virtual Classroom)</option>
             <option value="GOOGLE_MEET">🟢 Google Meet</option>
@@ -297,45 +302,57 @@ export function ScheduleSessionModal({
         </div>
 
         {/* Platform URL & Generator */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold text-slate-700">
-              Meeting URL {platformType === "JITSI" ? "(Auto-generated)" : ""}
-            </label>
+        {platformType === "LIVEKIT" ? (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1 text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
+              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Native In-LMS LiveKit Room</span>
+            </div>
+            <p className="text-indigo-700">
+              No external links or apps required. Participants join directly in the ELTMS workspace with native WebRTC audio, video, screen sharing, and automated attendance tracking.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700">
+                Meeting URL {platformType === "JITSI" ? "(Auto-generated)" : ""}
+              </label>
+              {platformType === "JITSI" && (
+                <button
+                  type="button"
+                  onClick={() => setExternalUrl(generateJitsiUrl())}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  New room code
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                required={platformType !== "CUSTOM"}
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                placeholder="https://meet.jit.si/..."
+                className={inputClass}
+              />
+            </div>
             {platformType === "JITSI" && (
-              <button
-                type="button"
-                onClick={() => setExternalUrl(generateJitsiUrl())}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition"
-              >
-                <RefreshCw className="h-3 w-3" />
-                New room code
-              </button>
+              <p className="flex items-center gap-1.5 text-[11px] text-emerald-700">
+                <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
+                Instant, zero-install WebRTC video room with screen sharing and chat.
+              </p>
+            )}
+            {platformType === "BIGBLUEBUTTON" && (
+              <p className="flex items-center gap-1.5 text-[11px] text-indigo-700">
+                <MonitorPlay className="h-3.5 w-3.5 flex-shrink-0 text-indigo-500" />
+                Integrated with MoR LMS BigBlueButton provider checksum security.
+              </p>
             )}
           </div>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              required={platformType !== "CUSTOM"}
-              value={externalUrl}
-              onChange={(e) => setExternalUrl(e.target.value)}
-              placeholder="https://meet.jit.si/..."
-              className={inputClass}
-            />
-          </div>
-          {platformType === "JITSI" && (
-            <p className="flex items-center gap-1.5 text-[11px] text-emerald-700">
-              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
-              Instant, zero-install WebRTC video room with screen sharing and chat.
-            </p>
-          )}
-          {platformType === "BIGBLUEBUTTON" && (
-            <p className="flex items-center gap-1.5 text-[11px] text-indigo-700">
-              <MonitorPlay className="h-3.5 w-3.5 flex-shrink-0 text-indigo-500" />
-              Integrated with MoR LMS BigBlueButton provider checksum security.
-            </p>
-          )}
-        </div>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           <div>

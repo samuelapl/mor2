@@ -38,10 +38,19 @@ import {
   recordSessionJoin,
   recordSessionLeave,
   selfCheckIn,
+  fetchLiveKitToken,
 } from "@/lib/api/monitoring";
 import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from "@/lib/api/types";
 import { useLms } from "@/lib/lms-store";
 import { DynamicAttendanceModal } from "./DynamicAttendanceModal";
+
+// LiveKit — only imported when session.platform === "LIVEKIT"
+import "@livekit/components-styles";
+import {
+  LiveKitRoom,
+  VideoConference,
+  RoomAudioRenderer,
+} from "@livekit/components-react";
 
 interface LiveSessionWorkspaceProps {
   open: boolean;
@@ -78,6 +87,13 @@ export function LiveSessionWorkspace({
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // LiveKit token state (only populated when session.platform === "LIVEKIT")
+  const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
+  const [liveKitWsUrl, setLiveKitWsUrl] = useState<string>(
+    process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
+  );
+  const isLiveKitSession = session.platform === "LIVEKIT";
 
   const toggleFullScreen = () => {
     const nextState = !isFullScreen;
@@ -155,43 +171,59 @@ export function LiveSessionWorkspace({
 
     const init = async () => {
       try {
-        // Record automatic audience Join / Rejoin
-        const joinRecord = await recordSessionJoin(session.id);
-        if (!cancelled && joinRecord) {
-          if ((joinRecord.rejoinCount ?? 0) > 0) {
-            setRejoinDetected(true);
+        // 1. For LIVEKIT sessions, prioritize fetching the room access token immediately
+        if (isLiveKitSession) {
+          try {
+            const tkRes = await fetchLiveKitToken(session.id);
+            if (!cancelled) {
+              setLiveKitToken(tkRes.token);
+              if (tkRes.wsUrl) setLiveKitWsUrl(tkRes.wsUrl);
+            }
+          } catch (tkErr) {
+            if (!cancelled) setError("Could not obtain LiveKit access token. Please refresh.");
           }
-          if (joinRecord.activeSeconds) {
-            setStaySeconds(joinRecord.activeSeconds);
-          }
-          if (joinRecord.percentage) {
-            setAttendancePercentage(joinRecord.percentage);
-          }
-          if (joinRecord.status === "PRESENT") {
-            setAttendanceStatus("PRESENT");
+        } else {
+          // Fetch join URL for external/embedded fallback
+          try {
+            const res = await fetchSessionJoinUrl(session.id);
+            if (!cancelled) {
+              const rawUrl = res?.joinUrl || session.externalUrl;
+              if (rawUrl) {
+                setJoinUrl(formatJitsiUrl(rawUrl, displayName));
+              }
+            }
+          } catch {
+            if (session.externalUrl && !cancelled) {
+              setJoinUrl(formatJitsiUrl(session.externalUrl, displayName));
+            }
           }
         }
 
-        // Also record self check-in for backward compatibility
+        // 2. Check visibility permissions (non-blocking)
+        fetchSessionAttendanceVisibility(session.id)
+          .then((vis) => {
+            if (!cancelled) setVisibility(vis);
+          })
+          .catch(() => {});
+
+        // 3. Optional audience Join / Rejoin sync (best-effort, non-blocking)
+        recordSessionJoin(session.id)
+          .then((joinRecord) => {
+            if (!cancelled && joinRecord) {
+              if ((joinRecord.rejoinCount ?? 0) > 0) setRejoinDetected(true);
+              if (joinRecord.activeSeconds) setStaySeconds(joinRecord.activeSeconds);
+              if (joinRecord.percentage) setAttendancePercentage(joinRecord.percentage);
+              if (joinRecord.status === "PRESENT") setAttendanceStatus("PRESENT");
+            }
+          })
+          .catch(() => {});
+
+        // 4. Learner self check-in (best-effort)
         if (userRole === "learner") {
           void selfCheckIn(session.id, "VIRTUAL").catch(() => {});
         }
-
-        // Check visibility permissions
-        const vis = await fetchSessionAttendanceVisibility(session.id);
-        if (!cancelled) setVisibility(vis);
-
-        // Fetch join URL for external/embedded fallback
-        const res = await fetchSessionJoinUrl(session.id);
-        if (cancelled) return;
-        const rawUrl = res?.joinUrl || session.externalUrl;
-        if (rawUrl) {
-          setJoinUrl(formatJitsiUrl(rawUrl, displayName));
-        }
-      } catch {
-        if (session.externalUrl && !cancelled) {
-          setJoinUrl(formatJitsiUrl(session.externalUrl, displayName));
-        }
+      } catch (err) {
+        if (!cancelled) setError("An error occurred while initializing the session room.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -390,33 +422,35 @@ export function LiveSessionWorkspace({
               ) : null}
             </Button>
 
-            {/* Room Mode Toggle */}
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setConferenceMode("interactive")}
-                className={`rounded-md px-2 py-1 font-medium transition ${
-                  conferenceMode === "interactive"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                In-LMS Suite
-              </button>
-              {joinUrl && (
+            {/* Room Mode Toggle — only show for non-LiveKit sessions */}
+            {!isLiveKitSession && (
+              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
                 <button
                   type="button"
-                  onClick={() => setConferenceMode("embedded")}
+                  onClick={() => setConferenceMode("interactive")}
                   className={`rounded-md px-2 py-1 font-medium transition ${
-                    conferenceMode === "embedded"
+                    conferenceMode === "interactive"
                       ? "bg-white text-slate-900 shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  Jitsi / External
+                  In-LMS Suite
                 </button>
-              )}
-            </div>
+                {joinUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setConferenceMode("embedded")}
+                    className={`rounded-md px-2 py-1 font-medium transition ${
+                      conferenceMode === "embedded"
+                        ? "bg-white text-slate-900 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Jitsi / External
+                  </button>
+                )}
+              </div>
+            )}
 
             {joinUrl && (
               <a
@@ -472,8 +506,50 @@ export function LiveSessionWorkspace({
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
                 <p className="text-sm font-medium">Connecting to virtual training room…</p>
                 <span className="text-xs text-indigo-300">
-                  Audience presence tracking initialized
+                  {isLiveKitSession ? "Acquiring LiveKit access token…" : "Audience presence tracking initialized"}
                 </span>
+              </div>
+            ) : isLiveKitSession && liveKitToken ? (
+              /* ── Native LiveKit Room ───────────────────────────────────── */
+              <div className="flex-1 min-h-0 flex flex-col h-full w-full overflow-hidden" data-lk-theme="default">
+                <LiveKitRoom
+                  token={liveKitToken}
+                  serverUrl={liveKitWsUrl}
+                  connect={true}
+                  video={false}
+                  audio={false}
+                  onDisconnected={handleLeaveSession}
+                  className="flex-1 flex flex-col h-full overflow-hidden"
+                >
+                  {/* Renders all remote participant audio tracks automatically */}
+                  <RoomAudioRenderer />
+                  {/* Full-featured video conference UI provided by the LiveKit component library */}
+                  <VideoConference />
+                </LiveKitRoom>
+              </div>
+            ) : isLiveKitSession && !liveKitToken ? (
+              /* LiveKit token unavailable — show error state */
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 text-slate-400 p-6">
+                <AlertCircle className="h-10 w-10 text-red-400" />
+                <p className="text-sm font-semibold text-slate-200">Unable to connect to the LiveKit room</p>
+                <p className="text-xs text-center text-slate-400 max-w-sm">
+                  {error || "Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course."}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setLoading(true);
+                    fetchLiveKitToken(session.id)
+                      .then((r) => { setLiveKitToken(r.token); if (r.wsUrl) setLiveKitWsUrl(r.wsUrl); setError(null); })
+                      .catch(() => setError("Token fetch failed. Please try again."))
+                      .finally(() => setLoading(false));
+                  }}
+                  className="gap-1.5 border-slate-600 text-slate-300 hover:bg-slate-800"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Retry Connection
+                </Button>
               </div>
             ) : conferenceMode === "embedded" && joinUrl ? (
               /* Embedded Jitsi/External Frame - 100% full screen with full native controls */

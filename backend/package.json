@@ -42,6 +42,7 @@
     "class-validator": "^0.14.1",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.2",
+    "livekit-server-sdk": "^2.19.1",
     "minio": "^8.0.2",
     "nodemailer": "^10.0.10",
     "passport": "^0.7.0",

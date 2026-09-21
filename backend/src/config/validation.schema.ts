@@ -80,6 +80,18 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SMTP_SECURE: string;
+
+  @IsString()
+  @IsOptional()
+  LIVEKIT_URL: string;
+
+  @IsString()
+  @IsOptional()
+  LIVEKIT_API_KEY: string;
+
+  @IsString()
+  @IsOptional()
+  LIVEKIT_API_SECRET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

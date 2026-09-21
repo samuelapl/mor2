@@ -23,7 +23,7 @@ export interface ScheduleSessionBody {
   titleAm: string;
   descriptionEn?: string;
   descriptionAm?: string;
-  platform?: "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
+  platform?: "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
   externalUrl?: string;
   meetingId?: string;
   meetingPassword?: string;
@@ -54,6 +54,16 @@ export function fetchSessionJoinUrl(
   id: string,
 ): Promise<{ joinUrl: string; platform: string }> {
   return api<{ joinUrl: string; platform: string }>(`live-sessions/${id}/join-url`);
+}
+
+export interface LiveKitTokenResponse {
+  token: string;
+  wsUrl: string;
+  roomName: string;
+}
+
+export function fetchLiveKitToken(sessionId: string): Promise<LiveKitTokenResponse> {
+  return api<LiveKitTokenResponse>(`live-sessions/${sessionId}/livekit-token`);
 }
 
 export function scheduleSession(

@@ -291,4 +291,139 @@ export class AttendanceService {
       isStaff: isStaff || isSessionTrainer,
     };
   }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // LiveKit server-side webhook handlers (tamper-proof, called from the controller)
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Called when a participant joins the LiveKit room.
+   * Creates or updates the Attendance row, always starting ABSENT.
+   * Increments rejoinCount on re-join.
+   */
+  async handleParticipantJoined(sessionId: string, userId: string): Promise<void> {
+    const existing = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+
+    if (existing) {
+      // Re-join — increment counter
+      await this.prisma.attendance.update({
+        where: { sessionId_userId: { sessionId, userId } },
+        data: { rejoinCount: { increment: 1 } },
+      });
+    } else {
+      // First join — create record with ABSENT (will be promoted on leave if threshold is met)
+      await this.prisma.attendance.create({
+        data: {
+          sessionId,
+          userId,
+          status: AttendanceStatus.ABSENT,
+          joinedAt: new Date(),
+          rejoinCount: 0,
+        },
+      });
+    }
+
+    // Create immutable JOIN log
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+    await this.prisma.attendanceLog.create({
+      data: {
+        sessionId,
+        userId,
+        attendanceId: attendance?.id ?? null,
+        eventType: 'JOIN',
+        timestamp: new Date(),
+        metadata: { source: 'livekit_webhook' },
+      },
+    });
+  }
+
+  /**
+   * Called when a participant leaves the LiveKit room.
+   * Accumulates activeSeconds across multiple segments (for rejoins).
+   * Promotes status to PRESENT if percentage >= threshold.
+   */
+  async handleParticipantLeft(
+    sessionId: string,
+    userId: string,
+    segmentDurationSeconds: number,
+  ): Promise<void> {
+    const session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
+    if (!session) return;
+
+    const sessionTotalSeconds = (session.durationMinutes ?? 60) * 60;
+
+    const existing = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+
+    const prevActiveSeconds = existing?.activeSeconds ?? 0;
+    const newActiveSeconds = prevActiveSeconds + Math.max(0, segmentDurationSeconds);
+    const rawPercentage = sessionTotalSeconds > 0
+      ? (newActiveSeconds / sessionTotalSeconds) * 100
+      : 0;
+    const percentage = Math.min(100, Math.round(rawPercentage));
+    const threshold = session.attendanceThreshold ?? 60;
+    const newStatus =
+      percentage >= threshold ? AttendanceStatus.PRESENT : (existing?.status ?? AttendanceStatus.ABSENT);
+
+    await this.prisma.attendance.upsert({
+      where: { sessionId_userId: { sessionId, userId } },
+      update: {
+        activeSeconds: newActiveSeconds,
+        percentage,
+        status: newStatus,
+        leftAt: new Date(),
+      },
+      create: {
+        sessionId,
+        userId,
+        status: newStatus,
+        activeSeconds: newActiveSeconds,
+        percentage,
+        joinedAt: new Date(),
+        leftAt: new Date(),
+        rejoinCount: 0,
+      },
+    });
+
+    // Create LEAVE log with segment duration
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId } },
+    });
+    await this.prisma.attendanceLog.create({
+      data: {
+        sessionId,
+        userId,
+        attendanceId: attendance?.id ?? null,
+        eventType: 'LEAVE',
+        durationSeconds: segmentDurationSeconds,
+        timestamp: new Date(),
+        metadata: { percentage, status: newStatus, source: 'livekit_webhook' },
+      },
+    });
+  }
+
+  /**
+   * Called when the LiveKit room finishes (all participants have left or the session is ended).
+   * Marks the LiveSession as COMPLETED.
+   */
+  async handleRoomFinished(sessionId: string): Promise<void> {
+    const session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
+    if (!session || session.status === 'COMPLETED') return;
+
+    if (session.status === 'LIVE') {
+      await this.prisma.liveSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'COMPLETED',
+          actualEndedAt: new Date(),
+        },
+      });
+    }
+  }
 }
+

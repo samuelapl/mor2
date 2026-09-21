@@ -525,7 +525,7 @@ export interface ApiDashboardStats {
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */
 
-export type BackendSessionPlatform = "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
+export type BackendSessionPlatform = "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
 export type BackendSessionStatus = "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
 export type BackendAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 export type BackendCheckInMethod = "VIRTUAL" | "QR" | "GPS" | "BIOMETRIC";

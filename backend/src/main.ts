@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { AppConfig } from './config/app.config';
 import { AllExceptionsFilter } from './common/filters';
@@ -8,7 +9,17 @@ import { TransformInterceptor } from './common/interceptors';
 import { AppValidationPipe } from './common/pipes';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
+
+  // LiveKit server webhooks use Content-Type: application/webhook+json
+  app.use(
+    express.raw({
+      type: 'application/webhook+json',
+      verify: (req: any, _res: any, buf: Buffer) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
 
   // Trust one reverse-proxy hop so req.ip reflects the real client address
   // (X-Forwarded-For) once this sits behind nginx/a load balancer.
