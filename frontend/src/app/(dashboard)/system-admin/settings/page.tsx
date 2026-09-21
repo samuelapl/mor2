@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Lock, Save, ShieldCheck, Users } from "lucide-react";
+import { CheckCircle2, Lock, Save, ShieldCheck } from "lucide-react";
 import { fetchSystemSettings, updateSystemSettings } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
 import PageShell from "@/components/shared/PageShell";
@@ -16,10 +16,6 @@ export default function SystemSettingsPage() {
   const [openRegistration, setOpenRegistration] = useState(false);
   const [ssoEnabled, setSSOEnabled] = useState(true);
 
-  // Live session attendance settings
-  const [allowAllViewAttendance, setAllowAllViewAttendance] = useState(false);
-  const [attendanceThreshold, setAttendanceThreshold] = useState("60");
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -31,12 +27,10 @@ export default function SystemSettingsPage() {
     fetchSystemSettings()
       .then((settings) => {
         if (!cancelled && settings) {
-          if (settings.allow_all_view_attendance !== undefined) {
-            setAllowAllViewAttendance(settings.allow_all_view_attendance === "true");
-          }
-          if (settings.default_attendance_threshold) {
-            setAttendanceThreshold(settings.default_attendance_threshold);
-          }
+          if (settings.session_timeout) setSessionTimeout(settings.session_timeout);
+          if (settings.notifications !== undefined) setNotifications(settings.notifications === "true");
+          if (settings.open_registration !== undefined) setOpenRegistration(settings.open_registration === "true");
+          if (settings.sso_enabled !== undefined) setSSOEnabled(settings.sso_enabled === "true");
         }
       })
       .catch(() => {})
@@ -65,8 +59,10 @@ export default function SystemSettingsPage() {
     setErrorMessage(null);
     try {
       await updateSystemSettings({
-        allow_all_view_attendance: String(allowAllViewAttendance),
-        default_attendance_threshold: String(attendanceThreshold),
+        session_timeout: sessionTimeout,
+        notifications: String(notifications),
+        open_registration: String(openRegistration),
+        sso_enabled: String(ssoEnabled),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
@@ -81,7 +77,7 @@ export default function SystemSettingsPage() {
     <PageShell
       role="system_admin"
       title="System Settings"
-      description="Configure platform defaults, institutional security, and dynamic live session attendance permissions."
+      description="Configure platform defaults, institutional security, and system preferences."
     >
       <div className="max-w-2xl space-y-6 pb-8">
         {errorMessage && (
@@ -89,82 +85,6 @@ export default function SystemSettingsPage() {
             {errorMessage}
           </div>
         )}
-
-        {/* Live Sessions & Attendance Governance Section */}
-        <div className="space-y-4 rounded-2xl border border-indigo-200/80 bg-white p-6 shadow-soft ring-super-soft">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-              <Users className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Live Sessions &amp; Attendance Policy
-              </h3>
-              <p className="text-xs text-slate-500">
-                Control dynamic attendance visibility for all actors and define qualification thresholds.
-              </p>
-            </div>
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {/* Dynamic Attendance Permission Toggle */}
-            <div className="flex items-center justify-between py-3">
-              <div className="pr-4">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-slate-900">
-                    Permit All Actors to View Session Attendance
-                  </p>
-                  <Badge variant={allowAllViewAttendance ? "green" : "slate"}>
-                    {allowAllViewAttendance ? "Permitted to All" : "Restricted to Staff"}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                  When enabled, any participant (including learners) can dynamically open the attendance
-                  modal and view attendees, join/leave timestamps, stay durations, and verification statuses.
-                  When disabled, only course trainers and system administrators can view attendees.
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={allowAllViewAttendance}
-                onClick={() => setAllowAllViewAttendance(!allowAllViewAttendance)}
-                className={toggleClass(allowAllViewAttendance)}
-              >
-                <span
-                  className={cn(
-                    "inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-xs",
-                    allowAllViewAttendance ? "translate-x-5" : "translate-x-0.5",
-                  )}
-                />
-              </button>
-            </div>
-
-            {/* Attendance Threshold Setting */}
-            <div className="py-3">
-              <label className="mb-1 block text-xs font-semibold text-slate-700">
-                Minimum Active Stay Threshold for &quot;Present&quot; Status (%)
-              </label>
-              <p className="mb-2 text-xs text-slate-500">
-                The minimum percentage of total session duration a learner must stay connected
-                across their join and rejoin intervals to be verified as <strong>PRESENT</strong> (e.g. 60%). Learners below this percentage are marked <strong>ABSENT</strong>.
-              </p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  min={10}
-                  max={100}
-                  value={attendanceThreshold}
-                  onChange={(e) => setAttendanceThreshold(e.target.value)}
-                  className={cn(inputClass, "max-w-[120px]")}
-                />
-                <span className="text-xs font-semibold text-slate-600">
-                  % of session duration
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* General System Information */}
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">

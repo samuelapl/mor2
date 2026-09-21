@@ -16,22 +16,27 @@ import {
   AlertCircle,
   FileCheck,
   UserCheck,
+  ClipboardCheck,
+  BookOpen,
+  User,
+  Key,
 } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { fetchLiveSession } from "@/lib/api/monitoring";
+import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Table, Td } from "@/components/ui/Table";
 import { RichContent } from "@/components/ui/RichContent";
 import { LiveSessionWorkspace } from "./LiveSessionWorkspace";
-import { DynamicAttendanceModal } from "./DynamicAttendanceModal";
 
 interface SessionDetailModalProps {
   open: boolean;
   onClose: () => void;
   sessionId: string;
-  userRole?: "trainer" | "learner" | "training_admin";
+  userRole?: string;
+  onOpenAttendance?: () => void;
   onJoin?: () => void;
 }
 
@@ -61,11 +66,15 @@ export function SessionDetailModal({
   onClose,
   sessionId,
   userRole = "trainer",
+  onOpenAttendance,
   onJoin,
 }: SessionDetailModalProps) {
+  const { courses, users, userName } = useLms();
+  const { can, canAny } = usePermissions();
   const [session, setSession] = useState<ApiLiveSession | null>(null);
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);
-  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+
+  const canViewAttendance = can("attendance.view") || can("attendance.manage");
 
   useEffect(() => {
     if (!open || !sessionId) {
@@ -88,16 +97,24 @@ export function SessionDetailModal({
   if (!open || !session) return null;
 
   const meta = STATUS_META[session.status];
-  const attendees = session.attendees || [];
-  const presentCount = attendees.filter((a) => a.status === "PRESENT" || a.status === "LATE").length;
+  const course = courses.find((c) => c.id === session.courseId) || session.course;
+  const courseTitle = (course as any)?.title || (course as any)?.titleEn || "Training Program";
+  const trainerObj = session.trainerId
+    ? users.find((u) => u.id === session.trainerId) || session.trainer
+    : session.trainer;
+  const trainerDisplayName = trainerObj
+    ? `${trainerObj.firstName || ""} ${trainerObj.lastName || ""}`.trim() || trainerObj.email
+    : session.trainerId
+    ? userName(session.trainerId)
+    : "Institutional Trainer";
 
   return (
     <>
       <WorkspaceDetailOverlay
         open={open && !liveWorkspaceOpen}
         onClose={onClose}
-        title={session.titleEn || "Live Training Session"}
-        subtitle={`${session.course.code} · ${session.course.titleEn || session.course.code}`}
+        title={session.titleEn || "Session Details"}
+        subtitle={`${course?.code || "COURSE"} · ${courseTitle}`}
         badge={
           <Badge variant={meta.variant} dot>
             {meta.label}
@@ -105,23 +122,19 @@ export function SessionDetailModal({
         }
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setAttendanceModalOpen(true)}
-              className="gap-1.5"
-            >
-              <Users className="h-3.5 w-3.5" />
-              Attendees &amp; Stay
-            </Button>
-
-            {userRole === "trainer" && (
-              <Link href={`/trainer/attendance`}>
-                <Button size="sm" variant="outline" className="gap-1.5">
-                  <FileCheck className="h-3.5 w-3.5" />
-                  Full Attendance Sheet
-                </Button>
-              </Link>
+            {canViewAttendance && onOpenAttendance && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onClose();
+                  onOpenAttendance();
+                }}
+                className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+              >
+                <ClipboardCheck className="h-3.5 w-3.5 text-indigo-600" />
+                View Attendance
+              </Button>
             )}
 
             <Button
@@ -134,148 +147,161 @@ export function SessionDetailModal({
                   setLiveWorkspaceOpen(true);
                 }
               }}
-              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
             >
               <MonitorPlay className="h-4 w-4" />
-              Join Session (In-LMS)
+              Join Session Room
             </Button>
           </div>
         }
       >
         <div className="w-full space-y-6 pb-8">
-          {/* Top Session Metadata Hero */}
+          {/* Key Schedule & Delivery Information */}
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                <CalendarDays className="h-4 w-4 text-indigo-500" />
-                {formatDate(session.scheduledAt)} at {formatTime(session.scheduledAt)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                <Clock className="h-4 w-4 text-indigo-500" />
-                {session.durationMinutes} Minutes Duration
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700">
-                <Video className="h-4 w-4 text-indigo-600" />
-                Platform: {session.platform || "JITSI"}
-              </span>
-              {session.trainer && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200/70 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-xs">
-                  <UserCheck className="h-4 w-4 text-amber-600" />
-                  Trainer: {session.trainer.firstName} {session.trainer.lastName} ({session.trainer.email})
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Schedule &amp; Delivery Information
+            </h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-slate-400">Scheduled Time</p>
+                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                    {formatDate(session.scheduledAt)}
+                  </p>
+                  <p className="text-[11px] text-slate-500">{formatTime(session.scheduledAt)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-slate-400">Session Duration</p>
+                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                    {session.durationMinutes} Minutes
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Threshold: {session.attendanceThreshold ?? 60}% required
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                  <Video className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-slate-400">Conferencing Platform</p>
+                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                    {session.platform || "IN-LMS (Jitsi / BigBlueButton)"}
+                  </p>
+                  <p className="text-[11px] text-slate-500">Interactive live classroom</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Course & Assigned Instructor */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
+              <div className="flex items-center gap-2 text-slate-500">
+                <BookOpen className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Course
                 </span>
+              </div>
+              <p className="text-sm font-bold text-slate-900">{courseTitle}</p>
+              <p className="text-xs text-slate-500">
+                Course Code: <span className="font-semibold text-slate-700">{course?.code}</span>
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
+              <div className="flex items-center gap-2 text-slate-500">
+                <User className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Designated Trainer / Instructor
+                </span>
+              </div>
+              <p className="text-sm font-bold text-slate-900">{trainerDisplayName}</p>
+              <p className="text-xs text-slate-500">
+                {trainerObj?.email || "Platform Assigned Instructor"}
+              </p>
+            </div>
+          </div>
+
+          {/* Meeting Room Access Credentials */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Meeting Room Access
+            </h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {session.meetingId && (
+                <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 border border-slate-100">
+                  <span className="text-[11px] text-slate-400 font-medium">Meeting ID</span>
+                  <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">
+                    {session.meetingId}
+                  </p>
+                </div>
+              )}
+              {session.meetingPassword && (
+                <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 border border-slate-100">
+                  <span className="text-[11px] text-slate-400 font-medium">Meeting Password</span>
+                  <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">
+                    {session.meetingPassword}
+                  </p>
+                </div>
               )}
             </div>
 
-            {session.titleAm ? (
-              <p className="text-xs text-slate-500 font-medium">የስልጠና ርዕስ (አማርኛ): {session.titleAm}</p>
+            {session.externalUrl ? (
+              <div className="pt-2">
+                <span className="text-[11px] text-slate-400 font-medium">External Join Link</span>
+                <div className="mt-1 flex items-center gap-2">
+                  <a
+                    href={session.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 underline break-all font-mono"
+                  >
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                    {session.externalUrl}
+                  </a>
+                </div>
+              </div>
             ) : null}
+          </div>
 
-            {session.descriptionEn ? (
-              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-700">
-                <p className="font-semibold text-slate-800 text-xs uppercase tracking-wider mb-2">
-                  Session Description &amp; Agenda:
-                </p>
+          {/* Session Description / Objectives */}
+          {session.descriptionEn && (
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Session Description &amp; Objectives
+              </h3>
+              <div className="text-xs leading-relaxed text-slate-600">
                 <RichContent html={session.descriptionEn} />
               </div>
-            ) : null}
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Registered Attendees</span>
-                <Users className="h-4 w-4 text-indigo-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{attendees.length}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Enrolled participants</p>
             </div>
+          )}
 
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Verified Present</span>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-emerald-600">{presentCount}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {attendees.length > 0
-                  ? `${Math.round((presentCount / attendees.length) * 100)}% attendance rate`
-                  : "No check-ins yet"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Live Status</span>
-                <Radio className="h-4 w-4 text-rose-500" />
-              </div>
-              <p className="mt-2 text-xl font-bold text-slate-900">{meta.label}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {session.status === "LIVE"
-                  ? "Interactive room is currently active"
-                  : "Scheduled for upcoming delivery"}
-              </p>
-            </div>
-          </div>
-
-          {/* Enrolled Learners & Attendance Table */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Enrolled Learners & Attendance Log</h3>
-                <p className="text-xs text-slate-500">
-                  Real-time participation tracking and attendance verification.
-                </p>
-              </div>
-              {userRole === "trainer" && (
-                <Link href={`/trainer/attendance`}>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    Open Full Attendance Sheet →
-                  </Button>
-                </Link>
+          {/* Amharic Title & Description if present */}
+          {session.titleAm && (
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                የርዕስ መረጃ (Amharic)
+              </h3>
+              <p className="text-xs font-semibold text-slate-900">{session.titleAm}</p>
+              {session.descriptionAm && (
+                <div className="text-xs text-slate-600">
+                  <RichContent html={session.descriptionAm} />
+                </div>
               )}
             </div>
-
-            {attendees.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-xs text-slate-400">
-                No attendance or check-in records logged for this session yet.
-              </div>
-            ) : (
-              <Table columns={["Learner Name", "Email / Account", "Check-in Method", "Status"]}>
-                {attendees.map((attendee) => (
-                  <tr key={attendee.id}>
-                    <Td className="font-semibold text-slate-900">
-                      {attendee.user
-                        ? `${attendee.user.firstName} ${attendee.user.lastName}`
-                        : "Unknown Participant"}
-                    </Td>
-                    <Td className="text-xs text-slate-500">
-                      {attendee.user?.email || "—"}
-                    </Td>
-                    <Td>
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                        {attendee.checkInMethod || "VIRTUAL"}
-                      </span>
-                    </Td>
-                    <Td>
-                      <Badge
-                        variant={
-                          attendee.status === "PRESENT" || attendee.status === "LATE"
-                            ? "green"
-                            : attendee.status === "EXCUSED"
-                            ? "blue"
-                            : "slate"
-                        }
-                        dot
-                      >
-                        {attendee.status}
-                      </Badge>
-                    </Td>
-                  </tr>
-                ))}
-              </Table>
-            )}
-          </div>
+          )}
         </div>
       </WorkspaceDetailOverlay>
 
@@ -285,24 +311,9 @@ export function SessionDetailModal({
           open={liveWorkspaceOpen}
           onClose={() => setLiveWorkspaceOpen(false)}
           session={session}
-          courseTitle={session.course.titleEn}
-          courseCode={session.course.code}
-          trainerName={
-            session.trainer
-              ? `${session.trainer.firstName} ${session.trainer.lastName}`
-              : undefined
-          }
-          userRole={userRole}
-        />
-      )}
-
-      {/* Dynamic Attendance Modal */}
-      {attendanceModalOpen && (
-        <DynamicAttendanceModal
-          open={attendanceModalOpen}
-          onClose={() => setAttendanceModalOpen(false)}
-          sessionId={sessionId}
-          sessionTitle={session.titleEn}
+          courseTitle={courseTitle}
+          courseCode={course?.code}
+          trainerName={trainerDisplayName}
           userRole={userRole}
         />
       )}

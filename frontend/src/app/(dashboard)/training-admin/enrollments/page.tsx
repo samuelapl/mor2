@@ -10,8 +10,8 @@ export default function EnrollmentsPage() {
   return (
     <PageShell
       role="training_admin"
-      title="Enrollments"
-      description={`Assign learners to any of the ${courses.length} courses in the catalog. Changes update the roster immediately.`}
+      title="Course Enrolled Students & Roster"
+      description="Inspect enrolled learners, track real-time course progress, and manage learner assignments across all catalog courses."
     >
       <EnrollmentForm />
     </PageShell>

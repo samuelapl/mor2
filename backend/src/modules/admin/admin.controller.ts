@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { AdminService } from './admin.service';
@@ -33,5 +33,19 @@ export class AdminController {
   @ApiOperation({ summary: 'Get system health status' })
   async health() {
     return this.adminService.getSystemHealth();
+  }
+
+  @Get('settings')
+  @Roles(RoleName.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Get system settings' })
+  async getSettings() {
+    return this.adminService.getSettings();
+  }
+
+  @Patch('settings')
+  @Roles(RoleName.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Update system settings' })
+  async updateSettings(@Body() body: Record<string, string>) {
+    return this.adminService.updateSettings(body);
   }
 }

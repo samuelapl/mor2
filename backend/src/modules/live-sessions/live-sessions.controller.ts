@@ -59,7 +59,7 @@ export class LiveSessionsController {
   }
 
   @Post('courses/:courseId/live-sessions')
-  @Permissions('live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage')
   @ApiOperation({ summary: 'Schedule a live session for a course' })
   @ApiParam({ name: 'courseId', type: String })
   async create(@Param('courseId') courseId: string, @Body() dto: CreateSessionDto) {
@@ -67,7 +67,7 @@ export class LiveSessionsController {
   }
 
   @Patch('live-sessions/:id')
-  @Permissions('live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage')
   @ApiOperation({ summary: 'Update a live session' })
   @ApiParam({ name: 'id', type: String })
   async update(@Param('id') id: string, @Body() dto: UpdateSessionDto) {
@@ -75,7 +75,7 @@ export class LiveSessionsController {
   }
 
   @Patch('live-sessions/:id/status')
-  @Permissions('live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage')
   @ApiOperation({ summary: 'Change session status (start, complete, cancel)' })
   @ApiParam({ name: 'id', type: String })
   async changeStatus(@Param('id') id: string, @Body('status') status: SessionStatus) {
@@ -83,7 +83,7 @@ export class LiveSessionsController {
   }
 
   @Delete('live-sessions/:id')
-  @Permissions('live_session.manage')
+  @Permissions('live_session.manage_all', 'live_session.manage')
   @ApiOperation({ summary: 'Soft delete a live session' })
   @ApiParam({ name: 'id', type: String })
   async remove(@Param('id') id: string) {
