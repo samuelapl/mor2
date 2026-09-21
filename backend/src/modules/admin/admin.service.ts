@@ -102,6 +102,28 @@ export class AdminService {
     };
   }
 
+  async getSettings(): Promise<Record<string, string>> {
+    const rows = await this.prisma.systemSetting.findMany();
+    const result: Record<string, string> = {};
+    for (const row of rows) {
+      result[row.key] = row.value;
+    }
+    return result;
+  }
+
+  async updateSettings(body: Record<string, string>): Promise<Record<string, string>> {
+    for (const [key, value] of Object.entries(body)) {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        await this.prisma.systemSetting.upsert({
+          where: { key },
+          create: { key, value: String(value) },
+          update: { value: String(value) },
+        });
+      }
+    }
+    return this.getSettings();
+  }
+
   private async checkDatabase(): Promise<boolean> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;

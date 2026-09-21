@@ -5,14 +5,17 @@ import Link from "next/link";
 import {
   CalendarDays,
   CheckCircle2,
-  FileCheck,
+  ClipboardCheck,
+  Filter,
   Info,
   LinkIcon,
   MonitorPlay,
   Play,
   RefreshCw,
+  Search,
   Square,
   Users,
+  X,
 } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { fetchLiveSessions, setSessionStatus, sendSessionAttendanceReport } from "@/lib/api/monitoring";
@@ -24,10 +27,11 @@ import PageSection from "@/components/shared/PageSection";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
-import { DynamicAttendanceModal } from "@/components/features/sessions/DynamicAttendanceModal";
+import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
 
 export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
@@ -36,10 +40,15 @@ export default function TrainerSessionsPage() {
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
-  const [selectedReportSessionId, setSelectedReportSessionId] = useState<string | null>(null);
+  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [filterScope, setFilterScope] = useState<"all" | "assigned">("all");
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("ALL");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
+
+  const canManageAll = can("live_session.manage_all") || can("live_session.manage");
 
   const assignedCourses = useMemo(
     () =>
@@ -63,18 +72,41 @@ export default function TrainerSessionsPage() {
     loadSessions();
   }, []);
 
-  // Filter sessions: show all sessions (including institutional sessions scheduled by Training Admin) or filter by assigned courses
+  // Filter sessions: if user only has view_own (not manage_all), strictly show only their assigned course sessions
   const mySessions = useMemo(() => {
-    if (filterScope === "assigned" && assignedCourses.length > 0) {
-      return sessions.filter(
-        (s) =>
+    return sessions.filter((s) => {
+      // Base ownership check if actor does not have manage_all
+      if (!canManageAll) {
+        const isAssigned =
           assignedCourses.some((c) => c.id === s.courseId) ||
-          (s as any).trainerId === currentUser?.id,
-      );
-    }
-    // "all" shows all scheduled sessions across courses & institutional sessions
-    return sessions;
-  }, [sessions, assignedCourses, filterScope, currentUser?.id]);
+          (s as any).trainerId === currentUser?.id ||
+          s.trainer?.id === currentUser?.id;
+        if (!isAssigned) return false;
+      }
+
+      // Course filter
+      if (selectedCourseFilter !== "ALL" && s.courseId !== selectedCourseFilter) {
+        return false;
+      }
+
+      // Status filter
+      if (selectedStatusFilter !== "ALL" && s.status !== selectedStatusFilter) {
+        return false;
+      }
+
+      // Search query (matches session title, course code, course title)
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const course = courses.find((c) => c.id === s.courseId);
+        const titleMatch = (s.titleEn || "").toLowerCase().includes(q);
+        const codeMatch = (course?.code || s.course?.code || "").toLowerCase().includes(q);
+        const courseTitleMatch = (course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
+        if (!titleMatch && !codeMatch && !courseTitleMatch) return false;
+      }
+
+      return true;
+    });
+  }, [sessions, assignedCourses, currentUser?.id, canManageAll, selectedCourseFilter, selectedStatusFilter, searchQuery, courses]);
 
   const upcoming = useMemo(
     () => mySessions.filter((s) => s.status === "SCHEDULED" || s.status === "LIVE"),
@@ -122,152 +154,243 @@ export default function TrainerSessionsPage() {
     }
   };
 
+  const canConductSession = canAny(["live_session.manage_all", "live_session.manage", "live_session.view_own"]);
+  const canViewAttendance = canAny(["attendance.view", "attendance.manage"]);
+
+  const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL" || selectedStatusFilter !== "ALL";
+
   return (
     <PageShell
-      role="trainer"
+      role={currentUser?.role ?? "trainer"}
       title="My Sessions"
-      description="Your scheduled live training sessions. Join directly in the LMS and manage attendance."
+      description="View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance."
     >
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading}>
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-
-          {assignedCourses.length > 0 && (
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setFilterScope("all")}
-                className={`rounded-md px-2.5 py-1 font-medium transition ${
-                  filterScope === "all"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                All Sessions ({sessions.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterScope("assigned")}
-                className={`rounded-md px-2.5 py-1 font-medium transition ${
-                  filterScope === "assigned"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                My Courses ({sessions.filter((s) => assignedCourses.some((c) => c.id === s.courseId)).length})
-              </button>
+      {/* FILTER BAR */}
+      <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            {/* Search Input */}
+            <div className="relative min-w-[220px] flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search session title, course code…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
+              />
             </div>
-          )}
-        </div>
-        {canAny(["attendance.view", "attendance.manage", "attendance.override"]) ? (
-          <Link href="/trainer/attendance">
-            <Button size="sm" variant="outline" className="gap-1.5">
-              <FileCheck className="h-3.5 w-3.5" />
-              Full Attendance Sheet
+
+            {/* Course Filter Dropdown */}
+            <select
+              value={selectedCourseFilter}
+              onChange={(e) => setSelectedCourseFilter(e.target.value)}
+              aria-label="Filter by course"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
+            >
+              <option value="ALL">All Courses ({assignedCourses.length > 0 ? assignedCourses.length : courses.length})</option>
+              {(assignedCourses.length > 0 ? assignedCourses : courses).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} · {c.title}
+                </option>
+              ))}
+            </select>
+
+            {/* Status Filter Pills */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-0.5 text-xs">
+              {(["ALL", "SCHEDULED", "LIVE", "COMPLETED", "CANCELLED"] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setSelectedStatusFilter(st)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${
+                    selectedStatusFilter === st
+                      ? "bg-white text-slate-900 shadow-xs font-semibold"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {st === "ALL"
+                    ? "All Status"
+                    : st === "SCHEDULED"
+                    ? "Upcoming"
+                    : st.charAt(0) + st.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCourseFilter("ALL");
+                  setSelectedStatusFilter("ALL");
+                }}
+                className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+
+            <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading} className="h-8 gap-1 text-xs text-slate-600">
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
             </Button>
-          </Link>
-        ) : null}
+          </div>
+        </div>
       </div>
 
-      <PageSection
-        title="Upcoming & Active Sessions"
-        description="Sessions scheduled to be delivered. Start the session to go live."
-      >
-        <SessionTable
-          sessions={upcomingRows.pageItems}
-          extra={(row) => (
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setSelectedDetailId(row.session.id)}
-                title="View Session Details & Attendees"
-                className="gap-1 text-slate-600 hover:text-slate-900"
-              >
-                <Info className="h-3.5 w-3.5" />
-                Details
-              </Button>
+      {/* SECTIONS RENDERING ACCORDING TO STATUS FILTER */}
+      {selectedStatusFilter === "ALL" && upcoming.length === 0 && past.length === 0 ? (
+        <EmptyState
+          title="No sessions found"
+          description={
+            hasActiveFilters
+              ? "No scheduled or past sessions match your current filters. Try resetting the search or course selector."
+              : "You do not have any assigned course sessions scheduled yet."
+          }
+        />
+      ) : null}
 
-              {can("live_session.manage") && row.session.status === "SCHEDULED" ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={statusUpdatingId === row.session.id}
-                  onClick={() => handleToggleLive(row.session)}
-                  className="border-emerald-300 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100 shadow-none gap-1"
-                >
-                  <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
-                  Go Live
-                </Button>
-              ) : can("live_session.manage") && row.session.status === "LIVE" ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={statusUpdatingId === row.session.id}
-                  onClick={() => handleToggleLive(row.session)}
-                  className="border-red-300 bg-red-50/80 text-red-700 hover:bg-red-100 shadow-none gap-1"
-                >
-                  <Square className="h-3 w-3 fill-red-600 text-red-600" />
-                  End Session
-                </Button>
-              ) : null}
+      {/* Upcoming & Active Sessions */}
+      {(selectedStatusFilter === "ALL" ? upcoming.length > 0 : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
+        <PageSection
+          title="Upcoming & Active Sessions"
+          description="Sessions scheduled to be delivered. Start the session to go live or review attendance."
+        >
+          {upcoming.length === 0 ? (
+            <EmptyState
+              title="No upcoming sessions found"
+              description="No scheduled or live sessions match your filter criteria."
+            />
+          ) : (
+            <>
+              <SessionTable
+                sessions={upcomingRows.pageItems}
+                extra={(row) => (
+                  <div className="flex items-center justify-end gap-2">
+                    {/* Dedicated Attendance Button */}
+                    {canViewAttendance && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedAttendanceSessionId(row.session.id)}
+                        title="View and inspect session attendance"
+                        className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5 text-indigo-600" />
+                        Attendance
+                      </Button>
+                    )}
 
-              <Button
-                size="sm"
-                onClick={() => setActiveJoinSession(row.session)}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
-              >
-                <MonitorPlay className="h-3.5 w-3.5" />
-                Join Room
-              </Button>
-            </div>
+                    {/* Dedicated Details Button */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedDetailId(row.session.id)}
+                      title="View Session Details"
+                      className="gap-1 text-slate-600 hover:text-slate-900 text-xs"
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                      Details
+                    </Button>
+
+                    {canConductSession && row.session.status === "SCHEDULED" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={statusUpdatingId === row.session.id}
+                        onClick={() => handleToggleLive(row.session)}
+                        className="border-emerald-300 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100 shadow-none gap-1 text-xs"
+                      >
+                        <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
+                        Go Live
+                      </Button>
+                    ) : canConductSession && row.session.status === "LIVE" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={statusUpdatingId === row.session.id}
+                        onClick={() => handleToggleLive(row.session)}
+                        className="border-red-300 bg-red-50/80 text-red-700 hover:bg-red-100 shadow-none gap-1 text-xs"
+                      >
+                        <Square className="h-3 w-3 fill-red-600 text-red-600" />
+                        End Session
+                      </Button>
+                    ) : null}
+
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveJoinSession(row.session)}
+                      className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
+                    >
+                      <MonitorPlay className="h-3.5 w-3.5" />
+                      Join Room
+                    </Button>
+                  </div>
+                )}
+              />
+              <Pagination
+                page={upcomingRows.page}
+                totalPages={upcomingRows.totalPages}
+                onPageChange={upcomingRows.setPage}
+              />
+            </>
           )}
-        />
-        <Pagination
-          page={upcomingRows.page}
-          totalPages={upcomingRows.totalPages}
-          onPageChange={upcomingRows.setPage}
-        />
-      </PageSection>
+        </PageSection>
+      ) : null}
 
-      {past.length > 0 ? (
+      {/* Past Sessions */}
+      {(selectedStatusFilter === "ALL" ? past.length > 0 : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
         <PageSection
           title="Past Sessions"
-          description="Completed training sessions with verifiable attendance history."
+          description="Completed training sessions with verifiable attendance records."
         >
-          <SessionTable
-            sessions={pastRows.pageItems}
-            extra={(row) => (
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedReportSessionId(row.session.id)}
-                  className="gap-1 text-indigo-600 border-indigo-200 hover:bg-indigo-50 text-xs"
-                >
-                  <FileCheck className="h-3.5 w-3.5" />
-                  Attendance Report
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedDetailId(row.session.id)}
-                  className="gap-1 text-slate-600"
-                >
-                  <Info className="h-3.5 w-3.5" />
-                  Details &amp; Logs
-                </Button>
-              </div>
-            )}
-          />
-          <Pagination
-            page={pastRows.page}
-            totalPages={pastRows.totalPages}
-            onPageChange={pastRows.setPage}
-          />
+          {past.length === 0 ? (
+            <EmptyState
+              title="No past sessions found"
+              description="No completed or cancelled sessions match your filter criteria."
+            />
+          ) : (
+            <>
+              <SessionTable
+                sessions={pastRows.pageItems}
+                extra={(row) => (
+                  <div className="flex items-center justify-end gap-2">
+                    {canViewAttendance && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedAttendanceSessionId(row.session.id)}
+                        className="gap-1 text-indigo-700 border-indigo-200 hover:bg-indigo-50 text-xs"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Attendance Records
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedDetailId(row.session.id)}
+                      className="gap-1 text-slate-600 text-xs"
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                      Details
+                    </Button>
+                  </div>
+                )}
+              />
+              <Pagination
+                page={pastRows.page}
+                totalPages={pastRows.totalPages}
+                onPageChange={pastRows.setPage}
+              />
+            </>
+          )}
         </PageSection>
       ) : null}
 
@@ -284,13 +407,17 @@ export default function TrainerSessionsPage() {
         />
       )}
 
-      {/* Full-Screen Session Detail Workspace */}
+      {/* Pure Session Details Modal */}
       {selectedDetailId && (
         <SessionDetailModal
           open={Boolean(selectedDetailId)}
           onClose={() => setSelectedDetailId(null)}
           sessionId={selectedDetailId}
-          userRole="trainer"
+          userRole={currentUser?.role ?? "trainer"}
+          onOpenAttendance={() => {
+            setSelectedAttendanceSessionId(selectedDetailId);
+            setSelectedDetailId(null);
+          }}
           onJoin={() => {
             const found = sessions.find((s) => s.id === selectedDetailId);
             if (found) setActiveJoinSession(found);
@@ -299,13 +426,12 @@ export default function TrainerSessionsPage() {
         />
       )}
 
-      {/* Dynamic Attendance Modal */}
-      {selectedReportSessionId && (
-        <DynamicAttendanceModal
-          open={Boolean(selectedReportSessionId)}
-          onClose={() => setSelectedReportSessionId(null)}
-          sessionId={selectedReportSessionId}
-          userRole="trainer"
+      {/* Dedicated Session Attendance Modal */}
+      {selectedAttendanceSessionId && (
+        <SessionAttendanceModal
+          open={Boolean(selectedAttendanceSessionId)}
+          onClose={() => setSelectedAttendanceSessionId(null)}
+          sessionId={selectedAttendanceSessionId}
         />
       )}
     </PageShell>

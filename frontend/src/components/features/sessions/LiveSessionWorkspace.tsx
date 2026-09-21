@@ -50,7 +50,7 @@ interface LiveSessionWorkspaceProps {
   courseTitle?: string;
   courseCode?: string;
   trainerName?: string;
-  userRole?: "trainer" | "learner" | "training_admin" | "system_admin" | "course_owner";
+  userRole?: "trainer" | "learner" | "training_admin" | "system_admin" | "course_owner" | "content_approver" | string;
 }
 
 interface ChatMessage {

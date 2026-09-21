@@ -92,10 +92,22 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: ["student.manage", "student.view", "enrollment.view_all"],
     },
     {
-      label: "Training Sessions",
-      href: "/training-admin/sessions",
+      label: "Sessions",
       icon: Presentation,
-      permission: ["live_session.manage", "attendance.view"],
+      children: [
+        {
+          label: "All Sessions",
+          href: "/training-admin/sessions",
+          icon: Presentation,
+          permission: ["live_session.manage_all", "live_session.manage"],
+        },
+        {
+          label: "My Sessions",
+          href: "/trainer/sessions",
+          icon: CalendarDays,
+          permission: ["live_session.view_own"],
+        },
+      ],
     },
   ],
   trainer: [
@@ -107,22 +119,28 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: ["course.view.assigned", "course.view.all"],
     },
     {
-      label: "My Sessions",
-      href: "/trainer/sessions",
+      label: "Sessions",
       icon: Presentation,
-      permission: ["live_session.manage", "attendance.view"],
+      children: [
+        {
+          label: "All Sessions",
+          href: "/training-admin/sessions",
+          icon: Presentation,
+          permission: ["live_session.manage_all", "live_session.manage"],
+        },
+        {
+          label: "My Sessions",
+          href: "/trainer/sessions",
+          icon: CalendarDays,
+          permission: ["live_session.view_own"],
+        },
+      ],
     },
     {
       label: "Question Bank",
       href: "/trainer/question-bank",
       icon: FileQuestion,
       permission: "question_bank.manage",
-    },
-    {
-      label: "Attendance",
-      href: "/trainer/attendance",
-      icon: ClipboardCheck,
-      permission: ["attendance.manage", "attendance.view", "attendance.override"],
     },
   ],
   learner: [
@@ -249,8 +267,8 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/course-owner/create-course": ["course.create"],
   "/course-owner/question-bank": ["question_bank.manage"],
   "/trainer/attendance": ["attendance.view", "attendance.manage", "attendance.override"],
-  "/training-admin/sessions": ["live_session.manage", "attendance.view"],
-  "/trainer/sessions": ["live_session.manage", "attendance.view"],
+  "/training-admin/sessions": ["live_session.manage_all", "live_session.manage"],
+  "/trainer/sessions": ["live_session.view_own", "live_session.manage_all", "live_session.manage"],
   "/learner/live-sessions": ["live_session.manage", "attendance.checkin", "course.browse"],
   "/training-admin/enrollments": ["student.manage", "student.view", "enrollment.view_all"],
   "/trainer/question-bank": ["question_bank.manage"],
@@ -272,21 +290,27 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
 /**
  * Dynamic cross-role capability items.
  * If the System Admin grants an actor (e.g. Content Approver, Course Owner, Training Admin)
- * permissions like `live_session.manage`, `attendance.view`, `quiz.create`, etc.,
+ * permissions like `live_session.manage_all`, `live_session.view_own`, `quiz.create`, etc.,
  * these nav items automatically appear in their sidebar navigation!
  */
 export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
   {
-    label: "Training Sessions",
-    href: "/training-admin/sessions",
+    label: "Sessions",
     icon: Presentation,
-    permission: ["live_session.manage", "attendance.view"],
-  },
-  {
-    label: "Attendance",
-    href: "/trainer/attendance",
-    icon: ClipboardCheck,
-    permission: ["attendance.manage", "attendance.view", "attendance.override"],
+    children: [
+      {
+        label: "All Sessions",
+        href: "/training-admin/sessions",
+        icon: Presentation,
+        permission: ["live_session.manage_all", "live_session.manage"],
+      },
+      {
+        label: "My Sessions",
+        href: "/trainer/sessions",
+        icon: CalendarDays,
+        permission: ["live_session.view_own"],
+      },
+    ],
   },
   {
     label: "Question Bank",
@@ -362,8 +386,8 @@ export function navItemsForRole(role: Role): NavItem[] {
   // For any capability item, if the role already has an equivalent link or label, skip.
   // Otherwise, include it so filterNavItems can show it whenever the role holds the permission!
   const extraItems = DYNAMIC_CAPABILITY_NAV_ITEMS.filter((item) => {
-    if (!item.href) return false;
-    if (existingHrefs.has(item.href)) return false;
+    if (!item.href && !item.children) return false;
+    if (item.href && existingHrefs.has(item.href)) return false;
     const normalizedLabel = item.label.toLowerCase().replace(/^(my|training)\s+/, "");
     if (existingLabels.has(normalizedLabel)) return false;
     return true;

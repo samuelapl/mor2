@@ -278,11 +278,15 @@ export class AttendanceService {
 
     const isSessionTrainer = Boolean(user?.id && session.trainerId === user.id);
     const sessionPermitted = Boolean(session.allowViewAttendance);
-    const canView = isStaff || isSessionTrainer || sessionPermitted;
+    const globalSetting = await this.prisma.systemSetting.findUnique({
+      where: { key: 'allow_all_view_attendance' },
+    });
+    const globalPermitted = globalSetting ? globalSetting.value === 'true' : false;
+    const canView = isStaff || isSessionTrainer || sessionPermitted || globalPermitted;
 
     return {
       canView,
-      globalPermitted: true,
+      globalPermitted,
       sessionPermitted,
       isStaff: isStaff || isSessionTrainer,
     };

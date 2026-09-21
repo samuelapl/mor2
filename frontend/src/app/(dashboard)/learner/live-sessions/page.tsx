@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CheckCircle, ExternalLink, MonitorPlay, RefreshCw, Video } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle, ExternalLink, MonitorPlay, RefreshCw, Search, Video, X } from "lucide-react";
 import { fetchUpcomingSessions, selfCheckIn } from "@/lib/api/monitoring";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
@@ -28,6 +28,8 @@ export default function LearnerLiveSessionsPage() {
   const [joined, setJoined] = useState<string[]>([]);
   const [activeSession, setActiveSession] = useState<ApiLiveSession | null>(null);
   const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState("ALL");
 
   const load = () => {
     fetchUpcomingSessions()
@@ -41,12 +43,31 @@ export default function LearnerLiveSessionsPage() {
     load();
   }, []);
 
-  const rows = sessions.map<SessionRow>((session) => ({
-    session,
-    courseTitle: session.course?.titleEn || "Course Session",
-    courseCode: session.course?.code || "TRAINING",
-    trainerName: "Assigned Trainer",
-  }));
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((s) => {
+      if (selectedCourseFilter !== "ALL" && s.courseId !== selectedCourseFilter) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const course = courses.find((c) => c.id === s.courseId);
+        const titleMatch = (s.titleEn || "").toLowerCase().includes(q);
+        const codeMatch = (course?.code || s.course?.code || "").toLowerCase().includes(q);
+        const courseTitleMatch = (course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
+        if (!titleMatch && !codeMatch && !courseTitleMatch) return false;
+      }
+      return true;
+    });
+  }, [sessions, selectedCourseFilter, searchQuery, courses]);
+
+  const rows = useMemo(() => {
+    return filteredSessions.map<SessionRow>((session) => ({
+      session,
+      courseTitle: session.course?.titleEn || "Course Session",
+      courseCode: session.course?.code || "TRAINING",
+      trainerName: "Assigned Trainer",
+    }));
+  }, [filteredSessions]);
 
   const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
 
@@ -57,20 +78,69 @@ export default function LearnerLiveSessionsPage() {
     setJoined((prev) => (prev.includes(session.id) ? prev : [...prev, session.id]));
   };
 
+  const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL";
+
   return (
     <PageShell
       role="learner"
       title={tr(lang, "liveSessions")}
       description="Upcoming live sessions for the courses you are enrolled in."
     >
-      <div className="mb-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={load}>
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
-          </Button>
+      {/* FILTER BAR */}
+      <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            {/* Search Input */}
+            <div className="relative min-w-[220px] flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search session or course code…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            {/* Course Filter Dropdown */}
+            <select
+              value={selectedCourseFilter}
+              onChange={(e) => setSelectedCourseFilter(e.target.value)}
+              aria-label="Filter by course"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
+            >
+              <option value="ALL">All Courses ({courses.length})</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} · {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCourseFilter("ALL");
+                }}
+                className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+
+            <Button variant="ghost" size="sm" onClick={load} className="h-8 gap-1 text-xs text-slate-600">
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </Button>
+            <LanguageToggle />
+          </div>
         </div>
-        <LanguageToggle />
       </div>
 
       {error ? (
@@ -88,8 +158,12 @@ export default function LearnerLiveSessionsPage() {
 
       {rows.length === 0 ? (
         <EmptyState
-          title="No live sessions scheduled"
-          description="Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here."
+          title={hasActiveFilters ? "No matching live sessions" : "No live sessions scheduled"}
+          description={
+            hasActiveFilters
+              ? "No live classroom sessions match your current search or course filter. Try resetting filters."
+              : "Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here."
+          }
         />
       ) : (
         <>
