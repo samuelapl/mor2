@@ -1875,6 +1875,14 @@ async function main() {
           data: { userId: user.id, role: acc.role },
         });
       }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: passwordHash,
+          isActive: true,
+          registrationStatus: 'APPROVED',
+        },
+      });
     }
   }
 

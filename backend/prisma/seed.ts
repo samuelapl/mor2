@@ -40,7 +40,15 @@ async function main() {
   for (const d of demoAccounts) {
     const existing = await prisma.user.findUnique({ where: { email: d.email } });
     if (existing) {
-      console.log(`  • ${d.email} already exists — skipping`);
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          password: demoPasswordHash,
+          isActive: true,
+          registrationStatus: 'APPROVED',
+        },
+      });
+      console.log(`  • ${d.email} already exists — synced password and status`);
       continue;
     }
     const user = await prisma.user.create({

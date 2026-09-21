@@ -50,10 +50,10 @@ const QUICK_LINKS = [
     icon: FileQuestion,
   },
   {
-    href: "/trainer/attendance",
-    title: "Attendance Workspace",
-    description: "Mark attendance and verify student check-ins.",
-    icon: ClipboardCheck,
+    href: "/trainer/sessions",
+    title: "My Sessions",
+    description: "Conduct scheduled training sessions and track attendance.",
+    icon: Presentation,
   },
 ];
 
@@ -301,8 +301,8 @@ export default function TrainerDashboardPage() {
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>Total enrolled students: {totalEnrolledLearners}</span>
-            <Link href="/trainer/attendance" className="font-semibold text-indigo-600 hover:underline">
-              Mark attendance →
+            <Link href="/trainer/sessions" className="font-semibold text-indigo-600 hover:underline">
+              View sessions & attendance →
             </Link>
           </div>
         </div>
@@ -413,8 +413,8 @@ export default function TrainerDashboardPage() {
                       <Video className="h-3.5 w-3.5" />
                       {isLive ? "Start Meeting (In-LMS)" : "Start Session"}
                     </Button>
-                    <Link href={`/trainer/attendance?sessionId=${session.id}`}>
-                      <Button size="sm" variant="outline" title="Manage Attendance">
+                    <Link href="/trainer/sessions">
+                      <Button size="sm" variant="outline" title="Session Details & Attendance">
                         <ClipboardCheck className="h-3.5 w-3.5" />
                       </Button>
                     </Link>

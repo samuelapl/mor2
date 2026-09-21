@@ -11,6 +11,7 @@ import {
   Lock,
   RefreshCw,
   Search,
+  Send,
   UserCheck,
   Users,
   UserX,
@@ -22,6 +23,7 @@ import {
   fetchLiveSession,
   fetchSessionAttendance,
   markAttendance,
+  sendSessionAttendanceReport,
 } from "@/lib/api/monitoring";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
@@ -49,6 +51,7 @@ export function SessionAttendanceModal({
   const [loading, setLoading] = useState(false);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -221,6 +224,21 @@ export function SessionAttendanceModal({
     }
   };
 
+  const handleSendReport = async () => {
+    if (!sessionId || !canManage) return;
+    setSendingReport(true);
+    try {
+      await sendSessionAttendanceReport(sessionId);
+      await loadData();
+      setFlash("Attendance report calculated and dispatched successfully.");
+      setTimeout(() => setFlash(null), 4000);
+    } catch {
+      setFlash("Failed to dispatch attendance report.");
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   const handleExportCsv = () => {
     if (studentRoster.length === 0) return;
     const headers = ["Learner Name", "Email", "Status", "Check-in Method", "Joined At", "Stay (Minutes)", "Percentage"];
@@ -294,15 +312,28 @@ export function SessionAttendanceModal({
           )}
 
           {canManage && (
-            <Button
-              size="sm"
-              onClick={handleMarkAllPresent}
-              disabled={bulkUpdating || studentRoster.length === 0}
-              className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {bulkUpdating ? "Marking All…" : "Mark All Present"}
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSendReport}
+                disabled={sendingReport || studentRoster.length === 0}
+                className="h-8 gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+              >
+                <Send className="h-3.5 w-3.5 text-indigo-600" />
+                {sendingReport ? "Calculating…" : "Calculate & Send Report"}
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={handleMarkAllPresent}
+                disabled={bulkUpdating || studentRoster.length === 0}
+                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {bulkUpdating ? "Marking All…" : "Mark All Present"}
+              </Button>
+            </>
           )}
         </div>
       }

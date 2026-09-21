@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
 import { LiveSessionWorkspace } from "./LiveSessionWorkspace";
+import { SessionAttendanceModal } from "./SessionAttendanceModal";
 
 interface SessionDetailModalProps {
   open: boolean;
@@ -73,6 +74,7 @@ export function SessionDetailModal({
   const { can, canAny } = usePermissions();
   const [session, setSession] = useState<ApiLiveSession | null>(null);
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
 
   const canViewAttendance = can("attendance.view") || can("attendance.manage");
 
@@ -122,13 +124,17 @@ export function SessionDetailModal({
         }
         actions={
           <div className="flex items-center gap-2">
-            {canViewAttendance && onOpenAttendance && (
+            {canViewAttendance && (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  onClose();
-                  onOpenAttendance();
+                  if (onOpenAttendance) {
+                    onClose();
+                    onOpenAttendance();
+                  } else {
+                    setAttendanceModalOpen(true);
+                  }
                 }}
                 className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
               >
@@ -315,6 +321,15 @@ export function SessionDetailModal({
           courseCode={course?.code}
           trainerName={trainerDisplayName}
           userRole={userRole}
+        />
+      )}
+
+      {/* Embedded Attendance Modal */}
+      {attendanceModalOpen && (
+        <SessionAttendanceModal
+          open={attendanceModalOpen}
+          onClose={() => setAttendanceModalOpen(false)}
+          sessionId={session.id}
         />
       )}
     </>
