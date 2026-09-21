@@ -38,12 +38,13 @@ export async function forgotPassword(email: string): Promise<{ message: string }
 }
 
 export async function resetPassword(
-  token: string,
+  email: string,
+  code: string,
   newPassword: string,
 ): Promise<{ message: string }> {
   return api<{ message: string }>("auth/reset-password", {
     method: "POST",
-    body: { token, newPassword },
+    body: { email, code, newPassword },
     skipAuthRetry: true,
   });
 }

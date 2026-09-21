@@ -18,10 +18,21 @@ import { MailService } from '@modules/mail/mail.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto } from './dto';
 
-const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000; // 60 minutes
+const PASSWORD_RESET_CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Constant-time comparison of two hex strings to prevent timing attacks.
+ * Returns true only if both strings are equal in length AND content.
+ */
+function safeEqualHex(a: string, b: string): boolean {
+  const ba = Buffer.from(a, 'hex');
+  const bb = Buffer.from(b, 'hex');
+  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
 }
 
 @Injectable()
@@ -174,77 +185,99 @@ export class AuthService {
   }
 
   /**
-   * Self-service "forgot password". Always succeeds (no user enumeration):
-   * if the email exists a hashed, expiring reset token is stored and emailed.
+   * Self-service "forgot password".
+   * Always returns the same message regardless of whether the email exists (anti-enumeration).
+   * Generates a 6-digit numeric code, stores its SHA-256 hash, and emails the plaintext code.
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
+    const normalized = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
+      where: { email: normalized },
     });
 
     if (!user || !user.isActive) {
-      // No user — respond identically to avoid email enumeration.
-      return { message: 'If that email exists, a reset link has been sent.' };
+      return { message: 'If that email exists, a code has been sent.' };
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+    // Invalidate any still-pending codes before issuing a new one.
+    await this.prisma.passwordReset.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    // Generate a 6-digit code in the range [100000, 999999].
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_CODE_TTL_MS);
 
     await this.prisma.passwordReset.create({
-      data: {
-        userId: user.id,
-        tokenHash: hashToken(token),
-        expiresAt,
-      },
+      data: { userId: user.id, codeHash: hashToken(code), expiresAt },
     });
-
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3001';
-    const resetUrl = `${frontendUrl.replace(/\/+$/, '')}/reset-password?token=${encodeURIComponent(token)}`;
 
     try {
-      await this.mailService.sendPasswordReset(user.email, resetUrl);
+      await this.mailService.sendPasswordResetCode(user.email, code);
     } catch (err) {
-      this.logger.error(`Failed to send password reset email to ${user.email}: ${err}`);
+      this.logger.error(`Failed to send password reset code to ${user.email}: ${err}`);
     }
 
-    return { message: 'If that email exists, a reset link has been sent.' };
+    return { message: 'If that email exists, a code has been sent.' };
   }
 
+  /**
+   * Verifies the 6-digit code + sets the new password.
+   * Uses constant-time comparison to resist timing attacks.
+   * Locks out after PASSWORD_RESET_MAX_ATTEMPTS wrong guesses.
+   */
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
-    const tokenHash = hashToken(dto.token);
+    const normalized = dto.email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
 
-    const reset = await this.prisma.passwordReset.findUnique({
-      where: { tokenHash },
+    // Use a generic message — do not reveal whether the email exists.
+    const genericError = 'Invalid or expired code.';
+    if (!user) throw new BadRequestException(genericError);
+
+    // Find the most recent active (non-expired, non-used) reset record for this user.
+    const reset = await this.prisma.passwordReset.findFirst({
+      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!reset || reset.usedAt) {
-      throw new BadRequestException('Invalid or already-used reset token.');
+    if (!reset) throw new BadRequestException(genericError);
+
+    // Brute-force guard — too many attempts, invalidate the code immediately.
+    if (reset.attempts >= PASSWORD_RESET_MAX_ATTEMPTS) {
+      await this.prisma.passwordReset.update({
+        where: { id: reset.id },
+        data: { usedAt: new Date() },
+      });
+      throw new BadRequestException('Too many attempts. Request a new code.');
     }
 
-    if (reset.expiresAt < new Date()) {
-      throw new BadRequestException('Reset token has expired.');
+    // Constant-time comparison: hash the submitted code and compare to stored hash.
+    if (!safeEqualHex(hashToken(dto.code), reset.codeHash)) {
+      const nextAttempts = reset.attempts + 1;
+      await this.prisma.passwordReset.update({
+        where: { id: reset.id },
+        data: {
+          attempts: nextAttempts,
+          // Auto-lock once the attempt ceiling is hit.
+          ...(nextAttempts >= PASSWORD_RESET_MAX_ATTEMPTS ? { usedAt: new Date() } : {}),
+        },
+      });
+      throw new BadRequestException(genericError);
     }
 
     const policyError = passwordIssues(dto.newPassword);
-    if (policyError) {
-      throw new BadRequestException(policyError);
-    }
-
-    const user = await this.prisma.user.findUnique({ where: { id: reset.userId } });
-    if (!user) {
-      throw new BadRequestException('Account no longer exists.');
-    }
+    if (policyError) throw new BadRequestException(policyError);
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
 
+    // Single transaction: mark reset used, update password, revoke all refresh tokens.
     await this.prisma.$transaction([
-      // One-time use: mark this token and invalidate every other pending one.
       this.prisma.passwordReset.updateMany({
         where: { userId: reset.userId, usedAt: null },
         data: { usedAt: new Date() },
       }),
       this.prisma.user.update({ where: { id: reset.userId }, data: { password: hashedPassword } }),
-      // Force re-authentication everywhere after a password change.
       this.prisma.refreshToken.updateMany({
         where: { userId: reset.userId, revokedAt: null },
         data: { revokedAt: new Date() },

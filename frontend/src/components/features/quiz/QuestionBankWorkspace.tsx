@@ -38,9 +38,13 @@ import { Pagination } from "@/components/ui/Pagination";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import {
   createCourseAssessment,
+  createQuestionBankItem,
+  deleteQuestionBankItem,
   fetchAssessmentWithAnswers,
   fetchCourseAssessments,
+  fetchQuestionBank,
   updateAssessment,
+  updateQuestionBankItem,
   type AssessmentQuestionInput,
   type SaveAssessmentBody,
 } from "@/lib/api/quiz";
@@ -51,10 +55,11 @@ export interface BankQuestion {
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
-  correctAnswer?: number | string;
+  correctAnswer?: number | string | null;
   points: number;
-  courseId: string;
+  courseId: string | null;
   category?: string;
+  isReusable?: boolean;
 }
 
 const inputClass =
@@ -97,6 +102,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const [questions, setQuestions] = useState<BankQuestion[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
+  const [filterScope, setFilterScope] = useState<"ALL" | "GLOBAL" | "COURSE">("ALL");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
   const [editorOpen, setEditorOpen] = useState(false);
@@ -109,6 +115,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const [qAnswerText, setQAnswerText] = useState("");
   const [qPoints, setQPoints] = useState(10);
   const [qCategory, setQCategory] = useState("General");
+  const [qIsReusable, setQIsReusable] = useState(false);
+  const [savingQuestion, setSavingQuestion] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   const [quizBuilderOpen, setQuizBuilderOpen] = useState(false);
   const [quizTitle, setQuizTitle] = useState("Course Quiz");
@@ -130,34 +140,6 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     try {
       const list = await fetchCourseAssessments(cId);
       setCourseAssessments(list);
-
-      const bank: BankQuestion[] = [];
-      for (const asm of list) {
-        try {
-          const detail = await fetchAssessmentWithAnswers(asm.id);
-          if (detail && Array.isArray(detail.questions)) {
-            detail.questions.forEach((q: any) => {
-              bank.push({
-                id: q.id || `q-${Math.random().toString(36).slice(2, 7)}`,
-                type: q.type || "MULTIPLE_CHOICE",
-                question: q.question || "",
-                options: Array.isArray(q.options) ? q.options : [],
-                correctAnswer: q.correctAnswer,
-                points: q.points || 10,
-                courseId: cId,
-                category: asm.titleEn || "Assessment",
-              });
-            });
-          }
-        } catch {
-          // best-effort
-        }
-      }
-
-      setQuestions((prev) => {
-        const others = prev.filter((p) => p.courseId !== cId);
-        return [...others, ...bank];
-      });
     } catch {
       setCourseAssessments([]);
     } finally {
@@ -165,8 +147,42 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     }
   };
 
+  const loadQuestions = async (cId: string) => {
+    setLoadingQuestions(true);
+    try {
+      const items = await fetchQuestionBank({
+        courseId: cId || undefined,
+        includeGlobal: true,
+      });
+      const bank: BankQuestion[] = items.map((q) => {
+        let parsedAnswer: number | string | null = q.correctAnswer;
+        if (q.type !== "SHORT_ANSWER" && q.correctAnswer !== null && q.correctAnswer !== undefined) {
+          const num = parseInt(q.correctAnswer, 10);
+          if (!isNaN(num)) parsedAnswer = num;
+        }
+        return {
+          id: q.id,
+          type: q.type,
+          question: q.question,
+          options: Array.isArray(q.options) ? (q.options as string[]) : [],
+          correctAnswer: parsedAnswer,
+          points: q.points || 10,
+          courseId: q.courseId,
+          category: q.category || "General",
+          isReusable: !q.courseId,
+        };
+      });
+      setQuestions(bank);
+    } catch (err) {
+      console.error("Failed to load question bank:", err);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedCourseId) {
+      loadQuestions(selectedCourseId);
       loadAssessments(selectedCourseId);
     }
   }, [selectedCourseId]);
@@ -182,9 +198,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
         q.options.some((o) => o.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesType = filterType === "ALL" || q.type === filterType;
-      return matchesSearch && matchesType;
+      const matchesScope =
+        filterScope === "ALL" ||
+        (filterScope === "GLOBAL" && !q.courseId) ||
+        (filterScope === "COURSE" && !!q.courseId);
+      return matchesSearch && matchesType && matchesScope;
     });
-  }, [courseQuestions, searchQuery, filterType]);
+  }, [courseQuestions, searchQuery, filterType, filterScope]);
 
   const questionsPage = usePagination(filteredQuestions, 10);
   const assessmentsPage = usePagination(courseAssessments, 6);
@@ -198,6 +218,8 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     setQAnswerText("");
     setQPoints(10);
     setQCategory("General");
+    setQIsReusable(false);
+    setSaveError(null);
     setEditorOpen(true);
   };
 
@@ -210,50 +232,135 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     setQAnswerText(typeof q.correctAnswer === "string" ? q.correctAnswer : "");
     setQPoints(q.points || 10);
     setQCategory(q.category || "General");
+    setQIsReusable(!q.courseId);
+    setSaveError(null);
     setEditorOpen(true);
   };
 
-  const handleSaveQuestion = (e: React.FormEvent) => {
+  const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qText.trim()) return;
 
-    const newQuestion: BankQuestion = {
-      id: editingQuestion ? editingQuestion.id : `bank-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    setSavingQuestion(true);
+    setSaveError(null);
+
+    const options =
+      qType === "TRUE_FALSE"
+        ? ["True", "False"]
+        : qType === "SHORT_ANSWER"
+        ? []
+        : qOptions.filter((o) => o.trim() !== "");
+
+    let correctAnswerStr: string | null = null;
+    if (qType === "SHORT_ANSWER") {
+      correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
+    } else {
+      correctAnswerStr = String(qCorrectIndex);
+    }
+
+    const payload = {
+      courseId: qIsReusable ? null : selectedCourseId,
       type: qType,
       question: qText.trim(),
-      options: qType === "TRUE_FALSE" ? ["True", "False"] : qType === "SHORT_ANSWER" ? [] : qOptions.filter((o) => o.trim() !== ""),
-      correctAnswer: qType === "SHORT_ANSWER" ? qAnswerText.trim() : qCorrectIndex,
+      options,
+      correctAnswer: correctAnswerStr,
       points: qPoints,
-      courseId: selectedCourseId,
-      category: qCategory,
+      category: qCategory.trim() || "General",
     };
 
-    setQuestions((prev) => {
+    try {
       if (editingQuestion) {
-        return prev.map((item) => (item.id === editingQuestion.id ? newQuestion : item));
+        const updated = await updateQuestionBankItem(editingQuestion.id, payload);
+        let parsedAnswer: number | string | null = updated.correctAnswer;
+        if (updated.type !== "SHORT_ANSWER" && updated.correctAnswer !== null) {
+          const num = parseInt(updated.correctAnswer, 10);
+          if (!isNaN(num)) parsedAnswer = num;
+        }
+        const mapped: BankQuestion = {
+          id: updated.id,
+          type: updated.type,
+          question: updated.question,
+          options: Array.isArray(updated.options) ? (updated.options as string[]) : [],
+          correctAnswer: parsedAnswer,
+          points: updated.points,
+          courseId: updated.courseId,
+          category: updated.category,
+          isReusable: !updated.courseId,
+        };
+        setQuestions((prev) => prev.map((item) => (item.id === editingQuestion.id ? mapped : item)));
+      } else {
+        const created = await createQuestionBankItem(payload);
+        let parsedAnswer: number | string | null = created.correctAnswer;
+        if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
+          const num = parseInt(created.correctAnswer, 10);
+          if (!isNaN(num)) parsedAnswer = num;
+        }
+        const mapped: BankQuestion = {
+          id: created.id,
+          type: created.type,
+          question: created.question,
+          options: Array.isArray(created.options) ? (created.options as string[]) : [],
+          correctAnswer: parsedAnswer,
+          points: created.points,
+          courseId: created.courseId,
+          category: created.category,
+          isReusable: !created.courseId,
+        };
+        setQuestions((prev) => [mapped, ...prev]);
       }
-      return [newQuestion, ...prev];
-    });
-
-    setEditorOpen(false);
+      setEditorOpen(false);
+    } catch (err: any) {
+      setSaveError(err?.message || "Failed to save question to bank");
+    } finally {
+      setSavingQuestion(false);
+    }
   };
 
-  const handleDeleteQuestion = (id: string) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== id));
-    setSelectedQuestionIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+  const handleDeleteQuestion = async (id: string) => {
+    try {
+      await deleteQuestionBankItem(id);
+      setQuestions((prev) => prev.filter((q) => q.id !== id));
+      setSelectedQuestionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch (err) {
+      console.error("Failed to delete question:", err);
+    }
   };
 
-  const handleDuplicateQuestion = (q: BankQuestion) => {
-    const dup: BankQuestion = {
-      ...q,
-      id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      question: `${q.question} (Copy)`,
-    };
-    setQuestions((prev) => [dup, ...prev]);
+  const handleDuplicateQuestion = async (q: BankQuestion) => {
+    try {
+      const created = await createQuestionBankItem({
+        courseId: q.courseId,
+        type: q.type,
+        question: `${q.question} (Copy)`,
+        options: q.options,
+        correctAnswer: q.correctAnswer !== undefined && q.correctAnswer !== null ? String(q.correctAnswer) : null,
+        points: q.points,
+        category: q.category,
+      });
+      let parsedAnswer: number | string | null = created.correctAnswer;
+      if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
+        const num = parseInt(created.correctAnswer, 10);
+        if (!isNaN(num)) parsedAnswer = num;
+      }
+      const mapped: BankQuestion = {
+        id: created.id,
+        type: created.type,
+        question: created.question,
+        options: Array.isArray(created.options) ? (created.options as string[]) : [],
+        correctAnswer: parsedAnswer,
+        points: created.points,
+        courseId: created.courseId,
+        category: created.category,
+        isReusable: !created.courseId,
+      };
+      setQuestions((prev) => [mapped, ...prev]);
+    } catch (err) {
+      console.error("Failed to duplicate question:", err);
+    }
   };
 
   const toggleSelectQuestion = (id: string) => {
@@ -453,6 +560,26 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 <option value="TRUE_FALSE">True / False</option>
                 <option value="SHORT_ANSWER">Short Answer</option>
               </select>
+
+              <select
+                value={filterScope}
+                onChange={(e) => setFilterScope(e.target.value as any)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none"
+              >
+                <option value="ALL">All Scopes (Course & Reusable)</option>
+                <option value="COURSE">Course-specific Only</option>
+                <option value="GLOBAL">Reusable (Across Courses)</option>
+              </select>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => loadQuestions(selectedCourseId)}
+                disabled={loadingQuestions}
+                title="Refresh Question Bank"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${loadingQuestions ? "animate-spin" : ""}`} />
+              </Button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -470,7 +597,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           </div>
 
           {/* Question List */}
-          {filteredQuestions.length === 0 ? (
+          {loadingQuestions ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            </div>
+          ) : filteredQuestions.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
               <FileQuestion className="mx-auto h-12 w-12 text-slate-300" />
               <h3 className="mt-3 text-sm font-semibold text-slate-800">No questions in this bank</h3>
@@ -511,6 +642,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                             <Badge variant={q.type === "MULTIPLE_CHOICE" ? "blue" : q.type === "TRUE_FALSE" ? "green" : "amber"}>
                               {q.type.replace("_", " ")}
                             </Badge>
+                            {!q.courseId ? (
+                              <Badge variant="indigo">Reusable Across Courses</Badge>
+                            ) : (
+                              <Badge variant="slate">Course Specific</Badge>
+                            )}
                             <span className="text-xs font-semibold text-slate-500">
                               {q.points} pts
                             </span>
@@ -570,6 +706,21 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                               >
                                 False {q.correctAnswer === 1 ? "✓ (Correct)" : ""}
                               </span>
+                            </div>
+                          )}
+
+                          {q.type === "SHORT_ANSWER" && (
+                            <div className="mt-2 text-xs">
+                              {q.correctAnswer ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                                  <Check className="h-3 w-3 text-emerald-600" />
+                                  Accepted: &quot;{q.correctAnswer}&quot;
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+                                  Open-ended / Manually graded (no fixed answer)
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -677,10 +828,34 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           open={editorOpen}
           onClose={() => setEditorOpen(false)}
           title={editingQuestion ? "Edit Question" : "Add Question to Bank"}
-          subtitle={`Assign to ${currentCourse?.title || "Course"} Question Bank`}
+          subtitle={
+            qIsReusable
+              ? "Global Question Bank (Reusable across all courses)"
+              : `Assign to ${currentCourse?.title || "Course"} Question Bank`
+          }
         >
           <div className="w-full py-4">
             <form onSubmit={handleSaveQuestion} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+              {/* Reusable Toggle */}
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 space-y-1.5">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={qIsReusable}
+                    onChange={(e) => setQIsReusable(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-bold text-slate-800">
+                    Reusable across courses (Save as Global Question)
+                  </span>
+                </label>
+                <p className="text-[11px] text-slate-500 pl-6.5">
+                  {qIsReusable
+                    ? "✓ This question will be available to all courses and can be imported or used in any quiz."
+                    : `This question is linked specifically to: ${currentCourse?.title || "Active Course"}.`}
+                </p>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className={labelClass}>Question Type</label>
@@ -691,7 +866,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   >
                     <option value="MULTIPLE_CHOICE">Multiple Choice (Single Answer)</option>
                     <option value="TRUE_FALSE">True / False</option>
-                    <option value="SHORT_ANSWER">Short Answer (Exact Match)</option>
+                    <option value="SHORT_ANSWER">Short Answer</option>
                   </select>
                 </div>
 
@@ -785,24 +960,41 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
               {qType === "SHORT_ANSWER" && (
                 <div>
-                  <label className={labelClass}>Accepted Answer Text *</label>
+                  <label className={labelClass}>Accepted Answer Text (Optional)</label>
                   <input
                     type="text"
-                    required
-                    placeholder="Enter the correct term or phrase (case-insensitive)"
+                    placeholder="Leave empty for open-ended / manually-graded questions"
                     value={qAnswerText}
                     onChange={(e) => setQAnswerText(e.target.value)}
                     className={inputClass}
                   />
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    If provided, student answers will be automatically checked against this value. If left blank, questions are treated as open-ended.
+                  </p>
+                </div>
+              )}
+
+              {saveError && (
+                <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+                  {saveError}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                <Button variant="outline" type="button" onClick={() => setEditorOpen(false)}>
+                <Button variant="outline" type="button" onClick={() => setEditorOpen(false)} disabled={savingQuestion}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingQuestion ? "Update Question" : "Save to Bank"}
+                <Button type="submit" disabled={savingQuestion}>
+                  {savingQuestion ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : editingQuestion ? (
+                    "Update Question"
+                  ) : (
+                    "Save to Bank"
+                  )}
                 </Button>
               </div>
             </form>

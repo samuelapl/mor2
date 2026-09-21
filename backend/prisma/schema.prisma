@@ -58,6 +58,7 @@ model User {
 
   refreshTokens           RefreshToken[]
   passwordResets          PasswordReset[]
+  questionBankQuestions   QuestionBankQuestion[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -163,7 +164,8 @@ model RolePermission {
 model PasswordReset {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")
-  tokenHash String    @unique @map("token_hash")
+  codeHash  String    @unique @map("code_hash")
+  attempts  Int       @default(0)
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
   createdAt DateTime  @default(now()) @map("created_at")
@@ -210,6 +212,7 @@ model Course {
   liveSessions    LiveSession[]
   certificates    Certificate[]
   attachments     Attachment[]
+  questionBankQuestions QuestionBankQuestion[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -516,6 +519,37 @@ model AssessmentAttempt {
   @@unique([assessmentId, userId, attemptNumber])
   @@index([userId])
   @@map("assessment_attempts")
+}
+
+// ──────────────────────────────────────────────────────────
+// 9b. Question Bank
+// ──────────────────────────────────────────────────────────
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+model QuestionBankQuestion {
+  id            String       @id @default(uuid())
+  courseId      String?      @map("course_id")
+  createdById   String       @map("created_by_id")
+  type          QuestionType @map("type")
+  question      String       @db.Text
+  options       Json         // string[] for MCQ/TF, [] for short answer
+  correctAnswer String?      @map("correct_answer") // nullable (index as string OR text OR null)
+  points        Int          @default(10)
+  category      String       @default("General")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  course        Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([createdById])
+  @@map("question_bank_questions")
 }
 
 // ──────────────────────────────────────────────────────────

@@ -50,6 +50,14 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: eltms-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # Web UI: http://localhost:8025
+      - "1025:1025"   # SMTP port
+
 volumes:
   postgres_data:
   redis_data:

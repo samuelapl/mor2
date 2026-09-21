@@ -18,18 +18,19 @@ export class MailService {
     this.from = this.configService.get<string>('SMTP_FROM') || (user ?? '');
     this.appName = this.configService.get<string>('APP_NAME') || 'ELTMS';
 
-    if (host && user && pass) {
+    if (host) {
       this.transporter = nodemailer.createTransport({
         host,
         port: parseInt(this.configService.get<string>('SMTP_PORT') || '465', 10),
         secure: this.configService.get<string>('SMTP_SECURE', 'true') === 'true',
-        auth: { user, pass },
+        // auth is optional — MailHog and similar dev catchers need no credentials
+        auth: user && pass ? { user, pass } : undefined,
       });
     } else {
       this.transporter = null;
       this.logger.warn(
-        'SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS missing). ' +
-          'Password-reset emails will NOT be sent. Configure these env vars to enable email delivery.',
+        'SMTP is not configured (SMTP_HOST missing). ' +
+          'Password-reset emails will NOT be sent. Set SMTP_HOST to enable email delivery.',
       );
     }
   }
@@ -38,24 +39,29 @@ export class MailService {
     return this.transporter !== null;
   }
 
-  async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
+  /**
+   * Sends a 6-digit OTP code for password reset.
+   * NOTE: Never log the plaintext `code` value.
+   */
+  async sendPasswordResetCode(to: string, code: string): Promise<void> {
     if (!this.transporter) {
-      this.logger.warn(`[mail] SMTP not configured — skipping password reset email to ${to}`);
+      this.logger.warn(`[mail] SMTP not configured — skipping password reset code email to ${to}`);
       return;
     }
 
     const appName = this.appName;
+    // Format as "123 456" for easy readability in the email body.
+    const display = `${code.slice(0, 3)} ${code.slice(3)}`;
+
     await this.transporter.sendMail({
       from: this.from || undefined,
       to,
-      subject: `${appName} — Password reset`,
+      subject: `${appName} — Your password reset code`,
       text: [
         `Hello,`,
         ``,
-        `You requested a password reset for your ${appName} account.`,
-        `Open the link below to choose a new password (it expires within 60 minutes):`,
-        ``,
-        resetUrl,
+        `Your ${appName} password reset code is: ${code}`,
+        `It expires in 10 minutes.`,
         ``,
         `If you didn't request this, you can safely ignore this email.`,
       ].join('\n'),
@@ -63,23 +69,19 @@ export class MailService {
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
           <h2 style="color:#1e293b;margin:0 0 8px">${appName}</h2>
           <p style="color:#475569;font-size:14px;line-height:1.6">
-            You requested a password reset for your account.
-            Open the link below to choose a new password
-            <strong>within 60 minutes</strong>:
+            Your password reset code is:
           </p>
-          <p style="margin:20px 0">
-            <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px">
-              Reset password
-            </a>
+          <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#4f46e5;background:#eef2ff;display:inline-block;padding:12px 24px;border-radius:8px;margin:16px 0">
+            ${display}
           </p>
           <p style="color:#94a3b8;font-size:12px">
-            If the button doesn't work, copy: ${resetUrl}<br />
+            This code expires in 10 minutes.<br/>
             If you didn't request this, you can safely ignore this email.
           </p>
         </div>
       `,
     });
-    this.logger.log(`Sent password reset email to ${to}`);
+    this.logger.log(`Sent password reset code email to ${to}`);
   }
 
   async sendRegistrationApproved(to: string): Promise<void> {

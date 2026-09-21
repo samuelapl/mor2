@@ -38,7 +38,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Request a password-reset link for an email (never reveals if it exists)',
+    summary: 'Request a 6-digit password-reset code for an email',
   })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
@@ -47,7 +47,7 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Set a new password using a one-time reset token' })
+  @ApiOperation({ summary: 'Set a new password using the emailed 6-digit code' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }

@@ -9,6 +9,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
+import { QuestionBankModule } from './modules/question-bank/question-bank.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { LiveSessionsModule } from './modules/live-sessions/live-sessions.module';
@@ -40,6 +41,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     CurriculumModule,
     AttachmentsModule,
     AssessmentsModule,
+    QuestionBankModule,
     EnrollmentsModule,
     ProgressModule,
     LiveSessionsModule,

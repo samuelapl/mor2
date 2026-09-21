@@ -128,3 +128,106 @@ export async function submitAttempt(
 export async function fetchAttempts(assessmentId: string): Promise<ApiAssessmentAttempt[]> {
   return api<ApiAssessmentAttempt[]>(`assessments/${assessmentId}/attempts`);
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Question Bank API                                                         */
+/* -------------------------------------------------------------------------- */
+
+export interface ApiQuestionBankQuestion {
+  id: string;
+  courseId: string | null;
+  createdById: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  question: string;
+  options: string[];
+  correctAnswer: string | null;
+  points: number;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+  course?: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    code: string;
+  } | null;
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface CreateBankQuestionInput {
+  courseId?: string | null;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  question: string;
+  options: string[];
+  correctAnswer?: string | null;
+  points?: number;
+  category?: string;
+}
+
+export interface UpdateBankQuestionInput {
+  courseId?: string | null;
+  type?: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  question?: string;
+  options?: string[];
+  correctAnswer?: string | null;
+  points?: number;
+  category?: string;
+}
+
+export interface QueryBankQuestionsParams {
+  courseId?: string;
+  includeGlobal?: boolean;
+  globalOnly?: boolean;
+  type?: string;
+  category?: string;
+  search?: string;
+}
+
+export async function fetchQuestionBank(
+  params?: QueryBankQuestionsParams,
+): Promise<ApiQuestionBankQuestion[]> {
+  const query: Record<string, string> = {};
+  if (params?.courseId) query.courseId = params.courseId;
+  if (params?.includeGlobal !== undefined) query.includeGlobal = String(params.includeGlobal);
+  if (params?.globalOnly !== undefined) query.globalOnly = String(params.globalOnly);
+  if (params?.type && params.type !== "ALL") query.type = params.type;
+  if (params?.category) query.category = params.category;
+  if (params?.search) query.search = params.search;
+
+  return api<ApiQuestionBankQuestion[]>("question-bank", { query });
+}
+
+export async function fetchQuestionBankItem(id: string): Promise<ApiQuestionBankQuestion> {
+  return api<ApiQuestionBankQuestion>(`question-bank/${id}`);
+}
+
+export async function createQuestionBankItem(
+  body: CreateBankQuestionInput,
+): Promise<ApiQuestionBankQuestion> {
+  return api<ApiQuestionBankQuestion>("question-bank", { method: "POST", body });
+}
+
+export async function updateQuestionBankItem(
+  id: string,
+  body: UpdateBankQuestionInput,
+): Promise<ApiQuestionBankQuestion> {
+  return api<ApiQuestionBankQuestion>(`question-bank/${id}`, { method: "PATCH", body });
+}
+
+export async function deleteQuestionBankItem(id: string): Promise<void> {
+  return api<void>(`question-bank/${id}`, { method: "DELETE" });
+}
+
+export async function bulkCreateQuestionBankItems(
+  questions: CreateBankQuestionInput[],
+): Promise<ApiQuestionBankQuestion[]> {
+  return api<ApiQuestionBankQuestion[]>("question-bank/bulk", {
+    method: "POST",
+    body: { questions },
+  });
+}

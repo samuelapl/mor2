@@ -47,6 +47,8 @@ export const PERMISSIONS: PermissionDef[] = [
   { code: 'quiz.create', resource: 'quiz', action: 'create', scope: 'ALL', description: 'Create quiz / assessment' },
   { code: 'quiz.grade', resource: 'quiz', action: 'grade', scope: 'ALL', description: 'Grade submissions' },
   { code: 'assessment.submit', resource: 'assessment', action: 'submit', scope: 'OWN', description: 'Take quiz' },
+  // Question Bank — dedicated permission to view and manage the question bank
+  { code: 'question_bank.manage', resource: 'question_bank', action: 'manage', scope: 'ALL', description: 'Access and manage the question bank (create, edit, delete questions)' },
 
   // Attendance
   { code: 'attendance.view', resource: 'attendance', action: 'view', scope: 'ALL', description: 'View attendance' },
@@ -99,6 +101,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'course.view_enrollments',
     'quiz.create',
     'quiz.grade',
+    'question_bank.manage',
     'assessment.submit',
     'attendance.view',
     'attendance.manage',
@@ -123,6 +126,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'enrollment.view_all',
     'quiz.create',
     'quiz.grade',
+    'question_bank.manage',
     'assessment.submit',
     'attendance.view',
     'attendance.manage',
@@ -138,6 +142,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'course.view.assigned',
     'quiz.create',
     'quiz.grade',
+    'question_bank.manage',
     'attendance.view',
     'attendance.manage',
     'result.view.all',
