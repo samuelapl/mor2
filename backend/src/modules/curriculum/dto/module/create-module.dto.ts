@@ -10,6 +10,27 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+export class CurriculumAttachmentDto {
+  @ApiProperty({ example: 'syllabus.pdf' })
+  @IsString()
+  fileName: string;
+
+  @ApiProperty({ example: 'http://localhost:9000/eltms-files/attachments/123.pdf' })
+  @IsString()
+  fileUrl: string;
+
+  @ApiPropertyOptional({ example: 'application/pdf' })
+  @IsOptional()
+  @IsString()
+  fileType?: string;
+
+  @ApiPropertyOptional({ example: 102400 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sizeBytes?: number;
+}
+
 export class LessonDto {
   @ApiProperty({ example: 'Introduction to Computers' })
   @IsString()
@@ -61,6 +82,13 @@ export class LessonDto {
   @ValidateNested({ each: true })
   @Type(() => LessonDto)
   subLessons?: LessonDto[];
+
+  @ApiPropertyOptional({ type: () => [CurriculumAttachmentDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CurriculumAttachmentDto)
+  attachments?: CurriculumAttachmentDto[];
 }
 
 export class CreateModuleDto {
@@ -118,4 +146,11 @@ export class CreateModuleDto {
   @ValidateNested({ each: true })
   @Type(() => LessonDto)
   lessons?: LessonDto[];
+
+  @ApiPropertyOptional({ type: [CurriculumAttachmentDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CurriculumAttachmentDto)
+  attachments?: CurriculumAttachmentDto[];
 }

@@ -5,6 +5,7 @@ import type {
   Course,
   Lang,
   Role,
+  UploadedResource,
   User,
   UserStatus,
 } from "@/types";
@@ -23,6 +24,7 @@ import type {
   BackendLessonContentType,
   BackendRoleName,
   CreateCourseBody,
+  CreateCurriculumAttachmentBody,
   CreateModuleBody,
   LocalizedText,
   UpdateCourseBody,
@@ -253,19 +255,63 @@ export function attachmentFromApi(attachment: ApiAttachment): Attachment {
   };
 }
 
+export function uploadedResourceFromApi(attachment: ApiAttachment): UploadedResource {
+  return {
+    id: attachment.id,
+    name: attachment.fileName,
+    url: attachment.fileUrl,
+    size: attachment.sizeBytes,
+    type: attachment.fileType,
+  };
+}
+
+export function uploadedResourceToApiAttachment(resource: UploadedResource): CreateCurriculumAttachmentBody {
+  return {
+    fileName: resource.name,
+    fileUrl: resource.url,
+    fileType: resource.type || "application/octet-stream",
+    sizeBytes: resource.size || 0,
+  };
+}
+
 export function moduleFromApi(mod: ApiModule): Module {
+  const attachments: UploadedResource[] = (mod.attachments ?? []).map(uploadedResourceFromApi);
+  if (attachments.length === 0 && mod.resourceUrl) {
+    attachments.push({
+      id: "legacy",
+      name: mod.fileName || mod.resourceUrl.split("/").pop() || "Resource",
+      url: mod.resourceUrl,
+      size: mod.fileSize || 0,
+    });
+  }
+
   return {
     id: mod.id,
     title: mod.titleEn ?? "",
     description: mod.descriptionEn ?? undefined,
     objectives: mod.objectivesEn || mod.objectivesAm || undefined,
     durationMinutes: mod.durationMinutes ?? undefined,
+    resourceUrl: mod.resourceUrl || (attachments[0]?.url ?? undefined),
+    fileName: mod.fileName || (attachments[0]?.name ?? undefined),
+    fileSize: mod.fileSize || (attachments[0]?.size ?? undefined),
+    resources: attachments,
+    attachments,
     unlocked: mod.unlocked,
     lessons: (mod.lessons ?? []).map(lessonFromApi),
   };
 }
 
 function lessonFromApi(lesson: ApiLesson): Lesson {
+  const attachments: UploadedResource[] = (lesson.attachments ?? []).map(uploadedResourceFromApi);
+  if (attachments.length === 0 && lesson.resourceUrl) {
+    attachments.push({
+      id: "legacy",
+      name: lesson.fileName || lesson.resourceUrl.split("/").pop() || "Resource",
+      url: lesson.resourceUrl,
+      size: lesson.fileSize || 0,
+    });
+  }
+
   return {
     id: lesson.id,
     title: lesson.titleEn ?? "",
@@ -273,7 +319,11 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
     durationMin: lesson.durationMinutes ?? 15,
     unlocked: lesson.unlocked,
     contentType: lesson.contentType,
-    resourceUrl: lesson.resourceUrl ?? undefined,
+    resourceUrl: lesson.resourceUrl || (attachments[0]?.url ?? undefined),
+    fileName: lesson.fileName || (attachments[0]?.name ?? undefined),
+    fileSize: lesson.fileSize || (attachments[0]?.size ?? undefined),
+    resources: attachments,
+    attachments,
     parentId: lesson.parentId ?? undefined,
     subLessons: (lesson.subLessons ?? []).map(lessonFromApi),
   };
@@ -354,6 +404,7 @@ export function moduleToCreateBody(input: {
   objectivesEn?: string;
   objectivesAm?: string;
   durationMinutes?: number;
+  attachments?: CreateCurriculumAttachmentBody[];
   lessons?: {
     titleEn: string;
     titleAm?: string;
@@ -361,6 +412,7 @@ export function moduleToCreateBody(input: {
     contentType?: BackendLessonContentType;
     durationMinutes?: number;
     resourceUrl?: string;
+    attachments?: CreateCurriculumAttachmentBody[];
     subLessons?: {
       titleEn: string;
       titleAm?: string;
@@ -368,6 +420,7 @@ export function moduleToCreateBody(input: {
       contentType?: BackendLessonContentType;
       durationMinutes?: number;
       resourceUrl?: string;
+      attachments?: CreateCurriculumAttachmentBody[];
     }[];
   }[];
 }): CreateModuleBody {
@@ -380,6 +433,7 @@ export function moduleToCreateBody(input: {
     objectivesEn: input.objectivesEn,
     objectivesAm: input.objectivesAm ?? input.objectivesEn,
     durationMinutes: input.durationMinutes,
+    attachments: input.attachments,
     lessons: (input.lessons ?? []).map((l) => ({
       titleEn: l.titleEn,
       titleAm: l.titleAm ?? l.titleEn,
@@ -387,6 +441,7 @@ export function moduleToCreateBody(input: {
       contentType: l.contentType ?? "DOCUMENT",
       durationMinutes: l.durationMinutes,
       resourceUrl: l.resourceUrl,
+      attachments: l.attachments,
       subLessons: (l.subLessons ?? []).map((sub) => ({
         titleEn: sub.titleEn,
         titleAm: sub.titleAm ?? sub.titleEn,
@@ -394,6 +449,7 @@ export function moduleToCreateBody(input: {
         contentType: sub.contentType ?? "DOCUMENT",
         durationMinutes: sub.durationMinutes,
         resourceUrl: sub.resourceUrl,
+        attachments: sub.attachments,
       })),
     })),
   };

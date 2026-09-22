@@ -56,7 +56,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import type { Attachment, Course, CourseLevel, Question, QuestionType, Quiz } from "@/types";
+import type { Attachment, Course, CourseLevel, Question, QuestionType, Quiz, UploadedResource } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { RichTextArea } from "@/components/ui/RichTextArea";
@@ -99,6 +99,8 @@ export interface LessonDraft {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   uploading?: boolean;
   uploadError?: string | null;
   subLessons?: LessonDraft[];
@@ -128,6 +130,8 @@ export interface ModuleDraft {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   uploading?: boolean;
   uploadError?: string | null;
   lessons: LessonDraft[];
@@ -412,6 +416,192 @@ function CompactRichEditor({
   );
 }
 
+function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+interface MultiFileUploaderProps {
+  id: string;
+  files?: UploadedResource[];
+  legacyUrl?: string;
+  legacyName?: string;
+  legacySize?: number;
+  accept?: string;
+  uploading?: boolean;
+  uploadError?: string | null;
+  onUpload: (files: File[]) => void;
+  onRemove: (fileIdOrUrl: string) => void;
+  placeholderText?: string;
+  descriptionText?: string;
+  theme?: "indigo" | "emerald" | "orange" | "slate";
+}
+
+function MultiFileUploader({
+  id,
+  files = [],
+  legacyUrl,
+  legacyName,
+  legacySize,
+  accept = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg",
+  uploading = false,
+  uploadError = null,
+  onUpload,
+  onRemove,
+  placeholderText = "Upload file(s) or drag and drop",
+  descriptionText = "Supports multiple files (PDFs, docs, spreadsheets, slides, archives). Previously uploaded files are preserved.",
+  theme = "indigo",
+}: MultiFileUploaderProps) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const allFiles: UploadedResource[] = [...files];
+  if (allFiles.length === 0 && legacyUrl) {
+    allFiles.push({
+      id: "legacy",
+      name: legacyName || legacyUrl.split("/").pop() || "Attached File",
+      url: legacyUrl,
+      size: legacySize || 0,
+    });
+  }
+
+  const themeClasses = {
+    indigo: {
+      activeBorder: "border-indigo-500 bg-indigo-50/50",
+      icon: "text-indigo-500",
+      badge: "bg-indigo-50 text-indigo-700",
+    },
+    emerald: {
+      activeBorder: "border-emerald-500 bg-emerald-50/50",
+      icon: "text-emerald-500",
+      badge: "bg-emerald-50 text-emerald-700",
+    },
+    orange: {
+      activeBorder: "border-orange-500 bg-orange-50/50",
+      icon: "text-orange-500",
+      badge: "bg-orange-50 text-orange-700",
+    },
+    slate: {
+      activeBorder: "border-slate-500 bg-slate-50/50",
+      icon: "text-slate-500",
+      badge: "bg-slate-100 text-slate-700",
+    },
+  }[theme];
+
+  return (
+    <div className="space-y-3">
+      {allFiles.length > 0 ? (
+        <div className="space-y-1.5">
+          {allFiles.map((file, idx) => (
+            <div
+              key={file.id || file.url || idx}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3.5 text-xs shadow-2xs hover:border-slate-300 transition"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", themeClasses.badge)}>
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-slate-800" title={file.name}>
+                    {file.name}
+                  </p>
+                  {file.size ? (
+                    <p className="text-[11px] text-slate-400">{formatFileSize(file.size)}</p>
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 transition"
+                >
+                  <ExternalLink className="h-3 w-3" /> View
+                </a>
+                <button
+                  type="button"
+                  onClick={() => onRemove(file.id || file.url)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                  title="Remove file"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            onUpload(Array.from(e.dataTransfer.files));
+          }
+        }}
+        className={cn(
+          "relative rounded-xl border border-dashed p-3 text-center transition",
+          isDragging
+            ? themeClasses.activeBorder
+            : "border-slate-300 bg-slate-50/40 hover:border-slate-400 hover:bg-slate-50/80",
+        )}
+      >
+        <input
+          type="file"
+          id={id}
+          multiple
+          accept={accept}
+          className="sr-only"
+          disabled={uploading}
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              onUpload(Array.from(e.target.files));
+              e.target.value = "";
+            }
+          }}
+        />
+        <label
+          htmlFor={id}
+          className="flex flex-col items-center justify-center gap-1 cursor-pointer select-none py-1"
+        >
+          {uploading ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Uploading file(s)...</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition">
+                <Upload className={cn("h-4 w-4", themeClasses.icon)} />
+                <span>{placeholderText}</span>
+              </div>
+              <p className="text-[11px] text-slate-400 max-w-md">{descriptionText}</p>
+            </>
+          )}
+        </label>
+      </div>
+
+      {uploadError ? (
+        <p className="text-xs text-red-600 font-medium">{uploadError}</p>
+      ) : null}
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Wizard Component                                                          */
 /* -------------------------------------------------------------------------- */
@@ -453,41 +643,85 @@ export function CourseCreationWizard({
   );
 
   // Step 2: Curriculum
+  const getInitialDraftResources = (item: {
+    resources?: UploadedResource[];
+    attachments?: UploadedResource[];
+    resourceUrl?: string;
+    fileName?: string;
+    fileSize?: number;
+  }): UploadedResource[] => {
+    if (item.resources && item.resources.length > 0) return item.resources;
+    if (item.attachments && item.attachments.length > 0) return item.attachments;
+    if (item.resourceUrl) {
+      return [
+        {
+          id: "legacy",
+          name: item.fileName || item.resourceUrl.split("/").pop() || "Attached File",
+          url: item.resourceUrl,
+          size: item.fileSize || 0,
+        },
+      ];
+    }
+    return [];
+  };
+
   const [modules, setModules] = useState<ModuleDraft[]>(() => {
     if (editingCourse?.modules && editingCourse.modules.length > 0) {
-      return editingCourse.modules.map((mod) => ({
-        id: mod.id,
-        title: mod.title,
-        description: mod.description ?? "",
-        objectives: mod.objectives ?? "",
-        durationMinutes: mod.durationMinutes || 60,
-        lessons: mod.lessons.map((lesson) => ({
-          id: lesson.id,
-          title: lesson.title,
-          content: lesson.content ?? "",
-          durationMin: lesson.durationMin || 15,
-          contentType: (lesson.contentType as WizardContentType) || "DOCUMENT",
-          resourceUrl: lesson.resourceUrl || "",
-          required: true,
-          assignmentInstructions:
-            lesson.contentType === "ASSIGNMENT" ? lesson.content ?? "" : undefined,
-          assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
-          assignmentMaxMarks: 100,
-          subLessons: (lesson.subLessons ?? []).map((sub) => ({
-            id: sub.id,
-            title: sub.title,
-            content: sub.content ?? "",
-            durationMin: sub.durationMin || 15,
-            contentType: (sub.contentType as WizardContentType) || "DOCUMENT",
-            resourceUrl: sub.resourceUrl || "",
-            required: true,
-            assignmentInstructions:
-              sub.contentType === "ASSIGNMENT" ? sub.content ?? "" : undefined,
-            assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
-            assignmentMaxMarks: 100,
-          })),
-        })),
-      }));
+      return editingCourse.modules.map((mod) => {
+        const modRes = getInitialDraftResources(mod);
+        return {
+          id: mod.id,
+          title: mod.title,
+          description: mod.description ?? "",
+          objectives: mod.objectives ?? "",
+          durationMinutes: mod.durationMinutes || 60,
+          resourceUrl: mod.resourceUrl || modRes[0]?.url || "",
+          fileName: mod.fileName || modRes[0]?.name || "",
+          fileSize: mod.fileSize || modRes[0]?.size || 0,
+          resources: modRes,
+          attachments: modRes,
+          lessons: mod.lessons.map((lesson) => {
+            const lesRes = getInitialDraftResources(lesson);
+            return {
+              id: lesson.id,
+              title: lesson.title,
+              content: lesson.content ?? "",
+              durationMin: lesson.durationMin || 15,
+              contentType: (lesson.contentType as WizardContentType) || "DOCUMENT",
+              resourceUrl: lesson.resourceUrl || lesRes[0]?.url || "",
+              fileName: lesson.fileName || lesRes[0]?.name || "",
+              fileSize: lesson.fileSize || lesRes[0]?.size || 0,
+              resources: lesRes,
+              attachments: lesRes,
+              required: true,
+              assignmentInstructions:
+                lesson.contentType === "ASSIGNMENT" ? lesson.content ?? "" : undefined,
+              assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
+              assignmentMaxMarks: 100,
+              subLessons: (lesson.subLessons ?? []).map((sub) => {
+                const subRes = getInitialDraftResources(sub);
+                return {
+                  id: sub.id,
+                  title: sub.title,
+                  content: sub.content ?? "",
+                  durationMin: sub.durationMin || 15,
+                  contentType: (sub.contentType as WizardContentType) || "DOCUMENT",
+                  resourceUrl: sub.resourceUrl || subRes[0]?.url || "",
+                  fileName: sub.fileName || subRes[0]?.name || "",
+                  fileSize: sub.fileSize || subRes[0]?.size || 0,
+                  resources: subRes,
+                  attachments: subRes,
+                  required: true,
+                  assignmentInstructions:
+                    sub.contentType === "ASSIGNMENT" ? sub.content ?? "" : undefined,
+                  assignmentFileTypes: ["PDF", "DOCX", "PPTX"],
+                  assignmentMaxMarks: 100,
+                };
+              }),
+            };
+          }),
+        };
+      });
     }
     // New course — start empty, no dummy content
     return [];
@@ -531,22 +765,55 @@ export function CourseCreationWizard({
   const [assessmentFileUrl, setAssessmentFileUrl] = useState<string>("");
   const [assessmentFileName, setAssessmentFileName] = useState<string>("");
   const [assessmentFileSize, setAssessmentFileSize] = useState<number>(0);
+  const [assessmentResources, setAssessmentResources] = useState<UploadedResource[]>(() => {
+    if (editingCourse?.attachments && editingCourse.attachments.length > 0) {
+      return editingCourse.attachments.map((a) => ({
+        id: a.id,
+        name: a.name,
+        url: a.url,
+      }));
+    }
+    return [];
+  });
   const [assessmentUploading, setAssessmentUploading] = useState<boolean>(false);
   const [assessmentUploadError, setAssessmentUploadError] = useState<string | null>(null);
 
-  const handleFinalAssessmentFileUpload = async (file: File) => {
+  const handleFinalAssessmentFileUpload = async (files: File | File[] | FileList) => {
+    const fileList = Array.isArray(files) ? files : files instanceof File ? [files] : Array.from(files);
+    if (fileList.length === 0) return;
+
     setAssessmentUploading(true);
     setAssessmentUploadError(null);
     try {
-      const res = await uploadAttachment(file, { courseId: editingCourse?.id });
-      setAssessmentFileUrl(res.fileUrl);
-      setAssessmentFileName(res.fileName);
-      setAssessmentFileSize(res.sizeBytes);
+      const uploaded: UploadedResource[] = [];
+      for (const f of fileList) {
+        const res = await uploadAttachment(f, { courseId: editingCourse?.id });
+        uploaded.push({
+          id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: res.fileName,
+          url: res.fileUrl,
+          size: res.sizeBytes,
+          type: res.fileType,
+        });
+      }
+      const combined = [...assessmentResources, ...uploaded];
+      setAssessmentResources(combined);
+      setAssessmentFileUrl(combined[0]?.url || "");
+      setAssessmentFileName(combined[0]?.name || "");
+      setAssessmentFileSize(combined[0]?.size || 0);
     } catch (err) {
       setAssessmentUploadError(err instanceof Error ? err.message : "Failed to upload reference file");
     } finally {
       setAssessmentUploading(false);
     }
+  };
+
+  const removeFinalAssessmentFile = (fileIdOrUrl: string) => {
+    const filtered = assessmentResources.filter((f) => f.id !== fileIdOrUrl && f.url !== fileIdOrUrl);
+    setAssessmentResources(filtered);
+    setAssessmentFileUrl(filtered[0]?.url || "");
+    setAssessmentFileName(filtered[0]?.name || "");
+    setAssessmentFileSize(filtered[0]?.size || 0);
   };
 
   // Load course / question bank questions
@@ -1085,38 +1352,89 @@ export function CourseCreationWizard({
     );
   };
 
-  // Real backend file upload for module content (syllabus, overview, guide)
-  const handleModuleFileUpload = async (file: File, moduleId: string) => {
+  // Helper to normalize file inputs
+  const normalizeFiles = (input: File | File[] | FileList): File[] => {
+    if (Array.isArray(input)) return input;
+    if (input instanceof File) return [input];
+    return Array.from(input);
+  };
+
+  // Real backend multi-file upload for module content (syllabi, slides, manuals, etc.)
+  const handleModuleFileUpload = async (files: File | File[] | FileList, moduleId: string) => {
+    const fileList = normalizeFiles(files);
+    if (fileList.length === 0) return;
+
     patchModule(moduleId, { uploading: true, uploadError: null });
 
     try {
-      const res = await uploadAttachment(file, {
-        moduleId,
-        courseId: editingCourse?.id,
-      });
+      const targetMod = modules.find((m) => m.id === moduleId);
+      const existingResources = [...(targetMod?.resources || targetMod?.attachments || [])];
+      if (existingResources.length === 0 && targetMod?.resourceUrl) {
+        existingResources.push({
+          id: "legacy",
+          name: targetMod.fileName || targetMod.resourceUrl.split("/").pop() || "Attached File",
+          url: targetMod.resourceUrl,
+          size: targetMod.fileSize || 0,
+        });
+      }
 
+      const uploaded: UploadedResource[] = [];
+      for (const f of fileList) {
+        const res = await uploadAttachment(f, {
+          moduleId,
+          courseId: editingCourse?.id,
+        });
+        uploaded.push({
+          id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: res.fileName,
+          url: res.fileUrl,
+          size: res.sizeBytes,
+          type: res.fileType,
+        });
+      }
+
+      const combined = [...existingResources, ...uploaded];
       patchModule(moduleId, {
         uploading: false,
-        resourceUrl: res.fileUrl,
-        fileName: res.fileName,
-        fileSize: res.sizeBytes,
+        resources: combined,
+        attachments: combined,
+        resourceUrl: combined[0]?.url || "",
+        fileName: combined[0]?.name || "",
+        fileSize: combined[0]?.size || 0,
         uploadError: null,
       });
     } catch (err) {
       patchModule(moduleId, {
         uploading: false,
-        uploadError: err instanceof Error ? err.message : "Failed to upload module file",
+        uploadError: err instanceof Error ? err.message : "Failed to upload module file(s)",
       });
     }
   };
 
   // Real backend file upload for lesson / sub-lesson content
+  const removeModuleFile = (moduleId: string, fileIdOrUrl: string) => {
+    const targetMod = modules.find((m) => m.id === moduleId);
+    const existing = [...(targetMod?.resources || targetMod?.attachments || [])];
+    const filtered = existing.filter((f) => f.id !== fileIdOrUrl && f.url !== fileIdOrUrl);
+    patchModule(moduleId, {
+      resources: filtered,
+      attachments: filtered,
+      resourceUrl: filtered[0]?.url || "",
+      fileName: filtered[0]?.name || "",
+      fileSize: filtered[0]?.size || 0,
+    });
+  };
+
+  // Real backend multi-file upload for lesson / sub-lesson content
   const handleLessonFileUpload = async (
-    file: File,
+    files: File | File[] | FileList,
     moduleId: string,
     targetLessonId: string,
     parentLessonId?: string,
   ) => {
+    const fileList = normalizeFiles(files);
+    if (fileList.length === 0) return;
+
     const updateTarget = (patch: Partial<LessonDraft>) => {
       if (parentLessonId) {
         patchSubLesson(moduleId, parentLessonId, targetLessonId, patch);
@@ -1128,24 +1446,91 @@ export function CourseCreationWizard({
     updateTarget({ uploading: true, uploadError: null });
 
     try {
-      const res = await uploadAttachment(file, {
-        moduleId,
-        lessonId: targetLessonId,
-        courseId: editingCourse?.id,
-      });
+      const parentMod = modules.find((m) => m.id === moduleId);
+      let targetLesson: LessonDraft | undefined;
+      if (parentLessonId) {
+        targetLesson = parentMod?.lessons
+          .find((l) => l.id === parentLessonId)
+          ?.subLessons?.find((s) => s.id === targetLessonId);
+      } else {
+        targetLesson = parentMod?.lessons.find((l) => l.id === targetLessonId);
+      }
 
+      const existingResources = [...(targetLesson?.resources || targetLesson?.attachments || [])];
+      if (existingResources.length === 0 && targetLesson?.resourceUrl) {
+        existingResources.push({
+          id: "legacy",
+          name: targetLesson.fileName || targetLesson.resourceUrl.split("/").pop() || "Attached File",
+          url: targetLesson.resourceUrl,
+          size: targetLesson.fileSize || 0,
+        });
+      }
+
+      const uploaded: UploadedResource[] = [];
+      for (const f of fileList) {
+        const res = await uploadAttachment(f, {
+          moduleId,
+          lessonId: targetLessonId,
+          courseId: editingCourse?.id,
+        });
+        uploaded.push({
+          id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: res.fileName,
+          url: res.fileUrl,
+          size: res.sizeBytes,
+          type: res.fileType,
+        });
+      }
+
+      const combined = [...existingResources, ...uploaded];
       updateTarget({
         uploading: false,
-        resourceUrl: res.fileUrl,
-        fileName: res.fileName,
-        fileSize: res.sizeBytes,
+        resources: combined,
+        attachments: combined,
+        resourceUrl: combined[0]?.url || "",
+        fileName: combined[0]?.name || "",
+        fileSize: combined[0]?.size || 0,
         uploadError: null,
       });
     } catch (err) {
       updateTarget({
         uploading: false,
-        uploadError: err instanceof Error ? err.message : "Failed to upload file",
+        uploadError: err instanceof Error ? err.message : "Failed to upload file(s)",
       });
+    }
+  };
+
+  const removeLessonFile = (
+    moduleId: string,
+    targetLessonId: string,
+    fileIdOrUrl: string,
+    parentLessonId?: string,
+  ) => {
+    const parentMod = modules.find((m) => m.id === moduleId);
+    let targetLesson: LessonDraft | undefined;
+    if (parentLessonId) {
+      targetLesson = parentMod?.lessons
+        .find((l) => l.id === parentLessonId)
+        ?.subLessons?.find((s) => s.id === targetLessonId);
+    } else {
+      targetLesson = parentMod?.lessons.find((l) => l.id === targetLessonId);
+    }
+
+    const existing = [...(targetLesson?.resources || targetLesson?.attachments || [])];
+    const filtered = existing.filter((f) => f.id !== fileIdOrUrl && f.url !== fileIdOrUrl);
+
+    const patch: Partial<LessonDraft> = {
+      resources: filtered,
+      attachments: filtered,
+      resourceUrl: filtered[0]?.url || "",
+      fileName: filtered[0]?.name || "",
+      fileSize: filtered[0]?.size || 0,
+    };
+
+    if (parentLessonId) {
+      patchSubLesson(moduleId, parentLessonId, targetLessonId, patch);
+    } else {
+      patchLesson(moduleId, targetLessonId, patch);
     }
   };
 
@@ -1212,43 +1597,58 @@ export function CourseCreationWizard({
   const buildCurriculumPayload = () =>
     modules
       .filter((m) => m.title.trim() !== "" || m.lessons.some((l) => l.title.trim() !== ""))
-      .map((m) => ({
-        title: m.title.trim() || "Module",
-        description: m.description?.trim() || undefined,
-        objectives: m.objectives?.trim() || undefined,
-        durationMinutes: m.durationMinutes || undefined,
-        resourceUrl: m.resourceUrl?.trim() || undefined,
-        fileName: m.fileName || undefined,
-        fileSize: m.fileSize || undefined,
-        lessons: m.lessons
-          .filter((l) => l.title.trim() !== "")
-          .map((l) => ({
-            title: l.title.trim(),
-            content:
-              l.contentType === "ASSIGNMENT"
-                ? l.assignmentInstructions || l.content || ""
-                : l.content || "",
-            durationMin: l.durationMin || 15,
-            contentType: l.contentType,
-            resourceUrl: l.resourceUrl?.trim() || undefined,
-            fileName: l.fileName || undefined,
-            fileSize: l.fileSize || undefined,
-            subLessons: (l.subLessons ?? [])
-              .filter((sub) => sub.title.trim() !== "")
-              .map((sub) => ({
-                title: sub.title.trim(),
+      .map((m) => {
+        const mResources = m.resources?.length ? m.resources : m.attachments?.length ? m.attachments : [];
+        return {
+          title: m.title.trim() || "Module",
+          description: m.description?.trim() || undefined,
+          objectives: m.objectives?.trim() || undefined,
+          durationMinutes: m.durationMinutes || undefined,
+          resourceUrl: m.resourceUrl?.trim() || mResources[0]?.url || undefined,
+          fileName: m.fileName || mResources[0]?.name || undefined,
+          fileSize: m.fileSize || mResources[0]?.size || undefined,
+          resources: mResources,
+          attachments: mResources,
+          lessons: m.lessons
+            .filter((l) => l.title.trim() !== "")
+            .map((l) => {
+              const lResources = l.resources?.length ? l.resources : l.attachments?.length ? l.attachments : [];
+              return {
+                title: l.title.trim(),
                 content:
-                  sub.contentType === "ASSIGNMENT"
-                    ? sub.assignmentInstructions || sub.content || ""
-                    : sub.content || "",
-                durationMin: sub.durationMin || 15,
-                contentType: sub.contentType,
-                resourceUrl: sub.resourceUrl?.trim() || undefined,
-                fileName: sub.fileName || undefined,
-                fileSize: sub.fileSize || undefined,
-              })),
-          })),
-      }));
+                  l.contentType === "ASSIGNMENT"
+                    ? l.assignmentInstructions || l.content || ""
+                    : l.content || "",
+                durationMin: l.durationMin || 15,
+                contentType: l.contentType,
+                resourceUrl: l.resourceUrl?.trim() || lResources[0]?.url || undefined,
+                fileName: l.fileName || lResources[0]?.name || undefined,
+                fileSize: l.fileSize || lResources[0]?.size || undefined,
+                resources: lResources,
+                attachments: lResources,
+                subLessons: (l.subLessons ?? [])
+                  .filter((sub) => sub.title.trim() !== "")
+                  .map((sub) => {
+                    const sResources = sub.resources?.length ? sub.resources : sub.attachments?.length ? sub.attachments : [];
+                    return {
+                      title: sub.title.trim(),
+                      content:
+                        sub.contentType === "ASSIGNMENT"
+                          ? sub.assignmentInstructions || sub.content || ""
+                          : sub.content || "",
+                      durationMin: sub.durationMin || 15,
+                      contentType: sub.contentType,
+                      resourceUrl: sub.resourceUrl?.trim() || sResources[0]?.url || undefined,
+                      fileName: sub.fileName || sResources[0]?.name || undefined,
+                      fileSize: sub.fileSize || sResources[0]?.size || undefined,
+                      resources: sResources,
+                      attachments: sResources,
+                    };
+                  }),
+              };
+            }),
+        };
+      });
 
   const buildQuizPayload = (): Quiz | undefined =>
     questions.length > 0
@@ -1259,8 +1659,10 @@ export function CourseCreationWizard({
           attemptsAllowed,
           timeLimitMinutes: timeLimitMinutes || null,
           questions,
-          resourceUrl: assessmentFileUrl || undefined,
-          fileName: assessmentFileName || undefined,
+          resourceUrl: assessmentFileUrl || assessmentResources[0]?.url || undefined,
+          fileName: assessmentFileName || assessmentResources[0]?.name || undefined,
+          resources: assessmentResources,
+          attachments: assessmentResources,
         }
       : undefined;
 
@@ -1609,58 +2011,24 @@ export function CourseCreationWizard({
             <p className="text-[11px] text-slate-500">
               Upload a template, problem sheet, or assignment brief that learners can download.
             </p>
-            {lesson.resourceUrl ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600" />
-                  <span className="font-semibold">{lesson.fileName || "Template file uploaded"}</span>
-                  {lesson.fileSize ? (
-                    <span className="text-emerald-600">({(lesson.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={lesson.resourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
-                  >
-                    <ExternalLink className="h-3 w-3" /> View / Download
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
-                    className="p-1 text-slate-400 hover:text-red-600 transition"
-                    title="Remove template file"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="file"
-                  id={`assign-file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="sr-only"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
-                  }}
-                />
-                <label
-                  htmlFor={`assign-file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-orange-300 bg-orange-50/20 px-4 py-3 text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"
-                >
-                  <Upload className="h-4 w-4" />
-                  <span>Upload Starter Template or Assignment PDF/Word/Excel/PPT file</span>
-                </label>
-              </div>
-            )}
             {lesson.uploadError && (
               <p className="mt-1 text-xs text-red-600 font-medium">{lesson.uploadError}</p>
             )}
+            <MultiFileUploader
+              id={`assign-file-${lesson.id}-${parentLessonId || "parent"}`}
+              files={lesson.resources || lesson.attachments}
+              legacyUrl={lesson.resourceUrl}
+              legacyName={lesson.fileName}
+              legacySize={lesson.fileSize}
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+              uploading={lesson.uploading}
+              uploadError={lesson.uploadError}
+              theme="emerald"
+              placeholderText="Upload Starter Templates, Problem Sheets, Briefs or Rubrics"
+              descriptionText="Attach multiple briefs, templates, datasets, or rubrics that learners can download."
+              onUpload={(files) => handleLessonFileUpload(files, moduleId, lesson.id, parentLessonId)}
+              onRemove={(fileIdOrUrl) => removeLessonFile(moduleId, lesson.id, fileIdOrUrl, parentLessonId)}
+            />
           </div>
         </div>
       );
@@ -1867,58 +2235,24 @@ export function CourseCreationWizard({
             <p className="text-[11px] text-slate-500">
               Attach reference materials, case studies, formula sheets, or instructions that learners can download or view during this {isQuiz ? "quiz" : "assessment"}.
             </p>
-            {lesson.resourceUrl ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600" />
-                  <span className="font-semibold">{lesson.fileName || "Reference document uploaded"}</span>
-                  {lesson.fileSize ? (
-                    <span className="text-emerald-600">({(lesson.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={lesson.resourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
-                  >
-                    <ExternalLink className="h-3 w-3" /> View / Download
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
-                    className="p-1 text-slate-400 hover:text-red-600 transition"
-                    title="Remove reference file"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="file"
-                  id={`quiz-file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="sr-only"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
-                  }}
-                />
-                <label
-                  htmlFor={`quiz-file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/20 px-4 py-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
-                >
-                  <Upload className="h-4 w-4 text-indigo-500" />
-                  <span>Upload Reference Document, Formula Sheet, or Case Study File</span>
-                </label>
-              </div>
-            )}
             {lesson.uploadError && (
               <p className="mt-1 text-xs text-red-600 font-medium">{lesson.uploadError}</p>
             )}
+            <MultiFileUploader
+              id={`quiz-file-${lesson.id}-${parentLessonId || "parent"}`}
+              files={lesson.resources || lesson.attachments}
+              legacyUrl={lesson.resourceUrl}
+              legacyName={lesson.fileName}
+              legacySize={lesson.fileSize}
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+              uploading={lesson.uploading}
+              uploadError={lesson.uploadError}
+              theme="indigo"
+              placeholderText="Upload Reference Document, Formula Sheet, or Case Study File"
+              descriptionText="Attach multiple formula sheets, reference documents, or case study files for this quiz."
+              onUpload={(files) => handleLessonFileUpload(files, moduleId, lesson.id, parentLessonId)}
+              onRemove={(fileIdOrUrl) => removeLessonFile(moduleId, lesson.id, fileIdOrUrl, parentLessonId)}
+            />
           </div>
 
           {/* Interactive Questions Builder */}
@@ -2237,72 +2571,32 @@ export function CourseCreationWizard({
                     : "Course Document (PDF, Word DOC/DOCX, Spreadsheets, Text)"}
             </label>
 
-            {lesson.resourceUrl ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-800">
-                <div className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-emerald-600" />
-                  <div>
-                    <p className="font-semibold">{lesson.fileName || "File uploaded successfully"}</p>
-                    {lesson.fileSize ? (
-                      <p className="text-xs text-emerald-600">
-                        Size: {(lesson.fileSize / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={lesson.resourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-xs hover:bg-slate-50"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" /> View
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => applyPatch({ resourceUrl: "", fileName: "", fileSize: 0 })}
-                    className="rounded-lg p-1 text-slate-400 hover:text-red-600 transition"
-                    title="Remove file"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="file"
-                  id={`file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="sr-only"
-                  accept={
-                    lesson.contentType === "VIDEO"
-                      ? "video/mp4,video/webm,video/ogg"
-                      : lesson.contentType === "AUDIO"
-                        ? "audio/*"
-                        : lesson.contentType === "PRESENTATION"
-                          ? ".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-                          : ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  }
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleLessonFileUpload(f, moduleId, lesson.id, parentLessonId);
-                  }}
-                />
-                <label
-                  htmlFor={`file-${lesson.id}-${parentLessonId || "parent"}`}
-                  className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-slate-50/80"
-                >
-                  <Upload className="h-4 w-4 text-indigo-500" />
-                  <span>Choose file to upload to storage</span>
-                </label>
-              </div>
-            )}
-
             {lesson.uploadError ? (
               <p className="mt-1 text-xs text-red-600">{lesson.uploadError}</p>
             ) : null}
+            <MultiFileUploader
+              id={`file-${lesson.id}-${parentLessonId || "parent"}`}
+              files={lesson.resources || lesson.attachments}
+              legacyUrl={lesson.resourceUrl}
+              legacyName={lesson.fileName}
+              legacySize={lesson.fileSize}
+              accept={
+                lesson.contentType === "VIDEO"
+                  ? "video/mp4,video/webm,video/ogg"
+                  : lesson.contentType === "AUDIO"
+                    ? "audio/*"
+                    : lesson.contentType === "PRESENTATION"
+                      ? ".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
+                      : ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              }
+              uploading={lesson.uploading}
+              uploadError={lesson.uploadError}
+              theme="indigo"
+              placeholderText="Upload Lesson Files (batch drag & drop supported)"
+              descriptionText="Attach multiple files, lecture notes, or slides to this lesson without replacing previous uploads."
+              onUpload={(files) => handleLessonFileUpload(files, moduleId, lesson.id, parentLessonId)}
+              onRemove={(fileIdOrUrl) => removeLessonFile(moduleId, lesson.id, fileIdOrUrl, parentLessonId)}
+            />
           </div>
         )}
 
@@ -2780,58 +3074,24 @@ export function CourseCreationWizard({
                             </span>
                           )}
                         </div>
-                        {mod.resourceUrl ? (
-                          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2 text-xs text-emerald-800">
-                            <div className="flex items-center gap-2">
-                              <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                              <span className="font-semibold truncate max-w-xs">{mod.fileName || "Module resource uploaded"}</span>
-                              {mod.fileSize ? (
-                                <span className="text-emerald-600 shrink-0">({(mod.fileSize / 1024 / 1024).toFixed(2)} MB)</span>
-                              ) : null}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={mod.resourceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
-                              >
-                                <ExternalLink className="h-3 w-3" /> View / Download
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => patchModule(mod.id, { resourceUrl: "", fileName: "", fileSize: 0 })}
-                                className="p-1 text-slate-400 hover:text-red-600 transition"
-                                title="Remove file"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative">
-                            <input
-                              type="file"
-                              id={`module-file-${mod.id}`}
-                              className="sr-only"
-                              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) handleModuleFileUpload(f, mod.id);
-                              }}
-                            />
-                            <label
-                              htmlFor={`module-file-${mod.id}`}
-                              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/20 transition"
-                            >
-                              <Upload className="h-3.5 w-3.5 text-indigo-500" />
-                              <span>Upload Module Syllabus, Overview Document, or Reference Slides</span>
-                            </label>
-                          </div>
-                        )}
                         {mod.uploadError && (
                           <p className="text-xs text-red-600 mt-1">{mod.uploadError}</p>
                         )}
+                        <MultiFileUploader
+                          id={`module-file-${mod.id}`}
+                          files={mod.resources || mod.attachments}
+                          legacyUrl={mod.resourceUrl}
+                          legacyName={mod.fileName}
+                          legacySize={mod.fileSize}
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+                          uploading={mod.uploading}
+                          uploadError={mod.uploadError}
+                          theme="indigo"
+                          placeholderText="Upload Module Syllabus, Overview Document, or Reference Slides"
+                          descriptionText="Attach multiple syllabi, slide decks, reference manuals, or guides for this module."
+                          onUpload={(files) => handleModuleFileUpload(files, mod.id)}
+                          onRemove={(fileIdOrUrl) => removeModuleFile(mod.id, fileIdOrUrl)}
+                        />
                       </div>
 
                       {/* Lessons */}
@@ -3330,62 +3590,24 @@ export function CourseCreationWizard({
               )}
             </div>
 
-            {assessmentFileUrl ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-xs text-emerald-800">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600" />
-                  <span className="font-semibold">{assessmentFileName || "Exam reference file uploaded"}</span>
-                  {assessmentFileSize ? (
-                    <span className="text-emerald-600">({(assessmentFileSize / 1024 / 1024).toFixed(2)} MB)</span>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={assessmentFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50"
-                  >
-                    <ExternalLink className="h-3 w-3" /> View / Download
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssessmentFileUrl("");
-                      setAssessmentFileName("");
-                      setAssessmentFileSize(0);
-                    }}
-                    className="p-1 text-slate-400 hover:text-red-600 transition"
-                    title="Remove file"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="file"
-                  id="final-assessment-file"
-                  className="sr-only"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleFinalAssessmentFileUpload(f);
-                  }}
-                />
-                <label
-                  htmlFor="final-assessment-file"
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/20 px-4 py-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
-                >
-                  <Upload className="h-4 w-4 text-indigo-500" />
-                  <span>Upload Final Assessment Brief, Reference Sheet, or Case Study File</span>
-                </label>
-              </div>
-            )}
             {assessmentUploadError && (
               <p className="text-xs text-red-600 mt-1">{assessmentUploadError}</p>
             )}
+            <MultiFileUploader
+              id="final-assessment-file"
+              files={assessmentResources}
+              legacyUrl={assessmentFileUrl}
+              legacyName={assessmentFileName}
+              legacySize={assessmentFileSize}
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg"
+              uploading={assessmentUploading}
+              uploadError={assessmentUploadError}
+              theme="emerald"
+              placeholderText="Upload Final Assessment Brief, Reference Sheet, or Case Study File"
+              descriptionText="Attach multiple formula sheets, reference documents, or case study files for learners during final assessment."
+              onUpload={handleFinalAssessmentFileUpload}
+              onRemove={removeFinalAssessmentFile}
+            />
           </div>
 
           {/* Questions List */}

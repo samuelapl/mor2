@@ -50,6 +50,15 @@ export interface User {
   lastLogin?: string | null;
 }
 
+export interface UploadedResource {
+  id?: string;
+  name: string;
+  url: string;
+  size?: number;
+  type?: string;
+  file?: File;
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -60,6 +69,8 @@ export interface Lesson {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   parentId?: string;
   subLessons?: Lesson[];
 }
@@ -73,6 +84,8 @@ export interface Module {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   lessons: Lesson[];
   unlocked?: boolean;
 }
@@ -99,6 +112,8 @@ export interface Quiz {
   questions: Question[];
   resourceUrl?: string;
   fileName?: string;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
 }
 
 export type AttachmentType = "video" | "pdf";

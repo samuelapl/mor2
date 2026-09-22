@@ -185,12 +185,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   system_admin: [
     { label: "Dashboard", href: "/system-admin", icon: LayoutDashboard },
     {
-      label: "Users & Roles",
-      href: "/system-admin/users",
-      icon: Users,
-      permission: ["user.manage", "user.view"],
-    },
-    {
       label: "Courses",
       href: "/courses",
       icon: BookOpen,
@@ -237,6 +231,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: "/trainer/question-bank",
       icon: FileQuestion,
       permission: "question_bank.manage",
+    },
+    {
+      label: "Users & Roles",
+      href: "/system-admin/users",
+      icon: Users,
+      permission: ["user.manage", "user.view"],
     },
     {
       label: "Roles & Permissions",

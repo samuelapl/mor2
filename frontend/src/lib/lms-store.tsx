@@ -74,8 +74,10 @@ import {
   courseToUpdateBody,
   moduleToCreateBody,
   roleToApi,
+  uploadedResourceToApiAttachment,
   userFromApi,
 } from "@/lib/api/transform";
+import type { CreateCurriculumAttachmentBody } from "@/lib/api/types";
 import type {
   ActionResult,
   Attachment,
@@ -85,6 +87,7 @@ import type {
   LoginResult,
   Quiz,
   Role,
+  UploadedResource,
   User,
 } from "@/types";
 
@@ -107,6 +110,8 @@ export interface WizardLessonInput {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   subLessons?: WizardLessonInput[];
 }
 
@@ -118,7 +123,33 @@ export interface WizardModuleInput {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  resources?: UploadedResource[];
+  attachments?: UploadedResource[];
   lessons: WizardLessonInput[];
+}
+
+function toAttachmentBodies(
+  attachments?: UploadedResource[],
+  resources?: UploadedResource[],
+  resourceUrl?: string,
+  fileName?: string,
+  fileSize?: number,
+): CreateCurriculumAttachmentBody[] | undefined {
+  const list = attachments?.length ? attachments : resources?.length ? resources : [];
+  if (list.length > 0) {
+    return list.map(uploadedResourceToApiAttachment);
+  }
+  if (resourceUrl) {
+    return [
+      {
+        fileName: fileName || resourceUrl.split("/").pop() || "Resource",
+        fileUrl: resourceUrl,
+        fileType: "application/octet-stream",
+        sizeBytes: fileSize || 0,
+      },
+    ];
+  }
+  return undefined;
 }
 
 function normalizeLessonContentType(
@@ -575,18 +606,39 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               descriptionEn: mod.description || "Course module",
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
+              attachments: toAttachmentBodies(
+                mod.attachments,
+                mod.resources,
+                mod.resourceUrl,
+                mod.fileName,
+                mod.fileSize,
+              ),
               lessons: mod.lessons.map((lesson) => ({
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
                 contentType: normalizeLessonContentType(lesson.contentType),
                 resourceUrl: lesson.resourceUrl,
+                attachments: toAttachmentBodies(
+                  lesson.attachments,
+                  lesson.resources,
+                  lesson.resourceUrl,
+                  lesson.fileName,
+                  lesson.fileSize,
+                ),
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
                   titleEn: sub.title,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
                   contentType: normalizeLessonContentType(sub.contentType),
                   resourceUrl: sub.resourceUrl,
+                  attachments: toAttachmentBodies(
+                    sub.attachments,
+                    sub.resources,
+                    sub.resourceUrl,
+                    sub.fileName,
+                    sub.fileSize,
+                  ),
                 })),
               })),
             }),
@@ -913,18 +965,39 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               descriptionEn: mod.description || "Course module",
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
+              attachments: toAttachmentBodies(
+                mod.attachments,
+                mod.resources,
+                mod.resourceUrl,
+                mod.fileName,
+                mod.fileSize,
+              ),
               lessons: mod.lessons.map((lesson) => ({
                 titleEn: lesson.title,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
                 contentType: normalizeLessonContentType(lesson.contentType),
                 resourceUrl: lesson.resourceUrl,
+                attachments: toAttachmentBodies(
+                  lesson.attachments,
+                  lesson.resources,
+                  lesson.resourceUrl,
+                  lesson.fileName,
+                  lesson.fileSize,
+                ),
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
                   titleEn: sub.title,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
                   contentType: normalizeLessonContentType(sub.contentType),
                   resourceUrl: sub.resourceUrl,
+                  attachments: toAttachmentBodies(
+                    sub.attachments,
+                    sub.resources,
+                    sub.resourceUrl,
+                    sub.fileName,
+                    sub.fileSize,
+                  ),
                 })),
               })),
             }),

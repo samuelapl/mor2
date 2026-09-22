@@ -196,6 +196,7 @@ export interface ApiLesson {
   resourceUrl: string | null;
   fileName?: string | null;
   fileSize?: number | null;
+  attachments?: ApiAttachment[];
   parentId?: string | null;
   subLessons?: ApiLesson[];
   createdAt: string;
@@ -217,6 +218,7 @@ export interface ApiModule {
   resourceUrl?: string | null;
   fileName?: string | null;
   fileSize?: number | null;
+  attachments?: ApiAttachment[];
   lessons: ApiLesson[];
   unlocked?: boolean;
   completedLessons?: number;
@@ -729,6 +731,13 @@ export interface AssignTrainerBody {
   userId: string;
 }
 
+export interface CreateCurriculumAttachmentBody {
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  sizeBytes: number;
+}
+
 export interface CreateModuleBody {
   titleEn: string;
   titleAm: string;
@@ -739,6 +748,7 @@ export interface CreateModuleBody {
   durationMinutes?: number;
   order?: number;
   passingScore?: number;
+  attachments?: CreateCurriculumAttachmentBody[];
   lessons?: CreateInlineLessonBody[];
 }
 
@@ -751,6 +761,7 @@ export interface CreateInlineLessonBody {
   durationMinutes?: number;
   resourceUrl?: string;
   parentId?: string;
+  attachments?: CreateCurriculumAttachmentBody[];
   subLessons?: CreateInlineLessonBody[];
 }
 

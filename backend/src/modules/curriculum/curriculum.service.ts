@@ -35,6 +35,22 @@ function sanitizeLessonContentType(type?: any): LessonContentType {
   return LessonContentType.DOCUMENT;
 }
 
+function deriveAttachmentFileKey(fileUrl: string, fileName?: string): string {
+  try {
+    const url = new URL(fileUrl);
+    const parts = url.pathname.split('/');
+    if (parts.length >= 3) {
+      return parts.slice(2).join('/');
+    }
+  } catch {
+    // fallback if fileUrl is relative
+  }
+  if (fileUrl.includes('/attachments/')) {
+    return `attachments/${fileUrl.split('/attachments/')[1]}`;
+  }
+  return `attachments/${fileName || 'file'}`;
+}
+
 @Injectable()
 export class CurriculumService {
   constructor(
@@ -66,6 +82,23 @@ export class CurriculumService {
           },
         });
 
+        if (mod.attachments && mod.attachments.length > 0) {
+          for (const att of mod.attachments) {
+            await tx.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+            await tx.attachment.create({
+              data: {
+                courseId,
+                moduleId: createdModule.id,
+                fileName: att.fileName,
+                fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+                fileUrl: att.fileUrl,
+                fileType: att.fileType || 'application/octet-stream',
+                sizeBytes: att.sizeBytes || 0,
+              },
+            });
+          }
+        }
+
         if (mod.lessons && mod.lessons.length > 0) {
           for (const [idx, lesson] of mod.lessons.entries()) {
             const createdLesson = await tx.lesson.create({
@@ -83,9 +116,27 @@ export class CurriculumService {
               },
             });
 
+            if (lesson.attachments && lesson.attachments.length > 0) {
+              for (const att of lesson.attachments) {
+                await tx.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+                await tx.attachment.create({
+                  data: {
+                    courseId,
+                    moduleId: createdModule.id,
+                    lessonId: createdLesson.id,
+                    fileName: att.fileName,
+                    fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+                    fileUrl: att.fileUrl,
+                    fileType: att.fileType || 'application/octet-stream',
+                    sizeBytes: att.sizeBytes || 0,
+                  },
+                });
+              }
+            }
+
             if (lesson.subLessons && lesson.subLessons.length > 0) {
               for (const [sIdx, sub] of lesson.subLessons.entries()) {
-                await tx.lesson.create({
+                const createdSubLesson = await tx.lesson.create({
                   data: {
                     moduleId: createdModule.id,
                     parentId: createdLesson.id,
@@ -99,6 +150,24 @@ export class CurriculumService {
                     resourceUrl: sub.resourceUrl,
                   },
                 });
+
+                if (sub.attachments && sub.attachments.length > 0) {
+                  for (const att of sub.attachments) {
+                    await tx.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+                    await tx.attachment.create({
+                      data: {
+                        courseId,
+                        moduleId: createdModule.id,
+                        lessonId: createdSubLesson.id,
+                        fileName: att.fileName,
+                        fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+                        fileUrl: att.fileUrl,
+                        fileType: att.fileType || 'application/octet-stream',
+                        sizeBytes: att.sizeBytes || 0,
+                      },
+                    });
+                  }
+                }
               }
             }
           }
@@ -206,7 +275,7 @@ export class CurriculumService {
 
     const order = dto.order ?? (lastModule ? lastModule.order + 1 : 0);
 
-    return this.prisma.curriculumModule.create({
+    const mod = await this.prisma.curriculumModule.create({
       data: {
         courseId,
         titleAm: dto.titleAm,
@@ -235,8 +304,51 @@ export class CurriculumService {
       },
       include: {
         lessons: { orderBy: { order: 'asc' } },
+        attachments: true,
       },
     });
+
+    if (dto.attachments && dto.attachments.length > 0) {
+      for (const att of dto.attachments) {
+        await this.prisma.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+        await this.prisma.attachment.create({
+          data: {
+            courseId,
+            moduleId: mod.id,
+            fileName: att.fileName,
+            fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+            fileUrl: att.fileUrl,
+            fileType: att.fileType || 'application/octet-stream',
+            sizeBytes: att.sizeBytes || 0,
+          },
+        });
+      }
+    }
+
+    if (dto.lessons && dto.lessons.length > 0) {
+      for (const [idx, lesson] of dto.lessons.entries()) {
+        const createdLesson = mod.lessons[idx];
+        if (createdLesson && lesson.attachments && lesson.attachments.length > 0) {
+          for (const att of lesson.attachments) {
+            await this.prisma.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+            await this.prisma.attachment.create({
+              data: {
+                courseId,
+                moduleId: mod.id,
+                lessonId: createdLesson.id,
+                fileName: att.fileName,
+                fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+                fileUrl: att.fileUrl,
+                fileType: att.fileType || 'application/octet-stream',
+                sizeBytes: att.sizeBytes || 0,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    return this.getModule(mod.id);
   }
 
   async updateModule(moduleId: string, dto: UpdateModuleDto) {

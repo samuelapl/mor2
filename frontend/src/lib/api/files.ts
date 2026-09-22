@@ -28,7 +28,7 @@ const isUuid = (val?: string): boolean =>
 export async function uploadAttachment(
   file: File,
   opts: { moduleId?: string; lessonId?: string; courseId?: string; purpose?: string } = {},
-): Promise<{ fileUrl: string; id: string; fileName: string; sizeBytes: number }> {
+): Promise<{ fileUrl: string; id: string; fileName: string; sizeBytes: number; fileType: string }> {
   const form = new FormData();
   form.append("file", file);
   form.append("purpose", opts.purpose || "attachment");
@@ -43,6 +43,7 @@ export async function uploadAttachment(
     id: data?.id ?? "",
     fileName: data?.fileName ?? file.name,
     sizeBytes: data?.sizeBytes ?? file.size,
+    fileType: data?.fileType ?? file.type ?? "application/octet-stream",
   };
 }
 
