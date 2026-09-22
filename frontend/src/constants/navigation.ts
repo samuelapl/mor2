@@ -109,6 +109,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
         },
       ],
     },
+    {
+      label: "Question Bank",
+      href: "/trainer/question-bank",
+      icon: FileQuestion,
+      permission: "question_bank.manage",
+    },
   ],
   trainer: [
     { label: "Dashboard", href: "/trainer", icon: LayoutDashboard },
@@ -225,6 +231,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: "/system-admin/certificate-templates",
       icon: FilePlus2,
       permission: "certificate.manage",
+    },
+    {
+      label: "Question Bank",
+      href: "/trainer/question-bank",
+      icon: FileQuestion,
+      permission: "question_bank.manage",
     },
     {
       label: "Roles & Permissions",

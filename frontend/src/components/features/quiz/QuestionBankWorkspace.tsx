@@ -74,7 +74,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const { courses, currentUser } = useLms();
 
   const relevantCourses = useMemo(() => {
-    if (role === "course_owner") {
+    if (
+      role === "course_owner" ||
+      currentUser?.role === "training_admin" ||
+      currentUser?.role === "system_admin"
+    ) {
       return courses;
     }
     const assigned = courses.filter(

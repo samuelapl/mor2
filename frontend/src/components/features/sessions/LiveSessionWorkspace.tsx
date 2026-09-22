@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Camera,
@@ -9,6 +9,7 @@ import {
   Clock,
   ExternalLink,
   Hand,
+  HelpCircle,
   Laptop,
   Loader2,
   Maximize2,
@@ -54,6 +55,17 @@ import {
   RoomAudioRenderer,
 } from "@livekit/components-react";
 
+// Phase 2: Live Interactive Subsystem
+import { useLiveKitDataChannel } from "@/hooks/useLiveKitDataChannel";
+import type {
+  LiveKitDataEvent,
+  LiveQuizOption,
+  RaisedHandEntry,
+} from "@/types/livekit-events";
+import { LiveQuizTrainerControl } from "./interactive/LiveQuizTrainerControl";
+import { LiveQuizLearnerOverlay } from "./interactive/LiveQuizLearnerOverlay";
+import { HandRaiseIndicator } from "./interactive/HandRaiseIndicator";
+
 interface LiveSessionWorkspaceProps {
   open: boolean;
   onClose: () => void;
@@ -72,6 +84,261 @@ interface ChatMessage {
   isSelf: boolean;
 }
 
+interface LiveKitInteractiveLayerProps {
+  session: ApiLiveSession;
+  currentUser: any;
+  trainerName?: string;
+  isStaff: boolean;
+  trainerQuizModalOpen: boolean;
+  setTrainerQuizModalOpen: (open: boolean) => void;
+}
+
+function LiveKitInteractiveLayer({
+  session,
+  currentUser,
+  trainerName,
+  isStaff,
+  trainerQuizModalOpen,
+  setTrainerQuizModalOpen,
+}: LiveKitInteractiveLayerProps) {
+  const currentUserId = String(currentUser?.id || "guest");
+  const currentUserName =
+    currentUser?.name ||
+    currentUser?.firstName ||
+    (isStaff ? "Trainer" : "Learner");
+
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState<{
+    id: string;
+    titleEn: string;
+    titleAm?: string;
+    type?: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE";
+    options: LiveQuizOption[];
+    timeLimitSeconds: number;
+    startedAt: number;
+    trainerName?: string;
+    correctOptionIds?: string[];
+    explanationEn?: string;
+  } | null>(null);
+
+  const [revealData, setRevealData] = useState<{
+    correctOptionIds: string[];
+    explanationEn?: string;
+    explanationAm?: string;
+    distribution: Record<string, number>;
+    totalResponses: number;
+  } | null>(null);
+
+  const [answers, setAnswers] = useState<
+    Record<string, { userId: string; userName: string; selectedOptionIds: string[] }>
+  >({});
+
+  // Hand raise state
+  const [raisedHands, setRaisedHands] = useState<RaisedHandEntry[]>([]);
+  const [myHandRaised, setMyHandRaised] = useState(false);
+
+  // Central event handler for processing actions locally and remotely
+  const processEvent = useCallback(
+    (event: LiveKitDataEvent) => {
+      switch (event.type) {
+        case "QUIZ_START":
+          setActiveQuiz(event.payload);
+          setRevealData(null);
+          setAnswers({});
+          break;
+        case "QUIZ_ANSWER":
+          setAnswers((prev) => ({
+            ...prev,
+            [event.payload.userId]: {
+              userId: event.payload.userId,
+              userName: event.payload.userName,
+              selectedOptionIds: event.payload.selectedOptionIds,
+            },
+          }));
+          break;
+        case "QUIZ_REVEAL":
+          setRevealData(event.payload);
+          break;
+        case "QUIZ_CLOSE":
+          setActiveQuiz(null);
+          setRevealData(null);
+          setAnswers({});
+          break;
+        case "HAND_RAISE":
+          if (event.payload.raised) {
+            setRaisedHands((prev) => {
+              if (prev.some((h) => h.userId === event.payload.userId)) return prev;
+              return [
+                ...prev,
+                {
+                  userId: event.payload.userId,
+                  userName: event.payload.userName,
+                  timestamp: event.payload.timestamp,
+                },
+              ];
+            });
+            if (event.payload.userId === currentUserId) {
+              setMyHandRaised(true);
+            }
+          } else {
+            setRaisedHands((prev) =>
+              prev.filter((h) => h.userId !== event.payload.userId)
+            );
+            if (event.payload.userId === currentUserId) {
+              setMyHandRaised(false);
+            }
+          }
+          break;
+      }
+    },
+    [currentUserId]
+  );
+
+  // Hook into Data Channel for remote events
+  const { broadcast } = useLiveKitDataChannel({
+    onEvent: processEvent,
+  });
+
+  // Outbound broadcast that also applies locally immediately
+  const handleBroadcast = useCallback(
+    (event: LiveKitDataEvent) => {
+      processEvent(event);
+      broadcast(event);
+    },
+    [broadcast, processEvent]
+  );
+
+  const handleToggleMyHand = useCallback(() => {
+    const nextState = !myHandRaised;
+    setMyHandRaised(nextState);
+    broadcast({
+      type: "HAND_RAISE",
+      payload: {
+        userId: currentUserId,
+        userName: currentUserName,
+        raised: nextState,
+        timestamp: Date.now(),
+      },
+    });
+  }, [broadcast, currentUserId, currentUserName, myHandRaised]);
+
+  const handleLowerHandForUser = useCallback(
+    (targetUserId: string) => {
+      const entry = raisedHands.find((h) => h.userId === targetUserId);
+      setRaisedHands((prev) => prev.filter((h) => h.userId !== targetUserId));
+      broadcast({
+        type: "HAND_RAISE",
+        payload: {
+          userId: targetUserId,
+          userName: entry?.userName || "Participant",
+          raised: false,
+          timestamp: Date.now(),
+        },
+      });
+    },
+    [broadcast, raisedHands]
+  );
+
+  const handleLowerAllHands = useCallback(() => {
+    const currentList = [...raisedHands];
+    setRaisedHands([]);
+    for (const h of currentList) {
+      broadcast({
+        type: "HAND_RAISE",
+        payload: {
+          userId: h.userId,
+          userName: h.userName,
+          raised: false,
+          timestamp: Date.now(),
+        },
+      });
+    }
+  }, [broadcast, raisedHands]);
+
+  return (
+    <>
+      {/* Hand Raise queue (trainer) or indicator/button (learner) */}
+      <HandRaiseIndicator
+        isTrainer={isStaff}
+        raisedHands={raisedHands}
+        myHandRaised={myHandRaised}
+        onToggleMyHand={handleToggleMyHand}
+        onLowerHandForUser={handleLowerHandForUser}
+        onLowerAllHands={handleLowerAllHands}
+      />
+
+      {/* Trainer Floating Button to launch quiz when none is active */}
+      {isStaff && !activeQuiz && (
+        <div className="absolute bottom-20 right-6 z-30">
+          <button
+            type="button"
+            onClick={() => setTrainerQuizModalOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-indigo-500/50 bg-indigo-950/90 px-3.5 py-2 text-xs font-semibold text-indigo-200 shadow-xl backdrop-blur-md hover:bg-indigo-900 hover:text-white transition duration-150"
+            title="Open Live Quiz & Polls Controller"
+          >
+            <HelpCircle className="h-4 w-4 text-indigo-400" />
+            <span>Live Quiz &amp; Polls</span>
+          </button>
+        </div>
+      )}
+
+      {/* Trainer Floating Banner when a quiz is actively running */}
+      {isStaff && activeQuiz && !trainerQuizModalOpen && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-indigo-500/50 bg-slate-900/95 px-4 py-2 text-slate-100 shadow-xl backdrop-blur-md">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-bold">Quiz In Progress</span>
+            <span className="text-xs text-indigo-300">
+              ({Object.keys(answers).length} responses)
+            </span>
+            <button
+              type="button"
+              onClick={() => setTrainerQuizModalOpen(true)}
+              className="rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-indigo-700 transition"
+            >
+              View Results
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Learner Interactive Quiz Overlay (appears over video when active) */}
+      {!isStaff && activeQuiz && (
+        <LiveQuizLearnerOverlay
+          sessionId={session.id}
+          userId={currentUserId}
+          userName={currentUserName}
+          quiz={{
+            ...activeQuiz,
+            type: activeQuiz.type || "SINGLE_CHOICE",
+          }}
+          revealData={revealData}
+          onBroadcast={broadcast}
+          onDismiss={() => setActiveQuiz(null)}
+        />
+      )}
+
+      {/* Trainer Quiz & Polls Management Modal / Drawer */}
+      {isStaff && (
+        <LiveQuizTrainerControl
+          open={trainerQuizModalOpen}
+          onClose={() => setTrainerQuizModalOpen(false)}
+          courseId={session.courseId}
+          trainerName={trainerName || currentUserName}
+          onBroadcast={handleBroadcast}
+          activeQuiz={activeQuiz}
+          answers={answers}
+          onClearQuiz={() => {
+            setActiveQuiz(null);
+            setRevealData(null);
+            setAnswers({});
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 export function LiveSessionWorkspace({
   open,
   onClose,
@@ -82,6 +349,15 @@ export function LiveSessionWorkspace({
   userRole = "learner",
 }: LiveSessionWorkspaceProps) {
   const { currentUser } = useLms();
+
+  const isTrainerOrStaff =
+    userRole === "trainer" ||
+    userRole === "training_admin" ||
+    userRole === "system_admin" ||
+    userRole === "course_owner" ||
+    Boolean(currentUser?.id && session.trainerId === currentUser.id);
+
+  const [trainerQuizModalOpen, setTrainerQuizModalOpen] = useState(false);
 
   // Conference modes
   const [conferenceMode, setConferenceMode] = useState<"interactive" | "embedded">("interactive");
@@ -451,6 +727,20 @@ export function LiveSessionWorkspace({
               ) : null}
             </Button>
 
+            {/* LiveKit Phase 2: Live Quiz & Polls button for trainers/staff */}
+            {isLiveKitSession && isTrainerOrStaff && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setTrainerQuizModalOpen(true)}
+                className="gap-1.5 border-indigo-500/40 bg-indigo-950/40 text-indigo-300 hover:bg-indigo-900/60 hover:text-white"
+                title="Create or broadcast a live quiz/poll to learners"
+              >
+                <HelpCircle className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Quiz &amp; Polls</span>
+              </Button>
+            )}
+
             {/* Room Mode Toggle — only show for non-LiveKit sessions */}
             {!isLiveKitSession && (
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
@@ -554,6 +844,15 @@ export function LiveSessionWorkspace({
                   <RoomAudioRenderer />
                   {/* Full-featured video conference UI provided by the LiveKit component library */}
                   <VideoConference />
+                  {/* Phase 2: Live Interactive Subsystem (Quiz, Polls, Hand Raising over Data Channel) */}
+                  <LiveKitInteractiveLayer
+                    session={session}
+                    currentUser={currentUser}
+                    trainerName={trainerName}
+                    isStaff={isTrainerOrStaff}
+                    trainerQuizModalOpen={trainerQuizModalOpen}
+                    setTrainerQuizModalOpen={setTrainerQuizModalOpen}
+                  />
                 </LiveKitRoom>
               </div>
             ) : isLiveKitSession && !liveKitToken ? (

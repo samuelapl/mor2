@@ -3,7 +3,7 @@ import { Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
-import { CreateSessionDto, UpdateSessionDto } from './dto';
+import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto } from './dto';
 import { BigBlueButtonProvider } from './providers/bigbluebutton.provider';
 import { LiveKitProvider } from './providers/livekit.provider';
 import { LiveKitConfig } from '@config/app.config';
@@ -318,4 +318,78 @@ export class LiveSessionsService {
 
     return buildPaginatedResponse(sessions, total, page, limit);
   }
+
+  /**
+   * Submit learner response for an interactive in-room live quiz.
+   * Scores response, creates an immutable audit attendance log, and returns score.
+   */
+  async submitQuizResponse(
+    sessionId: string,
+    user: AuthenticatedUser,
+    dto: SubmitLiveQuizDto,
+  ) {
+    const session = await this.findById(sessionId);
+
+    // Verify enrollment if learner
+    const isStaff = user.roles?.some((r) =>
+      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+    ) ?? false;
+    const isSessionTrainer = session.trainerId === user.id;
+    if (!isStaff && !isSessionTrainer) {
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
+      });
+      if (!enrollment || enrollment.status !== 'ACTIVE') {
+        throw new ForbiddenException('You must be enrolled in this course to submit quiz answers');
+      }
+    }
+
+    // Try finding question in question bank
+    const question = await this.prisma.questionBankQuestion.findUnique({
+      where: { id: dto.questionId },
+    });
+
+    let isCorrect = false;
+    let score = 0;
+    const explanation = undefined;
+
+    if (question) {
+      const correctAns = question.correctAnswer?.trim().toLowerCase();
+      const selected = dto.selectedOptionIds.map((s) => s.trim().toLowerCase());
+
+      if (correctAns) {
+        isCorrect = selected.includes(correctAns);
+      }
+      score = isCorrect ? question.points : 0;
+    }
+
+    // Create an immutable log entry in attendanceLog for audit & performance records
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { sessionId_userId: { sessionId, userId: user.id } },
+    });
+
+    await this.prisma.attendanceLog.create({
+      data: {
+        sessionId,
+        userId: user.id,
+        attendanceId: attendance?.id ?? null,
+        eventType: 'QUIZ_RESPONSE',
+        timestamp: new Date(),
+        metadata: {
+          questionId: dto.questionId,
+          selectedOptionIds: dto.selectedOptionIds,
+          isCorrect,
+          score,
+          responseDurationSeconds: dto.responseDurationSeconds,
+        },
+      },
+    });
+
+    return {
+      isCorrect,
+      score,
+      explanation,
+    };
+  }
 }
+

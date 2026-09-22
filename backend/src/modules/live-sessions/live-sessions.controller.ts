@@ -16,7 +16,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { LiveSessionsService } from './live-sessions.service';
-import { CreateSessionDto, UpdateSessionDto } from './dto';
+import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto } from './dto';
 import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -138,6 +138,17 @@ export class LiveSessionsController {
   @ApiParam({ name: 'id', type: String })
   async getLiveKitToken(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.liveSessionsService.getLiveKitToken(id, user);
+  }
+
+  @Post('live-sessions/:id/quiz-response')
+  @ApiOperation({ summary: 'Submit response for an interactive in-room live quiz' })
+  @ApiParam({ name: 'id', type: String })
+  async submitQuizResponse(
+    @Param('id') id: string,
+    @Body() dto: SubmitLiveQuizDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.liveSessionsService.submitQuizResponse(id, user, dto);
   }
 
   @Post('courses/:courseId/live-sessions')

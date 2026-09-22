@@ -212,6 +212,24 @@ export function overrideAttendance(
   });
 }
 
+export function submitLiveSessionQuizResponse(
+  sessionId: string,
+  body: {
+    questionId: string;
+    selectedOptionIds: string[];
+    responseDurationSeconds: number;
+  },
+): Promise<{ isCorrect: boolean; score: number; explanation?: string }> {
+  return api<{ isCorrect: boolean; score: number; explanation?: string }>(
+    `live-sessions/${sessionId}/quiz-response`,
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */
