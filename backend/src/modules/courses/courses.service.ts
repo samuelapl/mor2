@@ -278,19 +278,19 @@ export class CoursesService {
               return {
                 ...l,
                 unlocked: lesUnlocked,
-                contentEn: lesUnlocked ? l.contentEn : null,
-                contentAm: lesUnlocked ? l.contentAm : null,
-                resourceUrl: lesUnlocked ? l.resourceUrl : null,
-                attachments: lesUnlocked ? l.attachments : [],
+                contentEn: l.contentEn,
+                contentAm: l.contentAm,
+                resourceUrl: l.resourceUrl,
+                attachments: l.attachments,
                 subLessons: (l.subLessons ?? []).map((sub: any) => {
                   const subUnlocked = lessonUnlocked.get(sub.id) ?? false;
                   return {
                     ...sub,
                     unlocked: subUnlocked,
-                    contentEn: subUnlocked ? sub.contentEn : null,
-                    contentAm: subUnlocked ? sub.contentAm : null,
-                    resourceUrl: subUnlocked ? sub.resourceUrl : null,
-                    attachments: subUnlocked ? sub.attachments : [],
+                    contentEn: sub.contentEn,
+                    contentAm: sub.contentAm,
+                    resourceUrl: sub.resourceUrl,
+                    attachments: sub.attachments,
                   };
                 }),
               };

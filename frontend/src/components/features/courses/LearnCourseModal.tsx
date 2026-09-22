@@ -5,20 +5,27 @@ import Link from "next/link";
 import {
   AlertCircle,
   Award,
+  BookOpen,
   BookOpenCheck,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   Clock,
   Download,
   ExternalLink,
   FileCheck,
+  FileSpreadsheet,
   FileText,
+  Film,
   Headphones,
   ListChecks,
   Loader2,
   Lock,
+  Paperclip,
   PlayCircle,
+  Presentation,
   Sparkles,
   Trash2,
   UploadCloud,
@@ -32,6 +39,8 @@ import { RichContent } from "@/components/ui/RichContent";
 import { QuizTakerModal } from "@/components/features/quiz/QuizTakerModal";
 import { useLms } from "@/lib/lms-store";
 import { addLessonTime, fetchCourseProgress, markLessonComplete } from "@/lib/api/progress";
+import { fetchCourseDetail } from "@/lib/api/courses";
+import { courseFromDetail } from "@/lib/api/transform";
 import { uploadAttachment } from "@/lib/api/files";
 import { ApiError } from "@/lib/api/client";
 import type {
@@ -40,7 +49,13 @@ import type {
   ApiProgressModule,
   ApiProgressSubLesson,
 } from "@/lib/api/types";
+import type { Course, Lesson, Module, UploadedResource } from "@/types";
 import { cn } from "@/lib/utils";
+import {
+  formatFileSize,
+  getItemAttachments,
+  getFileBadge,
+} from "./wizard-components";
 
 interface LearnCourseModalProps {
   open: boolean;
@@ -65,18 +80,74 @@ interface ActiveQuizContext {
   subIndex?: number;
 }
 
-function formatFileSize(bytes?: number): string {
-  if (!bytes || bytes <= 0) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function formatMMSS(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Reusable card for attached resources with dedicated Open (view) and Download actions.
+ */
+function AttachmentCard({
+  file,
+  label,
+}: {
+  file: UploadedResource;
+  label?: string;
+}) {
+  const badge = getFileBadge(file);
+  const Icon = badge.icon;
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs transition hover:border-indigo-300">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
+            badge.bgColor,
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+            {file.name}
+          </p>
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">
+              {badge.badgeLabel}
+            </span>
+            {file.size ? <span>{formatFileSize(file.size)}</span> : null}
+            {label ? <span>· {label}</span> : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <a
+          href={file.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition shadow-2xs"
+          title="Open in new tab"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          <span>Open</span>
+        </a>
+        <a
+          href={file.url}
+          download={file.name}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-2xs"
+          title="Download file"
+        >
+          <Download className="h-3.5 w-3.5" />
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  );
 }
 
 export function LearnCourseModal({
@@ -87,7 +158,10 @@ export function LearnCourseModal({
   showQuiz = true,
 }: LearnCourseModalProps) {
   const { courseById } = useLms();
-  const course = courseById(courseId);
+  const storeCourse = courseById(courseId);
+  const [liveCourse, setLiveCourse] = useState<Course | null>(null);
+  const course = liveCourse || storeCourse;
+
   const [progress, setProgress] = useState<ApiCourseProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionBusyId, setActionBusyId] = useState<string | null>(null);
@@ -170,8 +244,14 @@ export function LearnCourseModal({
     if (!open || !courseId) return;
     setLoading(true);
     try {
-      const res = await fetchCourseProgress(courseId);
-      setProgress(res);
+      const [resProgress, detail] = await Promise.all([
+        fetchCourseProgress(courseId),
+        fetchCourseDetail(courseId).catch(() => null),
+      ]);
+      setProgress(resProgress);
+      if (detail) {
+        setLiveCourse(courseFromDetail(detail));
+      }
     } catch {
       setProgress(null);
     } finally {
@@ -187,9 +267,7 @@ export function LearnCourseModal({
     void refresh();
   }, [refresh]);
 
-  // Auto-open the first unlocked, incomplete lesson once progress loads —
-  // otherwise the learner can sit on a fully-collapsed view where no
-  // heartbeat ever runs, and "Next" looks permanently stuck.
+  // Auto-open the first unlocked, incomplete lesson once progress loads
   useEffect(() => {
     if (!progress || openLesson) return;
     for (const mod of progress.modules) {
@@ -199,10 +277,22 @@ export function LearnCourseModal({
         if (!lesson.unlocked) break;
         setExpandedModules((prev) => ({ ...prev, [mod.moduleId]: true }));
         setOpenLesson(lesson.lessonId);
+        // If lesson has sub-lessons, auto-expand sub-lessons and open first incomplete sub-lesson
+        const modObj = course?.modules.find((m) => m.id === mod.moduleId);
+        const lessonObj = modObj?.lessons.find((l) => l.id === lesson.lessonId);
+        if (lessonObj?.subLessons && lessonObj.subLessons.length > 0) {
+          setExpandedSubLessons((prev) => ({ ...prev, [lesson.lessonId]: true }));
+          const incompleteSub = lesson.subLessons?.find((s) => !s.completed);
+          if (incompleteSub) {
+            setOpenSubLesson(incompleteSub.lessonId);
+          } else if (lessonObj.subLessons[0]) {
+            setOpenSubLesson(lessonObj.subLessons[0].id);
+          }
+        }
         return;
       }
     }
-  }, [progress, openLesson]);
+  }, [progress, openLesson, course]);
 
   // Expand first module by default
   useEffect(() => {
@@ -216,10 +306,7 @@ export function LearnCourseModal({
     }
   }, [course]);
 
-  // Flushes the REAL wall-clock time elapsed since the item was opened (or last
-  // flushed) — not a flat 30s — so a click on "Next" always checks against
-  // up-to-date, accurate spent time instead of waiting for the next periodic
-  // tick. No-ops if `itemId` isn't the currently-open item (nothing to add).
+  // Heartbeat flushes wall-clock time
   const flushHeartbeat = useCallback(async (itemId: string) => {
     const ref = lastFlushRef.current;
     if (!ref || ref.itemId !== itemId) return null;
@@ -235,12 +322,11 @@ export function LearnCourseModal({
       setLiveTime((prev) => ({ ...prev, [itemId]: res.timeSpentSeconds }));
       return res;
     } catch {
-      // heartbeat failures are non-fatal; retried on the next tick
       return null;
     }
   }, []);
 
-  // Heartbeat: while a lesson/sub-lesson is open and the tab is visible, accumulate time server-side.
+  // Heartbeat periodic timer
   useEffect(() => {
     const activeItemId = openSubLesson ?? openLesson;
     if (!open || !activeItemId) return;
@@ -318,6 +404,35 @@ export function LearnCourseModal({
     }));
   };
 
+  /**
+   * Toggles a lesson open/closed. If the lesson has sub-lessons, it automatically
+   * expands the sub-lessons branch and opens the first incomplete sub-lesson.
+   */
+  const toggleLesson = (mod: Module, lesson: Lesson) => {
+    const modProg = findModuleProgress(mod.id);
+    const lesProg = findLessonProgress(modProg, lesson.id);
+    const locked = !(modProg?.unlocked ?? false) || !(lesProg?.unlocked ?? false);
+    if (locked) return;
+
+    if (openLesson === lesson.id) {
+      setOpenLesson(null);
+      setOpenSubLesson(null);
+    } else {
+      setOpenLesson(lesson.id);
+      if (lesson.subLessons && lesson.subLessons.length > 0) {
+        setExpandedSubLessons((prev) => ({ ...prev, [lesson.id]: true }));
+        const firstIncomplete = lesProg?.subLessons?.find((s) => !s.completed);
+        if (firstIncomplete) {
+          setOpenSubLesson(firstIncomplete.lessonId);
+        } else if (lesson.subLessons[0]) {
+          setOpenSubLesson(lesson.subLessons[0].id);
+        }
+      } else {
+        setOpenSubLesson(null);
+      }
+    }
+  };
+
   const overall = progress?.stats.overallPercent ?? 0;
   const courseCompletion = progress?.courseCompletion;
   const certificateEligible = courseCompletion?.certificateEligible ?? false;
@@ -329,8 +444,14 @@ export function LearnCourseModal({
     if (nextModule) {
       setExpandedModules((prev) => ({ ...prev, [nextModule.id]: true }));
       if (nextModule.lessons && nextModule.lessons.length > 0) {
-        setOpenLesson(nextModule.lessons[0].id);
-        setOpenSubLesson(null);
+        const nextLesson = nextModule.lessons[0];
+        setOpenLesson(nextLesson.id);
+        if (nextLesson.subLessons && nextLesson.subLessons.length > 0) {
+          setExpandedSubLessons((prev) => ({ ...prev, [nextLesson.id]: true }));
+          setOpenSubLesson(nextLesson.subLessons[0].id);
+        } else {
+          setOpenSubLesson(null);
+        }
       }
     }
   };
@@ -338,26 +459,39 @@ export function LearnCourseModal({
   const advanceAfter = (moduleIndex: number, lessonIndex: number, subIndex?: number) => {
     const mod = course.modules[moduleIndex];
     const lesson = mod?.lessons[lessonIndex];
+
+    // Case 1: Just finished parent lesson reading and it HAS sub-lessons -> auto-expand sub-lessons and open first sub-lesson!
+    if (subIndex === undefined && lesson?.subLessons && lesson.subLessons.length > 0) {
+      setExpandedSubLessons((prev) => ({ ...prev, [lesson.id]: true }));
+      setOpenSubLesson(lesson.subLessons[0].id);
+      return;
+    }
+
+    // Case 2: Just finished a sub-lesson -> advance to next sub-lesson if one exists
     if (subIndex !== undefined && lesson?.subLessons) {
       const nextSub = lesson.subLessons[subIndex + 1];
       if (nextSub) {
         setOpenSubLesson(nextSub.id);
         return;
       }
-      // All sub-lessons visited; the parent lesson auto-completes server-side
-      // once every sub-lesson is done — the learner clicks the lesson-level
-      // Next button next.
+      // All sub-lessons for this lesson completed
       setOpenSubLesson(null);
-      return;
     }
 
+    // Case 3: Move to next lesson in the current module
     const nextLessonInModule = mod?.lessons[lessonIndex + 1];
     if (nextLessonInModule) {
       setOpenLesson(nextLessonInModule.id);
-      setOpenSubLesson(null);
+      if (nextLessonInModule.subLessons && nextLessonInModule.subLessons.length > 0) {
+        setExpandedSubLessons((prev) => ({ ...prev, [nextLessonInModule.id]: true }));
+        setOpenSubLesson(nextLessonInModule.subLessons[0].id);
+      } else {
+        setOpenSubLesson(null);
+      }
       return;
     }
 
+    // Case 4: Last lesson of module -> advance to next module
     advanceToNextModule(moduleIndex);
   };
 
@@ -377,22 +511,36 @@ export function LearnCourseModal({
     if (!itemProg) return;
     clearActionError(item.id);
 
-    // Sync the true wall-clock elapsed time now, instead of trusting the last
-    // periodic (30s) heartbeat snapshot — otherwise a click made between two
-    // ticks always sees the same stale "spent" value, however long was
-    // actually waited.
+    // If on parent lesson and it has sub-lessons:
+    // Seamlessly transition the learner into the sub-lesson with auto-expansion!
+    if (subIndex === undefined && lesson.subLessons && lesson.subLessons.length > 0) {
+      try {
+        await flushHeartbeat(item.id);
+        await markLessonComplete(item.id, { completed: true, lastPosition: 0 });
+      } catch {
+        // Parent completion might require sub-lessons first, so proceed to sub-lesson
+      }
+      setExpandedSubLessons((prev) => ({ ...prev, [lesson.id]: true }));
+      const firstIncompleteSub = lessonProg?.subLessons?.find((s) => !s.completed);
+      if (firstIncompleteSub) {
+        setOpenSubLesson(firstIncompleteSub.lessonId);
+      } else if (lesson.subLessons[0]) {
+        setOpenSubLesson(lesson.subLessons[0].id);
+      }
+      void refresh();
+      return;
+    }
+
     const freshHeartbeat = await flushHeartbeat(item.id);
     const spent = freshHeartbeat?.timeSpentSeconds ?? liveTime[item.id] ?? itemProg.timeSpentSeconds;
     const required = freshHeartbeat?.requiredSeconds ?? itemProg.requiredSeconds;
     if (spent < required) {
       const remaining = Math.max(required - spent, 0);
-      // Time only accumulates while the item is expanded/open — the heartbeat
-      // isn't running at all for a collapsed row, so waiting does nothing.
-      // Open it here so the next tick (or next click) actually counts time.
       const isCurrentlyOpen = subIndex !== undefined ? openSubLesson === item.id : openLesson === item.id;
       if (!isCurrentlyOpen) {
         if (subIndex !== undefined) {
           setOpenLesson(lesson.id);
+          setExpandedSubLessons((prev) => ({ ...prev, [lesson.id]: true }));
           setOpenSubLesson(item.id);
         } else {
           setOpenLesson(item.id);
@@ -469,7 +617,7 @@ export function LearnCourseModal({
       case "AUDIO":
         return <Headphones className="h-4 w-4 text-purple-500" />;
       case "PRESENTATION":
-        return <FileText className="h-4 w-4 text-amber-500" />;
+        return <Presentation className="h-4 w-4 text-amber-500" />;
       case "INTERACTIVE":
         return <ListChecks className="h-4 w-4 text-emerald-500" />;
       case "EXTERNAL_LINK":
@@ -483,11 +631,10 @@ export function LearnCourseModal({
   };
 
   const renderVideoEmbed = (url: string) => {
-    // YouTube embed helper
     const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
     if (ytMatch) {
       return (
-        <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+        <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
           <iframe
             src={`https://www.youtube.com/embed/${ytMatch[1]}`}
             title="Video lecture"
@@ -499,11 +646,10 @@ export function LearnCourseModal({
       );
     }
 
-    // Vimeo embed helper
     const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
     if (vimeoMatch) {
       return (
-        <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+        <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
           <iframe
             src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
             title="Video lecture"
@@ -515,16 +661,14 @@ export function LearnCourseModal({
       );
     }
 
-    // Native MP4 / WebM video
     if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url)) {
       return (
-        <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+        <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
           <video src={url} controls className="h-full w-full" />
         </div>
       );
     }
 
-    // Generic external stream or URL
     return (
       <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
         <div className="flex items-center gap-3">
@@ -551,18 +695,18 @@ export function LearnCourseModal({
     if (required <= 0) return null;
     const pct = Math.min(100, Math.round((spent / required) * 100));
     return (
-      <div className="flex items-center gap-2 text-[11px] text-slate-500">
+      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
         <Clock className="h-3 w-3 shrink-0" />
-        <span className={cn("font-medium", satisfied ? "text-emerald-600" : "text-slate-500")}>
+        <span className={cn("font-medium", satisfied ? "text-emerald-600" : "text-indigo-600 font-semibold")}>
           {formatMMSS(spent)} / {formatMMSS(required)}
         </span>
         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200">
           <div
-            className={cn("h-full rounded-full", satisfied ? "bg-emerald-500" : "bg-indigo-400")}
+            className={cn("h-full rounded-full", satisfied ? "bg-emerald-500" : "bg-indigo-500")}
             style={{ width: `${pct}%` }}
           />
         </div>
-        {satisfied ? <Badge variant="green">Time requirement met</Badge> : null}
+        {satisfied ? <Badge variant="green">Time met</Badge> : null}
       </div>
     );
   };
@@ -572,6 +716,7 @@ export function LearnCourseModal({
     itemProg: ApiProgressLesson | ApiProgressSubLesson | undefined,
     onClick: () => void,
     size: "sm" = "sm",
+    customLabel?: string,
   ) => {
     if (!itemProg) return null;
     const spent = liveTime[itemId] ?? itemProg.timeSpentSeconds;
@@ -584,7 +729,10 @@ export function LearnCourseModal({
         variant={needsAssessment ? "primary" : "success"}
         disabled={actionBusyId === itemId}
         onClick={onClick}
-        className="shadow-xs font-medium"
+        className={cn(
+          "shadow-2xs font-semibold gap-1.5",
+          needsAssessment ? "bg-indigo-600 hover:bg-indigo-700" : "bg-emerald-600 hover:bg-emerald-700 text-white",
+        )}
       >
         {actionBusyId === itemId ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -593,7 +741,7 @@ export function LearnCourseModal({
         ) : (
           <Check className="h-3.5 w-3.5" />
         )}
-        {needsAssessment ? "Take Assessment" : "Next"}
+        {needsAssessment ? "Take Assessment" : customLabel || "Next"}
       </Button>
     );
   };
@@ -615,50 +763,40 @@ export function LearnCourseModal({
       subIndex !== undefined ? lessonProg?.subLessons?.find((s) => s.lessonId === item.id) : lessonProg;
     const isCompleted = itemProg?.completed ?? false;
     const error = actionError[item.id];
+    const attachedTemplates = getItemAttachments(item);
 
     return (
-      <div className="space-y-4 rounded-2xl border border-orange-200/90 bg-orange-50/40 p-4 sm:p-5">
+      <div className="space-y-4 rounded-2xl border border-orange-200/90 bg-orange-50/30 p-5">
         {/* Header */}
-        <div className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-orange-600" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-700">
+            <ClipboardList className="h-4 w-4" />
+          </div>
           <div>
-            <h4 className="text-sm font-bold text-orange-950">Assignment Brief & Instructions</h4>
-            <p className="text-[11px] text-orange-800/80">
-              Review requirements, download starter template, and upload your completed solution.
+            <h4 className="text-sm font-bold text-slate-900">Assignment Brief & Instructions</h4>
+            <p className="text-[11px] text-slate-500">
+              Review assignment requirements, download template resources, and upload your completed solution.
             </p>
           </div>
         </div>
 
         {item.content ? (
-          <div className="rounded-xl border border-orange-200/80 bg-white p-3.5 text-xs leading-relaxed text-slate-700 shadow-2xs">
+          <div className="rounded-xl border border-slate-200/90 bg-white p-4 text-xs leading-relaxed text-slate-700 shadow-2xs">
             <RichContent html={item.content} />
           </div>
         ) : null}
 
-        {/* Teacher Template / Starter File */}
-        {item.resourceUrl ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-orange-200 bg-white p-3.5 shadow-2xs">
-            <div className="flex items-center gap-3 min-w-0">
-              <FileText className="h-5 w-5 text-orange-600 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-800 truncate">
-                  {item.fileName || "Assignment Starter Template & Brief"}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {item.fileSize ? formatFileSize(item.fileSize) + " · " : ""}Instructor Reference File
-                </p>
-              </div>
+        {/* Attached Starter Templates */}
+        {attachedTemplates.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Starter Templates & Brief Materials ({attachedTemplates.length}):
+            </p>
+            <div className="grid gap-2">
+              {attachedTemplates.map((file, i) => (
+                <AttachmentCard key={i} file={file} label="Starter Template" />
+              ))}
             </div>
-            <a
-              href={item.resourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
-              className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white shadow-xs hover:bg-orange-700 transition-colors shrink-0"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download Template
-            </a>
           </div>
         ) : null}
 
@@ -667,14 +805,14 @@ export function LearnCourseModal({
           <div className="flex items-center justify-between">
             <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
               <UploadCloud className="h-4 w-4 text-indigo-600" />
-              Your Submission
+              Your Solution Submission
             </h5>
             {submission ? (
               <Badge variant="green" dot>
-                Work Uploaded
+                Uploaded
               </Badge>
             ) : (
-              <span className="text-[11px] text-slate-400">PDF, Word, Excel, CSV, ZIP, or Images</span>
+              <span className="text-[11px] text-slate-400">PDF, Word, Excel, CSV, or ZIP</span>
             )}
           </div>
 
@@ -687,7 +825,10 @@ export function LearnCourseModal({
                   <p className="text-[11px] text-emerald-800">
                     {formatFileSize(submission.sizeBytes)} · Submitted{" "}
                     {new Date(submission.submittedAt).toLocaleDateString()} at{" "}
-                    {new Date(submission.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(submission.submittedAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
               </div>
@@ -696,10 +837,9 @@ export function LearnCourseModal({
                   href={submission.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  download
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shrink-0"
                 >
-                  <Download className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" />
                   View File
                 </a>
                 {!isCompleted ? (
@@ -731,7 +871,7 @@ export function LearnCourseModal({
                       Click to select your assignment file to upload
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Supports .pdf, .docx, .xlsx, .csv, .zip, .png, .jpg up to 50MB
+                      Supports .pdf, .docx, .xlsx, .csv, .zip up to 50MB
                     </p>
                     <input
                       type="file"
@@ -771,9 +911,13 @@ export function LearnCourseModal({
               variant="success"
               disabled={actionBusyId === item.id || !submission}
               onClick={() => void handleNext(moduleIndex, lessonIndex, subIndex)}
-              className="w-full mt-2 shadow-xs font-semibold"
+              className="w-full mt-2 shadow-2xs font-semibold"
             >
-              {actionBusyId === item.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}
+              {actionBusyId === item.id ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-1.5 h-4 w-4" />
+              )}
               {submission ? "Submit Assignment & Complete Activity" : "Attach File Above to Complete"}
             </Button>
           ) : (
@@ -808,15 +952,15 @@ export function LearnCourseModal({
       }
     >
       <div className="space-y-6 w-full pb-8">
-        {/* Breadcrumbs & Overview Banner */}
-        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm">
+        {/* Course Overview & Progress Banner */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <nav className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="font-medium text-slate-700">Courses</span>
+              <span className="font-semibold text-slate-700">Courses</span>
               <span>/</span>
-              <span className="font-medium text-indigo-600">{course.code}</span>
+              <span className="font-semibold text-indigo-600">{course.code}</span>
               <span>/</span>
-              <span>Learning Materials</span>
+              <span>Learning Environment</span>
             </nav>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{course.level.toUpperCase()}</Badge>
@@ -835,25 +979,28 @@ export function LearnCourseModal({
           <div className="mt-4">
             <h2 className="text-xl font-bold tracking-tight text-slate-900">{course.title}</h2>
             {course.description ? (
-              <div className="mt-1.5 text-sm leading-relaxed text-slate-600 max-w-3xl prose prose-sm max-w-none">
+              <div className="mt-2 text-sm leading-relaxed text-slate-600 max-w-4xl">
                 <RichContent html={course.description} />
               </div>
             ) : null}
             {course.objectives ? (
-              <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5">
-                <p className="text-xs font-bold text-indigo-900 mb-2">Course Learning Objectives:</p>
-                <div className="text-xs text-indigo-950/90 prose prose-xs max-w-none">
+              <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+                <p className="text-xs font-bold text-indigo-900 mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                  Course Learning Objectives
+                </p>
+                <div className="text-xs text-indigo-950 leading-relaxed">
                   <RichContent html={course.objectives} />
                 </div>
               </div>
             ) : null}
           </div>
 
-          {/* Progress Indicator */}
-          <div className="mt-5 border-t border-slate-200/60 pt-4">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-slate-600">Your Course Progress</span>
-              <span className="text-indigo-600">{Math.round(overall)}%</span>
+          {/* Progress Indicator Bar */}
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-slate-700">Curriculum Completion Progress</span>
+              <span className="text-indigo-600 font-mono">{Math.round(overall)}%</span>
             </div>
             <div className="mt-2">
               <ProgressBar value={overall} />
@@ -861,15 +1008,14 @@ export function LearnCourseModal({
           </div>
         </div>
 
-
         {loading && !progress ? (
           <div className="flex items-center justify-center py-8 text-xs text-slate-400">
             <Loader2 className="mr-2 h-4 w-4 animate-spin text-indigo-500" />
-            Loading course curriculum and progress…
+            Loading course curriculum and learner progress…
           </div>
         ) : null}
 
-        {/* Modules Hierarchy with + / − Tree Navigation */}
+        {/* Modules Hierarchy */}
         <div className="space-y-4">
           {course.modules.map((module, moduleIndex) => {
             const moduleProgress = findModuleProgress(module.id);
@@ -878,22 +1024,30 @@ export function LearnCourseModal({
             const moduleAssessment = moduleProgress?.assessment ?? null;
             const completedCount = moduleProgress?.completedLessons ?? 0;
             const totalCount = moduleProgress?.totalLessons ?? module.lessons.length;
-            const modulePercent = moduleProgress?.progressPercent ?? 0;
             const isExpanded = expandedModules[module.id] ?? false;
             const moduleContentDone = totalCount > 0 && completedCount === totalCount;
             const moduleTimeSatisfied = moduleProgress?.timeSatisfied ?? true;
+            const moduleAttachments = getItemAttachments(module);
+
+            // Active module indicator: if the currently open lesson belongs to this module
+            const isModuleCurrent =
+              isExpanded &&
+              !moduleLocked &&
+              (module.lessons.some((l) => l.id === openLesson) || openLesson === null);
 
             return (
               <div
                 key={module.id}
                 className={cn(
-                  "overflow-hidden rounded-2xl border transition-all duration-200 shadow-sm",
+                  "overflow-hidden rounded-2xl border transition-all duration-200 shadow-xs",
                   moduleLocked
                     ? "border-slate-200/70 bg-slate-50/40 opacity-75"
+                    : isModuleCurrent
+                    ? "border-indigo-300 bg-white shadow-sm ring-1 ring-indigo-300/40"
                     : "border-slate-200/90 bg-white",
                 )}
               >
-                {/* Module Header / + / − Tree Item */}
+                {/* Module Header Row */}
                 <button
                   type="button"
                   onClick={() => !moduleLocked && toggleModule(module.id)}
@@ -901,26 +1055,56 @@ export function LearnCourseModal({
                   className={cn(
                     "w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors group",
                     moduleLocked
-                      ? "cursor-not-allowed bg-slate-100/50"
-                      : "bg-amber-50/70 hover:bg-amber-100/60 border-b border-amber-200/60",
+                      ? "cursor-not-allowed bg-slate-100/50 border-l-4 border-l-slate-300"
+                      : isModuleCurrent
+                      ? "bg-indigo-50/70 border-b border-indigo-200/80 border-l-4 border-l-indigo-600"
+                      : isExpanded
+                      ? "bg-slate-50/80 border-b border-slate-200/80 border-l-4 border-l-indigo-500"
+                      : "bg-white hover:bg-slate-50/80 border-b border-slate-100 border-l-4 border-l-transparent",
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Explicit + / − Expand/Collapse Icon */}
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200/90 font-mono text-base font-bold text-amber-950 border border-amber-300 shadow-2xs">
-                      {moduleLocked ? <Lock className="h-3.5 w-3.5 text-slate-500" /> : isExpanded ? "−" : "+"}
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold border shadow-2xs transition-colors",
+                        moduleLocked
+                          ? "bg-slate-100 text-slate-400 border-slate-200"
+                          : isModuleCurrent
+                          ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                          : isExpanded
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-indigo-50 text-indigo-700 border-indigo-200 group-hover:bg-indigo-100",
+                      )}
+                    >
+                      {moduleLocked ? (
+                        <Lock className="h-3.5 w-3.5 text-slate-400" />
+                      ) : isExpanded ? (
+                        "−"
+                      ) : (
+                        "+"
+                      )}
                     </span>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <span>Module {moduleIndex + 1}: {module.title}</span>
+                    <div className="min-w-0">
+                      <h3
+                        className={cn(
+                          "text-sm font-bold transition truncate",
+                          isModuleCurrent ? "text-indigo-950 font-bold" : "text-slate-900 group-hover:text-indigo-600",
+                        )}
+                      >
+                        Module {moduleIndex + 1}: {module.title}
                       </h3>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-500 mt-0.5">
                         {totalCount} learning activities · {completedCount} completed
+                        {moduleAttachments.length > 0 ? (
+                          <span className="text-indigo-600 font-medium ml-2">
+                            · {moduleAttachments.length} reference file{moduleAttachments.length > 1 ? "s" : ""}
+                          </span>
+                        ) : null}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
                     {moduleLocked ? (
                       <Badge variant="slate">
                         <Lock className="mr-1 h-3 w-3" />
@@ -929,6 +1113,10 @@ export function LearnCourseModal({
                     ) : moduleCompleted ? (
                       <Badge variant="green" dot>
                         Completed
+                      </Badge>
+                    ) : isModuleCurrent ? (
+                      <Badge variant="blue" dot>
+                        Current Module
                       </Badge>
                     ) : moduleAssessment && moduleContentDone && !moduleAssessment.passed ? (
                       <Badge variant="amber">
@@ -944,91 +1132,122 @@ export function LearnCourseModal({
                   </div>
                 </button>
 
-                {/* Module Body — Lessons with Tree Indentation */}
+                {/* Module Body */}
                 {isExpanded && !moduleLocked ? (
-                  <div className="p-4 space-y-3 bg-slate-50/30">
-                    {module.resourceUrl ? (
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 shadow-2xs">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <FileText className="h-5 w-5 text-indigo-600 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-indigo-900 truncate">
-                              {module.fileName || `Module ${moduleIndex + 1} Syllabus & Reference Materials`}
-                            </p>
-                            <p className="text-[11px] text-indigo-700">
-                              {module.fileSize ? formatFileSize(module.fileSize) + " · " : ""}Module Document & Slides
-                            </p>
-                          </div>
+                  <div className="p-5 space-y-4 bg-slate-50/40">
+                    {/* Module Reference Files with dedicated Open and Download actions */}
+                    {moduleAttachments.length > 0 ? (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Module Reference Materials & Documents ({moduleAttachments.length}):
+                        </h4>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {moduleAttachments.map((file, i) => (
+                            <AttachmentCard key={i} file={file} label="Module Reference" />
+                          ))}
                         </div>
-                        <a
-                          href={module.resourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-xs hover:bg-indigo-700 transition shrink-0"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Download Syllabus
-                        </a>
                       </div>
                     ) : null}
 
+                    {/* Module Objectives */}
                     {module.objectives ? (
-                      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
-                        <p className="text-xs font-bold text-indigo-900 mb-1">Module Learning Objectives:</p>
-                        <div className="text-xs text-indigo-950/90 prose prose-xs max-w-none">
+                      <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3.5">
+                        <p className="text-xs font-bold text-indigo-900 mb-1">
+                          Module Learning Objectives:
+                        </p>
+                        <div className="text-xs text-indigo-950 leading-relaxed">
                           <RichContent html={module.objectives} />
                         </div>
                       </div>
                     ) : null}
 
-                    {/* Lesson Tree Branch */}
+                    {/* Lessons Tree Branch */}
                     <div className="space-y-3 border-l-2 border-indigo-200 ml-4 pl-4">
                       {module.lessons.map((lesson, lessonIndex) => {
                         const lessonProgress = findLessonProgress(moduleProgress, lesson.id);
                         const lessonLocked = moduleLocked || !(lessonProgress?.unlocked ?? false);
                         const completedFlag = lessonProgress?.completed ?? false;
                         const isOpen = openLesson === lesson.id;
+                        const isLessonActive = isOpen && !lessonLocked;
                         const subLessonsGroupOpen = expandedSubLessons[lesson.id] ?? false;
                         const spent = liveTime[lesson.id] ?? lessonProgress?.timeSpentSeconds ?? 0;
                         const required = lessonProgress?.requiredSeconds ?? 0;
                         const timeSatisfied = required <= 0 || spent >= required;
                         const lessonError = actionError[lesson.id];
+                        const lessonAttachments = getItemAttachments(lesson);
 
                         return (
                           <div
                             key={lesson.id}
                             className={cn(
-                              "rounded-xl border transition-all duration-200 overflow-hidden bg-white shadow-xs",
+                              "rounded-xl border transition-all duration-200 overflow-hidden shadow-2xs",
                               lessonLocked
                                 ? "border-slate-200/70 bg-slate-50/50 opacity-70"
+                                : isLessonActive
+                                ? "border-indigo-500 bg-indigo-50/20 shadow-md ring-2 ring-indigo-500/20"
                                 : completedFlag
-                                ? "border-emerald-200/80 bg-emerald-50/10"
+                                ? "border-emerald-200/80 bg-emerald-50/15"
                                 : "border-slate-200/80 hover:border-indigo-300",
                             )}
                           >
-                            {/* Lesson Summary Row with + / − Toggle */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                            {/* Lesson Summary Row */}
+                            <div
+                              className={cn(
+                                "flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors",
+                                isLessonActive
+                                  ? "bg-gradient-to-r from-indigo-50/80 to-indigo-100/30 border-b border-indigo-200/70"
+                                  : "bg-white",
+                              )}
+                            >
                               <button
                                 type="button"
                                 disabled={lessonLocked}
-                                onClick={() => setOpenLesson(isOpen ? null : lesson.id)}
+                                onClick={() => toggleLesson(module, lesson)}
                                 className="flex min-w-0 flex-1 items-center gap-3 text-left group"
                               >
-                                {/* Explicit + / − Indicator */}
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-300 bg-slate-50 font-mono text-xs font-bold text-slate-700 shadow-2xs group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors">
+                                <span
+                                  className={cn(
+                                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold shadow-2xs transition-colors",
+                                    lessonLocked
+                                      ? "bg-slate-50 text-slate-400 border-slate-200"
+                                      : isLessonActive
+                                      ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                                      : isOpen
+                                      ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-slate-100 text-slate-700 border-slate-200 group-hover:border-indigo-400 group-hover:text-indigo-700",
+                                  )}
+                                >
                                   {lessonLocked ? "•" : isOpen ? "−" : "+"}
                                 </span>
 
-                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-indigo-50 transition-colors">
+                                <div
+                                  className={cn(
+                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                                    isLessonActive
+                                      ? "bg-indigo-100 border border-indigo-300/80 text-indigo-900"
+                                      : "bg-slate-100 group-hover:bg-indigo-50",
+                                  )}
+                                >
                                   {renderActivityIcon(lesson.contentType)}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
+                                  <p
+                                    className={cn(
+                                      "text-sm font-bold truncate transition-colors",
+                                      isLessonActive
+                                        ? "text-indigo-950 font-bold"
+                                        : "text-slate-800 group-hover:text-indigo-600",
+                                    )}
+                                  >
                                     Lesson {moduleIndex + 1}.{lessonIndex + 1}: {lesson.title}
                                   </p>
-                                  <p className="text-[11px] text-slate-400">
+                                  <p className="text-[11px] text-slate-400 mt-0.5">
                                     {lesson.durationMin || 15} min · {lesson.contentType || "DOCUMENT"}
+                                    {lessonAttachments.length > 0 ? (
+                                      <span className="text-indigo-600 font-medium ml-2">
+                                        · {lessonAttachments.length} file{lessonAttachments.length > 1 ? "s" : ""}
+                                      </span>
+                                    ) : null}
                                   </p>
                                   {!lessonLocked && !completedFlag
                                     ? renderTimeIndicator(spent, required, timeSatisfied)
@@ -1036,7 +1255,7 @@ export function LearnCourseModal({
                                 </div>
                               </button>
 
-                              {/* Progression Status & Next Button */}
+                              {/* Status & Next Button */}
                               <div className="flex items-center gap-2">
                                 {lessonLocked ? (
                                   <Badge variant="slate">
@@ -1047,14 +1266,49 @@ export function LearnCourseModal({
                                   <Badge variant="green" dot>
                                     Completed
                                   </Badge>
+                                ) : isLessonActive ? (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="blue" dot>
+                                      Active Lesson
+                                    </Badge>
+                                    {lesson.subLessons && lesson.subLessons.length > 0 ? (
+                                      <Button
+                                        size="sm"
+                                        variant="primary"
+                                        disabled={actionBusyId === lesson.id}
+                                        onClick={() => void handleNext(moduleIndex, lessonIndex)}
+                                        className="shadow-2xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700/50 gap-1"
+                                      >
+                                        <span>Start Sub-Lesson</span>
+                                        <span className="font-mono text-xs">→</span>
+                                      </Button>
+                                    ) : (
+                                      renderNextButton(lesson.id, lessonProgress, () =>
+                                        void handleNext(moduleIndex, lessonIndex),
+                                      )
+                                    )}
+                                  </div>
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     <Badge variant="blue">
                                       <PlayCircle className="h-3 w-3 mr-1" />
                                       Available
                                     </Badge>
-                                    {renderNextButton(lesson.id, lessonProgress, () =>
-                                      void handleNext(moduleIndex, lessonIndex),
+                                    {lesson.subLessons && lesson.subLessons.length > 0 ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={actionBusyId === lesson.id}
+                                        onClick={() => void handleNext(moduleIndex, lessonIndex)}
+                                        className="shadow-2xs font-semibold border-indigo-300 text-indigo-800 hover:bg-indigo-50 gap-1"
+                                      >
+                                        <span>Open Sub-Lesson</span>
+                                        <span className="font-mono text-xs">→</span>
+                                      </Button>
+                                    ) : (
+                                      renderNextButton(lesson.id, lessonProgress, () =>
+                                        void handleNext(moduleIndex, lessonIndex),
+                                      )
                                     )}
                                   </div>
                                 )}
@@ -1072,12 +1326,12 @@ export function LearnCourseModal({
 
                             {/* Expanded Lesson Content Viewer */}
                             {isOpen && !lessonLocked ? (
-                              <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
+                              <div className="border-t border-indigo-200/80 bg-white p-5 space-y-5">
                                 {/* Video Embed if applicable */}
                                 {lesson.contentType === "VIDEO" && lesson.resourceUrl ? (
                                   <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-slate-700">
-                                      Video Lecture / Interactive Media:
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                      Video Lecture / Media:
                                     </p>
                                     {renderVideoEmbed(lesson.resourceUrl)}
                                   </div>
@@ -1088,121 +1342,167 @@ export function LearnCourseModal({
                                   <div className="space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Headphones className="h-4 w-4 text-purple-600" />
-                                      <p className="text-xs font-semibold text-purple-900">
-                                        Audio Lecture / Recording:
+                                      <p className="text-xs font-bold text-purple-900">
+                                        Audio Lecture / Audio Track:
                                       </p>
                                     </div>
                                     <audio controls className="w-full" src={lesson.resourceUrl} />
                                   </div>
                                 ) : null}
 
-                                {/* Document Download/View if applicable */}
-                                {lesson.contentType === "DOCUMENT" && lesson.resourceUrl ? (
-                                  <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <FileText className="h-6 w-6 text-blue-600 shrink-0" />
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-semibold text-slate-800 truncate">
-                                          {lesson.fileName || lesson.title}
-                                        </p>
-                                        <p className="text-[11px] text-slate-500">
-                                          {lesson.fileSize ? formatFileSize(lesson.fileSize) + " · " : ""}Document / Lecture Material
-                                        </p>
-                                      </div>
+                                {/* Lesson Attached Documents with Open & Download */}
+                                {lessonAttachments.length > 0 && lesson.contentType !== "ASSIGNMENT" ? (
+                                  <div className="space-y-2">
+                                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                      Lesson Files & Study Guides ({lessonAttachments.length}):
+                                    </h5>
+                                    <div className="grid gap-2">
+                                      {lessonAttachments.map((file, i) => (
+                                        <AttachmentCard key={i} file={file} label="Lesson Material" />
+                                      ))}
                                     </div>
-                                    <a
-                                      href={lesson.resourceUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      download
-                                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 transition shrink-0"
-                                    >
-                                      <Download className="h-3.5 w-3.5" />
-                                      Download Document
-                                    </a>
                                   </div>
                                 ) : null}
 
-                                {/* Assignment display */}
+                                {/* Assignment Section */}
                                 {lesson.contentType === "ASSIGNMENT" ? (
                                   renderAssignmentSection(lesson, moduleIndex, lessonIndex, undefined)
                                 ) : null}
 
                                 {/* Generic resource link for other types */}
-                                {lesson.contentType !== "VIDEO" && lesson.contentType !== "AUDIO" && lesson.contentType !== "DOCUMENT" && lesson.contentType !== "ASSIGNMENT" && lesson.resourceUrl ? (
+                                {lesson.contentType !== "VIDEO" &&
+                                lesson.contentType !== "AUDIO" &&
+                                lesson.contentType !== "DOCUMENT" &&
+                                lesson.contentType !== "ASSIGNMENT" &&
+                                lesson.resourceUrl ? (
                                   <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-slate-700">Resource Link:</p>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                      Resource Link:
+                                    </p>
                                     {renderVideoEmbed(lesson.resourceUrl)}
                                   </div>
                                 ) : null}
 
-                                {/* Reading / Document Content */}
+                                {/* Lecture Notes & Study Material (High Readability) */}
                                 {lesson.content ? (
-                                  <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-slate-700">
-                                      Lecture Notes & Study Material:
-                                    </p>
-                                    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+                                  <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-2xs space-y-3">
+                                    <div className="flex items-center gap-2 pb-2.5 border-b border-indigo-100">
+                                      <BookOpen className="h-4 w-4 text-indigo-600" />
+                                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950">
+                                        Lecture Notes & Detailed Study Material
+                                      </h4>
+                                    </div>
+                                    <div className="text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none">
                                       <RichContent html={lesson.content} />
                                     </div>
                                   </div>
                                 ) : null}
 
-                                {/* Sub-lessons Tree with + / − */}
+                                {/* Sub-lessons Tree with Auto-Expansion & Indigo Highlighting */}
                                 {lesson.subLessons && lesson.subLessons.length > 0 ? (
-                                  <div className="mt-4 pt-3 border-t border-slate-200/80 space-y-3">
+                                  <div className="mt-5 pt-4 border-t border-slate-200/80 space-y-3">
                                     <button
                                       type="button"
                                       onClick={() => toggleSubLessonGroup(lesson.id)}
-                                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 hover:text-indigo-600"
+                                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-950 hover:text-indigo-700 transition"
                                     >
-                                      <span className="flex h-4 w-4 items-center justify-center rounded bg-slate-200 font-mono text-[11px] font-bold text-slate-800">
+                                      <span
+                                        className={cn(
+                                          "flex h-5 w-5 items-center justify-center rounded font-mono text-xs font-bold border transition",
+                                          subLessonsGroupOpen
+                                            ? "bg-indigo-600 text-white border-indigo-700 shadow-2xs"
+                                            : "bg-slate-200 text-slate-700 border-slate-300",
+                                        )}
+                                      >
                                         {subLessonsGroupOpen ? "−" : "+"}
                                       </span>
-                                      Sub-Lessons ({lesson.subLessons.length})
+                                      <span>Sub-Lessons & Detailed Topics ({lesson.subLessons.length})</span>
                                     </button>
 
                                     {subLessonsGroupOpen && (
-                                      <div className="space-y-2 border-l-2 border-violet-300 ml-3 pl-3">
+                                      <div className="space-y-3 border-l-2 border-indigo-300 ml-4 pl-4">
                                         {lesson.subLessons.map((sub, subIdx) => {
                                           const subProgress = lessonProgress?.subLessons?.find(
                                             (s) => s.lessonId === sub.id,
                                           );
-                                          const subLocked = lessonLocked || !(subProgress?.unlocked ?? false);
+                                          const subLocked =
+                                            lessonLocked || !(subProgress?.unlocked ?? false);
                                           const subComplete = subProgress?.completed ?? false;
                                           const isSubOpen = openSubLesson === sub.id;
-                                          const subSpent = liveTime[sub.id] ?? subProgress?.timeSpentSeconds ?? 0;
+                                          const isSubActive = isSubOpen && !subLocked;
+                                          const subSpent =
+                                            liveTime[sub.id] ?? subProgress?.timeSpentSeconds ?? 0;
                                           const subRequired = subProgress?.requiredSeconds ?? 0;
-                                          const subTimeSatisfied = subRequired <= 0 || subSpent >= subRequired;
+                                          const subTimeSatisfied =
+                                            subRequired <= 0 || subSpent >= subRequired;
                                           const subError = actionError[sub.id];
+                                          const subAttachments = getItemAttachments(sub);
 
                                           return (
                                             <div
                                               key={sub.id}
                                               className={cn(
-                                                "rounded-xl border bg-white shadow-2xs overflow-hidden transition-all",
-                                                subLocked ? "opacity-60 border-slate-200" : "border-violet-100",
+                                                "rounded-xl border shadow-2xs overflow-hidden transition-all",
+                                                subLocked
+                                                  ? "opacity-60 border-slate-200 bg-slate-50/40"
+                                                  : isSubActive
+                                                  ? "border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/30"
+                                                  : subComplete
+                                                  ? "border-emerald-200 bg-emerald-50/15"
+                                                  : "border-slate-200 bg-white hover:border-indigo-300",
                                               )}
                                             >
-                                              <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+                                              <div
+                                                className={cn(
+                                                  "flex flex-wrap items-center justify-between gap-3 p-3.5 transition-colors",
+                                                  isSubActive ? "bg-indigo-100/50" : "bg-transparent",
+                                                )}
+                                              >
                                                 <button
                                                   type="button"
                                                   disabled={subLocked}
-                                                  onClick={() => setOpenSubLesson(isSubOpen ? null : sub.id)}
+                                                  onClick={() =>
+                                                    setOpenSubLesson(isSubOpen ? null : sub.id)
+                                                  }
                                                   className="flex items-center gap-2.5 min-w-0 flex-1 text-left group"
                                                 >
-                                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold border border-violet-200 bg-violet-50 text-violet-800 group-hover:border-violet-400">
+                                                  <span
+                                                    className={cn(
+                                                      "flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold border transition",
+                                                      subLocked
+                                                        ? "border-slate-200 bg-slate-100 text-slate-400"
+                                                        : isSubActive
+                                                        ? "border-indigo-600 bg-indigo-600 text-white font-bold shadow-xs"
+                                                        : "border-slate-200 bg-slate-50 text-slate-700",
+                                                    )}
+                                                  >
                                                     {subLocked ? "•" : isSubOpen ? "−" : "+"}
                                                   </span>
                                                   <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-semibold text-slate-800 group-hover:text-violet-700 truncate">
+                                                    <p
+                                                      className={cn(
+                                                        "text-xs font-bold truncate transition-colors",
+                                                        isSubActive
+                                                          ? "text-indigo-950 font-bold"
+                                                          : "text-slate-800 group-hover:text-indigo-700",
+                                                      )}
+                                                    >
                                                       {sub.title}
                                                     </p>
-                                                    <p className="text-[10px] text-slate-400">
+                                                    <p className="text-[10px] text-slate-400 mt-0.5">
                                                       {sub.durationMin || 5} min · {sub.contentType}
+                                                      {subAttachments.length > 0 ? (
+                                                        <span className="text-indigo-600 font-medium ml-1.5">
+                                                          · {subAttachments.length} file{subAttachments.length > 1 ? "s" : ""}
+                                                        </span>
+                                                      ) : null}
                                                     </p>
                                                     {!subLocked && !subComplete
-                                                      ? renderTimeIndicator(subSpent, subRequired, subTimeSatisfied)
+                                                      ? renderTimeIndicator(
+                                                          subSpent,
+                                                          subRequired,
+                                                          subTimeSatisfied,
+                                                        )
                                                       : null}
                                                   </div>
                                                 </button>
@@ -1216,9 +1516,31 @@ export function LearnCourseModal({
                                                     <Badge variant="green" dot>
                                                       Done
                                                     </Badge>
+                                                  ) : isSubActive ? (
+                                                    <div className="flex items-center gap-2">
+                                                      <Badge variant="blue" dot>
+                                                        Active Topic
+                                                      </Badge>
+                                                      {renderNextButton(
+                                                        sub.id,
+                                                        subProgress,
+                                                        () =>
+                                                          void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                        "sm",
+                                                        lesson.subLessons &&
+                                                          subIdx + 1 < lesson.subLessons.length
+                                                          ? "Next Topic →"
+                                                          : "Complete & Next Lesson →",
+                                                      )}
+                                                    </div>
                                                   ) : (
-                                                    renderNextButton(sub.id, subProgress, () =>
-                                                      void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                    renderNextButton(
+                                                      sub.id,
+                                                      subProgress,
+                                                      () =>
+                                                        void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                      "sm",
+                                                      "Next",
                                                     )
                                                   )}
                                                 </div>
@@ -1235,9 +1557,14 @@ export function LearnCourseModal({
 
                                               {/* Expanded Sub-lesson content */}
                                               {isSubOpen && !subLocked && (
-                                                <div className="border-t border-violet-100 bg-slate-50/50 p-3.5 space-y-3">
+                                                <div className="border-t border-indigo-200 bg-indigo-50/20 p-4 space-y-4">
                                                   {sub.contentType === "ASSIGNMENT" ? (
-                                                    renderAssignmentSection(sub, moduleIndex, lessonIndex, subIdx)
+                                                    renderAssignmentSection(
+                                                      sub,
+                                                      moduleIndex,
+                                                      lessonIndex,
+                                                      subIdx,
+                                                    )
                                                   ) : (
                                                     <>
                                                       {sub.contentType === "VIDEO" && sub.resourceUrl ? (
@@ -1248,63 +1575,44 @@ export function LearnCourseModal({
                                                         <div className="space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-3">
                                                           <div className="flex items-center gap-2 mb-1">
                                                             <Headphones className="h-4 w-4 text-purple-600" />
-                                                            <p className="text-xs font-semibold text-purple-900">Audio Lecture</p>
+                                                            <p className="text-xs font-semibold text-purple-900">
+                                                              Audio Lecture
+                                                            </p>
                                                           </div>
-                                                          <audio controls className="w-full" src={sub.resourceUrl} />
+                                                          <audio
+                                                            controls
+                                                            className="w-full"
+                                                            src={sub.resourceUrl}
+                                                          />
                                                         </div>
                                                       ) : null}
 
-                                                      {sub.contentType === "DOCUMENT" && sub.resourceUrl ? (
-                                                        <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/50 p-3">
-                                                          <div className="flex items-center gap-2.5 min-w-0">
-                                                            <FileText className="h-5 w-5 text-blue-600 shrink-0" />
-                                                            <div className="min-w-0">
-                                                              <p className="text-xs font-semibold text-slate-800 truncate">{sub.fileName || sub.title}</p>
-                                                              <p className="text-[10px] text-slate-500">
-                                                                {sub.fileSize ? formatFileSize(sub.fileSize) + " · " : ""}Lecture Material
-                                                              </p>
-                                                            </div>
+                                                      {/* Sub-lesson Attached Files */}
+                                                      {subAttachments.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                                            Sub-Topic Files & Notes ({subAttachments.length}):
+                                                          </h5>
+                                                          <div className="grid gap-2">
+                                                            {subAttachments.map((f, fi) => (
+                                                              <AttachmentCard
+                                                                key={fi}
+                                                                file={f}
+                                                                label="Sub-lesson File"
+                                                              />
+                                                            ))}
                                                           </div>
-                                                          <a
-                                                            href={sub.resourceUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            download
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 shrink-0"
-                                                          >
-                                                            <Download className="h-3 w-3" />
-                                                            Download
-                                                          </a>
-                                                        </div>
-                                                      ) : null}
-
-                                                      {sub.contentType !== "VIDEO" && sub.contentType !== "AUDIO" && sub.contentType !== "DOCUMENT" && sub.resourceUrl ? (
-                                                        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
-                                                          <div className="flex items-center gap-2.5 min-w-0">
-                                                            <FileText className="h-5 w-5 text-indigo-600 shrink-0" />
-                                                            <p className="text-xs font-semibold text-slate-800 truncate">{sub.fileName || "Resource File"}</p>
-                                                          </div>
-                                                          <a
-                                                            href={sub.resourceUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            download
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 shrink-0"
-                                                          >
-                                                            <Download className="h-3 w-3" />
-                                                            Open
-                                                          </a>
                                                         </div>
                                                       ) : null}
 
                                                       {sub.content ? (
-                                                        <div className="rounded-xl border border-slate-200/80 bg-white p-3 text-xs leading-relaxed text-slate-700 shadow-2xs">
+                                                        <div className="rounded-xl border border-indigo-100 bg-white p-4 text-xs leading-relaxed text-slate-700 shadow-2xs prose prose-xs max-w-none">
                                                           <RichContent html={sub.content} />
                                                         </div>
                                                       ) : null}
 
                                                       {!subComplete ? (
-                                                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-violet-100/80">
+                                                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-indigo-200/60">
                                                           {subError ? (
                                                             <p className="flex items-center gap-1.5 text-[11px] text-amber-700">
                                                               <AlertCircle className="h-3 w-3 shrink-0" />
@@ -1313,8 +1621,16 @@ export function LearnCourseModal({
                                                           ) : (
                                                             <span />
                                                           )}
-                                                          {renderNextButton(sub.id, subProgress, () =>
-                                                            void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                          {renderNextButton(
+                                                            sub.id,
+                                                            subProgress,
+                                                            () =>
+                                                              void handleNext(moduleIndex, lessonIndex, subIdx),
+                                                            "sm",
+                                                            lesson.subLessons &&
+                                                              subIdx + 1 < lesson.subLessons.length
+                                                              ? "Next Topic →"
+                                                              : "Complete & Next Lesson →",
                                                           )}
                                                         </div>
                                                       ) : null}
@@ -1347,8 +1663,21 @@ export function LearnCourseModal({
                                   </div>
 
                                   {!completedFlag && lesson.contentType !== "ASSIGNMENT" ? (
-                                    renderNextButton(lesson.id, lessonProgress, () =>
-                                      void handleNext(moduleIndex, lessonIndex),
+                                    lesson.subLessons && lesson.subLessons.length > 0 ? (
+                                      <Button
+                                        size="sm"
+                                        variant="primary"
+                                        disabled={actionBusyId === lesson.id}
+                                        onClick={() => void handleNext(moduleIndex, lessonIndex)}
+                                        className="shadow-2xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700/50 gap-1.5"
+                                      >
+                                        <span>Continue to Sub-Lesson</span>
+                                        <span className="font-mono text-xs">→</span>
+                                      </Button>
+                                    ) : (
+                                      renderNextButton(lesson.id, lessonProgress, () =>
+                                        void handleNext(moduleIndex, lessonIndex),
+                                      )
                                     )
                                   ) : null}
                                 </div>
@@ -1365,11 +1694,11 @@ export function LearnCourseModal({
                       </p>
                     ) : null}
 
-                    {/* Module time / assessment summary */}
+                    {/* Module Progress & Assessment Summary */}
                     {!moduleCompleted ? (
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
                         <div className="space-y-1">
-                          <p className="text-xs font-bold text-slate-700">Module Progress</p>
+                          <p className="text-xs font-bold text-slate-700">Module Requirements</p>
                           {moduleProgress?.requiredSeconds ? (
                             renderTimeIndicator(
                               moduleProgress.timeSpentSeconds,
@@ -1384,17 +1713,19 @@ export function LearnCourseModal({
                           <Button
                             size="sm"
                             variant={moduleAssessment.passed ? "outline" : "primary"}
-                            disabled={!moduleContentDone || !moduleTimeSatisfied || moduleAssessment.passed}
+                            disabled={
+                              !moduleContentDone || !moduleTimeSatisfied || moduleAssessment.passed
+                            }
                             onClick={() => openModuleAssessment(moduleIndex)}
                           >
                             {moduleAssessment.passed ? (
                               <>
-                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                                 Assessment Passed
                               </>
                             ) : (
                               <>
-                                <BookOpenCheck className="h-3.5 w-3.5" />
+                                <BookOpenCheck className="h-3.5 w-3.5 mr-1" />
                                 {moduleContentDone && moduleTimeSatisfied
                                   ? "Take Module Assessment"
                                   : "Complete Lessons First"}
@@ -1412,51 +1743,46 @@ export function LearnCourseModal({
         </div>
 
         {/* Course-level Materials & Attachments */}
-        {course.attachments && course.attachments.length > 0 ? (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Downloadable Course Materials ({course.attachments.length})
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {course.attachments.map((att) => (
-                <a
-                  key={att.id}
-                  href={att.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-3 hover:bg-slate-100/70 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <FileText className="h-5 w-5 text-indigo-500 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-800 truncate group-hover:text-indigo-600">
-                      {att.name}
-                    </span>
-                  </div>
-                  <Download className="h-4 w-4 text-slate-400 shrink-0 group-hover:text-indigo-600" />
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        {(() => {
+          const courseAttachments = getItemAttachments(course);
+          if (courseAttachments.length === 0) return null;
 
-        {/* Final Assessment Card with Progression Gate */}
+          return (
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Course Resource Files & Downloads ({courseAttachments.length})
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {courseAttachments.map((att, i) => (
+                  <AttachmentCard key={i} file={att} label="Course Reference" />
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Final Assessment Card */}
         {showQuiz && finalAssessment ? (
-          <div className={cn(
-            "rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all",
-            contentCompleted
-              ? "border-indigo-200 bg-gradient-to-br from-indigo-50/50 to-violet-50/50"
-              : "border-slate-200 bg-slate-50/70 opacity-80"
-          )}>
+          <div
+            className={cn(
+              "rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all",
+              contentCompleted
+                ? "border-indigo-300 bg-gradient-to-br from-indigo-50/60 to-violet-50/60"
+                : "border-slate-200 bg-slate-50/70 opacity-80",
+            )}
+          >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <BookOpenCheck className="h-5 w-5 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">Final Course Assessment</h3>
+                <h3 className="text-sm font-bold text-slate-900">Comprehensive Final Assessment</h3>
                 {finalAssessment.passed ? (
                   <Badge variant="green" dot>
                     Passed
                   </Badge>
                 ) : contentCompleted ? (
-                  <Badge variant="blue">Unlocked · Passing Score: {finalAssessment.passingScore}%</Badge>
+                  <Badge variant="blue">
+                    Unlocked · Passing Score: {finalAssessment.passingScore}%
+                  </Badge>
                 ) : (
                   <Badge variant="slate">
                     <Lock className="h-3 w-3 mr-1" />
@@ -1464,8 +1790,8 @@ export function LearnCourseModal({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-600 max-w-xl">
-                Demonstrate your comprehension of the complete course curriculum. Passing score issues your accredited certificate.
+              <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
+                Demonstrate your comprehension of the complete course curriculum. Achieving the passing mark awards your accredited completion certificate.
               </p>
             </div>
 
@@ -1473,48 +1799,56 @@ export function LearnCourseModal({
               <Button
                 disabled={!contentCompleted}
                 onClick={openFinalAssessment}
-                className={cn("shadow-md gap-1.5", !contentCompleted && "opacity-50 cursor-not-allowed")}
+                className={cn(
+                  "shadow-md gap-1.5 font-bold",
+                  !contentCompleted && "opacity-50 cursor-not-allowed",
+                  contentCompleted && "bg-indigo-600 hover:bg-indigo-700 text-white",
+                )}
               >
-                {contentCompleted ? <BookOpenCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                {contentCompleted ? "Take Assessment" : "Locked"}
+                {contentCompleted ? (
+                  <BookOpenCheck className="h-4 w-4" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )}
+                {contentCompleted ? "Take Final Assessment" : "Locked"}
               </Button>
             ) : null}
           </div>
         ) : null}
 
-        {/* Certificate — locked until the course is actually completed */}
+        {/* Certificate Section */}
         {certificateEligible ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
-                <Sparkles className="h-5 w-5" />
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-emerald-900 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
+                <Sparkles className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-sm font-bold">Congratulations! You completed this course.</p>
-                <p className="text-xs text-emerald-700">
-                  You have fulfilled all curriculum requirements. Your official certificate is ready.
+                <p className="text-xs text-emerald-700 mt-0.5">
+                  You have fulfilled all curriculum requirements. Your accredited certificate is issued.
                 </p>
               </div>
             </div>
             <Link href="/learner/certificates">
-              <Button size="sm" variant="success" className="shadow-md">
-                <Award className="h-4 w-4" />
+              <Button size="sm" variant="success" className="shadow-md font-semibold">
+                <Award className="h-4 w-4 mr-1.5" />
                 View & Download Certificate
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-slate-600 shadow-sm opacity-80">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-slate-600 shadow-2xs opacity-80">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-500 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-500 shadow-2xs">
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-700">Certificate — Locked</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-bold text-slate-700">Course Certificate — Locked</p>
+                <p className="text-xs text-slate-500 mt-0.5">
                   {contentCompleted && finalAssessment && !finalAssessment.passed
                     ? "Pass the Final Assessment above to unlock your certificate."
-                    : "Complete every lesson and pass the Final Assessment to unlock your certificate."}
+                    : "Complete every module and pass the Final Assessment to unlock your official certificate."}
                 </p>
               </div>
             </div>
