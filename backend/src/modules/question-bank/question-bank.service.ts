@@ -25,6 +25,9 @@ export class QuestionBankService {
     return this.prisma.questionBankQuestion.create({
       data: {
         courseId: dto.courseId || null,
+        moduleId: dto.moduleId || null,
+        lessonId: dto.lessonId || null,
+        subLessonId: dto.subLessonId || null,
         createdById: userId,
         type: dto.type,
         question: dto.question,
@@ -39,6 +42,15 @@ export class QuestionBankService {
         },
         course: {
           select: { id: true, titleEn: true, titleAm: true, code: true },
+        },
+        module: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        lesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        subLesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
         },
       },
     });
@@ -67,6 +79,14 @@ export class QuestionBankService {
       } else {
         where.courseId = query.courseId;
       }
+    }
+
+    if (query.subLessonId) {
+      where.subLessonId = query.subLessonId;
+    } else if (query.lessonId) {
+      where.lessonId = query.lessonId;
+    } else if (query.moduleId) {
+      where.moduleId = query.moduleId;
     }
 
     if (query.type) {
@@ -107,6 +127,15 @@ export class QuestionBankService {
         course: {
           select: { id: true, titleEn: true, titleAm: true, code: true },
         },
+        module: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        lesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        subLesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
       },
     });
   }
@@ -120,6 +149,15 @@ export class QuestionBankService {
         },
         course: {
           select: { id: true, titleEn: true, titleAm: true, code: true },
+        },
+        module: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        lesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        subLesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
         },
       },
     });
@@ -147,6 +185,9 @@ export class QuestionBankService {
       where: { id },
       data: {
         ...(dto.courseId !== undefined ? { courseId: dto.courseId } : {}),
+        ...(dto.moduleId !== undefined ? { moduleId: dto.moduleId } : {}),
+        ...(dto.lessonId !== undefined ? { lessonId: dto.lessonId } : {}),
+        ...(dto.subLessonId !== undefined ? { subLessonId: dto.subLessonId } : {}),
         ...(dto.type !== undefined ? { type: dto.type } : {}),
         ...(dto.question !== undefined ? { question: dto.question } : {}),
         ...(dto.options !== undefined ? { options: dto.options as unknown as Prisma.InputJsonValue } : {}),
@@ -160,6 +201,15 @@ export class QuestionBankService {
         },
         course: {
           select: { id: true, titleEn: true, titleAm: true, code: true },
+        },
+        module: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        lesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
+        },
+        subLesson: {
+          select: { id: true, titleEn: true, titleAm: true, order: true },
         },
       },
     });

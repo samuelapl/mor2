@@ -9,6 +9,21 @@ export class QueryQuestionBankDto {
   @IsString()
   courseId?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by Curriculum Module ID' })
+  @IsOptional()
+  @IsString()
+  moduleId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Lesson ID' })
+  @IsOptional()
+  @IsString()
+  lessonId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Sub-lesson ID' })
+  @IsOptional()
+  @IsString()
+  subLessonId?: string;
+
   @ApiPropertyOptional({ description: 'Include global / reusable questions when courseId is provided', default: true })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)

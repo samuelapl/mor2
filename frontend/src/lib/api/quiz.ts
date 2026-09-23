@@ -136,13 +136,16 @@ export async function fetchAttempts(assessmentId: string): Promise<ApiAssessment
 export interface ApiQuestionBankQuestion {
   id: string;
   courseId: string | null;
-  createdById: string;
+  moduleId?: string | null;
+  lessonId?: string | null;
+  subLessonId?: string | null;
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
   correctAnswer: string | null;
   points: number;
   category: string;
+  explanation?: string | null;
   createdAt: string;
   updatedAt: string;
   course?: {
@@ -150,6 +153,24 @@ export interface ApiQuestionBankQuestion {
     titleEn: string;
     titleAm: string;
     code: string;
+  } | null;
+  module?: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    order: number;
+  } | null;
+  lesson?: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    order: number;
+  } | null;
+  subLesson?: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    order: number;
   } | null;
   createdBy?: {
     id: string;
@@ -161,26 +182,37 @@ export interface ApiQuestionBankQuestion {
 
 export interface CreateBankQuestionInput {
   courseId?: string | null;
+  moduleId?: string | null;
+  lessonId?: string | null;
+  subLessonId?: string | null;
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question: string;
   options: string[];
   correctAnswer?: string | null;
   points?: number;
   category?: string;
+  explanation?: string | null;
 }
 
 export interface UpdateBankQuestionInput {
   courseId?: string | null;
+  moduleId?: string | null;
+  lessonId?: string | null;
+  subLessonId?: string | null;
   type?: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   question?: string;
   options?: string[];
   correctAnswer?: string | null;
   points?: number;
   category?: string;
+  explanation?: string | null;
 }
 
 export interface QueryBankQuestionsParams {
   courseId?: string;
+  moduleId?: string;
+  lessonId?: string;
+  subLessonId?: string;
   includeGlobal?: boolean;
   globalOnly?: boolean;
   type?: string;
@@ -193,6 +225,9 @@ export async function fetchQuestionBank(
 ): Promise<ApiQuestionBankQuestion[]> {
   const query: Record<string, string> = {};
   if (params?.courseId) query.courseId = params.courseId;
+  if (params?.moduleId) query.moduleId = params.moduleId;
+  if (params?.lessonId) query.lessonId = params.lessonId;
+  if (params?.subLessonId) query.subLessonId = params.subLessonId;
   if (params?.includeGlobal !== undefined) query.includeGlobal = String(params.includeGlobal);
   if (params?.globalOnly !== undefined) query.globalOnly = String(params.globalOnly);
   if (params?.type && params.type !== "ALL") query.type = params.type;
@@ -230,4 +265,4 @@ export async function bulkCreateQuestionBankItems(
     method: "POST",
     body: { questions },
   });
-}
+}

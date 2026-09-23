@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
@@ -10,6 +10,8 @@ import { LiveKitConfig } from '@config/app.config';
 
 @Injectable()
 export class LiveSessionsService {
+  private readonly logger = new Logger(LiveSessionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly bbbProvider: BigBlueButtonProvider,
@@ -269,13 +271,32 @@ export class LiveSessionsService {
       });
     }
 
-    // Learners must be actively enrolled in the course
+    // Learners must be actively enrolled in the course.
+    // If not yet enrolled for an active/scheduled session, auto-enroll them so they can participate seamlessly!
     if (!isAuthorizedStaff) {
       const enrollment = await this.prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
       });
       if (!enrollment || enrollment.status !== 'ACTIVE') {
-        throw new ForbiddenException('You must be actively enrolled in this course to join');
+        try {
+          await this.prisma.enrollment.upsert({
+            where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
+            update: {
+              status: 'ACTIVE',
+              droppedAt: null,
+              droppedReason: null,
+              droppedBy: null,
+            },
+            create: {
+              userId: user.id,
+              courseId: session.courseId,
+              status: 'ACTIVE',
+            },
+          });
+          this.logger.log(`Auto-enrolled learner ${user.id} into course ${session.courseId} on session ${sessionId} join`);
+        } catch (enrollErr) {
+          this.logger.warn(`Could not auto-enroll learner ${user.id} in course ${session.courseId}:`, enrollErr);
+        }
       }
     }
 
@@ -389,6 +410,171 @@ export class LiveSessionsService {
       isCorrect,
       score,
       explanation,
+    };
+  }
+
+  /**
+   * Get comprehensive live quiz and poll report for a session from AttendanceLog.
+   */
+  async getLiveQuizReport(sessionId: string) {
+    await this.findById(sessionId);
+
+    // Fetch all QUIZ_RESPONSE attendance logs for this session
+    const logs = await this.prisma.attendanceLog.findMany({
+      where: {
+        sessionId,
+        eventType: 'QUIZ_RESPONSE',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'asc',
+      },
+    });
+
+    // Group logs by questionId
+    const questionMap = new Map<
+      string,
+      {
+        questionId: string;
+        answers: Array<{
+          userId: string;
+          userName: string;
+          email: string;
+          selectedOptionIds: string[];
+          isCorrect: boolean;
+          score: number;
+          responseDurationSeconds?: number;
+          timestamp: Date;
+        }>;
+      }
+    >();
+
+    const distinctQuestionIds = new Set<string>();
+
+    for (const log of logs) {
+      const meta = (log.metadata as Record<string, any>) || {};
+      const qId = meta.questionId || 'unknown';
+      distinctQuestionIds.add(qId);
+
+      if (!questionMap.has(qId)) {
+        questionMap.set(qId, {
+          questionId: qId,
+          answers: [],
+        });
+      }
+
+      const qEntry = questionMap.get(qId)!;
+      qEntry.answers.push({
+        userId: log.user.id,
+        userName: `${log.user.firstName} ${log.user.lastName}`.trim(),
+        email: log.user.email,
+        selectedOptionIds: meta.selectedOptionIds || [],
+        isCorrect: Boolean(meta.isCorrect),
+        score: meta.score || 0,
+        responseDurationSeconds: meta.responseDurationSeconds,
+        timestamp: log.timestamp,
+      });
+    }
+
+    // Fetch question bank questions for the stored questionIds
+    const storedQuestions = await this.prisma.questionBankQuestion.findMany({
+      where: {
+        id: { in: Array.from(distinctQuestionIds) },
+      },
+    });
+
+    const storedQuestionMap = new Map(storedQuestions.map((q) => [q.id, q]));
+
+    // Format questions array
+    const questions = Array.from(questionMap.entries()).map(([qId, qData]) => {
+      const qEntity = storedQuestionMap.get(qId);
+      const totalAnswers = qData.answers.length;
+      const correctAnswers = qData.answers.filter((a) => a.isCorrect).length;
+      const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+
+      // Option distribution
+      const distribution: Record<string, number> = {};
+      for (const ans of qData.answers) {
+        for (const optId of ans.selectedOptionIds) {
+          distribution[optId] = (distribution[optId] || 0) + 1;
+        }
+      }
+
+      return {
+        questionId: qId,
+        titleEn: qEntity?.question || 'Live Session Question',
+        type: qEntity?.type || 'SINGLE_CHOICE',
+        options: qEntity?.options || [],
+        correctAnswer: qEntity?.correctAnswer,
+        points: qEntity?.points || 1,
+        totalResponses: totalAnswers,
+        correctCount: correctAnswers,
+        accuracy,
+        distribution,
+        answers: qData.answers,
+      };
+    });
+
+    // Per-learner overall summary
+    const learnerMap = new Map<
+      string,
+      {
+        userId: string;
+        userName: string;
+        email: string;
+        answeredCount: number;
+        correctCount: number;
+        totalScore: number;
+      }
+    >();
+
+    for (const q of questions) {
+      for (const ans of q.answers) {
+        if (!learnerMap.has(ans.userId)) {
+          learnerMap.set(ans.userId, {
+            userId: ans.userId,
+            userName: ans.userName,
+            email: ans.email,
+            answeredCount: 0,
+            correctCount: 0,
+            totalScore: 0,
+          });
+        }
+        const lEntry = learnerMap.get(ans.userId)!;
+        lEntry.answeredCount += 1;
+        if (ans.isCorrect) {
+          lEntry.correctCount += 1;
+        }
+        lEntry.totalScore += ans.score;
+      }
+    }
+
+    const learners = Array.from(learnerMap.values()).map((l) => ({
+      ...l,
+      scorePercent: l.answeredCount > 0 ? Math.round((l.correctCount / l.answeredCount) * 100) : 0,
+    }));
+
+    const totalResponses = logs.length;
+    const totalCorrect = logs.filter((l) => (l.metadata as any)?.isCorrect).length;
+    const overallAccuracy = totalResponses > 0 ? Math.round((totalCorrect / totalResponses) * 100) : 0;
+
+    return {
+      sessionId,
+      totalQuestions: questions.length,
+      totalResponses,
+      overallAccuracy,
+      questions,
+      learners,
     };
   }
 }

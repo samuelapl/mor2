@@ -10,6 +10,8 @@ import { ApiError } from "@/lib/api/client";
 import { scheduleSession } from "@/lib/api/monitoring";
 import { fetchTrainers } from "@/lib/api/users";
 import type { ApiUser } from "@/lib/api/types";
+import { SearchableCourseSelect } from "./SearchableCourseSelect";
+import { SearchableTrainerSelect } from "./SearchableTrainerSelect";
 
 interface ScheduleSessionModalProps {
   open: boolean;
@@ -122,6 +124,16 @@ export function ScheduleSessionModal({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+
+    if (!courseId) {
+      setError("Please select a course for this session.");
+      return;
+    }
+    if (!trainerId) {
+      setError("Please assign a qualified trainer to host this session.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -175,30 +187,26 @@ export function ScheduleSessionModal({
     >
       <div className="w-full py-4">
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+        {/* Searchable Course Selection */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-600">Course *</label>
-          <select
-            required
+          <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+            Course (Search &amp; Select) *
+          </label>
+          <SearchableCourseSelect
+            courses={courses}
             value={courseId}
-            onChange={(event) => {
-              setCourseId(event.target.value);
+            onChange={(selectedId) => {
+              setCourseId(selectedId);
               if (platformType === "JITSI") {
-                const code = (courses.find((c) => c.id === event.target.value)?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
+                const code = (courses.find((c) => c.id === selectedId)?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
                 setExternalUrl(`https://meet.jit.si/MoR-LMS-${code}-${Math.random().toString(36).substring(2, 8)}`);
               }
             }}
-            className={inputClass}
-          >
-            {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.code} — {course.title}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
-        {/* Assigned Trainer Selection */}
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2">
+        {/* Searchable Assigned Trainer Selection */}
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2.5">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
               <UserCheck className="h-4 w-4 text-indigo-600" />
@@ -213,30 +221,13 @@ export function ScheduleSessionModal({
             ) : null}
           </div>
 
-          <select
-            required
+          <SearchableTrainerSelect
+            trainers={availableTrainers}
+            courseTrainers={courseTrainers}
             value={trainerId}
-            onChange={(event) => setTrainerId(event.target.value)}
-            className="w-full rounded-xl border border-indigo-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-xs outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
-          >
-            <option value="">Select Trainer to Lead this Session…</option>
-            {courseTrainers.length > 0 && (
-              <optgroup label="── Recommended: Assigned Course Trainers ──">
-                {courseTrainers.map((trainer) => (
-                  <option key={trainer.id} value={trainer.id}>
-                    ⭐ {trainer.firstName} {trainer.lastName} ({trainer.email}) — Course Trainer
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            <optgroup label="── All LMS Qualified Trainers ──">
-              {otherTrainers.map((trainer) => (
-                <option key={trainer.id} value={trainer.id}>
-                  👤 {trainer.firstName} {trainer.lastName} ({trainer.email})
-                </option>
-              ))}
-            </optgroup>
-          </select>
+            onChange={setTrainerId}
+            loading={trainersLoading}
+          />
 
           <p className="text-[11px] text-slate-600 leading-relaxed">
             The assigned trainer will be designated as the session speaker, appear with verified host credentials in the video classroom, and receive direct scheduling reminders.

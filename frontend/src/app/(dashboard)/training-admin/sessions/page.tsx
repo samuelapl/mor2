@@ -318,7 +318,45 @@ export default function TrainingAdminSessionsPage() {
                 <SessionTable
                   sessions={upcomingRows.pageItems}
                   extra={(row) => (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Secondary Management: Details, Edit, Delete */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedDetailId(row.session.id)}
+                        title="View Session Details"
+                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg shrink-0"
+                      >
+                        <Info className="h-4 w-4" />
+                        <span className="sr-only">Details</span>
+                      </Button>
+
+                      {canManageAll && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingSession(row.session)}
+                            title="Edit details or reschedule date/time"
+                            className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg shrink-0"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            <span className="sr-only">Edit / Reschedule</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={deletingId === row.session.id}
+                            onClick={() => handleDeleteSession(row.session)}
+                            title="Delete session"
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </>
+                      )}
+
                       {/* Dedicated Attendance Button */}
                       {canViewAttendance && (
                         <Button
@@ -326,57 +364,21 @@ export default function TrainingAdminSessionsPage() {
                           variant="outline"
                           onClick={() => setSelectedAttendanceSessionId(row.session.id)}
                           title="View and manage session attendance"
-                          className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200"
+                          className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200 hover:bg-slate-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <ClipboardCheck className="h-3.5 w-3.5 text-indigo-600" />
                           Attendance
                         </Button>
                       )}
 
-                      {/* Dedicated Details Button */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedDetailId(row.session.id)}
-                        className="gap-1 text-slate-600 hover:text-slate-900 text-xs"
-                      >
-                        <Info className="h-3.5 w-3.5" />
-                        Details
-                      </Button>
-
-                      {canManageAll && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSession(row.session)}
-                            className="gap-1 text-slate-700 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 text-xs"
-                            title="Edit details or reschedule date/time"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                            Edit / Reschedule
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled={deletingId === row.session.id}
-                            onClick={() => handleDeleteSession(row.session)}
-                            className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                            title="Delete session"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                          </Button>
-                        </>
-                      )}
-
+                      {/* Go Live / End Session Lifecycle */}
                       {row.session.status === "SCHEDULED" ? (
                         <Button
                           size="sm"
                           variant="outline"
                           disabled={statusUpdatingId === row.session.id}
                           onClick={() => handleToggleLive(row.session)}
-                          className="border-emerald-300 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100 shadow-none text-xs gap-1"
+                          className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
                           Go Live
@@ -387,17 +389,18 @@ export default function TrainingAdminSessionsPage() {
                           variant="outline"
                           disabled={statusUpdatingId === row.session.id}
                           onClick={() => handleToggleLive(row.session)}
-                          className="border-red-300 bg-red-50/80 text-red-700 hover:bg-red-100 shadow-none text-xs gap-1"
+                          className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
-                          <Square className="h-3 w-3 fill-red-600 text-red-600" />
+                          <Square className="h-3 w-3 fill-rose-600 text-rose-600" />
                           End Session
                         </Button>
                       ) : null}
 
+                      {/* Primary Call to Action: Join Room */}
                       <Button
                         size="sm"
                         onClick={() => handleJoin(row.session)}
-                        className="gap-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
+                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs text-xs h-8 px-3 rounded-lg shrink-0 font-medium"
                       >
                         <MonitorPlay className="h-3.5 w-3.5" />
                         Join Room
@@ -431,52 +434,55 @@ export default function TrainingAdminSessionsPage() {
                 <SessionTable
                   sessions={pastRows.pageItems}
                   extra={(row) => (
-                    <div className="flex items-center justify-end gap-2">
-                      {canViewAttendance && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedAttendanceSessionId(row.session.id)}
-                          className="gap-1 text-indigo-700 border-indigo-200 hover:bg-indigo-50 text-xs"
-                        >
-                          <ClipboardCheck className="h-3.5 w-3.5" />
-                          Attendance Records
-                        </Button>
-                      )}
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Secondary Management: Details, Edit, Delete */}
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => setSelectedDetailId(row.session.id)}
-                        className="gap-1 text-slate-600 text-xs"
+                        title="View Session Details"
+                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg shrink-0"
                       >
-                        <Info className="h-3.5 w-3.5" />
-                        Details
+                        <Info className="h-4 w-4" />
+                        <span className="sr-only">Details</span>
                       </Button>
 
                       {canManageAll && (
                         <>
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => setEditingSession(row.session)}
-                            className="gap-1 text-slate-700 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 text-xs"
                             title="Edit details or reschedule date/time"
+                            className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg shrink-0"
                           >
-                            <Edit3 className="h-3.5 w-3.5" />
-                            Edit / Reschedule
+                            <Edit3 className="h-4 w-4" />
+                            <span className="sr-only">Edit / Reschedule</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             disabled={deletingId === row.session.id}
                             onClick={() => handleDeleteSession(row.session)}
-                            className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
                             title="Delete session"
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
                           </Button>
                         </>
+                      )}
+
+                      {canViewAttendance && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedAttendanceSessionId(row.session.id)}
+                          className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                          Attendance Records
+                        </Button>
                       )}
                     </div>
                   )}

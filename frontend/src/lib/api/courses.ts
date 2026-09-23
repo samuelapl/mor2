@@ -64,6 +64,10 @@ export async function publishCourse(id: string): Promise<ApiCourseListItem> {
 /*  Curriculum (modules / lessons)                                             */
 /* -------------------------------------------------------------------------- */
 
+export async function fetchCourseModules(courseId: string): Promise<ApiModule[]> {
+  return api<ApiModule[]>(`courses/${courseId}/modules`);
+}
+
 export async function createModule(
   courseId: string,
   body: { titleEn: string; titleAm: string; descriptionEn?: string; descriptionAm?: string; lessons?: { titleEn: string; titleAm: string; contentType?: string; durationMinutes?: number }[] },

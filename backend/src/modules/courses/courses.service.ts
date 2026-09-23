@@ -56,6 +56,14 @@ export class CoursesService {
     );
   }
 
+  private hasQuestionBankAccess(roles: Set<string>): boolean {
+    return (
+      this.isBroadStaff(roles) ||
+      roles.has(RoleName.TRAINER) ||
+      roles.has(RoleName.COURSE_OWNER)
+    );
+  }
+
   private visibilityWhere(
     user: AuthenticatedUser,
     requestedStatus?: CourseStatus,
@@ -63,7 +71,8 @@ export class CoursesService {
     const roles = this.roleSet(user);
     const statusFilter = requestedStatus ? { status: requestedStatus } : {};
 
-    if (this.isBroadStaff(roles)) {
+    // All actors with question bank access (Trainers, Course Owners, Admins, Approvers) can access all institutional courses
+    if (this.hasQuestionBankAccess(roles)) {
       return statusFilter;
     }
 
@@ -86,7 +95,7 @@ export class CoursesService {
     const course = await this.findById(courseId);
     const roles = this.roleSet(user);
 
-    if (this.isBroadStaff(roles)) return;
+    if (this.hasQuestionBankAccess(roles)) return;
     if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) return;
     if (roles.has(RoleName.TRAINER) && course.trainers.some((t) => t.userId === user.id)) return;
 

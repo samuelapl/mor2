@@ -174,15 +174,15 @@ export default function LearnerLiveSessionsPage() {
               const isLoading = loadingJoinId === row.session.id;
 
               return (
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-1.5">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setSelectedAttendanceSessionId(row.session.id)}
-                    className="gap-1 text-slate-600 border-slate-200 hover:bg-slate-50 text-xs"
-                    title="View session attendees and verification status (governed by admin permission)"
+                    className="gap-1.5 text-xs text-slate-700 border-slate-200 hover:bg-slate-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
+                    title="View session attendees and verification status"
                   >
-                    <Users className="h-3.5 w-3.5" />
+                    <Users className="h-3.5 w-3.5 text-indigo-600" />
                     Attendees
                   </Button>
 
@@ -195,7 +195,11 @@ export default function LearnerLiveSessionsPage() {
                     size="sm"
                     disabled={isLoading}
                     onClick={() => handleJoin(row.session)}
-                    className={isCheckedIn ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200" : ""}
+                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${
+                      isCheckedIn
+                        ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                        : "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs"
+                    }`}
                   >
                     <MonitorPlay className="h-3.5 w-3.5" />
                     {isLoading

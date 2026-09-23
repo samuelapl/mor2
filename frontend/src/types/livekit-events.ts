@@ -9,19 +9,46 @@ export interface LiveQuizOption {
   textAm?: string;
 }
 
+export interface LiveQuizPayload {
+  id: string;
+  titleEn: string;
+  titleAm?: string;
+  type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  options: LiveQuizOption[];
+  timeLimitSeconds: number; // e.g. 15, 30, 45, 60
+  startedAt: number; // epoch ms
+  trainerName?: string;
+  correctOptionIds?: string[];
+  explanationEn?: string;
+  explanationAm?: string;
+  questionIndex?: number;
+  totalQuestions?: number;
+  allQuestions?: LiveQuizPayload[];
+}
+
+export interface LiveQuizRevealPayload {
+  questionId: string;
+  correctOptionIds: string[];
+  explanationEn?: string;
+  explanationAm?: string;
+  distribution: Record<string, number>; // optionId -> vote count
+  totalResponses: number;
+  allReveals?: Record<
+    string,
+    {
+      correctOptionIds: string[];
+      explanationEn?: string;
+      explanationAm?: string;
+      distribution?: Record<string, number>;
+      totalResponses?: number;
+    }
+  >;
+}
+
 export type LiveKitDataEvent =
   | {
       type: "QUIZ_START";
-      payload: {
-        id: string;
-        titleEn: string;
-        titleAm?: string;
-        type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE";
-        options: LiveQuizOption[];
-        timeLimitSeconds: number; // e.g. 15, 30, 45, 60
-        startedAt: number; // epoch ms
-        trainerName?: string;
-      };
+      payload: LiveQuizPayload;
     }
   | {
       type: "QUIZ_ANSWER";
@@ -36,14 +63,7 @@ export type LiveKitDataEvent =
     }
   | {
       type: "QUIZ_REVEAL";
-      payload: {
-        questionId: string;
-        correctOptionIds: string[];
-        explanationEn?: string;
-        explanationAm?: string;
-        distribution: Record<string, number>; // optionId -> vote count
-        totalResponses: number;
-      };
+      payload: LiveQuizRevealPayload;
     }
   | {
       type: "QUIZ_CLOSE";

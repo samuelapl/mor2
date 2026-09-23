@@ -229,6 +229,54 @@ export function submitLiveSessionQuizResponse(
   );
 }
 
+export interface ApiLiveQuizReportAnswer {
+  userId: string;
+  userName: string;
+  email: string;
+  selectedOptionIds: string[];
+  isCorrect: boolean;
+  score: number;
+  responseDurationSeconds?: number;
+  timestamp: string;
+}
+
+export interface ApiLiveQuizReportQuestion {
+  questionId: string;
+  titleEn: string;
+  type: string;
+  options: any;
+  correctAnswer?: string;
+  points: number;
+  totalResponses: number;
+  correctCount: number;
+  accuracy: number;
+  distribution: Record<string, number>;
+  answers: ApiLiveQuizReportAnswer[];
+}
+
+export interface ApiLiveQuizReportLearner {
+  userId: string;
+  userName: string;
+  email: string;
+  answeredCount: number;
+  correctCount: number;
+  totalScore: number;
+  scorePercent: number;
+}
+
+export interface ApiLiveQuizReport {
+  sessionId: string;
+  totalQuestions: number;
+  totalResponses: number;
+  overallAccuracy: number;
+  questions: ApiLiveQuizReportQuestion[];
+  learners: ApiLiveQuizReportLearner[];
+}
+
+export function fetchLiveSessionQuizReport(sessionId: string): Promise<ApiLiveQuizReport> {
+  return api<ApiLiveQuizReport>(`live-sessions/${sessionId}/quiz-report`);
+}
+
 
 
 /* -------------------------------------------------------------------------- */
