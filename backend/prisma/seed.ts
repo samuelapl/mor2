@@ -60,7 +60,7 @@ interface SubLessonSeed {
   contentEn: string;
   contentAm: string;
   attachment: AttachmentSeed;
-  assessment: AssessmentSeed;
+  assessment?: AssessmentSeed;
 }
 
 interface LessonSeed {
@@ -74,7 +74,6 @@ interface LessonSeed {
   attachment: AttachmentSeed;
   assessment: AssessmentSeed;
   subLessons?: SubLessonSeed[];
-  subLessons: SubLessonSeed[];
 }
 
 interface ModuleSeed {
@@ -106,7 +105,6 @@ interface CourseSeed {
   objectivesEn: string;
   objectivesAm: string;
   prerequisites: string;
-  approvalComments: string;
   approvalComments?: string;
   modules: ModuleSeed[];
   finalAssessment: AssessmentSeed;
@@ -349,15 +347,11 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
         },
         lessons: [
           {
-            titleEn: '2.1 Building Dynamic PivotTables for Monthly Revenue Summaries',
-            titleAm: '2.1 ተለዋዋጭ ፒቮት ሠንጠረዦችን ለወርሃዊ የገቢ ማጠቃለያ መገንባት',
             titleEn: '2.1 Building Dynamic PivotTables with Slicers & Timelines',
             titleAm: '2.1 ተለዋዋጭ ፒቮት ሠንጠረዦችን ከመቁረጫዎች እና የጊዜ መስመር ጋር መገንባት',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 0,
-            contentEn: `## From Raw Rows to a Summary in Seconds
-A PivotTable lets you drag fields into Rows, Columns, and Values to instantly summarize thousands of transaction records without writing a single formula.
             contentEn: `## The Power of PivotTables
 A revenue report that requires manual formulas across 50,000 transactions takes hours to build and breaks easily. PivotTables generate total revenue by tax type, branch, and payment channel in seconds.
 
@@ -366,34 +360,27 @@ A revenue report that requires manual formulas across 50,000 transactions takes 
 2. Insert > PivotTable, place it on a new sheet.
 3. Drag "Branch" to Rows, "Month" to Columns, and "Amount" to Values (set to Sum).
 4. Right-click any value cell and choose "Show Value As > % of Grand Total" to see each branch's share of total revenue.
+
 ## Best Practices for Clean Source Data
 1. Every column must have a distinct, non-blank header.
 2. No empty rows or merged cells in the data range.
 3. Use an Excel Table (\`Ctrl+T\`) as the source so the PivotTable automatically includes new rows when refreshed.
 
 ## Refreshing Data
-When source data changes, right-click the PivotTable and choose "Refresh" — the summary updates instantly without rebuilding the report from scratch.`,
+When source data changes, right-click the PivotTable and choose "Refresh" — the summary updates instantly without rebuilding the report from scratch.
+
 ## Interactive Controls
 - **Slicers**: enable managers to filter the summary by Branch or Tax Type with a single click.
 - **Timelines**: let analysts slide across fiscal quarters or months without typing date filters.`,
             contentAm: `### ማጠቃለያ
-ፒቮት ሠንጠረዥ መስኮችን ወደ ረድፎች፣ ዓምዶች እና እሴቶች በመጎተት ሺዎች ግብይቶችን በሰከንዶች ውስጥ ያጠቃልላል። ምንጭ ውሂብ ሲቀየር "Refresh" በመጫን ሪፖርቱ ራሱ ይዘምናል።`,
-            attachment: pdf('Lesson 2.1 - PivotTable Build Walkthrough.pdf'),
 ፒቮት ሠንጠረዦች በሺዎች የሚቆጠሩ ግብይቶችን በደቂቃዎች ውስጥ ያጠቃልላሉ። ምንጭ ውሂቡን በሰንጠረዥ (Ctrl+T) ማዘጋጀት አዳዲስ ረድፎች በራስ-ሰር እንዲካተቱ ይረዳል። መቁረጫዎች (Slicers) ፈጣን ማጣሪያ ይሰጣሉ።`,
             attachment: pdf('Lesson 2.1 - PivotTable Architecture Guide.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: Building PivotTables',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ ፒቮት ሠንጠረዦችን መገንባት',
               titleEn: 'Lesson 2.1 Check: PivotTable Architecture',
               titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ የፒቮት ሠንጠረዥ ግንባታ',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
-                mcq('excel-m2-l1-q1', 'Why is it recommended to convert source data into a named Excel Table before building a PivotTable?', ['It changes the font automatically', 'The PivotTable auto-expands as new rows are added', 'It removes the need for headers', 'It encrypts the data'], 1, 'PivotTables'),
-                mcq('excel-m2-l1-q2', 'To see each branch share of total revenue, which "Show Value As" option is used?', ['% of Grand Total', 'Rank Largest to Smallest', 'Running Total', 'Index'], 0, 'PivotTables'),
-                tf('excel-m2-l1-q3', 'True or False: Right-clicking a PivotTable and choosing Refresh updates it after the source data changes.', 0, 'PivotTables'),
-                mcq('excel-m2-l1-q4', 'Which area of the PivotTable Field List determines the numeric summary (e.g. Sum, Average)?', ['Rows', 'Columns', 'Values', 'Filters'], 2, 'PivotTables'),
-                sa('excel-m2-l1-q5', 'What menu path inserts a PivotTable from selected data?', 'Insert > PivotTable', 'PivotTables'),
                 mcq('excel-m2-l1-q1', 'Why should an official Excel Table (Ctrl+T) be used as a PivotTable data source?', ['It compresses file size by 90%', 'The PivotTable range automatically expands as new rows are added', 'It prevents anyone from editing the cells', 'It forces uppercase text'], 1, 'PivotTable Setup'),
                 mcq('excel-m2-l1-q2', 'What happens if a source data column has no header text?', ['Excel automatically numbers it', 'The PivotTable cannot be created until the header is added', 'The column is permanently deleted', 'It becomes a row label'], 1, 'Data Hygiene'),
                 tf('excel-m2-l1-q3', 'True or False: Multiple PivotTables can be connected to the same Slicer for unified filtering.', 0, 'Slicers'),
@@ -405,11 +392,8 @@ When source data changes, right-click the PivotTable and choose "Refresh" — th
               {
                 titleEn: 'Practical Lab: Slicers, Timelines & Drill-Down Dashboards',
                 titleAm: 'ተግባራዊ ላብ፡ መቁረጫዎች፣ የጊዜ መስመሮች እና ዳሽቦርድ ማጥለቅ',
-                titleEn: 'Practical Lab: Monthly Tax Collection Pivot Summary',
-                titleAm: 'ተግባራዊ ላብ፡ የወርሃዊ ግብር ስብስብ ፒቮት ማጠቃለያ',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
-                durationMinutes: 25,
                 order: 0,
                 contentEn: `## Lab Scenario
 Starting from the PivotTable built in the previous lesson, add interactivity so a branch manager can explore the data without touching a formula.
@@ -422,22 +406,12 @@ Starting from the PivotTable built in the previous lesson, add interactivity so 
 
 ## Deliverable
 An interactive one-page dashboard where clicking "Addis Ababa Branch" and dragging the timeline instantly recalculates every linked PivotTable.`,
-Given 10,000 transaction records for the current fiscal quarter:
-1. Convert the data to an official Excel Table named "TaxTransactions".
-2. Insert a PivotTable on a new sheet: Branch on Rows, Tax Category on Columns, and Sum of Amount in Values.
-3. Group the Date field by Month and Quarter.
-4. Insert Slicers for "Branch" and "Payment Method" (Telebirr, CBE, Cash).
-5. Format the Values field as Currency with 2 decimal places.`,
                 contentAm: `### የላብ ሁኔታ
 መቁረጫዎችን (Slicers) እና የጊዜ መስመርን (Timeline) በመጨመር የቅርንጫፍ ሀላፊ ያለ ቀመር ውሂብን እንዲመረምር ማስቻል። Grand Total ላይ ድርብ-ጠቅ ማድረግ ለኦዲት የሚረዳ ዝርዝር ረድፎችን ያሳያል።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Slicer & Timeline Lab Pack.pdf'),
-10,000 የግብይት መረጃዎችን ወደ ፒቮት ሠንጠረዥ መቀየር፣ በወር መቧደን እና በቅርንጫፍና በክፍያ ዘዴ መቁረጫዎችን ማከል እና እንደ ገንዘብ ቅርጸት ማበጀት።`,
-                attachment: pdf('Sub-Lesson 2.1.1 - Tax Collection Pivot Lab.pdf'),
                 assessment: {
                   titleEn: 'Sub-Lesson 2.1.1 Check: Slicers & Timelines',
                   titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ መቁረጫዎች እና የጊዜ መስመሮች',
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Tax Collection Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የግብር ስብስብ ላብ',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -446,11 +420,6 @@ Given 10,000 transaction records for the current fiscal quarter:
                     tf('excel-m2-l1-s1-q3', 'True or False: A single Slicer can be connected to control more than one PivotTable at once via Report Connections.', 0, 'Slicers'),
                     mcq('excel-m2-l1-s1-q4', 'Where is "Insert Slicer" found in the ribbon?', ['Home tab', 'PivotTable Analyze tab', 'Page Layout tab', 'Review tab'], 1, 'Slicers'),
                     sa('excel-m2-l1-s1-q5', 'What is the drill-down feature useful for in a revenue audit context?', 'Viewing the underlying transactions behind a total', 'Drill-Down'),
-                    mcq('excel-m2-l1-s1-q1', 'When grouping dates in a PivotTable, which increments can be selected together?', ['Months and Quarters', 'Colors and Sizes', 'Currencies only', 'Font types'], 0, 'Date Grouping'),
-                    mcq('excel-m2-l1-s1-q2', 'Where in the PivotTable field list do numeric metrics like "Tax Amount" belong?', ['Filters quadrant', 'Rows quadrant', 'Values quadrant', 'Columns quadrant'], 2, 'Field Placement'),
-                    tf('excel-m2-l1-s1-q3', 'True or False: Number formatting should be set via Field Settings rather than plain cell formatting.', 0, 'Field Settings'),
-                    mcq('excel-m2-l1-s1-q4', 'What tool lets you view revenue by both Branch and Tax Category simultaneously?', ['A two-dimensional PivotTable with Rows and Columns', 'A pie chart with no legend', 'Sort ascending', 'Find and Replace'], 0, 'Field Placement'),
-                    sa('excel-m2-l1-s1-q5', 'In which quadrant of the PivotTable field list should the primary calculation metric be placed?', 'Values', 'Field Placement'),
                   ],
                 },
               },
@@ -459,15 +428,11 @@ Given 10,000 transaction records for the current fiscal quarter:
           {
             titleEn: '2.2 Designing Automated Dashboards with Conditional Formatting & Charts',
             titleAm: '2.2 ራስ-ሰር ዳሽቦርዶችን በሁኔታዊ ቅርጸት እና ገበታዎች መንደፍ',
-            titleEn: '2.2 Executive Dashboard Design & KPI Visualization',
-            titleAm: '2.2 የአመራር ዳሽቦርድ ንድፍ እና የKPI ምስላዊ እይታ',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 1,
             contentEn: `## Turning Numbers into a Visual Story
-A well-designed dashboard lets a director understand collection performance in seconds, not minutes.
-            contentEn: `## Designing for Decision Makers
-Directors do not read 20-page spreadsheet tabs. An executive dashboard consolidates critical metrics onto a single screen that requires no horizontal or vertical scrolling.
+A well-designed dashboard lets a director understand collection performance in seconds, not minutes. An executive dashboard consolidates critical metrics onto a single screen that requires no horizontal or vertical scrolling.
 
 ## Conditional Formatting for Alerts
 - **Color Scales**: shade a "Collection Rate %" column from red (low) to green (high) across all branches.
@@ -480,16 +445,9 @@ Directors do not read 20-page spreadsheet tabs. An executive dashboard consolida
 - **Combo Chart**: showing actual revenue as columns against a target line for immediate gap visibility.
 
 Keep dashboards to a single printable page — link charts directly to the PivotTable so the entire dashboard refreshes with one click.`,
-## Design Rules for Ministry Dashboards
-- **Grid Alignment**: align cards and charts to a strict 4-column layout.
-- **Color Palette**: use corporate navy for baseline data, green for target achieved, and amber/red for variance warnings. Avoid random bright colors.
-- **KPI Metric Cards**: show Total Collected, % of Target Achieved, and Comparison with Prior Year.
-- **Interactive Chart Connection**: connect Pivot Charts to the central Slicers so the entire screen reacts in real time.`,
             contentAm: `### ማጠቃለያ
 ሁኔታዊ ቅርጸት (Conditional Formatting) ከፍተኛ እና ዝቅተኛ የመሰብሰብ መጠኖችን በቀለም ያሳያል። Combo Chart ትክክለኛ ገቢን ከግብ ጋር በማነጻጸር ክፍተትን ወዲያውኑ ያሳያል። ዳሽቦርድ በአንድ ገጽ ላይ ተጠቃሎ ሊታይ ይገባል።`,
             attachment: pdf('Lesson 2.2 - Dashboard Design Reference.pdf'),
-የአመራር ዳሽቦርድ ቁልፍ መለኪያዎችን በአንድ ገጽ ላይ ያቀርባል። ወጥ የሆነ የቀለም አጠቃቀም፣ የተስተካከለ የአቀማመጥ መረብ እና ከSlicer ጋር የተገናኙ ገበታዎች አስፈላጊ ናቸው።`,
-            attachment: pdf('Lesson 2.2 - Dashboard Design System.pdf'),
             assessment: {
               titleEn: 'Lesson 2.2 Check: Dashboard Design',
               titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የዳሽቦርድ ንድፍ',
@@ -501,11 +459,6 @@ Keep dashboards to a single printable page — link charts directly to the Pivot
                 tf('excel-m2-l2-q3', 'True or False: Linking dashboard charts directly to a PivotTable means the whole dashboard can refresh with one click.', 0, 'Dashboards'),
                 mcq('excel-m2-l2-q4', 'Which chart type is best suited for comparing performance across several branches side by side?', ['Bar/Column Chart', 'Pie Chart with 20 slices', 'Scatter Chart', 'Radar Chart'], 0, 'Charts'),
                 sa('excel-m2-l2-q5', 'What formula-based Conditional Formatting rule would flag rows where DaysOverdue exceeds 30?', '=[@DaysOverdue]>30', 'Conditional Formatting'),
-                mcq('excel-m2-l2-q1', 'What is the primary constraint of an executive dashboard?', ['It must contain at least 15 charts', 'It should fit on a single screen without scrolling', 'It must use every available color', 'It cannot contain numbers'], 1, 'Dashboard Rules'),
-                mcq('excel-m2-l2-q2', 'What do KPI metric cards prominently display at the top of an executive view?', ['High-level totals, target attainment, and variance', 'Raw database connection strings', 'Full employee rosters', 'Software license keys'], 0, 'KPI Design'),
-                tf('excel-m2-l2-q3', 'True or False: Using random vibrant colors for every chart element increases visual clarity for executives.', 1, 'Design Psychology'),
-                mcq('excel-m2-l2-q4', 'How do you ensure all charts on a dashboard update when a single slicer button is clicked?', ['By configuring Slicer Report Connections', 'By writing complex VBA scripts', 'By printing the page to PDF', 'By pressing F9 repeated times'], 0, 'Interactivity'),
-                sa('excel-m2-l2-q5', 'What Excel setting links a single slicer to multiple PivotTables and PivotCharts?', 'Report Connections', 'Interactivity'),
               ],
             },
             subLessons: [
@@ -547,8 +500,6 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
     finalAssessment: {
       titleEn: 'Final Comprehensive Assessment: Advanced Excel Certification',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የላቀ Excel ሰርተፊኬት ምዘና',
-      titleEn: 'Final Comprehensive Assessment: Excel & Analytics Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የExcel እና የመረጃ ትንተና ብቃት ምዘና',
       passingScore: 75,
       timeLimitMinutes: 30,
       questions: [
@@ -557,11 +508,6 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
         tf('excel-fn-q3', 'True or False: Data Validation can prevent invalid data from being typed into a cell before it happens.', 0, 'Data Validation'),
         mcq('excel-fn-q4', 'Slicers in a PivotTable dashboard are used to what end?', ['Interactively filter the report by a category', 'Change the workbook password', 'Encrypt the file', 'Print the file'], 0, 'Dashboards'),
         sa('excel-fn-q5', 'What is the name of the Excel tool that summarizes and aggregates large datasets interactively?', 'PivotTable', 'PivotTables'),
-        mcq('excel-fn-q1', 'Which formula correctly looks up a taxpayer name in column B when the TIN is matched in column A?', ['=INDEX(B:B, MATCH(lookup_tin, A:A, 0))', '=MATCH(INDEX(A:A, lookup_tin), 0)', '=VLOOKUP(lookup_tin, B:A, 1, FALSE)', '=COUNTIF(A:A, lookup_tin)'], 0, 'Formulas'),
-        mcq('excel-fn-q2', 'What is the effect of applying a Stop Alert in Data Validation?', ['It records a log file', 'It strictly blocks input that does not satisfy the validation criteria', 'It displays a warning but accepts the invalid entry', 'It turns the cell red'], 1, 'Data Validation'),
-        tf('excel-fn-q3', 'True or False: Slicers connected via Report Connections will filter multiple PivotTables simultaneously.', 0, 'PivotTables'),
-        mcq('excel-fn-q4', 'Why is converting raw transaction records into an Excel Table (Ctrl+T) strongly recommended?', ['Tables automatically expand their range when new rows are added', 'Tables prevent password guessing', 'Tables disable calculation lag', 'Tables allow unlimited rows'], 0, 'Data Structures'),
-        sa('excel-fn-q5', 'What is the shortcut key to open the Create Table dialog in Microsoft Excel?', 'Ctrl+T', 'Shortcuts'),
       ],
     },
   },
@@ -588,7 +534,6 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
       'Draft a project charter, map stakeholders with a RACI matrix, build a work breakdown structure and schedule, and track budget variance using earned value.',
     objectivesAm: 'የፕሮጀክት ቻርተር ማርቀቅ፣ በRACI ባለድርሻ አካላትን መለየት፣ WBS እና መርሃግብር መገንባት እና በEarned Value በጀት ልዩነትን መከታተል።',
     prerequisites: 'None — designed for first-time project leads',
-    approvalComments: '',
     approvalComments: 'Submitted for final review by the Strategic Planning Committee. All curriculum materials prepared.',
     modules: [
       {
@@ -646,25 +591,17 @@ A charter for a district tax-office renovation should explicitly state whether I
                 tf('proj-m1-l1-q3', 'True or False: A Project Charter should be finalized before significant project work begins.', 0, 'Initiation'),
                 mcq('proj-m1-l1-q4', 'Who typically grants the project manager authority to use resources in the charter?', ['The project sponsor', 'A random employee', 'The vendor', 'The auditor'], 0, 'Initiation'),
                 sa('proj-m1-l1-q5', 'What term describes uncontrolled expansion of a project scope after it has started?', 'Scope Creep', 'Scope'),
-                mcq('proj-m1-l1-q1', 'What does the "S" in SMART objectives stand for?', ['Specific', 'Standard', 'Simple', 'Strategic'], 0, 'SMART Objectives'),
-                mcq('proj-m1-l1-q2', 'Why is explicitly documenting "out-of-scope" items valuable in a project charter?', ['To make the charter longer', 'To prevent scope creep and manage stakeholder expectations', 'To avoid hiring consultants', 'It is required only for software projects'], 1, 'Scope Management'),
-                tf('proj-m1-l1-q3', 'True or False: A project manager has formal authority to spend budget before a charter is signed by the sponsor.', 1, 'Governance'),
-                mcq('proj-m1-l1-q4', 'Which section of the charter describes the strategic business problem being resolved?', ['Risk Log', 'Project Purpose / Business Case', 'Team Bio', 'Vendor Invoice List'], 1, 'Charter Sections'),
-                sa('proj-m1-l1-q5', 'What is the term for uncontrolled changes or continuous growth in a project scope?', 'Scope Creep', 'Scope Management'),
               ],
             },
             subLessons: [
               {
                 titleEn: 'Practical Lab: Drafting a Charter for a District Tax-Office Renovation Project',
                 titleAm: 'ተግባራዊ ላብ፡ ለወረዳ ግብር ጽ/ቤት እድሳት ፕሮጀክት ቻርተር ማርቀቅ',
-                titleEn: 'Practical Lab: Drafting a Ministry Modernization Project Charter',
-                titleAm: 'ተግባራዊ ላብ፡ የሚኒስቴሩ ማዘመኛ ፕሮጀክት ቻርተር ማርቀቅ',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
                 contentEn: `## Lab Scenario
 Your district tax office needs renovation: a new public service counter, accessible ramps, and an upgraded network cabinet. Draft a one-page charter.
-You are appointed lead for the "Branch Digital Queue Modernization" project across 5 Addis Ababa tax offices. Draft a 2-page project charter using the template in the attached PDF.
 
 ## Steps
 1. Write a Purpose statement linking the renovation to the Ministry's citizen-service improvement strategy.
@@ -674,19 +611,12 @@ You are appointed lead for the "Branch Digital Queue Modernization" project acro
 
 ## Deliverable
 A completed one-page charter using the attached template, ready for sponsor sign-off.`,
-## Requirements
-- Write 3 SMART objectives with quantitative targets (e.g. reduction in citizen wait time from 45 to 15 minutes).
-- Define at least 3 explicitly "out-of-scope" items (e.g. building physical expansions, procurement of non-queue PCs).
-- Identify the project sponsor, estimated budget ceiling, and top 3 project risks.`,
                 contentAm: `### የላብ ሁኔታ
 ለወረዳ ግብር ጽ/ቤት እድሳት የአንድ ገጽ ቻርተር ማርቀቅ፡ ዓላማ፣ SMART ግቦች፣ የወሰን ውስጥ እና ውጭ ዝርዝሮች እና ስፖንሰር በመግለጽ።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Renovation Charter Lab Template.pdf'),
-በአምስት የአዲስ አበባ ቅርንጫፎች የዲጂታል ሰልፍ ማዘመኛ ፕሮጀክት ቻርተር ማዘጋጀት፣ 3 SMART ግቦችን መፃፍ እና ከወሰን ውጪ የሆኑ ነጥቦችን በግልጽ ማስቀመጥ።`,
-                attachment: pdf('Sub-Lesson 1.1.1 - Modernization Charter Lab Pack.pdf'),
                 assessment: {
                   titleEn: 'Sub-Lesson 1.1.1 Check: Charter Drafting Lab',
                   titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የቻርተር ማርቀቅ ላብ',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የቻርተር ዝግጅት ላብ',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -695,11 +625,6 @@ A completed one-page charter using the attached template, ready for sponsor sign
                     tf('proj-m1-l1-s1-q3', 'True or False: The lab charter should name the Regional Director as sponsor.', 0, 'Initiation'),
                     mcq('proj-m1-l1-s1-q4', 'What does stating the project manager spending authority limit in the charter accomplish?', ['It removes all budget controls', 'It clarifies how much the PM can approve without escalation', 'It replaces the need for a budget', 'It cancels the project'], 1, 'Governance'),
                     sa('proj-m1-l1-s1-q5', 'What is the recommended length for the charter produced in this lab?', 'One page', 'Initiation'),
-                    mcq('proj-m1-l1-s1-q1', 'Which of the following is a measurable project objective?', ['Make citizens happier', 'Reduce average counter wait time to under 15 minutes by Q3', 'Improve IT equipment soon', 'Provide better customer care'], 1, 'Lab Objectives'),
-                    mcq('proj-m1-l1-s1-q2', 'Who signs off on the charter to authorize the project budget?', ['The database administrator', 'The Project Sponsor', 'Any external contractor', 'The junior intern'], 1, 'Lab Roles'),
-                    tf('proj-m1-l1-s1-q3', 'True or False: Explicitly excluding physical building renovation prevents budget disputes with contractors.', 0, 'Lab Scope'),
-                    mcq('proj-m1-l1-s1-q4', 'What is the recommended maximum page length for an executive project charter?', ['50 pages', '1 to 3 pages', '100 pages', 'A single tweet'], 1, 'Charter Format'),
-                    sa('proj-m1-l1-s1-q5', 'What role holds executive accountability for funding and authorizing the project charter?', 'Project Sponsor', 'Governance'),
                   ],
                 },
               },
@@ -708,15 +633,11 @@ A completed one-page charter using the attached template, ready for sponsor sign
           {
             titleEn: '1.2 Stakeholder Analysis & the RACI Responsibility Matrix',
             titleAm: '1.2 ባለድርሻ አካላት ትንተና እና የRACI ተጠያቂነት ማትሪክስ',
-            titleEn: '1.2 Stakeholder Analysis & the RACI Governance Matrix',
-            titleAm: '1.2 የባለድርሻ አካላት ትንተና እና የRACI የአስተዳደር ማትሪክስ',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
             contentEn: `## Identifying Who Matters
 A stakeholder is anyone who affects, or is affected by, the project — from the Regional Director to the citizens waiting in the renovated service hall.
-            contentEn: `## Engaging the Right People at the Right Time
-Projects rarely fail for purely technical reasons; they fail because key stakeholders were ignored or responsibilities were unclear.
 
 ## Power-Interest Grid
 Map each stakeholder on two axes:
@@ -724,24 +645,12 @@ Map each stakeholder on two axes:
 - **High Power / Low Interest**: keep satisfied (e.g., the Finance Directorate).
 - **Low Power / High Interest**: keep informed (e.g., front-desk staff).
 - **Low Power / Low Interest**: monitor with minimal effort.
-## The Power-Interest Grid
-- **High Power, High Interest**: Manage Closely (Director General, Directorate Directors).
-- **High Power, Low Interest**: Keep Satisfied (Finance Ministry auditors, Legal Directorate).
-- **Low Power, High Interest**: Keep Informed (Branch front-desk staff, taxpayers).
-- **Low Power, Low Interest**: Monitor with minimum effort.
 
 ## The RACI Matrix
 For every major task, assign exactly one **Accountable** owner, one or more **Responsible** doers, and note who is **Consulted** (two-way input) versus merely **Informed** (one-way update). Ambiguity between Responsible and Accountable is the most common cause of dropped tasks in multi-directorate projects.`,
-Every key project deliverable must have:
-- **R (Responsible)**: the person who does the work.
-- **A (Accountable)**: the SINGLE person who has final approval authority.
-- **C (Consulted)**: subject matter experts whose input is sought before work is done.
-- **I (Informed)**: individuals kept updated on progress after completion.`,
             contentAm: `### ማጠቃለያ
 ባለድርሻ አካላትን በሀይል-ፍላጎት ፍርግርግ መለየት እና በRACI ማትሪክስ ለእያንዳንዱ ተግባር አንድ ተጠያቂ (Accountable) እና ተከናዋኞችን (Responsible) መመደብ ያስፈልጋል።`,
             attachment: pdf('Lesson 1.2 - Stakeholder & RACI Worksheet.pdf'),
-የባለድርሻ አካላት በስልጣን እና ፍላጎት ይከፈላሉ። በRACI ማትሪክስ ለእያንዳንዱ ስራ አንድ ተጠያቂ (A) ብቻ ሊኖር ይገባል፤ ይህም ግራ መጋባትን ያስቀራል።`,
-            attachment: pdf('Lesson 1.2 - RACI Matrix Governance Handbook.pdf'),
             assessment: {
               titleEn: 'Lesson 1.2 Check: Stakeholders & RACI',
               titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ ባለድርሻ አካላት እና RACI',
@@ -753,11 +662,6 @@ Every key project deliverable must have:
                 tf('proj-m1-l2-q3', 'True or False: Every major task should have exactly one Accountable owner.', 0, 'RACI'),
                 mcq('proj-m1-l2-q4', 'Front-desk staff in the renovation project would typically fall into which Power-Interest quadrant?', ['High Power / High Interest', 'Low Power / High Interest', 'High Power / Low Interest', 'Low Power / Low Interest'], 1, 'Stakeholder Analysis'),
                 sa('proj-m1-l2-q5', 'What grid tool plots stakeholders by their power and interest levels?', 'Power-Interest Grid', 'Stakeholder Analysis'),
-                mcq('proj-m1-l2-q1', 'On a Power-Interest Grid, how should high-power, high-interest stakeholders be managed?', ['Monitor only', 'Manage Closely', 'Ignore until the end', 'Send monthly spam emails'], 1, 'Stakeholder Analysis'),
-                mcq('proj-m1-l2-q2', 'What is the rule regarding the "A" (Accountable) in a RACI row?', ['Every team member must be Accountable', 'There must be exactly one Accountable person per deliverable', 'Accountability rotates weekly', 'No one needs to be Accountable'], 1, 'RACI Rules'),
-                tf('proj-m1-l2-q3', 'True or False: "Consulted" stakeholders in RACI provide two-way communication before work is finalized.', 0, 'RACI Definitions'),
-                mcq('proj-m1-l2-q4', 'Which stakeholder group typically falls into "Low Power, High Interest"?', ['Front-line officers affected by new software', 'The Ministry Cabinet', 'Supreme Court judges', 'Foreign ambassadors'], 0, 'Stakeholder Mapping'),
-                sa('proj-m1-l2-q5', 'In RACI, which letter represents individuals kept updated through one-way notifications?', 'I', 'RACI Definitions'),
               ],
             },
             subLessons: [
@@ -802,20 +706,11 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
         descriptionAm: 'ፕሮጀክቱን ወደ መርሃግብር መከፋፈል፣ ወጪን ከመነሻ ጋር ማወዳደር እና ስጋቶችን ከመከሰታቸው በፊት መከታተል።',
         objectivesEn: 'Build a Work Breakdown Structure and Gantt schedule; establish a budget baseline and track earned value.',
         objectivesAm: 'WBS እና Gantt መርሃግብር መገንባት፤ የበጀት መነሻ ማቋቋም እና Earned Value መከታተል።',
-        titleEn: 'Module 2: Work Breakdown Structures (WBS) & Schedule Management',
-        titleAm: 'ሞዱል 2፡ የስራ ዝርዝር መዋቅር (WBS) እና የመርሃግብር አስተዳደር',
-        descriptionEn: 'Decompose complex project deliverables into manageable work packages and establish critical path schedules.',
-        descriptionAm: 'ውስብስብ የፕሮጀክት ስራዎችን ወደ ተመጣጣኝ ፓኬጆች መከፋፈል እና ወሳኝ የመርሃግብር መስመሮችን ማዘጋጀት።',
-        objectivesEn: 'Construct a 100% rule WBS and apply the Critical Path Method (CPM) to project timelines.',
-        objectivesAm: 'የ100% ህግ WBS መገንባት እና የCritical Path ዘዴን በፕሮጀክት መርሃግብር ላይ መተግበር።',
         order: 1,
         attachment: pdf('Module 2 - Scheduling & Budgeting Toolkit.pdf'),
-        attachment: pdf('Module 2 - WBS & Scheduling Standard Guide.pdf'),
         assessment: {
           titleEn: 'Module 2 Knowledge Check: Scheduling & Budgeting',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ መርሃግብር እና በጀት',
-          titleEn: 'Module 2 Knowledge Check: WBS & Scheduling',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ WBS እና መርሃግብር',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -824,52 +719,31 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
             tf('proj-m2-q3', 'True or False: Delaying a task on the Critical Path delays the entire project.', 0, 'Scheduling'),
             mcq('proj-m2-q4', 'Earned Value Management compares which three values?', ['Planned Value, Earned Value, and Actual Cost', 'Employee count, office size, and vendor rating', 'Weather, holidays, and traffic', 'Logo color, font, and layout'], 0, 'Budgeting'),
             sa('proj-m2-q5', 'What chart visually displays task bars against a timeline to show a project schedule?', 'Gantt Chart', 'Scheduling'),
-            mcq('proj-m2-q1', 'What does the "100% Rule" in WBS design state?', ['A project must be 100% funded', 'The WBS must include 100% of the scope defined by the project and nothing more', 'All tasks must take 100 days', 'Every worker must give 100% overtime'], 1, 'WBS Rules'),
-            mcq('proj-m2-q2', 'What is the lowest level of a Work Breakdown Structure called?', ['Tasklet', 'Work Package', 'Activity fragment', 'Sub-clause'], 1, 'WBS Terminology'),
-            tf('proj-m2-q3', 'True or False: The Critical Path is the sequence of dependent activities that represents the longest path through the project.', 0, 'Critical Path'),
-            mcq('proj-m2-q4', 'If an activity on the critical path is delayed by 3 days, what happens to the project completion date?', ['Nothing, it absorbs the delay', 'The overall project completion date is delayed by 3 days', 'The project finishes early', 'The project budget doubles automatically'], 1, 'Critical Path'),
-            sa('proj-m2-q5', 'What term represents the amount of time an activity can be delayed without delaying the project finish date?', 'Float', 'Schedule Concepts'),
           ],
         },
         lessons: [
           {
             titleEn: '2.1 Work Breakdown Structures & Critical Path Scheduling',
             titleAm: '2.1 WBS እና የክሪቲካል ፓዝ መርሃግብር',
-            titleEn: '2.1 Constructing Deliverable-Oriented Work Breakdown Structures',
-            titleAm: '2.1 ውጤት ተኮር የስራ ዝርዝር መዋቅር (WBS) መገንባት',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
-            durationMinutes: 40,
             order: 0,
             contentEn: `## Decomposing the Work
 A Work Breakdown Structure (WBS) breaks the total project scope into progressively smaller, assignable work packages — following the "100% Rule": the sum of child items must equal 100% of the parent's scope, no more, no less.
-            contentEn: `## What is a Work Breakdown Structure?
-A WBS is a hierarchical decomposition of the total scope of work to be carried out by the project team to accomplish project objectives and create required deliverables.
 
 ## From WBS to Schedule
 1. Sequence work packages by dependency (which tasks must finish before others can start).
 2. Estimate duration for each package.
 3. Identify the **Critical Path**: the longest chain of dependent tasks — any delay here delays the whole project. Non-critical tasks have **float** (slack) and can shift without affecting the finish date.
-## The 100% Rule
-The WBS includes 100% of the work defined by the project scope and captures all deliverables — internal, external, and interim — in terms of work to be completed, including project management itself.
 
 ## Government Example
 In a multi-phase office rollout, "Network cabling" must finish before "IT equipment installation" can start — this dependency likely sits on the critical path, so it deserves the closest monitoring.`,
-## Work Package Characteristics
-- Distinct, verifiable output.
-- Assigned to a single organization unit or lead.
-- Realistic duration (typically between 8 and 80 working hours).
-- Can be independently budgeted and tracked.`,
             contentAm: `### ማጠቃለያ
 WBS ፕሮጀክቱን ወደ ትናንሽ ስራዎች ይከፋፍላል። Critical Path በጣም ረጅሙ የተግባር ሰንሰለት ሲሆን መዘግየቱ መላውን ፕሮጀክት ያዘገየዋል። ሌሎች ተግባራት float (ትርፍ ጊዜ) ሊኖራቸው ይችላል።`,
             attachment: pdf('Lesson 2.1 - WBS & Critical Path Guide.pdf'),
-WBS አጠቃላይ የፕሮጀክት ስራን በደረጃ የሚከፋፍል መዋቅር ነው። የ100% ህግ ስራዎችን በሙሉ ያጠቃልላል። የWork Package ቆይታ በአጠቃላይ ከ8 እስከ 80 ሰዓታት መሆን አለበት።`,
-            attachment: pdf('Lesson 2.1 - WBS Construction Manual.pdf'),
             assessment: {
               titleEn: 'Lesson 2.1 Check: WBS & Critical Path',
               titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ WBS እና ክሪቲካል ፓዝ',
-              titleEn: 'Lesson 2.1 Check: WBS Construction',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ የWBS ግንባታ',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -878,19 +752,12 @@ WBS አጠቃላይ የፕሮጀክት ስራን በደረጃ የሚከፋፍል
                 tf('proj-m2-l1-q3', 'True or False: Tasks on the Critical Path have zero float.', 0, 'Scheduling'),
                 mcq('proj-m2-l1-q4', 'In the office rollout example, why does "Network cabling before IT installation" matter for scheduling?', ['It is an irrelevant detail', 'It is a dependency that likely sits on the critical path', 'It has no effect on the finish date', 'It can be done in any order'], 1, 'Scheduling'),
                 sa('proj-m2-l1-q5', 'What term describes breaking total project scope into a hierarchy of smaller work packages?', 'Work Breakdown Structure', 'WBS'),
-                mcq('proj-m2-l1-q1', 'Which of the following is a deliverable-oriented WBS element rather than an action verb?', ['Install Cables', 'Cabling Infrastructure Completed', 'Running tests', 'Drafting emails'], 1, 'WBS Design'),
-                mcq('proj-m2-l1-q2', 'What is the recommended duration range for a standard work package (the 8/80 rule)?', ['1 to 2 minutes', 'Between 8 and 80 working hours', 'Exactly 1 year', '500 hours minimum'], 1, 'WBS Guidelines'),
-                tf('proj-m2-l1-q3', 'True or False: Project Management activities such as status reporting and reviews should be included in the WBS.', 0, '100% Rule'),
-                mcq('proj-m2-l1-q4', 'What document accompanies the WBS to provide detailed descriptions of each work package?', ['WBS Dictionary', 'Phone Directory', 'Tax Code Book', 'Hardware Warranty'], 0, 'WBS Documentation'),
-                sa('proj-m2-l1-q5', 'What companion document describes work packages, milestones, and acceptance criteria in detail?', 'WBS Dictionary', 'WBS Documentation'),
               ],
             },
             subLessons: [
               {
                 titleEn: 'Practical Lab: Building a Gantt Chart for a Multi-Phase Rollout',
                 titleAm: 'ተግባራዊ ላብ፡ ለባለብዙ ደረጃ ማስፋፊያ Gantt ገበታ መገንባት',
-                titleEn: 'Practical Lab: Decomposing a Branch Opening into Work Packages',
-                titleAm: 'ተግባራዊ ላብ፡ የቅርንጫፍ መክፈቻ ስራዎችን ወደ ፓኬጆች መከፋፈል',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
@@ -905,20 +772,12 @@ Your project has three phases: (1) Procurement of equipment — 20 days, (2) Net
 
 ## Deliverable
 A Gantt chart clearly showing the 45-day critical path and any parallel, non-critical activities.`,
-Decompose the opening of the "Hawassa Sub-City Tax Center" into a 3-level WBS:
-- Level 1: Hawassa Tax Center Opening
-- Level 2: 1.0 Facilities & Fit-out, 2.0 IT & Network, 3.0 Staffing & Training, 4.0 Public Launch, 5.0 Project Management
-- Level 3: Work packages under each Level 2 deliverable obeying the 100% rule and the 8/80 hour heuristic.`,
                 contentAm: `### የላብ ሁኔታ
 ሶስት ደረጃዎች ያሉት ፕሮጀክት፡ ግዥ (20 ቀናት)፣ የኔትወርክ ገመድ (15 ቀናት)፣ IT ጭነት (10 ቀናት)። Gantt ገበታ በመገንባት ጠቅላላ 45 የስራ ቀናት የክሪቲካል ፓዝ መሆኑን ማሳየት።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Gantt Chart Lab Data.pdf'),
-የሀዋሳ ታክስ ማዕከል መክፈቻን ወደ ሶስት ደረጃ WBS መከፋፈል እና የስራ ፓኬጆችን በ8/80 ሰዓት መመሪያ መሰረት ማዋቀር።`,
-                attachment: pdf('Sub-Lesson 2.1.1 - Branch Opening WBS Lab.pdf'),
                 assessment: {
                   titleEn: 'Sub-Lesson 2.1.1 Check: Gantt Chart Lab',
                   titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የGantt ገበታ ላብ',
-                  titleEn: 'Sub-Lesson 2.1.1 Check: WBS Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የWBS ላብ',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -927,11 +786,6 @@ Decompose the opening of the "Hawassa Sub-City Tax Center" into a 3-level WBS:
                     tf('proj-m2-l1-s1-q3', 'True or False: A Gantt chart displays one bar per task along a shared timeline.', 0, 'Gantt Charts'),
                     mcq('proj-m2-l1-s1-q4', 'Which task must finish before "IT installation" can start, per the lab scenario?', ['Procurement only', 'Network cabling', 'Nothing, it can start anytime', 'Budget approval'], 1, 'Dependencies'),
                     sa('proj-m2-l1-s1-q5', 'What visual marking distinguishes non-critical tasks with float on the Gantt chart in this lab?', 'A lighter color', 'Gantt Charts'),
-                    mcq('proj-m2-l1-s1-q1', 'Which of the following belongs under "2.0 IT & Network" in the lab?', ['Counter furniture installation', 'Server Rack & LAN Deployment', 'Staff uniform distribution', 'TV press conference'], 1, 'WBS Decomposition'),
-                    mcq('proj-m2-l1-s1-q2', 'Under the 100% rule, if Facilities comprises 4 sub-elements, their sum must equal:', ['Exactly the entire scope of the Facilities branch', 'Half the facilities scope', 'Double the budget', 'Whatever the contractor decides'], 0, '100% Rule'),
-                    tf('proj-m2-l1-s1-q3', 'True or False: Work packages should have objective acceptance criteria so completion is verifiable.', 0, 'Quality Control'),
-                    mcq('proj-m2-l1-s1-q4', 'Why is "Project Management" included as an explicit Level 2 item in the WBS?', ['To track management overhead and governance deliverables under the 100% rule', 'Because project managers do not do any work', 'To inflate project cost', 'It is an optional suggestion only'], 0, 'WBS Standards'),
-                    sa('proj-m2-l1-s1-q5', 'What rule requires that the sum of child work packages equals 100% of their parent node?', '100% Rule', 'WBS Principles'),
                   ],
                 },
               },
@@ -940,15 +794,11 @@ Decompose the opening of the "Hawassa Sub-City Tax Center" into a 3-level WBS:
           {
             titleEn: '2.2 Budget Baselines, Earned Value & Variance Tracking',
             titleAm: '2.2 የበጀት መነሻዎች፣ Earned Value እና የልዩነት ክትትል',
-            titleEn: '2.2 Critical Path Method (CPM) & Milestone Tracking',
-            titleAm: '2.2 ወሳኝ የመርሃግብር መስመር ዘዴ (CPM) እና የዋና ዋና ደረጃዎች ክትትል',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
             contentEn: `## Setting the Baseline
 Before spending begins, lock a **Budget Baseline** — the approved, time-phased spending plan. Every future comparison measures performance against this fixed reference.
-            contentEn: `## Finding the Longest Sequence
-Project schedules are networks of dependent activities. The Critical Path Method identifies which tasks directly dictate the overall finish date.
 
 ## Earned Value Management (EVM) Basics
 - **Planned Value (PV)**: budgeted cost of work scheduled to date.
@@ -956,27 +806,15 @@ Project schedules are networks of dependent activities. The Critical Path Method
 - **Actual Cost (AC)**: real money spent to date.
 - **Cost Variance (CV) = EV − AC**: negative means over budget.
 - **Schedule Variance (SV) = EV − PV**: negative means behind schedule.
-## Key Calculations
-- **Early Start (ES) / Early Finish (EF)**: calculated by the Forward Pass.
-- **Late Start (LS) / Late Finish (LF)**: calculated by the Backward Pass.
-- **Total Float (Slack)**: \`LS - ES\` or \`LF - EF\`.
-- Any activity with **Zero Float** is on the Critical Path.
 
 ## Reading the Signals
 If EV is far below both PV and AC, the project is simultaneously late and over budget — the clearest signal for an escalation to the sponsor before the gap widens further.`,
-## Schedule Compression Techniques
-1. **Crashing**: adding resources to critical path activities to shorten duration (increases cost).
-2. **Fast-Tracking**: performing activities in parallel that were originally planned in sequence (increases risk of rework).`,
             contentAm: `### ማጠቃለያ
 የበጀት መነሻ ከወጪ በፊት ይቆለፋል። Earned Value (EV) ከAC ሲቀነስ አሉታዊ ውጤት ከበጀት በላይ መሆኑን ያሳያል፤ ከPV ሲቀነስ አሉታዊ ውጤት ከመርሃግብር መዘግየትን ያሳያል።`,
             attachment: pdf('Lesson 2.2 - EVM Formula Reference.pdf'),
-CPM ረጅሙን የጥገኝነት መስመር ያሰላል። ዜሮ Float ያላቸው ስራዎች ወሳኝ መስመር (Critical Path) ላይ ይገኛሉ። Crashing ሀብት መጨመር ሲሆን Fast-Tracking ስራዎችን በትይዩ መስራትን ያመለክታል።`,
-            attachment: pdf('Lesson 2.2 - Critical Path & Schedule Tracking Guide.pdf'),
             assessment: {
               titleEn: 'Lesson 2.2 Check: Earned Value & Variance',
               titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ Earned Value እና ልዩነት',
-              titleEn: 'Lesson 2.2 Check: Critical Path Method',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የCPM ዘዴ',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -985,11 +823,6 @@ CPM ረጅሙን የጥገኝነት መስመር ያሰላል። ዜሮ Float �
                 tf('proj-m2-l2-q3', 'True or False: The Budget Baseline should be locked before spending begins so future performance can be measured against it.', 0, 'Budgeting'),
                 mcq('proj-m2-l2-q4', 'If Earned Value is far below both Planned Value and Actual Cost, what does this signal?', ['The project is ahead of schedule and under budget', 'The project is simultaneously late and over budget', 'Nothing significant', 'The project is complete'], 1, 'Earned Value'),
                 sa('proj-m2-l2-q5', 'What three-letter acronym represents the budgeted cost of work actually completed?', 'EV', 'Earned Value'),
-                mcq('proj-m2-l2-q1', 'What is the Total Float of an activity on the Critical Path?', ['Zero days', '10 days', 'Infinite days', 'Negative 5 days'], 0, 'Float Concept'),
-                mcq('proj-m2-l2-q2', 'What compression technique involves doing sequential tasks in parallel?', ['Fast-Tracking', 'Crashing', 'De-scoping', 'Padding'], 0, 'Schedule Compression'),
-                tf('proj-m2-l2-q3', 'True or False: "Crashing" an activity typically increases project cost by adding overtime or extra staff.', 0, 'Schedule Compression'),
-                mcq('proj-m2-l2-q4', 'Which calculation pass determines Early Start and Early Finish dates?', ['Forward Pass', 'Backward Pass', 'Lateral Pass', 'Auditor Pass'], 0, 'Network Calculation'),
-                sa('proj-m2-l2-q5', 'What schedule compression method adds resources to critical tasks to compress duration?', 'Crashing', 'Schedule Compression'),
               ],
             },
             subLessons: [
@@ -1036,62 +869,41 @@ Analyze a 7-activity network for an IT deployment:
     finalAssessment: {
       titleEn: 'Final Comprehensive Assessment: Project Management Certification',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የፕሮጀክት አስተዳደር ሰርተፊኬት ምዘና',
-      titleEn: 'Final Comprehensive Assessment: Public Sector Project Management',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የመንግስት ፕሮጀክት አስተዳደር ብቃት ምዘና',
       passingScore: 75,
       timeLimitMinutes: 35,
-      timeLimitMinutes: 30,
       questions: [
         mcq('proj-fn-q1', 'What document formally authorizes a project and names its sponsor?', ['Project Charter', 'Meeting agenda', 'Expense report', 'Training manual'], 0, 'Initiation'),
         mcq('proj-fn-q2', 'A Work Breakdown Structure (WBS) primarily helps a project manager do what?', ['Decompose project scope into manageable, assignable work packages', 'Calculate employee salaries', 'Approve vendor invoices', 'Design a logo'], 0, 'Scheduling'),
         tf('proj-fn-q3', 'True or False: The Critical Path is the sequence of tasks that determines the shortest possible project duration.', 0, 'Scheduling'),
         mcq('proj-fn-q4', 'Earned Value Management primarily tracks what?', ['Employee satisfaction scores', 'Budget and schedule performance against a baseline', 'Building temperature', 'Vendor marketing materials'], 1, 'Budgeting'),
         sa('proj-fn-q5', 'What matrix tool clarifies who is Responsible, Accountable, Consulted, and Informed for each task?', 'RACI', 'Stakeholder Management'),
-        mcq('proj-fn-q1', 'Which document formally authorizes a project and designates the project manager?', ['Project Charter', 'Invoice Voucher', 'Staff Evaluation Form', 'Attendance Log'], 0, 'Initiation'),
-        mcq('proj-fn-q2', 'In a RACI matrix, what is the key principle regarding the Accountable (A) role?', ['There must be exactly one Accountable individual per task', 'All team members share accountability', 'The external vendor is always Accountable', 'Accountability is never assigned'], 0, 'Governance'),
-        tf('proj-fn-q3', 'True or False: Tasks located on the Critical Path have zero float.', 0, 'Critical Path'),
-        mcq('proj-fn-q4', 'What heuristic guideline limits a work package duration to manageable bounds?', ['The 8/80 rule', 'The 100/500 rule', 'The 5-minute rule', 'The 1-year rule'], 0, 'WBS Standards'),
-        sa('proj-fn-q5', 'What schedule technique runs sequential activities simultaneously to accelerate completion?', 'Fast-Tracking', 'Schedule Management'),
       ],
     },
   },
 
   // ─────────────────────────────────────────────────────────
   // 3. REJECTED — Citizen Service Excellence & Front-Office Standards
-  // 3. REJECTED: Citizen Service Excellence & Taxpayer Engagement
   // ─────────────────────────────────────────────────────────
   {
     code: 'CSERV101',
     titleEn: 'Citizen Service Excellence & Front-Office Standards',
     titleAm: 'የዜጎች አገልግሎት ብቃት እና የፊት ለፊት ጽ/ቤት ደረጃዎች',
-    titleEn: 'Citizen Service Excellence & Taxpayer Engagement',
-    titleAm: 'የዜጎች አገልግሎት የላቀ ብቃት እና የግብር ከፋዮች ተሳትፎ',
     descriptionEn:
       'Front-office conduct, complaint de-escalation, multi-channel service etiquette, and service-level measurement for taxpayer-facing staff.',
     descriptionAm: 'የፊት ለፊት ጽ/ቤት ስነ-ስርዓት፣ ቅሬታ አፈታት፣ ባለብዙ ቻናል አገልግሎት እና የአገልግሎት ደረጃ መለኪያ ለግብር ከፋዮች አገልግሎት ሰጪ ሰራተኞች።',
-      'Front-line service standards, customer-first communication, de-escalation of difficult taxpayers, and service-level commitment monitoring.',
-    descriptionAm: 'የፊት ለፊት አገልግሎት ደረጃዎች፣ ደንበኛ-ተኮር ተግባቦት፣ የተበሳጩ ግብር ከፋዮችን ማረጋጋት እና የአገልግሎት ደረጃ ግዴታዎች ክትትል።',
     level: CourseLevel.BASIC,
     status: CourseStatus.REJECTED,
     estimatedHours: 14,
     category: 'Customer Service & Public Engagement',
-    estimatedHours: 16,
-    category: 'Public Administration & Ethics',
     department: 'Taxpayer Services Directorate',
     targetAudience: 'Front-desk officers, call center agents, and taxpayer service window staff',
     deliveryMethod: 'Self-paced e-learning with role-play scenario labs',
-    targetAudience: 'Counter staff, receptionist officers, customer care agents, and call center teams',
-    deliveryMethod: 'Interactive e-learning with simulated taxpayer dialogue exercises',
     objectivesEn:
       'Apply consistent greeting and queue-management standards, de-escalate frustrated taxpayers, maintain service etiquette across channels, and track SLA performance.',
     objectivesAm: 'ወጥ የሆነ የመቀበያ እና የተራ አስተዳደር ደረጃዎችን መተግበር፣ የተበሳጩ ግብር ከፋዮችን ማረጋጋት እና በSLA አፈጻጸምን መከታተል።',
     prerequisites: 'None',
-      'Execute professional greeting protocols, apply active listening and de-escalation techniques, and resolve taxpayer complaints within service commitments.',
-    objectivesAm: 'ሙያዊ የአቀባበል ስነ-ስርዓትን መፈጸም፣ የማዳመጥ እና የማረጋጋት ዘዴዎችን መተግበር እና በቅሬታዎች ላይ ፈጣን መፍትሄ መስጠት።',
-    prerequisites: 'None — mandatory orientation for all front-desk personnel',
     approvalComments:
       'Returned for revision: Module 2 lacks accessibility considerations for persons with disabilities, and the SLA benchmarks are not aligned with the 2026 Taxpayer Charter revision. Please update the response-time targets and resubmit for approval.',
-      'Module 2 practical exercises require additional localized scenarios specifically covering regional customs clearing branches before approval can be granted. Please update and resubmit.',
     modules: [
       {
         titleEn: 'Module 1: Front-Office Conduct & Service Standards',
@@ -1100,20 +912,11 @@ Analyze a 7-activity network for an IT deployment:
         descriptionAm: 'ከመጀመሪያው ሰላምታ እስከ ቅሬታ አፈታት ድረስ ያለውን የግብር ከፋይ ግንኙነት ድምጽ ማስቀመጥ።',
         objectivesEn: 'Apply standardized greeting and queue-management protocols; de-escalate frustrated taxpayers professionally.',
         objectivesAm: 'ወጥ የሆነ የመቀበያ እና የተራ አስተዳደር ደንቦችን መተግበር፤ የተበሳጩ ግብር ከፋዮችን በሙያዊ መንገድ ማረጋጋት።',
-        titleEn: 'Module 1: Front-Office Etiquette, Greeting Protocols & Queue Management',
-        titleAm: 'ሞዱል 1፡ የፊት ለፊት አገልግሎት ስነ-ስርዓት፣ የአቀባበል መመሪያ እና የተራ አስተዳደር',
-        descriptionEn: 'Establish immediate trust and reduce citizen frustration from the moment a taxpayer enters the branch.',
-        descriptionAm: 'ግብር ከፋዩ ወደ ቢሮ ከገባበት ቅጽበት ጀምሮ መተማመንን መገንባት እና ብስጭትን መቀነስ።',
-        objectivesEn: 'Apply the 30-second greeting rule and manage waiting area expectations effectively.',
-        objectivesAm: 'የ30 ሰከንድ አቀባበል ደንብን መተግበር እና የመጠባበቂያ አካባቢን በብቃት ማስተዳደር።',
         order: 0,
         attachment: pdf('Module 1 - Front-Office Standards Handbook.pdf'),
-        attachment: pdf('Module 1 - Front-Office Etiquette Standard.pdf'),
         assessment: {
           titleEn: 'Module 1 Knowledge Check: Front-Office Conduct',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ የፊት ለፊት ስነ-ስርዓት',
-          titleEn: 'Module 1 Knowledge Check: Etiquette & Queue Management',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ስነ-ስርዓት እና የተራ አስተዳደር',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1122,27 +925,17 @@ Analyze a 7-activity network for an IT deployment:
             tf('cserv-m1-q3', 'True or False: A visible, numbered queue system reduces perceived wait time and taxpayer frustration.', 0, 'Queue Management'),
             mcq('cserv-m1-q4', 'What should a front-office officer do if they cannot resolve a complaint themselves?', ['Ignore the complaint', 'Escalate it to a supervisor following the documented procedure', 'Tell the taxpayer to come back another day with no explanation', 'End the conversation abruptly'], 1, 'Escalation'),
             sa('cserv-m1-q5', 'What is the term for calming an upset taxpayer before addressing the substance of their issue?', 'De-escalation', 'De-escalation'),
-            mcq('cserv-m1-q1', 'What is the "30-second rule" in front-office service?', ['Citizens must leave within 30 seconds', 'Acknowledge an approaching taxpayer within 30 seconds even if finishing a task', 'Count to 30 before speaking', 'Take a 30-second break every hour'], 1, 'Etiquette'),
-            mcq('cserv-m1-q2', 'Which tone is most appropriate when addressing a taxpayer who seems confused by tax forms?', ['Impatient and loud', 'Empathetic, clear, and welcoming', 'Sarcastic', 'Completely silent'], 1, 'Communication'),
-            tf('cserv-m1-q3', 'True or False: Wearing the official Ministry identification badge visibly is mandatory for all front-office staff.', 0, 'Standards'),
-            mcq('cserv-m1-q4', 'What is the primary psychological cause of taxpayer frustration in queues?', ['The color of the walls', 'Uncertainty about wait times and perceived lack of fairness', 'Air conditioning temperature', 'Music selection'], 1, 'Queue Psychology'),
-            sa('cserv-m1-q5', 'Within how many seconds should an officer acknowledge a taxpayer approaching the service counter?', '30 seconds', 'Standards'),
           ],
         },
         lessons: [
           {
             titleEn: '1.1 Greeting Protocols, Queue Management & First Impressions',
             titleAm: '1.1 የመቀበያ ደንቦች፣ የተራ አስተዳደር እና የመጀመሪያ ስሜት',
-            titleEn: '1.1 Professional Greeting Standards & In-Person Reception',
-            titleAm: '1.1 ሙያዊ የአቀባበል ደረጃዎች እና በአካል መቀበያ',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
-            durationMinutes: 30,
             order: 0,
             contentEn: `## The First Seven Seconds
 Taxpayers form an impression of the entire institution within the first seconds of an interaction. A consistent greeting protocol makes that impression positive regardless of who is on duty.
-            contentEn: `## First Impressions in Public Service
-Every interaction between a citizen and a revenue officer shapes public trust in government institutions. A standardized greeting protocol ensures every taxpayer receives respectful, consistent service.
 
 ## Standard Greeting Sequence
 1. Make eye contact and smile before the taxpayer finishes approaching.
@@ -1153,21 +946,12 @@ Every interaction between a citizen and a revenue officer shapes public trust in
 - Use a visible, numbered ticketing system so taxpayers can see their position without asking.
 - Display estimated wait times where possible — uncertainty, not the wait itself, is what drives frustration.
 - Rotate staff breaks so the number of open windows never drops during peak hours (typically 9:00–11:00 AM).`,
-## The Standard Greeting Sequence
-1. **Eye Contact & Smile**: acknowledge the person immediately.
-2. **Institutional Greeting**: "Good morning/afternoon, welcome to the Ministry of Revenues."
-3. **Identification**: "My name is [Name], how may I assist you today?"
-4. **Active Listening**: allow the taxpayer to explain their inquiry without interruption.`,
             contentAm: `### ማጠቃለያ
 ወጥ የሆነ የመቀበያ ደንብ በማን ላይ ቢሆን አዎንታዊ ስሜት ይፈጥራል። የሚታይ የተራ ቁጥር ስርዓት እና የሚጠበቅ የጥበቃ ጊዜ ማሳየት ብስጭትን ይቀንሳል።`,
             attachment: pdf('Lesson 1.1 - Greeting & Queue Protocol Guide.pdf'),
-የመጀመሪያ እይታ የመንግስት እምነትን ይገነባል። የዓይን ግንኙነት ማድረግ፣ ተቋማዊ ሰላምታ መስጠት፣ ራስን ማስተዋወቅ እና ያለምንም ማቋረጥ ማዳመጥ መሰረታዊ ናቸው።`,
-            attachment: pdf('Lesson 1.1 - Reception Protocols Handbook.pdf'),
             assessment: {
               titleEn: 'Lesson 1.1 Check: Greeting & Queue Management',
               titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ መቀበያ እና የተራ አስተዳደር',
-              titleEn: 'Lesson 1.1 Check: Greeting Standards',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ የአቀባበል ደረጃዎች',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1231,7 +1015,6 @@ A complaint is an opportunity to correct a process failure before it affects mor
 
 ## When to Escalate
 Escalate immediately if the taxpayer requests a supervisor, if the issue involves a policy exception, or if de-escalation attempts have failed twice — do not let an interaction continue indefinitely without bringing in a supervisor.`,
-Escalate immediately if the taxpayer requests a supervisor, if the issue involves a policy exception, or if de-escalation attempts have failed twice.`,
             contentAm: `### ማጠቃለያ
 ቅሬታ የሂደት ችግርን ለማረም እድል ነው። ማወቅ፣ ማብራራት፣ እርምጃ መውሰድ እና መመዝገብ የቅሬታ አያያዝ ደረጃዎች ናቸው። ሁለት ጊዜ ማረጋጋት ካልተሳካ ወደ ሀላፊ ማስተላለፍ ያስፈልጋል።`,
             attachment: pdf('Lesson 1.2 - Complaint Handling Procedure.pdf'),
@@ -1312,7 +1095,6 @@ A business taxpayer demands to see the branch manager immediately after being as
             order: 0,
             contentEn: `## One Standard, Many Channels
 Taxpayers expect the same professionalism whether they walk in, call, email, or use a self-service kiosk. Each channel has specific etiquette rules that support that consistency.
-Taxpayers expect the same professionalism whether they walk in, call, email, or use a self-service kiosk.
 
 ## Phone
 - Answer within 3 rings; state your name, directorate, and a greeting.
@@ -1394,7 +1176,6 @@ Service quality that is not measured cannot be improved. Three metrics keep fron
 
 ## Using the Data
 Review SLA and CSAT trends monthly with the team — a single missed target is noise, but a declining trend over three consecutive months signals a process problem that needs a root-cause review, not just individual coaching.`,
-Review SLA and CSAT trends monthly with the team — a declining trend over three consecutive months signals a process problem that needs a root-cause review, not just individual coaching.`,
             contentAm: `### ማጠቃለያ
 SLA የተቀመጠ ግዴታ ነው (ለምሳሌ 90% ግብይቶች በ10 ደቂቃ ውስጥ)። CSAT የግብር ከፋይ እርካታን ይለካል። ወርሃዊ አዝማሚያ መገምገም የሂደት ችግርን አስቀድሞ ለመለየት ይረዳል።`,
             attachment: pdf('Lesson 2.2 - Service Metrics Handbook.pdf'),
@@ -2486,36 +2267,6 @@ async function main() {
                 uploadedById: ownerId,
               },
             });
-
-            // Sub-lesson Assessment
-            await prisma.assessment.create({
-              data: {
-                courseId: course.id,
-                moduleId: createdMod.id,
-                lessonId: createdSub.id,
-                type: AssessmentType.SUB_LESSON_ASSESSMENT,
-                titleEn: sub.assessment.titleEn,
-                titleAm: sub.assessment.titleAm,
-                passingScore: sub.assessment.passingScore,
-                timeLimitMinutes: sub.assessment.timeLimitMinutes,
-                questions: sub.assessment.questions as unknown as Prisma.InputJsonValue,
-              },
-            });
-
-            for (const q of sub.assessment.questions) {
-              await prisma.questionBankQuestion.create({
-                data: {
-                  courseId: course.id,
-                  createdById: ownerId,
-                  type: q.type === 'MULTIPLE_CHOICE' ? QuestionType.MULTIPLE_CHOICE : q.type === 'TRUE_FALSE' ? QuestionType.TRUE_FALSE : QuestionType.SHORT_ANSWER,
-                  question: q.question,
-                  options: q.options,
-                  correctAnswer: q.correctAnswer !== null ? String(q.correctAnswer) : null,
-                  points: q.points,
-                  category: q.category || 'Lab Check',
-                },
-              });
-            }
           }
         }
       }

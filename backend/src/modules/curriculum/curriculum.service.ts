@@ -209,10 +209,6 @@ export class CurriculumService {
               orderBy: { order: 'asc' },
               include: {
                 attachments: true,
-                assessments: {
-                  where: { type: 'SUB_LESSON_ASSESSMENT' },
-                  include: { attempts: true },
-                },
               },
             },
           },
@@ -244,10 +240,6 @@ export class CurriculumService {
               orderBy: { order: 'asc' },
               include: {
                 attachments: true,
-                assessments: {
-                  where: { type: 'SUB_LESSON_ASSESSMENT' },
-                  include: { attempts: true },
-                },
               },
             },
           },
@@ -450,7 +442,7 @@ export class CurriculumService {
         attachments: true,
         assessments: {
           where: {
-            type: { in: ['LESSON_ASSESSMENT', 'SUB_LESSON_ASSESSMENT'] },
+            type: 'LESSON_ASSESSMENT',
           },
           include: { attempts: true },
         },
@@ -460,10 +452,6 @@ export class CurriculumService {
           orderBy: { order: 'asc' },
           include: {
             attachments: true,
-            assessments: {
-              where: { type: 'SUB_LESSON_ASSESSMENT' },
-              include: { attempts: true },
-            },
           },
         },
         module: {

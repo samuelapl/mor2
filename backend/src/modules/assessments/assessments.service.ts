@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AssessmentType,
   CourseStatus,
@@ -118,7 +118,7 @@ export class AssessmentsService {
     const assessments = await this.prisma.assessment.findMany({
       where: {
         lessonId,
-        type: { in: [AssessmentType.LESSON_ASSESSMENT, AssessmentType.SUB_LESSON_ASSESSMENT] },
+        type: AssessmentType.LESSON_ASSESSMENT,
       },
       orderBy: { createdAt: 'asc' },
       include: assessmentInclude,
@@ -244,7 +244,7 @@ export class AssessmentsService {
     });
   }
 
-  /** Lesson / sub-lesson assessment. The lesson's parentId determines the type. */
+  /** Lesson assessment. Only parent lessons can have assessments. */
   async createForLesson(
     courseId: string,
     moduleId: string,
@@ -254,9 +254,13 @@ export class AssessmentsService {
     await this.assertCourseEditable(courseId);
     const lesson = await this.assertLessonInModule(moduleId, lessonId);
 
-    const type = lesson.parentId
-      ? AssessmentType.SUB_LESSON_ASSESSMENT
-      : AssessmentType.LESSON_ASSESSMENT;
+    if (lesson.parentId) {
+      throw new BadRequestException(
+        'Sub-lessons cannot have assessments. Assessments are only supported at lesson, module, and course final levels.',
+      );
+    }
+
+    const type = AssessmentType.LESSON_ASSESSMENT;
 
     const existing = await this.prisma.assessment.findFirst({
       where: { lessonId, type },
@@ -348,8 +352,7 @@ export class AssessmentsService {
     }
 
     if (
-      (assessment.type === AssessmentType.LESSON_ASSESSMENT ||
-        assessment.type === AssessmentType.SUB_LESSON_ASSESSMENT) &&
+      assessment.type === AssessmentType.LESSON_ASSESSMENT &&
       assessment.lessonId
     ) {
       if (!(lessonUnlocked.get(assessment.lessonId) ?? false)) {
@@ -584,8 +587,7 @@ export class AssessmentsService {
           await this.progressService.maybeCompleteModule(userId, assessment.moduleId);
         }
         if (
-          (assessment.type === AssessmentType.LESSON_ASSESSMENT ||
-            assessment.type === AssessmentType.SUB_LESSON_ASSESSMENT) &&
+          assessment.type === AssessmentType.LESSON_ASSESSMENT &&
           assessment.lessonId &&
           assessment.moduleId
         ) {

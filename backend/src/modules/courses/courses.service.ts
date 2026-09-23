@@ -149,11 +149,19 @@ export class CoursesService {
           orderBy: { order: 'asc' },
           include: {
             attachments: true,
+            assessments: {
+              where: { type: 'MODULE_ASSESSMENT' },
+              select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
+            },
             lessons: {
               where: { deletedAt: null, parentId: null },
               orderBy: { order: 'asc' },
               include: {
                 attachments: true,
+                assessments: {
+                  where: { type: 'LESSON_ASSESSMENT' },
+                  select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
+                },
                 subLessons: {
                   where: { deletedAt: null },
                   orderBy: { order: 'asc' },
@@ -162,6 +170,10 @@ export class CoursesService {
               },
             },
           },
+        },
+        assessments: {
+          where: { type: 'FINAL_ASSESSMENT' },
+          select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
         },
         attachments: true,
       },

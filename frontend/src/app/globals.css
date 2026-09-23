@@ -104,7 +104,7 @@
 
   /* Allow-listed rich lesson content */
   .rich-content {
-    @apply text-sm leading-relaxed text-slate-700;
+    @apply text-[15px] sm:text-base leading-relaxed text-slate-800;
   }
 
   .rich-content p {
@@ -127,23 +127,23 @@
   .rich-content h2,
   .rich-content h3,
   .rich-content h4 {
-    @apply mb-1.5 mt-3 font-semibold text-slate-800;
+    @apply mb-2 mt-4 font-semibold text-slate-900;
   }
 
   .rich-content h1 {
-    @apply text-lg;
+    @apply text-xl font-bold;
   }
 
   .rich-content h2 {
-    @apply text-base;
+    @apply text-lg font-bold;
   }
 
   .rich-content h3 {
-    @apply text-sm;
+    @apply text-base font-semibold;
   }
 
   .rich-content h4 {
-    @apply text-sm;
+    @apply text-[15px] font-semibold;
   }
 
   .rich-content b,

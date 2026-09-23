@@ -54,4 +54,56 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
 
     expect(moduleUnlocked.get('m2')).toBe(true);
   });
+
+  it('keeps lesson 2 locked if lesson 1 has an unpassed assessment, even if sub-lessons are completed', () => {
+    const testModules: ModuleUnlockRow[] = [
+      {
+        id: 'm1',
+        order: 1,
+        lessons: [
+          {
+            id: 'l1',
+            order: 1,
+            subLessons: [{ id: 's1', order: 1 }, { id: 's2', order: 2 }],
+            hasAssessment: true,
+            assessmentPassed: false,
+          },
+          { id: 'l2', order: 2 },
+        ],
+      },
+    ];
+
+    const lessonCompletions = new Set(['s1', 's2']); // all sub-lessons done, but quiz NOT passed
+    const { lessonUnlocked } = computeSequentialUnlocks(testModules, new Map([['m1', false]]), lessonCompletions);
+
+    expect(lessonUnlocked.get('l1')).toBe(true);
+    expect(lessonUnlocked.get('s1')).toBe(true);
+    expect(lessonUnlocked.get('s2')).toBe(true);
+    expect(lessonUnlocked.get('l2')).toBe(false); // Lesson 2 must stay locked!
+  });
+
+  it('unlocks lesson 2 once lesson 1 assessment is passed', () => {
+    const testModules: ModuleUnlockRow[] = [
+      {
+        id: 'm1',
+        order: 1,
+        lessons: [
+          {
+            id: 'l1',
+            order: 1,
+            subLessons: [{ id: 's1', order: 1 }, { id: 's2', order: 2 }],
+            hasAssessment: true,
+            assessmentPassed: true,
+          },
+          { id: 'l2', order: 2 },
+        ],
+      },
+    ];
+
+    const lessonCompletions = new Set(['s1', 's2']);
+    const { lessonUnlocked } = computeSequentialUnlocks(testModules, new Map([['m1', false]]), lessonCompletions);
+
+    expect(lessonUnlocked.get('l1')).toBe(true);
+    expect(lessonUnlocked.get('l2')).toBe(true); // Lesson 2 unlocks!
+  });
 });

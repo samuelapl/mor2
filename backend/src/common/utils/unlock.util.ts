@@ -20,6 +20,8 @@ export interface LessonUnlockRow {
   id: string;
   order: number;
   subLessons?: SubLessonUnlockRow[];
+  hasAssessment?: boolean;
+  assessmentPassed?: boolean;
 }
 
 export interface ModuleUnlockRow {
@@ -40,11 +42,25 @@ export function computeSequentialUnlocks(
   const lessonUnlocked = new Map<string, boolean>();
 
   const isLessonComplete = (l: LessonUnlockRow): boolean => {
-    if (lessonCompletions.has(l.id)) return true;
-    if (l.subLessons && l.subLessons.length > 0) {
-      return l.subLessons.every((s) => lessonCompletions.has(s.id));
+    // If the lesson has an assessment, it MUST be passed to be considered complete
+    if (l.hasAssessment && !l.assessmentPassed) {
+      return false;
     }
-    return false;
+
+    if (l.subLessons && l.subLessons.length > 0) {
+      const allSubsDone = l.subLessons.every((s) => lessonCompletions.has(s.id));
+      if (!allSubsDone) return false;
+      if (l.hasAssessment) {
+        return l.assessmentPassed === true;
+      }
+      return true;
+    }
+
+    if (l.hasAssessment) {
+      return l.assessmentPassed === true && lessonCompletions.has(l.id);
+    }
+
+    return lessonCompletions.has(l.id);
   };
 
   // `ModuleCompletion` is authoritative (it also captures the module's time
