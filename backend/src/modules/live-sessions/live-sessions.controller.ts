@@ -151,6 +151,14 @@ export class LiveSessionsController {
     return this.liveSessionsService.submitQuizResponse(id, user, dto);
   }
 
+  @Get('live-sessions/:id/quiz-report')
+  @Permissions('live_session.manage_all', 'live_session.manage_own', 'attendance.view')
+  @ApiOperation({ summary: 'Get live quiz and poll response report for a session' })
+  @ApiParam({ name: 'id', type: String })
+  async getQuizReport(@Param('id') id: string) {
+    return this.liveSessionsService.getLiveQuizReport(id);
+  }
+
   @Post('courses/:courseId/live-sessions')
   @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Schedule a live session for a course' })

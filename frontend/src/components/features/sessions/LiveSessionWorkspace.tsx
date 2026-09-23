@@ -17,6 +17,7 @@ import {
   Mic,
   MicOff,
   Minimize2,
+  MonitorPlay,
   PhoneOff,
   Radio,
   RefreshCw,
@@ -60,6 +61,8 @@ import { useLiveKitDataChannel } from "@/hooks/useLiveKitDataChannel";
 import type {
   LiveKitDataEvent,
   LiveQuizOption,
+  LiveQuizPayload,
+  LiveQuizRevealPayload,
   RaisedHandEntry,
 } from "@/types/livekit-events";
 import { LiveQuizTrainerControl } from "./interactive/LiveQuizTrainerControl";
@@ -91,6 +94,9 @@ interface LiveKitInteractiveLayerProps {
   isStaff: boolean;
   trainerQuizModalOpen: boolean;
   setTrainerQuizModalOpen: (open: boolean) => void;
+  courseTitle?: string;
+  courseCode?: string;
+  attendees?: any[];
 }
 
 function LiveKitInteractiveLayer({
@@ -100,7 +106,13 @@ function LiveKitInteractiveLayer({
   isStaff,
   trainerQuizModalOpen,
   setTrainerQuizModalOpen,
+  courseTitle: propCourseTitle,
+  courseCode: propCourseCode,
+  attendees = [],
 }: LiveKitInteractiveLayerProps) {
+  const courseTitle = propCourseTitle || session.course?.titleEn || session.course?.titleAm || "";
+  const courseCode = propCourseCode || session.course?.code || "";
+
   const currentUserId = String(currentUser?.id || "guest");
   const currentUserName =
     currentUser?.name ||
@@ -108,30 +120,42 @@ function LiveKitInteractiveLayer({
     (isStaff ? "Trainer" : "Learner");
 
   // Quiz state
-  const [activeQuiz, setActiveQuiz] = useState<{
-    id: string;
-    titleEn: string;
-    titleAm?: string;
-    type?: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE";
-    options: LiveQuizOption[];
-    timeLimitSeconds: number;
-    startedAt: number;
-    trainerName?: string;
-    correctOptionIds?: string[];
-    explanationEn?: string;
-  } | null>(null);
-
-  const [revealData, setRevealData] = useState<{
-    correctOptionIds: string[];
-    explanationEn?: string;
-    explanationAm?: string;
-    distribution: Record<string, number>;
-    totalResponses: number;
-  } | null>(null);
+  const [activeQuiz, setActiveQuiz] = useState<LiveQuizPayload | null>(null);
 
   const [answers, setAnswers] = useState<
-    Record<string, { userId: string; userName: string; selectedOptionIds: string[] }>
+    Record<
+      string,
+      {
+        userId: string;
+        userName: string;
+        selectedOptionIds: string[];
+        submittedAt?: number;
+        responseDurationSeconds?: number;
+      }
+    >
   >({});
+
+  const [revealData, setRevealData] = useState<LiveQuizRevealPayload | null>(null);
+  const [revealsByQuestionId, setRevealsByQuestionId] = useState<Record<string, LiveQuizRevealPayload>>({});
+  const [learnerDismissed, setLearnerDismissed] = useState(false);
+
+  const [quizHistory, setQuizHistory] = useState<
+    Array<{
+      quiz: LiveQuizPayload;
+      answers: Record<
+        string,
+        {
+          userId: string;
+          userName: string;
+          selectedOptionIds: string[];
+          submittedAt?: number;
+          responseDurationSeconds?: number;
+        }
+      >;
+      revealData?: LiveQuizRevealPayload | null;
+      completedAt: number;
+    }>
+  >([]);
 
   // Hand raise state
   const [raisedHands, setRaisedHands] = useState<RaisedHandEntry[]>([]);
@@ -142,9 +166,25 @@ function LiveKitInteractiveLayer({
     (event: LiveKitDataEvent) => {
       switch (event.type) {
         case "QUIZ_START":
-          setActiveQuiz(event.payload);
+          setLearnerDismissed(false);
+          setActiveQuiz((currentActive) => {
+            if (currentActive) {
+              setAnswers((currentAnswers) => {
+                setQuizHistory((prev) => [
+                  ...prev.filter((h) => h.quiz.id !== currentActive.id),
+                  {
+                    quiz: currentActive,
+                    answers: currentAnswers,
+                    revealData: revealsByQuestionId[currentActive.id] || revealData,
+                    completedAt: Date.now(),
+                  },
+                ]);
+                return {};
+              });
+            }
+            return event.payload;
+          });
           setRevealData(null);
-          setAnswers({});
           break;
         case "QUIZ_ANSWER":
           setAnswers((prev) => ({
@@ -153,16 +193,73 @@ function LiveKitInteractiveLayer({
               userId: event.payload.userId,
               userName: event.payload.userName,
               selectedOptionIds: event.payload.selectedOptionIds,
+              submittedAt: event.payload.submittedAt,
+              responseDurationSeconds: event.payload.responseDurationSeconds,
             },
           }));
           break;
         case "QUIZ_REVEAL":
           setRevealData(event.payload);
+          setRevealsByQuestionId((prev) => {
+            const next = {
+              ...prev,
+              [event.payload.questionId]: event.payload,
+            };
+            if (event.payload.allReveals) {
+              Object.entries(event.payload.allReveals).forEach(([qId, rev]) => {
+                next[qId] = {
+                  questionId: qId,
+                  correctOptionIds: rev.correctOptionIds,
+                  explanationEn: rev.explanationEn,
+                  explanationAm: rev.explanationAm,
+                  distribution: rev.distribution || {},
+                  totalResponses: rev.totalResponses || 0,
+                };
+              });
+            }
+            return next;
+          });
+          setQuizHistory((prev) =>
+            prev.map((h) => {
+              if (h.quiz.id === event.payload.questionId) {
+                return { ...h, revealData: event.payload };
+              }
+              if (event.payload.allReveals && event.payload.allReveals[h.quiz.id]) {
+                const rev = event.payload.allReveals[h.quiz.id];
+                return {
+                  ...h,
+                  revealData: {
+                    questionId: h.quiz.id,
+                    correctOptionIds: rev.correctOptionIds || h.quiz.correctOptionIds || ["0"],
+                    explanationEn: rev.explanationEn || h.quiz.explanationEn,
+                    explanationAm: rev.explanationAm || h.quiz.explanationAm,
+                    distribution: rev.distribution || {},
+                    totalResponses: rev.totalResponses || 0,
+                  },
+                };
+              }
+              return h;
+            })
+          );
           break;
         case "QUIZ_CLOSE":
-          setActiveQuiz(null);
-          setRevealData(null);
-          setAnswers({});
+          setActiveQuiz((currentActive) => {
+            if (currentActive) {
+              setAnswers((currentAnswers) => {
+                setQuizHistory((prev) => [
+                  ...prev.filter((h) => h.quiz.id !== currentActive.id),
+                  {
+                    quiz: currentActive,
+                    answers: currentAnswers,
+                    revealData: revealsByQuestionId[currentActive.id] || revealData,
+                    completedAt: Date.now(),
+                  },
+                ]);
+                return {};
+              });
+            }
+            return null;
+          });
           break;
         case "HAND_RAISE":
           if (event.payload.raised) {
@@ -302,19 +399,25 @@ function LiveKitInteractiveLayer({
         </div>
       )}
 
-      {/* Learner Interactive Quiz Overlay (appears over video when active) */}
-      {!isStaff && activeQuiz && (
+      {/* Learner Interactive Quiz Overlay (appears over video when active or in review) */}
+      {!isStaff && !learnerDismissed && (Boolean(activeQuiz) || quizHistory.length > 0) && (
         <LiveQuizLearnerOverlay
           sessionId={session.id}
           userId={currentUserId}
           userName={currentUserName}
-          quiz={{
-            ...activeQuiz,
-            type: activeQuiz.type || "SINGLE_CHOICE",
-          }}
+          quiz={
+            activeQuiz
+              ? {
+                  ...activeQuiz,
+                  type: activeQuiz.type || "SINGLE_CHOICE",
+                }
+              : null
+          }
+          quizHistory={quizHistory}
           revealData={revealData}
-          onBroadcast={broadcast}
-          onDismiss={() => setActiveQuiz(null)}
+          revealsByQuestionId={revealsByQuestionId}
+          onBroadcast={handleBroadcast}
+          onDismiss={() => setLearnerDismissed(true)}
         />
       )}
 
@@ -323,12 +426,22 @@ function LiveKitInteractiveLayer({
         <LiveQuizTrainerControl
           open={trainerQuizModalOpen}
           onClose={() => setTrainerQuizModalOpen(false)}
+          sessionId={session.id}
           courseId={session.courseId}
+          course={session.course || (courseTitle ? { id: session.courseId, titleEn: courseTitle, titleAm: "", code: courseCode } : undefined)}
           trainerName={trainerName || currentUserName}
           onBroadcast={handleBroadcast}
           activeQuiz={activeQuiz}
           answers={answers}
+          quizHistory={quizHistory}
+          attendees={attendees}
           onClearQuiz={() => {
+            if (activeQuiz) {
+              setQuizHistory((prev) => [
+                ...prev.filter((h) => h.quiz.id !== activeQuiz.id),
+                { quiz: activeQuiz, answers, completedAt: Date.now() },
+              ]);
+            }
             setActiveQuiz(null);
             setRevealData(null);
             setAnswers({});
@@ -365,6 +478,7 @@ export function LiveSessionWorkspace({
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [standardModeFallback, setStandardModeFallback] = useState(false);
 
   // LiveKit token state (only populated when session.platform === "LIVEKIT")
   const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
@@ -469,8 +583,11 @@ export function LiveSessionWorkspace({
               setLiveKitToken(tkRes.token);
               if (tkRes.wsUrl) setLiveKitWsUrl(tkRes.wsUrl);
             }
-          } catch (tkErr) {
-            if (!cancelled) setError("Could not obtain LiveKit access token. Please refresh.");
+          } catch (tkErr: any) {
+            if (!cancelled) {
+              const msg = tkErr?.message || "Could not obtain LiveKit access token.";
+              setError(msg);
+            }
           }
         } else {
           // Fetch join URL for external/embedded fallback
@@ -852,32 +969,58 @@ export function LiveSessionWorkspace({
                     isStaff={isTrainerOrStaff}
                     trainerQuizModalOpen={trainerQuizModalOpen}
                     setTrainerQuizModalOpen={setTrainerQuizModalOpen}
+                    courseTitle={courseTitle}
+                    courseCode={courseCode}
+                    attendees={attendees}
                   />
                 </LiveKitRoom>
               </div>
-            ) : isLiveKitSession && !liveKitToken ? (
-              /* LiveKit token unavailable — show error state */
+            ) : isLiveKitSession && !liveKitToken && !standardModeFallback ? (
+              /* LiveKit token unavailable — show error state with retry and fallback */
               <div className="flex flex-1 flex-col items-center justify-center gap-4 text-slate-400 p-6">
-                <AlertCircle className="h-10 w-10 text-red-400" />
-                <p className="text-sm font-semibold text-slate-200">Unable to connect to the LiveKit room</p>
-                <p className="text-xs text-center text-slate-400 max-w-sm">
-                  {error || "Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course."}
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setLoading(true);
-                    fetchLiveKitToken(session.id)
-                      .then((r) => { setLiveKitToken(r.token); if (r.wsUrl) setLiveKitWsUrl(r.wsUrl); setError(null); })
-                      .catch(() => setError("Token fetch failed. Please try again."))
-                      .finally(() => setLoading(false));
-                  }}
-                  className="gap-1.5 border-slate-600 text-slate-300 hover:bg-slate-800"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Retry Connection
-                </Button>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-base font-bold text-slate-100">Live Classroom Room Access</p>
+                  <p className="text-xs text-center text-slate-400 max-w-md">
+                    {error || "Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setLoading(true);
+                      fetchLiveKitToken(session.id)
+                        .then((r) => {
+                          setLiveKitToken(r.token);
+                          if (r.wsUrl) setLiveKitWsUrl(r.wsUrl);
+                          setError(null);
+                        })
+                        .catch((err: any) => {
+                          setError(err?.message || "Token fetch failed. Please try again.");
+                        })
+                        .finally(() => setLoading(false));
+                    }}
+                    className="gap-1.5 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Retry Connection
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setStandardModeFallback(true);
+                      setError(null);
+                    }}
+                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
+                  >
+                    <MonitorPlay className="h-3.5 w-3.5" />
+                    Continue in Standard Classroom
+                  </Button>
+                </div>
               </div>
             ) : conferenceMode === "embedded" && joinUrl ? (
               /* Embedded Jitsi/External Frame - 100% full screen with full native controls */

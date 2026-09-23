@@ -131,6 +131,8 @@ export interface Course {
   id: string;
   code: string;
   title: string;
+  titleEn?: string;
+  titleAm?: string;
   category: string;
   department?: string;
   targetAudience?: string;

@@ -315,6 +315,7 @@ model CurriculumModule {
   completions ModuleCompletion[]
   attachments Attachment[]
   assessments Assessment[]
+  questionBankQuestions QuestionBankQuestion[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -345,6 +346,9 @@ model Lesson {
 
   parent      Lesson?  @relation("LessonToSubLessons", fields: [parentId], references: [id], onDelete: Cascade)
   subLessons  Lesson[] @relation("LessonToSubLessons")
+
+  questionBankQuestions    QuestionBankQuestion[] @relation("QuestionBankLesson")
+  questionBankSubQuestions QuestionBankQuestion[] @relation("QuestionBankSubLesson")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -534,6 +538,9 @@ enum QuestionType {
 model QuestionBankQuestion {
   id            String       @id @default(uuid())
   courseId      String?      @map("course_id")
+  moduleId      String?      @map("module_id")
+  lessonId      String?      @map("lesson_id")
+  subLessonId   String?      @map("sub_lesson_id")
   createdById   String       @map("created_by_id")
   type          QuestionType @map("type")
   question      String       @db.Text
@@ -544,10 +551,16 @@ model QuestionBankQuestion {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  course        Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  course        Course?            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module        CurriculumModule?  @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  lesson        Lesson?            @relation("QuestionBankLesson", fields: [lessonId], references: [id], onDelete: SetNull)
+  subLesson     Lesson?            @relation("QuestionBankSubLesson", fields: [subLessonId], references: [id], onDelete: SetNull)
+  createdBy     User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+  @@index([moduleId])
+  @@index([lessonId])
+  @@index([subLessonId])
   @@index([createdById])
   @@map("question_bank_questions")
 }

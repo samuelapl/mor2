@@ -10,6 +10,7 @@ import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ApiError } from "@/lib/api/client";
 import { updateLiveSession } from "@/lib/api/monitoring";
 import { fetchTrainers } from "@/lib/api/users";
+import { SearchableTrainerSelect } from "./SearchableTrainerSelect";
 
 interface EditSessionModalProps {
   open: boolean;
@@ -189,8 +190,8 @@ export function EditSessionModal({
             </span>
           </div>
 
-          {/* Assigned Trainer Selection */}
-          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2">
+          {/* Searchable Assigned Trainer Selection */}
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                 <UserCheck className="h-4 w-4 text-indigo-600" />
@@ -205,30 +206,13 @@ export function EditSessionModal({
               ) : null}
             </div>
 
-            <select
-              required
+            <SearchableTrainerSelect
+              trainers={availableTrainers}
+              courseTrainers={courseTrainers}
               value={trainerId}
-              onChange={(event) => setTrainerId(event.target.value)}
-              className="w-full rounded-xl border border-indigo-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-xs outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
-            >
-              <option value="">Select Trainer to Lead this Session…</option>
-              {courseTrainers.length > 0 && (
-                <optgroup label="── Recommended: Assigned Course Trainers ──">
-                  {courseTrainers.map((trainer) => (
-                    <option key={trainer.id} value={trainer.id}>
-                      ⭐ {trainer.firstName} {trainer.lastName} ({trainer.email}) — Course Trainer
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              <optgroup label="── All LMS Qualified Trainers ──">
-                {otherTrainers.map((trainer) => (
-                  <option key={trainer.id} value={trainer.id}>
-                    👤 {trainer.firstName} {trainer.lastName} ({trainer.email})
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+              onChange={setTrainerId}
+              loading={trainersLoading}
+            />
           </div>
 
           <div>

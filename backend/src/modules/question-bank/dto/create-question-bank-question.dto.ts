@@ -8,6 +8,21 @@ export class CreateQuestionBankQuestionDto {
   @IsString()
   courseId?: string | null;
 
+  @ApiPropertyOptional({ example: 'm1-uuid', description: 'Curriculum Module ID or null' })
+  @IsOptional()
+  @IsString()
+  moduleId?: string | null;
+
+  @ApiPropertyOptional({ example: 'l1-uuid', description: 'Lesson ID or null' })
+  @IsOptional()
+  @IsString()
+  lessonId?: string | null;
+
+  @ApiPropertyOptional({ example: 'sub1-uuid', description: 'Sub-lesson ID or null' })
+  @IsOptional()
+  @IsString()
+  subLessonId?: string | null;
+
   @ApiProperty({ enum: QuestionType, example: QuestionType.MULTIPLE_CHOICE })
   @IsEnum(QuestionType)
   type: QuestionType;
