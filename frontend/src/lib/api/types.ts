@@ -424,6 +424,7 @@ export interface ApiCertificate {
   downloadUrl: string | null;
   createdAt: string;
   templateId: string | null;
+  template?: ApiCertificateTemplate | null;
   user?: { id: string; firstName: string; lastName: string; email: string };
   course: { id: string; titleEn: string; titleAm: string; code: string };
 }
@@ -438,6 +439,12 @@ export interface ApiCertificateField {
   size?: number;
   color?: string;
   bold?: boolean;
+  imageUrl?: string;
+  width?: number;
+  height?: number;
+  text?: string;
+  title?: string;
+  visible?: boolean;
 }
 
 export interface ApiCertificateTemplate {

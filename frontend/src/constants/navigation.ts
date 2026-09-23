@@ -222,7 +222,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     },
     {
       label: "Certificate Templates",
-      href: "/system-admin/certificate-templates",
+      href: "/certificate-templates",
       icon: FilePlus2,
       permission: "certificate.manage",
     },
@@ -291,6 +291,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/system-admin/register-actor": ["user.manage"],
   "/system-admin/bulk-register": ["user.manage"],
   "/system-admin/pending-course-approvals": ["course.approve_reject"],
+  "/certificate-templates": ["certificate.manage"],
   "/system-admin/certificate-templates": ["certificate.manage"],
   "/system-admin/settings": ["user.manage", "role.manage", "permission.manage"],
   "/system-admin/audit-logs": ["audit.view"],
@@ -344,7 +345,7 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Certificate Templates",
-    href: "/system-admin/certificate-templates",
+    href: "/certificate-templates",
     icon: FilePlus2,
     permission: "certificate.manage",
   },

@@ -18,6 +18,12 @@ export async function fetchCertificate(id: string): Promise<ApiCertificate> {
   return api<ApiCertificate>(`certificates/${id}`);
 }
 
+export async function claimCertificate(courseId: string): Promise<ApiCertificate> {
+  return api<ApiCertificate>(`certificates/claim?courseId=${encodeURIComponent(courseId)}`, {
+    method: "POST",
+  });
+}
+
 export async function fetchCertificateDownloadUrl(id: string): Promise<{ downloadUrl: string }> {
   return api<{ downloadUrl: string }>(`certificates/${id}/download`);
 }

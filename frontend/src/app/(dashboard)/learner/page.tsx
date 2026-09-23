@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { DonutChart, ProgressRing } from "@/components/ui/charts";
-import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
 
@@ -41,7 +40,6 @@ export default function LearnerDashboardPage() {
   const [sessionsLoading, setSessionsLoading] = useState(true);
 
   // Modals / Workspaces
-  const [learnCourse, setLearnCourse] = useState<{ id: string; title: string } | null>(null);
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
@@ -201,14 +199,15 @@ export default function LearnerDashboardPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {nextUp ? (
-                <Button
-                  size="md"
-                  onClick={() => setLearnCourse({ id: nextUp.id, title: nextUp.title })}
-                  className="bg-white text-indigo-950 font-semibold hover:bg-indigo-50 shadow-md shadow-white/10"
-                >
-                  <PlayCircle className="h-4 w-4 text-indigo-700" />
-                  {nextUpPercent > 0 ? "Resume Course" : "Start Course"}
-                </Button>
+                <Link href={`/learner/courses/${nextUp.id}/learn`}>
+                  <Button
+                    size="md"
+                    className="bg-white text-indigo-950 font-semibold hover:bg-indigo-50 shadow-md shadow-white/10"
+                  >
+                    <PlayCircle className="h-4 w-4 text-indigo-700" />
+                    {nextUpPercent > 0 ? "Resume Course" : "Start Course"}
+                  </Button>
+                </Link>
               ) : null}
               <Link href="/learner/my-courses">
                 <Button
@@ -404,15 +403,6 @@ export default function LearnerDashboardPage() {
       </div>
 
       {/* Full-Screen Workspaces */}
-      {learnCourse ? (
-        <LearnCourseModal
-          open={learnCourse !== null}
-          onClose={() => setLearnCourse(null)}
-          courseId={learnCourse.id}
-          courseTitle={learnCourse.title}
-        />
-      ) : null}
-
       {activeLiveSession ? (
         <LiveSessionWorkspace
           open={activeLiveSession !== null}

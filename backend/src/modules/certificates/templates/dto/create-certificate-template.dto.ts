@@ -45,6 +45,36 @@ export class CertificateFieldDto {
   @IsOptional()
   @IsBoolean()
   bold?: boolean;
+
+  @ApiPropertyOptional({ example: '/logo.png' })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @ApiPropertyOptional({ example: 120 })
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @ApiPropertyOptional({ example: 50 })
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @ApiPropertyOptional({ example: 'MD. Morshedul Alam ACMA' })
+  @IsOptional()
+  @IsString()
+  text?: string;
+
+  @ApiPropertyOptional({ example: 'CEO, Analyst Skill' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  visible?: boolean;
 }
 
 export class CreateCertificateTemplateDto {

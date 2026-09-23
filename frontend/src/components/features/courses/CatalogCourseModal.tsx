@@ -5,46 +5,25 @@ import {
   Award,
   BookOpen,
   BookOpenCheck,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   ClipboardPen,
   Clock,
-  Download,
-  ExternalLink,
-  FileCheck,
-  FileSpreadsheet,
-  FileText,
-  Film,
   Globe2,
-  Headphones,
-  HelpCircle,
   Layers,
   ListChecks,
-  Lock,
+  Loader2,
   Paperclip,
-  Presentation,
   Sparkles,
   UserRound,
-  Video,
-  Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
-import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { useLms } from "@/lib/lms-store";
 import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
 import type { ApiAssessment } from "@/lib/api/types";
-import { cn } from "@/lib/utils";
-import {
-  formatFileSize,
-  getItemAttachments,
-  getFileBadge,
-} from "./wizard-components";
+import { getItemAttachments } from "./wizard-components";
 
 interface CatalogCourseModalProps {
   open: boolean;
@@ -61,25 +40,7 @@ function formatDuration(minutes: number): string {
   return `${mins} min`;
 }
 
-function getActivityTypeIcon(type?: string) {
-  switch (type) {
-    case "VIDEO":
-      return <Video className="h-4 w-4 text-rose-500" />;
-    case "AUDIO":
-      return <Headphones className="h-4 w-4 text-purple-500" />;
-    case "PRESENTATION":
-      return <Presentation className="h-4 w-4 text-amber-500" />;
-    case "INTERACTIVE":
-      return <ListChecks className="h-4 w-4 text-emerald-500" />;
-    case "ASSIGNMENT":
-      return <ClipboardPen className="h-4 w-4 text-orange-500" />;
-    case "EXTERNAL_LINK":
-      return <ExternalLink className="h-4 w-4 text-indigo-500" />;
-    case "DOCUMENT":
-    default:
-      return <FileText className="h-4 w-4 text-blue-500" />;
-  }
-}
+
 
 /**
  * Pre-enrollment course preview for the learner catalog. Shows a transparent,
@@ -87,13 +48,13 @@ function getActivityTypeIcon(type?: string) {
  * prominent Enroll CTA. Once the learner is enrolled, hands off to LearnCourseModal.
  */
 export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseModalProps) {
+  const router = useRouter();
   const { courseById, currentUser, userName, enrollSelf } = useLms();
   const course = courseById(courseId);
 
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<ApiAssessment[]>([]);
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   // Fetch course assessments for quiz question count & stats
   useEffect(() => {
@@ -113,18 +74,6 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
       cancelled = true;
     };
   }, [open, courseId]);
-
-  // Expand all modules by default for immediate transparent preview
-  useEffect(() => {
-    if (course?.modules && course.modules.length > 0) {
-      const initial: Record<string, boolean> = {};
-      course.modules.forEach((m) => {
-        initial[m.id] = true;
-      });
-      setExpandedModules(initial);
-    }
-  }, [course]);
-
   // Aggregated totals (unconditionally declared at top level)
   const totalLessons = useMemo(
     () => (course?.modules || []).reduce((sum, m) => sum + (m.lessons?.length || 0), 0),
@@ -187,43 +136,29 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   const me = currentUser?.id;
   const enrolled = me && course ? course.enrolledLearnerIds.includes(me) : false;
 
-  // Early return if not loaded or enrolled
-  if (!course) return null;
+  useEffect(() => {
+    if (open && enrolled && courseId) {
+      onClose();
+      router.push(`/learner/courses/${courseId}/learn`);
+    }
+  }, [open, enrolled, courseId, onClose, router]);
 
-  if (enrolled) {
-    return (
-      <LearnCourseModal
-        open={open}
-        onClose={onClose}
-        courseId={courseId}
-        courseTitle={course.title}
-      />
-    );
-  }
+  // Early return if not loaded or enrolled
+  if (!course || enrolled) return null;
 
   const doEnroll = async () => {
     setEnrolling(true);
     setError(null);
     const result = await enrollSelf(courseId);
     setEnrolling(false);
-    if (!result.ok) setError(result.message);
+    if (!result.ok) {
+      setError(result.message);
+    } else {
+      onClose();
+      router.push(`/learner/courses/${courseId}/learn`);
+    }
   };
 
-  const toggleModule = (id: string) => {
-    setExpandedModules((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const allExpanded =
-    course.modules.length > 0 && course.modules.every((m) => expandedModules[m.id]);
-
-  const toggleAllModules = () => {
-    const nextState = !allExpanded;
-    const next: Record<string, boolean> = {};
-    course.modules.forEach((m) => {
-      next[m.id] = nextState;
-    });
-    setExpandedModules(next);
-  };
 
   return (
     <WorkspaceDetailOverlay
@@ -485,219 +420,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           </div>
         ) : null}
 
-        {/* Course Syllabus Roadmap (Transparent & Clear Preview) */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold tracking-tight text-slate-900">
-                Course Syllabus & Curriculum Roadmap
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review the structured modules, lecture topics, and resources. Enrolling unlocks all content.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={toggleAllModules}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition"
-            >
-              {allExpanded ? (
-                <>
-                  <ChevronUp className="h-3.5 w-3.5" />
-                  Collapse All
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-3.5 w-3.5" />
-                  Expand All
-                </>
-              )}
-            </button>
-          </div>
 
-          <div className="space-y-3">
-            {course.modules.map((module, mIdx) => {
-              const isExpanded = expandedModules[module.id] ?? false;
-              const moduleFiles = getItemAttachments(module);
-              const mDuration = module.durationMinutes || 0;
-
-              return (
-                <div
-                  key={module.id}
-                  className="rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden transition"
-                >
-                  {/* Module Header Card */}
-                  <button
-                    type="button"
-                    onClick={() => toggleModule(module.id)}
-                    className="w-full flex items-center justify-between gap-3 p-4 text-left border-l-4 border-l-indigo-600 hover:bg-slate-50/70 transition group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-50 font-mono text-xs font-bold text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                        {mIdx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition truncate">
-                          Module {mIdx + 1}: {module.title}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                          <span>{module.lessons.length} lessons</span>
-                          <span>·</span>
-                          <span>
-                            {mDuration > 0 ? `${mDuration} min` : "Self-paced"}
-                          </span>
-                          {moduleFiles.length > 0 ? (
-                            <>
-                              <span>·</span>
-                              <span className="text-indigo-600 font-medium">
-                                {moduleFiles.length} reference file{moduleFiles.length > 1 ? "s" : ""}
-                              </span>
-                            </>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                        <Lock className="h-3 w-3 text-slate-400" />
-                        Locked
-                      </span>
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-700 transition">
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Expanded Module Details & Lessons List */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-100 bg-slate-50/40 p-4 space-y-3">
-                      {module.objectives ? (
-                        <div className="rounded-xl border border-indigo-100/90 bg-indigo-50/50 p-3 text-xs text-indigo-950">
-                          <span className="font-bold text-indigo-900">Module Objective: </span>
-                          <span>{module.objectives}</span>
-                        </div>
-                      ) : null}
-
-                      {/* Module Reference Files Info */}
-                      {moduleFiles.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-600">
-                          <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
-                          <span className="font-semibold text-slate-800">Included Materials:</span>
-                          {moduleFiles.map((f, i) => (
-                            <span
-                              key={i}
-                              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                            >
-                              {f.name} {f.size ? `(${formatFileSize(f.size)})` : ""}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {/* Lessons Tree */}
-                      <div className="space-y-2 border-l-2 border-indigo-200 ml-3 pl-3">
-                        {module.lessons.map((lesson, lIdx) => {
-                          const lessonFiles = getItemAttachments(lesson);
-
-                          return (
-                            <div
-                              key={lesson.id}
-                              className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs space-y-2"
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100">
-                                    {getActivityTypeIcon(lesson.contentType)}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-bold text-slate-800 truncate">
-                                      {mIdx + 1}.{lIdx + 1} · {lesson.title}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                      <span>{lesson.durationMin || 15} min</span>
-                                      <span>·</span>
-                                      <span className="capitalize">{lesson.contentType || "Document"}</span>
-                                      {lessonFiles.length > 0 ? (
-                                        <>
-                                          <span>·</span>
-                                          <span className="text-indigo-600 font-medium">
-                                            {lessonFiles.length} file{lessonFiles.length > 1 ? "s" : ""}
-                                          </span>
-                                        </>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1.5">
-                                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-                                    <Lock className="h-2.5 w-2.5 text-slate-400" />
-                                    Enroll to view
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Sub-lessons outline if present */}
-                              {lesson.subLessons && lesson.subLessons.length > 0 ? (
-                                <div className="ml-5 mt-2 space-y-1.5 border-l border-violet-200 pl-3">
-                                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Sub-topics ({lesson.subLessons.length}):
-                                  </span>
-                                  {lesson.subLessons.map((sub, sIdx) => (
-                                    <div
-                                      key={sub.id}
-                                      className="flex items-center justify-between text-xs text-slate-600"
-                                    >
-                                      <div className="flex items-center gap-2 truncate">
-                                        <span className="font-mono text-[10px] text-violet-600">
-                                          {mIdx + 1}.{lIdx + 1}.{sIdx + 1}
-                                        </span>
-                                        <span className="truncate">{sub.title}</span>
-                                      </div>
-                                      <span className="text-[10px] text-slate-400 shrink-0">
-                                        {sub.durationMin || 5}m
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Final Course Assessment Card */}
-        {finalAssessment ? (
-          <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-indigo-600" />
-                <h4 className="text-sm font-bold text-slate-900">
-                  Accredited Course Certification & Final Exam
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-                Complete all course modules and achieve {finalAssessment.passingScore}% or higher on the final assessment to earn an official accredited Ministry certificate.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="blue">Passing Mark: {finalAssessment.passingScore}%</Badge>
-              <Badge variant="outline">Certificate Issued</Badge>
-            </div>
-          </div>
-        ) : null}
 
         {/* Prominent Bottom Enroll CTA Banner */}
         <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 sm:p-7 text-white shadow-md flex flex-wrap items-center justify-between gap-5">

@@ -85,6 +85,7 @@ export class CertificatesService {
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        template: true,
       },
     });
 
@@ -115,6 +116,7 @@ export class CertificatesService {
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        template: true,
       },
     });
 
@@ -128,6 +130,7 @@ export class CertificatesService {
       where: { userId },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        template: true,
       },
       orderBy: { issuedAt: 'desc' },
     });
@@ -140,6 +143,7 @@ export class CertificatesService {
       where: { courseId },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        template: true,
       },
       orderBy: { issuedAt: 'desc' },
     });
@@ -193,10 +197,33 @@ export class CertificatesService {
    * Returns the existing certificate if already issued, or null if not yet eligible.
    */
   async maybeIssueForCompletion(userId: string, courseId: string) {
+    const activeTemplate = await this.prisma.certificateTemplate.findFirst({
+      where: { isActive: true },
+    });
+
     const existing = await this.prisma.certificate.findUnique({
       where: { userId_courseId: { userId, courseId } },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        template: true,
+      },
     });
-    if (existing) return existing;
+    if (existing) {
+      if (activeTemplate && existing.templateId !== activeTemplate.id) {
+        const updated = await this.prisma.certificate.update({
+          where: { id: existing.id },
+          data: { templateId: activeTemplate.id },
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+            template: true,
+          },
+        });
+        return this.withDownloadUrl(updated);
+      }
+      return this.withDownloadUrl(existing);
+    }
 
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId },

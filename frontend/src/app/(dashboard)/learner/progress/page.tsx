@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Lock, PlayCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, ChevronDown, Lock, PlayCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
@@ -18,6 +19,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 export default function ProgressPage() {
+  const router = useRouter();
   const { courses, lang, currentUser } = useLms();
   const me = currentUser?.id ?? "";
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
@@ -86,10 +88,27 @@ export default function ProgressPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setLearnCourse({ id: course.id, title: course.title })}
+                    className={
+                      done
+                        ? "border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
+                        : ""
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/learner/courses/${course.id}/learn`);
+                    }}
                   >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    {tr(lang, "startLearning")}
+                    {done ? (
+                      <>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        {tr(lang, "completed")}
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        Continue
+                      </>
+                    )}
                   </Button>
                   <ChevronDown
                     className={cn(
@@ -142,6 +161,9 @@ export default function ProgressPage() {
                                 ) : (
                                   <Badge variant="outline">Not started</Badge>
                                 )}
+                                <Badge variant={lesson.completed ? "green" : lesson.unlocked === false ? "slate" : "outline"}>
+                                  {lesson.completed ? "Completed" : lesson.unlocked === false ? "Locked" : "Not started"}
+                                </Badge>
                               </Td>
                             </tr>
                           ))}

@@ -1,14 +1,5 @@
-import { CertificateTemplatesAdmin } from "@/components/features/certificates/CertificateTemplatesAdmin";
-import PageShell from "@/components/shared/PageShell";
+import { redirect } from "next/navigation";
 
-export default function CertificateTemplatesPage() {
-  return (
-    <PageShell
-      role="system_admin"
-      title="Certificate Templates"
-      description="Manage the layouts used to issue completion certificates."
-    >
-      <CertificateTemplatesAdmin />
-    </PageShell>
-  );
+export default function LegacyCertificateTemplatesPage() {
+  redirect("/certificate-templates");
 }

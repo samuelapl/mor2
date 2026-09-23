@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
-import { navItemsForRole, ROLE_ICONS, type NavItem } from "@/constants/navigation";
+import { getRoleFromPath } from "@/constants/roles";
+import { navItemsForRole, type NavItem } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { cn } from "@/lib/utils";
@@ -30,9 +30,7 @@ export default function Sidebar() {
   const { currentUser, logout } = useLms();
   const { canAny } = usePermissions();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? "learner";
-  const RoleIcon = ROLE_ICONS[role];
   const navItems = filterNavItems(navItemsForRole(role), canAny);
-  const displayUser = currentUser;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -95,34 +93,6 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div className={cn("relative border-b border-slate-200 px-4 py-4", collapsed && "px-2")}>
-        <div
-          title={collapsed ? `${ROLE_LABELS[role]} — ${displayUser?.name ?? ""}` : undefined}
-          className={cn(
-            "flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          {displayUser?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={displayUser.avatarUrl}
-              alt="Avatar"
-              className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-white/20"
-            />
-          ) : (
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white ring-1 ring-white/20">
-              <RoleIcon className="h-4 w-4" />
-            </div>
-          )}
-          {!collapsed ? (
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-sm font-medium text-slate-900">{ROLE_LABELS[role]}</p>
-              <p className="truncate text-[11px] text-slate-500">{displayUser?.name}</p>
-            </div>
-          ) : null}
-        </div>
-      </div>
 
       {!collapsed ? (
         <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">

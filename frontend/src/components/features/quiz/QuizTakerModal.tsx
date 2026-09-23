@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  ArrowLeft,
   BookOpenCheck,
   Check,
   Clock,
@@ -35,6 +36,8 @@ interface QuizTakerModalProps {
   assessmentId?: string;
   /** Called once the learner passes. The parent is responsible for refreshing progress / advancing. */
   onPassed?: () => void;
+  /** When true, renders directly inside the container without a portal overlay covering the sidebar */
+  embedded?: boolean;
 }
 
 interface AttemptInfo {
@@ -49,6 +52,7 @@ export function QuizTakerModal({
   courseTitle,
   assessmentId,
   onPassed,
+  embedded = false,
 }: QuizTakerModalProps) {
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(true);
@@ -91,7 +95,7 @@ export function QuizTakerModal({
         if (!cancelled) setAssessment(detail);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Unable to load quiz.");
+          setError(err instanceof ApiError ? err.message : "Unable to load assessment.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -154,7 +158,7 @@ export function QuizTakerModal({
         setRemainingSec(null);
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unable to start the quiz.");
+      setError(err instanceof ApiError ? err.message : "Unable to start the assessment.");
     }
   };
 
@@ -172,7 +176,7 @@ export function QuizTakerModal({
       const graded = await submitAttempt(assessment.id, payload);
       setResult(graded);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unable to submit the quiz.");
+      setError(err instanceof ApiError ? err.message : "Unable to submit the assessment.");
     } finally {
       setSubmitting(false);
     }
@@ -190,18 +194,12 @@ export function QuizTakerModal({
     (result?.review ?? []).map((r) => [r.questionId, r]),
   );
 
-  return (
-    <WorkspaceDetailOverlay
-      open={open}
-      onClose={onClose}
-      title={assessment?.titleEn ?? "Assessment / Quiz"}
-      subtitle={assessment ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts` : courseTitle}
-    >
-      <div className="w-full space-y-6 pb-12">
+  const innerContent = (
+    <div className="w-full space-y-6 pb-12">
       {loading ? (
         <div className="flex flex-col items-center py-10 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-          <p className="mt-3 text-sm text-slate-500">Loading quiz…</p>
+          <p className="mt-3 text-sm text-slate-500">Loading assessment…</p>
         </div>
       ) : notFound || !assessment ? (
         <div className="flex flex-col items-center py-10 text-center">
@@ -209,7 +207,7 @@ export function QuizTakerModal({
             <BookOpenCheck className="h-7 w-7" />
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-500">
-            No quiz is set up for this course yet. Please check back later.
+            No assessment is set up for this course yet. Please check back later.
           </p>
           <Button className="mt-6" onClick={onClose}>
             Close
@@ -221,7 +219,7 @@ export function QuizTakerModal({
             <BookOpenCheck className="h-7 w-7" />
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-500">
-            This quiz has {assessment.questions.length} questions.
+            This assessment has {assessment.questions.length} questions.
             You need at least {assessment.passingScore}% to pass.
           </p>
           {assessment.resourceUrl ? (
@@ -232,7 +230,7 @@ export function QuizTakerModal({
                   <p className="text-xs font-bold text-indigo-950 truncate">
                     {assessment.fileName || "Assessment Reference Sheet / Study Material"}
                   </p>
-                  <p className="text-[11px] text-indigo-700">Reference material provided for this exam</p>
+                  <p className="text-[11px] text-indigo-700">Reference material provided for this assessment</p>
                 </div>
               </div>
               <a
@@ -248,8 +246,8 @@ export function QuizTakerModal({
             </div>
           ) : null}
           {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
-          <Button className="mt-6" onClick={start}>
-            Start quiz
+          <Button className="mt-6 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm" onClick={start}>
+            Start assessment
           </Button>
         </div>
       ) : result ? (
@@ -286,7 +284,7 @@ export function QuizTakerModal({
             </Badge>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
               {result.passed
-                ? "Congratulations! You passed the quiz. Review your answers below."
+                ? "Congratulations! You passed the assessment. Review your answers below."
                 : `You need at least ${assessment.passingScore}% to continue. Review the answers below and try again.`}
             </p>
             {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
@@ -567,7 +565,68 @@ export function QuizTakerModal({
           </div>
         </div>
       )}
+    </div>
+  );
+
+  if (embedded) {
+    if (!open) return null;
+    return (
+      <div className="w-full flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden min-h-[520px]">
+        {/* Top Header Bar */}
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs"
+              title="Back to Course"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                {assessment?.titleEn ?? "Assessment"}
+              </h2>
+              <p className="text-xs text-slate-500 truncate">
+                {assessment
+                  ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts`
+                  : courseTitle}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+            title="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Assessment Body */}
+        <div className="p-4 sm:p-8 flex-1">
+          <div className="max-w-3xl mx-auto">
+            {innerContent}
+          </div>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <WorkspaceDetailOverlay
+      open={open}
+      onClose={onClose}
+      title={assessment?.titleEn ?? "Assessment"}
+      subtitle={
+        assessment
+          ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts`
+          : courseTitle
+      }
+    >
+      {innerContent}
     </WorkspaceDetailOverlay>
   );
 }
+

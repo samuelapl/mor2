@@ -385,7 +385,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           const mine = await fetchMyEnrollments();
           const enrolledCourseIds = new Set(
             mine.data
-              .filter((enrollment) => enrollment.status === "ACTIVE")
+              .filter(
+                (enrollment) =>
+                  enrollment.status === "ACTIVE" ||
+                  enrollment.status === "COMPLETED",
+              )
               .map((enrollment) => enrollment.courseId),
           );
           next = next.map((course) => ({

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Award, Download, Eye } from "lucide-react";
-import type { ApiCertificate } from "@/lib/api/types";
+import { useEffect, useState } from "react";
+import { Award, Download, Eye, Printer } from "lucide-react";
+import type { ApiCertificate, ApiCertificateTemplate } from "@/lib/api/types";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
+import { CertificateRenderer } from "@/components/features/certificates/CertificateRenderer";
+import { fetchActiveCertificateTemplate } from "@/lib/api/certificates";
 
 interface CertificateCardProps {
   certificate: ApiCertificate;
@@ -23,7 +25,20 @@ function formatDate(value: string): string {
 
 export function CertificateCard({ certificate, learnerName }: CertificateCardProps) {
   const [open, setOpen] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<ApiCertificateTemplate | null>(null);
   const course = certificate.course;
+
+  useEffect(() => {
+    if (!certificate.template) {
+      void fetchActiveCertificateTemplate().then(setActiveTemplate).catch(() => {});
+    }
+  }, [certificate.template]);
+
+  const templateToUse = certificate.template || activeTemplate || undefined;
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <>
@@ -61,45 +76,38 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
       <WorkspaceDetailOverlay
         open={open}
         onClose={() => setOpen(false)}
-        title="Certificate of Completion"
-        subtitle={`${course.titleEn} (${course.code})`}
+        title="Official Certificate of Completion"
+        subtitle={`${course.titleEn} (${course.code}) · Verified Credential`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
+              <Printer className="h-4 w-4" />
+              Print / Save PDF
+            </Button>
+            {certificate.downloadUrl ? (
+              <a href={certificate.downloadUrl} target="_blank" rel="noreferrer">
+                <Button size="sm" className="gap-1.5">
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+              </a>
+            ) : null}
+          </div>
+        }
       >
         <div className="w-full space-y-6 pb-12">
-          <div className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-b from-amber-50/60 to-white p-10 text-center shadow-soft">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400" />
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 ring-4 ring-amber-100">
-              <Award className="h-8 w-8" />
-            </div>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">
-              Ministry of Revenues · ETIMS Academy
-            </p>
-            <h3 className="mt-3 font-display text-3xl font-bold tracking-tight text-slate-900">
-              Certificate of Completion
-            </h3>
-            <div className="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
-            <p className="mt-6 text-sm text-slate-600">This certifies that</p>
-            <p className="mt-2 font-display text-2xl font-bold text-slate-900">{learnerName}</p>
-            <p className="mt-2 text-sm text-slate-500">has successfully completed all requirements for</p>
-            <p className="mt-2 font-display text-xl font-bold text-indigo-900">{course.titleEn}</p>
-            <p className="mt-1 text-xs text-slate-400">{course.code}</p>
-            <div className="mx-auto mt-8 h-px w-40 bg-slate-200" />
-            <p className="mt-4 text-xs text-slate-500">Issued {formatDate(certificate.issuedAt)}</p>
-            <p className="mt-2 font-mono text-xs text-slate-400">
-              Certificate No: {certificate.certificateNumber} · Verification: {certificate.verificationCode}
-            </p>
-            <div className="mt-8 flex justify-center gap-3">
-              {certificate.downloadUrl ? (
-                <a href={certificate.downloadUrl} target="_blank" rel="noreferrer">
-                  <Button size="md">
-                    <Download className="h-4 w-4" />
-                    Download PDF Certificate
-                  </Button>
-                </a>
-              ) : null}
-              <Button size="md" variant="outline" onClick={() => setOpen(false)}>
-                Close Workspace
-              </Button>
+          <div className="rounded-2xl border border-slate-200 bg-slate-900/5 p-4 shadow-inner overflow-hidden flex items-center justify-center">
+            <div className="w-full max-w-4xl">
+              <CertificateRenderer
+                template={templateToUse}
+                studentName={learnerName}
+                courseTitle={course.titleEn || course.titleAm}
+                courseCode={course.code}
+                certificateNumber={certificate.certificateNumber}
+                verificationCode={certificate.verificationCode}
+                completionDate={certificate.issuedAt}
+                editable={false}
+              />
             </div>
           </div>
         </div>

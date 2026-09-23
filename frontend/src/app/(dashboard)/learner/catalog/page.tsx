@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookPlus } from "lucide-react";
+import Link from "next/link";
+import { BookPlus, CheckCircle2, PlayCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { usePagination } from "@/lib/usePagination";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
@@ -21,6 +23,13 @@ export default function LearnerCatalogPage() {
   const [category, setCategory] = useState("all");
   const [flash, setFlash] = useState<string | null>(null);
   const [openCourseId, setOpenCourseId] = useState<string | null>(null);
+
+  const enrolledCourseIds = useMemo(() => {
+    return courses
+      .filter((c) => (me ? c.enrolledLearnerIds.includes(me) : false))
+      .map((c) => c.id);
+  }, [courses, me]);
+  const { progress } = useCourseProgress(enrolledCourseIds);
 
   const available = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -90,16 +99,41 @@ export default function LearnerCatalogPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pageItems.map((course) => {
             const enrolled = me ? course.enrolledLearnerIds.includes(me) : false;
+            const percent = progress[course.id]?.stats.overallPercent ?? 0;
+            const done = percent >= 100;
+
             return (
               <CourseCard
                 key={course.id}
                 course={course}
-                onClick={() => setOpenCourseId(course.id)}
+                showStatus={false}
+                progress={enrolled ? percent : undefined}
+                onClick={() => {
+                  if (enrolled) return;
+                  setOpenCourseId(course.id);
+                }}
               >
                 {enrolled ? (
-                  <Button size="sm" variant="outline" onClick={() => setOpenCourseId(course.id)}>
-                    View Course
-                  </Button>
+                  <Link
+                    href={`/learner/courses/${course.id}/learn`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {done ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        Completed
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline">
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        Continue
+                      </Button>
+                    )}
+                  </Link>
                 ) : (
                   <Button
                     size="sm"

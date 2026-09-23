@@ -40,18 +40,38 @@ export class EnrollmentsService {
     }
 
     if (existing?.status === EnrollmentStatus.COMPLETED) {
-      throw new BadRequestException('You have already completed this course');
+      const cert = await this.prisma.certificate.findUnique({
+        where: { userId_courseId: { userId, courseId: dto.courseId } },
+      });
+      if (cert) {
+        throw new BadRequestException('You have already completed this course and earned your certificate');
+      }
+
+      // If certificate was revoked or deleted, reset previous completions so learner can retake
+      const modules = await this.prisma.curriculumModule.findMany({
+        where: { courseId: dto.courseId },
+        select: { id: true, lessons: { select: { id: true } } },
+      });
+      const moduleIds = modules.map((m) => m.id);
+      const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+      if (lessonIds.length > 0) {
+        await this.prisma.lessonCompletion.deleteMany({
+          where: { userId, lessonId: { in: lessonIds } },
+        });
+      }
+      if (moduleIds.length > 0) {
+        await this.prisma.moduleCompletion.deleteMany({
+          where: { userId, moduleId: { in: moduleIds } },
+        });
+      }
     }
 
     try {
-      // `upsert` (re)activates an existing DROPPED row or creates a new one
-      // atomically — a plain findUnique-then-create here raced two concurrent
-      // enroll requests (or missed the COMPLETED case above) straight into
-      // the (user_id, course_id) unique constraint.
       const enrollment = await this.prisma.enrollment.upsert({
         where: { userId_courseId: { userId, courseId: dto.courseId } },
         update: {
           status: EnrollmentStatus.ACTIVE,
+          completedAt: null,
           droppedAt: null,
           droppedReason: null,
           droppedBy: null,

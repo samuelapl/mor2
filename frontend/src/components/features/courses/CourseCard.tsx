@@ -12,9 +12,17 @@ interface CourseCardProps {
   progress?: number;
   children?: ReactNode;
   onClick?: () => void;
+  showStatus?: boolean;
 }
 
-export function CourseCard({ course, extraBadge, progress, children, onClick }: CourseCardProps) {
+export function CourseCard({
+  course,
+  extraBadge,
+  progress,
+  children,
+  onClick,
+  showStatus = true,
+}: CourseCardProps) {
   const lessonCount = course.modules.reduce(
     (sum, module) => sum + module.lessons.length,
     0,
@@ -53,9 +61,11 @@ export function CourseCard({ course, extraBadge, progress, children, onClick }: 
           </h3>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <CourseStatusBadge
-            status={course.published ? "published" : course.status}
-          />
+          {showStatus && (
+            <CourseStatusBadge
+              status={course.published ? "published" : course.status}
+            />
+          )}
           <Badge variant={courseLevelVariant(course.level)}>
             {courseLevelLabel(course.level)}
           </Badge>

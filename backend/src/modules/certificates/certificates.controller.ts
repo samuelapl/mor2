@@ -21,6 +21,15 @@ export class CertificatesController {
     return this.certificatesService.issue(userId, courseId);
   }
 
+  @Post('claim')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Permissions('certificate.view')
+  @ApiOperation({ summary: 'Claim certificate upon course completion' })
+  async claim(@CurrentUser() user: AuthenticatedUser, @Query('courseId') courseId: string) {
+    return this.certificatesService.maybeIssueForCompletion(user.id, courseId);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
