@@ -10,6 +10,7 @@ import LanguageToggle from "@/components/shared/LanguageToggle";
 import { CertificateCard } from "@/components/features/cert/CertificateCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 
 export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<ApiCertificate[] | null>(null);
@@ -45,7 +46,9 @@ export default function CertificatesPage() {
       {error ? (
         <p className="text-sm text-red-500">{error}</p>
       ) : certificates === null ? (
-        <p className="text-sm text-slate-500">Loading certificates…</p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <CardSkeleton count={3} />
+        </div>
       ) : certificates.length === 0 ? (
         <EmptyState
           title="No certificates yet"

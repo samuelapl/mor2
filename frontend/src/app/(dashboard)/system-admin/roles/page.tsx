@@ -19,6 +19,9 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { TableSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import {
   createRole,
   deleteRole,
@@ -52,12 +55,12 @@ export default function RolesPermissionsPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [draftIds, setDraftIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
-  const [flash, setFlash] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showNewRole, setShowNewRole] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [roleToDelete, setRoleToDelete] = useState<ApiRoleWithPermissions | null>(null);
   const [view, setView] = useState<ViewMode>("table");
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
@@ -134,7 +137,6 @@ export default function RolesPermissionsPage() {
   const handleSave = async () => {
     if (!selectedRole) return;
     setSaving(true);
-    setFlash(null);
     try {
       const updated = await setRolePermissions(selectedRole.id, Array.from(draftIds));
       setRoles((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
@@ -147,15 +149,9 @@ export default function RolesPermissionsPage() {
       } catch {
         // storage fallback
       }
-      setFlash({
-        type: "success",
-        message: `${selectedRole.label} updated — sidebars and capabilities updated live across the workspace.`,
-      });
+      toast.success(`${selectedRole.label} permissions updated live across the workspace.`);
     } catch (err) {
-      setFlash({
-        type: "error",
-        message: err instanceof ApiError ? err.message : "Failed to save permissions.",
-      });
+      toast.error(err instanceof ApiError ? err.message : "Failed to save permissions.");
     } finally {
       setSaving(false);
     }
@@ -163,13 +159,11 @@ export default function RolesPermissionsPage() {
 
   const handleReset = () => {
     setDraftIds(new Set(savedIds));
-    setFlash(null);
   };
 
   const handleCreateRole = async () => {
     if (!newRoleName.trim() || !newRoleLabel.trim()) return;
     setCreating(true);
-    setFlash(null);
     try {
       const role = await createRole({ name: newRoleName.trim(), label: newRoleLabel.trim() });
       setRoles((prev) => [...prev, role]);
@@ -177,30 +171,25 @@ export default function RolesPermissionsPage() {
       setNewRoleName("");
       setNewRoleLabel("");
       setShowNewRole(false);
-      setFlash({ type: "success", message: `${role.label} created with 0 permissions.` });
+      toast.success(`Role "${role.label}" created successfully.`);
     } catch (err) {
-      setFlash({
-        type: "error",
-        message: err instanceof ApiError ? err.message : "Failed to create role.",
-      });
+      toast.error(err instanceof ApiError ? err.message : "Failed to create role.");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteRole = async (role: ApiRoleWithPermissions) => {
-    setDeletingId(role.id);
-    setFlash(null);
+  const confirmDeleteRole = async () => {
+    if (!roleToDelete) return;
+    setDeletingId(roleToDelete.id);
     try {
-      await deleteRole(role.id);
-      setRoles((prev) => prev.filter((r) => r.id !== role.id));
-      setSelectedRoleId((current) => (current === role.id ? null : current));
-      setFlash({ type: "success", message: `${role.label} deleted.` });
+      await deleteRole(roleToDelete.id);
+      setRoles((prev) => prev.filter((r) => r.id !== roleToDelete.id));
+      setSelectedRoleId((current) => (current === roleToDelete.id ? null : current));
+      toast.success(`Role "${roleToDelete.label}" was deleted.`);
+      setRoleToDelete(null);
     } catch (err) {
-      setFlash({
-        type: "error",
-        message: err instanceof ApiError ? err.message : "Failed to delete role.",
-      });
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete role.");
     } finally {
       setDeletingId(null);
     }
@@ -213,7 +202,9 @@ export default function RolesPermissionsPage() {
         title="Roles & Permissions"
         description="Control what each role can see and do, live."
       >
-        <p className="text-sm text-slate-500">Loading permission matrix…</p>
+        <div className="space-y-4">
+          <TableSkeleton rows={6} columns={4} />
+        </div>
       </PageShell>
     );
   }
@@ -237,24 +228,6 @@ export default function RolesPermissionsPage() {
       description="Toggle exactly what each of the 6 roles can do. Changes apply to everyone with that role within ~15 seconds — no redeploy, no re-login."
       actions={<ViewToggle view={view} onChange={setView} />}
     >
-      {flash ? (
-        <div
-          className={cn(
-            "mb-5 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ring-1 ring-inset",
-            flash.type === "success"
-              ? "border-emerald-200/70 bg-emerald-50/80 text-emerald-700 ring-emerald-600/10"
-              : "border-red-200/70 bg-red-50/80 text-red-700 ring-red-600/10",
-          )}
-        >
-          {flash.type === "success" ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-          ) : (
-            <ShieldAlert className="h-4 w-4 shrink-0" />
-          )}
-          {flash.message}
-        </div>
-      ) : null}
-
       {view === "grid" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sortedRoles.map((role) => {
@@ -277,7 +250,7 @@ export default function RolesPermissionsPage() {
                       type="button"
                       title="Delete role"
                       disabled={deletingId === role.id}
-                      onClick={() => handleDeleteRole(role)}
+                      onClick={() => setRoleToDelete(role)}
                       className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -371,7 +344,7 @@ export default function RolesPermissionsPage() {
                       type="button"
                       title="Delete role"
                       disabled={deletingId === role.id}
-                      onClick={() => handleDeleteRole(role)}
+                      onClick={() => setRoleToDelete(role)}
                       className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -411,8 +384,14 @@ export default function RolesPermissionsPage() {
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> Reset
                     </Button>
-                    <Button size="sm" onClick={handleSave} disabled={!isDirty || saving}>
-                      <Save className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save changes"}
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={!isDirty || saving}
+                      isLoading={saving}
+                      loadingText="Saving…"
+                    >
+                      <Save className="h-3.5 w-3.5" /> Save changes
                     </Button>
                   </div>
                 )}
@@ -490,9 +469,11 @@ export default function RolesPermissionsPage() {
             <Button
               size="sm"
               disabled={creating || !newRoleName.trim() || !newRoleLabel.trim()}
+              isLoading={creating}
+              loadingText="Creating role…"
               onClick={handleCreateRole}
             >
-              {creating ? "Creating…" : "Create role"}
+              Create role
             </Button>
           </div>
         }
@@ -522,6 +503,26 @@ export default function RolesPermissionsPage() {
           </div>
         </div>
       </WorkspaceDetailOverlay>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(roleToDelete)}
+        onClose={() => setRoleToDelete(null)}
+        onConfirm={confirmDeleteRole}
+        title="Delete Role"
+        description={
+          <>
+            Are you sure you want to delete role{" "}
+            <span className="font-semibold text-slate-800">
+              &quot;{roleToDelete?.label}&quot;
+            </span>
+            ? This action cannot be undone and will revoke permissions for all users assigned to this role.
+          </>
+        }
+        confirmText="Delete Role"
+        variant="danger"
+        isLoading={Boolean(deletingId)}
+      />
     </PageShell>
   );
 }

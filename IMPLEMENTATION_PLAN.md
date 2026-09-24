@@ -1,109 +1,221 @@
-# Complete Implementation Plan: Course Management & Learner Experience Modernization
+# Enterprise Loading (Spinning) & Toast Notification System for MoR LMS
 
-This document outlines the end-to-end plan covering all previously completed milestones as well as the new learner-facing modernizations for [`CatalogCourseModal.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/CatalogCourseModal.tsx) and [`LearnCourseModal.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/LearnCourseModal.tsx).
-
----
-
-## 1. Summary of Completed Milestones
-
-### Milestone 1: Course Database Seeding
-- **Action**: Created 5 comprehensive courses in [`backend/prisma/seed.ts`](file:///home/samuelapl/_projects/lms/backend/prisma/seed.ts) covering all lifecycle statuses (`DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PUBLISHED`, `ARCHIVED`).
-- **Curriculum & Attachments**:
-  - Each module includes objectives, duration, and PDF attachments (pointing to public assets such as `/file-sample.pdf`).
-  - Lessons and sub-lessons include detailed notes, instructions, and media resources.
-  - Final assessments include at least 5 varied questions (Multiple Choice, True/False, Short Answer) with passing scores, time limits, and attempt rules.
-  - Linked to existing demo accounts (`course-owner`, `trainer`, `content-approver`, `training-admin`, `system-admin`, `learner`).
-
-### Milestone 2: Course Creation Wizard Modularization
-- **Action**: Refactored the monolithic 4,234-line [`CourseCreationWizard.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/CourseCreationWizard.tsx) into 4 dedicated, maintainable step files inside `frontend/src/components/features/courses/`:
-  - [`StepCourseDetails.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/StepCourseDetails.tsx) (Step 1: Details, Cover, Objectives)
-  - [`StepCurriculum.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/StepCurriculum.tsx) (Step 2: Modules, Lessons, Sub-lessons, Media)
-  - [`StepFinalAssessment.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/StepFinalAssessment.tsx) (Step 3: Assessment Rules & Questions)
-  - [`StepReviewSubmit.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/StepReviewSubmit.tsx) (Step 4: Fully Expanded Review & Submit)
-  - Shared [`wizard-types.ts`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/wizard-types.ts) and [`wizard-components.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/wizard-components.tsx).
-
-### Milestone 3: Review & Admin Modal Modernization (`CourseDetailModal.tsx`)
-- **Action**: Modernized [`CourseDetailModal.tsx`](file:///home/samuelapl/_projects/lms/frontend/src/components/features/courses/CourseDetailModal.tsx) to match `StepReviewSubmit.tsx` styling:
-  - 6-Stat badges summary bar (Modules, Lessons, Sub-lessons, Attachments, Questions, Est. Duration).
-  - Fully expanded curriculum by default with global **Expand All** and **Collapse All** controls.
-  - Universal attachment cards with **Open in New Tab** and **Download** actions.
-  - Rich question preview with choices and highlighted correct answers.
-  - Strictly adhering to React's Rules of Hooks.
+## Goal Description
+Enhance MoR LMS from ad-hoc flash messages and missing loading indicators into an enterprise-grade UX system. This introduces a unified, accessible, and aesthetically polished Toast Notification architecture (supporting success, error, warning, info, loading, and promise-based toasts) and a multi-level Loading system (Button spinner integration, Table/Card Skeletons, Loading Overlays, and Confirm Deletion Dialogs) across every dashboard, page, and modal in the application.
 
 ---
 
-## 2. New Milestone: Learner Experience Overhaul
+## User Review Required
 
-The learner experience is the most critical touchpoint of the platform. We are upgrading both the **pre-enrollment preview** (`CatalogCourseModal.tsx`) and the **interactive study player** (`LearnCourseModal.tsx`).
+> [!IMPORTANT]
+> **Zero External Dependency Risk & Design Consistency**: We implement a high-performance, self-contained Toast & Spinner system directly with React 18, Tailwind CSS, and Lucide React. This guarantees zero version conflicts with Next.js 14 / React 18, preserves the brand identity (Indigo / Violet / Slate), and ensures full offline / local reliability without relying on external network fetches.
 
-### Component A: `CatalogCourseModal.tsx` (Pre-Enrollment & Course Decision)
-#### Current Issues:
-- The curriculum is completely blurred with an opacity overlay, preventing learners from understanding the syllabus.
-- Font sizes and metadata are small and lack visual impact.
-- Attached materials are not previewable.
-
-#### Proposed Modernization:
-1. **Hero Header & Attributes**:
-   - Display course cover image with modern rounded borders.
-   - Code badge, English title, and Amharic title (if available) with strong, comfortable font weights.
-   - Badges for category, level, delivery mode, language, and assigned trainer.
-   - Quick metadata grid: Department, Target Audience, Prerequisites.
-2. **6-Stat Summary Cards**:
-   - Quick visual pills for Total Modules, Lessons, Sub-lessons, Downloadable Attachments, Final Exam Questions, and Total Estimated Duration.
-3. **Transparent Curriculum & Syllabus Outline**:
-   - Replace blur with a clear, structured syllabus breakdown showing module titles, descriptions, lesson titles, content type badges (Video, Reading, Quiz, Assignment), and duration.
-   - Keep lesson content locked while giving learners full insight into the syllabus.
-4. **Downloadable Resources Preview**:
-   - Display a preview badge highlighting included study materials (e.g. "Includes 4 PDF reference guides & 2 lecture videos").
-5. **High-Impact Enrollment CTA**:
-   - Prominent, modern "Enroll in Course" action button with instant enrollment state feedback.
+> [!TIP]
+> **Modern Confirmation Dialogs**: We eliminate archaic browser `window.confirm(...)` popups (e.g., during session or course deletion) and replace them with an enterprise `<ConfirmModal />` featuring destructive styling and a spinning loading state on the Confirm button.
 
 ---
 
-### Component B: `LearnCourseModal.tsx` (Interactive Study Player)
-#### Current Issues:
-- Clunky amber module headers (`bg-amber-50`) that clash with the modern light-mode palette.
-- Only checks legacy single `resourceUrl`, ignoring multi-file `resources` and `attachments`.
-- Sub-lessons and notes are cramped with tiny fonts.
-- Missing uniform open/download actions for attached files.
+## Proposed Architecture & Components
 
-#### Proposed Modernization:
-1. **Modern Light-Mode Theme & Typography**:
-   - Replace dated amber styling with clean white and soft slate cards featuring indigo left accent bars (`border-l-4 border-l-indigo-600`).
-   - Upgrade typography to comfortable `text-sm` and `text-base` font sizes with clear weights.
-2. **Comprehensive Attachment Management**:
-   - Aggregate all attached files across modules, lessons, and sub-lessons (combining `resources`, `attachments`, and legacy URLs).
-   - Render modern `AttachmentCard`s with file-type badges (PDF, Word, Video, Audio), file sizes, **Open in New Tab** (`target="_blank"`), and **Download** (`download={fileName}`).
-3. **Enhanced Lesson Player & Reading Notes**:
-   - Formatted rich text reading notes with comfortable reading width and clear prose typography.
-   - Clean video / audio players and media links.
-   - Clear timer / progress tracking and "Mark as Complete" progression controls.
-4. **Hierarchical Sub-Lesson Tree**:
-   - Indented hierarchy tree (`pl-4 border-l-2 border-indigo-200`) with distinct sub-lesson cards.
-   - Full access to sub-lesson reading notes, attachments with open/download, and completion tracking.
-5. **Integrated Quiz & Assignment Submissions**:
-   - Clear module quiz triggers and assignment submission dropzones with file upload status.
+```
+mor2/frontend/src/
+├── lib/
+│   └── toast.ts                        <-- Global toast dispatcher (callable anywhere, even outside React)
+├── components/
+│   ├── ui/
+│   │   ├── Toast.tsx                   <-- Toast container, animated toast items, progress bar, icons
+│   │   ├── Spinner.tsx                 <-- Universal customizable SVG/Lucide spinner
+│   │   ├── Skeleton.tsx                <-- Shimmer skeleton loaders for tables, cards, stat cards
+│   │   ├── LoadingOverlay.tsx          <-- Modal/card backdrop loader for heavy async tasks
+│   │   ├── ConfirmModal.tsx            <-- Enterprise confirmation dialog with spinning action button
+│   │   └── Button.tsx                  <-- Enhanced with `isLoading` and `loadingText`
+│   └── providers/
+│       └── AppProviders.tsx            <-- Mounts the global ToastContainer
+```
 
 ---
 
-## 4. Milestone 4: Learner Experience Overhaul (COMPLETED)
+## Detailed Implementation Breakdown
 
-### Status: ✅ COMPLETED & VERIFIED
-- **`CatalogCourseModal.tsx`**:
-  - Replaced the dark blur overlay with a clean, transparent, fully readable **Course Syllabus & Curriculum Roadmap**.
-  - Added the **6-Stat Summary Cards Bar**: Modules, Lessons, Sub-lessons, Est. Duration, Included Materials, and Assessment Passing Mark.
-  - Implemented rich course cover display, metadata grid (Department, Target Audience, Delivery, Language, Prerequisites), objectives banner, and expand/collapse all module controls.
-  - Added a prominent bottom **Enroll CTA Banner** with immediate state feedback and top-level action button.
-  - Adhered strictly to React Rules of Hooks (all hooks declared unconditionally at the top).
+### Phase 1: Core Enterprise Toast & Loading Infrastructure
 
-- **`LearnCourseModal.tsx`**:
-  - Removed clunky amber styling (`bg-amber-50`) in favor of crisp white cards, slate backgrounds, and bold indigo left accent bars (`border-l-4 border-l-indigo-600`).
-  - Added uniform multi-file attachment resolution via `getItemAttachments()` across course, modules, lessons, and sub-lessons.
-  - Implemented modern `AttachmentCard` with file type badge, file size, **Open in New Tab** (`target="_blank"`), and **Download** (`download`) action buttons.
-  - Upgraded lecture notes typography to comfortable, spacious reading containers (`text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none`).
-  - Upgraded sub-lessons into a clean indented tree (`border-l-2 border-violet-300 ml-4 pl-4`) with duration, time indicator, status badges, notes, and attachments.
-  - Preserved all learner APIs: lesson time heartbeat (`flushHeartbeat`), completion progression (`handleNext`), assignment file upload/download, `QuizTakerModal`, and completion certificate claim.
+1. **Global Toast System (`src/lib/toast.ts` & `src/components/ui/Toast.tsx`)**:
+   - Provide standard toast methods:
+     - `toast.success(message, options?)`: Green / emerald badge, check icon, auto-dismiss.
+     - `toast.error(message, options?)`: Rose / red badge, alert icon, detailed error display.
+     - `toast.warning(message, options?)`: Amber badge, warning icon.
+     - `toast.info(message, options?)`: Indigo / sky badge, info icon.
+     - `toast.loading(message, options?)`: Spinner icon, persistent until updated/dismissed.
+     - `toast.promise(promise, { loading, success, error })`: Automatically transitions between loading, success, and error states based on Promise resolution.
+     - `toast.dismiss(id?)`: Programmatic dismiss.
+   - Polished styling: Subtle glassmorphism (`backdrop-blur-md bg-white/95 border shadow-xl`), smooth slide-and-fade in/out animations, dismiss button (`X`), stack management.
+   - Accessible: `role="status"` and `aria-live="polite"`.
 
-### Build & Verification Results:
-- `npx tsc --noEmit -p tsconfig.json`: **0 errors** (Pass).
-- `npm run build`: **Compiled successfully, static pages (46/46) generated** (Pass).
+2. **Unified Spinner & Skeleton Components (`src/components/ui/Spinner.tsx`, `Skeleton.tsx`, `LoadingOverlay.tsx`)**:
+   - `<Spinner size="xs|sm|md|lg|xl" variant="primary|white|slate|indigo" label="..." />`
+   - `<TableSkeleton columns={number} rows={number} />` prevents the "No items found" flash during table fetches.
+   - `<CardSkeleton count={number} />` for course catalogs, grid views, and stats.
+   - `<LoadingOverlay message="..." />` for blocking modal or page actions.
+
+3. **Button Component Enhancement (`src/components/ui/Button.tsx`)**:
+   - Add `isLoading?: boolean` and `loadingText?: string` to `ButtonProps`.
+   - When `isLoading` is true, automatically render an animated spinner, disable interactions, and maintain layout height/width to avoid layout shifts.
+
+4. **Enterprise Action Confirmation Modal (`src/components/ui/ConfirmModal.tsx`)**:
+   - Replaces crude `window.confirm(...)` calls across all pages.
+   - Features: Title, contextual warning description, variant (`danger` | `primary`), cancel button, and confirm button with integrated `isLoading` spinner.
+
+---
+
+### Phase 2: Page-by-Page Integration & Refactoring
+
+#### 1. Training Admin Module
+- **`training-admin/sessions/page.tsx`**:
+  - Replace ad-hoc `flash` banner with `toast.success` and `toast.error`.
+  - Replace `window.confirm` with `<ConfirmModal>` for session deletion.
+  - Add `<TableSkeleton>` to `SessionTable` during initial and filter loading states.
+  - Add spinning state to `Status` update button and `Delete` action.
+- **`training-admin/courses/page.tsx`**:
+  - Replace flash messages on course publish, trainer assignment, and archiving with toasts.
+  - Add loading skeletons for course tables and action spinners.
+- **`training-admin/enrollments/page.tsx`**:
+  - Toast on learner enrollment, bulk enrollments, and withdrawals.
+  - Spinning button states during enrollment processing.
+- **`training-admin/publish/page.tsx` & `calendar/page.tsx`**:
+  - Data loading spinners and action completion toasts.
+
+#### 2. System Admin Module
+- **`system-admin/users/page.tsx`**:
+  - Add toast feedback for: role change, registration approval, registration rejection, account suspension, and reactivation.
+  - Integrate spinning states onto inline action buttons (`approve`, `reject`, `suspend`, `reactivate`).
+  - Add loading skeleton while fetching/filtering user roster.
+- **`system-admin/roles/page.tsx`**:
+  - Replace `flash` state with toasts on role creation, permission matrix update, and role deletion.
+  - Button spinning states on save/delete.
+- **`system-admin/pending-registrations/page.tsx`**:
+  - Toast notifications and button spinners for approving/rejecting learner signups.
+- **`system-admin/pending-course-approvals/page.tsx`**:
+  - Toast notifications and button spinners for approving, rejecting, or requesting changes on course submissions.
+- **`system-admin/policies/page.tsx`**:
+  - Toast on policy updates and policy resets; enhance existing spinners with consistent `<Button isLoading={...}>`.
+- **`system-admin/certificate-templates/page.tsx`**:
+  - Toast notifications on template creation, logo/stamp/signature uploads, edits, and deletions.
+  - Loading indicators for asset uploads.
+- **`system-admin/bulk-register/page.tsx` & `register-actor/page.tsx`**:
+  - Progress spinner and toast on bulk creation and single actor registration.
+
+#### 3. Course Owner Module
+- **`course-owner/my-courses/page.tsx` & `create-course/page.tsx` (`CourseCreationWizard.tsx`)**:
+  - Toast on saving drafts, submitting for review, updating curriculum, uploading media, and deleting modules.
+  - Button spinning states on all multi-step wizard actions.
+- **`course-owner/question-bank/page.tsx`**:
+  - Toast on adding, editing, and deleting questions/assessments; table loading skeletons.
+
+#### 4. Trainer Module
+- **`trainer/sessions/page.tsx`**:
+  - Toast on session creation, rescheduling, deletion, and status changes.
+- **`trainer/attendance/page.tsx`**:
+  - Replace `flashMessage` banner with toasts for individual status updates, bulk mark all, manual overrides, and attendance report dispatch.
+  - Retain and polish loading spinners on the refresh and action buttons.
+- **`trainer/create-quiz/page.tsx` & `trainer/question-bank/page.tsx`**:
+  - Loading states and success/error toasts for quiz creation and question edits.
+
+#### 5. Learner Module
+- **`learner/catalog/page.tsx`**:
+  - Toast on course enrollment ("Successfully enrolled!"), spinning state on the "Enroll Now" button.
+- **`learner/live-sessions/page.tsx`**:
+  - Add `<TableSkeleton>` for initial loading state (prevent empty state flicker).
+  - Toast feedback for self check-in and joining sessions.
+- **`learner/my-courses/page.tsx` & `progress/page.tsx`**:
+  - Loading indicators while fetching course progress and certificates.
+- **`learner/certificates/page.tsx`**:
+  - Loading spinner while generating/downloading PDF certificates.
+- **`components/features/quiz/QuizTakerModal.tsx`**:
+  - Spinning button on quiz submit and result calculation toast.
+
+#### 6. Core Modals & Shared Workspaces
+- **`SessionDetailModal.tsx`**:
+  - Add loading skeleton/spinner while `fetchLiveSession(sessionId)` resolves so the modal opens smoothly instead of freezing.
+- **`CourseDetailModal.tsx`**:
+  - Replace `window.confirm` with `<ConfirmModal>`.
+  - Toast on course approval, rejection, archiving, and deletion with button spinning states.
+- **`UserDetailModal.tsx`**:
+  - Toast and spinning states when updating user roles or statuses from within the modal.
+- **`AccountModal.tsx` (`ProfileTab.tsx`, `PasswordTab.tsx`)**:
+  - Toast on profile updates, avatar uploads, and password resets.
+
+---
+
+## Verification Plan
+
+### Automated Build & Lint Verification
+1. Run Next.js lint:
+   ```bash
+   cd "c:\Users\HP\Desktop\MoR LMS\MoR LMS\mor2\frontend" && npm run lint
+   ```
+2. Verify TypeScript type checking:
+   ```bash
+   npx tsc --noEmit
+   ```
+
+### Manual & Interactive Verification
+1. **Toast Notification Verification**:
+   - Trigger a delete action (e.g. session delete) -> Verify confirm dialog opens -> Confirm -> Verify spinning state on button -> Verify toast appears at top right with smooth entrance -> Verify auto-dismiss after timer or on 'X' click.
+   - Trigger an update action (e.g. role change or attendance update) -> Verify success toast with green badge.
+   - Simulate a network/API failure (e.g. invalid form input or bad ID) -> Verify error toast with clear message.
+2. **Loading / Spinner Verification**:
+   - Navigate to Sessions, Users, Courses, Attendance -> Verify table skeletons appear immediately while loading rather than flashing "No records found".
+   - Submit forms and wizard steps -> Verify buttons show animated spinners and disable double-clicking.
+   - Open Session and User detail modals -> Verify smooth spinner while loading entity data.
+
+---
+
+## Implementation Status: 100% Complete ✅
+
+All phases and items from this implementation plan have been successfully executed:
+
+1. **Infrastructure**:
+   - `src/lib/toast.ts`: Global observer toast system with support for success, error, warning, info, loading, and promise-based toasts.
+   - `src/components/ui/Toast.tsx`: Glassmorphic animated toast container with auto-dismiss progress and Lucide icons.
+   - `src/components/ui/Spinner.tsx`: Universal customizable spinner with smooth SVG rotation.
+   - `src/components/ui/Skeleton.tsx`: High-performance shimmer skeletons (`TableSkeleton`, `CardSkeleton`, `StatCardSkeleton`).
+   - `src/components/ui/LoadingOverlay.tsx`: Backdrop modal/card async blocker.
+   - `src/components/ui/ConfirmModal.tsx`: Destructive/warning confirmation dialog with integrated button loading spinners.
+   - `src/components/ui/Button.tsx`: Enhanced with `isLoading` and `loadingText` maintaining fixed dimensions.
+   - `src/components/providers/AppProviders.tsx`: Mounts the `<ToastContainer />`.
+
+2. **Training Admin Module**:
+   - `training-admin/sessions/page.tsx`: TableSkeleton, ConfirmModal for delete, button spinners, toast alerts.
+   - `training-admin/enrollments/page.tsx` & `EnrollmentForm.tsx`: TableSkeleton, quick learner enroll dialog, learner withdrawal ConfirmModal, button spinners, toasts.
+   - `training-admin/calendar/page.tsx`: TableSkeleton during session fetching.
+   - `courses/page.tsx`: CardSkeleton during catalog loading, toast alerts, removed flash banners.
+
+3. **System Admin Module**:
+   - `system-admin/users/page.tsx` & `UserDetailModal.tsx`: Inline spinners per user action, toasts for role changes/status changes/approvals.
+   - `system-admin/roles/page.tsx`: TableSkeleton, ConfirmModal for deletion, Button spinners, toasts.
+   - `system-admin/pending-registrations/page.tsx`: Approval/rejection toasts, inline button spinners.
+   - `PendingCourseApprovals.tsx`: Approval/rejection/changes toasts, button spinners.
+   - `system-admin/policies/page.tsx`: CardSkeleton, button spinners, toasts.
+   - `CertificateTemplatesAdmin.tsx`: ConfirmModal for template deletion, toasts on duplicate/activate/save/delete.
+   - `system-admin/bulk-register/page.tsx` & `register-actor/page.tsx`: Form validation toasts, Button isLoading spinners.
+
+4. **Course Owner & Trainer Modules**:
+   - `CourseCreationWizard.tsx`: Button isLoading on draft and submission, toasts on save and submit for approval, removed flash banners.
+   - `QuestionBankWorkspace.tsx`: CardSkeleton during questions load, ConfirmModal on question deletion, button spinners, toasts on duplicate/save/delete/quiz publishing.
+   - `trainer/sessions/page.tsx`: ConfirmModal for session deletion, button spinners, toasts on creation/deletion/status.
+   - `trainer/attendance/page.tsx`: TableSkeleton, button spinners, toasts on mark all/override/report dispatch.
+
+5. **Learner Module**:
+   - `CatalogCourseModal.tsx`: Button isLoading on enrollment CTAs, toasts on enrollment.
+   - `learner/live-sessions/page.tsx`: TableSkeleton, toasts on entering room, button loading states.
+   - `learner/my-courses/page.tsx`: CardSkeleton during catalog ready state.
+   - `learner/progress/page.tsx`: CardSkeleton during progress fetch.
+   - `learner/certificates/page.tsx`: CardSkeleton during certificates loading.
+   - `QuizTakerModal.tsx`: CardSkeleton during assessment load, Button isLoading on assessment submit, toasts on pass/fail score calculations.
+
+6. **Core Modals & Shared Components**:
+   - `SessionDetailModal.tsx`: Loading skeleton while fetching session details.
+   - `CourseDetailModal.tsx`: ConfirmModal for archive and delete, button spinners, toasts for all actions.
+   - `StepFinalAssessment.tsx`: Replaced alert dialogs with toasts.
+   - `ProfileTab.tsx` & `SecurityTab.tsx`: Button isLoading and toast feedback for profile and password changes.
+   - **Zero browser dialogs**: Verified 0 `window.confirm` and 0 `window.alert` remaining across the entire frontend.

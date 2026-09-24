@@ -5,6 +5,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { uploadAvatar } from "@/lib/api/files";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/lib/toast";
 import type { ApiUser } from "@/lib/api/types";
 
 const inputClass =
@@ -30,7 +31,6 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -55,12 +55,16 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
       const url = await uploadAvatar(file);
       const result = await updateProfile({ avatarUrl: url });
       if (!result.ok) {
-        setError(result.message ?? "Failed to save avatar.");
+        const msg = result.message ?? "Failed to save avatar.";
+        setError(msg);
+        toast.error(msg);
       } else if (profile) {
         onUpdated({ ...profile, avatarUrl: url });
+        toast.success("Profile avatar updated successfully!");
       }
     } catch {
       setError("Failed to upload avatar.");
+      toast.error("Failed to upload avatar.");
     } finally {
       setUploadingAvatar(false);
     }
@@ -69,9 +73,9 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setError("First and last name are required.");
+      toast.error("First and last name are required.");
       return;
     }
     setSaving(true);
@@ -83,7 +87,9 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
     });
     setSaving(false);
     if (!result.ok) {
-      setError(result.message ?? "Failed to update profile.");
+      const msg = result.message ?? "Failed to update profile.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     if (profile) {
@@ -95,7 +101,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
         tin: form.tin.trim() || null,
       });
     }
-    setSuccess("Profile updated.");
+    toast.success("Profile updated successfully!");
   };
 
   if (loading) {
@@ -192,12 +198,9 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
       </div>
 
       {error ? <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p> : null}
-      {success ? (
-        <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">{success}</p>
-      ) : null}
 
-      <Button type="submit" disabled={saving} className="gap-2">
-        {saving ? "Saving..." : "Save changes"}
+      <Button type="submit" isLoading={saving} loadingText="Saving changes..." className="gap-2">
+        Save changes
       </Button>
     </form>
   );

@@ -44,6 +44,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Td } from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
+import { TableSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-US", {
@@ -67,8 +69,6 @@ export default function TrainerAttendancePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [flashMessage, setFlashMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Override dialog
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
@@ -211,7 +211,6 @@ export default function TrainerAttendancePage() {
   const handleMarkStatus = async (userId: string, status: BackendAttendanceStatus) => {
     if (!activeSession) return;
     setActionLoadingId(userId);
-    setErrorMessage(null);
 
     try {
       await markAttendance({
@@ -219,11 +218,10 @@ export default function TrainerAttendancePage() {
         userId,
         status,
       });
-      setFlashMessage(`Updated status to ${status}.`);
+      toast.success(`Updated attendance status to ${status}.`);
       await loadAttendanceForSession(activeSession.id);
-      setTimeout(() => setFlashMessage(null), 3000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to record attendance status.");
+      toast.error(err instanceof Error ? err.message : "Failed to record attendance status.");
     } finally {
       setActionLoadingId(null);
     }
@@ -232,7 +230,6 @@ export default function TrainerAttendancePage() {
   const handleBulkMarkAll = async (status: BackendAttendanceStatus) => {
     if (!activeSession || studentRoster.length === 0) return;
     setLoadingAttendance(true);
-    setErrorMessage(null);
 
     try {
       const records = studentRoster.map((s) => ({
@@ -243,11 +240,10 @@ export default function TrainerAttendancePage() {
         sessionId: activeSession.id,
         records,
       });
-      setFlashMessage(`Successfully marked all learners as ${status}.`);
+      toast.success(`Successfully marked all learners as ${status}.`);
       await loadAttendanceForSession(activeSession.id);
-      setTimeout(() => setFlashMessage(null), 3000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to bulk update attendance.");
+      toast.error(err instanceof Error ? err.message : "Failed to bulk update attendance.");
     } finally {
       setLoadingAttendance(false);
     }
@@ -264,12 +260,11 @@ export default function TrainerAttendancePage() {
     setOverrideSubmitting(true);
     try {
       await overrideAttendance(overrideTarget.id, overrideStatus);
-      setFlashMessage(`Attendance record overridden to ${overrideStatus}.`);
+      toast.success(`Attendance record overridden to ${overrideStatus}.`);
       setOverrideModalOpen(false);
       if (activeSession) await loadAttendanceForSession(activeSession.id);
-      setTimeout(() => setFlashMessage(null), 3000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to override attendance.");
+      toast.error(err instanceof Error ? err.message : "Failed to override attendance.");
     } finally {
       setOverrideSubmitting(false);
     }
@@ -278,14 +273,12 @@ export default function TrainerAttendancePage() {
   const handleSendReport = async () => {
     if (!selectedSessionId) return;
     setSendingReport(true);
-    setErrorMessage(null);
     try {
       await sendSessionAttendanceReport(selectedSessionId);
-      setFlashMessage("Attendance report calculated and official notification delivered to trainer!");
+      toast.success("Attendance report calculated and official notification delivered to trainer!");
       await loadAttendanceForSession(selectedSessionId);
-      setTimeout(() => setFlashMessage(null), 4000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to dispatch attendance report.");
+      toast.error(err instanceof Error ? err.message : "Failed to dispatch attendance report.");
     } finally {
       setSendingReport(false);
     }
@@ -298,21 +291,6 @@ export default function TrainerAttendancePage() {
       description="Track, verify, and manage participant attendance across your scheduled live training sessions."
     >
       <div className="space-y-6">
-        {/* Flash Notifications */}
-        {flashMessage && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            {flashMessage}
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            {errorMessage}
-          </div>
-        )}
-
         {/* Session Selector & Context Bar */}
         <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -573,10 +551,10 @@ export default function TrainerAttendancePage() {
                           learner.status === "PRESENT"
                             ? "green"
                             : learner.status === "LATE"
-                            ? "amber"
-                            : learner.status === "EXCUSED"
-                            ? "blue"
-                            : "slate"
+                              ? "amber"
+                              : learner.status === "EXCUSED"
+                                ? "blue"
+                                : "slate"
                         }
                         dot
                       >
@@ -593,9 +571,8 @@ export default function TrainerAttendancePage() {
                               variant={learner.status === "PRESENT" ? "primary" : "outline"}
                               disabled={isLoading}
                               onClick={() => handleMarkStatus(learner.userId, "PRESENT")}
-                              className={`h-7 px-2.5 text-xs ${
-                                learner.status === "PRESENT" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-                              }`}
+                              className={`h-7 px-2.5 text-xs ${learner.status === "PRESENT" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                                }`}
                             >
                               Present
                             </Button>
@@ -605,9 +582,8 @@ export default function TrainerAttendancePage() {
                               variant={learner.status === "LATE" ? "primary" : "outline"}
                               disabled={isLoading}
                               onClick={() => handleMarkStatus(learner.userId, "LATE")}
-                              className={`h-7 px-2.5 text-xs ${
-                                learner.status === "LATE" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
-                              }`}
+                              className={`h-7 px-2.5 text-xs ${learner.status === "LATE" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
+                                }`}
                             >
                               Late
                             </Button>
@@ -617,9 +593,8 @@ export default function TrainerAttendancePage() {
                               variant={learner.status === "ABSENT" ? "primary" : "outline"}
                               disabled={isLoading}
                               onClick={() => handleMarkStatus(learner.userId, "ABSENT")}
-                              className={`h-7 px-2.5 text-xs ${
-                                learner.status === "ABSENT" ? "bg-slate-700 text-white" : ""
-                              }`}
+                              className={`h-7 px-2.5 text-xs ${learner.status === "ABSENT" ? "bg-slate-700 text-white" : ""
+                                }`}
                             >
                               Absent
                             </Button>
@@ -629,9 +604,8 @@ export default function TrainerAttendancePage() {
                               variant={learner.status === "EXCUSED" ? "primary" : "outline"}
                               disabled={isLoading}
                               onClick={() => handleMarkStatus(learner.userId, "EXCUSED")}
-                              className={`h-7 px-2.5 text-xs ${
-                                learner.status === "EXCUSED" ? "bg-sky-600 text-white" : ""
-                              }`}
+                              className={`h-7 px-2.5 text-xs ${learner.status === "EXCUSED" ? "bg-sky-600 text-white" : ""
+                                }`}
                             >
                               Excused
                             </Button>

@@ -43,7 +43,11 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
 import { RichTextArea } from "@/components/ui/RichTextArea";
+import { CardSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { toast } from "@/lib/toast";
 import {
+  bulkCreateQuestionBankItems,
   createCourseAssessment,
   createQuestionBankItem,
   deleteQuestionBankItem,
@@ -112,6 +116,21 @@ function getCleanSubLessonTitle(title?: string | null): string {
 const inputClass =
   "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
 const labelClass = "mb-1.5 block text-xs font-semibold text-slate-700";
+
+interface StagedQuestion {
+  id: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  question: string;
+  options: string[];
+  correctAnswer: string | null;
+  points: number;
+  category: string;
+}
+
+function stripHtml(html?: string | null): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>?/gm, "").trim() || html;
+}
 
 interface QuestionBankWorkspaceProps {
   role: "trainer" | "course_owner";
@@ -187,6 +206,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<BankQuestion | null>(null);
+  const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>([]);
 
   const [qType, setQType] = useState<"MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER">("MULTIPLE_CHOICE");
   const [qText, setQText] = useState("");
@@ -209,7 +229,6 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<BankQuestion[]>([]);
   const [savingQuiz, setSavingQuiz] = useState(false);
-  const [quizFlash, setQuizFlash] = useState<string | null>(null);
 
   const [courseAssessments, setCourseAssessments] = useState<any[]>([]);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
@@ -413,6 +432,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const openCreateQuestion = (node?: ActiveCurriculumNode) => {
     const target = node || activeCurriculumNode;
     setEditingQuestion(null);
+    setStagedQuestions([]);
     setQType("MULTIPLE_CHOICE");
     setQText("");
     setQOptions(["", "", "", ""]);
@@ -459,6 +479,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
   const openEditQuestion = (q: BankQuestion) => {
     setEditingQuestion(q);
+    setStagedQuestions([]);
     setQType(q.type);
     setQText(q.question);
     setQOptions(q.options.length > 0 ? q.options : ["", "", "", ""]);
@@ -499,19 +520,24 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     setEditorOpen(true);
   };
 
-  const handleSaveQuestion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!qText.trim()) return;
-
-    setSavingQuestion(true);
-    setSaveError(null);
+  const handleAddQuestionToBatch = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (!qText.trim()) {
+      setSaveError("Please enter question prompt before adding.");
+      return;
+    }
 
     const options =
       qType === "TRUE_FALSE"
         ? ["True", "False"]
         : qType === "SHORT_ANSWER"
-        ? []
-        : qOptions.filter((o) => o.trim() !== "");
+          ? []
+          : qOptions.filter((o) => o.trim() !== "");
+
+    if (qType === "MULTIPLE_CHOICE" && options.length < 2) {
+      setSaveError("Please provide at least 2 non-empty answer choices.");
+      return;
+    }
 
     let correctAnswerStr: string | null = null;
     if (qType === "SHORT_ANSWER") {
@@ -519,6 +545,62 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     } else {
       correctAnswerStr = String(qCorrectIndex);
     }
+
+    const newStaged: StagedQuestion = {
+      id: `staged-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      type: qType,
+      question: qText.trim(),
+      options,
+      correctAnswer: correctAnswerStr,
+      points: qPoints,
+      category: qCategory.trim() || "General",
+    };
+
+    setStagedQuestions((prev) => [...prev, newStaged]);
+    // Reset inputs for next question, preserving curriculum target level & parameters
+    setQText("");
+    setQOptions(["", "", "", ""]);
+    setQCorrectIndex(0);
+    setQAnswerText("");
+    setSaveError(null);
+    toast.success(`Question added to queue! (${stagedQuestions.length + 1} ready to save)`);
+  };
+
+  const handleEditStagedQuestion = (idx: number) => {
+    const sq = stagedQuestions[idx];
+    if (!sq) return;
+    setQType(sq.type);
+    setQText(sq.question);
+    setQOptions(
+      sq.options.length > 0
+        ? sq.options.length >= 4
+          ? sq.options
+          : [...sq.options, ...Array(4 - sq.options.length).fill("")]
+        : ["", "", "", ""]
+    );
+    if (sq.type === "SHORT_ANSWER") {
+      setQAnswerText(sq.correctAnswer || "");
+    } else {
+      const parsed = parseInt(sq.correctAnswer || "0", 10);
+      setQCorrectIndex(!isNaN(parsed) ? parsed : 0);
+    }
+    setQPoints(sq.points || 10);
+    setQCategory(sq.category || "General");
+    setStagedQuestions((prev) => prev.filter((_, i) => i !== idx));
+    toast.info("Question loaded back into form for editing.");
+  };
+
+  const handleSaveQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const hasCurrentText = !!qText.trim();
+    if (!hasCurrentText && stagedQuestions.length === 0) {
+      setSaveError("Please enter a question prompt or add at least one question before saving.");
+      return;
+    }
+
+    setSavingQuestion(true);
+    setSaveError(null);
 
     const isGlobal = targetLevel === "GLOBAL" || qIsReusable;
     const finalModuleId =
@@ -532,21 +614,35 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     const finalSubLessonId =
       !isGlobal && targetLevel === "SUB_LESSON" ? targetSubLessonId || null : null;
 
-    const payload = {
-      courseId: isGlobal ? null : selectedCourseId,
-      moduleId: finalModuleId,
-      lessonId: finalLessonId,
-      subLessonId: finalSubLessonId,
-      type: qType,
-      question: qText.trim(),
-      options,
-      correctAnswer: correctAnswerStr,
-      points: qPoints,
-      category: qCategory.trim() || "General",
-    };
-
     try {
       if (editingQuestion) {
+        const options =
+          qType === "TRUE_FALSE"
+            ? ["True", "False"]
+            : qType === "SHORT_ANSWER"
+              ? []
+              : qOptions.filter((o) => o.trim() !== "");
+
+        let correctAnswerStr: string | null = null;
+        if (qType === "SHORT_ANSWER") {
+          correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
+        } else {
+          correctAnswerStr = String(qCorrectIndex);
+        }
+
+        const payload = {
+          courseId: isGlobal ? null : selectedCourseId,
+          moduleId: finalModuleId,
+          lessonId: finalLessonId,
+          subLessonId: finalSubLessonId,
+          type: qType,
+          question: qText.trim(),
+          options,
+          correctAnswer: correctAnswerStr,
+          points: qPoints,
+          category: qCategory.trim() || "General",
+        };
+
         const updated = await updateQuestionBankItem(editingQuestion.id, payload);
         let parsedAnswer: number | string | null = updated.correctAnswer;
         if (updated.type !== "SHORT_ANSWER" && updated.correctAnswer !== null) {
@@ -571,51 +667,128 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           subLesson: updated.subLesson,
         };
         setQuestions((prev) => prev.map((item) => (item.id === editingQuestion.id ? mapped : item)));
+        toast.success("Question updated successfully!");
       } else {
-        const created = await createQuestionBankItem(payload);
-        let parsedAnswer: number | string | null = created.correctAnswer;
-        if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
-          const num = parseInt(created.correctAnswer, 10);
-          if (!isNaN(num)) parsedAnswer = num;
+        const batchItems: StagedQuestion[] = [...stagedQuestions];
+
+        if (hasCurrentText) {
+          const options =
+            qType === "TRUE_FALSE"
+              ? ["True", "False"]
+              : qType === "SHORT_ANSWER"
+                ? []
+                : qOptions.filter((o) => o.trim() !== "");
+
+          if (qType === "MULTIPLE_CHOICE" && options.length < 2) {
+            setSaveError("Current question needs at least 2 answer choices.");
+            setSavingQuestion(false);
+            return;
+          }
+
+          let correctAnswerStr: string | null = null;
+          if (qType === "SHORT_ANSWER") {
+            correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
+          } else {
+            correctAnswerStr = String(qCorrectIndex);
+          }
+
+          batchItems.push({
+            id: `temp-${Date.now()}`,
+            type: qType,
+            question: qText.trim(),
+            options,
+            correctAnswer: correctAnswerStr,
+            points: qPoints,
+            category: qCategory.trim() || "General",
+          });
         }
-        const mapped: BankQuestion = {
-          id: created.id,
-          type: created.type,
-          question: created.question,
-          options: Array.isArray(created.options) ? (created.options as string[]) : [],
-          correctAnswer: parsedAnswer,
-          points: created.points,
-          courseId: created.courseId,
-          moduleId: created.moduleId,
-          lessonId: created.lessonId,
-          subLessonId: created.subLessonId,
-          category: created.category,
-          isReusable: !created.courseId,
-          module: created.module,
-          lesson: created.lesson,
-          subLesson: created.subLesson,
-        };
-        setQuestions((prev) => [mapped, ...prev]);
+
+        const payloads = batchItems.map((item) => ({
+          courseId: isGlobal ? null : selectedCourseId,
+          moduleId: finalModuleId,
+          lessonId: finalLessonId,
+          subLessonId: finalSubLessonId,
+          type: item.type,
+          question: item.question,
+          options: item.options,
+          correctAnswer: item.correctAnswer,
+          points: item.points,
+          category: item.category,
+        }));
+
+        let createdList: any[] = [];
+        try {
+          createdList = await bulkCreateQuestionBankItems(payloads);
+        } catch {
+          // Fallback to sequential creation if bulk endpoint encountered error
+          for (const p of payloads) {
+            const res = await createQuestionBankItem(p);
+            createdList.push(res);
+          }
+        }
+
+        const mappedList: BankQuestion[] = createdList.map((created) => {
+          let parsedAnswer: number | string | null = created.correctAnswer;
+          if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
+            const num = parseInt(created.correctAnswer, 10);
+            if (!isNaN(num)) parsedAnswer = num;
+          }
+          return {
+            id: created.id,
+            type: created.type,
+            question: created.question,
+            options: Array.isArray(created.options) ? (created.options as string[]) : [],
+            correctAnswer: parsedAnswer,
+            points: created.points,
+            courseId: created.courseId,
+            moduleId: created.moduleId,
+            lessonId: created.lessonId,
+            subLessonId: created.subLessonId,
+            category: created.category,
+            isReusable: !created.courseId,
+            module: created.module,
+            lesson: created.lesson,
+            subLesson: created.subLesson,
+          };
+        });
+
+        setQuestions((prev) => [...mappedList, ...prev]);
+        setStagedQuestions([]);
+        toast.success(
+          mappedList.length > 1
+            ? `Successfully saved ${mappedList.length} questions to question bank!`
+            : "Question added to question bank!"
+        );
       }
       setEditorOpen(false);
     } catch (err: any) {
       setSaveError(err?.message || "Failed to save question to bank");
+      toast.error(err?.message || "Failed to save question to bank");
     } finally {
       setSavingQuestion(false);
     }
   };
 
-  const handleDeleteQuestion = async (id: string) => {
+  const [deletingQuestion, setDeletingQuestion] = useState<BankQuestion | null>(null);
+  const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
+
+  const confirmDeleteQuestion = async () => {
+    if (!deletingQuestion) return;
+    setIsDeletingQuestion(true);
     try {
-      await deleteQuestionBankItem(id);
-      setQuestions((prev) => prev.filter((q) => q.id !== id));
+      await deleteQuestionBankItem(deletingQuestion.id);
+      setQuestions((prev) => prev.filter((q) => q.id !== deletingQuestion.id));
       setSelectedQuestionIds((prev) => {
         const next = new Set(prev);
-        next.delete(id);
+        next.delete(deletingQuestion.id);
         return next;
       });
-    } catch (err) {
-      console.error("Failed to delete question:", err);
+      toast.success("Question deleted from bank successfully.");
+      setDeletingQuestion(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete question.");
+    } finally {
+      setIsDeletingQuestion(false);
     }
   };
 
@@ -656,8 +829,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         subLesson: created.subLesson,
       };
       setQuestions((prev) => [mapped, ...prev]);
-    } catch (err) {
-      console.error("Failed to duplicate question:", err);
+      toast.success("Question duplicated successfully.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to duplicate question.");
     }
   };
 
@@ -690,14 +864,12 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     setMaxAttempts(3);
     setTimeLimitMinutes(30);
     setShuffleQuestions(false);
-    setQuizFlash(null);
     setQuizBuilderOpen(true);
   };
 
   const handleSaveQuiz = async () => {
     if (!selectedCourseId || quizQuestions.length === 0) return;
     setSavingQuiz(true);
-    setQuizFlash(null);
 
     try {
       const questionsPayload: AssessmentQuestionInput[] = quizQuestions.map((q) => ({
@@ -722,15 +894,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       };
 
       await createCourseAssessment(selectedCourseId, body);
-      setQuizFlash("Quiz successfully saved and published for learners!");
+      toast.success("Quiz successfully saved and published for learners!");
       await loadAssessments(selectedCourseId);
 
-      setTimeout(() => {
-        setQuizBuilderOpen(false);
-        setActiveTab("quizzes");
-      }, 1200);
+      setQuizBuilderOpen(false);
+      setActiveTab("quizzes");
     } catch (err: any) {
-      setQuizFlash(`Error saving quiz: ${err?.message || "Please verify quiz settings."}`);
+      toast.error(`Error saving quiz: ${err?.message || "Please verify quiz settings."}`);
     } finally {
       setSavingQuiz(false);
     }
@@ -833,11 +1003,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             <button
               type="button"
               onClick={() => setCourseFilterMode("ALL")}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                courseFilterMode === "ALL"
+              className={`px-2.5 py-1 rounded-lg transition ${courseFilterMode === "ALL"
                   ? "bg-white text-indigo-700 shadow-2xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
               title="Browse Question Banks across all institutional courses"
             >
               All Courses ({courses.length})
@@ -845,11 +1014,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             <button
               type="button"
               onClick={() => setCourseFilterMode("MY")}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                courseFilterMode === "MY"
+              className={`px-2.5 py-1 rounded-lg transition ${courseFilterMode === "MY"
                   ? "bg-white text-indigo-700 shadow-2xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
               title={`Show only courses where you are assigned as ${role === "course_owner" ? "Owner" : "Trainer"}`}
             >
               {role === "course_owner" ? "My Created" : "My Assigned"} ({myCourses.length})
@@ -862,11 +1030,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           <button
             type="button"
             onClick={() => setActiveTab("questions")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              activeTab === "questions"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${activeTab === "questions"
                 ? "bg-white text-indigo-700 shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+              }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
             Questions ({courseQuestions.length})
@@ -874,11 +1041,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           <button
             type="button"
             onClick={() => setActiveTab("quizzes")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              activeTab === "quizzes"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${activeTab === "quizzes"
                 ? "bg-white text-indigo-700 shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+              }`}
           >
             <Award className="h-3.5 w-3.5" />
             Published Quizzes ({courseAssessments.length})
@@ -908,19 +1074,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 <button
                   type="button"
                   onClick={() => setActiveCurriculumNode({ type: "ALL", id: null, title: "All Course Questions" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                    activeCurriculumNode.type === "ALL"
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "ALL"
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-700 hover:bg-slate-100"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <ListChecks className="h-3.5 w-3.5 shrink-0" />
                     All Questions
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    activeCurriculumNode.type === "ALL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                  }`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "ALL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
+                    }`}>
                     {questionCounts.all || 0}
                   </span>
                 </button>
@@ -928,19 +1092,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 <button
                   type="button"
                   onClick={() => setActiveCurriculumNode({ type: "COURSE_GENERAL", id: null, title: "Course-Level (General)" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                    activeCurriculumNode.type === "COURSE_GENERAL"
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "COURSE_GENERAL"
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-700 hover:bg-slate-100"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <BookOpen className="h-3.5 w-3.5 shrink-0" />
                     Course Level (General)
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    activeCurriculumNode.type === "COURSE_GENERAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                  }`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "COURSE_GENERAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
+                    }`}>
                     {questionCounts.courseGeneral || 0}
                   </span>
                 </button>
@@ -948,19 +1110,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 <button
                   type="button"
                   onClick={() => setActiveCurriculumNode({ type: "GLOBAL", id: null, title: "Reusable Global Questions" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                    activeCurriculumNode.type === "GLOBAL"
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "GLOBAL"
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-700 hover:bg-slate-100"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <Globe className="h-3.5 w-3.5 shrink-0" />
                     Reusable Global
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    activeCurriculumNode.type === "GLOBAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                  }`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "GLOBAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
+                    }`}>
                     {questionCounts.global || 0}
                   </span>
                 </button>
@@ -991,11 +1151,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                         <div key={mod.id} className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
                           {/* Module Header */}
                           <div
-                            className={`group flex items-center justify-between p-2 text-xs transition-colors cursor-pointer ${
-                              isModActive
+                            className={`group flex items-center justify-between p-2 text-xs transition-colors cursor-pointer ${isModActive
                                 ? "bg-indigo-50/90 text-indigo-950 font-bold ring-1 ring-indigo-200"
                                 : "hover:bg-slate-50 text-slate-800"
-                            }`}
+                              }`}
                           >
                             <div
                               className="flex items-center gap-2 flex-1 min-w-0"
@@ -1008,11 +1167,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                               title={`Module ${modIdx + 1}: ${cleanModuleTitle}`}
                             >
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight shrink-0 ${
-                                  isModActive
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight shrink-0 ${isModActive
                                     ? "bg-indigo-600 text-white"
                                     : "bg-indigo-100/80 text-indigo-800 border border-indigo-200/60"
-                                }`}
+                                  }`}
                               >
                                 M{modIdx + 1}
                               </span>
@@ -1023,11 +1181,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
                             <div className="flex items-center gap-1.5 shrink-0 ml-2">
                               <span
-                                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                                  isModActive
+                                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${isModActive
                                     ? "bg-indigo-200/70 text-indigo-900 border-indigo-300"
                                     : "bg-slate-100 text-slate-600 border-slate-200"
-                                }`}
+                                  }`}
                                 title={`${modCount} questions attached to this module`}
                               >
                                 {modCount}
@@ -1080,16 +1237,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                 return (
                                   <div
                                     key={les.id}
-                                    className={`rounded-lg border transition-all ${
-                                      isLesActive
+                                    className={`rounded-lg border transition-all ${isLesActive
                                         ? "bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-2xs"
                                         : "bg-white/90 border-slate-200/70 hover:border-slate-300"
-                                    }`}
+                                      }`}
                                   >
                                     <div
-                                      className={`flex items-center justify-between p-2 text-xs transition cursor-pointer ${
-                                        isLesActive ? "text-indigo-950 font-bold" : "hover:bg-slate-50/70"
-                                      }`}
+                                      className={`flex items-center justify-between p-2 text-xs transition cursor-pointer ${isLesActive ? "text-indigo-950 font-bold" : "hover:bg-slate-50/70"
+                                        }`}
                                     >
                                       <div
                                         className="flex items-center gap-2 flex-1 min-w-0"
@@ -1103,11 +1258,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                         title={`Lesson ${modIdx + 1}.${lesIdx + 1}: ${cleanLessonTitle}`}
                                       >
                                         <span
-                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 ${
-                                            isLesActive
+                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 ${isLesActive
                                               ? "bg-indigo-100 text-indigo-800"
                                               : "bg-slate-100 text-slate-600 border border-slate-200/60"
-                                          }`}
+                                            }`}
                                         >
                                           {modIdx + 1}.{lesIdx + 1}
                                         </span>
@@ -1168,11 +1322,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                           return (
                                             <div
                                               key={sub.id}
-                                              className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${
-                                                isSubActive
+                                              className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${isSubActive
                                                   ? "bg-indigo-100 text-indigo-950 font-bold border border-indigo-200 shadow-2xs"
                                                   : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200/60"
-                                              }`}
+                                                }`}
                                               onClick={() => setActiveCurriculumNode({
                                                 type: "SUB_LESSON",
                                                 id: sub.id,
@@ -1322,8 +1475,8 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
             {/* Question List */}
             {loadingQuestions ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+              <div className="space-y-3">
+                <CardSkeleton count={4} />
               </div>
             ) : filteredQuestions.length === 0 ? (
               <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
@@ -1345,11 +1498,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   return (
                     <div
                       key={q.id}
-                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-150 p-5 ${
-                        isSelected
+                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-150 p-5 ${isSelected
                           ? "border-indigo-400 bg-indigo-50/20 shadow-sm ring-2 ring-indigo-500/10"
                           : "border-slate-200/90 bg-white hover:border-slate-300 shadow-xs"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -1408,16 +1560,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                   return (
                                     <div
                                       key={optIdx}
-                                      className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium ${
-                                        isCorrect
+                                      className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium ${isCorrect
                                           ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold"
                                           : "bg-slate-50 text-slate-600 border border-slate-100"
-                                      }`}
+                                        }`}
                                     >
                                       <span
-                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
-                                          isCorrect ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
-                                        }`}
+                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${isCorrect ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+                                          }`}
                                       >
                                         {String.fromCharCode(65 + optIdx)}
                                       </span>
@@ -1434,16 +1584,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                             {q.type === "TRUE_FALSE" && (
                               <div className="mt-2 flex items-center gap-3 text-xs">
                                 <span
-                                  className={`px-2.5 py-1 rounded-lg font-semibold ${
-                                    q.correctAnswer === 0 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                                  }`}
+                                  className={`px-2.5 py-1 rounded-lg font-semibold ${q.correctAnswer === 0 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                                    }`}
                                 >
                                   True {q.correctAnswer === 0 ? "✓ (Correct)" : ""}
                                 </span>
                                 <span
-                                  className={`px-2.5 py-1 rounded-lg font-semibold ${
-                                    q.correctAnswer === 1 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                                  }`}
+                                  className={`px-2.5 py-1 rounded-lg font-semibold ${q.correctAnswer === 1 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                                    }`}
                                 >
                                   False {q.correctAnswer === 1 ? "✓ (Correct)" : ""}
                                 </span>
@@ -1488,7 +1636,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleDeleteQuestion(q.id)}
+                            onClick={() => setDeletingQuestion(q)}
                             title="Delete Question"
                             className="hover:text-red-600"
                           >
@@ -1524,41 +1672,41 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             </div>
           ) : (
             <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {assessmentsPage.pageItems.map((asm) => (
-                <div
-                  key={asm.id}
-                  className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge variant="blue">Passing: {asm.passingScore}%</Badge>
-                    <span className="text-xs text-slate-400">
-                      {asm.questionsCount || (asm.questions ? asm.questions.length : "Multi")} questions
-                    </span>
-                  </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {assessmentsPage.pageItems.map((asm) => (
+                  <div
+                    key={asm.id}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <Badge variant="blue">Passing: {asm.passingScore}%</Badge>
+                      <span className="text-xs text-slate-400">
+                        {asm.questionsCount || (asm.questions ? asm.questions.length : "Multi")} questions
+                      </span>
+                    </div>
 
-                  <h4 className="font-display text-sm font-bold text-slate-900 line-clamp-1">
-                    {asm.titleEn}
-                  </h4>
-                  <p className="text-xs text-slate-500 line-clamp-2">
-                    {asm.descriptionEn || "No description provided."}
-                  </p>
+                    <h4 className="font-display text-sm font-bold text-slate-900 line-clamp-1">
+                      {asm.titleEn}
+                    </h4>
+                    <p className="text-xs text-slate-500 line-clamp-2">
+                      {asm.descriptionEn || "No description provided."}
+                    </p>
 
-                  <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      {asm.timeLimitMinutes ? `${asm.timeLimitMinutes} min` : "No limit"}
-                    </span>
-                    <span>Max {asm.maxAttempts} attempts</span>
+                    <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        {asm.timeLimitMinutes ? `${asm.timeLimitMinutes} min` : "No limit"}
+                      </span>
+                      <span>Max {asm.maxAttempts} attempts</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <Pagination
-              page={assessmentsPage.page}
-              totalPages={assessmentsPage.totalPages}
-              onPageChange={assessmentsPage.setPage}
-            />
+                ))}
+              </div>
+              <Pagination
+                page={assessmentsPage.page}
+                totalPages={assessmentsPage.totalPages}
+                onPageChange={assessmentsPage.setPage}
+              />
             </>
           )}
         </div>
@@ -1827,28 +1975,118 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 </div>
               )}
 
+              {/* Staged Questions List */}
+              {stagedQuestions.length > 0 && (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
+                        {stagedQuestions.length}
+                      </span>
+                      <span className="text-xs font-bold text-indigo-950 uppercase tracking-wide">
+                        Questions Added in this Session (Ready to Save)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStagedQuestions([])}
+                      className="text-[11px] text-slate-400 hover:text-rose-600 transition"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {stagedQuestions.map((sq, sIdx) => (
+                      <div
+                        key={sq.id}
+                        className="flex items-center justify-between rounded-lg bg-white border border-slate-200/90 p-3 text-xs shadow-2xs hover:border-indigo-300 transition"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span className="h-5 w-5 shrink-0 rounded bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-[10px] border border-indigo-200">
+                            #{sIdx + 1}
+                          </span>
+                          <div className="truncate">
+                            <p className="font-semibold text-slate-800 truncate">
+                              {stripHtml(sq.question)}
+                            </p>
+                            <p className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                              <span className="font-medium text-indigo-600 capitalize">
+                                {sq.type.toLowerCase().replace(/_/g, " ")}
+                              </span>
+                              <span>•</span>
+                              <span>{sq.points} pts</span>
+                              {sq.options.length > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>{sq.options.length} options</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                          <button
+                            type="button"
+                            onClick={() => handleEditStagedQuestion(sIdx)}
+                            className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition"
+                            title="Edit this question"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStagedQuestions((prev) => prev.filter((_, i) => i !== sIdx))}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Remove question"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {saveError && (
                 <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
                   {saveError}
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                <Button variant="outline" type="button" onClick={() => setEditorOpen(false)} disabled={savingQuestion}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={savingQuestion}>
-                  {savingQuestion ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : editingQuestion ? (
-                    "Update Question"
-                  ) : (
-                    "Save to Bank"
-                  )}
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                {!editingQuestion && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddQuestionToBatch}
+                    disabled={savingQuestion}
+                    className="gap-2 border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 hover:text-indigo-900 font-semibold shadow-2xs"
+                  >
+                    <Plus className="h-4 w-4 text-indigo-600" />
+                    Add Question
+                  </Button>
+                )}
+                <div className="flex items-center gap-2 ml-auto">
+                  <Button variant="outline" type="button" onClick={() => setEditorOpen(false)} disabled={savingQuestion}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={savingQuestion} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+                    {savingQuestion ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : editingQuestion ? (
+                      "Update Question"
+                    ) : stagedQuestions.length > 0 ? (
+                      `Save to Bank (${stagedQuestions.length + (qText.trim() ? 1 : 0)})`
+                    ) : (
+                      "Save to Bank"
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
@@ -1870,21 +2108,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               <Button
                 size="sm"
                 onClick={handleSaveQuiz}
-                disabled={savingQuiz || quizQuestions.length === 0}
+                disabled={quizQuestions.length === 0}
+                isLoading={savingQuiz}
+                loadingText="Publishing…"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {savingQuiz ? "Publishing…" : "Save & Publish Quiz"}
+                Save & Publish Quiz
               </Button>
             </div>
           }
         >
           <div className="w-full py-4 space-y-6 pb-12">
-            {quizFlash && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                {quizFlash}
-              </div>
-            )}
 
             {/* Quiz Configuration Card */}
             <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
@@ -2038,6 +2272,18 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           </div>
         </WorkspaceDetailOverlay>
       )}
+
+      {/* Confirm Question Deletion Modal */}
+      <ConfirmModal
+        open={Boolean(deletingQuestion)}
+        title="Delete Question from Bank"
+        description={`Are you sure you want to delete this question? "${(deletingQuestion?.question ?? "").slice(0, 80)}..." This action cannot be undone.`}
+        confirmText="Delete Question"
+        variant="danger"
+        isLoading={isDeletingQuestion}
+        onConfirm={confirmDeleteQuestion}
+        onClose={() => !isDeletingQuestion && setDeletingQuestion(null)}
+      />
     </PageShell>
   );
 }

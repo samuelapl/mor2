@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, KeyRound, Mail, Send } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, Mail, Send } from "lucide-react";
 import { forgotPassword } from "@/lib/api/auth";
 import { isValidEmail } from "@/constants/auth";
 
@@ -89,8 +89,17 @@ export default function ForgotPasswordPage() {
               disabled={sending}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             >
-              {sending ? "Sending…" : "Send reset code"}
-              <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              {sending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  <span>Sending…</span>
+                </>
+              ) : (
+                <>
+                  <span>Send reset code</span>
+                  <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
             </button>
 
 

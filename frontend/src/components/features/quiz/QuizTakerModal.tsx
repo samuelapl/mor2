@@ -17,6 +17,8 @@ import type { ApiAssessment, AssessmentReviewItem } from "@/lib/api/types";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { CardSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import { ApiError } from "@/lib/api/client";
 import type { GradedResult, SubmitAnswer } from "@/lib/api/quiz";
 import {
@@ -175,8 +177,15 @@ export function QuizTakerModal({
       );
       const graded = await submitAttempt(assessment.id, payload);
       setResult(graded);
+      if (graded.passed) {
+        toast.success(`Congratulations! You passed with ${graded.score}%.`);
+      } else {
+        toast.warning(`You scored ${graded.score}%. You need ${assessment.passingScore}% to pass.`);
+      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unable to submit the assessment.");
+      const msg = err instanceof ApiError ? err.message : "Unable to submit the assessment.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -197,9 +206,8 @@ export function QuizTakerModal({
   const innerContent = (
     <div className="w-full space-y-6 pb-12">
       {loading ? (
-        <div className="flex flex-col items-center py-10 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-          <p className="mt-3 text-sm text-slate-500">Loading assessment…</p>
+        <div className="space-y-4 py-4">
+          <CardSkeleton count={3} />
         </div>
       ) : notFound || !assessment ? (
         <div className="flex flex-col items-center py-10 text-center">
@@ -550,17 +558,13 @@ export function QuizTakerModal({
                 <p className="text-[10px] text-slate-400">Early submission permitted</p>
               ) : null}
             </div>
-            <Button onClick={() => void submit(false)} disabled={submitting || answeredCount === 0}>
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting…
-                </>
-              ) : answeredCount < assessment.questions.length ? (
-                "Submit Early"
-              ) : (
-                "Submit Assessment"
-              )}
+            <Button
+              onClick={() => void submit(false)}
+              disabled={answeredCount === 0}
+              isLoading={submitting}
+              loadingText="Submitting…"
+            >
+              {answeredCount < assessment.questions.length ? "Submit Early" : "Submit Assessment"}
             </Button>
           </div>
         </div>

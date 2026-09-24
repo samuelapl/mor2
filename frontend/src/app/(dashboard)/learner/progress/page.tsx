@@ -16,6 +16,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pagination } from "@/components/ui/Pagination";
 import { LearnCourseModal } from "@/components/features/courses/LearnCourseModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 export default function ProgressPage() {
@@ -48,7 +49,9 @@ export default function ProgressPage() {
       </div>
 
       {loading && rows.length === 0 ? (
-        <p className="text-sm text-slate-500">Loading progress…</p>
+        <div className="space-y-3">
+          <CardSkeleton count={4} />
+        </div>
       ) : rows.length === 0 ? (
         <EmptyState title="No courses" description="Enrolled courses will appear here." />
       ) : (

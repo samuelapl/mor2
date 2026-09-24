@@ -22,6 +22,7 @@ const COVER = '/sample.jpg';
 const PDF_FILE_KEY = 'attachments/file-sample.pdf';
 const PDF_FILE_URL = '/file-sample.pdf';
 const PDF_SIZE_BYTES = 142786;
+const SAMPLE_VIDEO = '/sample.mp4';
 
 // ──────────────────────────────────────────────────────────
 // Curriculum data model helpers
@@ -2187,7 +2188,8 @@ async function main() {
             contentEn: les.contentEn,
             contentAm: les.contentAm,
             contentType: les.contentType,
-            durationMinutes: les.durationMinutes,
+            resourceUrl: les.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null,
+            durationMinutes: 1,
             order: les.order,
           },
         });
@@ -2250,7 +2252,8 @@ async function main() {
                 contentEn: sub.contentEn,
                 contentAm: sub.contentAm,
                 contentType: sub.contentType,
-                durationMinutes: sub.durationMinutes,
+                resourceUrl: sub.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null,
+                durationMinutes: 1,
                 order: sub.order,
               },
             });

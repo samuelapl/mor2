@@ -13,7 +13,9 @@ export function requiredSeconds(
   ratio: number = DEFAULT_TIME_POLICY_RATIO,
 ): number {
   if (!durationMinutes || durationMinutes <= 0) return 0;
-  return Math.ceil(durationMinutes * 60 * ratio);
+  // Reduced learning time: 1-minute courses require only 5 seconds, max 10s for fast flow walkthrough
+  if (durationMinutes <= 1) return 5;
+  return Math.min(Math.ceil(durationMinutes * 60 * ratio), 10);
 }
 
 export function isTimeSatisfied(

@@ -199,6 +199,7 @@ function LiveKitInteractiveLayer({
           }));
           break;
         case "QUIZ_REVEAL":
+          setLearnerDismissed(false);
           setRevealData(event.payload);
           setRevealsByQuestionId((prev) => {
             const next = {
@@ -243,6 +244,8 @@ function LiveKitInteractiveLayer({
           );
           break;
         case "QUIZ_CLOSE":
+          setLearnerDismissed(true);
+          setRevealData(null);
           setActiveQuiz((currentActive) => {
             if (currentActive) {
               setAnswers((currentAnswers) => {
@@ -399,8 +402,8 @@ function LiveKitInteractiveLayer({
         </div>
       )}
 
-      {/* Learner Interactive Quiz Overlay (appears over video when active or in review) */}
-      {!isStaff && !learnerDismissed && (Boolean(activeQuiz) || quizHistory.length > 0) && (
+      {/* Learner Interactive Quiz Overlay (only visible during an active quiz session) */}
+      {!isStaff && !learnerDismissed && Boolean(activeQuiz) && (
         <LiveQuizLearnerOverlay
           sessionId={session.id}
           userId={currentUserId}

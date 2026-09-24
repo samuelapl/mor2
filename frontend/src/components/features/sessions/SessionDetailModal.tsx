@@ -107,8 +107,8 @@ export function SessionDetailModal({
   const trainerDisplayName = trainerObj
     ? `${trainerObj.firstName || ""} ${trainerObj.lastName || ""}`.trim() || trainerObj.email
     : session.trainerId
-    ? userName(session.trainerId)
-    : "Institutional Trainer";
+      ? userName(session.trainerId)
+      : "Institutional Trainer";
 
   return (
     <>

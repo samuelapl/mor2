@@ -35,6 +35,7 @@ interface UserDetailModalProps {
   onReject: (userId: string) => void;
   onSuspend: (userId: string) => void;
   onReactivate: (userId: string) => void;
+  isLoading?: boolean;
 }
 
 export function UserDetailModal({
@@ -45,6 +46,7 @@ export function UserDetailModal({
   onReject,
   onSuspend,
   onReactivate,
+  isLoading = false,
 }: UserDetailModalProps) {
   const { can } = usePermissions();
   const canManage = can("user.manage");
@@ -112,19 +114,42 @@ export function UserDetailModal({
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
               {user.status === "pending" ? (
                 <>
-                  <Button size="sm" variant="success" onClick={() => onApprove(user.id)}>
+                  <Button
+                    size="sm"
+                    variant="success"
+                    isLoading={isLoading}
+                    disabled={isLoading}
+                    onClick={() => onApprove(user.id)}
+                  >
                     <CheckCircle2 className="h-3.5 w-3.5" /> Approve
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => onReject(user.id)}>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={isLoading}
+                    onClick={() => onReject(user.id)}
+                  >
                     <XCircle className="h-3.5 w-3.5" /> Reject
                   </Button>
                 </>
               ) : user.status === "suspended" ? (
-                <Button size="sm" variant="success" onClick={() => onReactivate(user.id)}>
+                <Button
+                  size="sm"
+                  variant="success"
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                  onClick={() => onReactivate(user.id)}
+                >
                   <ShieldCheck className="h-3.5 w-3.5" /> Reactivate
                 </Button>
               ) : (
-                <Button size="sm" variant="danger" onClick={() => onSuspend(user.id)}>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                  onClick={() => onSuspend(user.id)}
+                >
                   <ShieldOff className="h-3.5 w-3.5" /> Suspend
                 </Button>
               )}

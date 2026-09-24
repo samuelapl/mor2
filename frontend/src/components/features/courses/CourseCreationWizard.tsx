@@ -18,6 +18,7 @@ import { useLms } from "@/lib/lms-store";
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from "@/lib/api/quiz";
 import { uploadAttachment } from "@/lib/api/files";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
+import { toast } from "@/lib/toast";
 
 import {
   type LessonDraft,
@@ -53,7 +54,6 @@ export function CourseCreationWizard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [flash, setFlash] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
   const savedCourseIdRef = useRef<string | undefined>(editingCourse?.id);
 
@@ -584,7 +584,6 @@ export function CourseCreationWizard({
 
   const handleSave = async (andSubmit = false) => {
     setSaving(true);
-    setFlash(null);
 
     const quiz = buildQuizPayload();
     const curriculum = buildCurriculumPayload();
@@ -637,6 +636,9 @@ export function CourseCreationWizard({
         if (!submitRes.ok) {
           throw new Error(submitRes.message || "Failed to submit course for approval.");
         }
+        toast.success("Course submitted for approval successfully!");
+      } else {
+        toast.success("Course draft saved successfully!");
       }
 
       try {
@@ -645,7 +647,7 @@ export function CourseCreationWizard({
 
       onDone();
     } catch (err) {
-      setFlash(err instanceof Error ? err.message : "Failed to save course.");
+      toast.error(err instanceof Error ? err.message : "Failed to save course.");
     } finally {
       setSaving(false);
     }
@@ -734,12 +736,6 @@ export function CourseCreationWizard({
           >
             Discard Draft
           </button>
-        </div>
-      ) : null}
-
-      {flash ? (
-        <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
-          {flash}
         </div>
       ) : null}
 
@@ -864,11 +860,12 @@ export function CourseCreationWizard({
           <Button
             type="button"
             variant="outline"
-            disabled={saving}
+            isLoading={saving}
+            loadingText="Saving..."
             onClick={() => handleSave(false)}
             className="gap-1.5 shadow-xs text-xs"
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            <Save className="h-3.5 w-3.5" />
             Save as Draft
           </Button>
 
@@ -883,17 +880,13 @@ export function CourseCreationWizard({
           ) : (
             <Button
               variant="primary"
-              disabled={saving}
+              isLoading={saving}
+              loadingText="Submitting..."
               onClick={() => handleSave(true)}
               className="gap-1.5 shadow-sm bg-indigo-600 hover:bg-indigo-700"
             >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Send className="h-4 w-4" /> Submit for Approval
-                </>
-              )}
+              <Send className="h-4 w-4" />
+              Submit for Approval
             </Button>
           )}
         </div>

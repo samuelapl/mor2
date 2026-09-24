@@ -44,9 +44,11 @@ import {
 } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { CourseCreationWizard } from "@/components/features/courses/CourseCreationWizard";
+import { toast } from "@/lib/toast";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
@@ -276,6 +278,8 @@ export function CourseDetailModal({
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [needsTrainerForPublish, setNeedsTrainerForPublish] = useState(false);
   const [publishTrainerId, setPublishTrainerId] = useState("");
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const { can, hasRole } = usePermissions();
   const canAssignTrainer = can("course.assign_trainer");
@@ -471,6 +475,11 @@ export function CourseDetailModal({
   const notify = (ok: boolean, message: string) => {
     setFlashError(!ok);
     setFlash(message);
+    if (ok) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   const addTrainer = async (trainerId: string) => {
@@ -568,19 +577,20 @@ export function CourseDetailModal({
   };
 
   const doArchive = async () => {
-    if (!window.confirm("Archive this course? It will move out of the active catalog.")) return;
     setBusy(true);
     const result = await archiveCourse(course.id);
     setBusy(false);
+    setConfirmArchiveOpen(false);
     notify(result.ok, result.ok ? "Course archived." : result.message);
   };
 
   const doDelete = async () => {
-    if (!window.confirm("Delete this course? This cannot be undone.")) return;
     setBusy(true);
     const result = await deleteCourse(course.id);
     setBusy(false);
+    setConfirmDeleteOpen(false);
     if (result.ok) {
+      toast.success("Course deleted successfully.");
       onClose();
       return;
     }
@@ -659,13 +669,13 @@ export function CourseDetailModal({
         </Button>
       ) : null}
       {canArchiveAction ? (
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => void doArchive()} className="gap-1.5 shadow-2xs">
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirmArchiveOpen(true)} className="gap-1.5 shadow-2xs">
           <Archive className="h-3.5 w-3.5" />
           Archive course
         </Button>
       ) : null}
       {canDeleteAction ? (
-        <Button size="sm" variant="danger" disabled={busy} onClick={() => void doDelete()} className="gap-1.5 shadow-2xs">
+        <Button size="sm" variant="danger" disabled={busy} onClick={() => setConfirmDeleteOpen(true)} className="gap-1.5 shadow-2xs">
           <Trash2 className="h-3.5 w-3.5" />
           Delete course
         </Button>
@@ -1687,6 +1697,28 @@ export function CourseDetailModal({
           error={reasonError}
         />
       </Modal>
+
+      <ConfirmModal
+        open={confirmArchiveOpen}
+        title="Archive Course"
+        description={`Archive "${course.title}"? It will move out of the active catalog.`}
+        confirmText="Archive Course"
+        variant="warning"
+        isLoading={busy}
+        onConfirm={doArchive}
+        onClose={() => !busy && setConfirmArchiveOpen(false)}
+      />
+
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        title="Delete Course"
+        description={`Delete "${course.title}"? This action cannot be undone and will permanently remove all associated course content.`}
+        confirmText="Delete Course"
+        variant="danger"
+        isLoading={busy}
+        onConfirm={doDelete}
+        onClose={() => !busy && setConfirmDeleteOpen(false)}
+      />
     </>
   );
 }

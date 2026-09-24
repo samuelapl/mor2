@@ -17,6 +17,7 @@ import { Modal } from "@/components/ui/Modal";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { UserDetailModal } from "@/components/features/users/UserDetailModal";
+import { toast } from "@/lib/toast";
 import type { Role, User } from "@/types";
 
 function roleBadgeVariant(role: Role) {
@@ -59,7 +60,6 @@ export default function UsersPage() {
   const { can } = usePermissions();
   const canManage = can("user.manage");
 
-  const [flash, setFlash] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
   const [status, setStatus] = useState("all");
@@ -68,7 +68,10 @@ export default function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  /** Bulk actions and the delete dialog. */
   const [busy, setBusy] = useState(false);
+  /** Row whose inline action is running, so only its button spins. */
+  const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<"suspend" | "delete" | null>(null);
 
@@ -142,18 +145,18 @@ export default function UsersPage() {
     setBusy(false);
     setBulkAction(null);
     if (!result.ok) {
-      setFlash(result.message);
+      toast.error(result.message);
       return;
     }
     const verb = bulkAction === "suspend" ? "suspended" : "deleted";
     const failedNames = targets
       .filter((user) => result.failed.includes(user.id))
       .map((user) => user.name);
-    setFlash(
-      failedNames.length
-        ? `${result.succeeded} user(s) ${verb}. Failed: ${failedNames.join(", ")}.`
-        : `${result.succeeded} user(s) ${verb}.`,
-    );
+    if (failedNames.length) {
+      toast.warning(`${result.succeeded} user(s) ${verb}. Failed: ${failedNames.join(", ")}.`);
+    } else {
+      toast.success(`${result.succeeded} user(s) ${verb}.`);
+    }
     // Keep the ones that failed selected so they can be retried.
     setSelectedIds(new Set(result.failed));
   };
@@ -171,47 +174,73 @@ export default function UsersPage() {
 
   const detailUser = detailUserId ? (users.find((u) => u.id === detailUserId) ?? null) : null;
 
-  const changeRole = async (userId: string, nextRole: Role) => {
+  /** Runs one row's action with that row's button spinning, reporting the outcome as a toast. */
+  const runRowAction = async (
+    userId: string,
+    action: () => Promise<{ ok: boolean; message?: string }>,
+    success: string,
+    failure: string,
+  ) => {
+    setBusyUserId(userId);
+    try {
+      const result = await action();
+      if (result.ok) toast.success(success);
+      else toast.error(result.message || failure);
+    } catch {
+      toast.error(failure);
+    } finally {
+      setBusyUserId(null);
+    }
+  };
+
+  const changeRole = (userId: string, nextRole: Role) => {
     const user = users.find((item) => item.id === userId);
-    const result = await changeUserRole(userId, nextRole);
-    setFlash(result.ok ? `${user?.name ?? "User"} is now ${ROLE_LABELS[nextRole]}` : result.message);
+    return runRowAction(
+      userId,
+      () => changeUserRole(userId, nextRole),
+      `${user?.name ?? "User"} role updated to ${ROLE_LABELS[nextRole]}`,
+      "Failed to update role",
+    );
   };
 
-  const approve = async (userId: string) => {
-    setBusy(true);
-    const result = await approveRegistrationRequest(userId);
-    setFlash(result.ok ? "Registration approved." : result.message);
-    setBusy(false);
-  };
+  const approve = (userId: string) =>
+    runRowAction(
+      userId,
+      () => approveRegistrationRequest(userId),
+      "Registration approved successfully.",
+      "Failed to approve registration",
+    );
 
-  const reject = async (userId: string, reason?: string) => {
-    setBusy(true);
-    const result = await rejectRegistrationRequest(userId, reason?.trim() || undefined);
-    setRejectTarget(null);
-    setRejectReason("");
-    setFlash(result.ok ? "Registration rejected." : result.message);
-    setBusy(false);
-  };
+  const reject = (userId: string, reason?: string) =>
+    runRowAction(
+      userId,
+      async () => {
+        const result = await rejectRegistrationRequest(userId, reason?.trim() || undefined);
+        setRejectTarget(null);
+        setRejectReason("");
+        return result;
+      },
+      "Registration rejected.",
+      "Failed to reject registration",
+    );
 
-  const suspend = async (userId: string) => {
-    setBusy(true);
-    const result = await deactivateUser(userId);
-    setFlash(result.ok ? "User suspended." : result.message);
-    setBusy(false);
-  };
+  const suspend = (userId: string) =>
+    runRowAction(userId, () => deactivateUser(userId), "User account suspended.", "Failed to suspend user");
 
-  const reactivate = async (userId: string) => {
-    setBusy(true);
-    const result = await reactivateUser(userId);
-    setFlash(result.ok ? "User reactivated." : result.message);
-    setBusy(false);
-  };
+  const reactivate = (userId: string) =>
+    runRowAction(
+      userId,
+      () => reactivateUser(userId),
+      "User account reactivated.",
+      "Failed to reactivate user",
+    );
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setBusy(true);
     const result = await deleteUser(deleteTarget.id);
-    setFlash(result.ok ? `${deleteTarget.name} was deleted.` : result.message);
+    if (result.ok) toast.success(`${deleteTarget.name} was deleted.`);
+    else toast.error(result.message || "Failed to delete user");
     setDeleteTarget(null);
     setBusy(false);
   };
@@ -221,7 +250,7 @@ export default function UsersPage() {
       <Button
         size="sm"
         variant="outline"
-        disabled={busy}
+        disabled={busy || busyUserId === user.id}
         onClick={() => setDeleteTarget(user)}
         aria-label={`Delete ${user.name}`}
         className="text-red-600 hover:border-red-300 hover:text-red-700"
@@ -241,16 +270,25 @@ export default function UsersPage() {
   };
 
   const statusButton = (user: User) => {
+    const isBusy = busyUserId === user.id;
     if (user.status === "pending") {
       return (
         <div className="flex items-center gap-1.5">
-          <Button size="sm" variant="success" disabled={busy} onClick={() => void approve(user.id)}>
+          <Button
+            size="sm"
+            variant="success"
+            isLoading={isBusy}
+            disabled={busy}
+            title="Approve registration"
+            onClick={() => void approve(user.id)}
+          >
             <CheckCircle2 className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="sm"
             variant="danger"
-            disabled={busy}
+            disabled={busy || isBusy}
+            title="Reject registration"
             onClick={() => {
               setRejectTarget(rejectTarget === user.id ? null : user.id);
               setRejectReason("");
@@ -263,13 +301,25 @@ export default function UsersPage() {
     }
     if (user.status === "suspended") {
       return (
-        <Button size="sm" variant="success" disabled={busy} onClick={() => void reactivate(user.id)}>
+        <Button
+          size="sm"
+          variant="success"
+          isLoading={isBusy}
+          disabled={busy}
+          onClick={() => void reactivate(user.id)}
+        >
           <ShieldCheck className="h-3.5 w-3.5" /> Reactivate
         </Button>
       );
     }
     return (
-      <Button size="sm" variant="danger" disabled={busy} onClick={() => void suspend(user.id)}>
+      <Button
+        size="sm"
+        variant="danger"
+        isLoading={isBusy}
+        disabled={busy}
+        onClick={() => void suspend(user.id)}
+      >
         <ShieldOff className="h-3.5 w-3.5" /> Suspend
       </Button>
     );
@@ -282,13 +332,6 @@ export default function UsersPage() {
       description="Manage user accounts, approval status, and role assignments."
       actions={<ViewToggle view={view} onChange={setView} />}
     >
-      {flash ? (
-        <div className="mb-5 inline-flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 ring-1 ring-inset ring-emerald-600/10">
-          <CheckCircle2 className="h-4 w-4" />
-          {flash}
-        </div>
-      ) : null}
-
       <FilterBar
         search={search}
         onSearchChange={withClearedSelection(setSearch)}
@@ -489,7 +532,7 @@ export default function UsersPage() {
                         <Button
                           size="sm"
                           variant="danger"
-                          disabled={busy}
+                          isLoading={busyUserId === user.id}
                           onClick={() => void reject(user.id, rejectReason)}
                         >
                           Confirm
@@ -571,7 +614,7 @@ export default function UsersPage() {
                     <Button
                       size="sm"
                       variant="danger"
-                      disabled={busy}
+                      isLoading={busyUserId === user.id}
                       onClick={() => void reject(user.id, rejectReason)}
                     >
                       Confirm
@@ -596,8 +639,13 @@ export default function UsersPage() {
             <Button variant="outline" disabled={busy} onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
-            <Button variant="danger" disabled={busy} onClick={() => void confirmDelete()}>
-              <Trash2 className="h-4 w-4" /> {busy ? "Deleting…" : "Delete user"}
+            <Button
+              variant="danger"
+              isLoading={busy}
+              loadingText="Deleting…"
+              onClick={() => void confirmDelete()}
+            >
+              <Trash2 className="h-4 w-4" /> Delete user
             </Button>
           </div>
         }
@@ -623,14 +671,19 @@ export default function UsersPage() {
             <Button variant="outline" disabled={busy} onClick={() => setBulkAction(null)}>
               Cancel
             </Button>
-            <Button variant="danger" disabled={busy} onClick={() => void confirmBulk()}>
+            <Button
+              variant="danger"
+              isLoading={busy}
+              loadingText={bulkAction === "suspend" ? "Suspending…" : "Deleting…"}
+              onClick={() => void confirmBulk()}
+            >
               {bulkAction === "suspend" ? (
                 <>
-                  <ShieldOff className="h-4 w-4" /> {busy ? "Suspending…" : "Suspend users"}
+                  <ShieldOff className="h-4 w-4" /> Suspend users
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4" /> {busy ? "Deleting…" : "Delete users"}
+                  <Trash2 className="h-4 w-4" /> Delete users
                 </>
               )}
             </Button>
@@ -669,6 +722,7 @@ export default function UsersPage() {
         onReject={(userId) => void reject(userId)}
         onSuspend={(userId) => void suspend(userId)}
         onReactivate={(userId) => void reactivate(userId)}
+        isLoading={Boolean(busyUserId)}
       />
     </PageShell>
   );

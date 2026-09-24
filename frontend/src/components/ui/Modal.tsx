@@ -6,7 +6,8 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
-  open: boolean;
+  open?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
@@ -22,17 +23,19 @@ const SIZE_CLASSES = {
   full: "max-w-6xl w-[95vw]",
 };
 
-export function Modal({ open, onClose, title, subtitle, size = "md", children, footer }: ModalProps) {
+export function Modal({ open, isOpen, onClose, title, subtitle, size = "md", children, footer }: ModalProps) {
+  const effectiveOpen = Boolean(open ?? isOpen);
+
   useEffect(() => {
-    if (!open) return;
+    if (!effectiveOpen) return;
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [effectiveOpen, onClose]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!effectiveOpen || typeof document === "undefined") return null;
 
   // Portaled to <body> so an ancestor's stacking context (e.g. an animated page wrapper)
   // can't trap it underneath full-screen overlays like WorkspaceDetailOverlay.

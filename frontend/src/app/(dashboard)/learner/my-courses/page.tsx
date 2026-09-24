@@ -11,12 +11,13 @@ import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
 
 export default function LearnerCoursesPage() {
-  const { courses, lang, currentUser } = useLms();
+  const { courses, lang, currentUser, ready } = useLms();
   const me = currentUser?.id ?? "";
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -45,7 +46,11 @@ export default function LearnerCoursesPage() {
         <LanguageToggle />
       </div>
 
-      {enrolled.length === 0 ? (
+      {!ready ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <CardSkeleton count={6} />
+        </div>
+      ) : enrolled.length === 0 ? (
         <EmptyState
           title="No enrolled courses"
           description="Browse the catalog to enroll in courses."

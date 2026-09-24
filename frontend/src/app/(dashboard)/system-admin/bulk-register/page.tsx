@@ -14,6 +14,7 @@ import { isValidEmail, passwordIssues } from "@/constants/auth";
 import { fetchRolesWithPermissions } from "@/lib/api/permissions";
 import { roleToApi } from "@/lib/api/transform";
 import type { BulkCreateUserResultRow } from "@/lib/api/types";
+import { toast } from "@/lib/toast";
 
 interface RowDraft {
   key: string;
@@ -328,8 +329,6 @@ export default function BulkRegisterPage() {
   const handleCreate = async () => {
     const submitted = submitRows;
     setSaving(true);
-    setResult(null);
-    setMessage(null);
     try {
       const outcome = await bulkRegisterUsers(
         submitted.map((row) => ({
@@ -345,6 +344,7 @@ export default function BulkRegisterPage() {
       if (!outcome.ok) {
         setResult("error");
         setMessage(outcome.message);
+        toast.error(outcome.message || "Failed to register users.");
         return;
       }
 
@@ -362,10 +362,12 @@ export default function BulkRegisterPage() {
       // Keep skipped and not-yet-valid rows in the preview so they can be fixed and resent.
       setRows((prev) => prev.filter((row) => !createdKeys.has(row.key)));
       setResult("created");
-      setMessage(
+      const summary =
         `${totals.created} user${totals.created === 1 ? "" : "s"} registered` +
-          (totals.skipped > 0 ? `, ${totals.skipped} skipped.` : "."),
-      );
+        (totals.skipped > 0 ? `, ${totals.skipped} skipped.` : ".");
+      setMessage(summary);
+      if (totals.created > 0) toast.success(summary);
+      else toast.warning(summary);
     } finally {
       setSaving(false);
     }
@@ -600,23 +602,20 @@ export default function BulkRegisterPage() {
             ) : null}
             <Button
               type="button"
-              disabled={submitRows.length === 0 || saving}
+              isLoading={saving}
+              loadingText="Registering users…"
+              disabled={submitRows.length === 0}
               onClick={handleCreate}
+              className="gap-2"
             >
-              {saving ? (
-                "Registering…"
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4" />
-                  Register {submitRows.length} selected user{submitRows.length === 1 ? "" : "s"}
-                </>
-              )}
+              <UserPlus className="h-4 w-4" />
+              Register {submitRows.length} selected user{submitRows.length === 1 ? "" : "s"}
             </Button>
           </div>
         </PageSection>
       )}
 
-      {result === "created" ? (
+      {createdRows.length > 0 ? (
         <PageSection
           title="Registration summary"
           description={message ?? "Below is the confirmation of the records created."}

@@ -29,6 +29,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { toast } from "@/lib/toast";
 import {
   activateCertificateTemplate,
   createCertificateTemplate,
@@ -54,6 +56,7 @@ export function CertificateTemplatesAdmin() {
   const [templates, setTemplates] = useState<ApiCertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [deletingTemplate, setDeletingTemplate] = useState<{ id: string; name: string } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [flashOk, setFlashOk] = useState(true);
 
@@ -92,6 +95,11 @@ export function CertificateTemplatesAdmin() {
   const notify = (ok: boolean, message: string) => {
     setFlashOk(ok);
     setFlash(message);
+    if (ok) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
     setTimeout(() => {
       setFlash((current) => (current === message ? null : current));
     }, 5000);
@@ -299,14 +307,13 @@ export function CertificateTemplatesAdmin() {
     }
   };
 
-  const remove = async (id: string, templateName: string) => {
-    if (!window.confirm(`Are you sure you want to delete template "${templateName}"? This action cannot be undone.`)) {
-      return;
-    }
+  const confirmRemove = async () => {
+    if (!deletingTemplate) return;
     setBusy(true);
     try {
-      await deleteCertificateTemplate(id);
-      notify(true, `Template "${templateName}" deleted.`);
+      await deleteCertificateTemplate(deletingTemplate.id);
+      notify(true, `Template "${deletingTemplate.name}" deleted.`);
+      setDeletingTemplate(null);
       await refresh();
     } catch (err: any) {
       notify(false, `Failed to delete template: ${err.message || err}`);
@@ -577,7 +584,7 @@ export function CertificateTemplatesAdmin() {
 
                       <button
                         type="button"
-                        onClick={() => void remove(template.id, template.name)}
+                        onClick={() => setDeletingTemplate({ id: template.id, name: template.name })}
                         disabled={busy}
                         title="Delete template"
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
@@ -1507,6 +1514,18 @@ export function CertificateTemplatesAdmin() {
           </div>
         </div>
       </WorkspaceDetailOverlay>
+
+      {/* Confirm Certificate Template Deletion Modal */}
+      <ConfirmModal
+        open={Boolean(deletingTemplate)}
+        title="Delete Certificate Template"
+        description={`Are you sure you want to delete template "${deletingTemplate?.name}"? This action cannot be undone and will affect newly issued certificates.`}
+        confirmText="Delete Template"
+        variant="danger"
+        isLoading={busy}
+        onConfirm={confirmRemove}
+        onClose={() => !busy && setDeletingTemplate(null)}
+      />
     </div>
   );
 }

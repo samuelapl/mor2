@@ -4,11 +4,12 @@ import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronDown, KeyRound, Lock, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, KeyRound, Loader2, Lock, Mail } from "lucide-react";
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from "@/constants/auth";
 import { ROLE_LABELS, ROLE_PATHS } from "@/constants/roles";
 import { ROLE_ICONS } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -22,17 +23,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [demoAccountsOpen, setDemoAccountsOpen] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = await login(email, password);
-    if (result.ok) {
-      router.push(ROLE_PATHS[result.role]);
-    } else if (result.passwordChangeRequired) {
-      router.push("/first-login");
-    } else {
-      setError(result.message);
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await login(email, password);
+      if (result.ok) {
+        toast.success("Welcome back! Signing you in…");
+        router.push(ROLE_PATHS[result.role]);
+      } else if (result.passwordChangeRequired) {
+        // Admin-created account: a code was emailed, finish on the first-login page.
+        router.push("/first-login");
+      } else {
+        setError(result.message);
+        toast.error(result.message || "Invalid credentials.");
+      }
+    } catch {
+      setError("Unable to connect to service. Please try again.");
+      toast.error("Unable to connect to service. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -135,11 +150,20 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={!ready}
+              disabled={!ready || submitting}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             >
-              Sign in
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  <span>Signing in…</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign in</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
             </button>
           </form>
 

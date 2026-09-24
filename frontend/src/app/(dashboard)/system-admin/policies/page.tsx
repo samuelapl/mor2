@@ -23,6 +23,8 @@ import { fetchCoursePolicy, updateCoursePolicy } from "@/lib/api/policy";
 import { fetchSystemSettings, updateSystemSettings } from "@/lib/api/monitoring";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/toast";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 
 type PolicyTab = "course" | "live_sessions";
 
@@ -33,8 +35,6 @@ export default function PoliciesPage() {
   // Course policy states
   const [loadingCoursePolicy, setLoadingCoursePolicy] = useState(true);
   const [savingCoursePolicy, setSavingCoursePolicy] = useState(false);
-  const [coursePolicyError, setCoursePolicyError] = useState<string | null>(null);
-  const [coursePolicySaved, setCoursePolicySaved] = useState(false);
   const [timeSpentPercent, setTimeSpentPercent] = useState(50);
   const [retakeCooldownMinutes, setRetakeCooldownMinutes] = useState(0);
   const [coursePolicyUpdatedAt, setCoursePolicyUpdatedAt] = useState<string | null>(null);
@@ -42,8 +42,6 @@ export default function PoliciesPage() {
   // Live session attendance policy states
   const [loadingLivePolicy, setLoadingLivePolicy] = useState(true);
   const [savingLivePolicy, setSavingLivePolicy] = useState(false);
-  const [livePolicyError, setLivePolicyError] = useState<string | null>(null);
-  const [livePolicySaved, setLivePolicySaved] = useState(false);
   const [allowAllViewAttendance, setAllowAllViewAttendance] = useState(false);
   const [attendanceThreshold, setAttendanceThreshold] = useState("60");
   const [livePolicyUpdatedAt, setLivePolicyUpdatedAt] = useState<string | null>(null);
@@ -51,14 +49,13 @@ export default function PoliciesPage() {
   // Load course policies
   const loadCoursePolicies = async () => {
     setLoadingCoursePolicy(true);
-    setCoursePolicyError(null);
     try {
       const policy = await fetchCoursePolicy();
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setCoursePolicyUpdatedAt(policy.updatedAt);
     } catch (err) {
-      setCoursePolicyError(
+      toast.error(
         err instanceof ApiError ? err.message : "Unable to load course policy settings.",
       );
     } finally {
@@ -69,7 +66,6 @@ export default function PoliciesPage() {
   // Load live session policy
   const loadLivePolicies = async () => {
     setLoadingLivePolicy(true);
-    setLivePolicyError(null);
     try {
       const settings = await fetchSystemSettings();
       if (settings) {
@@ -84,7 +80,7 @@ export default function PoliciesPage() {
         }
       }
     } catch (err) {
-      setLivePolicyError(
+      toast.error(
         err instanceof Error ? err.message : "Unable to load live session policy settings.",
       );
     } finally {
@@ -99,17 +95,14 @@ export default function PoliciesPage() {
 
   const saveCoursePolicy = async () => {
     setSavingCoursePolicy(true);
-    setCoursePolicyError(null);
-    setCoursePolicySaved(false);
     try {
       const policy = await updateCoursePolicy({ timeSpentPercent, retakeCooldownMinutes });
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setCoursePolicyUpdatedAt(policy.updatedAt);
-      setCoursePolicySaved(true);
-      setTimeout(() => setCoursePolicySaved(false), 3500);
+      toast.success("Course completion policies saved successfully.");
     } catch (err) {
-      setCoursePolicyError(
+      toast.error(
         err instanceof ApiError ? err.message : "Unable to save course policy settings.",
       );
     } finally {
@@ -119,18 +112,15 @@ export default function PoliciesPage() {
 
   const saveLivePolicy = async () => {
     setSavingLivePolicy(true);
-    setLivePolicyError(null);
-    setLivePolicySaved(false);
     try {
       await updateSystemSettings({
         allow_all_view_attendance: String(allowAllViewAttendance),
         default_attendance_threshold: String(attendanceThreshold),
       });
       setLivePolicyUpdatedAt(new Date().toISOString());
-      setLivePolicySaved(true);
-      setTimeout(() => setLivePolicySaved(false), 3500);
+      toast.success("Live session attendance policy saved successfully.");
     } catch (err) {
-      setLivePolicyError(
+      toast.error(
         err instanceof Error ? err.message : "Failed to persist live session policy settings.",
       );
     } finally {
@@ -200,22 +190,19 @@ export default function PoliciesPage() {
             </div>
             <Button
               onClick={() => void saveCoursePolicy()}
-              disabled={loadingCoursePolicy || savingCoursePolicy}
+              isLoading={savingCoursePolicy}
+              loadingText="Saving Policies…"
+              disabled={loadingCoursePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
-              {savingCoursePolicy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
+              <Save className="h-4 w-4" />
               Save Course Policies
             </Button>
           </div>
 
           {loadingCoursePolicy ? (
-            <div className="flex items-center justify-center py-16 text-sm text-slate-400">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-indigo-500" />
-              Loading course policy settings…
+            <div className="grid gap-5 lg:grid-cols-2">
+              <CardSkeleton count={2} />
             </div>
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
@@ -312,18 +299,6 @@ export default function PoliciesPage() {
           )}
 
           <div className="flex items-center gap-3">
-            {coursePolicySaved ? (
-              <Badge variant="green" dot>
-                <CheckCircle2 className="mr-1 h-3 w-3" />
-                Course policies saved successfully
-              </Badge>
-            ) : null}
-            {coursePolicyError ? (
-              <p className="flex items-center gap-1.5 text-xs text-red-600">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                {coursePolicyError}
-              </p>
-            ) : null}
             {coursePolicyUpdatedAt ? (
               <p className="text-xs text-slate-400">
                 Last updated {new Date(coursePolicyUpdatedAt).toLocaleString()}
@@ -347,22 +322,19 @@ export default function PoliciesPage() {
             </div>
             <Button
               onClick={() => void saveLivePolicy()}
-              disabled={loadingLivePolicy || savingLivePolicy}
+              isLoading={savingLivePolicy}
+              loadingText="Saving Policy…"
+              disabled={loadingLivePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
-              {savingLivePolicy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
+              <Save className="h-4 w-4" />
               Save Live Session Policy
             </Button>
           </div>
 
           {loadingLivePolicy ? (
-            <div className="flex items-center justify-center py-16 text-sm text-slate-400">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-indigo-500" />
-              Loading live session policy…
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CardSkeleton count={2} />
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-2">
@@ -506,18 +478,6 @@ export default function PoliciesPage() {
           )}
 
           <div className="flex items-center gap-3">
-            {livePolicySaved ? (
-              <Badge variant="green" dot>
-                <CheckCircle2 className="mr-1 h-3 w-3" />
-                Live sessions &amp; attendance policy saved successfully
-              </Badge>
-            ) : null}
-            {livePolicyError ? (
-              <p className="flex items-center gap-1.5 text-xs text-red-600">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                {livePolicyError}
-              </p>
-            ) : null}
             {livePolicyUpdatedAt ? (
               <p className="text-xs text-slate-400">
                 Last updated {new Date(livePolicyUpdatedAt).toLocaleString()}

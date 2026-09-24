@@ -3,9 +3,10 @@
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Building2, CheckCircle2, CreditCard, Lock, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, CreditCard, Loader2, Lock, Mail, Phone, UserRound } from "lucide-react";
 import { isValidEmail, passwordIssues } from "@/constants/auth";
 import { useLms } from "@/lib/lms-store";
+import { toast } from "@/lib/toast";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
@@ -44,23 +45,31 @@ export default function RegisterPage() {
       return;
     }
     setError(null);
-    setSubmitting(true);
-    const result = await register({
-      firstName,
-      lastName,
-      email,
-      phone,
-      tin: tin.trim() || undefined,
-      password,
-      confirmPassword,
-      department,
-    });
-    if (!result.ok) {
-      setError(result.message);
+    try {
+      const result = await register({
+        firstName,
+        lastName,
+        email,
+        phone,
+        tin: tin.trim() || undefined,
+        password,
+        confirmPassword,
+        department,
+      });
+      if (!result.ok) {
+        setError(result.message);
+        toast.error(result.message || "Failed to submit registration.");
+        setSubmitting(false);
+        return;
+      }
+      toast.success("Registration submitted! Awaiting administrator approval.");
+      setSubmitted(true);
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-    setSubmitted(true);
   };
 
   return (
@@ -290,10 +299,19 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={!ready || submitting}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 disabled:opacity-50"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
               >
-                Submit registration
-                <ArrowRight className="h-4 w-4" />
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    <span>Submitting registration…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Submit registration</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
             </form>
 
