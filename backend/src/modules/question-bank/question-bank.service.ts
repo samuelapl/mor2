@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class QuestionBankService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(userId: string, dto: CreateQuestionBankQuestionDto) {
     if (dto.courseId) {

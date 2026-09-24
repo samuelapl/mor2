@@ -35,6 +35,8 @@ import { EditSessionModal } from "@/components/features/sessions/EditSessionModa
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
 import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { toast } from "@/lib/toast";
 
 export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
@@ -159,16 +161,18 @@ export default function TrainerSessionsPage() {
     }
   };
 
-  const handleDeleteSession = async (session: ApiLiveSession) => {
-    if (!window.confirm(`Are you sure you want to delete "${session.titleEn}"? This cannot be undone.`)) {
-      return;
-    }
-    setDeletingId(session.id);
+  const [sessionToDelete, setSessionToDelete] = useState<ApiLiveSession | null>(null);
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    setDeletingId(sessionToDelete.id);
     try {
-      await deleteLiveSession(session.id);
+      await deleteLiveSession(sessionToDelete.id);
+      toast.success(`Session "${sessionToDelete.titleEn}" deleted successfully.`);
+      setSessionToDelete(null);
       loadSessions();
-    } catch (err) {
-      console.error("Failed to delete session:", err);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete session.");
     } finally {
       setDeletingId(null);
     }
@@ -223,17 +227,16 @@ export default function TrainerSessionsPage() {
                   key={st}
                   type="button"
                   onClick={() => setSelectedStatusFilter(st)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${
-                    selectedStatusFilter === st
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${selectedStatusFilter === st
                       ? "bg-white text-slate-900 shadow-xs font-semibold"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   {st === "ALL"
                     ? "All Status"
                     : st === "SCHEDULED"
-                    ? "Upcoming"
-                    : st.charAt(0) + st.slice(1).toLowerCase()}
+                      ? "Upcoming"
+                      : st.charAt(0) + st.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -321,7 +324,7 @@ export default function TrainerSessionsPage() {
                           size="sm"
                           variant="ghost"
                           disabled={deletingId === row.session.id}
-                          onClick={() => handleDeleteSession(row.session)}
+                          onClick={() => setSessionToDelete(row.session)}
                           title="Delete session"
                           className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
                         >
@@ -437,7 +440,7 @@ export default function TrainerSessionsPage() {
                           size="sm"
                           variant="ghost"
                           disabled={deletingId === row.session.id}
-                          onClick={() => handleDeleteSession(row.session)}
+                          onClick={() => setSessionToDelete(row.session)}
                           title="Delete session"
                           className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
                         >
@@ -522,6 +525,18 @@ export default function TrainerSessionsPage() {
           loadSessions();
         }}
         courses={courses}
+      />
+
+      {/* Confirm Session Deletion Modal */}
+      <ConfirmModal
+        open={Boolean(sessionToDelete)}
+        title="Delete Live Training Session"
+        description={`Are you sure you want to delete session "${sessionToDelete?.titleEn}"? This action cannot be undone.`}
+        confirmText="Delete Session"
+        variant="danger"
+        isLoading={Boolean(deletingId)}
+        onConfirm={confirmDeleteSession}
+        onClose={() => !deletingId && setSessionToDelete(null)}
       />
     </PageShell>
   );

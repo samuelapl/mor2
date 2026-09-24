@@ -5,7 +5,8 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
-  open: boolean;
+  open?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
@@ -21,17 +22,19 @@ const SIZE_CLASSES = {
   full: "max-w-6xl w-[95vw]",
 };
 
-export function Modal({ open, onClose, title, subtitle, size = "md", children, footer }: ModalProps) {
+export function Modal({ open, isOpen, onClose, title, subtitle, size = "md", children, footer }: ModalProps) {
+  const effectiveOpen = Boolean(open ?? isOpen);
+
   useEffect(() => {
-    if (!open) return;
+    if (!effectiveOpen) return;
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [effectiveOpen, onClose]);
 
-  if (!open) return null;
+  if (!effectiveOpen) return null;
 
   // "screen" fills the dashboard content area only — below the header, to
   // the right of the sidebar — so those stay visible and usable, with no

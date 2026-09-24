@@ -195,18 +195,17 @@ export default function LearnerLiveSessionsPage() {
                     size="sm"
                     disabled={isLoading}
                     onClick={() => handleJoin(row.session)}
-                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${
-                      isCheckedIn
+                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${isCheckedIn
                         ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
                         : "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs"
-                    }`}
+                      }`}
                   >
                     <MonitorPlay className="h-3.5 w-3.5" />
                     {isLoading
                       ? "Connecting…"
                       : isCheckedIn
-                      ? "Enter Room"
-                      : tr(lang, "join")}
+                        ? "Enter Room"
+                        : tr(lang, "join")}
                     <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
                   </Button>
                 </div>

@@ -748,6 +748,15 @@ export function StepCurriculum({
               </div>
             ))}
           </div>
+
+          <div className="pt-2 flex items-center justify-between border-t border-indigo-100">
+            <span className="text-xs text-indigo-700 font-medium">
+              {questions.length} question{questions.length !== 1 ? "s" : ""} added
+            </span>
+            <Button size="sm" variant="outline" onClick={addQ} className="gap-1.5 text-xs font-semibold bg-white text-indigo-700 hover:bg-indigo-50 border-indigo-200">
+              <Plus className="h-3.5 w-3.5" /> Add Question
+            </Button>
+          </div>
         </div>
       );
     }

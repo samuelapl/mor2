@@ -16,6 +16,7 @@ import {
 import type { Question, QuestionType, UploadedResource } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { uploadAttachment } from "@/lib/api/files";
+import { toast } from "@/lib/toast";
 import { inputClass, labelClass, uid } from "./wizard-types";
 import { CompactRichEditor, MultiFileUploader } from "./wizard-components";
 
@@ -447,7 +448,7 @@ export function StepFinalAssessment({
                           handleQuestionImageUpload(
                             f,
                             (url) => patchQuestion(qIdx, { imageUrl: url }),
-                            (err) => alert(err),
+                            (err) => toast.error(err),
                           );
                         }
                       }}
@@ -517,6 +518,17 @@ export function StepFinalAssessment({
               )}
             </div>
           ))
+        )}
+
+        {questions.length > 0 && (
+          <div className="pt-3 flex items-center justify-between border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-medium">
+              {questions.length} question{questions.length !== 1 ? "s" : ""} configured
+            </span>
+            <Button size="sm" onClick={addQuestion} className="gap-1.5 shadow-xs">
+              <Plus className="h-4 w-4" /> Add Question
+            </Button>
+          </div>
         )}
       </div>
     </div>

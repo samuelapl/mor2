@@ -1268,17 +1268,6 @@ export function LiveQuizTrainerControl({
       }
     > = {};
 
-    if (stagedQueue && stagedQueue.length > 0) {
-      for (const sq of stagedQueue) {
-        const payload = buildQuizPayload(sq);
-        allReveals[sq.id] = {
-          correctOptionIds: payload.correctOptionIds || ["0"],
-          explanationEn: payload.explanationEn,
-          explanationAm: payload.explanationAm,
-        };
-      }
-    }
-
     allReveals[activeQuiz.id] = {
       correctOptionIds: activeQuiz.correctOptionIds || ["0"],
       explanationEn: activeQuiz.explanationEn,
@@ -1717,6 +1706,19 @@ export function LiveQuizTrainerControl({
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Explanation Banner for Trainer on Reveal */}
+                {isRevealed && (activeQuiz.explanationEn || (activeQuiz as any).explanation) && (
+                  <div className="rounded-xl border border-indigo-200 bg-white/95 p-3.5 text-xs space-y-1.5 shadow-2xs">
+                    <div className="flex items-center gap-1.5 font-bold text-indigo-950">
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                      <span>Answer Explanation (Revealed to Learners):</span>
+                    </div>
+                    <p className="text-slate-700 leading-relaxed pl-5 font-medium">
+                      {stripHtmlTags(activeQuiz.explanationEn || (activeQuiz as any).explanation)}
+                    </p>
                   </div>
                 )}
 

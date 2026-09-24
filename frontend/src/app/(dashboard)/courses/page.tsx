@@ -10,18 +10,20 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Pagination } from "@/components/ui/Pagination";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
 import { CourseCreationWizard } from "@/components/features/courses/CourseCreationWizard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 type StatusTab = "all" | "draft" | "under_review" | "approved" | "published" | "archived";
 
 export default function CoursesPage() {
-  const { courses, currentUser } = useLms();
+  const { courses, currentUser, ready } = useLms();
   const { can } = usePermissions();
   const canCreate = can("course.create");
   const canViewAssignedOnly = can("course.view.assigned") && !can("course.view.all");
@@ -32,7 +34,6 @@ export default function CoursesPage() {
   const [search, setSearch] = useState("");
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
   const [category, setCategory] = useState("all");
-  const [flash, setFlash] = useState<string | null>(null);
 
   const counts = useMemo(() => {
     return {
@@ -105,12 +106,6 @@ export default function CoursesPage() {
         ) : undefined
       }
     >
-      {flash ? (
-        <div className="mb-4 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700">
-          {flash}
-        </div>
-      ) : null}
-
       <div className="mb-5 flex flex-wrap items-center gap-1.5 border-b border-slate-200/80 pb-3">
         {tabs.map((tab) => {
           const active = statusTab === tab.id;
@@ -167,7 +162,11 @@ export default function CoursesPage() {
         hasActiveFilters={search !== "" || statusTab !== "all" || category !== "all"}
       />
 
-      {filtered.length === 0 ? (
+      {!ready ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <CardSkeleton count={6} />
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState title={emptyStateCopy.title} description={emptyStateCopy.description}>
           {canCreate ? (
             <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 shadow-xs">
@@ -271,7 +270,7 @@ export default function CoursesPage() {
               onDone={() => {
                 setCreateOpen(false);
                 setCreationMode(null);
-                setFlash("Course created successfully!");
+                toast.success("Course created successfully!");
               }}
               onCancel={() => setCreationMode(null)}
             />

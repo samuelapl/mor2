@@ -33,6 +33,27 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 const COVER = '/sample.jpg';
+const SAMPLE_VIDEO = '/sample.mp4';
+const SAMPLE_PDF = '/file-sample.pdf';
+
+interface AttachmentSeed {
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  sizeBytes: number;
+}
+
+interface SubLessonData {
+  titleEn: string;
+  titleAm: string;
+  contentType: LessonContentType;
+  durationMinutes: number;
+  order: number;
+  contentEn: string;
+  contentAm: string;
+  resourceUrl?: string;
+  attachment?: AttachmentSeed;
+}
 
 interface LessonData {
   titleEn: string;
@@ -42,6 +63,9 @@ interface LessonData {
   order: number;
   contentEn: string;
   contentAm: string;
+  resourceUrl?: string;
+  attachment?: AttachmentSeed;
+  subLessons?: SubLessonData[];
 }
 
 interface AssessmentQuestion {
@@ -68,6 +92,7 @@ interface ModuleData {
   descriptionEn: string;
   descriptionAm: string;
   order: number;
+  attachment?: AttachmentSeed;
   lessons: LessonData[];
   assessment: AssessmentData;
 }
@@ -83,6 +108,7 @@ interface CourseData {
   estimatedHours: number;
   category: string;
   department: string;
+  attachments?: AttachmentSeed[];
   modules: ModuleData[];
   finalAssessment: AssessmentData;
 }
@@ -104,6 +130,20 @@ const coursesToSeed: CourseData[] = [
     estimatedHours: 18,
     category: 'Risk Management & Governance',
     department: 'Risk Management Directorate',
+    attachments: [
+      {
+        fileName: 'MoR_Foundation_Course_Syllabus.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+      {
+        fileName: 'National_Risk_Governance_Charter.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Principles of Risk Management & Governance',
@@ -111,13 +151,59 @@ const coursesToSeed: CourseData[] = [
         descriptionEn: 'Core risk concepts, organizational risk appetite, legal mandates, and the M_o_R 4-stage lifecycle.',
         descriptionAm: 'መሰረታዊ የስጋት ጽንሰ-ሀሳቦች፣ የተቋሙ የስጋት የመቀበል አቅም፣ የህግ ማዕቀፍ እና የ M_o_R 4-ደረጃ የህይወት ዑደት።',
         order: 1,
+        attachment: {
+          fileName: 'Module_1_Risk_Management_Principles.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 Understanding Risk: Threats, Opportunities & Risk Appetite',
             titleAm: '1.1 አደጋን መረዳት፡ ስጋቶች፣ እድሎች እና የስጋት ፍላጎት',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Threats_Opportunities_Appetite_Guide.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Video Deep Dive: Organizational Risk Appetite Case Study',
+                titleAm: '1.1.1 የቪዲዮ ጥናት፡ የተቋሙ የስጋት ፍላጎት ትንተና',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Watch this comprehensive case study on how Ministry leadership calibrates quantitative risk tolerance for electronic tax filings.',
+                contentAm: 'የኤሌክትሮኒክስ ታክስ ማስገባት ላይ ያለውን የስጋት መጠን አመራሩ እንዴት እንደሚወስን የሚያሳይ ቪዲዮ።',
+                attachment: {
+                  fileName: 'Risk_Appetite_Matrix_Template.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+              {
+                titleEn: '1.1.2 Technical Reference: Inherent vs. Residual Risk Computation',
+                titleAm: '1.1.2 የቴክኒክ ማጣቀሻ፡ መሰረታዊ እና ቀሪ ስጋት ስሌት',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 2,
+                contentEn: 'Step-by-step mathematical model for scoring likelihood against impact to calculate residual exposure after internal control deployment.',
+                contentAm: 'የቁጥጥር እርምጃዎች ከተወሰዱ በኋላ የሚቀረውን ስጋት ለማስላት የሚያገለግል የሂሳብ ቀመር።',
+                attachment: {
+                  fileName: 'Residual_Risk_Scoring_Model.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Introduction & Context
 In public revenue administration, risk is defined as **an uncertain event or set of events that, should it occur, will have an effect on the achievement of organizational objectives**. Crucially, risk is not merely negative (threats); it also encompasses positive uncertainties (opportunities) that can enhance revenue collection, service delivery, or operational efficiency.
 
@@ -157,8 +243,26 @@ When deploying an automated digital customs declaration system:
             titleEn: '1.2 The M_o_R 4-Stage Cyclical Process: Identify to Implement',
             titleAm: '1.2 የ M_o_R 4-ደረጃ ዑደት ሂደት፡ ከመለየት እስከ መተግበር',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'MoR_4Stage_Lifecycle_Workflow.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Video Tutorial: Identifying Operational Vulnerabilities',
+                titleAm: '1.2.1 የቪዲዮ መመሪያ፡ የአሰራር ክፍተቶችን መለየት',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Visual guide to conducting departmental risk identification workshops across branch revenue offices.',
+                contentAm: 'በቅርንጫፍ ጽህፈት ቤቶች የአደጋ መለያ ወርክሾፖችን እንዴት ማካሄድ እንደሚቻል የሚያሳይ ቪዲዮ።',
+              },
+            ],
             contentEn: `## 1. The Core Lifecycle Stages
 
 ### Stage 1: Identify
@@ -201,7 +305,7 @@ Develop suitable risk responses:
           titleEn: 'Module 1 Knowledge Check: Risk Fundamentals',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ የአደጋ መሰረታዊ መርሆዎች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'mor-m1-q1',
@@ -253,13 +357,44 @@ Develop suitable risk responses:
         descriptionEn: 'Constructing 5x5 probability-impact matrices, calculating risk severity scores, and maintaining active risk registers.',
         descriptionAm: 'የ 5x5 እድል እና ተፅዕኖ ማትሪክስ ማዘጋጀት፣ የስጋት ክብደት ውጤቶችን ማስላት እና የስጋት መዝገብ ማስተዳደር።',
         order: 2,
+        attachment: {
+          fileName: 'Module_2_Risk_Appetite_Tolerances.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Building & Calibrating the 5x5 Probability-Impact Matrix',
             titleAm: '2.1 የ 5x5 እድል እና ተፅዕኖ ማትሪክስ ግንባታና ማስተካከል',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Risk_Register_Master_Template.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video Walkthrough: Dynamic Heatmap Calibration',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ ተለዋዋጭ የሂትማፕ አሰራር',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Step-by-step video demonstration of calculating probability and impact scores using automated spreadsheets and heatmaps.',
+                contentAm: 'የተሟላ የቪዲዮ ማብራሪያ በአደጋ ውጤት ስሌት እና በሂትማፕ አጠቃቀም ላይ።',
+                attachment: {
+                  fileName: 'Sample_Filled_Risk_Register.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Quantitative & Qualitative Scales
 The standard revenue assessment matrix employs a **5x5 grid**:
 - **Probability Scale (1 to 5)**:
@@ -290,8 +425,14 @@ $$\\text{Risk Score} = \\text{Probability} \\times \\text{Impact}$$
             titleEn: '2.2 Maintaining and Escalating the Risk Register',
             titleAm: '2.2 የስጋት መዝገብን መያዝ እና ሪፖርት ማድረግ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Risk_Treatment_Escalation_Handbook.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
             contentEn: `## 1. Anatomy of an Enterprise Risk Register
 A functional risk register must contain the following core fields:
 1. **Risk ID**: Unique tracking identifier (e.g., \`RSK-REV-042\`).
@@ -313,7 +454,7 @@ A functional risk register must contain the following core fields:
           titleEn: 'Module 2 Knowledge Check: Measurement & Registers',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ መለኪያ እና መዝገቦች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'mor-m2-q1',
@@ -364,7 +505,7 @@ A functional risk register must contain the following core fields:
       titleEn: 'Final Comprehensive Assessment: M_o_R Foundation Certification',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የ M_o_R መሰረታዊ ሰርተፊኬት ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 40,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'mor-fn-q1',
@@ -441,6 +582,20 @@ A functional risk register must contain the following core fields:
     estimatedHours: 24,
     category: 'Tax Audit & Compliance',
     department: 'Tax Audit & Investigation Directorate',
+    attachments: [
+      {
+        fileName: 'National_Tax_Audit_Standard_Operating_Procedure.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+      {
+        fileName: 'Tax_Fraud_Forensic_Investigation_Checklist.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Audit Planning & Risk-Based Taxpayer Profiling',
@@ -448,13 +603,44 @@ A functional risk register must contain the following core fields:
         descriptionEn: 'Techniques for third-party financial data triangulation, variance flagging, and field audit readiness.',
         descriptionAm: 'የሶስተኛ ወገን የፋይናንስ መረጃዎችን ማገናዘብ፣ ልዩነቶችን መለየት እና ለኦዲት መስክ ዝግጅት።',
         order: 1,
+        attachment: {
+          fileName: 'Module_1_Audit_Planning_Field_Guide.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 Risk-Based Case Selection & Third-Party Triangulation',
             titleAm: '1.1 በአደጋ ላይ የተመሰረተ መረጣ እና የሶስተኛ ወገን መረጃ ማገናዘብ',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Taxpayer_Risk_Scoring_Matrix.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Case Video: Triangulating Customs & Banking Records',
+                titleAm: '1.1.1 የቪዲዮ ክለሳ፡ የጉምሩክና ባንክ መረጃዎችን ማገናዘብ',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Practical walk-through on matching declared VAT turnover with foreign exchange bank remittances and ASYCUDA declarations.',
+                contentAm: 'የተጨማሪ እሴት ታክስ ሪፖርትን ከባንክ ዝውውር እና ከጉምሩክ ገቢ መረጃ ጋር የማነፃፀሪያ ቪዲዮ።',
+                attachment: {
+                  fileName: 'Triangulation_Audit_Worksheet.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. The Paradigm Shift: From Random Audits to Risk-Based Selection
 Traditional audit programs inspected taxpayers through random sampling, resulting in low yield per auditor hour. Modern revenue bodies deploy **Data-Driven Risk Scoring** using:
 - Customs import values vs. reported domestic cost of goods sold.
@@ -474,8 +660,31 @@ Traditional audit programs inspected taxpayers through random sampling, resultin
             titleEn: '1.2 Audit Notification Protocols & Pre-Audit Field Readiness',
             titleAm: '1.2 የኦዲት ማሳወቂያ ደንቦች እና የመስክ ዝግጅት',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Statutory_Audit_Notice_Template.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Document: Pre-Audit Entrance Conference Protocol',
+                titleAm: '1.2.1 ሰነድ፡ የቅድመ-ኦዲት መክፈቻ ስብሰባ መመሪያ',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 1,
+                contentEn: 'Standard operating procedure for conducting the mandatory Day 1 entrance conference with corporate management and external auditors.',
+                contentAm: 'ከድርጅቱ አመራሮች ጋር በመጀመሪያው ቀን የሚደረግ የኦዲት መክፈቻ ስብሰባ መመሪያ።',
+                attachment: {
+                  fileName: 'Entrance_Conference_Minutes_Template.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Statutory Notice Requirements
 Before initiating an on-site field examination, the auditor must issue a formal **Written Notice of Audit**:
 - Must state the tax years and specific tax heads under review (e.g., Corporate Income Tax, VAT, Withholding).
@@ -496,7 +705,7 @@ Before initiating an on-site field examination, the auditor must issue a formal 
           titleEn: 'Module 1 Knowledge Check: Audit Planning',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ የኦዲት እቅድ',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'tax-m1-q1',
@@ -553,13 +762,44 @@ Before initiating an on-site field examination, the auditor must issue a formal 
         descriptionEn: 'Investigating fictitious invoicing, electronic ledger audits, computation of penalty interest, and issuing deficiency assessments.',
         descriptionAm: 'የሀሰተኛ ደረሰኞችን መመርመር፣ የኤሌክትሮኒክስ መዝገብ ኦዲት፣ የወለድና መቀጮ ስሌት እና የውሳኔ ማስታወቂያ ማውጣት።',
         order: 2,
+        attachment: {
+          fileName: 'Module_2_Forensic_Audit_Handbook.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Detecting Fictitious Invoices & Phantom Suppliers',
             titleAm: '2.1 የሀሰተኛ ደረሰኞችና ያልነበሩ አቅራቢዎችን መለየት',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Fictitious_Invoice_Detection_Guide.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video: Uncovering Ghost Vendors Through Waybill Audits',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ የሀሰተኛ አቅራቢዎችን በመጋዘን ሰነድ መለየት',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Case investigation video highlighting physical inspection at freight checkpoints and uncovering fake warehouse receipts.',
+                contentAm: 'በፍተሻ ኬላዎች የሚደረግ የሰነድ ማረጋገጫ እና ሀሰተኛ ደረሰኞችን የመለየት ቪዲዮ።',
+                attachment: {
+                  fileName: 'Waybill_Verification_Manual.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Anatomy of Invoice Mills
 An invoice mill (phantom supplier) produces invoices for goods or services that were never delivered, allowing the buyer to inflate cost deductions and claim fraudulent input VAT refunds.
 
@@ -576,8 +816,14 @@ An invoice mill (phantom supplier) produces invoices for goods or services that 
             titleEn: '2.2 Drafting Assessment Notices & Managing Objection Windows',
             titleAm: '2.2 የውሳኔ ማሳወቂያ ረቂቅ እና የቅሬታ ጊዜ አስተዳደር',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Formal_Assessment_Notice_Format.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
             contentEn: `## 1. Preparing the Formal Assessment Notice
 The assessment report must withstand judicial scrutiny:
 1. **Statutory Legal Basis**: Exact articles of the Tax Proclamation invoked.
@@ -591,7 +837,7 @@ The assessment report must withstand judicial scrutiny:
           titleEn: 'Module 2 Knowledge Check: Forensic Findings',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ የፎረንሲክ ግኝቶች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'tax-m2-q1',
@@ -647,7 +893,7 @@ The assessment report must withstand judicial scrutiny:
       titleEn: 'Final Comprehensive Assessment: Tax Audit Certification',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የግብር ኦዲት ሰርተፊኬት ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 45,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'tax-fn-q1',
@@ -729,6 +975,20 @@ The assessment report must withstand judicial scrutiny:
     estimatedHours: 30,
     category: 'Information Security & IT',
     department: 'ICT & Cybersecurity Directorate',
+    attachments: [
+      {
+        fileName: 'Ministry_Cybersecurity_Policy_Standard.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+      {
+        fileName: 'ISO_27001_Compliance_Architecture.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Zero-Trust Network Architecture & Identity Security',
@@ -736,13 +996,44 @@ The assessment report must withstand judicial scrutiny:
         descriptionEn: 'Principle of least privilege, multi-factor authentication enforcement, and boundary segmentation.',
         descriptionAm: 'አነስተኛ የፈቃድ ወሰን መርህ፣ ባለብዙ ደረጃ ማረጋገጫ (MFA) እና የኔትወርክ ክፍፍል ደህንነት።',
         order: 1,
+        attachment: {
+          fileName: 'Module_1_Zero_Trust_Implementation_Guide.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 The Zero-Trust Paradigm: "Never Trust, Always Verify"',
             titleAm: '1.1 የዜሮ-ትረስት መርህ፡ "መቼም አትመን፣ ሁልጊዜ አረጋግጥ"',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 55,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Zero_Trust_Architecture_Reference.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Video Demo: Microsegmentation & Access Proxy Setup',
+                titleAm: '1.1.1 የቪዲዮ ማሳያ፡ የኔትወርክ ክፍፍል እና ፕሮክሲ አሰራር',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Step-by-step demonstration configuring micro-perimeters and Software-Defined Perimeter (SDP) gateways.',
+                contentAm: 'የኔትወርክ ወሰኖችን እና ፕሮክሲ ደህንነትን የሚያሳይ ተግባራዊ ቪዲዮ።',
+                attachment: {
+                  fileName: 'Microsegmentation_Design_Blueprint.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Deconstructing the Traditional Perimeter
 Legacy security assumed that everything inside the internal corporate network was inherently trustworthy. Modern Advanced Persistent Threats (APTs) invalidate this assumption.
 
@@ -759,8 +1050,31 @@ Legacy security assumed that everything inside the internal corporate network wa
             titleEn: '1.2 Multi-Factor Authentication (MFA) & Endpoint Hardening',
             titleAm: '1.2 ባለብዙ ደረጃ ማረጋገጫ (MFA) እና የመሳሪያዎች ጥበቃ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'MFA_Hardware_Tokens_Standard.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Document: FIDO2 Passwordless Deployment Checklist',
+                titleAm: '1.2.1 ሰነድ፡ የ FIDO2 ቁልፍ አጠቃቀም መመሪያ',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 1,
+                contentEn: 'Deployment matrix for enrolling staff into hardware security keys (YubiKey/FIDO2) across all revenue branches.',
+                contentAm: 'የሃርድዌር ሴኪዩሪቲ ቁልፎችን ለሰራተኞች የማደራጀት የስራ መመሪያ።',
+                attachment: {
+                  fileName: 'FIDO2_Enrollment_Procedures.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Authentication Factors
 - **Something you know**: Password or PIN.
 - **Something you have**: Hardware security key or TOTP authenticator app.
@@ -780,7 +1094,7 @@ Legacy security assumed that everything inside the internal corporate network wa
           titleEn: 'Module 1 Knowledge Check: Zero Trust',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ዜሮ ትረስት',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'cs-m1-q1',
@@ -832,13 +1146,44 @@ Legacy security assumed that everything inside the internal corporate network wa
         descriptionEn: 'Data-at-rest and in-transit encryption standards, digital forensics preservation, and step-by-step incident containment.',
         descriptionAm: 'የመረጃ ምስጠራ ደረጃዎች፣ ዲጂታል ማስረጃዎችን መጠበቅ እና የሳይበር አደጋዎችን የመቆጣጠር ደረጃዎች።',
         order: 2,
+        attachment: {
+          fileName: 'Module_2_Cryptographic_Controls_Manual.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Cryptographic Standards for Financial and Taxpayer Records',
             titleAm: '2.1 ለግብር ከፋዮች የፋይናንስ መረጃ የምስጠራ ደረጃዎች',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Cryptographic_Key_Management_Procedure.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video: Hardware Security Module (HSM) Key Lifecycle',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ የ HSM ምስጠራ ቁልፍ አስተዳደር',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Demonstrating secure key generation, backup, and rotation procedures inside certified HSM clusters.',
+                contentAm: 'በ HSM ውስጥ የምስጠራ ቁልፎችን የማመንጨትና የመጠበቅ ሂደት የሚያሳይ ቪዲዮ።',
+                attachment: {
+                  fileName: 'HSM_Configuration_Runbook.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Cryptography in Revenue Systems
 - **Data in Transit**: Mandatory TLS 1.3 encryption across all public web services and database connection strings. Deprecate TLS 1.0/1.1 and insecure ciphers.
 - **Data at Rest**: AES-256 encryption for database tables containing confidential taxpayer identifications, bank account numbers, and assessment notes.
@@ -850,8 +1195,32 @@ Legacy security assumed that everything inside the internal corporate network wa
             titleEn: '2.2 Incident Containment & Forensic Evidence Preservation',
             titleAm: '2.2 አደጋን መቆጣጠር እና የፎረንሲክ ማስረጃን መጠበቅ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 55,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Incident_Response_Runbook_2026.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.2.1 Video: Preserving Volatile RAM & Disk Images Under Incident Response',
+                titleAm: '2.2.1 የቪዲዮ መመሪያ፡ የፎረንሲክ ማስረጃን መጠበቅ',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Hands-on forensic acquisition tutorial capturing live RAM dumps and cryptographically verified raw bitstream disk images.',
+                contentAm: 'የኮምፒውተር ራም እና ሃርድ ድራይቭ ማስረጃዎችን የማውጣትና የመጠበቅ ቪዲዮ።',
+                attachment: {
+                  fileName: 'Digital_Forensics_Chain_of_Custody_Form.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. The 6-Phase Incident Response Lifecycle
 1. **Preparation**: Maintaining tools, call trees, and patched backup systems.
 2. **Identification**: Detecting anomalous traffic via SIEM logs.
@@ -867,7 +1236,7 @@ Legacy security assumed that everything inside the internal corporate network wa
           titleEn: 'Module 2 Knowledge Check: Cryptography & Response',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ ምስጠራ እና ምላሽ',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'cs-m2-q1',
@@ -918,7 +1287,7 @@ Legacy security assumed that everything inside the internal corporate network wa
       titleEn: 'Final Comprehensive Assessment: Cyber Defense Architecture',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የሳይበር ደህንነት ስነ-ህንፃ ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 45,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'cs-fn-q1',
@@ -990,6 +1359,20 @@ Legacy security assumed that everything inside the internal corporate network wa
     estimatedHours: 16,
     category: 'Ethics & Legal Compliance',
     department: 'Ethics & Anti-Corruption Directorate',
+    attachments: [
+      {
+        fileName: 'Civil_Service_Code_of_Conduct_Charter.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+      {
+        fileName: 'Anti_Corruption_Statutory_Proclamation.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Ethical Principles & Conflict of Interest Mitigation',
@@ -997,13 +1380,44 @@ Legacy security assumed that everything inside the internal corporate network wa
         descriptionEn: 'Statutory ethical duties, gift policies, kinship disclosures, and impartial public service delivery.',
         descriptionAm: 'ህጋዊ የስነ-ምግባር ግዴታዎች፣ የስጦታ ፖሊሲ፣ የዝምድና መረጃ ማሳወቅ እና ፍትሃዊ የህዝብ አገልግሎት።',
         order: 1,
+        attachment: {
+          fileName: 'Module_1_Ethics_and_Integrity_Manual.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 Foundations of Public Trust & The Civil Service Code',
             titleAm: '1.1 የህዝብ አመኔታ መሰረቶች እና የሲቪል ሰርቪስ ደንብ',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 40,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Public_Trust_Principles_Handbook.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Video: Ethical Dilemmas in Public Revenue Administration',
+                titleAm: '1.1.1 የቪዲዮ ክለሳ፡ በገቢዎች ስራ ውስጥ የስነ-ምግባር ተግዳሮቶች',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Dramatized case scenarios exploring ethical dilemmas faced by frontline revenue assessment officers.',
+                contentAm: 'በገቢዎች ግብር ስራ ላይ የሚያጋጥሙ የስነ-ምግባር ችግሮችን የሚያሳይ የቪዲዮ ትምህርት።',
+                attachment: {
+                  fileName: 'Ethical_Dilemmas_Case_Studies.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. The Stewardship Mandate
 Civil servants hold authority not as personal privilege, but as trustees of the public interest. The core values include:
 - **Impartiality**: Administering tax laws objectively regardless of taxpayer status, wealth, or political affiliation.
@@ -1016,8 +1430,31 @@ Civil servants hold authority not as personal privilege, but as trustees of the 
             titleEn: '1.2 Identifying and Disclosing Conflicts of Interest',
             titleAm: '1.2 የጥቅም ግጭትን መለየት እና ይፋ ማድረግ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Conflict_of_Interest_Declaration_Form.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Document: Recusal Procedure and Filing Protocols',
+                titleAm: '1.2.1 ሰነድ፡ ከውሳኔ ራስን የማግለል የስራ መመሪያ',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 1,
+                contentEn: 'Step-by-step guidance on formal written submission of conflict disclosures and automated case reassignment.',
+                contentAm: 'የጥቅም ግጭትን በጽሁፍ የማሳወቅ እና ከስራው ራስን የማግለል ዝርዝር መመሪያ።',
+                attachment: {
+                  fileName: 'Recusal_Filing_Guidelines.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Forms of Conflict of Interest
 - **Actual Conflict**: An officer is assigned to audit a business where their spouse is the primary shareholder.
 - **Perceived Conflict**: A customs official accepting paid weekend hospitality from an importer whose goods pass through their checkpoint.
@@ -1038,7 +1475,7 @@ When a conflict arises:
           titleEn: 'Module 1 Knowledge Check: Ethics & Conflicts',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ስነ-ምግባርና ጥቅሞች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'eth-m1-q1',
@@ -1095,13 +1532,44 @@ When a conflict arises:
         descriptionEn: 'Recognizing procurement red flags, non-retaliation policies, and formal whistleblower channels.',
         descriptionAm: 'በግዥ ውስጥ አጠራጣሪ ምልክቶችን መለየት፣ ከበቀል ጥበቃ የማድረግ ፖሊሲ እና ሚስጥራዊ የጥቆማ መስመሮች።',
         order: 2,
+        attachment: {
+          fileName: 'Whistleblower_Protection_Charter.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Anti-Bribery Mechanisms & Red Flags in Procurement',
             titleAm: '2.1 የፀረ-ጉቦ አሰራሮች እና በግዥ ውስጥ አጠራጣሪ ምልክቶች',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Procurement_Red_Flags_Inspection_Sheet.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video: Spotting Irregularities in Government Tenders',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ በመንግስት ጨረታዎች ውስጥ ክፍተቶችን መለየት',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Forensic inspection video demonstrating bid tailoring identification and vendor relationship mapping.',
+                contentAm: 'የጨረታ ሰነድ ማጭበርበርን እና የተሳሳቱ ዝርዝሮችን የመለየት ቪዲዮ።',
+                attachment: {
+                  fileName: 'Tender_Audit_Checklist.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Red Flags in Procurement & Licensing
 - Split bidding to circumvent tender approval thresholds.
 - Unusually narrow technical specifications drafted to match a single proprietary vendor.
@@ -1113,8 +1581,14 @@ When a conflict arises:
             titleEn: '2.2 Whistleblower Channels & Non-Retaliation Protections',
             titleAm: '2.2 የጥቆማ መስመሮች እና ከበቀል ጥበቃ የማድረግ ዋስትና',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Whistleblower_Submission_Security_Guide.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
             contentEn: `## 1. Legal Protection for Whistleblowers
 Whistleblowers are essential for exposing corruption that evades routine audits. Legal protections include:
 - Strict identity confidentiality under encrypted submission channels.
@@ -1128,7 +1602,7 @@ Whistleblowers are essential for exposing corruption that evades routine audits.
           titleEn: 'Module 2 Knowledge Check: Anti-Corruption Tools',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ የፀረ-ሙስና መሳሪያዎች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'eth-m2-q1',
@@ -1184,7 +1658,7 @@ Whistleblowers are essential for exposing corruption that evades routine audits.
       titleEn: 'Final Comprehensive Assessment: Ethics & Public Integrity',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ ስነ-ምግባርና የህዝብ ታማኝነት ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 40,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'eth-fn-q1',
@@ -1261,6 +1735,14 @@ Whistleblowers are essential for exposing corruption that evades routine audits.
     estimatedHours: 20,
     category: 'Leadership & Executive Development',
     department: 'Human Resource Development Directorate',
+    attachments: [
+      {
+        fileName: 'Strategic_Change_Management_Toolkit.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Vision Execution & Adaptive Leadership',
@@ -1268,13 +1750,44 @@ Whistleblowers are essential for exposing corruption that evades routine audits.
         descriptionEn: 'Translating policy directives into measurable departmental objectives and leading through uncertainty.',
         descriptionAm: 'የፖሊሲ መመሪያዎችን ወደ ተጨባጭ ግቦች መቀየር እና እርግጠኛ ባልሆነ ሁኔታ ውስጥ መምራት።',
         order: 1,
+        attachment: {
+          fileName: 'Adaptive_Leadership_Field_Manual.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 The Adaptive Leadership Framework in Public Administration',
             titleAm: '1.1 በተለዋዋጭ ሁኔታዎች ውስጥ የመምራት ስልት',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Technical_vs_Adaptive_Challenge_Matrix.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Video: Executive Decision Making in Digital Reforms',
+                titleAm: '1.1.1 የቪዲዮ ትንታኔ፡ በአመራር ደረጃ ውሳኔ አሰጣጥ',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Executive briefing on distinguishing technical issues from organizational mindset shifts during tax digitalization.',
+                contentAm: 'በዲጂታል ለውጥ ወቅት የሚገጥሙ የአመለካከት ተግዳሮቶችን የመፍታት የአመራር ቪዲዮ።',
+                attachment: {
+                  fileName: 'Executive_Decision_Framework.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Technical vs. Adaptive Challenges
 - **Technical Challenges**: Problems where both the issue and solution are well-understood (e.g., updating tax bracket tables in database software).
 - **Adaptive Challenges**: Problems where the solution requires changes in people's beliefs, attitudes, and habits (e.g., shifting employees from paper dossiers to cloud systems).`,
@@ -1285,8 +1798,31 @@ Whistleblowers are essential for exposing corruption that evades routine audits.
             titleEn: '1.2 Aligning Objectives: From Ministerial KPI to Frontline Milestones',
             titleAm: '1.2 ግቦችን ማስተሳሰር፡ ከሚኒስቴር KPI እስከ ግንባር ቀደም ሰራተኛ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Ministerial_KPI_Cascading_Template.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Document: Frontline Milestone Tracking Worksheets',
+                titleAm: '1.2.1 ሰነድ፡ የዕቅድና ግብ መከታተያ ቅጽ',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 1,
+                contentEn: 'Operational tracking worksheet decomposing quarterly revenue collection milestones into weekly team tasks.',
+                contentAm: 'የሩብ ዓመት ግቦችን ወደ ሳምንታዊ የስራ ድርሻ የመቀየሪያ ቅጽ።',
+                attachment: {
+                  fileName: 'Milestone_Tracking_Spreadsheet.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. The Cascading Alignment Model
 Strategic targets set by the Ministry must be systematically decomposed:
 1. **Strategic Pillar**: Enhance Domestic Revenue Mobilization.
@@ -1301,7 +1837,7 @@ Strategic targets set by the Ministry must be systematically decomposed:
           titleEn: 'Module 1 Knowledge Check: Leadership Frameworks',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ የአመራር ማዕቀፎች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'lead-m1-q1',
@@ -1358,13 +1894,44 @@ Strategic targets set by the Ministry must be systematically decomposed:
         descriptionEn: 'Kotter 8-step change model, coaching underperforming teams, and institutionalizing reform culture.',
         descriptionAm: 'የኮተር ባለ 8-ደረጃ የለውጥ ሞዴል፣ ደካማ አፈፃፀም ያላቸውን ቡድኖች ማብቃት እና የለውጥ ባህልን ማጽናት።',
         order: 2,
+        attachment: {
+          fileName: 'Kotter_8Step_Change_Playbook.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Kotter 8-Step Change Process Applied to Public Sector',
             titleAm: '2.1 የኮተር ባለ 8-ደረጃ የለውጥ ሂደት በመንግስት ዘርፍ',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Short_Term_Wins_Milestone_Planner.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video: Overcoming Cynicism & Building Guiding Coalitions',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ ጠንካራ መሪ ቡድን መገንባት',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Case study video demonstrating methods to enlist champions and early adopters across regional revenue hubs.',
+                contentAm: 'በቅርንጫፍ መስሪያ ቤቶች የለውጥ ደጋፊዎችን የማሰባሰብ ዘዴዎችን የሚያሳይ ቪዲዮ።',
+                attachment: {
+                  fileName: 'Coalition_Building_Guide.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. The 8 Stages of Reform
 1. Create a sense of urgency.
 2. Build a guiding coalition.
@@ -1381,8 +1948,14 @@ Strategic targets set by the Ministry must be systematically decomposed:
             titleEn: '2.2 Constructive Coaching & Performance Accountability',
             titleAm: '2.2 አጋዥ የአመራር ስልት እና የአፈፃፀም ተጠያቂነት',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'GROW_Coaching_Model_Executive_Guide.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
             contentEn: `## 1. The GROW Coaching Model
 - **Goal**: What outcome do we want to achieve?
 - **Reality**: What is the current factual status?
@@ -1396,7 +1969,7 @@ Strategic targets set by the Ministry must be systematically decomposed:
           titleEn: 'Module 2 Knowledge Check: Change Management',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ የለውጥ አመራር',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'lead-m2-q1',
@@ -1452,7 +2025,7 @@ Strategic targets set by the Ministry must be systematically decomposed:
       titleEn: 'Final Comprehensive Assessment: Strategic Leadership Certification',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ ስትራቴጂካዊ አመራር ሰርተፊኬት ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 40,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'lead-fn-q1',
@@ -1534,6 +2107,20 @@ Strategic targets set by the Ministry must be systematically decomposed:
     estimatedHours: 22,
     category: 'Data Science & Analytics',
     department: 'Revenue Intelligence & Analytics Directorate',
+    attachments: [
+      {
+        fileName: 'Revenue_Intelligence_Analytics_Whitepaper.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+      {
+        fileName: 'Tax_Fraud_Anomaly_Detection_Algorithms.pdf',
+        fileUrl: SAMPLE_PDF,
+        fileType: 'application/pdf',
+        sizeBytes: 142786,
+      },
+    ],
     modules: [
       {
         titleEn: 'Module 1: Tax Data Modeling & Business Intelligence Dashboards',
@@ -1541,13 +2128,44 @@ Strategic targets set by the Ministry must be systematically decomposed:
         descriptionEn: 'Taxpayer profiling datasets, real-time KPI visualization, and time-series revenue trends.',
         descriptionAm: 'የግብር ከፋዮች ዳታ ሞዴል፣ የቀጥታ KPI ዳሽቦርድ አዘገጃጀት እና የገቢ አዝማሚያዎችን መተንተን።',
         order: 1,
+        attachment: {
+          fileName: 'Executive_BI_Dashboard_Specification.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '1.1 Designing Executive Dashboards for Revenue Monitoring',
             titleAm: '1.1 የገቢዎች ክትትል ዳሽቦርድ ንድፍ ለአመራር',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'PowerBI_Tableau_Revenue_Model_Spec.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.1.1 Video: Building Real-Time Drill-Down Dashboards',
+                titleAm: '1.1.1 የቪዲዮ ትንታኔ፡ የቀጥታ ዳሽቦርዶች አሰራር',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Hands-on construction of executive BI dashboards aggregating multi-region tax receipts with instant drill-down.',
+                contentAm: 'የተለያዩ ቅርንጫፍ ቢሮዎችን ገቢ የሚያሳይ የቀጥታ ዳሽቦርድ አሰራር ቪዲዮ።',
+                attachment: {
+                  fileName: 'Dashboard_Data_Sources_Mapping.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Principles of High-Impact BI Dashboards
 - **Actionability**: Dashboards should immediately answer: "Where are we lagging behind targets, and which branch requires intervention?"
 - **Visual Hierarchy**: Strategic KPIs at top (Total Monthly Revenue, Target Variance %, On-Time Filing Rate).
@@ -1559,8 +2177,31 @@ Strategic targets set by the Ministry must be systematically decomposed:
             titleEn: '1.2 Time-Series Revenue Forecasting & Seasonality Adjustments',
             titleAm: '1.2 የጊዜ-ተከታታይ የገቢ ትንበያ እና የወቅቶች ተፅዕኖ',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'Time_Series_Seasonality_Forecast_Formulas.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '1.2.1 Document: Econometric Regression Models for Fiscal Forecasters',
+                titleAm: '1.2.1 ሰነድ፡ የኢኮኖሚክስ እና ስታቲስቲክስ የትንበያ ሞዴሎች',
+                contentType: LessonContentType.DOCUMENT,
+                durationMinutes: 1,
+                order: 1,
+                contentEn: 'Mathematical formulation of autoregressive integrated moving averages (ARIMA) for predicting monthly domestic excise tax.',
+                contentAm: 'የወርሃዊ የኤክሳይዝ ታክስ ገቢን ለመተንበይ የሚያገለግሉ የስታቲስቲክስ ቀመሮች።',
+                attachment: {
+                  fileName: 'Econometric_Models_Guide.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. Accounting for Fiscal Seasonality
 Tax receipts exhibit pronounced seasonal cycles:
 - Corporate income tax surges around statutory annual declaration months.
@@ -1574,7 +2215,7 @@ Tax receipts exhibit pronounced seasonal cycles:
           titleEn: 'Module 1 Knowledge Check: Dashboards & Forecasts',
           titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ዳሽቦርዶች እና ትንበያዎች',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'data-m1-q1',
@@ -1626,13 +2267,44 @@ Tax receipts exhibit pronounced seasonal cycles:
         descriptionEn: 'Applying Benford Law to invoices, statistical z-scores, and automated compliance risk scoring.',
         descriptionAm: 'የቤንፎርድ ህግን በደረሰኞች ላይ መተግበር፣ ያልተለመዱ ልዩነቶችን በስታቲስቲክስ መለየት እና አውቶሜትድ የአደጋ ውጤት ማስላት።',
         order: 2,
+        attachment: {
+          fileName: 'Benford_Law_Forensic_Testing_Procedure.pdf',
+          fileUrl: SAMPLE_PDF,
+          fileType: 'application/pdf',
+          sizeBytes: 142786,
+        },
         lessons: [
           {
             titleEn: '2.1 Benford Law & Digit Analysis in Forensic Accounting',
             titleAm: '2.1 የቤንፎርድ ህግ እና የቁጥሮች ትንተና በሂሳብ ምርመራ',
-            contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 50,
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 1,
             order: 1,
+            resourceUrl: SAMPLE_VIDEO,
+            attachment: {
+              fileName: 'Digit_Analysis_Statistical_Spreadsheet.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
+            subLessons: [
+              {
+                titleEn: '2.1.1 Video: Live Benford Law Fraud Detection on Invoicing Datasets',
+                titleAm: '2.1.1 የቪዲዮ ትንታኔ፡ የቤንፎርድ ህግን በደረሰኞች ላይ መተግበር',
+                contentType: LessonContentType.VIDEO,
+                durationMinutes: 1,
+                order: 1,
+                resourceUrl: SAMPLE_VIDEO,
+                contentEn: 'Demonstrating statistical anomaly detection scripts running against 100,000 corporate purchase invoice records.',
+                contentAm: 'የቤንፎርድ ህግን በ 100,000 ደረሰኞች ላይ በመሞከር የተጭበረበሩትን የመለየት ቪዲዮ።',
+                attachment: {
+                  fileName: 'Invoicing_Anomaly_Dataset_Walkthrough.pdf',
+                  fileUrl: SAMPLE_PDF,
+                  fileType: 'application/pdf',
+                  sizeBytes: 142786,
+                },
+              },
+            ],
             contentEn: `## 1. What is Benford Law?
 In naturally occurring numerical datasets, the number **1** will appear as the leading first digit approximately **30.1%** of the time, while the number **9** appears as the leading digit only **4.6%** of the time.
 
@@ -1647,8 +2319,14 @@ When taxpayers fabricate or manipulate invoice totals manually, human psychology
             titleEn: '2.2 Automated Compliance Profiling & Machine Learning Scoring',
             titleAm: '2.2 አውቶሜትድ የተገዢነት መለያ እና የማሽን ለርኒንግ ውጤት',
             contentType: LessonContentType.DOCUMENT,
-            durationMinutes: 45,
+            durationMinutes: 1,
             order: 2,
+            attachment: {
+              fileName: 'ML_Risk_Scoring_Pipeline_Architecture.pdf',
+              fileUrl: SAMPLE_PDF,
+              fileType: 'application/pdf',
+              sizeBytes: 142786,
+            },
             contentEn: `## 1. Supervised Risk Scoring Models
 Machine learning classifiers evaluate hundreds of variables simultaneously:
 - Filing timeliness history.
@@ -1664,7 +2342,7 @@ The resulting Risk Score (0–100) automatically routes declarations to Green (C
           titleEn: 'Module 2 Knowledge Check: Anomaly Detection',
           titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ ያልተለመዱ ክስተቶችን መለየት',
           passingScore: 75,
-          timeLimitMinutes: 15,
+          timeLimitMinutes: 1,
           questions: [
             {
               id: 'data-m2-q1',
@@ -1710,7 +2388,7 @@ The resulting Risk Score (0–100) automatically routes declarations to Green (C
       titleEn: 'Final Comprehensive Assessment: Revenue Data Analytics',
       titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የገቢዎች መረጃ ትንተና ምዘና',
       passingScore: 75,
-      timeLimitMinutes: 40,
+      timeLimitMinutes: 1,
       questions: [
         {
           id: 'data-fn-q1',
@@ -1958,6 +2636,23 @@ async function main() {
       },
     });
 
+    // Seed Course-Level Attachments
+    if (cData.attachments && cData.attachments.length > 0) {
+      for (const ca of cData.attachments) {
+        await prisma.attachment.create({
+          data: {
+            courseId: course.id,
+            fileName: ca.fileName,
+            fileKey: `seed/course/${course.id}/${ca.fileName}`,
+            fileUrl: ca.fileUrl,
+            fileType: ca.fileType,
+            sizeBytes: ca.sizeBytes,
+            uploadedById: ownerUser.id,
+          },
+        });
+      }
+    }
+
     // Seed Modules & Lessons
     for (const mData of cData.modules) {
       const module = await prisma.curriculumModule.create({
@@ -1968,21 +2663,97 @@ async function main() {
           descriptionEn: mData.descriptionEn,
           descriptionAm: mData.descriptionAm,
           order: mData.order,
-          durationMinutes: mData.lessons.reduce((acc, l) => acc + l.durationMinutes, 0),
+          durationMinutes: 1,
           passingScore: mData.assessment.passingScore,
-          lessons: {
-            create: mData.lessons.map((l) => ({
-              titleEn: l.titleEn,
-              titleAm: l.titleAm,
-              contentType: l.contentType,
-              durationMinutes: l.durationMinutes,
-              order: l.order,
-              contentEn: l.contentEn,
-              contentAm: l.contentAm,
-            })),
-          },
         },
       });
+
+      // Seed Module-Level Attachment
+      if (mData.attachment) {
+        await prisma.attachment.create({
+          data: {
+            courseId: course.id,
+            moduleId: module.id,
+            fileName: mData.attachment.fileName,
+            fileKey: `seed/mod/${module.id}/${mData.attachment.fileName}`,
+            fileUrl: mData.attachment.fileUrl,
+            fileType: mData.attachment.fileType,
+            sizeBytes: mData.attachment.sizeBytes,
+            uploadedById: ownerUser.id,
+          },
+        });
+      }
+
+      // Seed Lessons and Sub-lessons
+      for (const l of mData.lessons) {
+        const lesson = await prisma.lesson.create({
+          data: {
+            moduleId: module.id,
+            parentId: null,
+            titleEn: l.titleEn,
+            titleAm: l.titleAm,
+            contentType: l.contentType,
+            durationMinutes: 1,
+            order: l.order,
+            contentEn: l.contentEn,
+            contentAm: l.contentAm,
+            resourceUrl: l.resourceUrl ?? (l.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null),
+          },
+        });
+
+        // Lesson Attachment
+        if (l.attachment) {
+          await prisma.attachment.create({
+            data: {
+              courseId: course.id,
+              moduleId: module.id,
+              lessonId: lesson.id,
+              fileName: l.attachment.fileName,
+              fileKey: `seed/lesson/${lesson.id}/${l.attachment.fileName}`,
+              fileUrl: l.attachment.fileUrl,
+              fileType: l.attachment.fileType,
+              sizeBytes: l.attachment.sizeBytes,
+              uploadedById: ownerUser.id,
+            },
+          });
+        }
+
+        // Sub-lessons (Topics)
+        if (l.subLessons && l.subLessons.length > 0) {
+          for (const sub of l.subLessons) {
+            const subLesson = await prisma.lesson.create({
+              data: {
+                moduleId: module.id,
+                parentId: lesson.id,
+                titleEn: sub.titleEn,
+                titleAm: sub.titleAm,
+                contentType: sub.contentType,
+                durationMinutes: 1,
+                order: sub.order,
+                contentEn: sub.contentEn,
+                contentAm: sub.contentAm,
+                resourceUrl: sub.resourceUrl ?? (sub.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null),
+              },
+            });
+
+            if (sub.attachment) {
+              await prisma.attachment.create({
+                data: {
+                  courseId: course.id,
+                  moduleId: module.id,
+                  lessonId: subLesson.id,
+                  fileName: sub.attachment.fileName,
+                  fileKey: `seed/sub/${subLesson.id}/${sub.attachment.fileName}`,
+                  fileUrl: sub.attachment.fileUrl,
+                  fileType: sub.attachment.fileType,
+                  sizeBytes: sub.attachment.sizeBytes,
+                  uploadedById: ownerUser.id,
+                },
+              });
+            }
+          }
+        }
+      }
 
       // Seed Module-Level Assessment
       await prisma.assessment.create({
@@ -1996,7 +2767,7 @@ async function main() {
           descriptionAm: `የሞዱል እውቀት ማረጋገጫ ምዘና።`,
           passingScore: mData.assessment.passingScore,
           maxAttempts: 3,
-          timeLimitMinutes: mData.assessment.timeLimitMinutes,
+          timeLimitMinutes: 1,
           shuffleQuestions: false,
           questions: mData.assessment.questions as unknown as Prisma.InputJsonValue,
         },
@@ -2031,7 +2802,7 @@ async function main() {
         descriptionAm: `የኮርስ ማጠቃለያ ፈተና።`,
         passingScore: cData.finalAssessment.passingScore,
         maxAttempts: 3,
-        timeLimitMinutes: cData.finalAssessment.timeLimitMinutes,
+        timeLimitMinutes: 1,
         shuffleQuestions: true,
         questions: cData.finalAssessment.questions as unknown as Prisma.InputJsonValue,
       },

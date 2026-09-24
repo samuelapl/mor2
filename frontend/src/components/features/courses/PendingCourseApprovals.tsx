@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
+import { toast } from "@/lib/toast";
 
 export function PendingCourseApprovals() {
   const { courses, userName, approveCourse, rejectCourse, requestChangesCourse } = useLms();
@@ -26,7 +27,8 @@ export function PendingCourseApprovals() {
   const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
 
@@ -52,12 +54,15 @@ export function PendingCourseApprovals() {
 
   const confirmReject = async () => {
     if (!rejectId) return;
+    setModalBusy(true);
     const result = await rejectCourse(rejectId, reason);
+    setModalBusy(false);
     if (!result.ok) {
       setReasonError(result.message);
+      toast.error(result.message || "Failed to reject course.");
       return;
     }
-    setFlash("Course rejected. The owner can review your feedback and resubmit.");
+    toast.success("Course rejected. The owner can review your feedback and resubmit.");
     setRejectId(null);
     setReason("");
     setReasonError(null);
@@ -65,33 +70,33 @@ export function PendingCourseApprovals() {
 
   const confirmRequestChanges = async () => {
     if (!requestChangesId) return;
+    setModalBusy(true);
     const result = await requestChangesCourse(requestChangesId, reason);
+    setModalBusy(false);
     if (!result.ok) {
       setReasonError(result.message);
+      toast.error(result.message || "Failed to request changes.");
       return;
     }
-    setFlash("Changes requested. The course owner has been notified to revise the content.");
+    toast.success("Changes requested. The course owner has been notified to revise the content.");
     setRequestChangesId(null);
     setReason("");
     setReasonError(null);
   };
 
   const confirmApprove = async (courseId: string) => {
+    setBusyId(courseId);
     const result = await approveCourse(courseId);
-    setFlash(
-      result.ok
-        ? "Course approved. It is now awaiting publication by the Training Administrator."
-        : result.message,
-    );
+    setBusyId(null);
+    if (result.ok) {
+      toast.success("Course approved. It is now awaiting publication by the Training Administrator.");
+    } else {
+      toast.error(result.message || "Failed to approve course.");
+    }
   };
 
   return (
     <>
-      {flash ? (
-        <div className="mb-4 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700">
-          {flash}
-        </div>
-      ) : null}
 
       <FilterBar
         search={search}
@@ -143,7 +148,9 @@ export function PendingCourseApprovals() {
                   <Button
                     size="sm"
                     variant="success"
-                    disabled={!canApprove}
+                    isLoading={busyId === course.id}
+                    loadingText="Approving…"
+                    disabled={!canApprove || busyId !== null}
                     title={!canApprove ? "You no longer have permission to approve courses" : undefined}
                     onClick={() => confirmApprove(course.id)}
                   >
@@ -153,7 +160,7 @@ export function PendingCourseApprovals() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={!canReject}
+                    disabled={!canReject || busyId !== null}
                     title={!canReject ? "You no longer have permission to reject courses" : undefined}
                     onClick={() => {
                       setRequestChangesId(course.id);
@@ -166,7 +173,7 @@ export function PendingCourseApprovals() {
                   <Button
                     size="sm"
                     variant="danger"
-                    disabled={!canReject}
+                    disabled={!canReject || busyId !== null}
                     title={!canReject ? "You no longer have permission to reject courses" : undefined}
                     onClick={() => {
                       setRejectId(course.id);
@@ -227,6 +234,7 @@ export function PendingCourseApprovals() {
           <>
             <Button
               variant="ghost"
+              disabled={modalBusy}
               onClick={() => {
                 setRejectId(null);
                 setReason("");
@@ -234,7 +242,13 @@ export function PendingCourseApprovals() {
             >
               Cancel
             </Button>
-            <Button variant="danger" onClick={confirmReject} disabled={!reason.trim()}>
+            <Button
+              variant="danger"
+              isLoading={modalBusy}
+              loadingText="Rejecting…"
+              onClick={confirmReject}
+              disabled={!reason.trim()}
+            >
               Confirm Reject
             </Button>
           </>
@@ -269,6 +283,7 @@ export function PendingCourseApprovals() {
           <>
             <Button
               variant="ghost"
+              disabled={modalBusy}
               onClick={() => {
                 setRequestChangesId(null);
                 setReason("");
@@ -276,7 +291,13 @@ export function PendingCourseApprovals() {
             >
               Cancel
             </Button>
-            <Button variant="outline" onClick={confirmRequestChanges} disabled={!reason.trim()}>
+            <Button
+              variant="outline"
+              isLoading={modalBusy}
+              loadingText="Sending…"
+              onClick={confirmRequestChanges}
+              disabled={!reason.trim()}
+            >
               Send Revision Request
             </Button>
           </>

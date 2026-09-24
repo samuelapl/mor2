@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { KeyRound } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/lib/toast";
 import { passwordIssues } from "@/constants/auth";
 
 const inputClass =
@@ -17,25 +18,26 @@ export default function SecurityTab() {
   const { changePassword } = useLms();
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!form.currentPassword) {
       setError("Enter your current password.");
+      toast.error("Enter your current password.");
       return;
     }
     const issue = passwordIssues(form.newPassword);
     if (issue) {
       setError(issue);
+      toast.error(issue);
       return;
     }
     if (form.newPassword !== form.confirmPassword) {
       setError("New password and confirmation do not match.");
+      toast.error("New password and confirmation do not match.");
       return;
     }
 
@@ -47,10 +49,12 @@ export default function SecurityTab() {
     setSaving(false);
 
     if (!result.ok) {
-      setError(result.message ?? "Failed to change password.");
+      const msg = result.message ?? "Failed to change password.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
-    setSuccess("Password changed. You'll need to sign in again on your other devices.");
+    toast.success("Password changed successfully. Please sign in again on your other devices.");
     setForm(EMPTY_FORM);
   };
 
@@ -89,13 +93,10 @@ export default function SecurityTab() {
       </div>
 
       {error ? <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p> : null}
-      {success ? (
-        <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">{success}</p>
-      ) : null}
 
-      <Button type="submit" disabled={saving} className="gap-2">
+      <Button type="submit" isLoading={saving} loadingText="Changing password..." className="gap-2">
         <KeyRound className="h-4 w-4" />
-        {saving ? "Changing..." : "Change password"}
+        Change password
       </Button>
     </form>
   );

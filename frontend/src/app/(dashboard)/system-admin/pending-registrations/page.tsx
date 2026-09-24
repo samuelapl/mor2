@@ -56,11 +56,10 @@ export default function PendingRegistrationsPage() {
     >
       {flash ? (
         <div
-          className={`mb-5 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ring-1 ring-inset ${
-            flashOk
+          className={`mb-5 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ring-1 ring-inset ${flashOk
               ? "border-emerald-200/70 bg-emerald-50/80 text-emerald-700 ring-emerald-600/10"
               : "border-red-200/70 bg-red-50/80 text-red-700 ring-red-600/10"
-          }`}
+            }`}
         >
           {flash}
         </div>
@@ -73,84 +72,84 @@ export default function PendingRegistrationsPage() {
         />
       ) : (
         <>
-        <Table columns={["Applicant", "Email", "Phone", "Submitted", "Actions"]}>
-          {pageItems.map((user) => (
-            <tr key={user.id}>
-              <Td>
-                <span className="font-medium text-slate-900">{user.name}</span>
-                <span className="block text-[11px] text-slate-400">Pending approval</span>
-              </Td>
-              <Td>
-                <span className="text-slate-500">{user.email}</span>
-              </Td>
-              <Td>
-                <span className="text-slate-500">{user.phone || "—"}</span>
-              </Td>
-              <Td>
-                <Badge variant="blue" dot>
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </Badge>
-              </Td>
-              <Td>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="success"
-                    disabled={busy}
-                    onClick={() => void approve(user.id)}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    disabled={busy}
-                    onClick={() => {
-                      setRejectTarget(rejectTarget === user.id ? null : user.id);
-                      setRejectReason("");
-                    }}
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    Reject
-                  </Button>
-                </div>
-                {rejectTarget === user.id ? (
-                  <div className="mt-2 flex flex-col gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-3">
-                    <RichTextArea
-                      rows={2}
-                      value={rejectReason}
-                      onChange={(val) => setRejectReason(val)}
-                      placeholder="Reason (optional) — emailed to the applicant (supports formatting, bold, bullet points)…"
-                      compact
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setRejectTarget(null);
-                          setRejectReason("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        disabled={busy}
-                        onClick={() => void reject(user.id)}
-                      >
-                        Confirm
-                      </Button>
-                    </div>
+          <Table columns={["Applicant", "Email", "Phone", "Submitted", "Actions"]}>
+            {pageItems.map((user) => (
+              <tr key={user.id}>
+                <Td>
+                  <span className="font-medium text-slate-900">{user.name}</span>
+                  <span className="block text-[11px] text-slate-400">Pending approval</span>
+                </Td>
+                <Td>
+                  <span className="text-slate-500">{user.email}</span>
+                </Td>
+                <Td>
+                  <span className="text-slate-500">{user.phone || "—"}</span>
+                </Td>
+                <Td>
+                  <Badge variant="blue" dot>
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </Badge>
+                </Td>
+                <Td>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="success"
+                      disabled={busy}
+                      onClick={() => void approve(user.id)}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={busy}
+                      onClick={() => {
+                        setRejectTarget(rejectTarget === user.id ? null : user.id);
+                        setRejectReason("");
+                      }}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Reject
+                    </Button>
                   </div>
-                ) : null}
-              </Td>
-            </tr>
-          ))}
-        </Table>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                  {rejectTarget === user.id ? (
+                    <div className="mt-2 flex flex-col gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-3">
+                      <RichTextArea
+                        rows={2}
+                        value={rejectReason}
+                        onChange={(val) => setRejectReason(val)}
+                        placeholder="Reason (optional) — emailed to the applicant (supports formatting, bold, bullet points)…"
+                        compact
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setRejectTarget(null);
+                            setRejectReason("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={busy}
+                          onClick={() => void reject(user.id)}
+                        >
+                          Confirm
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </Td>
+              </tr>
+            ))}
+          </Table>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>
       )}
     </PageShell>

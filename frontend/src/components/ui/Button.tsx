@@ -1,8 +1,9 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "outline" | "ghost" | "danger" | "success";
-type ButtonSize = "sm" | "md";
+export type ButtonVariant = "primary" | "outline" | "ghost" | "danger" | "success";
+export type ButtonSize = "sm" | "md";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
@@ -21,26 +22,50 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
   md: "h-10 px-5 text-sm",
 };
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  isLoading?: boolean;
+  loadingText?: string;
+  icon?: ReactNode;
 }
 
 export function Button({
   variant = "primary",
   size = "md",
+  isLoading = false,
+  loadingText,
+  icon,
   className,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
+  const isDisabled = disabled || isLoading;
+
   return (
     <button
+      disabled={isDisabled}
+      aria-busy={isLoading}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]",
+        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97]",
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,
       )}
       {...props}
-    />
+    >
+      {isLoading ? (
+        <Loader2 className={cn("animate-spin shrink-0", size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4")} />
+      ) : icon ? (
+        <span className="shrink-0">{icon}</span>
+      ) : null}
+
+      {isLoading && loadingText ? (
+        <span>{loadingText}</span>
+      ) : (
+        children
+      )}
+    </button>
   );
 }

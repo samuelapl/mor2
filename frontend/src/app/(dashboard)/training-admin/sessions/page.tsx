@@ -37,6 +37,9 @@ import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSession
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
 import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { TableSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 
 export default function TrainingAdminSessionsPage() {
   const { courses, users, currentUser } = useLms();
@@ -44,10 +47,10 @@ export default function TrainingAdminSessionsPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<ApiLiveSession | null>(null);
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
   const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
@@ -149,27 +152,24 @@ export default function TrainingAdminSessionsPage() {
       setSessions((prev) =>
         prev.map((s) => (s.id === session.id ? { ...s, status: newStatus } : s)),
       );
-      setFlash(`Session status updated to ${newStatus}.`);
-      setTimeout(() => setFlash(null), 4000);
+      toast.success(`Session status updated to ${newStatus}.`);
     } catch {
-      setFlash("Failed to update session status.");
+      toast.error("Failed to update session status.");
     } finally {
       setStatusUpdatingId(null);
     }
   };
 
-  const handleDeleteSession = async (session: ApiLiveSession) => {
-    if (!window.confirm(`Are you sure you want to delete "${session.titleEn}"? This cannot be undone.`)) {
-      return;
-    }
-    setDeletingId(session.id);
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    setDeletingId(sessionToDelete.id);
     try {
-      await deleteLiveSession(session.id);
-      setFlash(`Session "${session.titleEn}" was deleted successfully.`);
-      setTimeout(() => setFlash(null), 4000);
+      await deleteLiveSession(sessionToDelete.id);
+      toast.success(`Session "${sessionToDelete.titleEn}" was deleted successfully.`);
+      setSessionToDelete(null);
       loadSessions();
     } catch {
-      setFlash("Failed to delete session.");
+      toast.error("Failed to delete session.");
     } finally {
       setDeletingId(null);
     }
@@ -191,12 +191,6 @@ export default function TrainingAdminSessionsPage() {
         ) : undefined
       }
     >
-      {flash ? (
-        <div className="mb-5 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700">
-          {flash}
-        </div>
-      ) : null}
-
       {/* FILTER BAR */}
       <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -296,12 +290,14 @@ export default function TrainingAdminSessionsPage() {
         ) : null}
 
         {/* Upcoming & Active Sessions */}
-        {(selectedStatusFilter === "ALL" ? upcoming.length > 0 : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
+        {(selectedStatusFilter === "ALL" ? (loading || upcoming.length > 0) : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
           <PageSection
             title="Upcoming & Active Sessions"
             description="Scheduled webinars and active classroom meetings awaiting or undergoing delivery."
           >
-            {upcoming.length === 0 ? (
+            {loading ? (
+              <TableSkeleton rows={4} columns={5} />
+            ) : upcoming.length === 0 ? (
               <EmptyState
                 title="No upcoming sessions found"
                 description={hasActiveFilters ? "Try adjusting your search or filters." : "Arrange a new live training session for any course."}
@@ -347,7 +343,7 @@ export default function TrainingAdminSessionsPage() {
                             size="sm"
                             variant="ghost"
                             disabled={deletingId === row.session.id}
-                            onClick={() => handleDeleteSession(row.session)}
+                            onClick={() => setSessionToDelete(row.session)}
                             title="Delete session"
                             className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
                           >
@@ -376,7 +372,7 @@ export default function TrainingAdminSessionsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={statusUpdatingId === row.session.id}
+                          isLoading={statusUpdatingId === row.session.id}
                           onClick={() => handleToggleLive(row.session)}
                           className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
@@ -387,7 +383,7 @@ export default function TrainingAdminSessionsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={statusUpdatingId === row.session.id}
+                          isLoading={statusUpdatingId === row.session.id}
                           onClick={() => handleToggleLive(row.session)}
                           className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
@@ -419,12 +415,14 @@ export default function TrainingAdminSessionsPage() {
         ) : null}
 
         {/* Past Sessions */}
-        {(selectedStatusFilter === "ALL" ? past.length > 0 : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
+        {(selectedStatusFilter === "ALL" ? (loading || past.length > 0) : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
           <PageSection
             title="Past Sessions Archive"
             description="Previously conducted or cancelled training events."
           >
-            {past.length === 0 ? (
+            {loading ? (
+              <TableSkeleton rows={4} columns={5} />
+            ) : past.length === 0 ? (
               <EmptyState
                 title="No past sessions found"
                 description="No completed or cancelled sessions match your filter criteria."
@@ -463,7 +461,7 @@ export default function TrainingAdminSessionsPage() {
                             size="sm"
                             variant="ghost"
                             disabled={deletingId === row.session.id}
-                            onClick={() => handleDeleteSession(row.session)}
+                            onClick={() => setSessionToDelete(row.session)}
                             title="Delete session"
                             className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
                           >
@@ -503,7 +501,7 @@ export default function TrainingAdminSessionsPage() {
         onClose={() => setScheduleOpen(false)}
         onScheduled={() => {
           setScheduleOpen(false);
-          setFlash("Live training session successfully scheduled and persisted.");
+          toast.success("Live training session successfully scheduled and persisted.");
           loadSessions();
         }}
         courses={courses}
@@ -515,8 +513,7 @@ export default function TrainingAdminSessionsPage() {
         onClose={() => setEditingSession(null)}
         onUpdated={() => {
           setEditingSession(null);
-          setFlash("Live training session has been updated / rescheduled.");
-          setTimeout(() => setFlash(null), 4000);
+          toast.success("Live training session has been updated / rescheduled.");
           loadSessions();
         }}
         courses={courses}
@@ -569,6 +566,26 @@ export default function TrainingAdminSessionsPage() {
           sessionId={selectedAttendanceSessionId}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(sessionToDelete)}
+        onClose={() => setSessionToDelete(null)}
+        onConfirm={confirmDeleteSession}
+        title="Delete Live Session"
+        description={
+          <>
+            Are you sure you want to delete session{" "}
+            <span className="font-semibold text-slate-800">
+              &quot;{sessionToDelete?.titleEn}&quot;
+            </span>
+            ? This action cannot be undone and will revoke scheduled room links for all enrolled learners.
+          </>
+        }
+        confirmText="Delete Session"
+        variant="danger"
+        isLoading={Boolean(deletingId)}
+      />
     </PageShell>
   );
 }

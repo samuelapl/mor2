@@ -8,6 +8,7 @@ import PageSection from "@/components/shared/PageSection";
 import { Button } from "@/components/ui/Button";
 import { ROLE_LABELS, ROLES } from "@/constants/roles";
 import type { Role } from "@/types";
+import { toast } from "@/lib/toast";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
@@ -28,52 +29,51 @@ const EMPTY_FORM = {
 export default function RegisterActorPage() {
   const { registerActor } = useLms();
   const [form, setForm] = useState(EMPTY_FORM);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const update = (patch: Partial<typeof form>) => {
     setForm((prev) => ({ ...prev, ...patch }));
-    setError(null);
-    setSuccess(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError("First and last name are required.");
+      toast.error("First and last name are required.");
       return;
     }
     if (!VALID_EMAIL.test(form.email.trim())) {
-      setError("Enter a valid email address.");
+      toast.error("Enter a valid email address.");
       return;
     }
     if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
     setSubmitting(true);
-    const result = await registerActor({
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      email: form.email.trim(),
-      phone: form.phone.trim() || undefined,
-      password: form.password,
-      role: form.role,
-    });
-    setSubmitting(false);
+    try {
+      const result = await registerActor({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        password: form.password,
+        role: form.role,
+      });
 
-    if (!result.ok) {
-      setError(result.message ?? "Failed to register actor.");
-      return;
+      if (!result.ok) {
+        toast.error(result.message ?? "Failed to register actor.");
+        return;
+      }
+
+      toast.success(`${form.firstName} ${form.lastName} was registered and approved — they can sign in now.`);
+      setForm(EMPTY_FORM);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to register actor.");
+    } finally {
+      setSubmitting(false);
     }
-
-    setSuccess(`${form.firstName} ${form.lastName} was registered and approved — they can sign in now.`);
-    setForm(EMPTY_FORM);
   };
 
   return (
@@ -152,16 +152,9 @@ export default function RegisterActorPage() {
             />
           </div>
 
-          {error ? (
-            <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
-          ) : null}
-          {success ? (
-            <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">{success}</p>
-          ) : null}
-
-          <Button type="submit" disabled={submitting} className="w-full justify-center gap-2">
+          <Button type="submit" isLoading={submitting} loadingText="Registering actor…" className="w-full justify-center gap-2">
             <UserCog className="h-4 w-4" />
-            {submitting ? "Registering..." : "Register actor"}
+            Register actor
           </Button>
         </form>
       </PageSection>

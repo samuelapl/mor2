@@ -8,6 +8,8 @@ import {
   Loader2,
   RefreshCw,
   Search,
+  UserMinus,
+  UserPlus,
   UsersRound,
   X,
 } from "lucide-react";
@@ -15,8 +17,11 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { TableSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { toast } from "@/lib/toast";
 import { useLms } from "@/lib/lms-store";
-import { fetchCourseEnrollments } from "@/lib/api/enrollments";
+import { dropEnrollment, fetchCourseEnrollments } from "@/lib/api/enrollments";
 import { fetchCourseLearnersProgress } from "@/lib/api/progress";
 import { usePagination } from "@/lib/usePagination";
 import { cn } from "@/lib/utils";
@@ -64,7 +69,7 @@ function stripHtml(html?: string): string {
 }
 
 export function EnrollmentForm() {
-  const { courses, users } = useLms();
+  const { courses, users, enrollLearners } = useLms();
 
   // Selected Course
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
@@ -79,6 +84,13 @@ export function EnrollmentForm() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED" | "DROPPED">("ALL");
   const [sortBy, setSortBy] = useState<"name" | "progress_desc" | "progress_asc" | "date_desc">("progress_desc");
 
+  // Enroll & Withdraw Modal States
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [userToEnroll, setUserToEnroll] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+  const [withdrawingLearner, setWithdrawingLearner] = useState<EnrolledLearnerItem | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+
   // Current selected course object
   const selectedCourse = courses.find((c) => c.id === courseId) ?? courses[0];
 
@@ -90,6 +102,14 @@ export function EnrollmentForm() {
     }
     return map;
   }, [users]);
+
+  // Set of enrolled user IDs for this course
+  const enrolledUserIds = useMemo(() => new Set(roster.map((r) => r.userId)), [roster]);
+
+  // Unenrolled learners eligible for enrollment
+  const unenrolledUsers = useMemo(() => {
+    return users.filter((u) => u.role === "learner" && !enrolledUserIds.has(u.id));
+  }, [users, enrolledUserIds]);
 
   // Load enrolled students roster and progress for the active course
   const loadRoster = useCallback(async (cId: string) => {
@@ -170,6 +190,48 @@ export function EnrollmentForm() {
       void loadRoster(selectedCourse.id);
     }
   }, [selectedCourse?.id, loadRoster]);
+
+  // Handle single learner enrollment
+  const handleEnroll = async () => {
+    if (!selectedCourse?.id || !userToEnroll) {
+      toast.error("Please select a learner to enroll.");
+      return;
+    }
+    setEnrolling(true);
+    try {
+      const res = await enrollLearners(selectedCourse.id, [userToEnroll]);
+      if (res.ok) {
+        toast.success("Learner enrolled successfully!");
+        setShowEnrollModal(false);
+        setUserToEnroll("");
+        void loadRoster(selectedCourse.id);
+      } else {
+        toast.error(res.message || "Failed to enroll learner.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Enrollment failed.");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  // Handle learner drop/withdrawal
+  const handleWithdrawConfirm = async () => {
+    if (!withdrawingLearner) return;
+    setWithdrawing(true);
+    try {
+      await dropEnrollment(withdrawingLearner.enrollmentId, "Withdrawn by training admin");
+      toast.success(`${withdrawingLearner.name} has been withdrawn from this course.`);
+      setWithdrawingLearner(null);
+      if (selectedCourse?.id) {
+        void loadRoster(selectedCourse.id);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to withdraw learner.");
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   // Metrics for current course roster
   const metrics = useMemo(() => {
@@ -290,12 +352,26 @@ export function EnrollmentForm() {
           {/* Action Toolbar */}
           <div className="flex items-center gap-2.5">
             <Button
+              variant="primary"
+              onClick={() => {
+                if (unenrolledUsers.length > 0) {
+                  setUserToEnroll(unenrolledUsers[0].id);
+                }
+                setShowEnrollModal(true);
+              }}
+              className="gap-2 shadow-sm"
+            >
+              <UserPlus className="h-4 w-4" />
+              Enroll Learner
+            </Button>
+            <Button
               variant="outline"
               onClick={() => selectedCourse?.id && void loadRoster(selectedCourse.id)}
-              disabled={loadingRoster}
+              isLoading={loadingRoster}
+              loadingText="Refreshing..."
               className="gap-2 text-slate-700 hover:bg-slate-50"
             >
-              <RefreshCw className={cn("h-4 w-4", loadingRoster && "animate-spin text-indigo-600")} />
+              <RefreshCw className="h-4 w-4" />
               Refresh Roster
             </Button>
           </div>
@@ -411,11 +487,8 @@ export function EnrollmentForm() {
 
         {/* Loading State */}
         {loadingRoster ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-2" />
-            <p className="text-xs font-medium text-slate-500">
-              Fetching enrolled learners and live progress...
-            </p>
+          <div className="p-6">
+            <TableSkeleton columns={5} rows={6} />
           </div>
         ) : rosterError ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -458,7 +531,7 @@ export function EnrollmentForm() {
                     <th className="px-4 py-3.5">Department</th>
                     <th className="px-4 py-3.5">Enrolled Date</th>
                     <th className="px-4 py-3.5 min-w-[180px]">Course Progress</th>
-                    <th className="py-3.5 pl-4 pr-6 text-right">Status</th>
+                    <th className="py-3.5 pl-4 pr-6 text-right">Status & Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -524,24 +597,36 @@ export function EnrollmentForm() {
                           </div>
                         </td>
 
-                        {/* Status Badge */}
+                        {/* Status & Actions */}
                         <td className="py-3.5 pl-4 pr-6 text-right">
-                          <Badge
-                            variant={
-                              learner.status === "COMPLETED" || learner.progressPercent === 100
-                                ? "blue"
+                          <div className="flex items-center justify-end gap-2">
+                            <Badge
+                              variant={
+                                learner.status === "COMPLETED" || learner.progressPercent === 100
+                                  ? "blue"
+                                  : learner.status === "ACTIVE"
+                                    ? "green"
+                                    : "slate"
+                              }
+                              dot
+                            >
+                              {learner.status === "COMPLETED" || learner.progressPercent === 100
+                                ? "Completed"
                                 : learner.status === "ACTIVE"
-                                  ? "green"
-                                  : "slate"
-                            }
-                            dot
-                          >
-                            {learner.status === "COMPLETED" || learner.progressPercent === 100
-                              ? "Completed"
-                              : learner.status === "ACTIVE"
-                                ? "Active"
-                                : "Dropped"}
-                          </Badge>
+                                  ? "Active"
+                                  : "Dropped"}
+                            </Badge>
+                            {learner.status === "ACTIVE" && (
+                              <button
+                                type="button"
+                                title={`Withdraw ${learner.name}`}
+                                onClick={() => setWithdrawingLearner(learner)}
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                              >
+                                <UserMinus className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -561,6 +646,86 @@ export function EnrollmentForm() {
           </>
         )}
       </div>
+
+      {/* Enroll Learner Modal */}
+      {showEnrollModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Enroll Learner</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Enroll a student into <span className="font-semibold text-slate-700">{selectedCourse?.title}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEnrollModal(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-3">
+              <label className="block text-xs font-semibold text-slate-700">
+                Select Eligible Learner ({unenrolledUsers.length} available)
+              </label>
+              {unenrolledUsers.length === 0 ? (
+                <p className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500 border border-slate-200">
+                  All registered learners are already enrolled in this course.
+                </p>
+              ) : (
+                <select
+                  value={userToEnroll}
+                  onChange={(e) => setUserToEnroll(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-800 shadow-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 cursor-pointer"
+                >
+                  <option value="">-- Choose a learner --</option>
+                  {unenrolledUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email}) — {u.department || "No Dept"}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setShowEnrollModal(false)}
+                disabled={enrolling}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="button"
+                onClick={handleEnroll}
+                disabled={!userToEnroll || unenrolledUsers.length === 0}
+                isLoading={enrolling}
+                loadingText="Enrolling..."
+              >
+                Confirm Enrollment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Learner Withdrawal Modal */}
+      <ConfirmModal
+        open={Boolean(withdrawingLearner)}
+        title="Withdraw Learner from Course"
+        description={`Are you sure you want to withdraw "${withdrawingLearner?.name}" from "${selectedCourse?.title}"? Their progress will be preserved but their status will change to Dropped.`}
+        confirmText="Withdraw Learner"
+        variant="danger"
+        isLoading={withdrawing}
+        onConfirm={handleWithdrawConfirm}
+        onClose={() => !withdrawing && setWithdrawingLearner(null)}
+      />
     </div>
   );
 }

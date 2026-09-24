@@ -290,19 +290,36 @@ export function formatFileSize(bytes?: number): string {
  */
 export function getItemAttachments(item: {
   resources?: UploadedResource[];
-  attachments?: UploadedResource[];
+  attachments?: any[];
   resourceUrl?: string | null;
   fileName?: string | null;
   fileSize?: number | null;
+  contentType?: string | null;
 }): UploadedResource[] {
   const map = new Map<string, UploadedResource>();
 
   const list = [...(item.resources || []), ...(item.attachments || [])];
-  for (const f of list) {
-    if (f.url) map.set(f.url, f);
+  for (const raw of list as any[]) {
+    if (!raw) continue;
+    const url = raw.url || raw.fileUrl;
+    if (url) {
+      map.set(url, {
+        id: raw.id,
+        name: raw.name || raw.fileName || url.split("/").pop() || "Attached File",
+        url: url,
+        size: raw.size ?? raw.sizeBytes ?? undefined,
+        type: raw.type || raw.fileType || undefined,
+      });
+    }
   }
 
-  if (item.resourceUrl && !map.has(item.resourceUrl)) {
+  // Only fallback to resourceUrl if not already a video/audio lecture stream
+  if (
+    item.resourceUrl &&
+    !map.has(item.resourceUrl) &&
+    item.contentType !== "VIDEO" &&
+    item.contentType !== "AUDIO"
+  ) {
     map.set(item.resourceUrl, {
       name: item.fileName || item.resourceUrl.split("/").pop() || "Attached File",
       url: item.resourceUrl,

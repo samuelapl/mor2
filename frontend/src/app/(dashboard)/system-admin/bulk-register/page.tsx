@@ -11,6 +11,7 @@ import { Table, Td } from "@/components/ui/Table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ROLE_LABELS, ROLES } from "@/constants/roles";
 import type { Role } from "@/types";
+import { toast } from "@/lib/toast";
 
 interface RowDraft {
   key: string;
@@ -81,8 +82,6 @@ export default function BulkRegisterPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<RowDraft[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [result, setResult] = useState<"created" | "error" | null>(null);
   const [createdRows, setCreatedRows] = useState<RowDraft[]>([]);
   const [skippedRows, setSkippedRows] = useState<Array<{ email: string; reason: string }>>([]);
   const [saving, setSaving] = useState(false);
@@ -123,8 +122,6 @@ export default function BulkRegisterPage() {
       }
       setRows(parsed);
       setFileName(file.name);
-      setResult(null);
-      setMessage(null);
     };
     reader.readAsText(file);
   };
@@ -154,18 +151,19 @@ export default function BulkRegisterPage() {
 
   const handleCreate = async () => {
     setSaving(true);
-    setResult(null);
-    setMessage(null);
     try {
       const outcome = await bulkRegisterUsers(validRows);
-      setResult(outcome.ok ? "created" : "error");
-      setMessage(outcome.ok ? "Users registered successfully." : outcome.message);
       if (outcome.ok) {
+        toast.success(`Successfully registered ${validRows.length} users.`);
         setCreatedRows(validRows);
         setSkippedRows([]);
         setRows([]);
         setFileName(null);
+      } else {
+        toast.error(outcome.message || "Failed to register users.");
       }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to process bulk registration.");
     } finally {
       setSaving(false);
     }
@@ -290,38 +288,23 @@ export default function BulkRegisterPage() {
             })}
           </Table>
 
-          {message ? (
-            <div
-              className={
-                result === "created"
-                  ? "rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700"
-                  : "rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700"
-              }
-            >
-              {message}
-            </div>
-          ) : null}
-
           <div className="flex justify-end">
             <Button
               type="button"
-              disabled={validRows.length === 0 || saving}
+              isLoading={saving}
+              loadingText="Registering users…"
+              disabled={validRows.length === 0}
               onClick={handleCreate}
+              className="gap-2"
             >
-              {saving ? (
-                "Registering…"
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4" />
-                  Register {validRows.length} user{validRows.length === 1 ? "" : "s"}
-                </>
-              )}
+              <UserPlus className="h-4 w-4" />
+              Register {validRows.length} user{validRows.length === 1 ? "" : "s"}
             </Button>
           </div>
         </PageSection>
       )}
 
-      {result === "created" ? (
+      {createdRows.length > 0 ? (
         <PageSection
           title="Registration summary"
           description="Below is the confirmation of the records created."
