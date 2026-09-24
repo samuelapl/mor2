@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsEmail,
   IsNotEmpty,
@@ -8,6 +10,8 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+
+export const BULK_CREATE_MAX_ROWS = 500;
 
 export class BulkCreateUserItemDto {
   @ApiProperty({ example: 'John' })
@@ -24,6 +28,19 @@ export class BulkCreateUserItemDto {
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: '+251911000000' })
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+
+  @ApiPropertyOptional({
+    example: '0012345678',
+    description: 'Taxpayer Identification Number (optional)',
+  })
+  @IsOptional()
+  @IsString()
+  tin?: string;
+
   @ApiPropertyOptional({ example: 'Temporary123' })
   @IsOptional()
   @IsString()
@@ -38,6 +55,8 @@ export class BulkCreateUserItemDto {
 export class BulkCreateUsersDto {
   @ApiProperty({ type: [BulkCreateUserItemDto] })
   @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(BULK_CREATE_MAX_ROWS)
   @ValidateNested({ each: true })
   @Type(() => BulkCreateUserItemDto)
   users: BulkCreateUserItemDto[];

@@ -38,6 +38,9 @@ model User {
   isActive  Boolean  @default(true) @map("is_active")
   lastLogin DateTime? @map("last_login")
   registrationStatus ApprovalStatus @default(APPROVED) @map("registration_status")
+  // Set when an admin chose the password (bulk import, actor registration, admin reset);
+  // the user must set their own via an emailed code before any session is issued.
+  mustChangePassword Boolean @default(false) @map("must_change_password")
 
   // Polymorphic role assignment — a user may hold multiple roles
   roles                   UserRole[]
@@ -161,9 +164,15 @@ model RolePermission {
   @@map("role_permissions")
 }
 
+enum PasswordResetPurpose {
+  RESET       // self-service "forgot password"
+  FIRST_LOGIN // forced change for admin-created accounts
+}
+
 model PasswordReset {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")
+  purpose   PasswordResetPurpose @default(RESET)
   codeHash  String    @unique @map("code_hash")
   attempts  Int       @default(0)
   expiresAt DateTime  @map("expires_at")

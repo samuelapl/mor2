@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { CheckCircle2, Eye, ShieldCheck, ShieldOff, XCircle } from "lucide-react";
+import { CheckCircle2, Eye, ShieldCheck, ShieldOff, Trash2, XCircle } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "@/constants/roles";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
+import { Modal } from "@/components/ui/Modal";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { UserDetailModal } from "@/components/features/users/UserDetailModal";
@@ -52,6 +53,7 @@ export default function UsersPage() {
     rejectRegistrationRequest,
     deactivateUser,
     reactivateUser,
+    deleteUser,
   } = useLms();
   const { can } = usePermissions();
   const canManage = can("user.manage");
@@ -62,6 +64,7 @@ export default function UsersPage() {
   const [status, setStatus] = useState("all");
   const [view, setView] = useState<ViewMode>("table");
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -127,8 +130,40 @@ export default function UsersPage() {
     setBusy(false);
   };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setBusy(true);
+    const result = await deleteUser(deleteTarget.id);
+    setFlash(result.ok ? `${deleteTarget.name} was deleted.` : result.message);
+    setDeleteTarget(null);
+    setBusy(false);
+  };
+
+  const deleteButton = (user: User) =>
+    user.id === currentUser?.id ? null : (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        onClick={() => setDeleteTarget(user)}
+        aria-label={`Delete ${user.name}`}
+        className="text-red-600 hover:border-red-300 hover:text-red-700"
+      >
+        <Trash2 className="h-3.5 w-3.5" /> Delete
+      </Button>
+    );
+
   const statusActions = (user: User) => {
     if (!canManage) return null;
+    return (
+      <div className="flex items-center gap-1.5">
+        {statusButton(user)}
+        {deleteButton(user)}
+      </div>
+    );
+  };
+
+  const statusButton = (user: User) => {
     if (user.status === "pending") {
       return (
         <div className="flex items-center gap-1.5">
@@ -244,7 +279,12 @@ export default function UsersPage() {
                   <span className="text-slate-500">{user.department || "—"}</span>
                 </Td>
                 <Td>
-                  <UserStatusBadge status={user.status} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <UserStatusBadge status={user.status} />
+                    {user.mustChangePassword ? (
+                      <Badge variant="amber">Must change password</Badge>
+                    ) : null}
+                  </div>
                 </Td>
                 <Td>
                   {canManage ? (
@@ -395,6 +435,29 @@ export default function UsersPage() {
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>
       )}
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete user?"
+        subtitle={deleteTarget?.email}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={busy} onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" disabled={busy} onClick={() => void confirmDelete()}>
+              <Trash2 className="h-4 w-4" /> {busy ? "Deleting…" : "Delete user"}
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          <span className="font-semibold text-slate-800">{deleteTarget?.name}</span> will be removed
+          from the users list and can no longer sign in. Their course history, certificates and
+          audit records are kept, and their email can be registered again.
+        </p>
+      </Modal>
 
       <UserDetailModal
         user={detailUser}

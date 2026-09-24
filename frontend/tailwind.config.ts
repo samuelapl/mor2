@@ -6,10 +6,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Inter"', ...defaultTheme.fontFamily.sans],
+        sans: ["var(--font-poppins)", '"Poppins"', ...defaultTheme.fontFamily.sans],
         display: [
-          '"Plus Jakarta Sans"',
-          '"Inter"',
+          "var(--font-poppins)",
+          '"Poppins"',
           ...defaultTheme.fontFamily.sans,
         ],
       },

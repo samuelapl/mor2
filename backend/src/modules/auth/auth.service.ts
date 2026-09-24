@@ -10,16 +10,40 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { v4 as uuid } from 'uuid';
+import { PasswordResetPurpose, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { JwtPayload } from '@common/interfaces';
 import { BCRYPT_ROUNDS } from '@config/constants';
 import { passwordIssues } from '@common/utils';
 import { MailService } from '@modules/mail/mail.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto } from './dto';
+import {
+  RegisterDto,
+  LoginDto,
+  RefreshTokenDto,
+  ResetPasswordDto,
+  FirstLoginCompleteDto,
+} from './dto';
 
 const PASSWORD_RESET_CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+
+const FIRST_LOGIN_PURPOSE = 'first_login';
+const FIRST_LOGIN_CHALLENGE_TTL = '15m';
+const FIRST_LOGIN_RESEND_COOLDOWN_MS = 60 * 1000;
+
+type UserWithRoles = Prisma.UserGetPayload<{ include: { roles: true } }>;
+
+interface FirstLoginChallengePayload {
+  sub: string;
+  purpose: typeof FIRST_LOGIN_PURPOSE;
+}
+
+/** "abebe.kebede@mor.gov.et" -> "ab•••@mor.gov.et" — enough for the user to recognise. */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  return `${local.slice(0, Math.min(2, local.length))}•••@${domain}`;
+}
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -116,7 +140,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Update last login
+    // Admin-chosen password: no session until the user sets their own via an emailed code.
+    if (user.mustChangePassword) {
+      return this.startFirstLogin(user);
+    }
+
+    return this.createSession(user);
+  }
+
+  /** Issues access/refresh tokens for a fully authenticated user and records the login. */
+  private async createSession(user: UserWithRoles) {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLogin: new Date() },
@@ -163,6 +196,10 @@ export class AuthService {
       throw new UnauthorizedException('Account is not approved for access');
     }
 
+    if (user.mustChangePassword) {
+      throw new UnauthorizedException('You must change your password before continuing');
+    }
+
     // Revoke the old token
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
@@ -199,19 +236,7 @@ export class AuthService {
       return { message: 'If that email exists, a code has been sent.' };
     }
 
-    // Invalidate any still-pending codes before issuing a new one.
-    await this.prisma.passwordReset.updateMany({
-      where: { userId: user.id, usedAt: null },
-      data: { usedAt: new Date() },
-    });
-
-    // Generate a 6-digit code in the range [100000, 999999].
-    const code = crypto.randomInt(100000, 1000000).toString();
-    const expiresAt = new Date(Date.now() + PASSWORD_RESET_CODE_TTL_MS);
-
-    await this.prisma.passwordReset.create({
-      data: { userId: user.id, codeHash: hashToken(code), expiresAt },
-    });
+    const code = await this.issueCode(user.id, PasswordResetPurpose.RESET);
 
     try {
       await this.mailService.sendPasswordResetCode(user.email, code);
@@ -224,20 +249,200 @@ export class AuthService {
 
   /**
    * Verifies the 6-digit code + sets the new password.
-   * Uses constant-time comparison to resist timing attacks.
-   * Locks out after PASSWORD_RESET_MAX_ATTEMPTS wrong guesses.
+   * Also clears `mustChangePassword`: the user proved email ownership and chose their own
+   * password, which is exactly what the first-login step asks for.
    */
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
     const normalized = dto.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email: normalized } });
 
     // Use a generic message — do not reveal whether the email exists.
-    const genericError = 'Invalid or expired code.';
-    if (!user) throw new BadRequestException(genericError);
+    if (!user) throw new BadRequestException('Invalid or expired code.');
 
-    // Find the most recent active (non-expired, non-used) reset record for this user.
+    await this.consumeCode(user.id, PasswordResetPurpose.RESET, dto.code);
+
+    const policyError = passwordIssues(dto.newPassword);
+    if (policyError) throw new BadRequestException(policyError);
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+
+    // Single transaction: mark reset used, update password, revoke all refresh tokens.
+    await this.prisma.$transaction([
+      this.prisma.passwordReset.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword, mustChangePassword: false },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return { message: 'Password reset successfully. You can now sign in.' };
+  }
+
+  /**
+   * Called from `login` once the (admin-chosen) password checked out: emails a FIRST_LOGIN
+   * code and returns a short-lived challenge token instead of a session. The token proves
+   * the caller knew the temporary password; the code proves they own the email.
+   */
+  private async startFirstLogin(user: UserWithRoles) {
+    await this.sendFirstLoginCode(user.id, user.email);
+
+    const payload: FirstLoginChallengePayload = { sub: user.id, purpose: FIRST_LOGIN_PURPOSE };
+    const challengeToken = await this.jwtService.signAsync(payload, {
+      secret: this.firstLoginSecret(),
+      expiresIn: FIRST_LOGIN_CHALLENGE_TTL,
+    });
+
+    return {
+      passwordChangeRequired: true as const,
+      challengeToken,
+      email: maskEmail(user.email),
+    };
+  }
+
+  async resendFirstLoginCode(challengeToken: string) {
+    const user = await this.verifyFirstLoginChallenge(challengeToken);
+
+    const latest = await this.prisma.passwordReset.findFirst({
+      where: { userId: user.id, purpose: PasswordResetPurpose.FIRST_LOGIN },
+      orderBy: { createdAt: 'desc' },
+    });
+    const waitMs = latest
+      ? latest.createdAt.getTime() + FIRST_LOGIN_RESEND_COOLDOWN_MS - Date.now()
+      : 0;
+    if (waitMs > 0) {
+      throw new BadRequestException(
+        `Please wait ${Math.ceil(waitMs / 1000)} seconds before requesting a new code.`,
+      );
+    }
+
+    await this.sendFirstLoginCode(user.id, user.email);
+    return { message: 'A new code has been sent.', email: maskEmail(user.email) };
+  }
+
+  /**
+   * Finishes the forced first-login change and signs the user in. The new password must
+   * pass the policy and differ from the admin-chosen one.
+   */
+  async completeFirstLogin(dto: FirstLoginCompleteDto) {
+    const user = await this.verifyFirstLoginChallenge(dto.challengeToken);
+
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Confirm password must match the new password.');
+    }
+
+    await this.consumeCode(user.id, PasswordResetPurpose.FIRST_LOGIN, dto.code);
+
+    const policyError = passwordIssues(dto.newPassword);
+    if (policyError) throw new BadRequestException(policyError);
+
+    if (await bcrypt.compare(dto.newPassword, user.password)) {
+      throw new BadRequestException('Choose a new password different from the temporary one.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+
+    const [, updated] = await this.prisma.$transaction([
+      this.prisma.passwordReset.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword, mustChangePassword: false },
+        include: { roles: true },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return this.createSession(updated);
+  }
+
+  private firstLoginSecret(): string {
+    // Distinct from the access-token secret so a challenge token can never pass JwtStrategy.
+    return `${this.configService.get<string>('JWT_ACCESS_SECRET')}:${FIRST_LOGIN_PURPOSE}`;
+  }
+
+  private async verifyFirstLoginChallenge(token: string): Promise<UserWithRoles> {
+    const expired = new UnauthorizedException(
+      'Your password-change session has expired. Please sign in again.',
+    );
+
+    let payload: FirstLoginChallengePayload;
+    try {
+      payload = await this.jwtService.verifyAsync<FirstLoginChallengePayload>(token, {
+        secret: this.firstLoginSecret(),
+      });
+    } catch {
+      throw expired;
+    }
+    if (payload.purpose !== FIRST_LOGIN_PURPOSE) throw expired;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { roles: true },
+    });
+    // Also rejects a token replayed after the change is done (flag already cleared).
+    if (
+      !user ||
+      !user.isActive ||
+      user.registrationStatus !== 'APPROVED' ||
+      !user.mustChangePassword
+    ) {
+      throw expired;
+    }
+    return user;
+  }
+
+  private async sendFirstLoginCode(userId: string, email: string) {
+    const code = await this.issueCode(userId, PasswordResetPurpose.FIRST_LOGIN);
+    try {
+      await this.mailService.sendFirstLoginCode(email, code);
+    } catch (err) {
+      this.logger.error(`Failed to send first-login code to ${email}: ${err}`);
+    }
+  }
+
+  /**
+   * Generates a 6-digit code for `purpose`, invalidating that purpose's pending codes,
+   * and stores only its SHA-256 hash. Returns the plaintext for emailing.
+   */
+  private async issueCode(userId: string, purpose: PasswordResetPurpose): Promise<string> {
+    await this.prisma.passwordReset.updateMany({
+      where: { userId, purpose, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    // Generate a 6-digit code in the range [100000, 999999].
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_CODE_TTL_MS);
+
+    await this.prisma.passwordReset.create({
+      data: { userId, purpose, codeHash: hashToken(code), expiresAt },
+    });
+
+    return code;
+  }
+
+  /**
+   * Checks `code` against the user's latest active code for `purpose`. Uses constant-time
+   * comparison and locks the code after PASSWORD_RESET_MAX_ATTEMPTS wrong guesses.
+   * Throws on failure; the caller marks the code used once its own update succeeds.
+   */
+  private async consumeCode(userId: string, purpose: PasswordResetPurpose, code: string) {
+    const genericError = 'Invalid or expired code.';
+
     const reset = await this.prisma.passwordReset.findFirst({
-      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      where: { userId, purpose, usedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -253,7 +458,7 @@ export class AuthService {
     }
 
     // Constant-time comparison: hash the submitted code and compare to stored hash.
-    if (!safeEqualHex(hashToken(dto.code), reset.codeHash)) {
+    if (!safeEqualHex(hashToken(code), reset.codeHash)) {
       const nextAttempts = reset.attempts + 1;
       await this.prisma.passwordReset.update({
         where: { id: reset.id },
@@ -265,26 +470,6 @@ export class AuthService {
       });
       throw new BadRequestException(genericError);
     }
-
-    const policyError = passwordIssues(dto.newPassword);
-    if (policyError) throw new BadRequestException(policyError);
-
-    const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
-
-    // Single transaction: mark reset used, update password, revoke all refresh tokens.
-    await this.prisma.$transaction([
-      this.prisma.passwordReset.updateMany({
-        where: { userId: reset.userId, usedAt: null },
-        data: { usedAt: new Date() },
-      }),
-      this.prisma.user.update({ where: { id: reset.userId }, data: { password: hashedPassword } }),
-      this.prisma.refreshToken.updateMany({
-        where: { userId: reset.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
-
-    return { message: 'Password reset successfully. You can now sign in.' };
   }
 
   async logout(userId: string, sid?: string) {

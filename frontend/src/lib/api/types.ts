@@ -67,6 +67,14 @@ export interface ApiAuthResponse {
   permissions: string[];
 }
 
+/** Returned by `auth/login` instead of tokens when an admin-set password must be changed. */
+export interface ApiFirstLoginChallenge {
+  passwordChangeRequired: true;
+  challengeToken: string;
+  /** Masked, e.g. "ab•••@mor.gov.et". */
+  email: string;
+}
+
 export interface ApiAuthRegisterResponse {
   message: string;
   user: { id: string; firstName: string; lastName: string; email: string };
@@ -95,6 +103,7 @@ export interface ApiUser {
   locale: string;
   isActive: boolean;
   registrationStatus: BackendApprovalStatus | null;
+  mustChangePassword?: boolean;
   lastLogin: string | null;
   createdAt: string;
   updatedAt: string;
@@ -803,24 +812,32 @@ export interface ChangeMyPasswordBody {
 /*  Bulk user registration (spreadsheet import)                                */
 /* -------------------------------------------------------------------------- */
 
+/** `role` is a role name as stored in the backend (built-in or custom); defaults to LEARNER. */
 export interface BulkCreateUserItem {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
+  tin?: string;
   password?: string;
-  role?: BackendRoleName;
+  role?: string;
 }
 
+/** `row` is the 1-based position of the row in the submitted `users` array. */
 export interface BulkCreateUserResultRow {
+  row: number;
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  phone: string | null;
+  tin: string | null;
   password: string;
-  role: BackendRoleName;
+  role: string;
 }
 
 export interface BulkCreateUserSkipped {
+  row: number;
   email: string;
   reason: string;
 }

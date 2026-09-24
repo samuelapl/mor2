@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FileSpreadsheet, Download, Trash2, UploadCloud, UserPlus } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import PageShell from "@/components/shared/PageShell";
@@ -10,19 +10,72 @@ import { Badge } from "@/components/ui/Badge";
 import { Table, Td } from "@/components/ui/Table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ROLE_LABELS, ROLES } from "@/constants/roles";
-import type { Role } from "@/types";
+import { isValidEmail, passwordIssues } from "@/constants/auth";
+import { fetchRolesWithPermissions } from "@/lib/api/permissions";
+import { roleToApi } from "@/lib/api/transform";
+import type { BulkCreateUserResultRow } from "@/lib/api/types";
 
 interface RowDraft {
   key: string;
+  /** 1-based line in the imported file, so errors can point back to it. */
+  line: number;
   firstName: string;
   lastName: string;
   email: string;
-  role: Role;
+  phone: string;
+  tin: string;
+  /** Backend role name when recognised, otherwise the raw text from the file. */
+  role: string;
   password: string;
 }
 
-const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+interface RoleOption {
+  name: string;
+  label: string;
+}
+
+interface SkippedRow {
+  line: number;
+  email: string;
+  reason: string;
+}
+
+type ColumnKey = "firstName" | "lastName" | "email" | "phone" | "password" | "tin" | "role";
+
+const TEMPLATE_HEADER = "first_name,last_name,email,phone,password,tin,role";
+
+/** Header aliases, compared after lower-casing and stripping everything but letters/digits. */
+const COLUMN_ALIASES: Record<ColumnKey, string[]> = {
+  firstName: ["firstname", "first", "givenname"],
+  lastName: ["lastname", "last", "surname", "familyname"],
+  email: ["email", "emailaddress", "mail"],
+  phone: ["phone", "phonenumber", "mobile", "mobilenumber", "telephone"],
+  password: ["password"],
+  tin: ["tin", "tinnumber", "taxpayeridentificationnumber"],
+  role: ["role"],
+};
+
+const REQUIRED_COLUMNS: ColumnKey[] = ["firstName", "lastName", "email", "phone"];
+
+const COLUMN_LABELS: Record<ColumnKey, string> = {
+  firstName: "first_name",
+  lastName: "last_name",
+  email: "email",
+  phone: "phone",
+  password: "password",
+  tin: "tin",
+  role: "role",
+};
+
+const DEFAULT_ROLE = "LEARNER";
+
+const BUILT_IN_ROLE_OPTIONS: RoleOption[] = ROLES.map((role) => ({
+  name: roleToApi(role),
+  label: ROLE_LABELS[role],
+}));
+
+const cellInputClass =
+  "rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300";
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -68,80 +121,172 @@ function parseCsv(text: string): string[][] {
   return rows;
 }
 
-function normalizeRole(value: string): Role {
-  const candidate = value.trim().toLowerCase();
-  const found = ROLES.find((role) => role === candidate);
-  return found ?? "learner";
+function normalizeKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function toCsvCell(value: string): string {
+  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+function downloadCsv(fileName: string, lines: string[]) {
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Maps each known column to its index in the header row. */
+function mapHeader(header: string[]): Partial<Record<ColumnKey, number>> {
+  const indexes: Partial<Record<ColumnKey, number>> = {};
+  header.forEach((cell, index) => {
+    const key = normalizeKey(cell);
+    const column = (Object.keys(COLUMN_ALIASES) as ColumnKey[]).find((candidate) =>
+      COLUMN_ALIASES[candidate].includes(key),
+    );
+    if (column && indexes[column] === undefined) indexes[column] = index;
+  });
+  return indexes;
+}
+
+/** Accepts a role's backend name (LEARNER), frontend code (learner) or label (Learner). */
+function resolveRole(value: string, options: RoleOption[]): string {
+  const key = normalizeKey(value);
+  if (!key) return DEFAULT_ROLE;
+  const match = options.find(
+    (option) => normalizeKey(option.name) === key || normalizeKey(option.label) === key,
+  );
+  return match?.name ?? value.trim();
+}
+
+function rowErrors(row: RowDraft, roleNames: Set<string>): string[] {
+  const errors: string[] = [];
+  if (!row.firstName.trim()) errors.push("First name is required");
+  if (!row.lastName.trim()) errors.push("Last name is required");
+  if (!isValidEmail(row.email.trim())) errors.push("Invalid email");
+  if (!row.phone.trim()) errors.push("Phone is required");
+  if (row.password.trim()) {
+    const issue = passwordIssues(row.password);
+    if (issue) errors.push(issue);
+  }
+  if (!roleNames.has(row.role)) errors.push(`Unknown role "${row.role}"`);
+  return errors;
+}
 
 export default function BulkRegisterPage() {
   const { bulkRegisterUsers } = useLms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<RowDraft[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<"created" | "error" | null>(null);
-  const [createdRows, setCreatedRows] = useState<RowDraft[]>([]);
-  const [skippedRows, setSkippedRows] = useState<Array<{ email: string; reason: string }>>([]);
+  const [createdRows, setCreatedRows] = useState<BulkCreateUserResultRow[]>([]);
+  const [skippedRows, setSkippedRows] = useState<SkippedRow[]>([]);
   const [saving, setSaving] = useState(false);
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>(BUILT_IN_ROLE_OPTIONS);
 
-  const validRows = useMemo(
-    () => rows.filter((row) => VALID_EMAIL.test(row.email.trim())),
-    [rows],
+  // Custom roles live in the backend; fall back to the built-in list when the caller
+  // lacks `role.view`.
+  useEffect(() => {
+    let cancelled = false;
+    fetchRolesWithPermissions()
+      .then((roles) => {
+        if (cancelled || roles.length === 0) return;
+        setRoleOptions(roles.map((role) => ({ name: role.name, label: role.label || role.name })));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const roleNames = useMemo(() => new Set(roleOptions.map((role) => role.name)), [roleOptions]);
+  const roleLabel = (name: string) =>
+    roleOptions.find((role) => role.name === name)?.label ?? name;
+
+  const errorsByKey = useMemo(
+    () => new Map(rows.map((row) => [row.key, rowErrors(row, roleNames)])),
+    [rows, roleNames],
+  );
+  const readyRows = useMemo(
+    () => rows.filter((row) => (errorsByKey.get(row.key) ?? []).length === 0),
+    [rows, errorsByKey],
   );
 
   const readFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const text = String(reader.result ?? "");
+      // Excel prepends a byte-order mark to UTF-8 CSVs.
+      const text = String(reader.result ?? "").replace(/^﻿/, "");
       const grid = parseCsv(text);
-      if (grid.length === 0) return;
-      const headerIndex = grid[0].some((cell) =>
-        cell.toLowerCase().includes("email"),
-      )
-        ? 0
-        : -1;
-      const parsed: RowDraft[] = [];
-      for (let i = headerIndex >= 0 ? headerIndex + 1 : 0; i < grid.length; i++) {
-        const cells = grid[i];
-        const firstName = (cells[0] ?? "").trim();
-        const lastName = (cells[1] ?? "").trim();
-        const email = (cells[2] ?? "").trim();
-        const role = normalizeRole(cells[3] ?? "");
-        const password = (cells[4] ?? "").trim();
-        if (!firstName && !lastName && !email) continue;
-        parsed.push({
-          key: `row-${i}-${Date.now()}`,
-          firstName,
-          lastName,
-          email,
-          role,
-          password,
-        });
-      }
-      setRows(parsed);
       setFileName(file.name);
       setResult(null);
       setMessage(null);
+      setRows([]);
+
+      if (grid.length === 0) {
+        setFileError("The file is empty.");
+        return;
+      }
+      const columns = mapHeader(grid[0]);
+      const missing = REQUIRED_COLUMNS.filter((column) => columns[column] === undefined);
+      if (missing.length > 0) {
+        setFileError(
+          `Missing required column(s): ${missing.map((c) => COLUMN_LABELS[c]).join(", ")}. ` +
+            "The first row must be a header row — download the template to see the format.",
+        );
+        return;
+      }
+
+      const cell = (cells: string[], column: ColumnKey) => {
+        const index = columns[column];
+        return index === undefined ? "" : (cells[index] ?? "").trim();
+      };
+
+      const stamp = Date.now();
+      const parsed: RowDraft[] = [];
+      for (let i = 1; i < grid.length; i++) {
+        const cells = grid[i];
+        if (cells.every((value) => !value.trim())) continue;
+        parsed.push({
+          key: `row-${i}-${stamp}`,
+          line: i + 1,
+          firstName: cell(cells, "firstName"),
+          lastName: cell(cells, "lastName"),
+          email: cell(cells, "email"),
+          phone: cell(cells, "phone"),
+          tin: cell(cells, "tin"),
+          role: resolveRole(cell(cells, "role"), roleOptions),
+          password: cell(cells, "password"),
+        });
+      }
+      setFileError(parsed.length === 0 ? "The file has a header row but no users." : null);
+      setRows(parsed);
     };
     reader.readAsText(file);
   };
 
   const downloadTemplate = () => {
-    const csv = [
-      "first_name,last_name,email,role,password",
-      "Abebe,Kebede,abebe.kebede@mor.gov.et,learner,",
-      "Sara,Ahmed,sara.ahmed@mor.gov.et,trainer,Welcome2026",
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "bulk-register-template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv("bulk-register-template.csv", [
+      TEMPLATE_HEADER,
+      "Abebe,Kebede,abebe.kebede@mor.gov.et,+251911000000,Welcome2026,0012345678,learner",
+      "Sara,Ahmed,sara.ahmed@mor.gov.et,+251922000000,,,trainer",
+    ]);
+  };
+
+  const downloadCredentials = () => {
+    downloadCsv("registered-users.csv", [
+      "first_name,last_name,email,phone,role,password",
+      ...createdRows.map((row) =>
+        [row.firstName, row.lastName, row.email, row.phone ?? "", roleLabel(row.role), row.password]
+          .map(toCsvCell)
+          .join(","),
+      ),
+    ]);
   };
 
   const patchRow = (key: string, patch: Partial<RowDraft>) => {
@@ -153,19 +298,46 @@ export default function BulkRegisterPage() {
   };
 
   const handleCreate = async () => {
+    const submitted = readyRows;
     setSaving(true);
     setResult(null);
     setMessage(null);
     try {
-      const outcome = await bulkRegisterUsers(validRows);
-      setResult(outcome.ok ? "created" : "error");
-      setMessage(outcome.ok ? "Users registered successfully." : outcome.message);
-      if (outcome.ok) {
-        setCreatedRows(validRows);
-        setSkippedRows([]);
-        setRows([]);
-        setFileName(null);
+      const outcome = await bulkRegisterUsers(
+        submitted.map((row) => ({
+          firstName: row.firstName.trim(),
+          lastName: row.lastName.trim(),
+          email: row.email.trim(),
+          phone: row.phone.trim(),
+          tin: row.tin.trim() || undefined,
+          role: row.role,
+          password: row.password.trim() ? row.password : undefined,
+        })),
+      );
+      if (!outcome.ok) {
+        setResult("error");
+        setMessage(outcome.message);
+        return;
       }
+
+      const { created, skipped, totals } = outcome.result;
+      // The API reports `row` as the 1-based position in the submitted array.
+      const createdKeys = new Set(created.map((row) => submitted[row.row - 1]?.key));
+      setCreatedRows(created);
+      setSkippedRows(
+        skipped.map((row) => ({
+          line: submitted[row.row - 1]?.line ?? row.row,
+          email: row.email,
+          reason: row.reason,
+        })),
+      );
+      // Keep skipped and not-yet-valid rows in the preview so they can be fixed and resent.
+      setRows((prev) => prev.filter((row) => !createdKeys.has(row.key)));
+      setResult("created");
+      setMessage(
+        `${totals.created} user${totals.created === 1 ? "" : "s"} registered` +
+          (totals.skipped > 0 ? `, ${totals.skipped} skipped.` : "."),
+      );
     } finally {
       setSaving(false);
     }
@@ -175,11 +347,11 @@ export default function BulkRegisterPage() {
     <PageShell
       role="system_admin"
       title="Bulk Register Users"
-      description="Import a CSV of staff accounts. Duplicate emails are skipped automatically."
+      description="Import a CSV of user accounts. Accounts are created approved and active; duplicate emails are skipped."
     >
       <PageSection
         title="Import a spreadsheet"
-        description="Expected columns: first_name, last_name, email, role, password. Role defaults to learner and a policy-compliant password is generated when left blank."
+        description="Columns: first_name, last_name, email, phone (required) and password, tin, role (optional). A blank password is auto-generated, a blank role means Learner."
       >
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
@@ -203,79 +375,115 @@ export default function BulkRegisterPage() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) readFile(file);
+              // Allow choosing the same file again after fixing it.
+              event.target.value = "";
             }}
           />
-          {fileName ? <Badge variant="green">{fileName}</Badge> : null}
+          {fileName ? <Badge variant={fileError ? "red" : "green"}>{fileName}</Badge> : null}
         </div>
+        {fileError ? (
+          <div className="mt-3 rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700">
+            {fileError}
+          </div>
+        ) : null}
         <p className="mt-3 text-xs text-slate-400">
-          Paste or import a CSV with a header row. Roles accepted:{" "}
-          {ROLES.map((role) => ROLE_LABELS[role]).join(", ")}.
+          Columns are matched by header name, so their order doesn&apos;t matter. Roles accepted:{" "}
+          {roleOptions.map((role) => role.label).join(", ")}. Tip: if you edit the file in Excel,
+          format the phone and tin columns as Text so leading zeros are kept.
         </p>
       </PageSection>
 
       {rows.length === 0 ? (
-        <EmptyState
-          title="No rows loaded"
-          description="Choose a CSV file above to preview its contents before creating accounts."
-        />
+        result ? null : (
+          <EmptyState
+            title="No rows loaded"
+            description="Choose a CSV file above to preview its contents before creating accounts."
+          />
+        )
       ) : (
         <PageSection
-          title={`Preview (${rows.length} rows, ${validRows.length} valid)`}
-          description="Review and tweak the imported records before registering them."
+          title={`Preview (${rows.length} rows, ${readyRows.length} ready)`}
+          description="Review and fix the imported records before registering them. Rows with errors are not sent."
         >
-          <Table columns={["First name", "Last name", "Email", "Role", "Password", ""]}>
+          <Table columns={["Line", "First name", "Last name", "Email", "Phone", "TIN", "Role", "Password", ""]}>
             {rows.map((row) => {
-              const valid = VALID_EMAIL.test(row.email.trim());
+              const errors = errorsByKey.get(row.key) ?? [];
+              const roleKnown = roleNames.has(row.role);
               return (
-                <tr key={row.key}>
-                  <Td>
+                <tr key={row.key} className={errors.length > 0 ? "bg-red-50/40" : undefined}>
+                  <Td className="align-top text-xs text-slate-400">{row.line}</Td>
+                  <Td className="align-top">
                     <input
                       value={row.firstName}
                       onChange={(event) => patchRow(row.key, { firstName: event.target.value })}
-                      className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300"
+                      className={`w-28 ${cellInputClass}`}
                     />
+                    {errors.length > 0 ? (
+                      <ul className="mt-1 space-y-0.5">
+                        {errors.map((error) => (
+                          <li key={error} className="whitespace-nowrap text-[10px] text-red-500">
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </Td>
-                  <Td>
+                  <Td className="align-top">
                     <input
                       value={row.lastName}
                       onChange={(event) => patchRow(row.key, { lastName: event.target.value })}
-                      className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300"
+                      className={`w-28 ${cellInputClass}`}
                     />
                   </Td>
-                  <Td>
+                  <Td className="align-top">
                     <input
                       value={row.email}
                       onChange={(event) => patchRow(row.key, { email: event.target.value })}
-                      className="w-44 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300"
+                      className={`w-44 ${cellInputClass}`}
                     />
-                    {!valid ? (
-                      <p className="mt-0.5 text-[10px] text-red-500">Invalid email</p>
-                    ) : null}
                   </Td>
-                  <Td>
+                  <Td className="align-top">
+                    <input
+                      value={row.phone}
+                      onChange={(event) => patchRow(row.key, { phone: event.target.value })}
+                      className={`w-32 ${cellInputClass}`}
+                    />
+                  </Td>
+                  <Td className="align-top">
+                    <input
+                      value={row.tin}
+                      placeholder="optional"
+                      onChange={(event) => patchRow(row.key, { tin: event.target.value })}
+                      className={`w-28 ${cellInputClass}`}
+                    />
+                  </Td>
+                  <Td className="align-top">
                     <select
                       value={row.role}
-                      onChange={(event) =>
-                        patchRow(row.key, { role: event.target.value as Role })
-                      }
-                      className="w-40 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-indigo-300"
+                      onChange={(event) => patchRow(row.key, { role: event.target.value })}
+                      className={`w-40 py-1.5 ${cellInputClass}`}
                     >
-                      {ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {ROLE_LABELS[role]}
+                      {!roleKnown ? (
+                        <option value={row.role} disabled>
+                          Unknown: {row.role}
+                        </option>
+                      ) : null}
+                      {roleOptions.map((role) => (
+                        <option key={role.name} value={role.name}>
+                          {role.label}
                         </option>
                       ))}
                     </select>
                   </Td>
-                  <Td>
+                  <Td className="align-top">
                     <input
                       value={row.password}
                       placeholder="auto-generate"
                       onChange={(event) => patchRow(row.key, { password: event.target.value })}
-                      className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300"
+                      className={`w-28 ${cellInputClass}`}
                     />
                   </Td>
-                  <Td className="text-right">
+                  <Td className="text-right align-top">
                     <button
                       type="button"
                       onClick={() => removeRow(row.key)}
@@ -290,14 +498,8 @@ export default function BulkRegisterPage() {
             })}
           </Table>
 
-          {message ? (
-            <div
-              className={
-                result === "created"
-                  ? "rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700"
-                  : "rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700"
-              }
-            >
+          {message && result === "error" ? (
+            <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700">
               {message}
             </div>
           ) : null}
@@ -305,7 +507,7 @@ export default function BulkRegisterPage() {
           <div className="flex justify-end">
             <Button
               type="button"
-              disabled={validRows.length === 0 || saving}
+              disabled={readyRows.length === 0 || saving}
               onClick={handleCreate}
             >
               {saving ? (
@@ -313,7 +515,7 @@ export default function BulkRegisterPage() {
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" />
-                  Register {validRows.length} user{validRows.length === 1 ? "" : "s"}
+                  Register {readyRows.length} user{readyRows.length === 1 ? "" : "s"}
                 </>
               )}
             </Button>
@@ -324,36 +526,67 @@ export default function BulkRegisterPage() {
       {result === "created" ? (
         <PageSection
           title="Registration summary"
-          description="Below is the confirmation of the records created."
+          description={message ?? "Below is the confirmation of the records created."}
         >
-          <Table columns={["Name", "Email", "Role"]}>
-            {createdRows.map((row, index) => (
-              <tr key={`${row.key}-${index}`}>
-                <Td>
-                  <span className="font-medium text-slate-800">
-                    {row.firstName} {row.lastName}
-                  </span>
-                </Td>
-                <Td>{row.email}</Td>
-                <Td>
-                  <Badge variant="outline">{ROLE_LABELS[row.role]}</Badge>
-                </Td>
-              </tr>
-            ))}
-          </Table>
+          {createdRows.length > 0 ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
+                <span>
+                  Passwords are shown only once. Download the credentials now and share them
+                  securely with each user.
+                </span>
+                <Button type="button" variant="outline" size="sm" onClick={downloadCredentials}>
+                  <Download className="h-3.5 w-3.5" />
+                  Download credentials CSV
+                </Button>
+              </div>
+              <Table columns={["Name", "Email", "Phone", "TIN", "Role", "Password"]}>
+                {createdRows.map((row) => (
+                  <tr key={row.id}>
+                    <Td>
+                      <span className="font-medium text-slate-800">
+                        {row.firstName} {row.lastName}
+                      </span>
+                    </Td>
+                    <Td>{row.email}</Td>
+                    <Td>{row.phone ?? "—"}</Td>
+                    <Td>{row.tin ?? "—"}</Td>
+                    <Td>
+                      <Badge variant="outline">{roleLabel(row.role)}</Badge>
+                    </Td>
+                    <Td>
+                      <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{row.password}</code>
+                    </Td>
+                  </tr>
+                ))}
+              </Table>
+            </>
+          ) : null}
           {skippedRows.length > 0 ? (
-            <p className="text-xs text-amber-600">
-              {skippedRows.length} row(s) skipped because the email was already registered or
-              invalid.
-            </p>
+            <>
+              <p className="text-sm font-medium text-amber-700">
+                {skippedRows.length} row(s) skipped — they are still in the preview above so you
+                can fix and resend them.
+              </p>
+              <Table columns={["Line", "Email", "Reason"]}>
+                {skippedRows.map((row) => (
+                  <tr key={`${row.line}-${row.email}`}>
+                    <Td className="text-xs text-slate-400">{row.line}</Td>
+                    <Td>{row.email}</Td>
+                    <Td className="text-red-600">{row.reason}</Td>
+                  </tr>
+                ))}
+              </Table>
+            </>
           ) : null}
         </PageSection>
       ) : null}
 
       <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500">
         <UploadCloud className="h-4 w-4 shrink-0 text-indigo-500" />
-        Passwords left blank are auto-generated, meet the 8-character letter+number policy, and are
-        returned once in the API response so the administrator can copy them.
+        Passwords left blank are auto-generated to meet the password policy. On first sign-in,
+        each user receives an emailed code and must set their own password. Up to 500 users per
+        import.
       </div>
     </PageShell>
   );

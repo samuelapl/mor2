@@ -94,6 +94,11 @@ export async function reactivateUser(userId: string): Promise<unknown> {
   return api<unknown>(`users/${userId}/reactivate`, { method: "POST" });
 }
 
+/** Soft-deletes a user: history is kept, sign-in is blocked and the email is freed. */
+export async function deleteUser(userId: string): Promise<{ message: string }> {
+  return api<{ message: string }>(`users/${userId}`, { method: "DELETE" });
+}
+
 /** Bulk-creates users from a spreadsheet import (idempotent by email). */
 export async function bulkCreateUsers(
   rows: BulkCreateUserItem[],

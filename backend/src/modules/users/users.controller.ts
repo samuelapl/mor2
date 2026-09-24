@@ -87,8 +87,8 @@ export class UsersController {
   @Post('bulk')
   @Permissions('user.manage')
   @ApiOperation({ summary: 'Bulk-create users from a spreadsheet import (idempotent by email)' })
-  async bulkCreate(@Body() dto: BulkCreateUsersDto) {
-    return this.usersService.bulkCreate(dto);
+  async bulkCreate(@CurrentUser() user: AuthenticatedUser, @Body() dto: BulkCreateUsersDto) {
+    return this.usersService.bulkCreate(dto, user);
   }
 
   @Post('actors')
@@ -158,7 +158,7 @@ export class UsersController {
   @Permissions('user.manage')
   @ApiOperation({ summary: 'Soft delete a user' })
   @ApiParam({ name: 'id', type: String })
-  async remove(@Param('id') id: string) {
-    return this.usersService.softDelete(id);
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.usersService.softDelete(id, user);
   }
 }

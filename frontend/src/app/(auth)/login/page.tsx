@@ -29,6 +29,8 @@ export default function LoginPage() {
     const result = await login(email, password);
     if (result.ok) {
       router.push(ROLE_PATHS[result.role]);
+    } else if (result.passwordChangeRequired) {
+      router.push("/first-login");
     } else {
       setError(result.message);
     }

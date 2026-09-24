@@ -350,6 +350,30 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     permission: "certificate.manage",
   },
   {
+    label: "Registration",
+    icon: UserPlus,
+    children: [
+      {
+        label: "Approve Registration",
+        href: "/system-admin/pending-registrations",
+        icon: UserPlus,
+        permission: "user.manage",
+      },
+      {
+        label: "Actor Registration",
+        href: "/system-admin/register-actor",
+        icon: UserCog,
+        permission: "user.manage",
+      },
+      {
+        label: "Bulk Register",
+        href: "/system-admin/bulk-register",
+        icon: UploadCloud,
+        permission: "user.manage",
+      },
+    ],
+  },
+  {
     label: "Users & Roles",
     href: "/system-admin/users",
     icon: Users,

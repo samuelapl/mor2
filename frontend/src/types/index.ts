@@ -48,6 +48,8 @@ export interface User {
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string | null;
+  /** Admin-set password not yet replaced by the user (first-login change pending). */
+  mustChangePassword?: boolean;
 }
 
 export interface UploadedResource {
@@ -164,4 +166,4 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
 
 export type LoginResult =
   | { ok: true; role: Role }
-  | { ok: false; message: string };
+  | { ok: false; message: string; passwordChangeRequired?: true };

@@ -18,7 +18,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+  async validate(payload: JwtPayload & { purpose?: string }): Promise<AuthenticatedUser> {
+    // Purpose-scoped tokens (e.g. the first-login challenge) are never access tokens.
+    if (payload.purpose) {
+      throw new UnauthorizedException('Invalid access token');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: { courseOwnerships: true },
@@ -30,6 +35,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (user.registrationStatus === 'PENDING' || user.registrationStatus === 'REJECTED') {
       throw new UnauthorizedException('Account is not approved for access');
+    }
+
+    // Covers sessions that predate an admin password reset.
+    if (user.mustChangePassword) {
+      throw new UnauthorizedException('You must change your password before continuing');
     }
 
     return {

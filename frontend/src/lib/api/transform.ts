@@ -139,6 +139,7 @@ export function userFromApi(user: ApiUser): User {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     lastLogin: user.lastLogin ?? null,
+    mustChangePassword: user.mustChangePassword ?? false,
   };
 }
 

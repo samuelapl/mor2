@@ -1,7 +1,15 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
+import {
+  RegisterDto,
+  LoginDto,
+  RefreshTokenDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  FirstLoginResendCodeDto,
+  FirstLoginCompleteDto,
+} from './dto';
 import { Public, CurrentUser } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -21,7 +29,12 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({
+    summary: 'Login with email and password',
+    description:
+      'For admin-created accounts that must set their own password, returns ' +
+      '{ passwordChangeRequired, challengeToken, email } instead of tokens and emails a code.',
+  })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -50,6 +63,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Set a new password using the emailed 6-digit code' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Public()
+  @Post('first-login/resend-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend the first-login password-change code' })
+  async resendFirstLoginCode(@Body() dto: FirstLoginResendCodeDto) {
+    return this.authService.resendFirstLoginCode(dto.challengeToken);
+  }
+
+  @Public()
+  @Post('first-login/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Set a new password with the emailed code and sign in (first login)',
+  })
+  async completeFirstLogin(@Body() dto: FirstLoginCompleteDto) {
+    return this.authService.completeFirstLogin(dto);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -19,8 +19,13 @@ import {
   setUnauthorizedHandler,
 } from "@/lib/api/client";
 import {
+  clearFirstLoginChallenge,
+  completeFirstLogin as apiCompleteFirstLogin,
   login as apiLogin,
   logout as apiLogout,
+  readFirstLoginChallenge,
+  saveFirstLoginChallenge,
+  type AuthResult,
   refresh as apiRefresh,
   register as apiRegister,
 } from "@/lib/api/auth";
@@ -51,6 +56,7 @@ import {
   deactivateUser as apiDeactivateUser,
   fetchUsers,
   reactivateUser as apiReactivateUser,
+  deleteUser as apiDeleteUser,
   rejectRegistration,
   removeRole,
   updateMyProfile,
@@ -78,7 +84,11 @@ import {
   uploadedResourceToApiAttachment,
   userFromApi,
 } from "@/lib/api/transform";
-import type { CreateCurriculumAttachmentBody } from "@/lib/api/types";
+import type {
+  BulkCreateUserItem,
+  BulkCreateUsersResult,
+  CreateCurriculumAttachmentBody,
+} from "@/lib/api/types";
 import type {
   ActionResult,
   Attachment,
@@ -177,6 +187,12 @@ interface LmsContextValue {
   currentUser: User | null;
   setLang: (lang: Lang) => void;
   login: (email: string, password: string) => Promise<LoginResult>;
+  /** Finishes the forced password change of an admin-created account and signs it in. */
+  completeFirstLogin: (input: {
+    code: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => Promise<LoginResult>;
   logout: () => void;
   register: (input: RegisterInput) => Promise<ActionResult>;
   courseById: (courseId: string) => Course | undefined;
@@ -251,15 +267,10 @@ interface LmsContextValue {
   ) => Promise<ActionResult>;
   deactivateUser: (userId: string) => Promise<ActionResult>;
   reactivateUser: (userId: string) => Promise<ActionResult>;
+  deleteUser: (userId: string) => Promise<ActionResult>;
   bulkRegisterUsers: (
-    rows: Array<{
-      firstName: string;
-      lastName: string;
-      email: string;
-      role?: Role;
-      password?: string;
-    }>,
-  ) => Promise<ActionResult>;
+    rows: BulkCreateUserItem[],
+  ) => Promise<{ ok: true; result: BulkCreateUsersResult } | { ok: false; message: string }>;
   registerActor: (input: {
     firstName: string;
     lastName: string;
@@ -456,16 +467,31 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const enterSession = useCallback(
+    async (res: AuthResult): Promise<LoginResult> => {
+      setAccessToken(res.accessToken);
+      setCurrentUser(res.user);
+      currentUserRef.current = res.user;
+      setUserNames({ [res.user.id]: res.user.name });
+      await reloadData(res.user);
+      return { ok: true, role: res.user.role };
+    },
+    [reloadData],
+  );
+
   const login = useCallback(
     async (email: string, password: string): Promise<LoginResult> => {
       try {
         const res = await apiLogin(email.trim(), password);
-        setAccessToken(res.accessToken);
-        setCurrentUser(res.user);
-        currentUserRef.current = res.user;
-        setUserNames({ [res.user.id]: res.user.name });
-        await reloadData(res.user);
-        return { ok: true, role: res.user.role };
+        if ("passwordChangeRequired" in res) {
+          saveFirstLoginChallenge({ challengeToken: res.challengeToken, email: res.email });
+          return {
+            ok: false,
+            passwordChangeRequired: true,
+            message: "You need to set a new password before continuing.",
+          };
+        }
+        return await enterSession(res);
       } catch (err) {
         return {
           ok: false,
@@ -473,7 +499,35 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         };
       }
     },
-    [reloadData],
+    [enterSession],
+  );
+
+  const completeFirstLogin: LmsContextValue["completeFirstLogin"] = useCallback(
+    async ({ code, newPassword, confirmPassword }) => {
+      const challenge = readFirstLoginChallenge();
+      if (!challenge) {
+        return {
+          ok: false,
+          message: "Your password-change session has expired. Please sign in again.",
+        };
+      }
+      try {
+        const res = await apiCompleteFirstLogin({
+          challengeToken: challenge.challengeToken,
+          code,
+          newPassword,
+          confirmPassword,
+        });
+        clearFirstLoginChallenge();
+        return await enterSession(res);
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Could not change your password. Please try again."),
+        };
+      }
+    },
+    [enterSession],
   );
 
   const refreshPermissions = useCallback(async (): Promise<void> => {
@@ -745,17 +799,19 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         return { ok: false, message: "No users in the file." };
       }
       try {
-        await bulkCreateUsers(
+        const result = await bulkCreateUsers(
           rows.map((row) => ({
             firstName: row.firstName,
             lastName: row.lastName,
             email: row.email,
-            role: roleToApi(row.role ?? "learner"),
+            phone: row.phone,
+            tin: row.tin || undefined,
+            role: row.role || undefined,
             password: row.password || undefined,
           })),
         );
         await reloadData(currentUserRef.current);
-        return { ok: true };
+        return { ok: true, result };
       } catch (err) {
         return {
           ok: false,
@@ -1370,6 +1426,26 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const deleteUser = useCallback(
+    async (userId: string): Promise<ActionResult> => {
+      const admin = currentUserRef.current;
+      if (!admin || !hasPermission(admin, "user.manage")) {
+        return { ok: false, message: "You are not allowed to manage users." };
+      }
+      try {
+        await apiDeleteUser(userId);
+        await reloadData(admin);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, "Failed to delete user."),
+        };
+      }
+    },
+    [reloadData],
+  );
+
   const courseById = useCallback(
     (courseId: string) => courses.find((course) => course.id === courseId),
     [courses],
@@ -1460,6 +1536,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       currentUser,
       setLang,
       login,
+      completeFirstLogin,
       logout,
       register,
       courseById,
@@ -1485,6 +1562,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       rejectRegistrationRequest,
       deactivateUser,
       reactivateUser,
+      deleteUser,
       bulkRegisterUsers,
       registerActor,
       updateProfile,
@@ -1499,6 +1577,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       lang,
       currentUser,
       login,
+      completeFirstLogin,
       logout,
       register,
       courseById,
@@ -1524,6 +1603,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       rejectRegistrationRequest,
       deactivateUser,
       reactivateUser,
+      deleteUser,
       bulkRegisterUsers,
       registerActor,
       updateProfile,
