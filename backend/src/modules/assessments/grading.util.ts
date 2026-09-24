@@ -15,6 +15,7 @@ export interface GradedAnswer {
 }
 
 export function gradeAnswers(questions: GradableQuestion[], answers: RawAnswer[]): GradedAnswer[] {
+  if (!Array.isArray(answers)) return [];
   return answers.map((answer) => {
     const question = questions.find((q) => q.id === answer.questionId);
     const isCorrect = question?.correctAnswer === answer.selectedOption;

@@ -1,7 +1,8 @@
 import type { HTMLAttributes, ReactNode, TdHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type TableColumn = string | { name: string; className?: string };
+/** `label` replaces the header text, e.g. with a select-all checkbox. */
+export type TableColumn = string | { name: string; label?: ReactNode; className?: string };
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   columns: TableColumn[];
@@ -22,6 +23,7 @@ export function Table({ columns, children, className }: TableProps) {
             {columns.map((column, idx) => {
               const name = typeof column === "string" ? column : column.name;
               const colClass = typeof column === "object" ? column.className : undefined;
+              const label = typeof column === "object" && column.label !== undefined ? column.label : name;
               const isLast = idx === columns.length - 1;
               const isAction = name.toLowerCase() === "actions" || name === "";
               return (
@@ -33,7 +35,7 @@ export function Table({ columns, children, className }: TableProps) {
                     colClass,
                   )}
                 >
-                  {name}
+                  {label}
                 </th>
               );
             })}

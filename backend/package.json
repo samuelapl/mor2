@@ -21,7 +21,8 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio",
     "prepare": "husky install",
-    "reseed:courses": "ts-node prisma/seed-courses.ts"
+    "reseed:courses": "ts-node prisma/seed-courses.ts",
+    "questions:correct-first": "ts-node prisma/correct-answer-first.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

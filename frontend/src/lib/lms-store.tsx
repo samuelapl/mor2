@@ -268,6 +268,11 @@ interface LmsContextValue {
   deactivateUser: (userId: string) => Promise<ActionResult>;
   reactivateUser: (userId: string) => Promise<ActionResult>;
   deleteUser: (userId: string) => Promise<ActionResult>;
+  /** Suspends or deletes several users, reloading once. Failures are reported per user. */
+  bulkUserAction: (
+    action: "suspend" | "delete",
+    userIds: string[],
+  ) => Promise<{ ok: false; message: string } | { ok: true; succeeded: number; failed: string[] }>;
   bulkRegisterUsers: (
     rows: BulkCreateUserItem[],
   ) => Promise<{ ok: true; result: BulkCreateUsersResult } | { ok: false; message: string }>;
@@ -1446,6 +1451,28 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const bulkUserAction: LmsContextValue["bulkUserAction"] = useCallback(
+    async (action, userIds) => {
+      const admin = currentUserRef.current;
+      if (!admin || !hasPermission(admin, "user.manage")) {
+        return { ok: false, message: "You are not allowed to manage users." };
+      }
+      const run = action === "suspend" ? apiDeactivateUser : apiDeleteUser;
+      const failed: string[] = [];
+      // A few requests at a time so a large selection doesn't flood the API.
+      for (let i = 0; i < userIds.length; i += 5) {
+        const batch = userIds.slice(i, i + 5);
+        const results = await Promise.allSettled(batch.map((id) => run(id)));
+        results.forEach((result, index) => {
+          if (result.status === "rejected") failed.push(batch[index]);
+        });
+      }
+      await reloadData(admin);
+      return { ok: true, succeeded: userIds.length - failed.length, failed };
+    },
+    [reloadData],
+  );
+
   const courseById = useCallback(
     (courseId: string) => courses.find((course) => course.id === courseId),
     [courses],
@@ -1563,6 +1590,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       deactivateUser,
       reactivateUser,
       deleteUser,
+      bulkUserAction,
       bulkRegisterUsers,
       registerActor,
       updateProfile,
@@ -1604,6 +1632,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       deactivateUser,
       reactivateUser,
       deleteUser,
+      bulkUserAction,
       bulkRegisterUsers,
       registerActor,
       updateProfile,

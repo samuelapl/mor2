@@ -447,11 +447,9 @@ export class CoursesService {
       );
     }
 
-    const targetStatus = isApprove
-      ? CourseStatus.APPROVED
-      : dto.status === ApprovalStatus.NEEDS_REVISION
-        ? CourseStatus.DRAFT
-        : CourseStatus.REJECTED;
+    // A rejected course goes straight back to DRAFT so the owner can edit and resubmit it;
+    // the rejection itself is kept in the approval history below.
+    const targetStatus = isApprove ? CourseStatus.APPROVED : CourseStatus.DRAFT;
 
     this.stateMachine.assertCanTransition(course.status, targetStatus);
 
@@ -484,15 +482,18 @@ export class CoursesService {
         { courseId: id },
       );
     } else {
+      const rejected = dto.status === ApprovalStatus.REJECTED;
       await this.notificationsService.sendToMany(
         ownerIds,
         NotificationType.COURSE_REJECTED,
-        { en: 'Course needs changes', am: 'ኮርሱ ማስተካከያ ይፈልጋል' },
+        rejected
+          ? { en: 'Course rejected', am: 'ኮርሱ ውድቅ ተደርጓል' }
+          : { en: 'Course needs changes', am: 'ኮርሱ ማስተካከያ ይፈልጋል' },
         {
-          en: dto.comments ?? `"${title}" was returned for revision.`,
-          am: dto.comments ?? `"${title}" ለማስተካከያ ተመልሷል።`,
+          en: `"${title}" was ${rejected ? 'rejected' : 'returned for revision'} and moved back to draft. Reason: ${dto.comments}`,
+          am: `"${title}" ${rejected ? 'ውድቅ ተደርጓል' : 'ለማስተካከያ ተመልሷል'} እና ወደ ረቂቅ ተመልሷል። ምክንያት፦ ${dto.comments}`,
         },
-        { courseId: id },
+        { courseId: id, reason: dto.comments },
       );
     }
 

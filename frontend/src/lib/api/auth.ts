@@ -54,6 +54,18 @@ export async function resendFirstLoginCode(
   });
 }
 
+/** Checks the first-login code without using it up; rejects when it is wrong or expired. */
+export async function verifyFirstLoginCode(
+  challengeToken: string,
+  code: string,
+): Promise<{ message: string }> {
+  return api<{ message: string }>("auth/first-login/verify-code", {
+    method: "POST",
+    body: { challengeToken, code },
+    skipAuthRetry: true,
+  });
+}
+
 export async function completeFirstLogin(body: {
   challengeToken: string;
   code: string;
@@ -103,6 +115,15 @@ export async function forgotPassword(email: string): Promise<{ message: string }
   return api<{ message: string }>("auth/forgot-password", {
     method: "POST",
     body: { email },
+    skipAuthRetry: true,
+  });
+}
+
+/** Checks a reset code without using it up; rejects when it is wrong or expired. */
+export async function verifyResetCode(email: string, code: string): Promise<{ message: string }> {
+  return api<{ message: string }>("auth/verify-reset-code", {
+    method: "POST",
+    body: { email, code },
     skipAuthRetry: true,
   });
 }

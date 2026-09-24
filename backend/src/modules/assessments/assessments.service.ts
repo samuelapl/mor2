@@ -396,7 +396,11 @@ export class AssessmentsService {
 
         if (elapsedSec > limitSec) {
           // Time expired! Server-side auto-submission of pending attempt
-          await this.submit(assessmentId, userId, { answers: (pending.answers as any) || {} });
+          // Pending attempts store no answers yet; older rows hold `{}` rather than `[]`.
+          const saved = Array.isArray(pending.answers) ? pending.answers : [];
+          await this.submit(assessmentId, userId, {
+            answers: saved as Array<Record<string, unknown>>,
+          });
           await this.assertRetakeAllowed(assessmentId, userId, assessment.maxAttempts);
         } else {
           return {
@@ -428,7 +432,7 @@ export class AssessmentsService {
         attemptNumber: submittedCount + 1,
         score: 0,
         passed: false,
-        answers: {},
+        answers: [],
         startedAt: new Date(),
       },
     });

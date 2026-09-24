@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,13 +32,15 @@ export function Modal({ open, onClose, title, subtitle, size = "md", children, f
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
+  // Portaled to <body> so an ancestor's stacking context (e.g. an animated page wrapper)
+  // can't trap it underneath full-screen overlays like WorkspaceDetailOverlay.
   // "screen" fills the dashboard content area only — below the header, to
   // the right of the sidebar — so those stay visible and usable, with no
   // dimmed backdrop behind it.
   if (size === "screen") {
-    return (
+    return createPortal(
       <div className="fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex animate-fade-in flex-col bg-white overflow-hidden shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-b from-slate-50/80 to-transparent px-6 py-5">
           <div>
@@ -59,11 +62,12 @@ export function Modal({ open, onClose, title, subtitle, size = "md", children, f
             {footer}
           </div>
         ) : null}
-      </div>
+      </div>,
+      document.body,
     );
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 animate-fade-in bg-slate-950/60"
@@ -96,6 +100,7 @@ export function Modal({ open, onClose, title, subtitle, size = "md", children, f
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

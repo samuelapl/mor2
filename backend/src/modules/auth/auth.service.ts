@@ -22,6 +22,8 @@ import {
   LoginDto,
   RefreshTokenDto,
   ResetPasswordDto,
+  VerifyResetCodeDto,
+  FirstLoginVerifyCodeDto,
   FirstLoginCompleteDto,
 } from './dto';
 
@@ -248,6 +250,19 @@ export class AuthService {
   }
 
   /**
+   * Step one of the reset: checks the code without using it up, so the UI can move on to
+   * the new-password step. `resetPassword` checks it again before changing anything.
+   */
+  async verifyResetCode(dto: VerifyResetCodeDto): Promise<{ message: string }> {
+    const normalized = dto.email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    if (!user) throw new BadRequestException('Invalid or expired code.');
+
+    await this.consumeCode(user.id, PasswordResetPurpose.RESET, dto.code);
+    return { message: 'Code verified.' };
+  }
+
+  /**
    * Verifies the 6-digit code + sets the new password.
    * Also clears `mustChangePassword`: the user proved email ownership and chose their own
    * password, which is exactly what the first-login step asks for.
@@ -324,6 +339,13 @@ export class AuthService {
 
     await this.sendFirstLoginCode(user.id, user.email);
     return { message: 'A new code has been sent.', email: maskEmail(user.email) };
+  }
+
+  /** Step one of the first-login change: checks the code without using it up. */
+  async verifyFirstLoginCode(dto: FirstLoginVerifyCodeDto): Promise<{ message: string }> {
+    const user = await this.verifyFirstLoginChallenge(dto.challengeToken);
+    await this.consumeCode(user.id, PasswordResetPurpose.FIRST_LOGIN, dto.code);
+    return { message: 'Code verified.' };
   }
 
   /**

@@ -17,13 +17,12 @@ import { RichTextArea } from "@/components/ui/RichTextArea";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export function PendingCourseApprovals() {
-  const { courses, userName, approveCourse, rejectCourse, requestChangesCourse } = useLms();
+  const { courses, userName, approveCourse, rejectCourse } = useLms();
   const { can } = usePermissions();
   const canApprove = can("course.approve_reject");
   const canReject = can("course.approve_reject");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
-  const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
@@ -46,9 +45,7 @@ export function PendingCourseApprovals() {
   }, [courses, userName, search, category]);
 
   const { page, totalPages, setPage, pageItems } = usePagination(pending, 5);
-  const targetCourseData = courses.find(
-    (c) => c.id === (rejectId || requestChangesId),
-  );
+  const targetCourseData = courses.find((c) => c.id === rejectId);
 
   const confirmReject = async () => {
     if (!rejectId) return;
@@ -57,21 +54,8 @@ export function PendingCourseApprovals() {
       setReasonError(result.message);
       return;
     }
-    setFlash("Course rejected. The owner can review your feedback and resubmit.");
+    setFlash("Course rejected and moved back to draft. The owner has been notified with your reason.");
     setRejectId(null);
-    setReason("");
-    setReasonError(null);
-  };
-
-  const confirmRequestChanges = async () => {
-    if (!requestChangesId) return;
-    const result = await requestChangesCourse(requestChangesId, reason);
-    if (!result.ok) {
-      setReasonError(result.message);
-      return;
-    }
-    setFlash("Changes requested. The course owner has been notified to revise the content.");
-    setRequestChangesId(null);
     setReason("");
     setReasonError(null);
   };
@@ -152,19 +136,6 @@ export function PendingCourseApprovals() {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    disabled={!canReject}
-                    title={!canReject ? "You no longer have permission to reject courses" : undefined}
-                    onClick={() => {
-                      setRequestChangesId(course.id);
-                      setReason("");
-                      setReasonError(null);
-                    }}
-                  >
-                    Request Changes
-                  </Button>
-                  <Button
-                    size="sm"
                     variant="danger"
                     disabled={!canReject}
                     title={!canReject ? "You no longer have permission to reject courses" : undefined}
@@ -195,12 +166,6 @@ export function PendingCourseApprovals() {
                 onApprove: () => {
                   confirmApprove(selectedId);
                   setSelectedId(null);
-                },
-                onRequestChanges: () => {
-                  setRequestChangesId(selectedId);
-                  setSelectedId(null);
-                  setReason("");
-                  setReasonError(null);
                 },
                 onReject: () => {
                   setRejectId(selectedId);
@@ -250,52 +215,11 @@ export function PendingCourseApprovals() {
             setReason(val);
             setReasonError(null);
           }}
-          placeholder="Specify why this course is rejected and cannot be approved (supports bold, lists, headings)…"
+          placeholder="Explain why this course is rejected. The course owner is notified with this reason and the course moves back to draft…"
           error={reasonError}
         />
       </Modal>
 
-      {/* Request Changes Modal */}
-      <Modal
-        open={requestChangesId !== null}
-        onClose={() => {
-          setRequestChangesId(null);
-          setReason("");
-          setReasonError(null);
-        }}
-        title="Request Changes"
-        subtitle={targetCourseData ? `${targetCourseData.code} — ${targetCourseData.title}` : ""}
-        footer={
-          <>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setRequestChangesId(null);
-                setReason("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="outline" onClick={confirmRequestChanges} disabled={!reason.trim()}>
-              Send Revision Request
-            </Button>
-          </>
-        }
-      >
-        <RichTextArea
-          id="changeReason"
-          label="Required changes and feedback"
-          required
-          rows={3}
-          value={reason}
-          onChange={(val) => {
-            setReason(val);
-            setReasonError(null);
-          }}
-          placeholder="Describe the required updates, missing materials, or corrections the course owner needs to make before approval…"
-          error={reasonError}
-        />
-      </Modal>
     </>
   );
 }

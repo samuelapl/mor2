@@ -7,7 +7,9 @@ import {
   RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  VerifyResetCodeDto,
   FirstLoginResendCodeDto,
+  FirstLoginVerifyCodeDto,
   FirstLoginCompleteDto,
 } from './dto';
 import { Public, CurrentUser } from '@common/decorators';
@@ -58,6 +60,17 @@ export class AuthController {
   }
 
   @Public()
+  @Post('verify-reset-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check an emailed password-reset code before choosing a new password',
+    description: 'Does not use the code up; wrong guesses count toward the attempt limit.',
+  })
+  async verifyResetCode(@Body() dto: VerifyResetCodeDto) {
+    return this.authService.verifyResetCode(dto);
+  }
+
+  @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set a new password using the emailed 6-digit code' })
@@ -71,6 +84,17 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend the first-login password-change code' })
   async resendFirstLoginCode(@Body() dto: FirstLoginResendCodeDto) {
     return this.authService.resendFirstLoginCode(dto.challengeToken);
+  }
+
+  @Public()
+  @Post('first-login/verify-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check the emailed first-login code before choosing a new password',
+    description: 'Does not use the code up; wrong guesses count toward the attempt limit.',
+  })
+  async verifyFirstLoginCode(@Body() dto: FirstLoginVerifyCodeDto) {
+    return this.authService.verifyFirstLoginCode(dto);
   }
 
   @Public()

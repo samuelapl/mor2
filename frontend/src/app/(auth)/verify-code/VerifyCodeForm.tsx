@@ -4,7 +4,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { forgotPassword } from "@/lib/api/auth";
+import { forgotPassword, verifyResetCode } from "@/lib/api/auth";
 
 export default function VerifyCodeForm() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function VerifyCodeForm() {
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const code = digits.join("");
@@ -47,13 +48,21 @@ export default function VerifyCodeForm() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (code.length !== 6) {
       setError("Enter all 6 digits.");
       return;
     }
     if (!email) {
       setError("Email is missing. Go back and enter your email again.");
+      return;
+    }
+    setVerifying(true);
+    try {
+      await verifyResetCode(email, code);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid or expired code.");
+      setVerifying(false);
       return;
     }
     // Pass both email and code to the password-change page via query params
@@ -78,27 +87,24 @@ export default function VerifyCodeForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
-      <div className="pointer-events-none absolute -top-24 left-1/3 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/15 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
 
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-2xl shadow-indigo-900/50 ring-1 ring-white/20">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <ShieldCheck className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
               Check your email
             </h1>
-            <p className="mt-1.5 text-sm text-slate-400">
+            <p className="mt-1.5 text-sm text-slate-500">
               We sent a 6-digit code to{" "}
               {email ? (
-                <span className="font-semibold text-indigo-300">{email}</span>
+                <span className="font-semibold text-indigo-500">{email}</span>
               ) : (
                 "your email"
               )}
@@ -134,13 +140,13 @@ export default function VerifyCodeForm() {
                 type="button"
                 onClick={handleResend}
                 disabled={resending}
-                className="text-xs text-slate-400 underline-offset-2 hover:text-indigo-300 hover:underline disabled:opacity-50"
+                className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline disabled:opacity-50"
               >
                 {resending ? "Sending…" : "Resend code"}
               </button>
               <Link
                 href="/forgot-password"
-                className="text-xs text-slate-400 underline-offset-2 hover:text-indigo-300 hover:underline"
+                className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline"
               >
                 Wrong email?
               </Link>
@@ -148,7 +154,7 @@ export default function VerifyCodeForm() {
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
               {error}
             </div>
           )}
@@ -157,16 +163,16 @@ export default function VerifyCodeForm() {
           <button
             type="button"
             onClick={handleContinue}
-            disabled={code.length !== 6}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20 transition-all duration-200 hover:shadow-indigo-700/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+            disabled={code.length !== 6 || verifying}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
-            Continue
+            {verifying ? "Verifying…" : "Continue"}
           </button>
 
-          <p className="mt-5 text-center text-sm text-slate-400">
+          <p className="mt-5 text-center text-sm text-slate-500">
             <Link
               href="/forgot-password"
-              className="inline-flex items-center gap-1 font-semibold text-indigo-300 hover:text-white"
+              className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back

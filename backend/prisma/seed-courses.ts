@@ -31,6 +31,8 @@ import {
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
+import { correctAnswerFirst } from './correct-answer-first';
+
 const prisma = new PrismaClient();
 const COVER = '/sample.jpg';
 
@@ -1998,12 +2000,12 @@ async function main() {
           maxAttempts: 3,
           timeLimitMinutes: mData.assessment.timeLimitMinutes,
           shuffleQuestions: false,
-          questions: mData.assessment.questions as unknown as Prisma.InputJsonValue,
+          questions: mData.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
         },
       });
 
       // Also seed these module questions into the Question Bank table (courseId = course.id)
-      for (const mq of mData.assessment.questions) {
+      for (const mq of mData.assessment.questions.map(correctAnswerFirst)) {
         await prisma.questionBankQuestion.create({
           data: {
             courseId: course.id,
@@ -2033,12 +2035,12 @@ async function main() {
         maxAttempts: 3,
         timeLimitMinutes: cData.finalAssessment.timeLimitMinutes,
         shuffleQuestions: true,
-        questions: cData.finalAssessment.questions as unknown as Prisma.InputJsonValue,
+        questions: cData.finalAssessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
       },
     });
 
     // Also seed final assessment questions into Question Bank
-    for (const fq of cData.finalAssessment.questions) {
+    for (const fq of cData.finalAssessment.questions.map(correctAnswerFirst)) {
       await prisma.questionBankQuestion.create({
         data: {
           courseId: course.id,

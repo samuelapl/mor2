@@ -187,6 +187,8 @@ export default function BulkRegisterPage() {
   const [createdRows, setCreatedRows] = useState<BulkCreateUserResultRow[]>([]);
   const [skippedRows, setSkippedRows] = useState<SkippedRow[]>([]);
   const [saving, setSaving] = useState(false);
+  /** Row keys ticked for registration; every row starts ticked when a file loads. */
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>(BUILT_IN_ROLE_OPTIONS);
 
   // Custom roles live in the backend; fall back to the built-in list when the caller
@@ -216,6 +218,30 @@ export default function BulkRegisterPage() {
     () => rows.filter((row) => (errorsByKey.get(row.key) ?? []).length === 0),
     [rows, errorsByKey],
   );
+  const selectedRows = useMemo(
+    () => rows.filter((row) => selectedKeys.has(row.key)),
+    [rows, selectedKeys],
+  );
+  // Only ticked rows without errors are sent.
+  const submitRows = useMemo(
+    () => readyRows.filter((row) => selectedKeys.has(row.key)),
+    [readyRows, selectedKeys],
+  );
+  const selectedWithErrors = selectedRows.length - submitRows.length;
+  const allSelected = rows.length > 0 && selectedRows.length === rows.length;
+
+  const toggleRow = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelectedKeys(allSelected ? new Set() : new Set(rows.map((row) => row.key)));
+  };
 
   const readFile = (file: File) => {
     const reader = new FileReader();
@@ -227,6 +253,7 @@ export default function BulkRegisterPage() {
       setResult(null);
       setMessage(null);
       setRows([]);
+      setSelectedKeys(new Set());
 
       if (grid.length === 0) {
         setFileError("The file is empty.");
@@ -266,6 +293,7 @@ export default function BulkRegisterPage() {
       }
       setFileError(parsed.length === 0 ? "The file has a header row but no users." : null);
       setRows(parsed);
+      setSelectedKeys(new Set(parsed.map((row) => row.key)));
     };
     reader.readAsText(file);
   };
@@ -298,7 +326,7 @@ export default function BulkRegisterPage() {
   };
 
   const handleCreate = async () => {
-    const submitted = readyRows;
+    const submitted = submitRows;
     setSaving(true);
     setResult(null);
     setMessage(null);
@@ -402,15 +430,74 @@ export default function BulkRegisterPage() {
         )
       ) : (
         <PageSection
-          title={`Preview (${rows.length} rows, ${readyRows.length} ready)`}
-          description="Review and fix the imported records before registering them. Rows with errors are not sent."
+          title={`Preview (${rows.length} rows, ${readyRows.length} ready, ${selectedRows.length} selected)`}
+          description="Review and fix the imported records, then tick the rows to register. Rows with errors are not sent."
         >
-          <Table columns={["Line", "First name", "Last name", "Email", "Phone", "TIN", "Role", "Password", ""]}>
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <button
+              type="button"
+              onClick={() => setSelectedKeys(new Set(rows.map((row) => row.key)))}
+              className="font-semibold text-indigo-600 hover:text-indigo-800"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedKeys(new Set(readyRows.map((row) => row.key)))}
+              className="font-semibold text-indigo-600 hover:text-indigo-800"
+            >
+              Select ready only
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedKeys(new Set())}
+              className="font-semibold text-slate-500 hover:text-slate-700"
+            >
+              Clear selection
+            </button>
+          </div>
+          <Table
+            columns={[
+              {
+                name: "select",
+                className: "w-10",
+                label: (
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    aria-label="Select all rows"
+                    className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+                  />
+                ),
+              },
+              "Line",
+              "First name", "Last name", "Email", "Phone", "TIN", "Role", "Password", "",
+            ]}
+          >
             {rows.map((row) => {
               const errors = errorsByKey.get(row.key) ?? [];
               const roleKnown = roleNames.has(row.role);
               return (
-                <tr key={row.key} className={errors.length > 0 ? "bg-red-50/40" : undefined}>
+                <tr
+                  key={row.key}
+                  className={
+                    errors.length > 0
+                      ? "bg-red-50/40"
+                      : selectedKeys.has(row.key)
+                        ? undefined
+                        : "opacity-60"
+                  }
+                >
+                  <Td className="w-10 align-top">
+                    <input
+                      type="checkbox"
+                      checked={selectedKeys.has(row.key)}
+                      onChange={() => toggleRow(row.key)}
+                      aria-label={`Select line ${row.line}`}
+                      className="mt-1.5 h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+                    />
+                  </Td>
                   <Td className="align-top text-xs text-slate-400">{row.line}</Td>
                   <Td className="align-top">
                     <input
@@ -504,10 +591,16 @@ export default function BulkRegisterPage() {
             </div>
           ) : null}
 
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {selectedWithErrors > 0 ? (
+              <span className="text-xs text-amber-700">
+                {selectedWithErrors} selected row{selectedWithErrors === 1 ? " has" : "s have"}{" "}
+                errors and won&apos;t be sent until fixed.
+              </span>
+            ) : null}
             <Button
               type="button"
-              disabled={readyRows.length === 0 || saving}
+              disabled={submitRows.length === 0 || saving}
               onClick={handleCreate}
             >
               {saving ? (
@@ -515,7 +608,7 @@ export default function BulkRegisterPage() {
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" />
-                  Register {readyRows.length} user{readyRows.length === 1 ? "" : "s"}
+                  Register {submitRows.length} selected user{submitRows.length === 1 ? "" : "s"}
                 </>
               )}
             </Button>

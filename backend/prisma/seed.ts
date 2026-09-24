@@ -13,6 +13,8 @@ import {
 } from '@prisma/client';
 import { seedPermissions } from './seed-permissions';
 
+import { correctAnswerFirst } from './correct-answer-first';
+
 const prisma = new PrismaClient();
 
 const BCRYPT_ROUNDS = 12;
@@ -2153,12 +2155,12 @@ async function main() {
           descriptionAm: mod.assessment.descriptionAm || '',
           passingScore: mod.assessment.passingScore,
           timeLimitMinutes: mod.assessment.timeLimitMinutes,
-          questions: mod.assessment.questions as unknown as Prisma.InputJsonValue,
+          questions: mod.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
         },
       });
 
       // Record questions into Question Bank
-      for (const q of mod.assessment.questions) {
+      for (const q of mod.assessment.questions.map(correctAnswerFirst)) {
         await prisma.questionBankQuestion.create({
           data: {
             courseId: course.id,
@@ -2216,11 +2218,11 @@ async function main() {
             titleAm: les.assessment.titleAm,
             passingScore: les.assessment.passingScore,
             timeLimitMinutes: les.assessment.timeLimitMinutes,
-            questions: les.assessment.questions as unknown as Prisma.InputJsonValue,
+            questions: les.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
           },
         });
 
-        for (const q of les.assessment.questions) {
+        for (const q of les.assessment.questions.map(correctAnswerFirst)) {
           await prisma.questionBankQuestion.create({
             data: {
               courseId: course.id,
@@ -2281,11 +2283,11 @@ async function main() {
         titleAm: c.finalAssessment.titleAm,
         passingScore: c.finalAssessment.passingScore,
         timeLimitMinutes: c.finalAssessment.timeLimitMinutes,
-        questions: c.finalAssessment.questions as unknown as Prisma.InputJsonValue,
+        questions: c.finalAssessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
       },
     });
 
-    for (const q of c.finalAssessment.questions) {
+    for (const q of c.finalAssessment.questions.map(correctAnswerFirst)) {
       await prisma.questionBankQuestion.create({
         data: {
           courseId: course.id,

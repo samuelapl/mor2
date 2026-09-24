@@ -67,11 +67,8 @@ interface CourseDetailModalProps {
   reviewActions?: {
     onApprove: () => void;
     onReject: () => void;
-    onRequestChanges?: () => void;
   };
 }
-
-type ReasonPromptKind = "reject" | "request_changes";
 
 /**
  * Returns all attached files for an item by combining resources, attachments,
@@ -261,7 +258,6 @@ export function CourseDetailModal({
     submitForApproval,
     approveCourse,
     rejectCourse,
-    requestChangesCourse,
     publishCourse,
     unpublishCourse,
     archiveCourse,
@@ -275,7 +271,7 @@ export function CourseDetailModal({
   const [trainerOptions, setTrainerOptions] = useState<User[]>([]);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [busy, setBusy] = useState(false);
-  const [reasonPrompt, setReasonPrompt] = useState<ReasonPromptKind | null>(null);
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [needsTrainerForPublish, setNeedsTrainerForPublish] = useState(false);
@@ -424,7 +420,7 @@ export function CourseDetailModal({
     setFlash(null);
     setFlashError(false);
     setMode("view");
-    setReasonPrompt(null);
+    setRejectOpen(false);
     setReason("");
     setReasonError(null);
     setNeedsTrainerForPublish(false);
@@ -548,31 +544,27 @@ export function CourseDetailModal({
     notify(result.ok, result.ok ? "Course approved." : result.message);
   };
 
-  const openReasonPrompt = (kind: ReasonPromptKind) => {
+  const openReject = () => {
     setReason("");
     setReasonError(null);
-    setReasonPrompt(kind);
+    setRejectOpen(true);
   };
 
-  const confirmReasonPrompt = async () => {
-    if (!reasonPrompt) return;
+  const confirmReject = async () => {
     const trimmed = reason.trim();
     if (!trimmed) {
       setReasonError("A reason is required.");
       return;
     }
     setBusy(true);
-    const result =
-      reasonPrompt === "reject"
-        ? await rejectCourse(course.id, trimmed)
-        : await requestChangesCourse(course.id, trimmed);
+    const result = await rejectCourse(course.id, trimmed);
     setBusy(false);
     if (!result.ok) {
       setReasonError(result.message);
       return;
     }
-    setReasonPrompt(null);
-    notify(true, reasonPrompt === "reject" ? "Course rejected." : "Changes requested.");
+    setRejectOpen(false);
+    notify(true, "Course rejected and moved back to draft. The owner has been notified.");
   };
 
   const doArchive = async () => {
@@ -601,7 +593,6 @@ export function CourseDetailModal({
     (course.status === "draft" || course.status === "rejected");
   const canSubmit =
     can("course.submit_approval") && (course.status === "draft" || course.status === "rejected");
-  const canRequestChanges = can("course.approve_reject") && course.status === "under_review";
   const canRejectAction = can("course.approve_reject") && course.status === "under_review";
   const canApproveAction = can("course.approve_reject") && course.status === "under_review";
   const canArchiveAction =
@@ -628,13 +619,8 @@ export function CourseDetailModal({
           {course.status === "rejected" ? "Resubmit for approval" : "Submit for approval"}
         </Button>
       ) : null}
-      {canRequestChanges ? (
-        <Button size="sm" variant="outline" onClick={() => openReasonPrompt("request_changes")} className="gap-1.5 shadow-2xs">
-          Request changes
-        </Button>
-      ) : null}
       {canRejectAction ? (
-        <Button size="sm" variant="danger" onClick={() => openReasonPrompt("reject")} className="gap-1.5 shadow-2xs">
+        <Button size="sm" variant="danger" onClick={openReject} className="gap-1.5 shadow-2xs">
           Reject
         </Button>
       ) : null}
@@ -1666,30 +1652,30 @@ export function CourseDetailModal({
         )}
       </WorkspaceDetailOverlay>
 
-      {/* Reject / Request Changes Modal */}
+      {/* Reject Modal */}
       <Modal
-        open={reasonPrompt !== null}
-        onClose={() => setReasonPrompt(null)}
-        title={reasonPrompt === "reject" ? "Reject course" : "Request changes"}
+        open={rejectOpen}
+        onClose={() => setRejectOpen(false)}
+        title="Reject course"
         subtitle={`${course.code} — ${course.title}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setReasonPrompt(null)}>
+            <Button variant="ghost" onClick={() => setRejectOpen(false)}>
               Cancel
             </Button>
             <Button
-              variant={reasonPrompt === "reject" ? "danger" : "outline"}
+              variant="danger"
               disabled={!reason.trim() || busy}
-              onClick={() => void confirmReasonPrompt()}
+              onClick={() => void confirmReject()}
             >
-              {reasonPrompt === "reject" ? "Confirm Reject" : "Send Revision Request"}
+              {busy ? "Rejecting…" : "Confirm Reject"}
             </Button>
           </>
         }
       >
         <RichTextArea
-          id="courseReasonPrompt"
-          label={reasonPrompt === "reject" ? "Reason for rejection" : "Required changes and feedback"}
+          id="courseRejectReason"
+          label="Reason for rejection"
           required
           rows={3}
           value={reason}
@@ -1697,11 +1683,7 @@ export function CourseDetailModal({
             setReason(val);
             setReasonError(null);
           }}
-          placeholder={
-            reasonPrompt === "reject"
-              ? "Specify why this course is rejected and cannot be approved (supports bold, lists, headings)..."
-              : "Describe the required updates, missing materials, or corrections the course owner needs to make before approval..."
-          }
+          placeholder="Explain why this course is rejected. The course owner is notified with this reason and the course moves back to draft..."
           error={reasonError}
         />
       </Modal>

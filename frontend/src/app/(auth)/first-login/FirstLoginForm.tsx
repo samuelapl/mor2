@@ -3,9 +3,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Hash, KeyRound, Lock } from "lucide-react";
+import { ArrowLeft, Check, Hash, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
-import { readFirstLoginChallenge, resendFirstLoginCode } from "@/lib/api/auth";
+import {
+  readFirstLoginChallenge,
+  resendFirstLoginCode,
+  verifyFirstLoginCode,
+} from "@/lib/api/auth";
 import { MIN_PASSWORD_LENGTH, passwordIssues } from "@/constants/auth";
 import { ROLE_PATHS } from "@/constants/roles";
 
@@ -19,15 +23,15 @@ const RESEND_COOLDOWN_SECONDS = 60;
 
 type Challenge = { challengeToken: string; email: string };
 
+const submitClass =
+  "flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50";
+
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
-      <div className="pointer-events-none absolute -top-24 left-1/3 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/15 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           {children}
         </div>
       </div>
@@ -37,7 +41,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
   return (
-    <li className={`flex items-center gap-1.5 ${met ? "text-emerald-300" : "text-slate-400"}`}>
+    <li className={`flex items-center gap-1.5 ${met ? "text-emerald-600" : "text-slate-400"}`}>
       <Check className={`h-3 w-3 ${met ? "opacity-100" : "opacity-30"}`} />
       {children}
     </li>
@@ -50,6 +54,8 @@ export default function FirstLoginForm() {
 
   // undefined = not read yet (sessionStorage is client-only), null = missing.
   const [challenge, setChallenge] = useState<Challenge | null | undefined>(undefined);
+  // The code is checked on its own first; the password form only opens once it passes.
+  const [step, setStep] = useState<"code" | "password">("code");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -74,9 +80,9 @@ export default function FirstLoginForm() {
   if (challenge === null) {
     return (
       <Shell>
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-slate-500">
           Your password-change session has expired.{" "}
-          <Link href="/login" className="font-semibold text-indigo-300 hover:text-white">
+          <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-700">
             Sign in again
           </Link>{" "}
           to get a new code.
@@ -101,9 +107,25 @@ export default function FirstLoginForm() {
     }
   };
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleVerify = async (event: FormEvent) => {
     event.preventDefault();
     if (!/^\d{6}$/.test(code)) { setError("Enter the 6-digit code from the email."); return; }
+
+    setError(null);
+    setNotice(null);
+    setSaving(true);
+    try {
+      await verifyFirstLoginCode(challenge.challengeToken, code);
+      setStep("password");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid or expired code.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     const issue = passwordIssues(password);
     if (issue) { setError(issue); return; }
     if (password !== confirm) { setError("Passwords do not match."); return; }
@@ -121,61 +143,129 @@ export default function FirstLoginForm() {
       return;
     }
     setSaving(false);
+    // The code can expire or lock between the two steps — send the user back for a new one.
+    if (/code|attempts/i.test(result.message)) {
+      setCode("");
+      setStep("code");
+    }
     setError(result.message);
+  };
+
+  const backToCode = () => {
+    setStep("code");
+    setError(null);
+    setNotice(null);
   };
 
   const sessionExpired = error?.toLowerCase().includes("sign in again") ?? false;
 
+  const messages = (
+    <>
+      {notice && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-700">
+          {notice}
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+          {error}{" "}
+          {sessionExpired ? (
+            <Link href="/login" className="underline hover:text-red-800">
+              Go to sign in.
+            </Link>
+          ) : null}
+        </div>
+      )}
+    </>
+  );
+
+  if (step === "code") {
+    return (
+      <Shell>
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
+            <ShieldCheck className="h-7 w-7" />
+          </div>
+          <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+            Verify your email
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-500">
+            Your account was created by an administrator. We sent a 6-digit code to{" "}
+            <span className="font-semibold text-slate-800">{challenge.email}</span> — enter it
+            below to continue.
+          </p>
+        </div>
+
+        <form onSubmit={handleVerify} className="mt-7 space-y-4">
+          <div>
+            <label htmlFor="code" className={labelClass}>Verification code</label>
+            <div className="relative">
+              <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                required
+                maxLength={6}
+                value={code}
+                onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setError(null); }}
+                placeholder="123456"
+                className={`${inputClass} tracking-[0.3em]`}
+              />
+            </div>
+            <div className="mt-1.5 text-right text-xs">
+              {cooldown > 0 ? (
+                <span className="text-slate-500">Resend code in {cooldown}s</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="font-semibold text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
+                >
+                  {resending ? "Sending…" : "Resend code"}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {messages}
+
+          <button type="submit" disabled={saving || code.length !== 6} className={submitClass}>
+            {saving ? "Verifying…" : "Verify code"}
+          </button>
+        </form>
+
+        <p className="mt-5 text-center text-sm text-slate-500">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to sign in
+          </Link>
+        </p>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
       <div className="text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-2xl shadow-indigo-900/50 ring-1 ring-white/20">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
           <KeyRound className="h-7 w-7" />
         </div>
-        <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+        <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
           Set your own password
         </h1>
-        <p className="mt-1.5 text-sm text-slate-400">
-          Your account was created by an administrator. We sent a 6-digit code to{" "}
-          <span className="font-semibold text-slate-200">{challenge.email}</span> — enter it
-          below and choose a new password.
+        <p className="mt-1.5 text-sm text-slate-500">
+          Email verified. Choose a new password for your account.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-        <div>
-          <label htmlFor="code" className={labelClass}>Verification code</label>
-          <div className="relative">
-            <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              id="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              required
-              maxLength={6}
-              value={code}
-              onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setError(null); }}
-              placeholder="123456"
-              className={`${inputClass} tracking-[0.3em]`}
-            />
-          </div>
-          <div className="mt-1.5 text-right text-xs">
-            {cooldown > 0 ? (
-              <span className="text-slate-500">Resend code in {cooldown}s</span>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resending}
-                className="font-semibold text-indigo-300 hover:text-white disabled:opacity-50"
-              >
-                {resending ? "Sending…" : "Resend code"}
-              </button>
-            )}
-          </div>
-        </div>
-
         <div>
           <label htmlFor="password" className={labelClass}>New password</label>
           <div className="relative">
@@ -184,6 +274,7 @@ export default function FirstLoginForm() {
               id="password"
               type="password"
               required
+              autoFocus
               autoComplete="new-password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(null); }}
@@ -219,40 +310,22 @@ export default function FirstLoginForm() {
           <Rule met={password.length > 0 && password === confirm}>Passwords match</Rule>
         </ul>
 
-        {notice && (
-          <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-300">
-            {notice}
-          </div>
-        )}
+        {messages}
 
-        {error && (
-          <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
-            {error}{" "}
-            {sessionExpired ? (
-              <Link href="/login" className="underline hover:text-red-200">
-                Go to sign in.
-              </Link>
-            ) : null}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20 transition-all duration-200 hover:shadow-indigo-700/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
-        >
+        <button type="submit" disabled={saving} className={submitClass}>
           {saving ? "Saving…" : "Set password and continue"}
         </button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-slate-400">
-        <Link
-          href="/login"
-          className="inline-flex items-center gap-1 font-semibold text-indigo-300 hover:text-white"
+      <p className="mt-5 text-center text-sm text-slate-500">
+        <button
+          type="button"
+          onClick={backToCode}
+          className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to sign in
-        </Link>
+          Back to verification
+        </button>
       </p>
     </Shell>
   );

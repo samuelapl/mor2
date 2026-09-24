@@ -13,10 +13,15 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "MoR Learning Management System",
+    default: "MoR E-Learning",
     template: "%s | MoR Learning Management System",
   },
   description: "MoR Learning Management System",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

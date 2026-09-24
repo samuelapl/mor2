@@ -29,13 +29,13 @@ export default function ResetPasswordForm() {
   // Guard: if someone navigates here directly without email/code, redirect back
   if (!email || !code) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-        <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+        <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
         <div className="relative w-full max-w-md text-center">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-8 shadow-2xl backdrop-blur-xl">
-            <p className="text-sm text-slate-400">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+            <p className="text-sm text-slate-500">
               This link is incomplete.{" "}
-              <Link href="/forgot-password" className="font-semibold text-indigo-300 hover:text-white">
+              <Link href="/forgot-password" className="font-semibold text-indigo-500 hover:text-indigo-700">
                 Request a new code
               </Link>
             </p>
@@ -65,25 +65,22 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient" />
-      <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-60" />
-      <div className="pointer-events-none absolute -top-24 left-1/3 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/15 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
 
           {done ? (
             /* ── Success state ── */
             <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-2xl shadow-emerald-900/50 ring-1 ring-white/20">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20">
                 <CheckCircle className="h-7 w-7" />
               </div>
-              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
                 Password updated!
               </h1>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-slate-500">
                 Your password has been reset. Sign in with your new password.
               </p>
               <Link
@@ -97,13 +94,13 @@ export default function ResetPasswordForm() {
             <>
               {/* ── Header ── */}
               <div className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-2xl shadow-indigo-900/50 ring-1 ring-white/20">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
                   <KeyRound className="h-7 w-7" />
                 </div>
-                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
                   Set a new password
                 </h1>
-                <p className="mt-1.5 text-sm text-slate-400">
+                <p className="mt-1.5 text-sm text-slate-500">
                   At least 8 characters with a letter and a number.
                 </p>
               </div>
@@ -146,10 +143,10 @@ export default function ResetPasswordForm() {
                 </div>
 
                 {error && (
-                  <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
                     {error}{" "}
                     {error.includes("expired") || error.includes("Invalid") ? (
-                      <Link href="/forgot-password" className="underline hover:text-red-200">
+                      <Link href="/forgot-password" className="underline hover:text-red-800">
                         Request a new code.
                       </Link>
                     ) : null}
@@ -159,16 +156,16 @@ export default function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-900/40 ring-1 ring-white/20 transition-all duration-200 hover:shadow-indigo-700/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Reset password"}
                 </button>
               </form>
 
-              <p className="mt-5 text-center text-sm text-slate-400">
+              <p className="mt-5 text-center text-sm text-slate-500">
                 <Link
                   href={`/verify-code?email=${encodeURIComponent(email)}`}
-                  className="inline-flex items-center gap-1 font-semibold text-indigo-300 hover:text-white"
+                  className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Back to code entry

@@ -23,11 +23,34 @@ export class ResetPasswordDto {
   newPassword: string;
 }
 
+export class VerifyResetCodeDto {
+  @ApiProperty({ example: 'john.doe@mor.gov.et' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
+  code: string;
+}
+
 export class FirstLoginResendCodeDto {
   @ApiProperty({ description: 'Challenge token returned by /auth/login' })
   @IsString()
   @IsNotEmpty()
   challengeToken: string;
+}
+
+export class FirstLoginVerifyCodeDto {
+  @ApiProperty({ description: 'Challenge token returned by /auth/login' })
+  @IsString()
+  @IsNotEmpty()
+  challengeToken: string;
+
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
+  code: string;
 }
 
 export class FirstLoginCompleteDto {
