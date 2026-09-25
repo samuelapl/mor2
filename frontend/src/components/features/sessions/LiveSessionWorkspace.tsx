@@ -24,8 +24,7 @@ import {
   Send,
   Share2,
   ShieldAlert,
-  Sparkles,
-  Users,
+    Users,
   Video,
   Volume2,
 } from "lucide-react";

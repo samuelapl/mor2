@@ -31,6 +31,7 @@ import {
 } from "@/lib/api/permissions";
 import { ApiError } from "@/lib/api/client";
 import type { ApiPermission, ApiPermissionsByResource, ApiRoleWithPermissions } from "@/lib/api/types";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { cn } from "@/lib/utils";
 
 function humanizeResource(resource: string): string {
@@ -47,6 +48,7 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
 
 export default function RolesPermissionsPage() {
   const { currentUser, refreshPermissions } = useLms();
+  const { tBilingual } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [roles, setRoles] = useState<ApiRoleWithPermissions[]>([]);
@@ -224,8 +226,11 @@ export default function RolesPermissionsPage() {
   return (
     <PageShell
       role={currentUser?.role ?? "system_admin"}
-      title="Roles & Permissions"
-      description="Toggle exactly what each of the 6 roles can do. Changes apply to everyone with that role within ~15 seconds — no redeploy, no re-login."
+      title={tBilingual("Roles & Permissions", "ሚናዎች እና ፈቃዶች")}
+      description={tBilingual(
+        "Toggle exactly what each role can do. Changes apply to everyone with that role within ~15 seconds — no redeploy, no re-login.",
+        "እያንዳንዱ ሚና ምን ማድረግ እንደሚችል በትክክል ይወስኑ። ለውጦች በ 15 ሰከንዶች ውስጥ በዚያ ሚና ውስጥ ባሉ ሁሉም ተጠቃሚዎች ላይ ተፈጻሚ ይሆናሉ።"
+      )}
       actions={<ViewToggle view={view} onChange={setView} />}
     >
       {view === "grid" ? (
@@ -242,13 +247,13 @@ export default function RolesPermissionsPage() {
                       {role.label}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {role.description || "No description provided."}
+                      {role.description || tBilingual("No description provided.", "ምንም መግለጫ አልተሰጠም።")}
                     </p>
                   </div>
                   {!role.isSystem ? (
                     <button
                       type="button"
-                      title="Delete role"
+                      title={tBilingual("Delete role", "ሚና ሰርዝ")}
                       disabled={deletingId === role.id}
                       onClick={() => setRoleToDelete(role)}
                       className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
@@ -264,7 +269,10 @@ export default function RolesPermissionsPage() {
                   className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                 >
                   <span>
-                    {role.permissionCodes.length} of {allPermissions.length} permissions
+                    {tBilingual(
+                      `${role.permissionCodes.length} of ${allPermissions.length} permissions`,
+                      `ከ ${allPermissions.length} ፈቃዶች ${role.permissionCodes.length} ተፈቅደዋል`
+                    )}
                   </span>
                   <ChevronDown
                     className={cn("h-3.5 w-3.5 shrink-0 transition-transform", expanded && "rotate-180")}
@@ -273,7 +281,9 @@ export default function RolesPermissionsPage() {
                 {expanded ? (
                   <div className="flex flex-wrap gap-1.5">
                     {role.permissionCodes.length === 0 ? (
-                      <span className="text-xs text-slate-400">No permissions granted.</span>
+                      <span className="text-xs text-slate-400">
+                        {tBilingual("No permissions granted.", "ምንም ፈቃዶች አልተሰጡም።")}
+                      </span>
                     ) : (
                       role.permissionCodes.map((code) => (
                         <Badge key={code} variant="slate" className="font-mono text-[10px]">
@@ -293,7 +303,7 @@ export default function RolesPermissionsPage() {
                     setView("table");
                   }}
                 >
-                  Edit permissions
+                  {tBilingual("Edit permissions", "ፈቃዶችን አርትዕ")}
                 </Button>
               </Card>
             );
@@ -304,8 +314,10 @@ export default function RolesPermissionsPage() {
         {/* Role list panel */}
         <Card padded={false} className="h-fit overflow-hidden">
           <div className="border-b border-slate-200/80 px-4 py-3">
-            <CardTitle>Roles</CardTitle>
-            <CardDescription>Select a role to view or edit its permissions.</CardDescription>
+            <CardTitle>{tBilingual("Roles", "ሚናዎች")}</CardTitle>
+            <CardDescription>
+              {tBilingual("Select a role to view or edit its permissions.", "ፈቃዶቹን ለመመልከት ወይም ለማረም ሚና ይምረጡ።")}
+            </CardDescription>
           </div>
 
           <div className="flex flex-col p-2">
@@ -342,7 +354,7 @@ export default function RolesPermissionsPage() {
                   {!role.isSystem ? (
                     <button
                       type="button"
-                      title="Delete role"
+                      title={tBilingual("Delete role", "ሚና ሰርዝ")}
                       disabled={deletingId === role.id}
                       onClick={() => setRoleToDelete(role)}
                       className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
@@ -363,16 +375,21 @@ export default function RolesPermissionsPage() {
               <div>
                 <CardTitle>{selectedRole.label}</CardTitle>
                 <CardDescription>
-                  Landing dashboard: <code className="text-slate-500">{selectedRole.dashboardPath}</code>
+                  {tBilingual("Landing dashboard:", "የመነሻ ዳሽቦርድ፡")}{" "}
+                  <code className="text-slate-500">{selectedRole.dashboardPath}</code>
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowNewRole(true)}>
-                  <Plus className="h-3.5 w-3.5" /> Add Role
+                  <Plus className="h-3.5 w-3.5" /> {tBilingual("Add Role", "ሚና ጨምር")}
                 </Button>
                 {isLocked ? (
                   <Badge variant="slate">
-                    <Lock className="h-3 w-3" /> Locked — superuser, always all permissions
+                    <Lock className="h-3 w-3" />{" "}
+                    {tBilingual(
+                      "Locked — superuser, always all permissions",
+                      "የተቆለፈ — ዋና አስተዳዳሪ፣ ሁልጊዜ ሙሉ ፈቃዶች"
+                    )}
                   </Badge>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -382,16 +399,16 @@ export default function RolesPermissionsPage() {
                       onClick={handleReset}
                       disabled={!isDirty || saving}
                     >
-                      <RotateCcw className="h-3.5 w-3.5" /> Reset
+                      <RotateCcw className="h-3.5 w-3.5" /> {tBilingual("Reset", "ወደ ነበረበት መልስ")}
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleSave}
                       disabled={!isDirty || saving}
                       isLoading={saving}
-                      loadingText="Saving…"
+                      loadingText={tBilingual("Saving…", "በማስቀመጥ ላይ…")}
                     >
-                      <Save className="h-3.5 w-3.5" /> Save changes
+                      <Save className="h-3.5 w-3.5" /> {tBilingual("Save changes", "ለውጦችን አስቀምጥ")}
                     </Button>
                   </div>
                 )}
@@ -459,21 +476,24 @@ export default function RolesPermissionsPage() {
       <WorkspaceDetailOverlay
         open={showNewRole}
         onClose={() => setShowNewRole(false)}
-        title="Create New Role"
-        subtitle="Configure custom role identifiers and assign granular RBAC permissions."
+        title={tBilingual("Create New Role", "አዲስ ሚና ፍጠር")}
+        subtitle={tBilingual(
+          "Configure custom role identifiers and assign granular RBAC permissions.",
+          "ብጁ ሚና መለያዎችን ያዋቅሩ እና ዝርዝር የፍቃድ ገደቦችን ይመድቡ።"
+        )}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowNewRole(false)}>
-              Cancel
+              {tBilingual("Cancel", "ሰርዝ")}
             </Button>
             <Button
               size="sm"
               disabled={creating || !newRoleName.trim() || !newRoleLabel.trim()}
               isLoading={creating}
-              loadingText="Creating role…"
+              loadingText={tBilingual("Creating role…", "ሚና በመፍጠር ላይ…")}
               onClick={handleCreateRole}
             >
-              Create role
+              {tBilingual("Create role", "ሚና ፍጠር")}
             </Button>
           </div>
         }
@@ -481,24 +501,38 @@ export default function RolesPermissionsPage() {
         <div className="w-full space-y-6">
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">Role Code Name *</label>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                {tBilingual("Role Code Name *", "የሚና ኮድ ስም *")}
+              </label>
               <input
                 className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-mono"
                 placeholder="e.g. REGIONAL_COORDINATOR"
                 value={newRoleName}
                 onChange={(e) => setNewRoleName(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-400">Unique uppercase identifier used by backend authorization guards.</p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                {tBilingual(
+                  "Unique uppercase identifier used by backend authorization guards.",
+                  "በስርዓቱ ውስጥ ለፍቃድ ማረጋገጫ የሚያገለግል ልዩ የካፒታል ፊደላት መለያ።"
+                )}
+              </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">Display Label *</label>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                {tBilingual("Display Label *", "የማሳያ ስም *")}
+              </label>
               <input
                 className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                 placeholder="e.g. Regional Coordinator"
                 value={newRoleLabel}
                 onChange={(e) => setNewRoleLabel(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-400">Human-readable title shown in user directory and role badges.</p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                {tBilingual(
+                  "Human-readable title shown in user directory and role badges.",
+                  "በተጠቃሚዎች ማውጫ እና በሚና ባጆች ላይ የሚታይ ግልጽ ስም።"
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -509,17 +543,21 @@ export default function RolesPermissionsPage() {
         open={Boolean(roleToDelete)}
         onClose={() => setRoleToDelete(null)}
         onConfirm={confirmDeleteRole}
-        title="Delete Role"
+        title={tBilingual("Delete Role", "ሚና ሰርዝ")}
         description={
           <>
-            Are you sure you want to delete role{" "}
+            {tBilingual("Are you sure you want to delete role", "ይህንን ሚና መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት")}{" "}
             <span className="font-semibold text-slate-800">
               &quot;{roleToDelete?.label}&quot;
             </span>
-            ? This action cannot be undone and will revoke permissions for all users assigned to this role.
+            ?{" "}
+            {tBilingual(
+              "This action cannot be undone and will revoke permissions for all users assigned to this role.",
+              "ይህ እርምጃ ሊመለስ አይችልም እንዲሁም በዚህ ሚና ለተመደቡ ተጠቃሚዎች ሁሉ ፈቃዶችን ይሰርዛል።"
+            )}
           </>
         }
-        confirmText="Delete Role"
+        confirmText={tBilingual("Delete Role", "ሚና ሰርዝ")}
         variant="danger"
         isLoading={Boolean(deletingId)}
       />

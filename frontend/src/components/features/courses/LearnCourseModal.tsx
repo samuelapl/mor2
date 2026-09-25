@@ -26,7 +26,7 @@ import {
   Paperclip,
   PlayCircle,
   Presentation,
-  Sparkles,
+  Target,
   Trash2,
   UploadCloud,
   Video,
@@ -1007,7 +1007,7 @@ export function LearnCourseModal({
             {course.objectives ? (
               <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
                 <p className="text-xs font-bold text-indigo-900 mb-1.5 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                  <Target className="h-3.5 w-3.5 text-indigo-600" />
                   Course Learning Objectives
                 </p>
                 <div className="text-xs text-indigo-950 leading-relaxed">
@@ -2035,7 +2035,7 @@ export function LearnCourseModal({
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-emerald-900 shadow-sm">
             <div className="flex items-center gap-3.5">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
-                <Sparkles className="h-6 w-6" />
+                <Award className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-sm font-bold">Congratulations! You completed this course.</p>

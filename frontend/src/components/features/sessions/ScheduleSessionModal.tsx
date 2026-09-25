@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { Video, Sparkles, Shield, MonitorPlay, Link as LinkIcon, RefreshCw, UserCheck } from "lucide-react";
+import { Video, Shield, MonitorPlay, Link as LinkIcon, RefreshCw, UserCheck } from "lucide-react";
 import type { Course } from "@/types";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Button } from "@/components/ui/Button";
@@ -294,7 +294,7 @@ export function ScheduleSessionModal({
         {platformType === "LIVEKIT" ? (
           <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1 text-xs">
             <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+              <MonitorPlay className="h-3.5 w-3.5 text-indigo-600" />
               <span>Native In-LMS LiveKit Room</span>
             </div>
             <p className="text-indigo-700">
@@ -330,7 +330,7 @@ export function ScheduleSessionModal({
             </div>
             {platformType === "JITSI" && (
               <p className="flex items-center gap-1.5 text-[11px] text-emerald-700">
-                <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
+                <Video className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
                 Instant, zero-install WebRTC video room with screen sharing and chat.
               </p>
             )}

@@ -26,6 +26,8 @@ export class MailService {
         // auth is optional — MailHog and similar dev catchers need no credentials
         auth: user && pass ? { user, pass } : undefined,
       });
+      const port = this.configService.get<string>('SMTP_PORT') || '465';
+      this.logger.log(`SMTP transporter initialized: ${host}:${port} (secure: ${this.configService.get<string>('SMTP_SECURE', 'true') === 'true'})`);
     } else {
       this.transporter = null;
       this.logger.warn(
@@ -74,7 +76,10 @@ export class MailService {
     if (!this.transporter) {
       // Without SMTP nobody could ever receive the code; in development only, print it so
       // the flow can still be exercised locally.
-      if (this.configService.get<string>('NODE_ENV') === 'development') {
+      const isDev =
+        this.configService.get<string>('NODE_ENV') === 'development' ||
+        this.configService.get<string>('APP_ENV') === 'development';
+      if (isDev) {
         this.logger.warn(`[mail] SMTP not configured — DEV ONLY ${copy.kind} for ${to}: ${code}`);
       } else {
         this.logger.warn(`[mail] SMTP not configured — skipping ${copy.kind} email to ${to}`);

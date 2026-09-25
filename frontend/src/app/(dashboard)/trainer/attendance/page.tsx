@@ -37,6 +37,7 @@ import {
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -61,6 +62,7 @@ const formatTime = (value: string) =>
 export default function TrainerAttendancePage() {
   const { courses, currentUser, users, userName } = useLms();
   const { can } = usePermissions();
+  const { tBilingual } = useTranslation();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const [attendanceRecords, setAttendanceRecords] = useState<ApiAttendance[]>([]);
@@ -197,7 +199,7 @@ export default function TrainerAttendancePage() {
     });
   }, [studentRoster, searchQuery, statusFilter]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(filteredRoster, 10);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filteredRoster, 10);
 
   // Stats calculation
   const totalStudents = studentRoster.length;
@@ -287,8 +289,11 @@ export default function TrainerAttendancePage() {
   return (
     <PageShell
       role="trainer"
-      title="Attendance Management Workspace"
-      description="Track, verify, and manage participant attendance across your scheduled live training sessions."
+      title={tBilingual("Attendance Management Workspace", "የተሳትፎ እና የክትትል አስተዳደር")}
+      description={tBilingual(
+        "Track, verify, and manage participant attendance across your scheduled live training sessions.",
+        "በታቀዱ የቀጥታ ስልጠና ክፍለ-ጊዜዎችዎ የተሳታፊዎችን ክትትል ይከታተሉ፣ ያረጋግጡ እና ያስተዳድሩ።"
+      )}
     >
       <div className="space-y-6">
         {/* Session Selector & Context Bar */}
@@ -296,7 +301,7 @@ export default function TrainerAttendancePage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Select Session:
+                {tBilingual("Select Session:", "ክፍለ-ጊዜ ይምረጡ:")}
               </span>
               <select
                 value={selectedSessionId}
@@ -320,7 +325,7 @@ export default function TrainerAttendancePage() {
                 className="text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
               >
                 <Send className="h-3.5 w-3.5" />
-                {sendingReport ? "Generating…" : "Send Report to Trainer"}
+                {sendingReport ? tBilingual("Generating…", "በማመንጨት ላይ…") : tBilingual("Send Report to Trainer", "ሪፖርት ለአሰልጣኝ ላክ")}
               </Button>
 
               <Button
@@ -334,7 +339,7 @@ export default function TrainerAttendancePage() {
                 className="text-xs gap-1"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${loadingAttendance ? "animate-spin" : ""}`} />
-                Refresh Roster
+                {tBilingual("Refresh Roster", "ዝርዝር አድስ")}
               </Button>
             </div>
           </div>
@@ -364,43 +369,43 @@ export default function TrainerAttendancePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Enrolled Students</span>
+              <span className="text-xs font-semibold text-slate-500">{tBilingual("Enrolled Students", "የተመዘገቡ ተማሪዎች")}</span>
               <Users className="h-4 w-4 text-slate-400" />
             </div>
             <p className="mt-2 text-2xl font-bold text-slate-900">{totalStudents}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Total eligible</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{tBilingual("Total eligible", "ጠቅላላ ብቁ")}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Present</span>
+              <span className="text-xs font-semibold text-slate-500">{tBilingual("Present", "የተገኙ")}</span>
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </div>
             <p className="mt-2 text-2xl font-bold text-emerald-600">{presentCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Confirmed check-ins</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{tBilingual("Confirmed check-ins", "የተረጋገጡ መግቢያዎች")}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Late</span>
+              <span className="text-xs font-semibold text-slate-500">{tBilingual("Late", "የዘገዩ")}</span>
               <Clock className="h-4 w-4 text-amber-500" />
             </div>
             <p className="mt-2 text-2xl font-bold text-amber-600">{lateCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Checked in after start</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{tBilingual("Checked in after start", "ከመጀመሪያ በኋላ የገቡ")}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Excused Absence</span>
+              <span className="text-xs font-semibold text-slate-500">{tBilingual("Excused Absence", "ፈቃድ ያላቸው")}</span>
               <Award className="h-4 w-4 text-sky-500" />
             </div>
             <p className="mt-2 text-2xl font-bold text-sky-600">{excusedCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Authorized permits</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{tBilingual("Authorized permits", "የተፈቀደላቸው")}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Attendance Rate</span>
+              <span className="text-xs font-semibold text-slate-500">{tBilingual("Attendance Rate", "የተሳትፎ ምጣኔ")}</span>
               <FileCheck className="h-4 w-4 text-indigo-500" />
             </div>
             <p className="mt-2 text-2xl font-bold text-indigo-600">{attendanceRate}%</p>
@@ -418,7 +423,7 @@ export default function TrainerAttendancePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search learner by name or email…"
+              placeholder={tBilingual("Search learner by name or email…", "ተማሪ በስም ወይም ኢሜይል ይፈልጉ…")}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
             />
           </div>
@@ -431,11 +436,11 @@ export default function TrainerAttendancePage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
               >
-                <option value="ALL">All Statuses ({studentRoster.length})</option>
-                <option value="PRESENT">Present ({presentCount})</option>
-                <option value="LATE">Late ({lateCount})</option>
-                <option value="ABSENT">Absent ({absentCount})</option>
-                <option value="EXCUSED">Excused ({excusedCount})</option>
+                <option value="ALL">{tBilingual("All Statuses", "ሁሉም ሁኔታዎች")} ({studentRoster.length})</option>
+                <option value="PRESENT">{tBilingual("Present", "የተገኙ")} ({presentCount})</option>
+                <option value="LATE">{tBilingual("Late", "የዘገዩ")} ({lateCount})</option>
+                <option value="ABSENT">{tBilingual("Absent", "የቀሩ")} ({absentCount})</option>
+                <option value="EXCUSED">{tBilingual("Excused", "ፈቃድ")} ({excusedCount})</option>
               </select>
             </div>
 
@@ -477,13 +482,27 @@ export default function TrainerAttendancePage() {
           ) : filteredRoster.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users className="h-10 w-10 mx-auto text-slate-300 mb-2" />
-              <p className="text-sm font-semibold text-slate-700">No learners found</p>
+              <p className="text-sm font-semibold text-slate-700">
+                {tBilingual("No learners found", "ምንም ተማሪዎች አልተገኙም")}
+              </p>
               <p className="text-xs text-slate-400 mt-0.5">
-                No learners match the current filter or are enrolled in this course session.
+                {tBilingual(
+                  "No learners match the current filter or are enrolled in this course session.",
+                  "ከአሁኑ ማጣሪያ ጋር የሚዛመድ ወይም በዚህ ክፍለ-ጊዜ የተመዘገበ ተማሪ የለም።"
+                )}
               </p>
             </div>
           ) : (
-            <Table columns={["Learner Name", "Account / Email", "Check-in Details", "Stay & %", "Current Status", "Manage Attendance"]}>
+            <Table
+              columns={[
+                tBilingual("Learner Name", "የተማሪ ስም"),
+                tBilingual("Account / Email", "መለያ / ኢሜይል"),
+                tBilingual("Check-in Details", "የመግቢያ ዝርዝር"),
+                tBilingual("Stay & %", "የቆይታ ጊዜ እና %"),
+                tBilingual("Current Status", "የአሁን ሁኔታ"),
+                tBilingual("Manage Attendance", "ክትትል አስተዳድር"),
+              ]}
+            >
               {pageItems.map((learner) => {
                 const isLoading = actionLoadingId === learner.userId;
                 const sessionDur = activeSession?.durationMinutes || 30;
@@ -636,7 +655,15 @@ export default function TrainerAttendancePage() {
           )}
         </div>
         {!loadingAttendance && filteredRoster.length > 0 ? (
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 25, 50, 100]}
+          />
         ) : null}
       </div>
 

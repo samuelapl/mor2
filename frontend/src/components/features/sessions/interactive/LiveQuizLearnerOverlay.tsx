@@ -5,7 +5,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Sparkles,
+  FileQuestion,
   Send,
   HelpCircle,
   BarChart2,
@@ -338,7 +338,7 @@ export function LiveQuizLearnerOverlay({
           className="flex items-center gap-2.5 rounded-2xl border border-indigo-500/50 bg-slate-900/95 px-4 py-2.5 text-white shadow-2xl backdrop-blur-md hover:bg-slate-800 transition cursor-pointer"
         >
           <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
-            <Sparkles className="h-3.5 w-3.5" />
+            <FileQuestion className="h-3.5 w-3.5" />
           </span>
           <div className="text-left">
             <div className="flex items-center gap-1.5">
@@ -391,7 +391,7 @@ export function LiveQuizLearnerOverlay({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 shadow-2xs">
-                <Sparkles className="h-3.5 w-3.5" />
+                <FileQuestion className="h-3.5 w-3.5" />
               </span>
               <div className="min-w-0">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 truncate block">

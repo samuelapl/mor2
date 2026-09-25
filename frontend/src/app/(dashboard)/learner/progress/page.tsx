@@ -7,6 +7,7 @@ import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Table, Td } from "@/components/ui/Table";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 export default function ProgressPage() {
   const router = useRouter();
   const { courses, lang, currentUser } = useLms();
+  const { t, tBilingual } = useTranslation();
   const me = currentUser?.id ?? "";
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -36,13 +38,16 @@ export default function ProgressPage() {
     }))
     .sort((a, b) => a.percent - b.percent);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(rows, 6);
 
   return (
     <PageShell
       role="learner"
-      title={tr(lang, "progress")}
-      description="Your completion progress across all enrolled courses."
+      title={tBilingual("My Progress", "የእኔ ሂደት")}
+      description={tBilingual(
+        "Your completion progress across all enrolled courses.",
+        "በሁሉም የተመዘገቡባቸው ኮርሶች የማጠናቀቂያ ሂደትዎ።"
+      )}
     >
       <div className="mb-6 flex justify-end">
         <LanguageToggle />
@@ -53,7 +58,10 @@ export default function ProgressPage() {
           <CardSkeleton count={4} />
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No courses" description="Enrolled courses will appear here." />
+        <EmptyState
+          title={tBilingual("No courses", "ምንም ኮርሶች የሉም")}
+          description={tBilingual("Enrolled courses will appear here.", "የተመዘገቡባቸው ኮርሶች እዚህ ይታያሉ።")}
+        />
       ) : (
         <div className="space-y-3">
           {pageItems.map(({ course, data, percent }) => {
@@ -180,7 +188,15 @@ export default function ProgressPage() {
           })}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
       {learnCourse ? (
         <LearnCourseModal
           open={learnCourse !== null}

@@ -18,7 +18,7 @@ import {
   Minus,
   Plus,
   Presentation,
-  Sparkles,
+  MousePointerClick,
   Trash2,
   Upload,
   Video,
@@ -552,7 +552,7 @@ export function StepCurriculum({
       case "PRESENTATION":
         return <Presentation className={cn(size, "text-amber-600")} />;
       case "INTERACTIVE":
-        return <Sparkles className={cn(size, "text-violet-600")} />;
+        return <MousePointerClick className={cn(size, "text-violet-600")} />;
       case "EXTERNAL_LINK":
         return <ExternalLink className={cn(size, "text-blue-600")} />;
       case "ASSIGNMENT":
@@ -1233,7 +1233,7 @@ export function StepCurriculum({
                                       }}
                                       className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs"
                                     >
-                                      <Sparkles className="h-3.5 w-3.5" /> Assessment
+                                      <Award className="h-3.5 w-3.5" /> Assessment
                                     </button>
                                   </div>
                                 </div>
@@ -1374,7 +1374,7 @@ export function StepCurriculum({
                       onClick={() => addLesson(mod.id, "ASSESSMENT", "Module Assessment")}
                       className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 shadow-2xs"
                     >
-                      <Sparkles className="h-4 w-4" /> Add Assessment
+                      <Award className="h-4 w-4" /> Add Assessment
                     </Button>
                   </div>
                 </div>

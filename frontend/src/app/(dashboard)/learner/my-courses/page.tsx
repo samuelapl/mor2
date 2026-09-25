@@ -7,6 +7,7 @@ import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +19,7 @@ import { Pagination } from "@/components/ui/Pagination";
 
 export default function LearnerCoursesPage() {
   const { courses, lang, currentUser, ready } = useLms();
+  const { t, tBilingual } = useTranslation();
   const me = currentUser?.id ?? "";
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -34,13 +36,13 @@ export default function LearnerCoursesPage() {
     [enrolled, progress],
   );
 
-  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(rows, 6);
 
   return (
     <PageShell
       role="learner"
-      title={tr(lang, "myCourses")}
-      description="Courses you are enrolled in."
+      title={tBilingual("My Courses", "የእኔ ኮርሶች")}
+      description={tBilingual("Courses you are enrolled in.", "የተመዘገቡባቸው ኮርሶች።")}
     >
       <div className="mb-6 flex justify-end">
         <LanguageToggle />
@@ -52,8 +54,8 @@ export default function LearnerCoursesPage() {
         </div>
       ) : enrolled.length === 0 ? (
         <EmptyState
-          title="No enrolled courses"
-          description="Browse the catalog to enroll in courses."
+          title={tBilingual("No enrolled courses", "ምንም የተመዘገቡባቸው ኮርሶች የሉም")}
+          description={tBilingual("Browse the catalog to enroll in courses.", "በኮርሶች ለመመዝገብ ካታሎጉን ያስሱ።")}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -65,7 +67,7 @@ export default function LearnerCoursesPage() {
               progress={loading ? 0 : percent}
               extraBadge={
                 done ? (
-                  <Badge variant="green">{tr(lang, "completed")}</Badge>
+                  <Badge variant="green">{tBilingual("Completed", "የተጠናቀቀ")}</Badge>
                 ) : (
                   <Badge variant="blue">{percent}%</Badge>
                 )
@@ -80,14 +82,14 @@ export default function LearnerCoursesPage() {
                       className="border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                      {tr(lang, "completed")}
+                      {tBilingual("Completed", "የተጠናቀቀ")}
                     </Button>
                   </Link>
                 ) : (
                   <Link href={`/learner/courses/${course.id}/learn`}>
                     <Button size="sm">
                       <PlayCircle className="h-3.5 w-3.5" />
-                      Continue
+                      {tBilingual("Continue", "ቀጥል")}
                     </Button>
                   </Link>
                 )}
@@ -95,7 +97,7 @@ export default function LearnerCoursesPage() {
                   <Link href="/learner/certificates">
                     <Button size="sm" variant="outline">
                       <Award className="h-3.5 w-3.5" />
-                      {tr(lang, "certificates")}
+                      {tBilingual("Certificates", "የምስክር ወረቀቶች")}
                     </Button>
                   </Link>
                 ) : null}
@@ -104,7 +106,15 @@ export default function LearnerCoursesPage() {
           ))}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
     </PageShell>
   );
 }

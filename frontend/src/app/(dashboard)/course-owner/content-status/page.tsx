@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Eye, Send } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import { Table, Td } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +16,7 @@ import { FilterBar } from "@/components/ui/FilterBar";
 
 export default function ContentStatusPage() {
   const { courses, submitForApproval } = useLms();
+  const { t, tBilingual } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -31,30 +33,33 @@ export default function ContentStatusPage() {
       );
     });
   }, [courses, search, status]);
-  const { page, totalPages, setPage, pageItems } = usePagination(filtered, 5);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filtered, 5);
 
   return (
     <PageShell
       role="course_owner"
-      title="Content Status"
-      description="Monitor the approval pipeline and administrator rejection feedback."
+      title={tBilingual("Content Status", "የይዘት ሁኔታ")}
+      description={tBilingual(
+        "Monitor the approval pipeline and administrator rejection feedback.",
+        "የማረጋገጫ ሂደቱን እና የአስተዳዳሪ ግብረመልስን ይከታተሉ።"
+      )}
     >
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search courses or feedback…"
+        searchPlaceholder={tBilingual("Search courses or feedback…", "ኮርሶችን ወይም ግብረመልስን ይፈልጉ…")}
         selects={[
           {
             id: "status",
-            label: "Status",
+            label: tBilingual("Status", "ሁኔታ"),
             value: status,
             onChange: setStatus,
             options: [
-              { value: "all", label: "All" },
-              { value: "draft", label: "Draft" },
-              { value: "under_review", label: "Pending approval" },
-              { value: "approved", label: "Approved" },
-              { value: "rejected", label: "Rejected" },
+              { value: "all", label: tBilingual("All", "ሁሉም") },
+              { value: "draft", label: tBilingual("Draft", "ረቂቅ") },
+              { value: "under_review", label: tBilingual("Pending approval", "ማረጋገጫ በመጠባበቅ ላይ") },
+              { value: "approved", label: tBilingual("Approved", "የጸደቀ") },
+              { value: "rejected", label: tBilingual("Rejected", "ውድቅ የተደረገ") },
             ],
           },
         ]}
@@ -66,9 +71,20 @@ export default function ContentStatusPage() {
       />
 
       {filtered.length === 0 ? (
-        <EmptyState title="No courses" description="Nothing matches the current filters." />
+        <EmptyState
+          title={tBilingual("No courses", "ምንም ኮርሶች የሉም")}
+          description={tBilingual("Nothing matches the current filters.", "ከአሁኑ ማጣሪያዎች ጋር የሚዛመድ ምንም ነገር የለም።")}
+        />
       ) : (
-        <Table columns={["Course", "Approval status", "Publish status", "Admin feedback", ""]}>
+        <Table
+          columns={[
+            tBilingual("Course", "ኮርስ"),
+            tBilingual("Approval status", "የማረጋገጫ ሁኔታ"),
+            tBilingual("Publish status", "የህትመት ሁኔታ"),
+            tBilingual("Admin feedback", "የአስተዳዳሪ ግብረመልስ"),
+            "",
+          ]}
+        >
           {pageItems.map((course) => (
             <tr key={course.id}>
               <Td>
@@ -82,7 +98,9 @@ export default function ContentStatusPage() {
               </Td>
               <Td>
                 <Badge variant={course.published ? "green" : "slate"}>
-                  {course.published ? "Published" : "Not published"}
+                  {course.published
+                    ? tBilingual("Published", "የታተመ")
+                    : tBilingual("Not published", "ያልታተመ")}
                 </Badge>
               </Td>
               <Td className="max-w-[260px]">
@@ -90,7 +108,7 @@ export default function ContentStatusPage() {
                   <span className="text-xs text-red-600">{course.rejectionReason}</span>
                 ) : course.lastRejectionReason ? (
                   <span className="text-xs text-amber-700">
-                    Previous: {course.lastRejectionReason}
+                    {tBilingual("Previous:", "ቀዳሚ:")} {course.lastRejectionReason}
                   </span>
                 ) : (
                   <span className="text-xs text-slate-400">—</span>
@@ -100,12 +118,14 @@ export default function ContentStatusPage() {
                 <div className="flex justify-end gap-2">
                   <Button size="sm" variant="outline" onClick={() => setSelectedId(course.id)}>
                     <Eye className="h-3.5 w-3.5" />
-                    Details
+                    {tBilingual("Details", "ዝርዝሮች")}
                   </Button>
                   {course.status === "draft" || course.status === "rejected" ? (
                     <Button size="sm" onClick={() => void submitForApproval(course.id)}>
                       <Send className="h-3.5 w-3.5" />
-                      {course.status === "rejected" ? "Resubmit" : "Submit"}
+                      {course.status === "rejected"
+                        ? tBilingual("Resubmit", "እንደገና አስገባ")
+                        : tBilingual("Submit", "አስገባ")}
                     </Button>
                   ) : null}
                 </div>
@@ -114,7 +134,15 @@ export default function ContentStatusPage() {
           ))}
         </Table>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
 
       <CourseDetailModal
         open={selectedId !== null}

@@ -9,6 +9,8 @@ import { MOCK_ACCOUNTS, MOCK_PASSWORD } from "@/constants/auth";
 import { ROLE_LABELS, ROLE_PATHS } from "@/constants/roles";
 import { ROLE_ICONS } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import LanguageToggle from "@/components/shared/LanguageToggle";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
 export default function LoginPage() {
   const router = useRouter();
   const { login, ready } = useLms();
+  const { tBilingual, tRole } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -62,17 +65,20 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to home
-        </Link>
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {tBilingual("Back to home", "ወደ ዋና ገጽ ተመለስ")}
+          </Link>
+          <LanguageToggle />
+        </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           <div className="text-center">
-            <Link href="/" title="Back to home" className="inline-block transition-opacity hover:opacity-80">
+            <Link href="/" title={tBilingual("Back to home", "ወደ ዋና ገጽ ተመለስ")} className="inline-block transition-opacity hover:opacity-80">
               <Image
                 src="/logo.jpg"
                 alt="Ministry of Revenues"
@@ -82,17 +88,17 @@ export default function LoginPage() {
               />
             </Link>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-              Sign in to MoR LMS
+              {tBilingual("Sign in to MoR LMS", "ወደ ገቢዎች ሚ/ር LMS ይግቡ")}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              Staff demo accounts or a learner registration.
+              {tBilingual("Staff demo accounts or a learner registration.", "የሰራተኞች ማሳያ መለያዎች ወይም የተማሪ ምዝገባ።")}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className={labelClass}>
-                Email address
+                {tBilingual("Email address", "የኢሜይል አድራሻ")}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -115,13 +121,13 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className={labelClass}>
-                  Password
+                  {tBilingual("Password", "የይለፍ ቃል")}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-[11px] font-semibold text-indigo-500 transition-colors hover:text-indigo-700"
                 >
-                  Forgot password?
+                  {tBilingual("Forgot password?", "የይለፍ ቃል ረሱ?")}
                 </Link>
               </div>
               <div className="relative">
@@ -156,11 +162,11 @@ export default function LoginPage() {
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span>Signing in…</span>
+                  <span>{tBilingual("Signing in…", "በመግባት ላይ…")}</span>
                 </>
               ) : (
                 <>
-                  <span>Sign in</span>
+                  <span>{tBilingual("Sign in", "ግባ")}</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -168,9 +174,9 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-4 text-center text-sm text-slate-500">
-            Non-staff user?{" "}
+            {tBilingual("Non-staff user?", "ሰራተኛ አይደሉም?")}{" "}
             <Link href="/register" className="font-semibold text-indigo-500 hover:text-indigo-700">
-              Create an account
+              {tBilingual("Create an account", "መለያ ፍጠር")}
             </Link>
           </p>
 
@@ -184,7 +190,7 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-slate-200" />
               <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:text-indigo-500">
                 <KeyRound className="h-3.5 w-3.5" />
-                Demo accounts
+                {tBilingual("Demo accounts", "የማሳያ መለያዎች")}
                 <ChevronDown
                   className={cn(
                     "h-3.5 w-3.5 transition-transform duration-200",
@@ -220,7 +226,7 @@ export default function LoginPage() {
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate text-xs font-semibold text-slate-800">
-                            {ROLE_LABELS[account.role]}
+                            {tRole(account.role)}
                           </span>
                           <span className="block truncate text-[11px] text-slate-500">
                             {account.email} · {account.password}
@@ -236,7 +242,10 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-4 text-center text-[11px] text-slate-400">
-          New registrations require administrator approval before the first sign-in.
+          {tBilingual(
+            "New registrations require administrator approval before the first sign-in.",
+            "አዳዲስ ምዝገባዎች ከመጀመሪያው መግቢያ በፊት የአስተዳዳሪ ማረጋገጫ ያስፈልጋቸዋል።"
+          )}
         </p>
       </div>
     </main>

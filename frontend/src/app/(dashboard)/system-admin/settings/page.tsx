@@ -7,10 +7,12 @@ import { useLms } from "@/lib/lms-store";
 import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { cn } from "@/lib/utils";
 
 export default function SystemSettingsPage() {
   const { lang, setLang } = useLms();
+  const { tBilingual } = useTranslation();
   const [sessionTimeout, setSessionTimeout] = useState("60");
   const [notifications, setNotifications] = useState(true);
   const [openRegistration, setOpenRegistration] = useState(false);
@@ -76,8 +78,11 @@ export default function SystemSettingsPage() {
   return (
     <PageShell
       role="system_admin"
-      title="System Settings"
-      description="Configure platform defaults, institutional security, and system preferences."
+      title={tBilingual("System Settings", "የስርዓት ቅንብሮች")}
+      description={tBilingual(
+        "Configure platform defaults, institutional security, and system preferences.",
+        "የመድረኩን ነባሪዎች፣ ተቋማዊ ደህንነት እና የስርዓት ምርጫዎችን ያዋቅሩ።"
+      )}
     >
       <div className="max-w-2xl space-y-6 pb-8">
         {errorMessage && (
@@ -89,9 +94,14 @@ export default function SystemSettingsPage() {
         {/* General System Information */}
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">System name</label>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              {tBilingual("System name", "የስርዓቱ ስም")}
+            </label>
             <input
-              value="Ministry of Revenues — Learning Management System"
+              value={tBilingual(
+                "Ministry of Revenues — Learning Management System",
+                "የገቢዎች ሚኒስቴር — የትምህርት ማኔጅመንት ስርዓት"
+              )}
               readOnly
               className={cn(inputClass, "bg-slate-50")}
             />
@@ -99,20 +109,20 @@ export default function SystemSettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                Default language
+                {tBilingual("Default language", "ነባሪ ቋንቋ")}
               </label>
               <select
                 value={lang}
                 onChange={(event) => setLang(event.target.value as "en" | "am")}
                 className={inputClass}
               >
-                <option value="en">English</option>
+                <option value="en">English (እንግሊዝኛ)</option>
                 <option value="am">አማርኛ (Amharic)</option>
               </select>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                Session timeout (minutes)
+                {tBilingual("Session timeout (minutes)", "የክፍለ-ጊዜ ማብቂያ (በደቂቃዎች)")}
               </label>
               <input
                 type="number"
@@ -130,20 +140,29 @@ export default function SystemSettingsPage() {
         <div className="divide-y divide-slate-100/80 rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
           {[
             {
-              label: "Email notifications",
-              description: "Send email updates and session reminders to users and trainers.",
+              label: tBilingual("Email notifications", "የኢሜይል ማሳወቂያዎች"),
+              description: tBilingual(
+                "Send email updates and session reminders to users and trainers.",
+                "ለተጠቃሚዎች እና አሰልጣኞች የኢሜይል ዝማኔዎችን እና የክፍለ-ጊዜ ማስታወሻዎችን ይላኩ።"
+              ),
               value: notifications,
               set: setNotifications,
             },
             {
-              label: "Open registration",
-              description: "Allow new users to self-register via the login page.",
+              label: tBilingual("Open registration", "ክፍት ምዝገባ"),
+              description: tBilingual(
+                "Allow new users to self-register via the login page.",
+                "አዲስ ተጠቃሚዎች በመግቢያ ገጹ በኩል ራሳቸውን እንዲመዘግቡ ይፍቀዱ።"
+              ),
               value: openRegistration,
               set: setOpenRegistration,
             },
             {
-              label: "SSO / e-services integration",
-              description: "Single sign-on with the MoR eServices portal.",
+              label: tBilingual("SSO / e-services integration", "የ SSO / የኢ-አገልግሎቶች ቅንጅት"),
+              description: tBilingual(
+                "Single sign-on with the MoR eServices portal.",
+                "ከገቢዎች ሚኒስቴር የኢ-አገልግሎቶች መግቢያ ጋር የተዋሃደ አንድ ወጥ መግቢያ (SSO)።"
+              ),
               value: ssoEnabled,
               set: setSSOEnabled,
             },
@@ -174,12 +193,14 @@ export default function SystemSettingsPage() {
         <div className="flex items-center gap-3">
           <Button onClick={save} disabled={saving} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
             <Save className="h-4 w-4" />
-            {saving ? "Saving settings…" : "Save Settings"}
+            {saving
+              ? tBilingual("Saving settings…", "ቅንብሮችን በማስቀመጥ ላይ…")
+              : tBilingual("Save Settings", "ቅንብሮችን አስቀምጥ")}
           </Button>
           {saved && (
             <Badge variant="green" className="flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              Settings updated successfully
+              {tBilingual("Settings updated successfully", "ቅንብሮች በተሳካ ሁኔታ ተዘምነዋል")}
             </Badge>
           )}
         </div>

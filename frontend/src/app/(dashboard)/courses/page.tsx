@@ -20,11 +20,15 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
+import { useTranslation } from "@/lib/i18n/useTranslation";
+
 type StatusTab = "all" | "draft" | "under_review" | "approved" | "published" | "archived";
 
 export default function CoursesPage() {
   const { courses, currentUser, ready } = useLms();
   const { can } = usePermissions();
+  const { lang, t } = useTranslation();
+  const isAmharic = lang === "am";
   const canCreate = can("course.create");
   const canViewAssignedOnly = can("course.view.assigned") && !can("course.view.all");
 
@@ -66,42 +70,52 @@ export default function CoursesPage() {
     });
   }, [courses, search, statusTab, category]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(filtered, 6);
+  const { page, totalPages, setPage, pageItems, totalItems, pageSize, setPageSize } = usePagination(filtered, 6);
 
   const tabs: { id: StatusTab; label: string; count: number }[] = [
-    { id: "all", label: "All", count: counts.all },
-    { id: "draft", label: "Draft", count: counts.draft },
-    { id: "under_review", label: "Pending Approval", count: counts.under_review },
-    { id: "approved", label: "Approved", count: counts.approved },
-    { id: "published", label: "Published", count: counts.published },
-    { id: "archived", label: "Archived", count: counts.archived },
+    { id: "all", label: isAmharic ? "ሁሉም" : "All", count: counts.all },
+    { id: "draft", label: isAmharic ? "ረቂቅ" : "Draft", count: counts.draft },
+    { id: "under_review", label: isAmharic ? "ማጽደቅ የሚጠብቅ" : "Pending Approval", count: counts.under_review },
+    { id: "approved", label: isAmharic ? "የጸደቀ" : "Approved", count: counts.approved },
+    { id: "published", label: isAmharic ? "የታተመ" : "Published", count: counts.published },
+    { id: "archived", label: isAmharic ? "የተቀመጠ" : "Archived", count: counts.archived },
   ];
 
   const emptyStateCopy = canViewAssignedOnly
     ? {
-        title: "No courses assigned to you yet",
-        description: "Once a Training Administrator assigns you to a course, it will appear here.",
+        title: isAmharic ? "እስካሁን የተመደበልዎ ኮርስ የለም" : "No courses assigned to you yet",
+        description: isAmharic
+          ? "የስልጠና አስተዳዳሪ ወደ ኮርስ ሲመድብዎ እዚህ ይታያል።"
+          : "Once a Training Administrator assigns you to a course, it will appear here.",
       }
     : canCreate
       ? {
-          title: "No courses yet",
-          description: "Create one to get started, or adjust the filters above.",
+          title: isAmharic ? "እስካሁን ምንም ኮርስ የለም" : "No courses yet",
+          description: isAmharic
+            ? "ለመጀመር አዲስ ኮርስ ይፍጠሩ ወይም ማጣሪያዎችን ያስተካክሉ።"
+            : "Create one to get started, or adjust the filters above.",
         }
       : {
-          title: "No courses match",
-          description: "Adjust the filters above to see other courses.",
+          title: isAmharic ? "ምንም የተዛመደ ኮርስ የለም" : "No courses match",
+          description: isAmharic
+            ? "ሌሎች ኮርሶችን ለማየት ከላይ ያሉትን ማጣሪያዎች ያስተካክሉ።"
+            : "Adjust the filters above to see other courses.",
         };
 
   return (
     <PageShell
       role={currentUser?.role ?? "course_owner"}
-      title="Courses"
-      description="Browse, review, and manage courses. What you see here is scoped to your role."
+      title={isAmharic ? "ኮርሶች" : "Courses"}
+      description={
+        isAmharic
+          ? "ኮርሶችን ያስሱ፣ ይገምግሙ እና ያስተዳድሩ። እዚህ የሚያዩት እንደ ሚናዎ የተወሰነ ነው።"
+          : "Browse, review, and manage courses. What you see here is scoped to your role."
+      }
       actions={
         canCreate ? (
           <Button onClick={() => setCreateOpen(true)} className="shadow-sm">
             <Plus className="h-4 w-4" />
-            Create Course
+            {isAmharic ? "አዲስ ኮርስ ፍጠር" : "Create Course"}
           </Button>
         ) : undefined
       }
@@ -199,7 +213,15 @@ export default function CoursesPage() {
           ))}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       <CourseDetailModal
         open={selectedId !== null}

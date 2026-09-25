@@ -6,6 +6,7 @@ import { BookPlus, CheckCircle2, PlayCircle } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +19,7 @@ import { COURSE_CATEGORIES } from "@/constants/course-categories";
 
 export default function LearnerCatalogPage() {
   const { courses, currentUser, lang, enrollSelf } = useLms();
+  const { t, tBilingual } = useTranslation();
   const me = currentUser?.id;
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -45,7 +47,7 @@ export default function LearnerCatalogPage() {
     });
   }, [courses, search, category]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(available, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(available, 6);
 
   const enroll = async (courseId: string) => {
     const result = await enrollSelf(courseId);
@@ -55,8 +57,8 @@ export default function LearnerCatalogPage() {
   return (
     <PageShell
       role="learner"
-      title="Available Courses"
-      description="Published courses you can enroll in."
+      title={tBilingual("Available Courses", "የሚገኙ ኮርሶች")}
+      description={tBilingual("Published courses you can enroll in.", "ሊመዘገቡባቸው የሚችሉ የታተሙ ኮርሶች።")}
     >
       <div className="mb-4 flex justify-end">
         <LanguageToggle />
@@ -70,15 +72,15 @@ export default function LearnerCatalogPage() {
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search available courses…"
+        searchPlaceholder={tBilingual("Search available courses…", "የሚገኙ ኮርሶችን ይፈልጉ…")}
         selects={[
           {
             id: "category",
-            label: "Category",
+            label: tBilingual("Category", "ምድብ"),
             value: category,
             onChange: setCategory,
             options: [
-              { value: "all", label: "All" },
+              { value: "all", label: tBilingual("All Categories", "ሁሉም ምድቦች") },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
@@ -92,8 +94,11 @@ export default function LearnerCatalogPage() {
 
       {available.length === 0 ? (
         <EmptyState
-          title="No published courses"
-          description="Approved courses appear here after an administrator publishes them."
+          title={tBilingual("No published courses", "ምንም የታተሙ ኮርሶች የሉም")}
+          description={tBilingual(
+            "Approved courses appear here after an administrator publishes them.",
+            "የጸደቁ ኮርሶች በአስተዳዳሪ ከታተሙ በኋላ እዚህ ይታያሉ።"
+          )}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -125,12 +130,12 @@ export default function LearnerCatalogPage() {
                         className="border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        Completed
+                        {tBilingual("Completed", "የተጠናቀቀ")}
                       </Button>
                     ) : (
                       <Button size="sm" variant="outline">
                         <PlayCircle className="h-3.5 w-3.5" />
-                        Continue
+                        {tBilingual("Continue", "ቀጥል")}
                       </Button>
                     )}
                   </Link>
@@ -143,7 +148,7 @@ export default function LearnerCatalogPage() {
                     }}
                   >
                     <BookPlus className="h-3.5 w-3.5" />
-                    Enroll
+                    {tBilingual("Enroll", "ተመዝገብ")}
                   </Button>
                 )}
               </CourseCard>
@@ -151,7 +156,15 @@ export default function LearnerCatalogPage() {
           })}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {openCourseId ? (
         <CatalogCourseModal

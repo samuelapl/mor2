@@ -8,7 +8,7 @@ import {
   Loader2,
   Save,
   Send,
-  Sparkles,
+  BookmarkCheck,
 } from "lucide-react";
 import type { Course, CourseLevel, Question, QuestionType, Quiz, UploadedResource } from "@/types";
 import { Button } from "@/components/ui/Button";
@@ -704,7 +704,7 @@ export function CourseCreationWizard({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-4 py-3 text-xs text-indigo-950 shadow-2xs">
           <div className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
-              <Sparkles className="h-3.5 w-3.5" />
+              <BookmarkCheck className="h-3.5 w-3.5" />
             </span>
             <div>
               <p className="font-semibold text-indigo-900">Restored unfinished course draft</p>

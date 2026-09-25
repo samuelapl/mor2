@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Languages } from "lucide-react";
+import { Check, Globe } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { cn } from "@/lib/utils";
 import type { Lang } from "@/types";
 
-const OPTIONS: { key: Lang; label: string; native: string }[] = [
-  { key: "en", label: "English", native: "EN" },
-  { key: "am", label: "Amharic", native: "አማ" },
-];
-
 export default function PreferencesTab() {
   const { lang, updateLocale } = useLms();
+  const { tBilingual } = useTranslation();
   const [saving, setSaving] = useState<Lang | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const options: { key: Lang; label: string; native: string }[] = [
+    { key: "en", label: tBilingual("English", "እንግሊዝኛ"), native: "English (EN)" },
+    { key: "am", label: tBilingual("Amharic", "አማርኛ"), native: "አማርኛ (AM)" },
+  ];
 
   const handleSelect = async (option: Lang) => {
     if (option === lang || saving) return;
@@ -22,18 +24,23 @@ export default function PreferencesTab() {
     setError(null);
     const result = await updateLocale(option);
     setSaving(null);
-    if (!result.ok) setError(result.message ?? "Failed to update language.");
+    if (!result.ok) {
+      setError(
+        result.message ??
+          tBilingual("Failed to update language.", "ቋንቋውን ማዘመን አልተቻለም።")
+      );
+    }
   };
 
   return (
     <div className="space-y-4">
       <div>
         <p className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
-          <Languages className="h-4 w-4 text-slate-400" />
-          Display language
+          <Globe className="h-4 w-4 text-slate-400" />
+          {tBilingual("Display language", "የመተግበሪያው ቋንቋ")}
         </p>
         <div className="grid grid-cols-2 gap-3">
-          {OPTIONS.map((option) => (
+          {options.map((option) => (
             <button
               key={option.key}
               type="button"
@@ -57,7 +64,10 @@ export default function PreferencesTab() {
       </div>
       {error ? <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p> : null}
       <p className="text-xs text-slate-400">
-        Your language choice is saved to your account and applied the next time you sign in.
+        {tBilingual(
+          "Your language choice is saved to your account and applied the next time you sign in.",
+          "የመረጡት ቋንቋ በመለያዎ ውስጥ ይቀመጣል እንዲሁም በቀጣይ ሲገቡ በቀጥታ ይተገበራል።"
+        )}
       </p>
     </div>
   );

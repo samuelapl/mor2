@@ -46,7 +46,7 @@ export function PendingCourseApprovals() {
     });
   }, [courses, userName, search, category]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(pending, 5);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(pending, 5);
   const targetCourseData = courses.find((c) => c.id === rejectId);
 
   const confirmReject = async () => {
@@ -158,7 +158,15 @@ export function PendingCourseApprovals() {
           ))}
         </Table>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
 
       <CourseDetailModal
         open={selectedId !== null}

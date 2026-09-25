@@ -24,6 +24,7 @@ import { deleteLiveSession, fetchLiveSessions, setSessionStatus, sendSessionAtte
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import PageSection from "@/components/shared/PageSection";
 import { Button } from "@/components/ui/Button";
@@ -41,6 +42,7 @@ import { toast } from "@/lib/toast";
 export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
   const { can, canAny } = usePermissions();
+  const { tBilingual } = useTranslation();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -186,8 +188,11 @@ export default function TrainerSessionsPage() {
   return (
     <PageShell
       role={currentUser?.role ?? "trainer"}
-      title="My Sessions"
-      description="View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance."
+      title={tBilingual("My Sessions", "የእኔ የቀጥታ ክፍለ-ጊዜዎች")}
+      description={tBilingual(
+        "View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance.",
+        "ለተመደቡልዎት ኮርሶች የታቀዱ የቀጥታ ስልጠናዎችን ይመልከቱ እና ያካሂዱ፣ እንዲሁም የተሳታፊዎችን ክትትል ይመርምሩ።"
+      )}
     >
       {/* FILTER BAR */}
       <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
@@ -198,7 +203,7 @@ export default function TrainerSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search session title, course code…"
+                placeholder={tBilingual("Search session title, course code…", "የክፍለ-ጊዜ ርዕስ፣ የኮርስ ኮድ ይፈልጉ…")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -212,7 +217,9 @@ export default function TrainerSessionsPage() {
               aria-label="Filter by course"
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
-              <option value="ALL">All Courses ({assignedCourses.length > 0 ? assignedCourses.length : courses.length})</option>
+              <option value="ALL">
+                {tBilingual("All Courses", "ሁሉም ኮርሶች")} ({assignedCourses.length > 0 ? assignedCourses.length : courses.length})
+              </option>
               {(assignedCourses.length > 0 ? assignedCourses : courses).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} · {c.title}
@@ -227,16 +234,21 @@ export default function TrainerSessionsPage() {
                   key={st}
                   type="button"
                   onClick={() => setSelectedStatusFilter(st)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${selectedStatusFilter === st
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${
+                    selectedStatusFilter === st
                       ? "bg-white text-slate-900 shadow-xs font-semibold"
                       : "text-slate-600 hover:text-slate-900"
-                    }`}
+                  }`}
                 >
                   {st === "ALL"
-                    ? "All Status"
+                    ? tBilingual("All Status", "ሁሉም ሁኔታ")
                     : st === "SCHEDULED"
-                      ? "Upcoming"
-                      : st.charAt(0) + st.slice(1).toLowerCase()}
+                    ? tBilingual("Upcoming", "መጪ")
+                    : st === "LIVE"
+                    ? tBilingual("Live", "በቀጥታ")
+                    : st === "COMPLETED"
+                    ? tBilingual("Completed", "የተጠናቀቀ")
+                    : tBilingual("Cancelled", "የተሰረዘ")}
                 </button>
               ))}
             </div>
@@ -389,6 +401,10 @@ export default function TrainerSessionsPage() {
                 page={upcomingRows.page}
                 totalPages={upcomingRows.totalPages}
                 onPageChange={upcomingRows.setPage}
+                totalItems={upcomingRows.totalItems}
+                pageSize={upcomingRows.pageSize}
+                onPageSizeChange={upcomingRows.setPageSize}
+                pageSizeOptions={[6, 12, 24, 48]}
               />
             </>
           )}
@@ -398,13 +414,19 @@ export default function TrainerSessionsPage() {
       {/* Past Sessions */}
       {(selectedStatusFilter === "ALL" ? past.length > 0 : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
         <PageSection
-          title="Past Sessions"
-          description="Completed training sessions with verifiable attendance records."
+          title={tBilingual("Past Sessions", "ያለፉ ክፍለ-ጊዜዎች")}
+          description={tBilingual(
+            "Completed training sessions with verifiable attendance records.",
+            "የተረጋገጠ የተሳትፎ መዝገብ ያላቸው የተጠናቀቁ የስልጠና ክፍለ-ጊዜዎች።"
+          )}
         >
           {past.length === 0 ? (
             <EmptyState
-              title="No past sessions found"
-              description="No completed or cancelled sessions match your filter criteria."
+              title={tBilingual("No past sessions found", "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም")}
+              description={tBilingual(
+                "No completed or cancelled sessions match your filter criteria.",
+                "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።"
+              )}
             />
           ) : (
             <>
@@ -458,7 +480,7 @@ export default function TrainerSessionsPage() {
                         className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                       >
                         <ClipboardCheck className="h-3.5 w-3.5" />
-                        Attendance Records
+                        {tBilingual("Attendance Records", "የተሳትፎ መዝገቦች")}
                       </Button>
                     )}
                   </div>
@@ -468,6 +490,10 @@ export default function TrainerSessionsPage() {
                 page={pastRows.page}
                 totalPages={pastRows.totalPages}
                 onPageChange={pastRows.setPage}
+                totalItems={pastRows.totalItems}
+                pageSize={pastRows.pageSize}
+                onPageSizeChange={pastRows.setPageSize}
+                pageSizeOptions={[6, 12, 24, 48]}
               />
             </>
           )}

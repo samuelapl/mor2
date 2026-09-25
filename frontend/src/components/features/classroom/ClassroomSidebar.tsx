@@ -14,12 +14,14 @@ import {
   Headphones,
   Lock,
   PlayCircle,
-  Sparkles,
+  GraduationCap,
+  Layers,
 } from "lucide-react";
 import type { Course, Lesson, Module } from "@/types";
 import type { ApiCourseProgress } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import type { ClassroomActiveContent, ClassroomFlatItem } from "./types";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 interface ClassroomSidebarProps {
   course: Course;
@@ -65,6 +67,8 @@ export function ClassroomSidebar({
   onSelectItem,
   isOpen,
 }: ClassroomSidebarProps) {
+  const { tBilingual } = useTranslation();
+
   // Map flat items by key for instant lookup
   const itemsByKey = useMemo(() => {
     const map = new Map<string, ClassroomFlatItem>();
@@ -90,10 +94,10 @@ export function ClassroomSidebar({
       <div className="p-4 border-b border-slate-100 bg-slate-50/60 shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Course Curriculum
+            {tBilingual("Course Curriculum", "የኮርስ ስርዓተ-ትምህርት")}
           </p>
           <span className="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-            {course.modules.length} Modules
+            {tBilingual(`${course.modules.length} Modules`, `${course.modules.length} ሞጁሎች`)}
           </span>
         </div>
       </div>
@@ -123,8 +127,12 @@ export function ClassroomSidebar({
                 <BookOpen className="h-3.5 w-3.5" />
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-bold truncate">Course Overview & Objectives</p>
-                <p className="text-[11px] text-slate-400">Orientation & Syllabus</p>
+                <p className="text-xs font-bold truncate">
+                  {tBilingual("Course Overview & Objectives", "የኮርስ አጠቃላይ እይታና ግቦች")}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {tBilingual("Orientation & Syllabus", "መግቢያና ሲላበስ")}
+                </p>
               </div>
             </div>
             {isCourseOverviewActive ? (
@@ -181,10 +189,10 @@ export function ClassroomSidebar({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-900 truncate">
-                      Module {mIdx + 1}: {cleanModuleTitle(mod.title)}
+                      {tBilingual("Module", "ሞጁል")} {mIdx + 1}: {cleanModuleTitle(mod.title)}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {completedLessons}/{totalLessons} lessons completed
+                      {tBilingual(`${completedLessons}/${totalLessons} lessons completed`, `${completedLessons}/${totalLessons} ትምህርቶች ተጠናቀዋል`)}
                     </p>
                   </div>
                 </div>
@@ -224,13 +232,15 @@ export function ClassroomSidebar({
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Sparkles
+                          <Layers
                             className={cn(
                               "h-3.5 w-3.5 shrink-0",
                               isModOverviewActive ? "text-indigo-600" : "text-indigo-500",
                             )}
                           />
-                          <span className="truncate">Module Overview & Objectives</span>
+                          <span className="truncate">
+                            {tBilingual("Module Overview & Objectives", "የሞጁሉ አጠቃላይ እይታና ግቦች")}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isModOverviewActive ? (
@@ -277,7 +287,7 @@ export function ClassroomSidebar({
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {renderContentIcon(lesson.contentType)}
                             <span className="truncate">
-                              Lesson {mIdx + 1}.{lIdx + 1}: {cleanLessonTitle(lesson.title)}
+                              {tBilingual("Lesson", "ትምህርት")} {mIdx + 1}.{lIdx + 1}: {cleanLessonTitle(lesson.title)}
                             </span>
                           </div>
 
@@ -366,7 +376,7 @@ export function ClassroomSidebar({
                             >
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                 <BookOpenCheck className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">Lesson Assessment</span>
+                                <span className="truncate">{tBilingual("Lesson Assessment", "የትምህርት ምዘና")}</span>
                               </div>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -375,7 +385,7 @@ export function ClassroomSidebar({
                                 ) : lessonQuizItem.completed ? (
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                                 ) : (
-                                  <span className="text-[10px] font-bold">Quiz</span>
+                                  <span className="text-[10px] font-bold">{tBilingual("Quiz", "ፈተና")}</span>
                                 )}
                               </div>
                             </button>
@@ -405,9 +415,8 @@ export function ClassroomSidebar({
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Award className="h-4 w-4 shrink-0" />
-                          <span className="truncate">Module Assessment</span>
+                          <span className="truncate">{tBilingual("Module Assessment", "የሞጁል ምዘና")}</span>
                         </div>
-
 
                         <div className="flex items-center gap-1 shrink-0">
                           {!moduleQuizItem.unlocked ? (
@@ -416,7 +425,7 @@ export function ClassroomSidebar({
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider">
-                              Take Exam
+                              {tBilingual("Take Exam", "ፈተና ውሰድ")}
                             </span>
                           )}
                         </div>
@@ -453,10 +462,14 @@ export function ClassroomSidebar({
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
+                    <GraduationCap className="h-4 w-4 shrink-0 text-amber-300" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold truncate">Final Course Assessment</p>
-                      <p className="text-[10px] opacity-80 mt-0.5">Required for Certification</p>
+                      <p className="text-xs font-bold truncate">
+                        {tBilingual("Final Course Assessment", "የኮርስ ማጠቃለያ ፈተና")}
+                      </p>
+                      <p className="text-[10px] opacity-80 mt-0.5">
+                        {tBilingual("Required for Certification", "ለሰርተፊኬት የሚያስፈልግ")}
+                      </p>
                     </div>
                   </div>
 
@@ -467,7 +480,7 @@ export function ClassroomSidebar({
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                     ) : (
                       <span className="text-[10px] font-bold uppercase bg-white/20 px-2 py-0.5 rounded">
-                        Final
+                        {tBilingual("Final", "ማጠቃለያ")}
                       </span>
                     )}
                   </div>
@@ -512,9 +525,13 @@ export function ClassroomSidebar({
                     <Award className="h-4 w-4 shrink-0" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold truncate">Certificate of Completion</p>
+                    <p className="text-xs font-bold truncate">
+                      {tBilingual("Certificate of Completion", "የማጠናቀቂያ ሰርተፊኬት")}
+                    </p>
                     <p className="text-[10px] opacity-75 mt-0.5 truncate">
-                      {isUnlocked ? "Verified & Ready to View" : "Complete course to unlock"}
+                      {isUnlocked
+                        ? tBilingual("Verified & Ready to View", "የተረጋገጠና ለመመልከት ዝግጁ")
+                        : tBilingual("Complete course to unlock", "ለመክፈት ኮርሱን ያጠናቁ")}
                     </p>
                   </div>
                 </div>

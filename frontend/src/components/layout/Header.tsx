@@ -14,6 +14,8 @@ import {
 import type { ApiNotification } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import AccountModal from "@/components/shared/account/AccountModal";
+import LanguageToggle from "@/components/shared/LanguageToggle";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 function getInitials(label: string) {
   return label
@@ -24,13 +26,15 @@ function getInitials(label: string) {
     .toUpperCase();
 }
 
-interface ApiNotificationListItem extends ApiNotification {}
+interface ApiNotificationListItem extends ApiNotification { }
 
 export default function Header() {
   const pathname = usePathname();
   const { currentUser } = useLms();
+  const { lang, tRole } = useTranslation();
+  const isAmharic = lang === "am";
   const role = currentUser?.role ?? getRoleFromPath(pathname);
-  const roleLabel = role ? ROLE_LABELS[role] : "Dashboard";
+  const roleLabel = role ? tRole(role) : (isAmharic ? "ዳሽቦርድ" : "Dashboard");
   const demoUser = currentUser;
 
   const [unread, setUnread] = useState(0);
@@ -94,24 +98,29 @@ export default function Header() {
     setUnread(0);
   };
 
-  const title = (n: ApiNotificationListItem) => n.titleEn ?? n.titleAm;
+  const title = (n: ApiNotificationListItem) => (isAmharic ? (n.titleAm ?? n.titleEn) : (n.titleEn ?? n.titleAm));
+  const bodyText = (n: ApiNotificationListItem) => (isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm));
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-end gap-4 border-b border-slate-200 bg-white px-6">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
       <div className="flex items-center gap-3">
         <div className="relative hidden md:block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search courses, users..."
+            placeholder={isAmharic ? "ኮርሶችን፣ ተጠቃሚዎችን ፈልግ..." : "Search courses, users..."}
             className="h-9 w-64 rounded-xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none backdrop-blur transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
           />
         </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <LanguageToggle />
 
         <div className="relative" ref={panelRef}>
           <button
             type="button"
-            aria-label="Notifications"
+            aria-label={isAmharic ? "ማሳወቂያዎች" : "Notifications"}
             onClick={() => {
               if (!open) void load();
               setOpen((prev) => !prev);
@@ -129,20 +138,22 @@ export default function Header() {
           {open ? (
             <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">Notifications</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {isAmharic ? "ማሳወቂያዎች" : "Notifications"}
+                </p>
                 <button
                   type="button"
                   onClick={() => void readAll()}
                   className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
-                  Mark all read
+                  {isAmharic ? "ሁሉንም አንብብ" : "Mark all read"}
                 </button>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-slate-400">
-                    No notifications yet
+                    {isAmharic ? "ምንም ማሳወቂያዎች የሉም" : "No notifications yet"}
                   </p>
                 ) : (
                   notifications.map((n) => (
@@ -165,9 +176,9 @@ export default function Header() {
                         <span className="block text-xs font-semibold text-slate-800">
                           {title(n)}
                         </span>
-                        {(n.bodyEn ?? n.bodyAm) ? (
+                        {bodyText(n) ? (
                           <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">
-                            {n.bodyEn ?? n.bodyAm}
+                            {bodyText(n)}
                           </span>
                         ) : null}
                         <span className="mt-1 block text-[10px] text-slate-400">

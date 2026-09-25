@@ -10,6 +10,7 @@ import { QuizStage } from "./QuizStage";
 import { CourseOverviewStage } from "./CourseOverviewStage";
 import { ModuleOverviewStage } from "./ModuleOverviewStage";
 import { CertificateStage } from "./CertificateStage";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 interface ClassroomStageProps {
   activeContent: ClassroomActiveContent | null;
@@ -32,10 +33,17 @@ export function ClassroomStage({
   onItemComplete,
   onNavigateNext,
 }: ClassroomStageProps) {
+  const { tBilingual } = useTranslation();
+
   if (!activeContent) {
     return (
       <div className="flex h-full items-center justify-center p-8 text-center text-slate-400">
-        <p className="text-sm">Select a lesson, topic, or quiz from the curriculum sidebar.</p>
+        <p className="text-sm">
+          {tBilingual(
+            "Select a lesson, topic, or quiz from the curriculum sidebar.",
+            "ከስርዓተ-ትምህርቱ ማውጫ ትምህርት፣ ርዕስ ወይም ፈተና ይምረጡ።"
+          )}
+        </p>
       </div>
     );
   }

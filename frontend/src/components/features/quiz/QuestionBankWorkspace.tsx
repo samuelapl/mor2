@@ -30,8 +30,7 @@ import {
   RefreshCw,
   Search,
   Settings,
-  Sparkles,
-  Trash2,
+    Trash2,
   X,
 } from "lucide-react";
 import { useLms } from "@/lib/lms-store";
@@ -925,8 +924,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   return (
     <PageShell
       role={role}
-      title="Question Bank & Quiz Builder"
-      description="Create reusable question repositories, organize questions by topic, and assemble quizzes in a dedicated full-screen workspace."
+      title={{
+        en: "Question Bank & Quiz Builder",
+        am: "የጥያቄ ባንክ እና የፈተና ማዘጋጃ",
+      }}
+      description={{
+        en: "Create reusable question repositories, organize questions by topic, and assemble quizzes in a dedicated full-screen workspace.",
+        am: "እንደገና ጥቅም ላይ የሚውሉ የጥያቄዎች ማከማቻ ያዘጋጁ፣ ጥያቄዎችን በይዘት ያደራጁ እና የተሟላ ፈተናዎችን በቀላሉ ያዘጋጁ።",
+      }}
       actions={
         <div className="flex items-center gap-2">
           <Button
@@ -1653,6 +1658,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               page={questionsPage.page}
               totalPages={questionsPage.totalPages}
               onPageChange={questionsPage.setPage}
+              totalItems={questionsPage.totalItems}
+              pageSize={questionsPage.pageSize}
+              onPageSizeChange={questionsPage.setPageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
           </div>
         </div>
@@ -1706,6 +1715,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 page={assessmentsPage.page}
                 totalPages={assessmentsPage.totalPages}
                 onPageChange={assessmentsPage.setPage}
+                totalItems={assessmentsPage.totalItems}
+                pageSize={assessmentsPage.pageSize}
+                onPageSizeChange={assessmentsPage.setPageSize}
+                pageSizeOptions={[6, 12, 24, 48]}
               />
             </>
           )}

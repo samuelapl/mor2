@@ -30,8 +30,7 @@ import {
   Pencil,
   Presentation,
   ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+  } from "lucide-react";
 import type { CourseLevel, Question, UploadedResource } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";

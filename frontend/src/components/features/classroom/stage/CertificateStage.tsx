@@ -7,8 +7,7 @@ import {
   Download,
   Lock,
   Printer,
-  Sparkles,
-  ExternalLink,
+    ExternalLink,
   Copy,
   Check,
   ShieldCheck,
@@ -281,7 +280,7 @@ export function CertificateStage({
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            Official Certificate of Completion <Sparkles className="h-5 w-5 text-amber-500 shrink-0" />
+            Official Certificate of Completion <Award className="h-5 w-5 text-amber-500 shrink-0" />
           </h2>
           <p className="text-xs md:text-sm text-slate-600">
             Congratulations, <strong className="text-slate-800">{recipientName}</strong>! Your

@@ -11,7 +11,7 @@ import {
   Clock,
   ExternalLink,
   PlayCircle,
-  Sparkles,
+  GraduationCap,
   Video,
 } from "lucide-react";
 import { fetchUpcomingSessions } from "@/lib/api/monitoring";
@@ -103,7 +103,7 @@ export default function LearnerDashboardPage() {
     >
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <Sparkles className="h-4 w-4 text-amber-500" />
+          <GraduationCap className="h-4 w-4 text-amber-500" />
           <span>
             {currentUser?.firstName || currentUser?.name
               ? `Welcome back, ${currentUser.firstName || currentUser.name}!`
@@ -119,27 +119,27 @@ export default function LearnerDashboardPage() {
           icon={BookOpen}
           label={tr(lang, "myCourses")}
           value={enrolled.length}
-          hint="Enrolled programs"
+          hint={lang === "am" ? "የተመዘገቡባቸው ፕሮግራሞች" : "Enrolled programs"}
         />
         <StatCard
           icon={PlayCircle}
           label={tr(lang, "inProgress")}
           value={inProgress.length}
-          hint="Active courses"
+          hint={lang === "am" ? "በሂደት ላይ ያሉ ኮርሶች" : "Active courses"}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           icon={CheckCircle2}
           label={tr(lang, "completed")}
           value={completed.length}
-          hint="Finished courses"
+          hint={lang === "am" ? "ያጠናቀቋቸው ኮርሶች" : "Finished courses"}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={Award}
           label={tr(lang, "averageProgress")}
           value={`${avgProgress}%`}
-          hint="Platform average"
+          hint={lang === "am" ? "አጠቃላይ አማካይ" : "Platform average"}
           iconClassName="bg-amber-50 text-amber-600"
         />
       </div>
@@ -205,7 +205,9 @@ export default function LearnerDashboardPage() {
                     className="bg-white text-indigo-950 font-semibold hover:bg-indigo-50 shadow-md shadow-white/10"
                   >
                     <PlayCircle className="h-4 w-4 text-indigo-700" />
-                    {nextUpPercent > 0 ? "Resume Course" : "Start Course"}
+                    {nextUpPercent > 0
+                      ? (lang === "am" ? "ትምህርት ቀጥል" : "Resume Course")
+                      : (lang === "am" ? "ትምህርት ጀምር" : "Start Course")}
                   </Button>
                 </Link>
               ) : null}

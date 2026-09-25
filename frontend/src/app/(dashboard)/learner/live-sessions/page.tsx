@@ -5,9 +5,10 @@ import { CheckCircle, ExternalLink, MonitorPlay, RefreshCw, Search, Video, X } f
 import { fetchUpcomingSessions, selfCheckIn } from "@/lib/api/monitoring";
 import type { ApiLiveSession } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
-import { useLms } from "@/lib/lms-store";
 import { tr } from "@/constants/labels";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useLms } from "@/lib/lms-store";
 import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ import { Users } from "lucide-react";
 
 export default function LearnerLiveSessionsPage() {
   const { lang, courses } = useLms();
+  const { tBilingual } = useTranslation();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [loadingJoinId, setLoadingJoinId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function LearnerLiveSessionsPage() {
     }));
   }, [filteredSessions]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(rows, 6);
 
   const handleJoin = (session: ApiLiveSession) => {
     setError(null);
@@ -83,8 +85,11 @@ export default function LearnerLiveSessionsPage() {
   return (
     <PageShell
       role="learner"
-      title={tr(lang, "liveSessions")}
-      description="Upcoming live sessions for the courses you are enrolled in."
+      title={tBilingual("Live Sessions", "የቀጥታ ክፍለ-ጊዜዎች")}
+      description={tBilingual(
+        "Upcoming live sessions for the courses you are enrolled in.",
+        "ለተመዘገቡባቸው ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።"
+      )}
     >
       {/* FILTER BAR */}
       <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
@@ -95,7 +100,7 @@ export default function LearnerLiveSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search session or course code…"
+                placeholder={tBilingual("Search session or course code…", "ክፍለ-ጊዜ ወይም የኮርስ ኮድ ይፈልጉ…")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -109,7 +114,7 @@ export default function LearnerLiveSessionsPage() {
               aria-label="Filter by course"
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
-              <option value="ALL">All Courses ({courses.length})</option>
+              <option value="ALL">{tBilingual("All Courses", "ሁሉም ኮርሶች")} ({courses.length})</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} · {c.title}
@@ -130,13 +135,13 @@ export default function LearnerLiveSessionsPage() {
                 className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
               >
                 <X className="h-3.5 w-3.5" />
-                Clear
+                {tBilingual("Clear", "አጽዳ")}
               </Button>
             )}
 
             <Button variant="ghost" size="sm" onClick={load} className="h-8 gap-1 text-xs text-slate-600">
               <RefreshCw className="h-3.5 w-3.5" />
-              Refresh
+              {tBilingual("Refresh", "አድስ")}
             </Button>
             <LanguageToggle />
           </div>
@@ -158,11 +163,21 @@ export default function LearnerLiveSessionsPage() {
 
       {rows.length === 0 ? (
         <EmptyState
-          title={hasActiveFilters ? "No matching live sessions" : "No live sessions scheduled"}
+          title={
+            hasActiveFilters
+              ? tBilingual("No matching live sessions", "ምንም የሚዛመዱ የቀጥታ ክፍለ-ጊዜዎች የሉም")
+              : tBilingual("No live sessions scheduled", "ምንም የታቀዱ የቀጥታ ክፍለ-ጊዜዎች የሉም")
+          }
           description={
             hasActiveFilters
-              ? "No live classroom sessions match your current search or course filter. Try resetting filters."
-              : "Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here."
+              ? tBilingual(
+                  "No live classroom sessions match your current search or course filter. Try resetting filters.",
+                  "ከአሁኑ ፍለጋ ወይም ማጣሪያ ጋር የሚዛመድ የቀጥታ ስልጠና የለም።"
+                )
+              : tBilingual(
+                  "Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here.",
+                  "ለተመዘገቡባቸው ኮርሶች መጪ የቀጥታ ክፍለ-ጊዜዎች እዚህ ይታያሉ።"
+                )
           }
         />
       ) : (
@@ -183,36 +198,45 @@ export default function LearnerLiveSessionsPage() {
                     title="View session attendees and verification status"
                   >
                     <Users className="h-3.5 w-3.5 text-indigo-600" />
-                    Attendees
+                    {tBilingual("Attendees", "ተሳታፊዎች")}
                   </Button>
 
                   {isCheckedIn && (
                     <Badge variant="green" dot>
-                      Present
+                      {tBilingual("Present", "የተገኘ")}
                     </Badge>
                   )}
                   <Button
                     size="sm"
                     disabled={isLoading}
                     onClick={() => handleJoin(row.session)}
-                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${isCheckedIn
+                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${
+                      isCheckedIn
                         ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
                         : "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs"
-                      }`}
+                    }`}
                   >
                     <MonitorPlay className="h-3.5 w-3.5" />
                     {isLoading
-                      ? "Connecting…"
+                      ? tBilingual("Connecting…", "በመገናኘት ላይ…")
                       : isCheckedIn
-                        ? "Enter Room"
-                        : tr(lang, "join")}
+                      ? tBilingual("Enter Room", "ወደ ክፍሉ ግባ")
+                      : tBilingual("Join", "ተቀላቀል")}
                     <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
                   </Button>
                 </div>
               );
             }}
           />
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[6, 12, 24, 48]}
+          />
         </>
       )}
 

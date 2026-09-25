@@ -341,11 +341,47 @@ function questionToApi(q: {
   };
 }
 
+export const LOCALE_STORAGE_KEY = "eltms_locale";
+
+export function getStoredLocale(): Lang {
+  if (typeof window === "undefined") return "en";
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (stored === "am" || stored === "en") return stored;
+  } catch {}
+  return "en";
+}
+
+export function persistLocale(locale: Lang): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    if (typeof document !== "undefined" && document.documentElement) {
+      document.documentElement.lang = locale;
+    }
+  } catch {}
+}
+
 export function LmsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLangState] = useState<Lang>("en");
+  const setLang = useCallback((nextLang: Lang) => {
+    setLangState(nextLang);
+    persistLocale(nextLang);
+  }, []);
+
+  // Synchronize stored language on initial client mount
+  useEffect(() => {
+    const stored = getStoredLocale();
+    if (stored) {
+      setLangState(stored);
+      if (typeof document !== "undefined" && document.documentElement) {
+        document.documentElement.lang = stored;
+      }
+    }
+  }, []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
 
@@ -478,6 +514,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       setCurrentUser(res.user);
       currentUserRef.current = res.user;
       setUserNames({ [res.user.id]: res.user.name });
+      const storedLocale = getStoredLocale();
+      if (storedLocale) {
+        setLangState(storedLocale);
+        if (res.user.locale && res.user.locale !== storedLocale) {
+          void updateMyProfile({ locale: storedLocale }).catch(() => {});
+        }
+      } else if (res.user.locale === "am" || res.user.locale === "en") {
+        setLangState(res.user.locale);
+        persistLocale(res.user.locale);
+      }
       await reloadData(res.user);
       return { ok: true, role: res.user.role };
     },
@@ -640,27 +686,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           input.modules && input.modules.length > 0
             ? input.modules
             : [
-                {
-                  title: "Module 1: Introduction",
-                  description: "Course module",
-                  objectives: "Introduction to course concepts",
-                  durationMinutes: 35,
-                  lessons: [
-                    {
-                      title: "Welcome and course overview",
-                      content: "",
-                      durationMin: 15,
-                      subLessons: [],
-                    },
-                    {
-                      title: "Key concepts and definitions",
-                      content: "",
-                      durationMin: 20,
-                      subLessons: [],
-                    },
-                  ],
-                },
-              ];
+              {
+                title: "Module 1: Introduction",
+                description: "Course module",
+                objectives: "Introduction to course concepts",
+                durationMinutes: 35,
+                lessons: [
+                  {
+                    title: "Welcome and course overview",
+                    content: "",
+                    durationMin: 15,
+                    subLessons: [],
+                  },
+                  {
+                    title: "Key concepts and definitions",
+                    content: "",
+                    durationMin: 20,
+                    subLessons: [],
+                  },
+                ],
+              },
+            ];
 
         for (const mod of modulesToCreate) {
           await createModule(
@@ -896,22 +942,25 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const updateLocale: LmsContextValue["updateLocale"] = useCallback(
     async (locale) => {
-      try {
-        await updateMyProfile({ locale });
-        setLang(locale);
-        const current = currentUserRef.current;
-        if (current) {
-          const merged = { ...current, locale };
-          setCurrentUser(merged);
-          currentUserRef.current = merged;
+      // 1. Immediately apply the language change locally so UI updates with zero latency
+      setLangState(locale);
+      persistLocale(locale);
+
+      // 2. If user is signed in, sync preference to profile in background
+      const current = currentUserRef.current;
+      if (current) {
+        const merged = { ...current, locale };
+        setCurrentUser(merged);
+        currentUserRef.current = merged;
+
+        try {
+          await updateMyProfile({ locale });
+        } catch (err) {
+          console.warn("Could not sync language preference to remote profile:", err);
         }
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, "Failed to update language preference."),
-        };
       }
+
+      return { ok: true };
     },
     [],
   );
@@ -1001,27 +1050,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           input.modules && input.modules.length > 0
             ? input.modules
             : [
-                {
-                  title: "Module 1: Introduction",
-                  description: "Course module",
-                  objectives: "Introduction to course concepts",
-                  durationMinutes: 35,
-                  lessons: [
-                    {
-                      title: "Welcome and course overview",
-                      content: "",
-                      durationMin: 15,
-                      subLessons: [],
-                    },
-                    {
-                      title: "Key concepts and definitions",
-                      content: "",
-                      durationMin: 20,
-                      subLessons: [],
-                    },
-                  ],
-                },
-              ];
+              {
+                title: "Module 1: Introduction",
+                description: "Course module",
+                objectives: "Introduction to course concepts",
+                durationMinutes: 35,
+                lessons: [
+                  {
+                    title: "Welcome and course overview",
+                    content: "",
+                    durationMin: 15,
+                    subLessons: [],
+                  },
+                  {
+                    title: "Key concepts and definitions",
+                    content: "",
+                    durationMin: 20,
+                    subLessons: [],
+                  },
+                ],
+              },
+            ];
 
         await replaceCurriculum(
           courseId,

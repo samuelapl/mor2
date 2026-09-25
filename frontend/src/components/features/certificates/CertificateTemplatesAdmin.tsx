@@ -16,8 +16,7 @@ import {
   QrCode,
   Send,
   ShieldCheck,
-  Sparkles,
-  Stamp,
+    Stamp,
   Trash2,
   Type,
   Upload,
@@ -73,7 +72,7 @@ export function CertificateTemplatesAdmin() {
   const [fields, setFields] = useState<ApiCertificateField[]>([]);
   const [uploadingAssetKey, setUploadingAssetKey] = useState<string | null>(null);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(templates, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(templates, 6);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -600,7 +599,15 @@ export function CertificateTemplatesAdmin() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {/* Visual Template Customizer & Drag-and-Drop Canvas Overlay */}
       <WorkspaceDetailOverlay

@@ -286,7 +286,7 @@ export function EnrollmentForm() {
   }, [roster, statusFilter, searchQuery, sortBy]);
 
   // Pagination for roster
-  const { page, totalPages, setPage, pageItems } = usePagination(filteredRoster, 10);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filteredRoster, 10);
 
   const formatEnrollDate = (dateStr?: string) => {
     if (!dateStr) return "—";
@@ -636,12 +636,16 @@ export function EnrollmentForm() {
             </div>
 
             {/* Pagination Strip */}
-            <div className="flex items-center justify-between border-t border-slate-100 px-6 py-3 bg-slate-50/40">
-              <span className="text-xs text-slate-500">
-                Showing {Math.min(filteredRoster.length, (page - 1) * 10 + 1)}–
-                {Math.min(filteredRoster.length, page * 10)} of {filteredRoster.length} enrolled students
-              </span>
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <div className="border-t border-slate-100 px-6 py-3 bg-slate-50/40">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[5, 10, 25, 50]}
+              />
             </div>
           </>
         )}

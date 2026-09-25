@@ -12,7 +12,7 @@ import {
   Search,
   Plus,
   Trash2,
-  Sparkles,
+  FileQuestion,
   Users,
   AlertCircle,
   RotateCcw,
@@ -1313,7 +1313,7 @@ export function LiveQuizTrainerControl({
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/80">
-              <Sparkles className="h-4 w-4" />
+              <FileQuestion className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -1713,7 +1713,7 @@ export function LiveQuizTrainerControl({
                 {isRevealed && (activeQuiz.explanationEn || (activeQuiz as any).explanation) && (
                   <div className="rounded-xl border border-indigo-200 bg-white/95 p-3.5 text-xs space-y-1.5 shadow-2xs">
                     <div className="flex items-center gap-1.5 font-bold text-indigo-950">
-                      <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                      <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
                       <span>Answer Explanation (Revealed to Learners):</span>
                     </div>
                     <p className="text-slate-700 leading-relaxed pl-5 font-medium">
@@ -1905,7 +1905,7 @@ export function LiveQuizTrainerControl({
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <HelpCircle className="h-3.5 w-3.5" />
                   Instant Custom Question
                 </button>
                 <button
@@ -1961,7 +1961,7 @@ export function LiveQuizTrainerControl({
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-3 shadow-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-indigo-600" />
+                    <ListOrdered className="h-4 w-4 text-indigo-600" />
                     <span className="text-xs font-bold text-indigo-950">
                       Quiz Questions Ready to Broadcast ({stagedQueue.length} Question{stagedQueue.length > 1 ? "s" : ""})
                     </span>

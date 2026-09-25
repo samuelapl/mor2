@@ -7,6 +7,7 @@ import { uploadAvatar } from "@/lib/api/files";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import type { ApiUser } from "@/lib/api/types";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
@@ -25,6 +26,7 @@ interface ProfileTabProps {
 
 export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabProps) {
   const { updateProfile } = useLms();
+  const { tBilingual } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({ firstName: "", lastName: "", phone: "", tin: "" });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
         toast.error(msg);
       } else if (profile) {
         onUpdated({ ...profile, avatarUrl: url });
-        toast.success("Profile avatar updated successfully!");
+        toast.success(tBilingual("Profile avatar updated successfully!", "የመገለጫ ፎቶ በተሳካ ሁኔታ ተቀይሯል!"));
       }
     } catch {
       setError("Failed to upload avatar.");
@@ -74,8 +76,9 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
     event.preventDefault();
     setError(null);
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError("First and last name are required.");
-      toast.error("First and last name are required.");
+      const msg = tBilingual("First and last name are required.", "ስም እና የአባት ስም ያስፈልጋሉ።");
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setSaving(true);
@@ -87,7 +90,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
     });
     setSaving(false);
     if (!result.ok) {
-      const msg = result.message ?? "Failed to update profile.";
+      const msg = result.message ?? tBilingual("Failed to update profile.", "መገለጫን ማደስ አልተሳካም።");
       setError(msg);
       toast.error(msg);
       return;
@@ -101,7 +104,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
         tin: form.tin.trim() || null,
       });
     }
-    toast.success("Profile updated successfully!");
+    toast.success(tBilingual("Profile updated successfully!", "መገለጫዎ በተሳካ ሁኔታ ተሻሽሏል!"));
   };
 
   if (loading) {
@@ -133,7 +136,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
             className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 transition hover:text-indigo-600 disabled:opacity-50"
-            aria-label="Change avatar"
+            aria-label={tBilingual("Change avatar", "ፎቶ ቀይር")}
           >
             {uploadingAvatar ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -159,7 +162,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>First name</label>
+          <label className={labelClass}>{tBilingual("First name", "ስም")}</label>
           <input
             className={inputClass}
             value={form.firstName}
@@ -167,7 +170,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
           />
         </div>
         <div>
-          <label className={labelClass}>Last name</label>
+          <label className={labelClass}>{tBilingual("Last name", "የአባት ስም")}</label>
           <input
             className={inputClass}
             value={form.lastName}
@@ -178,7 +181,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Phone</label>
+          <label className={labelClass}>{tBilingual("Phone", "ስልክ")}</label>
           <input
             className={inputClass}
             value={form.phone}
@@ -187,20 +190,25 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
           />
         </div>
         <div>
-          <label className={labelClass}>TIN</label>
+          <label className={labelClass}>{tBilingual("TIN", "የግብር ከፋይ መለያ (TIN)")}</label>
           <input
             className={inputClass}
             value={form.tin}
             onChange={(e) => setForm((prev) => ({ ...prev, tin: e.target.value }))}
-            placeholder="Taxpayer ID"
+            placeholder={tBilingual("Taxpayer ID", "የግብር ከፋይ መለያ")}
           />
         </div>
       </div>
 
       {error ? <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p> : null}
 
-      <Button type="submit" isLoading={saving} loadingText="Saving changes..." className="gap-2">
-        Save changes
+      <Button
+        type="submit"
+        isLoading={saving}
+        loadingText={tBilingual("Saving changes...", "ለውጦችን በማስቀመጥ ላይ...")}
+        className="gap-2"
+      >
+        {tBilingual("Save changes", "ለውጦችን አስቀምጥ")}
       </Button>
     </form>
   );

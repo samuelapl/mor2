@@ -25,6 +25,7 @@ import { deleteLiveSession, fetchLiveSessions, fetchSessionJoinUrl, setSessionSt
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import PageSection from "@/components/shared/PageSection";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +45,7 @@ import { toast } from "@/lib/toast";
 export default function TrainingAdminSessionsPage() {
   const { courses, users, currentUser } = useLms();
   const { can, canAny } = usePermissions();
+  const { tBilingual } = useTranslation();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -180,13 +182,16 @@ export default function TrainingAdminSessionsPage() {
   return (
     <PageShell
       role={currentUser?.role ?? "training_admin"}
-      title="All Sessions"
-      description="Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses."
+      title={tBilingual("All Sessions", "ሁሉም የቀጥታ ክፍለ-ጊዜዎች")}
+      description={tBilingual(
+        "Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses.",
+        "በሁሉም ኮርሶች የተቋማዊ የቀጥታ ክፍለ-ጊዜዎችን፣ በአሰልጣኝ የሚመሩ ዌቢናሮችን እና ስብሰባዎችን ያቅዱ እና ያስተዳድሩ።"
+      )}
       actions={
         canManageAll ? (
           <Button onClick={() => setScheduleOpen(true)} className="shadow-sm">
             <CalendarPlus className="h-4 w-4" />
-            Schedule Session
+            {tBilingual("Schedule Session", "ክፍለ-ጊዜ መርሐግብር አውጣ")}
           </Button>
         ) : undefined
       }
@@ -200,7 +205,7 @@ export default function TrainingAdminSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search session, course, trainer…"
+                placeholder={tBilingual("Search session, course, trainer…", "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -214,7 +219,7 @@ export default function TrainingAdminSessionsPage() {
               aria-label="Filter by course"
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
-              <option value="ALL">All Courses ({courses.length})</option>
+              <option value="ALL">{tBilingual("All Courses", "ሁሉም ኮርሶች")} ({courses.length})</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} · {c.title}
@@ -236,10 +241,14 @@ export default function TrainingAdminSessionsPage() {
                   }`}
                 >
                   {st === "ALL"
-                    ? "All Status"
+                    ? tBilingual("All Status", "ሁሉም ሁኔታ")
                     : st === "SCHEDULED"
-                    ? "Upcoming"
-                    : st.charAt(0) + st.slice(1).toLowerCase()}
+                    ? tBilingual("Upcoming", "መጪ")
+                    : st === "LIVE"
+                    ? tBilingual("Live", "በቀጥታ")
+                    : st === "COMPLETED"
+                    ? tBilingual("Completed", "የተጠናቀቀ")
+                    : tBilingual("Cancelled", "የተሰረዘ")}
                 </button>
               ))}
             </div>
@@ -292,20 +301,27 @@ export default function TrainingAdminSessionsPage() {
         {/* Upcoming & Active Sessions */}
         {(selectedStatusFilter === "ALL" ? (loading || upcoming.length > 0) : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
           <PageSection
-            title="Upcoming & Active Sessions"
-            description="Scheduled webinars and active classroom meetings awaiting or undergoing delivery."
+            title={tBilingual("Upcoming & Active Sessions", "መጪ እና ንቁ ክፍለ-ጊዜዎች")}
+            description={tBilingual(
+              "Scheduled webinars and active classroom meetings awaiting or undergoing delivery.",
+              "የታቀዱ ዌቢናሮች እና ንቁ የስልጠና ስብሰባዎች።"
+            )}
           >
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : upcoming.length === 0 ? (
               <EmptyState
-                title="No upcoming sessions found"
-                description={hasActiveFilters ? "Try adjusting your search or filters." : "Arrange a new live training session for any course."}
+                title={tBilingual("No upcoming sessions found", "ምንም መጪ ክፍለ-ጊዜዎች አልተገኙም")}
+                description={
+                  hasActiveFilters
+                    ? tBilingual("Try adjusting your search or filters.", "እባክዎን ፍለጋዎን ወይም ማጣሪያዎችዎን ያስተካክሉ።")
+                    : tBilingual("Arrange a new live training session for any course.", "ለማንኛውም ኮርስ አዲስ የቀጥታ ስልጠና ያዘጋጁ።")
+                }
               >
                 {canManageAll && !hasActiveFilters ? (
                   <Button size="sm" onClick={() => setScheduleOpen(true)}>
                     <CalendarPlus className="h-4 w-4" />
-                    Schedule Session
+                    {tBilingual("Schedule Session", "ክፍለ-ጊዜ መርሐግብር አውጣ")}
                   </Button>
                 ) : null}
               </EmptyState>
@@ -408,6 +424,10 @@ export default function TrainingAdminSessionsPage() {
                   page={upcomingRows.page}
                   totalPages={upcomingRows.totalPages}
                   onPageChange={upcomingRows.setPage}
+                  totalItems={upcomingRows.totalItems}
+                  pageSize={upcomingRows.pageSize}
+                  onPageSizeChange={upcomingRows.setPageSize}
+                  pageSizeOptions={[5, 10, 20, 50]}
                 />
               </>
             )}
@@ -417,15 +437,15 @@ export default function TrainingAdminSessionsPage() {
         {/* Past Sessions */}
         {(selectedStatusFilter === "ALL" ? (loading || past.length > 0) : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
           <PageSection
-            title="Past Sessions Archive"
-            description="Previously conducted or cancelled training events."
+            title={tBilingual("Past Sessions Archive", "ያለፉ ክፍለ-ጊዜዎች መዝገብ")}
+            description={tBilingual("Previously conducted or cancelled training events.", "ከዚህ በፊት የተካሄዱ ወይም የተሰረዙ የስልጠና ዝግጅቶች።")}
           >
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : past.length === 0 ? (
               <EmptyState
-                title="No past sessions found"
-                description="No completed or cancelled sessions match your filter criteria."
+                title={tBilingual("No past sessions found", "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም")}
+                description={tBilingual("No completed or cancelled sessions match your filter criteria.", "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።")}
               />
             ) : (
               <>
@@ -479,7 +499,7 @@ export default function TrainingAdminSessionsPage() {
                           className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <ClipboardCheck className="h-3.5 w-3.5" />
-                          Attendance Records
+                          {tBilingual("Attendance Records", "የተሳትፎ መዝገቦች")}
                         </Button>
                       )}
                     </div>
@@ -489,6 +509,10 @@ export default function TrainingAdminSessionsPage() {
                   page={pastRows.page}
                   totalPages={pastRows.totalPages}
                   onPageChange={pastRows.setPage}
+                  totalItems={pastRows.totalItems}
+                  pageSize={pastRows.pageSize}
+                  onPageSizeChange={pastRows.setPageSize}
+                  pageSizeOptions={[5, 10, 20, 50]}
                 />
               </>
             )}

@@ -30,8 +30,7 @@ import {
   Presentation,
   Send,
   ShieldCheck,
-  Sparkles,
-  Trash2,
+    Trash2,
   UserPlus,
   UserRound,
 } from "lucide-react";

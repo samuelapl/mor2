@@ -7,6 +7,7 @@ import PageShell from "@/components/shared/PageShell";
 import PageSection from "@/components/shared/PageSection";
 import { Button } from "@/components/ui/Button";
 import { ROLE_LABELS, ROLES } from "@/constants/roles";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Role } from "@/types";
 import { toast } from "@/lib/toast";
 
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
 
 export default function RegisterActorPage() {
   const { registerActor } = useLms();
+  const { tBilingual, tRole } = useTranslation();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,45 +81,51 @@ export default function RegisterActorPage() {
   return (
     <PageShell
       role="system_admin"
-      title="Actor Registration"
-      description="Manually register a single actor with any role. The account is created already approved and active — no approval queue."
+      title={tBilingual("Actor Registration", "የተጠቃሚ ምዝገባ")}
+      description={tBilingual(
+        "Manually register a single actor with any role. The account is created already approved and active — no approval queue.",
+        "ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል — የይሁንታ ወረፋ አይጠብቅም።"
+      )}
     >
-      <PageSection title="New actor" description="Fill in the actor's details and choose a role.">
+      <PageSection
+        title={tBilingual("New actor", "አዲስ ተጠቃሚ")}
+        description={tBilingual("Fill in the actor's details and choose a role.", "የተጠቃሚውን ዝርዝሮች ይሙሉ እና ሚና ይምረጡ።")}
+      >
         <form onSubmit={handleSubmit} className="max-w-xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>First name</label>
+              <label className={labelClass}>{tBilingual("First name", "ስም")}</label>
               <input
                 className={inputClass}
                 value={form.firstName}
                 onChange={(e) => update({ firstName: e.target.value })}
-                placeholder="John"
+                placeholder="Abebe"
               />
             </div>
             <div>
-              <label className={labelClass}>Last name</label>
+              <label className={labelClass}>{tBilingual("Last name", "የአባት ስም")}</label>
               <input
                 className={inputClass}
                 value={form.lastName}
                 onChange={(e) => update({ lastName: e.target.value })}
-                placeholder="Doe"
+                placeholder="Kebede"
               />
             </div>
           </div>
 
           <div>
-            <label className={labelClass}>Email</label>
+            <label className={labelClass}>{tBilingual("Email", "ኢሜይል")}</label>
             <input
               type="email"
               className={inputClass}
               value={form.email}
               onChange={(e) => update({ email: e.target.value })}
-              placeholder="john.doe@mor.gov.et"
+              placeholder="abebe.kebede@mor.gov.et"
             />
           </div>
 
           <div>
-            <label className={labelClass}>Phone (optional)</label>
+            <label className={labelClass}>{tBilingual("Phone (optional)", "ስልክ (አማራጭ)")}</label>
             <input
               className={inputClass}
               value={form.phone}
@@ -127,7 +135,7 @@ export default function RegisterActorPage() {
           </div>
 
           <div>
-            <label className={labelClass}>Role</label>
+            <label className={labelClass}>{tBilingual("Role", "ሚና")}</label>
             <select
               className={inputClass}
               value={form.role}
@@ -135,26 +143,26 @@ export default function RegisterActorPage() {
             >
               {ROLES.map((role) => (
                 <option key={role} value={role}>
-                  {ROLE_LABELS[role]}
+                  {tRole(role)}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className={labelClass}>Password</label>
+            <label className={labelClass}>{tBilingual("Password", "የይለፍ ቃል")}</label>
             <input
               type="text"
               className={inputClass}
               value={form.password}
               onChange={(e) => update({ password: e.target.value })}
-              placeholder="Set the actor's initial password"
+              placeholder={tBilingual("Set the actor's initial password", "የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ")}
             />
           </div>
 
-          <Button type="submit" isLoading={submitting} loadingText="Registering actor…" className="w-full justify-center gap-2">
+          <Button type="submit" isLoading={submitting} loadingText={tBilingual("Registering actor…", "ተጠቃሚውን በመመዝገብ ላይ…")} className="w-full justify-center gap-2">
             <UserCog className="h-4 w-4" />
-            Register actor
+            {tBilingual("Register actor", "ተጠቃሚውን መዝግብ")}
           </Button>
         </form>
       </PageSection>

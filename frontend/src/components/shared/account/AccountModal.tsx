@@ -9,15 +9,9 @@ import ProfileTab from "./ProfileTab";
 import SecurityTab from "./SecurityTab";
 import DetailsTab from "./DetailsTab";
 import PreferencesTab from "./PreferencesTab";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type TabKey = "profile" | "security" | "details" | "preferences";
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "profile", label: "Profile" },
-  { key: "security", label: "Security" },
-  { key: "details", label: "Details" },
-  { key: "preferences", label: "Preferences" },
-];
 
 interface AccountModalProps {
   open: boolean;
@@ -28,6 +22,14 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
   const [tab, setTab] = useState<TabKey>("profile");
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(false);
+  const { tBilingual } = useTranslation();
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "profile", label: tBilingual("Profile", "መገለጫ") },
+    { key: "security", label: tBilingual("Security", "ደህንነት") },
+    { key: "details", label: tBilingual("Details", "ዝርዝር መረጃ") },
+    { key: "preferences", label: tBilingual("Preferences", "ምርጫዎች") },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -42,12 +44,15 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Account settings"
-      subtitle="Manage your profile, security, and preferences"
+      title={tBilingual("Account settings", "የመለያ ቅንብሮች")}
+      subtitle={tBilingual(
+        "Manage your profile, security, and preferences",
+        "የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ"
+      )}
       size="lg"
     >
       <div className="mb-5 flex gap-1 border-b border-slate-100 pb-3">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.key}
             type="button"

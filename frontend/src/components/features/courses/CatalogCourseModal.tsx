@@ -12,7 +12,7 @@ import {
   ListChecks,
   Loader2,
   Paperclip,
-  Sparkles,
+  Target,
   UserRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -357,7 +357,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
         {course.objectives ? (
           <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 shadow-xs space-y-2">
             <div className="flex items-center gap-2 text-indigo-900">
-              <Sparkles className="h-4 w-4 text-indigo-600" />
+              <Target className="h-4 w-4 text-indigo-600" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900">
                 Course Learning Objectives & Outcomes
               </h3>

@@ -9,6 +9,7 @@ import { getRoleFromPath } from "@/constants/roles";
 import { navItemsForRole, type NavItem } from "@/constants/navigation";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { cn } from "@/lib/utils";
 import AccountMenu from "@/components/shared/account/AccountMenu";
 
@@ -29,6 +30,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { currentUser, logout } = useLms();
   const { canAny } = usePermissions();
+  const { tNav, t, isAmharic } = useTranslation();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? "learner";
   const navItems = filterNavItems(navItemsForRole(role), canAny);
 
@@ -79,14 +81,16 @@ export default function Sidebar() {
               <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900">
                 MoR LMS
               </p>
-              <p className="truncate text-[11px] text-slate-500">Learning Management System</p>
+              <p className="truncate text-[11px] text-slate-500">
+                {isAmharic ? "የትምህርት አስተዳደር ሥርዓት" : "Learning Management System"}
+              </p>
             </div>
           ) : null}
         </Link>
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? (isAmharic ? "አስፋ" : "Expand sidebar") : (isAmharic ? "አሳንስ" : "Collapse sidebar")}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -96,7 +100,7 @@ export default function Sidebar() {
 
       {!collapsed ? (
         <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Navigation
+          {isAmharic ? "አቅጣጫ መጠቆሚያ" : "Navigation"}
         </p>
       ) : null}
       <nav
@@ -108,6 +112,7 @@ export default function Sidebar() {
         {/* overflow-x-hidden prevents label bleed during the width transition */}
         {navItems.map((item) => {
           const Icon = item.icon;
+          const translatedLabel = tNav(item.label);
 
           if (item.children) {
             const open = isGroupOpen(item);
@@ -117,7 +122,7 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(item.label)}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? translatedLabel : undefined}
                   className={cn(
                     "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     collapsed && "justify-center px-0",
@@ -127,7 +132,7 @@ export default function Sidebar() {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-indigo-500" />
-                  {!collapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+                  {!collapsed ? <span className="flex-1 text-left">{translatedLabel}</span> : null}
                   {!collapsed ? (
                     <ChevronDown
                       className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
@@ -143,12 +148,13 @@ export default function Sidebar() {
                   >
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
+                      const childTranslated = tNav(child.label);
                       const active = child.href ? isActive(child.href) : false;
                       return (
                         <Link
                           key={child.href}
                           href={child.href ?? "#"}
-                          title={collapsed ? child.label : undefined}
+                          title={collapsed ? childTranslated : undefined}
                           className={cn(
                             "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
                             collapsed && "justify-center px-0",
@@ -163,7 +169,7 @@ export default function Sidebar() {
                               active ? "text-white" : "text-slate-400 group-hover:text-indigo-500",
                             )}
                           />
-                          {!collapsed ? child.label : null}
+                          {!collapsed ? childTranslated : null}
                         </Link>
                       );
                     })}
@@ -178,7 +184,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href ?? "#"}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? translatedLabel : undefined}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 collapsed && "justify-center px-0",
@@ -195,7 +201,7 @@ export default function Sidebar() {
                     : "text-slate-400 group-hover:text-indigo-500",
                 )}
               />
-              {!collapsed ? item.label : null}
+              {!collapsed ? translatedLabel : null}
               {active && !collapsed ? (
                 <span className="absolute right-3 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgb(255_255_255/0.8)]" />
               ) : null}
@@ -209,14 +215,14 @@ export default function Sidebar() {
         <Link
           href="/login"
           onClick={() => logout()}
-          title={collapsed ? "Switch role / Sign out" : undefined}
+          title={collapsed ? (isAmharic ? "መለያ ቀይር / ውጣ" : "Switch role / Sign out") : undefined}
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900",
             collapsed && "justify-center px-0",
           )}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed ? "Switch role / Sign out" : null}
+          {!collapsed ? (isAmharic ? "መለያ ቀይር / ውጣ" : "Switch role / Sign out") : null}
         </Link>
       </div>
     </aside>

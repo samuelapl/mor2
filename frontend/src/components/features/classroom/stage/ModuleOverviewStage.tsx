@@ -2,8 +2,7 @@
 
 import {
   BookOpen,
-  Sparkles,
-  Target,
+    Target,
   ArrowRight,
   Layers,
   Clock,

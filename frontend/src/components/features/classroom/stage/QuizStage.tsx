@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, BookOpenCheck, CheckCircle2, Clock, HelpCircle, Lock, RotateCcw, Sparkles } from "lucide-react";
+import { Award, BookOpenCheck, CheckCircle2, Clock, HelpCircle, Lock, RotateCcw, GraduationCap } from "lucide-react";
 import type { ApiAttachedAssessment } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -87,7 +87,7 @@ export function QuizStage({
               <Award className="h-8 w-8" />
             ) : unlocked ? (
               isFinal ? (
-                <Sparkles className="h-8 w-8 text-indigo-600" />
+                <GraduationCap className="h-8 w-8 text-indigo-600" />
               ) : (
                 <BookOpenCheck className="h-8 w-8" />
               )

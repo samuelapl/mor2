@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Table, Td } from "@/components/ui/Table";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
+import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { ROLE_LABELS, ROLES } from "@/constants/roles";
 import { isValidEmail, passwordIssues } from "@/constants/auth";
 import { fetchRolesWithPermissions } from "@/lib/api/permissions";
@@ -179,8 +182,10 @@ function rowErrors(row: RowDraft, roleNames: Set<string>): string[] {
 
 export default function BulkRegisterPage() {
   const { bulkRegisterUsers } = useLms();
+  const { tBilingual } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<RowDraft[]>([]);
+  const { page, totalPages, setPage, pageItems } = usePagination(rows, 10);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -376,17 +381,23 @@ export default function BulkRegisterPage() {
   return (
     <PageShell
       role="system_admin"
-      title="Bulk Register Users"
-      description="Import a CSV of user accounts. Accounts are created approved and active; duplicate emails are skipped."
+      title={tBilingual("Bulk Register Users", "ተጠቃሚዎችን በብዛት መዝግብ")}
+      description={tBilingual(
+        "Import a CSV of user accounts. Accounts are created approved and active; duplicate emails are skipped.",
+        "የተጠቃሚዎችን ዝርዝር በ CSV ፋይል ያስመጡ። መለያዎች በቀጥታ የጸደቁና ንቁ ሆነው ይፈጠራሉ፤ የተደገሙ ኢሜይሎች ይታለፋሉ።"
+      )}
     >
       <PageSection
-        title="Import a spreadsheet"
-        description="Columns: first_name, last_name, email, phone (required) and password, tin, role (optional). A blank password is auto-generated, a blank role means Learner."
+        title={tBilingual("Import a spreadsheet", "የተጠቃሚዎችን ሰነድ አስመጣ")}
+        description={tBilingual(
+          "Columns: first_name, last_name, email, phone (required) and password, tin, role (optional). A blank password is auto-generated, a blank role means Learner.",
+          "አምዶች፡ first_name፣ last_name፣ email፣ phone (ግዴታ) እና password፣ tin፣ role (አማራጭ)። ባዶ ይለፍ ቃል በራሱ ይፈጠራል፤ ባዶ ሚና ማለት ተማሪ ነው።"
+        )}
       >
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
             <Download className="h-3.5 w-3.5" />
-            Download template
+            {tBilingual("Download template", "የቅጽ አብነት አውርድ")}
           </Button>
           <Button
             type="button"
@@ -395,7 +406,7 @@ export default function BulkRegisterPage() {
             onClick={() => fileInputRef.current?.click()}
           >
             <FileSpreadsheet className="h-3.5 w-3.5" />
-            Choose CSV
+            {tBilingual("Choose CSV", "CSV ፋይል ምረጥ")}
           </Button>
           <input
             ref={fileInputRef}
@@ -417,23 +428,33 @@ export default function BulkRegisterPage() {
           </div>
         ) : null}
         <p className="mt-3 text-xs text-slate-400">
-          Columns are matched by header name, so their order doesn&apos;t matter. Roles accepted:{" "}
-          {roleOptions.map((role) => role.label).join(", ")}. Tip: if you edit the file in Excel,
-          format the phone and tin columns as Text so leading zeros are kept.
+          {tBilingual(
+            `Columns are matched by header name, so their order doesn't matter. Roles accepted: ${roleOptions.map((role) => role.label).join(", ")}. Tip: if you edit the file in Excel, format the phone and tin columns as Text so leading zeros are kept.`,
+            `አምዶች በስሞቻቸው ስለሚዛመዱ ቅደም ተከተላቸው ለውጥ አያመጣም። ተቀባይነት ያላቸው ሚናዎች፡ ${roleOptions.map((role) => role.label).join(", ")}። ፍንጭ፡ ፋይሉን በ Excel ካስተካከሉ፣ የመነሻ ዜሮዎች እንዳይጠፉ የስልክ እና የግብር መለያ ቁጥር (TIN) አምዶችን እንደ Text ይቅረጹ።`
+          )}
         </p>
       </PageSection>
 
       {rows.length === 0 ? (
         result ? null : (
           <EmptyState
-            title="No rows loaded"
-            description="Choose a CSV file above to preview its contents before creating accounts."
+            title={tBilingual("No rows loaded", "ምንም ረድፎች አልተጫኑም")}
+            description={tBilingual(
+              "Choose a CSV file above to preview its contents before creating accounts.",
+              "መለያዎችን ከመፍጠርዎ በፊት ይዘቱን ለመገምገም ከላይ የ CSV ፋይል ይምረጡ።"
+            )}
           />
         )
       ) : (
         <PageSection
-          title={`Preview (${rows.length} rows, ${readyRows.length} ready, ${selectedRows.length} selected)`}
-          description="Review and fix the imported records, then tick the rows to register. Rows with errors are not sent."
+          title={tBilingual(
+            `Preview (${rows.length} rows, ${readyRows.length} ready, ${selectedRows.length} selected)`,
+            `ቅድመ-ዕይታ (${rows.length} ረድፎች፣ ${readyRows.length} ዝግጁ፣ ${selectedRows.length} የተመረጡ)`
+          )}
+          description={tBilingual(
+            "Review and fix the imported records, then tick the rows to register. Rows with errors are not sent.",
+            "የገቡትን መረጃዎች ይገምግሙና ያርሙ፣ ከዚያም የሚመዘገቡትን ረድፎች ይምረጡ። ስህተት ያለባቸው ረድፎች አይላኩም።"
+          )}
         >
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <button
@@ -441,21 +462,21 @@ export default function BulkRegisterPage() {
               onClick={() => setSelectedKeys(new Set(rows.map((row) => row.key)))}
               className="font-semibold text-indigo-600 hover:text-indigo-800"
             >
-              Select all
+              {tBilingual("Select all", "ሁሉንም ምረጥ")}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set(readyRows.map((row) => row.key)))}
               className="font-semibold text-indigo-600 hover:text-indigo-800"
             >
-              Select ready only
+              {tBilingual("Select ready only", "ዝግጁ የሆኑትን ብቻ ምረጥ")}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set())}
               className="font-semibold text-slate-500 hover:text-slate-700"
             >
-              Clear selection
+              {tBilingual("Clear selection", "ምርጫን አጽዳ")}
             </button>
           </div>
           <Table
@@ -473,11 +494,18 @@ export default function BulkRegisterPage() {
                   />
                 ),
               },
-              "Line",
-              "First name", "Last name", "Email", "Phone", "TIN", "Role", "Password", "",
+              tBilingual("Line", "መስመር"),
+              tBilingual("First name", "ስም"),
+              tBilingual("Last name", "የአባት ስም"),
+              tBilingual("Email", "ኢሜይል"),
+              tBilingual("Phone", "ስልክ"),
+              tBilingual("TIN", "የግብር መለያ"),
+              tBilingual("Role", "ሚና"),
+              tBilingual("Password", "የይለፍ ቃል"),
+              "",
             ]}
           >
-            {rows.map((row) => {
+            {pageItems.map((row) => {
               const errors = errorsByKey.get(row.key) ?? [];
               const roleKnown = roleNames.has(row.role);
               return (
@@ -541,7 +569,7 @@ export default function BulkRegisterPage() {
                   <Td className="align-top">
                     <input
                       value={row.tin}
-                      placeholder="optional"
+                      placeholder={tBilingual("optional", "አማራጭ")}
                       onChange={(event) => patchRow(row.key, { tin: event.target.value })}
                       className={`w-28 ${cellInputClass}`}
                     />
@@ -554,7 +582,7 @@ export default function BulkRegisterPage() {
                     >
                       {!roleKnown ? (
                         <option value={row.role} disabled>
-                          Unknown: {row.role}
+                          {tBilingual("Unknown:", "ያልታወቀ:")} {row.role}
                         </option>
                       ) : null}
                       {roleOptions.map((role) => (
@@ -567,7 +595,7 @@ export default function BulkRegisterPage() {
                   <Td className="align-top">
                     <input
                       value={row.password}
-                      placeholder="auto-generate"
+                      placeholder={tBilingual("auto-generate", "በራሱ ይፍጠር")}
                       onChange={(event) => patchRow(row.key, { password: event.target.value })}
                       className={`w-28 ${cellInputClass}`}
                     />
@@ -587,29 +615,46 @@ export default function BulkRegisterPage() {
             })}
           </Table>
 
+          {rows.length > 10 && (
+            <div className="mt-4">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalItems={rows.length}
+                pageSize={10}
+              />
+            </div>
+          )}
+
           {message && result === "error" ? (
             <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700">
               {message}
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
             {selectedWithErrors > 0 ? (
               <span className="text-xs text-amber-700">
-                {selectedWithErrors} selected row{selectedWithErrors === 1 ? " has" : "s have"}{" "}
-                errors and won&apos;t be sent until fixed.
+                {tBilingual(
+                  `${selectedWithErrors} selected row${selectedWithErrors === 1 ? " has" : "s have"} errors and won't be sent until fixed.`,
+                  `${selectedWithErrors} የተመረጡ ረድፎች ስህተት ስላላቸው እስኪስተካከሉ ድረስ አይላኩም።`
+                )}
               </span>
             ) : null}
             <Button
               type="button"
               isLoading={saving}
-              loadingText="Registering users…"
+              loadingText={tBilingual("Registering users…", "ተጠቃሚዎችን በመመዝገብ ላይ…")}
               disabled={submitRows.length === 0}
               onClick={handleCreate}
-              className="gap-2"
+              className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <UserPlus className="h-4 w-4" />
-              Register {submitRows.length} selected user{submitRows.length === 1 ? "" : "s"}
+              {tBilingual(
+                `Register ${submitRows.length} selected user${submitRows.length === 1 ? "" : "s"}`,
+                `${submitRows.length} የተመረጡ ተጠቃሚዎችን መዝግብ`
+              )}
             </Button>
           </div>
         </PageSection>
@@ -617,22 +662,33 @@ export default function BulkRegisterPage() {
 
       {createdRows.length > 0 ? (
         <PageSection
-          title="Registration summary"
-          description={message ?? "Below is the confirmation of the records created."}
+          title={tBilingual("Registration summary", "የምዝገባ ማጠቃለያ")}
+          description={message ?? tBilingual("Below is the confirmation of the records created.", "ከዚህ በታች የተፈጠሩት መረጃዎች ማረጋገጫ ቀርቧል።")}
         >
           {createdRows.length > 0 ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
                 <span>
-                  Passwords are shown only once. Download the credentials now and share them
-                  securely with each user.
+                  {tBilingual(
+                    "Passwords are shown only once. Download the credentials now and share them securely with each user.",
+                    "የይለፍ ቃሎች የሚታዩት አንድ ጊዜ ብቻ ነው። የመግቢያ መረጃዎችን አሁን አውርደው ለእያንዳንዱ ተጠቃሚ በጥንቃቄ ያጋሩ።"
+                  )}
                 </span>
                 <Button type="button" variant="outline" size="sm" onClick={downloadCredentials}>
                   <Download className="h-3.5 w-3.5" />
-                  Download credentials CSV
+                  {tBilingual("Download credentials CSV", "የይለፍ ቃሎችን CSV አውርድ")}
                 </Button>
               </div>
-              <Table columns={["Name", "Email", "Phone", "TIN", "Role", "Password"]}>
+              <Table
+                columns={[
+                  tBilingual("Name", "ስም"),
+                  tBilingual("Email", "ኢሜይል"),
+                  tBilingual("Phone", "ስልክ"),
+                  tBilingual("TIN", "የግብር መለያ"),
+                  tBilingual("Role", "ሚና"),
+                  tBilingual("Password", "የይለፍ ቃል"),
+                ]}
+              >
                 {createdRows.map((row) => (
                   <tr key={row.id}>
                     <Td>
@@ -657,10 +713,18 @@ export default function BulkRegisterPage() {
           {skippedRows.length > 0 ? (
             <>
               <p className="text-sm font-medium text-amber-700">
-                {skippedRows.length} row(s) skipped — they are still in the preview above so you
-                can fix and resend them.
+                {tBilingual(
+                  `${skippedRows.length} row(s) skipped — they are still in the preview above so you can fix and resend them.`,
+                  `${skippedRows.length} ረድፍ(ፎች) ታልፈዋል — ከላይ ባለው ቅድመ-ዕይታ ውስጥ ስላሉ አስተካክለው እንደገና መላክ ይችላሉ።`
+                )}
               </p>
-              <Table columns={["Line", "Email", "Reason"]}>
+              <Table
+                columns={[
+                  tBilingual("Line", "መስመር"),
+                  tBilingual("Email", "ኢሜይል"),
+                  tBilingual("Reason", "ምክንያት"),
+                ]}
+              >
                 {skippedRows.map((row) => (
                   <tr key={`${row.line}-${row.email}`}>
                     <Td className="text-xs text-slate-400">{row.line}</Td>
@@ -676,9 +740,10 @@ export default function BulkRegisterPage() {
 
       <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500">
         <UploadCloud className="h-4 w-4 shrink-0 text-indigo-500" />
-        Passwords left blank are auto-generated to meet the password policy. On first sign-in,
-        each user receives an emailed code and must set their own password. Up to 500 users per
-        import.
+        {tBilingual(
+          "Passwords left blank are auto-generated to meet the password policy. On first sign-in, each user receives an emailed code and must set their own password. Up to 500 users per import.",
+          "ባዶ የቀሩ የይለፍ ቃሎች የደህንነት ፖሊሲውን እንዲያሟሉ በራሳቸው ይፈጠራሉ። በመጀመሪያው መግቢያ ላይ እያንዳንዱ ተጠቃሚ በኢሜይል ኮድ ይደርሰዋል እንዲሁም የራሱን የይለፍ ቃል ማዘጋጀት አለበት። በአንድ ጊዜ እስከ 500 ተጠቃሚዎች ይቻላል።"
+        )}
       </div>
     </PageShell>
   );

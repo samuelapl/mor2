@@ -6,6 +6,7 @@ import { ROLES, ROLE_LABELS } from "@/constants/roles";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import PageShell from "@/components/shared/PageShell";
 import { Table, Td } from "@/components/ui/Table";
 import { Badge, UserStatusBadge } from "@/components/ui/Badge";
@@ -59,6 +60,7 @@ export default function UsersPage() {
   } = useLms();
   const { can } = usePermissions();
   const canManage = can("user.manage");
+  const { t, tBilingual, tRole } = useTranslation();
 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
@@ -105,7 +107,7 @@ export default function UsersPage() {
     });
   }, [users, search, role, status, department]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(filtered, 10);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filtered, 10);
 
   // You can't bulk-act on your own account (the backend refuses deleting it anyway).
   const isSelectable = (user: User) => canManage && user.id !== currentUser?.id;
@@ -328,45 +330,45 @@ export default function UsersPage() {
   return (
     <PageShell
       role={currentUser?.role ?? "system_admin"}
-      title="Users & Roles"
-      description="Manage user accounts, approval status, and role assignments."
+      title={tBilingual("Users & Roles", "ተጠቃሚዎች እና ሚናዎች")}
+      description={tBilingual("Manage user accounts, approval status, and role assignments.", "የተጠቃሚ መለያዎችን፣ የማረጋገጫ ሁኔታን እና የሚና ምደባዎችን ያስተዳድሩ።")}
       actions={<ViewToggle view={view} onChange={setView} />}
     >
       <FilterBar
         search={search}
         onSearchChange={withClearedSelection(setSearch)}
-        searchPlaceholder="Search name, email or phone…"
+        searchPlaceholder={tBilingual("Search name, email or phone…", "ስም፣ ኢሜይል ወይም ስልክ ይፈልጉ…")}
         selects={[
           {
             id: "role",
-            label: "Role",
+            label: tBilingual("Role", "ሚና"),
             value: role,
             onChange: withClearedSelection(setRole),
             options: [
-              { value: "all", label: "All" },
-              ...ROLES.map((item) => ({ value: item, label: ROLE_LABELS[item] })),
+              { value: "all", label: tBilingual("All Roles", "ሁሉም ሚናዎች") },
+              ...ROLES.map((item) => ({ value: item, label: tRole(item) })),
             ],
           },
           {
             id: "status",
-            label: "Status",
+            label: tBilingual("Status", "ሁኔታ"),
             value: status,
             onChange: withClearedSelection(setStatus),
             options: [
-              { value: "all", label: "All" },
-              { value: "pending", label: "Pending" },
-              { value: "active", label: "Active" },
-              { value: "rejected", label: "Rejected" },
-              { value: "suspended", label: "Suspended" },
+              { value: "all", label: tBilingual("All Statuses", "ሁሉም ሁኔታዎች") },
+              { value: "pending", label: tBilingual("Pending", "በመጠባበቅ ላይ") },
+              { value: "active", label: tBilingual("Active", "ንቁ") },
+              { value: "rejected", label: tBilingual("Rejected", "ውድቅ የተደረገ") },
+              { value: "suspended", label: tBilingual("Suspended", "የታገደ") },
             ],
           },
           {
             id: "department",
-            label: "Department",
+            label: tBilingual("Department", "ክፍል"),
             value: department,
             onChange: withClearedSelection(setDepartment),
             options: [
-              { value: "all", label: "All" },
+              { value: "all", label: tBilingual("All Departments", "ሁሉም ክፍሎች") },
               ...departments.map((item) => ({ value: item, label: item })),
             ],
           },
@@ -446,12 +448,12 @@ export default function UsersPage() {
                   },
                 ]
               : []),
-            "User",
-            "Email",
-            "Department",
-            "Status",
-            "Role",
-            "Actions",
+            tBilingual("User", "ተጠቃሚ"),
+            tBilingual("Email", "ኢሜይል"),
+            tBilingual("Department", "ክፍል"),
+            tBilingual("Status", "ሁኔታ"),
+            tBilingual("Role", "ሚና"),
+            tBilingual("Actions", "እርምጃዎች"),
           ]}
         >
           {pageItems.map((user) => (
@@ -472,7 +474,7 @@ export default function UsersPage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <UserStatusBadge status={user.status} />
                     {user.mustChangePassword ? (
-                      <Badge variant="amber">Must change password</Badge>
+                      <Badge variant="amber">{tBilingual("Must change password", "የይለፍ ቃል መቀየር አለበት")}</Badge>
                     ) : null}
                   </div>
                 </Td>
@@ -485,12 +487,12 @@ export default function UsersPage() {
                     >
                       {ROLES.map((item) => (
                         <option key={item} value={item}>
-                          {ROLE_LABELS[item]}
+                          {tRole(item)}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    <Badge variant={roleBadgeVariant(user.role)}>{ROLE_LABELS[user.role]}</Badge>
+                    <Badge variant={roleBadgeVariant(user.role)}>{tRole(user.role)}</Badge>
                   )}
                 </Td>
                 <Td>
@@ -527,7 +529,7 @@ export default function UsersPage() {
                             setRejectReason("");
                           }}
                         >
-                          Cancel
+                          {tBilingual("Cancel", "ይቅር")}
                         </Button>
                         <Button
                           size="sm"
@@ -535,7 +537,7 @@ export default function UsersPage() {
                           isLoading={busyUserId === user.id}
                           onClick={() => void reject(user.id, rejectReason)}
                         >
-                          Confirm
+                          {tBilingual("Confirm", "አረጋግጥ")}
                         </Button>
                       </div>
                     </div>
@@ -545,7 +547,15 @@ export default function UsersPage() {
             </Fragment>
           ))}
         </Table>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[5, 10, 25, 50, 100]}
+        />
         </>
       ) : (
         <>
@@ -625,35 +635,45 @@ export default function UsersPage() {
             </div>
           ))}
         </div>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[6, 12, 24, 48]}
+        />
         </>
       )}
 
       <Modal
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
-        title="Delete user?"
+        title={tBilingual("Delete user?", "ተጠቃሚ ይሰረዝ?")}
         subtitle={deleteTarget?.email}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" disabled={busy} onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {tBilingual("Cancel", "ይቅር")}
             </Button>
             <Button
               variant="danger"
               isLoading={busy}
-              loadingText="Deleting…"
+              loadingText={tBilingual("Deleting…", "በመሰረዝ ላይ…")}
               onClick={() => void confirmDelete()}
             >
-              <Trash2 className="h-4 w-4" /> Delete user
+              <Trash2 className="h-4 w-4" /> {tBilingual("Delete user", "ተጠቃሚ ሰርዝ")}
             </Button>
           </div>
         }
       >
         <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{deleteTarget?.name}</span> will be removed
-          from the users list and can no longer sign in. Their course history, certificates and
-          audit records are kept, and their email can be registered again.
+          <span className="font-semibold text-slate-800">{deleteTarget?.name}</span>{" "}
+          {tBilingual(
+            "will be removed from the users list and can no longer sign in. Their course history, certificates and audit records are kept, and their email can be registered again.",
+            "ከተጠቃሚዎች ዝርዝር ውስጥ ይወገዳል እና ከዚህ በኋላ መግባት አይችልም። የኮርስ ታሪካቸው፣ ሰርተፍኬታቸው እና የኦዲት መዝገቦቻቸው ይጠበቃሉ፣ እና ኢሜይላቸው እንደገና ሊመዘገብ ይችላል።"
+          )}
         </p>
       </Modal>
 
