@@ -1,7 +1,7 @@
-import { useCallback, useEffect } from "react";
-import { useRoomContext } from "@livekit/components-react";
-import { RoomEvent } from "livekit-client";
-import type { LiveKitDataEvent } from "@/types/livekit-events";
+import { useCallback, useEffect } from 'react';
+import { useRoomContext } from '@livekit/components-react';
+import { RoomEvent } from 'livekit-client';
+import type { LiveKitDataEvent } from '@/types/livekit-events';
 
 /**
  * Hook for LiveKit WebRTC Data Channel broadcasting and event listening.
@@ -9,26 +9,23 @@ import type { LiveKitDataEvent } from "@/types/livekit-events";
  */
 export function useLiveKitDataChannel(
   optionsOrHandler?:
-    | ((event: LiveKitDataEvent) => void)
-    | { onEvent?: (event: LiveKitDataEvent) => void }
+    ((event: LiveKitDataEvent) => void) | { onEvent?: (event: LiveKitDataEvent) => void },
 ) {
   const room = useRoomContext();
   const onEvent =
-    typeof optionsOrHandler === "function"
-      ? optionsOrHandler
-      : optionsOrHandler?.onEvent;
+    typeof optionsOrHandler === 'function' ? optionsOrHandler : optionsOrHandler?.onEvent;
 
   const broadcast = useCallback(
     async (event: LiveKitDataEvent) => {
-      if (!room || room.state !== "connected") {
-        console.warn("Cannot broadcast LiveKit data: room not connected");
+      if (!room || room.state !== 'connected') {
+        console.warn('Cannot broadcast LiveKit data: room not connected');
         return;
       }
       try {
         const payload = new TextEncoder().encode(JSON.stringify(event));
         await room.localParticipant.publishData(payload, { reliable: true });
       } catch (err) {
-        console.error("Failed to broadcast LiveKit data channel message:", err);
+        console.error('Failed to broadcast LiveKit data channel message:', err);
       }
     },
     [room],
@@ -57,7 +54,7 @@ export function useLiveKitDataChannel(
 
   return {
     broadcast,
-    isConnected: room?.state === "connected",
+    isConnected: room?.state === 'connected',
     participantCount: room?.numParticipants ?? 0,
   };
 }

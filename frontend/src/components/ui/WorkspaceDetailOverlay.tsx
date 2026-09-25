@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { ArrowLeft, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { RichContent } from "@/components/ui/RichContent";
+import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowLeft, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { RichContent } from '@/components/ui/RichContent';
 
 export interface WorkspaceDetailOverlayProps {
   open: boolean;
@@ -18,7 +18,7 @@ export interface WorkspaceDetailOverlayProps {
   className?: string;
   contentClassName?: string;
   fullViewport?: boolean;
-  theme?: "light" | "dark";
+  theme?: 'light' | 'dark';
 }
 
 /**
@@ -39,7 +39,7 @@ export function WorkspaceDetailOverlay({
   className,
   contentClassName,
   fullViewport = false,
-  theme = "light",
+  theme = 'light',
 }: WorkspaceDetailOverlayProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -50,15 +50,15 @@ export function WorkspaceDetailOverlay({
   useEffect(() => {
     if (!open) return;
     const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
   if (!open || !mounted) return null;
 
-  const isDark = theme === "dark" || (fullViewport && theme !== "light");
+  const isDark = theme === 'dark' || (fullViewport && theme !== 'light');
 
   return createPortal(
     <div
@@ -66,19 +66,19 @@ export function WorkspaceDetailOverlay({
       aria-modal="true"
       className={cn(
         fullViewport
-          ? "fixed inset-0 z-50 flex flex-col overflow-hidden shadow-2xl animate-fade-in"
-          : "fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex flex-col overflow-hidden shadow-2xl animate-fade-in",
-        isDark ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-900",
+          ? 'fixed inset-0 z-50 flex flex-col overflow-hidden shadow-2xl animate-fade-in'
+          : 'fixed top-16 bottom-0 left-0 md:left-64 right-0 z-30 flex flex-col overflow-hidden shadow-2xl animate-fade-in',
+        isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900',
         className,
       )}
     >
       {/* Top Workspace Header Bar */}
       <div
         className={cn(
-          "sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3 backdrop-blur-md shadow-xs transition-colors",
+          'sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3 backdrop-blur-md shadow-xs transition-colors',
           isDark
-            ? "border-b border-slate-800 bg-slate-900/95 text-white"
-            : "border-b border-slate-200/90 bg-white/95 text-slate-900",
+            ? 'border-b border-slate-800 bg-slate-900/95 text-white'
+            : 'border-b border-slate-200/90 bg-white/95 text-slate-900',
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -86,10 +86,10 @@ export function WorkspaceDetailOverlay({
             type="button"
             onClick={onClose}
             className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border shadow-xs transition",
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border shadow-xs transition',
               isDark
-                ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800',
             )}
             title="Go back / Close"
           >
@@ -100,11 +100,11 @@ export function WorkspaceDetailOverlay({
             <div className="flex items-center gap-2.5">
               <h2
                 className={cn(
-                  "truncate font-display text-base font-bold tracking-tight",
-                  isDark ? "text-white" : "text-slate-900",
+                  'truncate font-display text-base font-bold tracking-tight',
+                  isDark ? 'text-white' : 'text-slate-900',
                 )}
               >
-                {typeof title === "string" && title.includes("<") ? (
+                {typeof title === 'string' && title.includes('<') ? (
                   <RichContent inline html={title} />
                 ) : (
                   title
@@ -115,11 +115,11 @@ export function WorkspaceDetailOverlay({
             {subtitle ? (
               <p
                 className={cn(
-                  "truncate text-xs mt-0.5",
-                  isDark ? "text-slate-400" : "text-slate-500",
+                  'truncate text-xs mt-0.5',
+                  isDark ? 'text-slate-400' : 'text-slate-500',
                 )}
               >
-                {typeof subtitle === "string" && subtitle.includes("<") ? (
+                {typeof subtitle === 'string' && subtitle.includes('<') ? (
                   <RichContent inline html={subtitle} />
                 ) : (
                   subtitle
@@ -135,10 +135,10 @@ export function WorkspaceDetailOverlay({
             type="button"
             onClick={onClose}
             className={cn(
-              "rounded-lg p-1.5 transition",
+              'rounded-lg p-1.5 transition',
               isDark
-                ? "text-slate-400 hover:bg-slate-800 hover:text-white"
-                : "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
+                ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
             )}
             aria-label="Close"
           >
@@ -148,18 +148,16 @@ export function WorkspaceDetailOverlay({
       </div>
 
       {/* Main Workspace Body */}
-      <div className={cn("flex-1 overflow-y-auto px-6 py-6", contentClassName)}>
-        {children}
-      </div>
+      <div className={cn('flex-1 overflow-y-auto px-6 py-6', contentClassName)}>{children}</div>
 
       {/* Optional Workspace Footer Bar */}
       {footer ? (
         <div
           className={cn(
-            "sticky bottom-0 z-20 flex shrink-0 items-center justify-between px-6 py-3.5 backdrop-blur-md",
+            'sticky bottom-0 z-20 flex shrink-0 items-center justify-between px-6 py-3.5 backdrop-blur-md',
             isDark
-              ? "border-t border-slate-800 bg-slate-900/95 text-white"
-              : "border-t border-slate-200/90 bg-white/95 text-slate-900",
+              ? 'border-t border-slate-800 bg-slate-900/95 text-white'
+              : 'border-t border-slate-200/90 bg-white/95 text-slate-900',
           )}
         >
           {footer}

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarPlus,
   ClipboardCheck,
@@ -19,28 +19,33 @@ import {
   Users,
   Video,
   X,
-} from "lucide-react";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { deleteLiveSession, fetchLiveSessions, fetchSessionJoinUrl, setSessionStatus } from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { usePagination } from "@/lib/usePagination";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
-import { ScheduleSessionModal } from "@/components/features/sessions/ScheduleSessionModal";
-import { EditSessionModal } from "@/components/features/sessions/EditSessionModal";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
-import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { TableSkeleton } from "@/components/ui/Skeleton";
-import { toast } from "@/lib/toast";
+} from 'lucide-react';
+import type { ApiLiveSession } from '@/lib/api/types';
+import {
+  deleteLiveSession,
+  fetchLiveSessions,
+  fetchSessionJoinUrl,
+  setSessionStatus,
+} from '@/lib/api/monitoring';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { SessionTable, type SessionRow } from '@/components/features/sessions/SessionTable';
+import { ScheduleSessionModal } from '@/components/features/sessions/ScheduleSessionModal';
+import { EditSessionModal } from '@/components/features/sessions/EditSessionModal';
+import { LiveSessionWorkspace } from '@/components/features/sessions/LiveSessionWorkspace';
+import { SessionDetailModal } from '@/components/features/sessions/SessionDetailModal';
+import { SessionAttendanceModal } from '@/components/features/sessions/SessionAttendanceModal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { toast } from '@/lib/toast';
 
 export default function TrainingAdminSessionsPage() {
   const { courses, users, currentUser } = useLms();
@@ -55,15 +60,17 @@ export default function TrainingAdminSessionsPage() {
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
-  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
+  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(
+    null,
+  );
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("ALL");
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
 
-  const canManageAll = can("live_session.manage_all");
-  const canViewAttendance = canAny(["attendance.view", "attendance.manage"]);
+  const canManageAll = can('live_session.manage_all');
+  const canViewAttendance = canAny(['attendance.view', 'attendance.manage']);
 
   const loadSessions = () => {
     setLoading(true);
@@ -72,7 +79,7 @@ export default function TrainingAdminSessionsPage() {
         setSessions(res.data);
       })
       .catch((err) => {
-        console.error("Failed to load sessions:", err);
+        console.error('Failed to load sessions:', err);
         setSessions([]);
       })
       .finally(() => setLoading(false));
@@ -88,20 +95,26 @@ export default function TrainingAdminSessionsPage() {
   // Apply filters
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {
-      if (selectedCourseFilter !== "ALL" && s.courseId !== selectedCourseFilter) {
+      if (selectedCourseFilter !== 'ALL' && s.courseId !== selectedCourseFilter) {
         return false;
       }
-      if (selectedStatusFilter !== "ALL" && s.status !== selectedStatusFilter) {
+      if (selectedStatusFilter !== 'ALL' && s.status !== selectedStatusFilter) {
         return false;
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const course = courseMap.get(s.courseId);
-        const titleMatch = (s.titleEn || "").toLowerCase().includes(q);
-        const codeMatch = (course?.code || s.course?.code || "").toLowerCase().includes(q);
-        const courseTitleMatch = (course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
-        const trainer = s.trainerId ? userMap.get(s.trainerId) : s.trainer ? `${s.trainer.firstName} ${s.trainer.lastName}` : "";
-        const trainerMatch = (trainer || "").toLowerCase().includes(q);
+        const titleMatch = (s.titleEn || '').toLowerCase().includes(q);
+        const codeMatch = (course?.code || s.course?.code || '').toLowerCase().includes(q);
+        const courseTitleMatch = (course?.title || s.course?.titleEn || '')
+          .toLowerCase()
+          .includes(q);
+        const trainer = s.trainerId
+          ? userMap.get(s.trainerId)
+          : s.trainer
+            ? `${s.trainer.firstName} ${s.trainer.lastName}`
+            : '';
+        const trainerMatch = (trainer || '').toLowerCase().includes(q);
         if (!titleMatch && !codeMatch && !courseTitleMatch && !trainerMatch) return false;
       }
       return true;
@@ -109,11 +122,11 @@ export default function TrainingAdminSessionsPage() {
   }, [sessions, selectedCourseFilter, selectedStatusFilter, searchQuery, courseMap, userMap]);
 
   const upcoming = useMemo(
-    () => filteredSessions.filter((s) => s.status === "SCHEDULED" || s.status === "LIVE"),
+    () => filteredSessions.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE'),
     [filteredSessions],
   );
   const past = useMemo(
-    () => filteredSessions.filter((s) => s.status === "COMPLETED" || s.status === "CANCELLED"),
+    () => filteredSessions.filter((s) => s.status === 'COMPLETED' || s.status === 'CANCELLED'),
     [filteredSessions],
   );
 
@@ -123,13 +136,13 @@ export default function TrainingAdminSessionsPage() {
       const trainerName = session.trainerId ? userMap.get(session.trainerId) : undefined;
       return {
         session,
-        courseTitle: course?.title ?? "General Training",
-        courseCode: course?.code ?? "GENERAL",
+        courseTitle: course?.title ?? 'General Training',
+        courseCode: course?.code ?? 'GENERAL',
         trainerName:
           trainerName ??
           (session.trainer
             ? `${session.trainer.firstName} ${session.trainer.lastName}`
-            : "Assigned Trainer"),
+            : 'Assigned Trainer'),
       };
     });
 
@@ -141,14 +154,14 @@ export default function TrainingAdminSessionsPage() {
       const { joinUrl } = await fetchSessionJoinUrl(session.id);
       setActiveJoinSession(session);
     } catch (err) {
-      console.error("Failed to fetch join URL:", err);
+      console.error('Failed to fetch join URL:', err);
       setActiveJoinSession(session);
     }
   };
 
   const handleToggleLive = async (session: ApiLiveSession) => {
     setStatusUpdatingId(session.id);
-    const newStatus = session.status === "SCHEDULED" ? "LIVE" : "COMPLETED";
+    const newStatus = session.status === 'SCHEDULED' ? 'LIVE' : 'COMPLETED';
     try {
       await setSessionStatus(session.id, newStatus);
       setSessions((prev) =>
@@ -156,7 +169,7 @@ export default function TrainingAdminSessionsPage() {
       );
       toast.success(`Session status updated to ${newStatus}.`);
     } catch {
-      toast.error("Failed to update session status.");
+      toast.error('Failed to update session status.');
     } finally {
       setStatusUpdatingId(null);
     }
@@ -171,27 +184,28 @@ export default function TrainingAdminSessionsPage() {
       setSessionToDelete(null);
       loadSessions();
     } catch {
-      toast.error("Failed to delete session.");
+      toast.error('Failed to delete session.');
     } finally {
       setDeletingId(null);
     }
   };
 
-  const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL" || selectedStatusFilter !== "ALL";
+  const hasActiveFilters =
+    searchQuery !== '' || selectedCourseFilter !== 'ALL' || selectedStatusFilter !== 'ALL';
 
   return (
     <PageShell
-      role={currentUser?.role ?? "training_admin"}
-      title={tBilingual("All Sessions", "ሁሉም የቀጥታ ክፍለ-ጊዜዎች")}
+      role={currentUser?.role ?? 'training_admin'}
+      title={tBilingual('All Sessions', 'ሁሉም የቀጥታ ክፍለ-ጊዜዎች')}
       description={tBilingual(
-        "Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses.",
-        "በሁሉም ኮርሶች የተቋማዊ የቀጥታ ክፍለ-ጊዜዎችን፣ በአሰልጣኝ የሚመሩ ዌቢናሮችን እና ስብሰባዎችን ያቅዱ እና ያስተዳድሩ።"
+        'Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses.',
+        'በሁሉም ኮርሶች የተቋማዊ የቀጥታ ክፍለ-ጊዜዎችን፣ በአሰልጣኝ የሚመሩ ዌቢናሮችን እና ስብሰባዎችን ያቅዱ እና ያስተዳድሩ።',
       )}
       actions={
         canManageAll ? (
           <Button onClick={() => setScheduleOpen(true)} className="shadow-sm">
             <CalendarPlus className="h-4 w-4" />
-            {tBilingual("Schedule Session", "ክፍለ-ጊዜ መርሐግብር አውጣ")}
+            {tBilingual('Schedule Session', 'ክፍለ-ጊዜ መርሐግብር አውጣ')}
           </Button>
         ) : undefined
       }
@@ -205,7 +219,10 @@ export default function TrainingAdminSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder={tBilingual("Search session, course, trainer…", "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…")}
+                placeholder={tBilingual(
+                  'Search session, course, trainer…',
+                  'ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…',
+                )}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -219,7 +236,9 @@ export default function TrainingAdminSessionsPage() {
               aria-label="Filter by course"
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
-              <option value="ALL">{tBilingual("All Courses", "ሁሉም ኮርሶች")} ({courses.length})</option>
+              <option value="ALL">
+                {tBilingual('All Courses', 'ሁሉም ኮርሶች')} ({courses.length})
+              </option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} · {c.title}
@@ -229,26 +248,26 @@ export default function TrainingAdminSessionsPage() {
 
             {/* Status Filter Pills */}
             <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-0.5 text-xs">
-              {(["ALL", "SCHEDULED", "LIVE", "COMPLETED", "CANCELLED"] as const).map((st) => (
+              {(['ALL', 'SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED'] as const).map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setSelectedStatusFilter(st)}
                   className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${
                     selectedStatusFilter === st
-                      ? "bg-white text-slate-900 shadow-xs font-semibold"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {st === "ALL"
-                    ? tBilingual("All Status", "ሁሉም ሁኔታ")
-                    : st === "SCHEDULED"
-                    ? tBilingual("Upcoming", "መጪ")
-                    : st === "LIVE"
-                    ? tBilingual("Live", "በቀጥታ")
-                    : st === "COMPLETED"
-                    ? tBilingual("Completed", "የተጠናቀቀ")
-                    : tBilingual("Cancelled", "የተሰረዘ")}
+                  {st === 'ALL'
+                    ? tBilingual('All Status', 'ሁሉም ሁኔታ')
+                    : st === 'SCHEDULED'
+                      ? tBilingual('Upcoming', 'መጪ')
+                      : st === 'LIVE'
+                        ? tBilingual('Live', 'በቀጥታ')
+                        : st === 'COMPLETED'
+                          ? tBilingual('Completed', 'የተጠናቀቀ')
+                          : tBilingual('Cancelled', 'የተሰረዘ')}
                 </button>
               ))}
             </div>
@@ -260,9 +279,9 @@ export default function TrainingAdminSessionsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCourseFilter("ALL");
-                  setSelectedStatusFilter("ALL");
+                  setSearchQuery('');
+                  setSelectedCourseFilter('ALL');
+                  setSelectedStatusFilter('ALL');
                 }}
                 className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
               >
@@ -271,8 +290,14 @@ export default function TrainingAdminSessionsPage() {
               </Button>
             )}
 
-            <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading} className="h-8 gap-1 text-xs text-slate-600">
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadSessions}
+              disabled={loading}
+              className="h-8 gap-1 text-xs text-slate-600"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -280,13 +305,13 @@ export default function TrainingAdminSessionsPage() {
       </div>
 
       <div className="space-y-8">
-        {selectedStatusFilter === "ALL" && upcoming.length === 0 && past.length === 0 ? (
+        {selectedStatusFilter === 'ALL' && upcoming.length === 0 && past.length === 0 ? (
           <EmptyState
             title="No live sessions found"
             description={
               hasActiveFilters
-                ? "No sessions match your search or filter criteria. Try clearing filters."
-                : "No live training sessions have been scheduled yet."
+                ? 'No sessions match your search or filter criteria. Try clearing filters.'
+                : 'No live training sessions have been scheduled yet.'
             }
           >
             {canManageAll && !hasActiveFilters ? (
@@ -299,29 +324,39 @@ export default function TrainingAdminSessionsPage() {
         ) : null}
 
         {/* Upcoming & Active Sessions */}
-        {(selectedStatusFilter === "ALL" ? (loading || upcoming.length > 0) : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
+        {(
+          selectedStatusFilter === 'ALL'
+            ? loading || upcoming.length > 0
+            : selectedStatusFilter === 'SCHEDULED' || selectedStatusFilter === 'LIVE'
+        ) ? (
           <PageSection
-            title={tBilingual("Upcoming & Active Sessions", "መጪ እና ንቁ ክፍለ-ጊዜዎች")}
+            title={tBilingual('Upcoming & Active Sessions', 'መጪ እና ንቁ ክፍለ-ጊዜዎች')}
             description={tBilingual(
-              "Scheduled webinars and active classroom meetings awaiting or undergoing delivery.",
-              "የታቀዱ ዌቢናሮች እና ንቁ የስልጠና ስብሰባዎች።"
+              'Scheduled webinars and active classroom meetings awaiting or undergoing delivery.',
+              'የታቀዱ ዌቢናሮች እና ንቁ የስልጠና ስብሰባዎች።',
             )}
           >
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : upcoming.length === 0 ? (
               <EmptyState
-                title={tBilingual("No upcoming sessions found", "ምንም መጪ ክፍለ-ጊዜዎች አልተገኙም")}
+                title={tBilingual('No upcoming sessions found', 'ምንም መጪ ክፍለ-ጊዜዎች አልተገኙም')}
                 description={
                   hasActiveFilters
-                    ? tBilingual("Try adjusting your search or filters.", "እባክዎን ፍለጋዎን ወይም ማጣሪያዎችዎን ያስተካክሉ።")
-                    : tBilingual("Arrange a new live training session for any course.", "ለማንኛውም ኮርስ አዲስ የቀጥታ ስልጠና ያዘጋጁ።")
+                    ? tBilingual(
+                        'Try adjusting your search or filters.',
+                        'እባክዎን ፍለጋዎን ወይም ማጣሪያዎችዎን ያስተካክሉ።',
+                      )
+                    : tBilingual(
+                        'Arrange a new live training session for any course.',
+                        'ለማንኛውም ኮርስ አዲስ የቀጥታ ስልጠና ያዘጋጁ።',
+                      )
                 }
               >
                 {canManageAll && !hasActiveFilters ? (
                   <Button size="sm" onClick={() => setScheduleOpen(true)}>
                     <CalendarPlus className="h-4 w-4" />
-                    {tBilingual("Schedule Session", "ክፍለ-ጊዜ መርሐግብር አውጣ")}
+                    {tBilingual('Schedule Session', 'ክፍለ-ጊዜ መርሐግብር አውጣ')}
                   </Button>
                 ) : null}
               </EmptyState>
@@ -384,7 +419,7 @@ export default function TrainingAdminSessionsPage() {
                       )}
 
                       {/* Go Live / End Session Lifecycle */}
-                      {row.session.status === "SCHEDULED" ? (
+                      {row.session.status === 'SCHEDULED' ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -395,7 +430,7 @@ export default function TrainingAdminSessionsPage() {
                           <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
                           Go Live
                         </Button>
-                      ) : row.session.status === "LIVE" ? (
+                      ) : row.session.status === 'LIVE' ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -435,17 +470,27 @@ export default function TrainingAdminSessionsPage() {
         ) : null}
 
         {/* Past Sessions */}
-        {(selectedStatusFilter === "ALL" ? (loading || past.length > 0) : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
+        {(
+          selectedStatusFilter === 'ALL'
+            ? loading || past.length > 0
+            : selectedStatusFilter === 'COMPLETED' || selectedStatusFilter === 'CANCELLED'
+        ) ? (
           <PageSection
-            title={tBilingual("Past Sessions Archive", "ያለፉ ክፍለ-ጊዜዎች መዝገብ")}
-            description={tBilingual("Previously conducted or cancelled training events.", "ከዚህ በፊት የተካሄዱ ወይም የተሰረዙ የስልጠና ዝግጅቶች።")}
+            title={tBilingual('Past Sessions Archive', 'ያለፉ ክፍለ-ጊዜዎች መዝገብ')}
+            description={tBilingual(
+              'Previously conducted or cancelled training events.',
+              'ከዚህ በፊት የተካሄዱ ወይም የተሰረዙ የስልጠና ዝግጅቶች።',
+            )}
           >
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : past.length === 0 ? (
               <EmptyState
-                title={tBilingual("No past sessions found", "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም")}
-                description={tBilingual("No completed or cancelled sessions match your filter criteria.", "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።")}
+                title={tBilingual('No past sessions found', 'ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም')}
+                description={tBilingual(
+                  'No completed or cancelled sessions match your filter criteria.',
+                  'ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።',
+                )}
               />
             ) : (
               <>
@@ -499,7 +544,7 @@ export default function TrainingAdminSessionsPage() {
                           className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <ClipboardCheck className="h-3.5 w-3.5" />
-                          {tBilingual("Attendance Records", "የተሳትፎ መዝገቦች")}
+                          {tBilingual('Attendance Records', 'የተሳትፎ መዝገቦች')}
                         </Button>
                       )}
                     </div>
@@ -525,7 +570,7 @@ export default function TrainingAdminSessionsPage() {
         onClose={() => setScheduleOpen(false)}
         onScheduled={() => {
           setScheduleOpen(false);
-          toast.success("Live training session successfully scheduled and persisted.");
+          toast.success('Live training session successfully scheduled and persisted.');
           loadSessions();
         }}
         courses={courses}
@@ -537,7 +582,7 @@ export default function TrainingAdminSessionsPage() {
         onClose={() => setEditingSession(null)}
         onUpdated={() => {
           setEditingSession(null);
-          toast.success("Live training session has been updated / rescheduled.");
+          toast.success('Live training session has been updated / rescheduled.');
           loadSessions();
         }}
         courses={courses}
@@ -554,12 +599,12 @@ export default function TrainingAdminSessionsPage() {
             activeJoinSession.trainer
               ? `${activeJoinSession.trainer.firstName} ${activeJoinSession.trainer.lastName}`
               : activeJoinSession.trainerId
-              ? userMap.get(activeJoinSession.trainerId)
-              : courseMap.get(activeJoinSession.courseId)?.trainerId
-              ? userMap.get(courseMap.get(activeJoinSession.courseId)!.trainerId!)
-              : "Assigned Trainer"
+                ? userMap.get(activeJoinSession.trainerId)
+                : courseMap.get(activeJoinSession.courseId)?.trainerId
+                  ? userMap.get(courseMap.get(activeJoinSession.courseId)!.trainerId!)
+                  : 'Assigned Trainer'
           }
-          userRole={currentUser?.role ?? "training_admin"}
+          userRole={currentUser?.role ?? 'training_admin'}
         />
       )}
 
@@ -569,7 +614,7 @@ export default function TrainingAdminSessionsPage() {
           open={Boolean(selectedDetailId)}
           onClose={() => setSelectedDetailId(null)}
           sessionId={selectedDetailId}
-          userRole={currentUser?.role ?? "training_admin"}
+          userRole={currentUser?.role ?? 'training_admin'}
           onOpenAttendance={() => {
             setSelectedAttendanceSessionId(selectedDetailId);
             setSelectedDetailId(null);
@@ -599,11 +644,12 @@ export default function TrainingAdminSessionsPage() {
         title="Delete Live Session"
         description={
           <>
-            Are you sure you want to delete session{" "}
+            Are you sure you want to delete session{' '}
             <span className="font-semibold text-slate-800">
               &quot;{sessionToDelete?.titleEn}&quot;
             </span>
-            ? This action cannot be undone and will revoke scheduled room links for all enrolled learners.
+            ? This action cannot be undone and will revoke scheduled room links for all enrolled
+            learners.
           </>
         }
         confirmText="Delete Session"

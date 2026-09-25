@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import { Check, Move, ShieldCheck } from "lucide-react";
-import type { ApiCertificateField, ApiCertificateTemplate } from "@/lib/api/types";
-import { cn } from "@/lib/utils";
+import React, { useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
+import { Check, Move, ShieldCheck } from 'lucide-react';
+import type { ApiCertificateField, ApiCertificateTemplate } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
 
 export interface CertificateData {
   holderName: string;
@@ -40,13 +40,13 @@ export interface CertificateRendererProps {
 
 function formatDate(val: string | Date): string {
   try {
-    const d = typeof val === "string" ? new Date(val) : val;
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const d = typeof val === 'string' ? new Date(val) : val;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
   } catch {
-    return "23/09/2026";
+    return '23/09/2026';
   }
 }
 
@@ -83,8 +83,7 @@ function QrCodePattern({ code, size = 64 }: { code: string; size?: number }) {
     let seed = hash;
     for (let r = 0; r < s; r++) {
       for (let c = 0; c < s; c++) {
-        const inFinder =
-          (r < 8 && c < 8) || (r < 8 && c >= 9) || (r >= 9 && c < 8);
+        const inFinder = (r < 8 && c < 8) || (r < 8 && c >= 9) || (r >= 9 && c < 8);
         if (!inFinder) {
           seed = (seed * 1103515245 + 12345) & 0x7fffffff;
           g[r][c] = seed % 2 === 0;
@@ -133,13 +132,7 @@ function RealisticSignature({ name }: { name: string }) {
 }
 
 // Circular Embossed Official Seal Component (Fallback when no PNG stamp uploaded)
-function OfficialSeal({
-  size = 80,
-  subtext,
-}: {
-  size?: number;
-  subtext?: string;
-}) {
+function OfficialSeal({ size = 80, subtext }: { size?: number; subtext?: string }) {
   return (
     <div className="flex flex-col items-center justify-center select-none pointer-events-none">
       <div
@@ -150,7 +143,10 @@ function OfficialSeal({
         <div className="flex flex-col items-center justify-center text-center">
           <ShieldCheck
             className="text-[#0e2a47]"
-            style={{ width: `${Math.round(size * 0.32)}px`, height: `${Math.round(size * 0.32)}px` }}
+            style={{
+              width: `${Math.round(size * 0.32)}px`,
+              height: `${Math.round(size * 0.32)}px`,
+            }}
           />
           <span
             className="mt-0.5 font-extrabold tracking-wider text-[#0e2a47] uppercase leading-tight"
@@ -166,9 +162,7 @@ function OfficialSeal({
           </span>
         </div>
       </div>
-      {subtext ? (
-        <p className="mt-1 text-[9px] font-medium text-slate-500">{subtext}</p>
-      ) : null}
+      {subtext ? <p className="mt-1 text-[9px] font-medium text-slate-500">{subtext}</p> : null}
     </div>
   );
 }
@@ -222,12 +216,12 @@ function DraggableCanvasItem({
 
     const onPointerUp = () => {
       setIsDragging(false);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     };
 
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
   };
 
   return (
@@ -240,30 +234,32 @@ function DraggableCanvasItem({
         }
       }}
       className={cn(
-        "transition-shadow transition-transform",
-        editable && "cursor-grab select-none touch-none",
-        editable && isDragging && "cursor-grabbing z-40 opacity-90 scale-105",
+        'transition-shadow transition-transform',
+        editable && 'cursor-grab select-none touch-none',
+        editable && isDragging && 'cursor-grabbing z-40 opacity-90 scale-105',
         editable &&
           isSelected &&
-          "ring-2 ring-indigo-600 ring-offset-2 rounded-xl bg-indigo-50/20 z-30 shadow-md",
+          'ring-2 ring-indigo-600 ring-offset-2 rounded-xl bg-indigo-50/20 z-30 shadow-md',
         editable &&
           !isSelected &&
-          "hover:ring-2 hover:ring-indigo-400/50 hover:bg-indigo-50/10 rounded-xl",
+          'hover:ring-2 hover:ring-indigo-400/50 hover:bg-indigo-50/10 rounded-xl',
         className,
       )}
       style={{
-        position: "absolute",
+        position: 'absolute',
         left: `${x}%`,
         top: `${y}%`,
-        transform: "translate(-50%, -50%)",
+        transform: 'translate(-50%, -50%)',
       }}
     >
       {children}
       {editable && (
         <div
           className={cn(
-            "absolute -top-2.5 -right-2.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-xs transition-opacity",
-            isSelected ? "bg-indigo-600 opacity-100" : "bg-slate-700 opacity-0 group-hover:opacity-100",
+            'absolute -top-2.5 -right-2.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-xs transition-opacity',
+            isSelected
+              ? 'bg-indigo-600 opacity-100'
+              : 'bg-slate-700 opacity-0 group-hover:opacity-100',
           )}
           title="Drag to reposition"
         >
@@ -296,12 +292,12 @@ export function CertificateRenderer({
   const data: CertificateData = useMemo(() => {
     if (explicitData) return explicitData;
     return {
-      holderName: studentName || "Meron Kassa",
-      courseTitle: courseTitle || "Advanced Excel & Data Analytics for Revenue Reporting",
-      courseCode: courseCode || "EXCEL201",
-      courseHours: courseHours || durationHours || "30 Hours",
-      certificateNumber: certificateNumber || "ETIMS-CERT-2026-0001",
-      verificationCode: verificationCode || "VERIF-0001",
+      holderName: studentName || 'Meron Kassa',
+      courseTitle: courseTitle || 'Advanced Excel & Data Analytics for Revenue Reporting',
+      courseCode: courseCode || 'EXCEL201',
+      courseHours: courseHours || durationHours || '30 Hours',
+      certificateNumber: certificateNumber || 'ETIMS-CERT-2026-0001',
+      verificationCode: verificationCode || 'VERIF-0001',
       issuedAt: completionDate || new Date(),
     };
   }, [
@@ -328,41 +324,42 @@ export function CertificateRenderer({
   }, [fields]);
 
   // Distinct brand assets
-  const logoField = fieldsMap.get("companyLogo") || fieldsMap.get("logo") || {
-    key: "companyLogo",
-    x: 14,
-    y: 12,
-    width: 140,
-    text: "Analyst Skill",
-    title: "eLearning Platform",
-    visible: true,
-  };
+  const logoField = fieldsMap.get('companyLogo') ||
+    fieldsMap.get('logo') || {
+      key: 'companyLogo',
+      x: 14,
+      y: 12,
+      width: 140,
+      text: 'Analyst Skill',
+      title: 'eLearning Platform',
+      visible: true,
+    };
 
-  const qrField = fieldsMap.get("qrCode") || {
-    key: "qrCode",
+  const qrField = fieldsMap.get('qrCode') || {
+    key: 'qrCode',
     x: 10,
     y: 28,
     size: 68,
     visible: true,
   };
 
-  const verifiedBadgeField = fieldsMap.get("verifiedBadge") || {
-    key: "verifiedBadge",
+  const verifiedBadgeField = fieldsMap.get('verifiedBadge') || {
+    key: 'verifiedBadge',
     x: 88,
     y: 12,
     size: 75,
-    text: "VERIFIED",
+    text: 'VERIFIED',
     visible: true,
   };
 
   // Multiple Stamps support: collect all fields starting with "stamp"
   const stampFields = useMemo(() => {
-    const stamps = fields.filter((f) => f.key === "stamp" || f.key.startsWith("stamp"));
+    const stamps = fields.filter((f) => f.key === 'stamp' || f.key.startsWith('stamp'));
     if (stamps.length > 0) return stamps;
     // Default 1 stamp if none present
     return [
       {
-        key: "stamp",
+        key: 'stamp',
         x: 50,
         y: 82,
         size: 85,
@@ -375,20 +372,17 @@ export function CertificateRenderer({
   // Multiple Signatures support: BY DEFAULT ONE SIGNATURE WITH EMPTY SIGN NAME AND TITLE
   const signatureFields = useMemo(() => {
     const sigs = fields.filter(
-      (f) =>
-        f.key === "signature" ||
-        f.key.startsWith("signature") ||
-        f.key.startsWith("sig_"),
+      (f) => f.key === 'signature' || f.key.startsWith('signature') || f.key.startsWith('sig_'),
     );
     if (sigs.length > 0) return sigs;
     // Default: exactly ONE signature with empty sign name and title
     return [
       {
-        key: "signature1",
+        key: 'signature1',
         x: 50,
         y: 82,
-        text: "",
-        title: "",
+        text: '',
+        title: '',
         width: 140,
         visible: true,
       },
@@ -396,54 +390,54 @@ export function CertificateRenderer({
   }, [fields]);
 
   // Dynamic & Positionable Course Hours & Date Metadata
-  const courseHoursField = fieldsMap.get("courseHours") || {
-    key: "courseHours",
+  const courseHoursField = fieldsMap.get('courseHours') || {
+    key: 'courseHours',
     x: 18,
     y: 72,
-    text: "Course Hours :",
+    text: 'Course Hours :',
     visible: true,
   };
 
-  const issuedAtField = fieldsMap.get("issuedAt") || {
-    key: "issuedAt",
+  const issuedAtField = fieldsMap.get('issuedAt') || {
+    key: 'issuedAt',
     x: 82,
     y: 72,
-    text: "Date :",
+    text: 'Date :',
     visible: true,
   };
 
-  const titleField = fieldsMap.get("certificateTitle") || fieldsMap.get("headerTitle");
-  const preambleField = fieldsMap.get("preamble") || fieldsMap.get("headerSubtitle");
-  const completionTextField = fieldsMap.get("completionText");
-  const courseDescriptionField = fieldsMap.get("courseDescription");
-  const footerNoteField = fieldsMap.get("footerNote");
+  const titleField = fieldsMap.get('certificateTitle') || fieldsMap.get('headerTitle');
+  const preambleField = fieldsMap.get('preamble') || fieldsMap.get('headerSubtitle');
+  const completionTextField = fieldsMap.get('completionText');
+  const courseDescriptionField = fieldsMap.get('courseDescription');
+  const footerNoteField = fieldsMap.get('footerNote');
 
-  const titleText = titleField?.text || "Certificate of Training";
-  const preambleText = preambleField?.text || "THIS IS TO CERTIFY THAT";
+  const titleText = titleField?.text || 'Certificate of Training';
+  const preambleText = preambleField?.text || 'THIS IS TO CERTIFY THAT';
   const completionText =
-    completionTextField?.text || "has successfully completed the training course";
+    completionTextField?.text || 'has successfully completed the training course';
   const descriptionText =
     courseDescriptionField?.text ||
-    "by participating & completing all modules and passing all evaluation tests.";
+    'by participating & completing all modules and passing all evaluation tests.';
   const footerText =
     footerNoteField?.text ||
     `~ Ministry of Revenues ETIMS Academy · Verified Credential ${data.certificateNumber} · Verification: ${data.verificationCode} ~`;
 
-  const courseHoursText = data.courseHours ? `${data.courseHours} Hours` : "30 Hours";
+  const courseHoursText = data.courseHours ? `${data.courseHours} Hours` : '30 Hours';
   const formattedDate = formatDate(data.issuedAt);
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full max-w-4xl mx-auto overflow-hidden bg-white text-slate-800 shadow-xl transition-all print:shadow-none print:m-0 print:w-full print:max-w-none",
-        "aspect-[1.414/1] border-[12px] border-[#0e2a47] rounded-lg select-none",
+        'relative w-full max-w-4xl mx-auto overflow-hidden bg-white text-slate-800 shadow-xl transition-all print:shadow-none print:m-0 print:w-full print:max-w-none',
+        'aspect-[1.414/1] border-[12px] border-[#0e2a47] rounded-lg select-none',
         className,
       )}
       style={{
         backgroundImage: template?.backgroundUrl ? `url(${template.backgroundUrl})` : undefined,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
       }}
       onClick={() => {
         if (editable) onSelectField?.(null);
@@ -473,23 +467,19 @@ export function CertificateRenderer({
           {/* Prominent Recipient Name in Serif Italic */}
           <div className="py-1">
             <h2 className="font-serif text-3xl sm:text-4xl font-bold italic tracking-wide text-slate-900">
-              {data.holderName || "Meron Kassa"}
+              {data.holderName || 'Meron Kassa'}
             </h2>
             <div className="mx-auto mt-2 h-0.5 w-48 bg-slate-300" />
           </div>
 
-          <p className="text-xs sm:text-sm text-slate-600 italic">
-            {completionText}
-          </p>
+          <p className="text-xs sm:text-sm text-slate-600 italic">{completionText}</p>
 
           {/* Course Title Bold */}
           <h3 className="font-serif text-xl sm:text-2xl font-extrabold text-[#0e2a47] max-w-2xl mx-auto">
-            {data.courseTitle || "Advanced Excel & Data Analytics for Revenue Reporting"}
+            {data.courseTitle || 'Advanced Excel & Data Analytics for Revenue Reporting'}
           </h3>
 
-          <p className="text-xs text-slate-600 italic max-w-xl mx-auto">
-            {descriptionText}
-          </p>
+          <p className="text-xs text-slate-600 italic max-w-xl mx-auto">{descriptionText}</p>
         </div>
       </div>
 
@@ -516,7 +506,7 @@ export function CertificateRenderer({
               <img
                 src={logoField.imageUrl}
                 alt="Logo"
-                style={{ width: `${logoField.width || 140}px`, maxHeight: "55px" }}
+                style={{ width: `${logoField.width || 140}px`, maxHeight: '55px' }}
                 className="object-contain drop-shadow-xs shrink-0"
               />
             ) : (
@@ -587,7 +577,7 @@ export function CertificateRenderer({
               <Check className="h-3 w-3 stroke-[3]" />
             </div>
             <span className="text-[11px] font-extrabold tracking-wider text-slate-800 uppercase whitespace-nowrap">
-              {verifiedBadgeField.text || "VERIFIED"}
+              {verifiedBadgeField.text || 'VERIFIED'}
             </span>
           </div>
         </DraggableCanvasItem>
@@ -608,7 +598,9 @@ export function CertificateRenderer({
           className="p-1"
         >
           <div className="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap select-none pointer-events-none">
-            {courseHoursField.text ? `${courseHoursField.text} ${courseHoursText}` : `Course Hours : ${courseHoursText}`}
+            {courseHoursField.text
+              ? `${courseHoursField.text} ${courseHoursText}`
+              : `Course Hours : ${courseHoursText}`}
           </div>
         </DraggableCanvasItem>
       )}
@@ -627,7 +619,9 @@ export function CertificateRenderer({
           className="p-1"
         >
           <div className="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap select-none pointer-events-none">
-            {issuedAtField.text ? `${issuedAtField.text} ${formattedDate}` : `Date : ${formattedDate}`}
+            {issuedAtField.text
+              ? `${issuedAtField.text} ${formattedDate}`
+              : `Date : ${formattedDate}`}
           </div>
         </DraggableCanvasItem>
       )}
@@ -689,33 +683,34 @@ export function CertificateRenderer({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={sig.imageUrl}
-                  alt={sig.text || "Signature"}
-                  style={{ width: `${widthPx}px`, height: "45px" }}
+                  alt={sig.text || 'Signature'}
+                  style={{ width: `${widthPx}px`, height: '45px' }}
                   className="mx-auto object-contain select-none pointer-events-none"
                 />
               ) : (
                 <RealisticSignature name={sig.text || sig.key} />
               )}
-              <div
-                className="mx-auto h-px bg-slate-400 mt-0.5"
-                style={{ width: `${widthPx}px` }}
-              />
+              <div className="mx-auto h-px bg-slate-400 mt-0.5" style={{ width: `${widthPx}px` }} />
               <p className="text-xs font-bold text-slate-900 mt-1 whitespace-nowrap">
                 {sig.text ? (
                   sig.text
                 ) : editable ? (
-                  <span className="text-slate-400 italic font-normal text-[11px]">(Signer Name)</span>
+                  <span className="text-slate-400 italic font-normal text-[11px]">
+                    (Signer Name)
+                  </span>
                 ) : (
-                  ""
+                  ''
                 )}
               </p>
               <p className="text-[10px] text-slate-500 whitespace-nowrap">
                 {sig.title ? (
                   sig.title
                 ) : editable ? (
-                  <span className="text-slate-400 italic font-normal text-[10px]">(Signer Title)</span>
+                  <span className="text-slate-400 italic font-normal text-[10px]">
+                    (Signer Title)
+                  </span>
                 ) : (
-                  ""
+                  ''
                 )}
               </p>
             </div>
@@ -726,9 +721,7 @@ export function CertificateRenderer({
       {/* 8. Dynamic & Removable Footer Note */}
       {footerNoteField?.visible !== false && Boolean(footerNoteField?.text) && (
         <div className="absolute bottom-2 left-0 right-0 px-6 text-center select-none pointer-events-none z-10">
-          <p className="text-[9px] text-slate-400">
-            {footerNoteField?.text}
-          </p>
+          <p className="text-[9px] text-slate-400">{footerNoteField?.text}</p>
         </div>
       )}
     </div>

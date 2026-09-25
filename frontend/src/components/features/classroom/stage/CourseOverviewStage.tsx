@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import {
   BookOpen,
-    Target,
+  Target,
   ArrowRight,
   GraduationCap,
   Layers,
@@ -10,14 +10,14 @@ import {
   Award,
   CheckCircle2,
   FileText,
-} from "lucide-react";
-import type { Course, UploadedResource } from "@/types";
-import type { ApiCourseProgress } from "@/lib/api/types";
-import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
-import { ClassroomAttachments } from "../ClassroomAttachments";
+} from 'lucide-react';
+import type { Course, UploadedResource } from '@/types';
+import type { ApiCourseProgress } from '@/lib/api/types';
+import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface CourseOverviewStageProps {
   course: Course;
@@ -25,20 +25,23 @@ interface CourseOverviewStageProps {
   onStartCourse: () => void;
 }
 
-export function CourseOverviewStage({
-  course,
-  progress,
-  onStartCourse,
-}: CourseOverviewStageProps) {
+export function CourseOverviewStage({ course, progress, onStartCourse }: CourseOverviewStageProps) {
   const hasDescription = Boolean(course.description && stripHtmlTags(course.description).trim());
   const hasObjectives = Boolean(course.objectives && stripHtmlTags(course.objectives).trim());
-  const hasPrerequisites = Boolean(course.prerequisites && stripHtmlTags(course.prerequisites).trim());
-  const hasTargetAudience = Boolean(course.targetAudience && stripHtmlTags(course.targetAudience).trim());
+  const hasPrerequisites = Boolean(
+    course.prerequisites && stripHtmlTags(course.prerequisites).trim(),
+  );
+  const hasTargetAudience = Boolean(
+    course.targetAudience && stripHtmlTags(course.targetAudience).trim(),
+  );
 
   const courseAttachments: UploadedResource[] = getItemAttachments(course);
 
   const totalLessons = course.modules.reduce(
-    (acc, m) => acc + m.lessons.length + m.lessons.reduce((subAcc, l) => subAcc + (l.subLessons?.length ?? 0), 0),
+    (acc, m) =>
+      acc +
+      m.lessons.length +
+      m.lessons.reduce((subAcc, l) => subAcc + (l.subLessons?.length ?? 0), 0),
     0,
   );
 
@@ -47,7 +50,10 @@ export function CourseOverviewStage({
       acc +
       (m.durationMinutes ??
         m.lessons.reduce(
-          (lAcc, l) => lAcc + (l.durationMin || 0) + (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0),
+          (lAcc, l) =>
+            lAcc +
+            (l.durationMin || 0) +
+            (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0),
           0,
         )),
     0,
@@ -85,7 +91,8 @@ export function CourseOverviewStage({
           </h1>
           {course.department ? (
             <p className="text-xs text-slate-500 mt-1">
-              Ministry of Revenues · <span className="font-medium text-slate-700">{course.department}</span>
+              Ministry of Revenues ·{' '}
+              <span className="font-medium text-slate-700">{course.department}</span>
             </p>
           ) : null}
         </div>
@@ -107,7 +114,7 @@ export function CourseOverviewStage({
             <div>
               <p className="text-[10px] font-semibold text-slate-400 uppercase">Estimated Time</p>
               <p className="text-xs font-bold text-slate-800">
-                {totalDurationMin > 0 ? `${totalDurationMin} min` : "Self-paced"}
+                {totalDurationMin > 0 ? `${totalDurationMin} min` : 'Self-paced'}
               </p>
             </div>
           </div>
@@ -117,7 +124,7 @@ export function CourseOverviewStage({
             <div>
               <p className="text-[10px] font-semibold text-slate-400 uppercase">Assessment</p>
               <p className="text-xs font-bold text-slate-800">
-                {finalPassingScore ? `${finalPassingScore}% Passing` : "Graded Checks"}
+                {finalPassingScore ? `${finalPassingScore}% Passing` : 'Graded Checks'}
               </p>
             </div>
           </div>
@@ -134,7 +141,8 @@ export function CourseOverviewStage({
         {/* Start / Continue Learning Action */}
         <div className="pt-2 flex flex-wrap items-center justify-between gap-4">
           <p className="text-xs text-slate-500">
-            Review the syllabus, objectives, and reference materials below, then start your first lesson.
+            Review the syllabus, objectives, and reference materials below, then start your first
+            lesson.
           </p>
           <Button
             type="button"
@@ -142,7 +150,7 @@ export function CourseOverviewStage({
             onClick={onStartCourse}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
-            <span>{overallPercent > 0 ? "Continue Course" : "Start Learning"}</span>
+            <span>{overallPercent > 0 ? 'Continue Course' : 'Start Learning'}</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
@@ -173,7 +181,8 @@ export function CourseOverviewStage({
             </h2>
           </div>
           <p className="text-xs text-indigo-800/90">
-            Upon successful completion of this training, learners will be able to demonstrate the following core competencies:
+            Upon successful completion of this training, learners will be able to demonstrate the
+            following core competencies:
           </p>
           <div className="text-sm text-indigo-950 leading-relaxed bg-white/80 rounded-xl border border-indigo-100 p-4 shadow-2xs">
             <RichContent html={course.objectives!} />
@@ -213,10 +222,7 @@ export function CourseOverviewStage({
       {/* Course Attached Documents & Lab Resources */}
       {courseAttachments.length > 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3">
-          <ClassroomAttachments
-            files={courseAttachments}
-            label="Course Reference Material"
-          />
+          <ClassroomAttachments files={courseAttachments} label="Course Reference Material" />
         </div>
       ) : null}
 
@@ -228,7 +234,7 @@ export function CourseOverviewStage({
           onClick={onStartCourse}
           className="flex items-center gap-2 font-semibold shadow-xs"
         >
-          <span>{overallPercent > 0 ? "Continue to Lessons" : "Begin First Module"}</span>
+          <span>{overallPercent > 0 ? 'Continue to Lessons' : 'Begin First Module'}</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

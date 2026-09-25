@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
-import type { Course } from "@/types";
-import type { ApiCourseProgress } from "@/lib/api/types";
-import { fetchCourseDetail } from "@/lib/api/courses";
-import { fetchCourseProgress, markLessonComplete } from "@/lib/api/progress";
-import { courseFromDetail } from "@/lib/api/transform";
-import { QuizTakerModal } from "@/components/features/quiz/QuizTakerModal";
-import { ClassroomHeader } from "./ClassroomHeader";
-import { ClassroomSidebar } from "./ClassroomSidebar";
-import { ClassroomFooter } from "./ClassroomFooter";
-import { ClassroomStage } from "./stage/ClassroomStage";
-import { useClassroomNavigation } from "./hooks/useClassroomNavigation";
-import { useClassroomHeartbeat } from "./hooks/useClassroomHeartbeat";
+import { useCallback, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import type { Course } from '@/types';
+import type { ApiCourseProgress } from '@/lib/api/types';
+import { fetchCourseDetail } from '@/lib/api/courses';
+import { fetchCourseProgress, markLessonComplete } from '@/lib/api/progress';
+import { courseFromDetail } from '@/lib/api/transform';
+import { QuizTakerModal } from '@/components/features/quiz/QuizTakerModal';
+import { ClassroomHeader } from './ClassroomHeader';
+import { ClassroomSidebar } from './ClassroomSidebar';
+import { ClassroomFooter } from './ClassroomFooter';
+import { ClassroomStage } from './stage/ClassroomStage';
+import { useClassroomNavigation } from './hooks/useClassroomNavigation';
+import { useClassroomHeartbeat } from './hooks/useClassroomHeartbeat';
 
 interface ClassroomShellProps {
   courseId: string;
@@ -61,13 +61,10 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
   } = useClassroomNavigation({ course, progress });
 
   // Time tracking & heartbeats
-  const activeItemId =
-    activeContent?.subLesson?.id ?? activeContent?.lesson?.id ?? null;
-
+  const activeItemId = activeContent?.subLesson?.id ?? activeContent?.lesson?.id ?? null;
 
   // Calculate study time for current active target
-  const currentTargetProgress =
-    activeContent?.subLessonProgress ?? activeContent?.lessonProgress;
+  const currentTargetProgress = activeContent?.subLessonProgress ?? activeContent?.lessonProgress;
   const initialSeconds = currentTargetProgress?.timeSpentSeconds ?? 0;
   const requiredSeconds = currentTargetProgress?.requiredSeconds ?? 0;
 
@@ -86,9 +83,9 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
       : initialSeconds;
 
   const isOverview =
-    activeContent?.item.type === "COURSE_OVERVIEW" ||
-    activeContent?.item.type === "MODULE_OVERVIEW" ||
-    activeContent?.item.type === "CERTIFICATE";
+    activeContent?.item.type === 'COURSE_OVERVIEW' ||
+    activeContent?.item.type === 'MODULE_OVERVIEW' ||
+    activeContent?.item.type === 'CERTIFICATE';
 
   const timeSatisfied =
     isOverview ||
@@ -109,7 +106,7 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
       await markLessonComplete(activeItemId, { completed: true, lastPosition: 0 });
     } catch (err) {
       // In case lesson completion has an assessment requirement gate, proceed with loadData & navigation
-      console.warn("Notice: proceeding to next topic:", err);
+      console.warn('Notice: proceeding to next topic:', err);
     } finally {
       await loadData();
       if (nextItem) {
@@ -225,4 +222,3 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
     </div>
   );
 }
-

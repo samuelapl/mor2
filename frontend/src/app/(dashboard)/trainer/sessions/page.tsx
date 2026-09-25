@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   CalendarDays,
   CheckCircle2,
@@ -18,26 +18,31 @@ import {
   Trash2,
   Users,
   X,
-} from "lucide-react";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { deleteLiveSession, fetchLiveSessions, setSessionStatus, sendSessionAttendanceReport } from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { usePagination } from "@/lib/usePagination";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
-import { EditSessionModal } from "@/components/features/sessions/EditSessionModal";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
-import { SessionAttendanceModal } from "@/components/features/sessions/SessionAttendanceModal";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { toast } from "@/lib/toast";
+} from 'lucide-react';
+import type { ApiLiveSession } from '@/lib/api/types';
+import {
+  deleteLiveSession,
+  fetchLiveSessions,
+  setSessionStatus,
+  sendSessionAttendanceReport,
+} from '@/lib/api/monitoring';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SessionTable, type SessionRow } from '@/components/features/sessions/SessionTable';
+import { EditSessionModal } from '@/components/features/sessions/EditSessionModal';
+import { LiveSessionWorkspace } from '@/components/features/sessions/LiveSessionWorkspace';
+import { SessionDetailModal } from '@/components/features/sessions/SessionDetailModal';
+import { SessionAttendanceModal } from '@/components/features/sessions/SessionAttendanceModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { toast } from '@/lib/toast';
 
 export default function TrainerSessionsPage() {
   const { courses, currentUser } = useLms();
@@ -49,15 +54,17 @@ export default function TrainerSessionsPage() {
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
-  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(null);
+  const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("ALL");
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
 
-  const canManageAll = can("live_session.manage_all");
+  const canManageAll = can('live_session.manage_all');
 
   const assignedCourses = useMemo(
     () =>
@@ -94,12 +101,12 @@ export default function TrainerSessionsPage() {
       }
 
       // Course filter
-      if (selectedCourseFilter !== "ALL" && s.courseId !== selectedCourseFilter) {
+      if (selectedCourseFilter !== 'ALL' && s.courseId !== selectedCourseFilter) {
         return false;
       }
 
       // Status filter
-      if (selectedStatusFilter !== "ALL" && s.status !== selectedStatusFilter) {
+      if (selectedStatusFilter !== 'ALL' && s.status !== selectedStatusFilter) {
         return false;
       }
 
@@ -107,22 +114,33 @@ export default function TrainerSessionsPage() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const course = courses.find((c) => c.id === s.courseId);
-        const titleMatch = (s.titleEn || "").toLowerCase().includes(q);
-        const codeMatch = (course?.code || s.course?.code || "").toLowerCase().includes(q);
-        const courseTitleMatch = (course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
+        const titleMatch = (s.titleEn || '').toLowerCase().includes(q);
+        const codeMatch = (course?.code || s.course?.code || '').toLowerCase().includes(q);
+        const courseTitleMatch = (course?.title || s.course?.titleEn || '')
+          .toLowerCase()
+          .includes(q);
         if (!titleMatch && !codeMatch && !courseTitleMatch) return false;
       }
 
       return true;
     });
-  }, [sessions, assignedCourses, currentUser?.id, canManageAll, selectedCourseFilter, selectedStatusFilter, searchQuery, courses]);
+  }, [
+    sessions,
+    assignedCourses,
+    currentUser?.id,
+    canManageAll,
+    selectedCourseFilter,
+    selectedStatusFilter,
+    searchQuery,
+    courses,
+  ]);
 
   const upcoming = useMemo(
-    () => mySessions.filter((s) => s.status === "SCHEDULED" || s.status === "LIVE"),
+    () => mySessions.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE'),
     [mySessions],
   );
   const past = useMemo(
-    () => mySessions.filter((s) => s.status === "COMPLETED" || s.status === "CANCELLED"),
+    () => mySessions.filter((s) => s.status === 'COMPLETED' || s.status === 'CANCELLED'),
     [mySessions],
   );
 
@@ -132,11 +150,14 @@ export default function TrainerSessionsPage() {
       const isMyCourse = assignedCourses.some((c) => c.id === session.courseId);
       return {
         session,
-        courseTitle: course?.title ?? session.course?.titleEn ?? session.titleEn ?? "Training Session",
-        courseCode: course?.code ?? session.course?.code ?? "TRAINING",
+        courseTitle:
+          course?.title ?? session.course?.titleEn ?? session.titleEn ?? 'Training Session',
+        courseCode: course?.code ?? session.course?.code ?? 'TRAINING',
         trainerName: isMyCourse
-          ? (currentUser?.name ?? "Assigned Trainer")
-          : (session.course?.titleEn ? "Institutional Trainer" : (currentUser?.name ?? "Assigned Trainer")),
+          ? (currentUser?.name ?? 'Assigned Trainer')
+          : session.course?.titleEn
+            ? 'Institutional Trainer'
+            : (currentUser?.name ?? 'Assigned Trainer'),
       };
     });
 
@@ -146,9 +167,9 @@ export default function TrainerSessionsPage() {
   const handleToggleLive = async (session: ApiLiveSession) => {
     setStatusUpdatingId(session.id);
     try {
-      const nextStatus = session.status === "LIVE" ? "COMPLETED" : "LIVE";
+      const nextStatus = session.status === 'LIVE' ? 'COMPLETED' : 'LIVE';
       await setSessionStatus(session.id, nextStatus);
-      if (nextStatus === "COMPLETED") {
+      if (nextStatus === 'COMPLETED') {
         try {
           await sendSessionAttendanceReport(session.id);
         } catch {
@@ -157,7 +178,7 @@ export default function TrainerSessionsPage() {
       }
       loadSessions();
     } catch (err) {
-      console.error("Failed to update status:", err);
+      console.error('Failed to update status:', err);
     } finally {
       setStatusUpdatingId(null);
     }
@@ -174,24 +195,25 @@ export default function TrainerSessionsPage() {
       setSessionToDelete(null);
       loadSessions();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete session.");
+      toast.error(err?.message || 'Failed to delete session.');
     } finally {
       setDeletingId(null);
     }
   };
 
-  const canConductSession = canAny(["live_session.manage_all", "live_session.manage_own"]);
-  const canViewAttendance = canAny(["attendance.view", "attendance.manage"]);
+  const canConductSession = canAny(['live_session.manage_all', 'live_session.manage_own']);
+  const canViewAttendance = canAny(['attendance.view', 'attendance.manage']);
 
-  const hasActiveFilters = searchQuery !== "" || selectedCourseFilter !== "ALL" || selectedStatusFilter !== "ALL";
+  const hasActiveFilters =
+    searchQuery !== '' || selectedCourseFilter !== 'ALL' || selectedStatusFilter !== 'ALL';
 
   return (
     <PageShell
-      role={currentUser?.role ?? "trainer"}
-      title={tBilingual("My Sessions", "የእኔ የቀጥታ ክፍለ-ጊዜዎች")}
+      role={currentUser?.role ?? 'trainer'}
+      title={tBilingual('My Sessions', 'የእኔ የቀጥታ ክፍለ-ጊዜዎች')}
       description={tBilingual(
-        "View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance.",
-        "ለተመደቡልዎት ኮርሶች የታቀዱ የቀጥታ ስልጠናዎችን ይመልከቱ እና ያካሂዱ፣ እንዲሁም የተሳታፊዎችን ክትትል ይመርምሩ።"
+        'View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance.',
+        'ለተመደቡልዎት ኮርሶች የታቀዱ የቀጥታ ስልጠናዎችን ይመልከቱ እና ያካሂዱ፣ እንዲሁም የተሳታፊዎችን ክትትል ይመርምሩ።',
       )}
     >
       {/* FILTER BAR */}
@@ -203,7 +225,10 @@ export default function TrainerSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder={tBilingual("Search session title, course code…", "የክፍለ-ጊዜ ርዕስ፣ የኮርስ ኮድ ይፈልጉ…")}
+                placeholder={tBilingual(
+                  'Search session title, course code…',
+                  'የክፍለ-ጊዜ ርዕስ፣ የኮርስ ኮድ ይፈልጉ…',
+                )}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -218,7 +243,8 @@ export default function TrainerSessionsPage() {
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
               <option value="ALL">
-                {tBilingual("All Courses", "ሁሉም ኮርሶች")} ({assignedCourses.length > 0 ? assignedCourses.length : courses.length})
+                {tBilingual('All Courses', 'ሁሉም ኮርሶች')} (
+                {assignedCourses.length > 0 ? assignedCourses.length : courses.length})
               </option>
               {(assignedCourses.length > 0 ? assignedCourses : courses).map((c) => (
                 <option key={c.id} value={c.id}>
@@ -229,26 +255,26 @@ export default function TrainerSessionsPage() {
 
             {/* Status Filter Pills */}
             <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-0.5 text-xs">
-              {(["ALL", "SCHEDULED", "LIVE", "COMPLETED", "CANCELLED"] as const).map((st) => (
+              {(['ALL', 'SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED'] as const).map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setSelectedStatusFilter(st)}
                   className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${
                     selectedStatusFilter === st
-                      ? "bg-white text-slate-900 shadow-xs font-semibold"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {st === "ALL"
-                    ? tBilingual("All Status", "ሁሉም ሁኔታ")
-                    : st === "SCHEDULED"
-                    ? tBilingual("Upcoming", "መጪ")
-                    : st === "LIVE"
-                    ? tBilingual("Live", "በቀጥታ")
-                    : st === "COMPLETED"
-                    ? tBilingual("Completed", "የተጠናቀቀ")
-                    : tBilingual("Cancelled", "የተሰረዘ")}
+                  {st === 'ALL'
+                    ? tBilingual('All Status', 'ሁሉም ሁኔታ')
+                    : st === 'SCHEDULED'
+                      ? tBilingual('Upcoming', 'መጪ')
+                      : st === 'LIVE'
+                        ? tBilingual('Live', 'በቀጥታ')
+                        : st === 'COMPLETED'
+                          ? tBilingual('Completed', 'የተጠናቀቀ')
+                          : tBilingual('Cancelled', 'የተሰረዘ')}
                 </button>
               ))}
             </div>
@@ -260,9 +286,9 @@ export default function TrainerSessionsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCourseFilter("ALL");
-                  setSelectedStatusFilter("ALL");
+                  setSearchQuery('');
+                  setSelectedCourseFilter('ALL');
+                  setSelectedStatusFilter('ALL');
                 }}
                 className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
               >
@@ -271,8 +297,14 @@ export default function TrainerSessionsPage() {
               </Button>
             )}
 
-            <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading} className="h-8 gap-1 text-xs text-slate-600">
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadSessions}
+              disabled={loading}
+              className="h-8 gap-1 text-xs text-slate-600"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -280,19 +312,23 @@ export default function TrainerSessionsPage() {
       </div>
 
       {/* SECTIONS RENDERING ACCORDING TO STATUS FILTER */}
-      {selectedStatusFilter === "ALL" && upcoming.length === 0 && past.length === 0 ? (
+      {selectedStatusFilter === 'ALL' && upcoming.length === 0 && past.length === 0 ? (
         <EmptyState
           title="No sessions found"
           description={
             hasActiveFilters
-              ? "No scheduled or past sessions match your current filters. Try resetting the search or course selector."
-              : "You do not have any assigned course sessions scheduled yet."
+              ? 'No scheduled or past sessions match your current filters. Try resetting the search or course selector.'
+              : 'You do not have any assigned course sessions scheduled yet.'
           }
         />
       ) : null}
 
       {/* Upcoming & Active Sessions */}
-      {(selectedStatusFilter === "ALL" ? upcoming.length > 0 : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
+      {(
+        selectedStatusFilter === 'ALL'
+          ? upcoming.length > 0
+          : selectedStatusFilter === 'SCHEDULED' || selectedStatusFilter === 'LIVE'
+      ) ? (
         <PageSection
           title="Upcoming & Active Sessions"
           description="Sessions scheduled to be delivered. Start the session to go live or review attendance."
@@ -361,7 +397,7 @@ export default function TrainerSessionsPage() {
                     )}
 
                     {/* Go Live / End Session Lifecycle */}
-                    {canConductSession && row.session.status === "SCHEDULED" ? (
+                    {canConductSession && row.session.status === 'SCHEDULED' ? (
                       <Button
                         size="sm"
                         variant="outline"
@@ -372,7 +408,7 @@ export default function TrainerSessionsPage() {
                         <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
                         Go Live
                       </Button>
-                    ) : canConductSession && row.session.status === "LIVE" ? (
+                    ) : canConductSession && row.session.status === 'LIVE' ? (
                       <Button
                         size="sm"
                         variant="outline"
@@ -412,20 +448,24 @@ export default function TrainerSessionsPage() {
       ) : null}
 
       {/* Past Sessions */}
-      {(selectedStatusFilter === "ALL" ? past.length > 0 : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
+      {(
+        selectedStatusFilter === 'ALL'
+          ? past.length > 0
+          : selectedStatusFilter === 'COMPLETED' || selectedStatusFilter === 'CANCELLED'
+      ) ? (
         <PageSection
-          title={tBilingual("Past Sessions", "ያለፉ ክፍለ-ጊዜዎች")}
+          title={tBilingual('Past Sessions', 'ያለፉ ክፍለ-ጊዜዎች')}
           description={tBilingual(
-            "Completed training sessions with verifiable attendance records.",
-            "የተረጋገጠ የተሳትፎ መዝገብ ያላቸው የተጠናቀቁ የስልጠና ክፍለ-ጊዜዎች።"
+            'Completed training sessions with verifiable attendance records.',
+            'የተረጋገጠ የተሳትፎ መዝገብ ያላቸው የተጠናቀቁ የስልጠና ክፍለ-ጊዜዎች።',
           )}
         >
           {past.length === 0 ? (
             <EmptyState
-              title={tBilingual("No past sessions found", "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም")}
+              title={tBilingual('No past sessions found', 'ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም')}
               description={tBilingual(
-                "No completed or cancelled sessions match your filter criteria.",
-                "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።"
+                'No completed or cancelled sessions match your filter criteria.',
+                'ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።',
               )}
             />
           ) : (
@@ -480,7 +520,7 @@ export default function TrainerSessionsPage() {
                         className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                       >
                         <ClipboardCheck className="h-3.5 w-3.5" />
-                        {tBilingual("Attendance Records", "የተሳትፎ መዝገቦች")}
+                        {tBilingual('Attendance Records', 'የተሳትፎ መዝገቦች')}
                       </Button>
                     )}
                   </div>
@@ -506,8 +546,8 @@ export default function TrainerSessionsPage() {
           open={Boolean(activeJoinSession)}
           onClose={() => setActiveJoinSession(null)}
           session={activeJoinSession}
-          courseTitle={activeJoinSession.course?.titleEn || "Training Course"}
-          courseCode={activeJoinSession.course?.code || "TRAINING"}
+          courseTitle={activeJoinSession.course?.titleEn || 'Training Course'}
+          courseCode={activeJoinSession.course?.code || 'TRAINING'}
           trainerName={currentUser?.name}
           userRole="trainer"
         />
@@ -519,7 +559,7 @@ export default function TrainerSessionsPage() {
           open={Boolean(selectedDetailId)}
           onClose={() => setSelectedDetailId(null)}
           sessionId={selectedDetailId}
-          userRole={currentUser?.role ?? "trainer"}
+          userRole={currentUser?.role ?? 'trainer'}
           onOpenAttendance={() => {
             setSelectedAttendanceSessionId(selectedDetailId);
             setSelectedDetailId(null);

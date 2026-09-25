@@ -85,7 +85,10 @@ export class FilesService implements OnModuleInit {
 
     // UUID format check helper: prevent invalid uuid string crashes on temporary client IDs
     const isUuid = (val?: string): boolean =>
-      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val));
+      Boolean(
+        val &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val),
+      );
 
     // Verify foreign keys exist in DB before linking, otherwise leave null to gracefully support new/draft entities
     let validCourseId: string | null = null;

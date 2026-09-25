@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, ChevronDown, Check, UserCheck, Star, User, X } from "lucide-react";
-import type { ApiUser } from "@/lib/api/types";
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Search, ChevronDown, Check, UserCheck, Star, User, X } from 'lucide-react';
+import type { ApiUser } from '@/lib/api/types';
 
 interface SearchableTrainerSelectProps {
   trainers: ApiUser[];
@@ -22,18 +22,15 @@ export function SearchableTrainerSelect({
   disabled = false,
 }: SearchableTrainerSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const selectedTrainer = useMemo(
-    () => trainers.find((t) => t.id === value),
-    [trainers, value]
-  );
+  const selectedTrainer = useMemo(() => trainers.find((t) => t.id === value), [trainers, value]);
 
   const courseTrainerIds = useMemo(
     () => new Set(courseTrainers.map((t) => t.id)),
-    [courseTrainers]
+    [courseTrainers],
   );
 
   const isSelectedCourseTrainer = selectedTrainer
@@ -48,26 +45,26 @@ export function SearchableTrainerSelect({
       }
     }
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false);
       }
     }
     if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -75,29 +72,29 @@ export function SearchableTrainerSelect({
   const query = searchQuery.toLowerCase().trim();
   const filterFn = (t: ApiUser) => {
     if (!query) return true;
-    const matchFirst = (t.firstName || "").toLowerCase().includes(query);
-    const matchLast = (t.lastName || "").toLowerCase().includes(query);
-    const matchEmail = (t.email || "").toLowerCase().includes(query);
-    const matchDept = ((t as any).department || "").toLowerCase().includes(query);
+    const matchFirst = (t.firstName || '').toLowerCase().includes(query);
+    const matchLast = (t.lastName || '').toLowerCase().includes(query);
+    const matchEmail = (t.email || '').toLowerCase().includes(query);
+    const matchDept = ((t as any).department || '').toLowerCase().includes(query);
     return matchFirst || matchLast || matchEmail || matchDept;
   };
 
   const filteredCourseTrainers = useMemo(
     () => courseTrainers.filter(filterFn),
-    [courseTrainers, query]
+    [courseTrainers, query],
   );
 
   const filteredOtherTrainers = useMemo(
     () => trainers.filter((t) => !courseTrainerIds.has(t.id) && filterFn(t)),
-    [trainers, courseTrainerIds, query]
+    [trainers, courseTrainerIds, query],
   );
 
   const totalFilteredCount = filteredCourseTrainers.length + filteredOtherTrainers.length;
 
   const getInitials = (user: ApiUser) => {
-    const f = user.firstName?.[0] || "";
-    const l = user.lastName?.[0] || "";
-    return (f + l).toUpperCase() || "T";
+    const f = user.firstName?.[0] || '';
+    const l = user.lastName?.[0] || '';
+    return (f + l).toUpperCase() || 'T';
   };
 
   return (
@@ -109,9 +106,9 @@ export function SearchableTrainerSelect({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`w-full text-left rounded-xl border bg-white px-3.5 py-2.5 shadow-xs transition outline-none flex items-center justify-between gap-2.5 ${
           isOpen
-            ? "border-indigo-500 ring-4 ring-indigo-500/10"
-            : "border-indigo-200/90 hover:border-indigo-300"
-        } ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+            ? 'border-indigo-500 ring-4 ring-indigo-500/10'
+            : 'border-indigo-200/90 hover:border-indigo-300'
+        } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {selectedTrainer ? (
@@ -141,14 +138,14 @@ export function SearchableTrainerSelect({
             </div>
           ) : (
             <span className="text-sm text-slate-400">
-              {loading ? "Loading qualified trainers…" : "Select trainer to host this session…"}
+              {loading ? 'Loading qualified trainers…' : 'Select trainer to host this session…'}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1 text-slate-400 shrink-0">
           <ChevronDown
-            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180 text-indigo-600" : ""}`}
+            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-600' : ''}`}
           />
         </div>
       </button>
@@ -170,7 +167,7 @@ export function SearchableTrainerSelect({
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => setSearchQuery('')}
                 className="absolute right-3.5 top-2 text-slate-400 hover:text-slate-600 p-0.5"
               >
                 <X className="h-3.5 w-3.5" />
@@ -181,11 +178,9 @@ export function SearchableTrainerSelect({
           {/* Results Summary */}
           <div className="flex items-center justify-between px-2 pb-1 text-[11px] text-slate-400 font-medium">
             <span>
-              {totalFilteredCount} trainer{totalFilteredCount === 1 ? "" : "s"} available
+              {totalFilteredCount} trainer{totalFilteredCount === 1 ? '' : 's'} available
             </span>
-            {searchQuery && (
-              <span className="text-indigo-600 font-medium">Filtered</span>
-            )}
+            {searchQuery && <span className="text-indigo-600 font-medium">Filtered</span>}
           </div>
 
           {/* Scrollable List */}
@@ -212,12 +207,12 @@ export function SearchableTrainerSelect({
                           onClick={() => {
                             onChange(t.id);
                             setIsOpen(false);
-                            setSearchQuery("");
+                            setSearchQuery('');
                           }}
                           className={`w-full text-left rounded-xl px-3 py-2 text-xs transition flex items-center justify-between gap-3 ${
                             isSelected
-                              ? "bg-amber-50 border border-amber-200 text-slate-900 font-semibold shadow-xs"
-                              : "hover:bg-amber-50/50 text-slate-700"
+                              ? 'bg-amber-50 border border-amber-200 text-slate-900 font-semibold shadow-xs'
+                              : 'hover:bg-amber-50/50 text-slate-700'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -236,9 +231,7 @@ export function SearchableTrainerSelect({
                               <p className="text-[11px] text-slate-500 truncate">{t.email}</p>
                             </div>
                           </div>
-                          {isSelected && (
-                            <Check className="h-4 w-4 text-amber-600 shrink-0" />
-                          )}
+                          {isSelected && <Check className="h-4 w-4 text-amber-600 shrink-0" />}
                         </button>
                       );
                     })}
@@ -261,12 +254,12 @@ export function SearchableTrainerSelect({
                           onClick={() => {
                             onChange(t.id);
                             setIsOpen(false);
-                            setSearchQuery("");
+                            setSearchQuery('');
                           }}
                           className={`w-full text-left rounded-xl px-3 py-2 text-xs transition flex items-center justify-between gap-3 ${
                             isSelected
-                              ? "bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold"
-                              : "hover:bg-slate-50 text-slate-700"
+                              ? 'bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold'
+                              : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -280,9 +273,7 @@ export function SearchableTrainerSelect({
                               <p className="text-[11px] text-slate-500 truncate">{t.email}</p>
                             </div>
                           </div>
-                          {isSelected && (
-                            <Check className="h-4 w-4 text-indigo-600 shrink-0" />
-                          )}
+                          {isSelected && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
                         </button>
                       );
                     })}

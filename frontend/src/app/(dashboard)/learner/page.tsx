@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   ArrowRight,
   Award,
@@ -13,26 +13,26 @@ import {
   PlayCircle,
   GraduationCap,
   Video,
-} from "lucide-react";
-import { fetchUpcomingSessions } from "@/lib/api/monitoring";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { useLms } from "@/lib/lms-store";
-import { useCourseProgress } from "@/lib/api/useCourseProgress";
-import { tr } from "@/constants/labels";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import LanguageToggle from "@/components/shared/LanguageToggle";
-import { StatCard } from "@/components/ui/StatCard";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { DonutChart, ProgressRing } from "@/components/ui/charts";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
+} from 'lucide-react';
+import { fetchUpcomingSessions } from '@/lib/api/monitoring';
+import type { ApiLiveSession } from '@/lib/api/types';
+import { useLms } from '@/lib/lms-store';
+import { useCourseProgress } from '@/lib/api/useCourseProgress';
+import { tr } from '@/constants/labels';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { StatCard } from '@/components/ui/StatCard';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { DonutChart, ProgressRing } from '@/components/ui/charts';
+import { LiveSessionWorkspace } from '@/components/features/sessions/LiveSessionWorkspace';
+import { SessionDetailModal } from '@/components/features/sessions/SessionDetailModal';
 
 export default function LearnerDashboardPage() {
   const { courses, lang, currentUser } = useLms();
-  const me = currentUser?.id ?? "";
+  const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress } = useCourseProgress(enrolled.map((c) => c.id));
 
@@ -79,26 +79,26 @@ export default function LearnerDashboardPage() {
     inProgress.length > 0
       ? [...inProgress].sort((a, b) => percentOf(b.id) - percentOf(a.id))[0]
       : notStarted.length > 0
-      ? notStarted[0]
-      : enrolled[0] ?? null;
+        ? notStarted[0]
+        : (enrolled[0] ?? null);
 
   const nextUpPercent = nextUp ? percentOf(nextUp.id) : 0;
 
   // Donut status segments for learning progress
   const learningSegments = [
-    { label: "Completed", value: completed.length, color: "#10b981" },
-    { label: "In Progress", value: inProgress.length, color: "#6366f1" },
-    { label: "Not Started", value: notStarted.length, color: "#94a3b8" },
+    { label: 'Completed', value: completed.length, color: '#10b981' },
+    { label: 'In Progress', value: inProgress.length, color: '#6366f1' },
+    { label: 'Not Started', value: notStarted.length, color: '#94a3b8' },
   ];
 
   return (
     <PageShell
       role="learner"
-      title={lang === "en" ? "Learner Dashboard" : "የተማሪ ዳሽቦርድ"}
+      title={lang === 'en' ? 'Learner Dashboard' : 'የተማሪ ዳሽቦርድ'}
       description={
-        lang === "en"
-          ? "Track your learning journey, resume active courses, and participate in scheduled live sessions."
-          : "የመማር ሂደትዎን ይከታተሉ እና የቀጥታ ስልጠናዎችን ይቀላቀሉ።"
+        lang === 'en'
+          ? 'Track your learning journey, resume active courses, and participate in scheduled live sessions.'
+          : 'የመማር ሂደትዎን ይከታተሉ እና የቀጥታ ስልጠናዎችን ይቀላቀሉ።'
       }
     >
       <div className="mb-6 flex items-center justify-between">
@@ -107,7 +107,7 @@ export default function LearnerDashboardPage() {
           <span>
             {currentUser?.firstName || currentUser?.name
               ? `Welcome back, ${currentUser.firstName || currentUser.name}!`
-              : "Welcome to your LMS Learning Hub"}
+              : 'Welcome to your LMS Learning Hub'}
           </span>
         </div>
         <LanguageToggle />
@@ -117,29 +117,29 @@ export default function LearnerDashboardPage() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={BookOpen}
-          label={tr(lang, "myCourses")}
+          label={tr(lang, 'myCourses')}
           value={enrolled.length}
-          hint={lang === "am" ? "የተመዘገቡባቸው ፕሮግራሞች" : "Enrolled programs"}
+          hint={lang === 'am' ? 'የተመዘገቡባቸው ፕሮግራሞች' : 'Enrolled programs'}
         />
         <StatCard
           icon={PlayCircle}
-          label={tr(lang, "inProgress")}
+          label={tr(lang, 'inProgress')}
           value={inProgress.length}
-          hint={lang === "am" ? "በሂደት ላይ ያሉ ኮርሶች" : "Active courses"}
+          hint={lang === 'am' ? 'በሂደት ላይ ያሉ ኮርሶች' : 'Active courses'}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           icon={CheckCircle2}
-          label={tr(lang, "completed")}
+          label={tr(lang, 'completed')}
           value={completed.length}
-          hint={lang === "am" ? "ያጠናቀቋቸው ኮርሶች" : "Finished courses"}
+          hint={lang === 'am' ? 'ያጠናቀቋቸው ኮርሶች' : 'Finished courses'}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={Award}
-          label={tr(lang, "averageProgress")}
+          label={tr(lang, 'averageProgress')}
           value={`${avgProgress}%`}
-          hint={lang === "am" ? "አጠቃላይ አማካይ" : "Platform average"}
+          hint={lang === 'am' ? 'አጠቃላይ አማካይ' : 'Platform average'}
           iconClassName="bg-amber-50 text-amber-600"
         />
       </div>
@@ -156,7 +156,7 @@ export default function LearnerDashboardPage() {
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-semibold text-indigo-200 backdrop-blur-sm">
                   <PlayCircle className="h-3.5 w-3.5 text-indigo-300" />
-                  {nextUpPercent > 0 ? "Continue Learning" : "Start Learning"}
+                  {nextUpPercent > 0 ? 'Continue Learning' : 'Start Learning'}
                 </span>
                 {nextUp && (
                   <span className="text-xs font-medium text-indigo-200">
@@ -171,7 +171,8 @@ export default function LearnerDashboardPage() {
                     {nextUp.title}
                   </h3>
                   <p className="mt-2 text-sm text-indigo-200/90 line-clamp-2 leading-relaxed">
-                    {nextUp.description || "Pick up right where you left off and advance towards course completion."}
+                    {nextUp.description ||
+                      'Pick up right where you left off and advance towards course completion.'}
                   </p>
 
                   <div className="mt-5 space-y-1.5">
@@ -189,7 +190,9 @@ export default function LearnerDashboardPage() {
                 </div>
               ) : (
                 <div className="mt-6 py-4">
-                  <h3 className="font-display text-lg font-bold text-white">No active enrollments yet</h3>
+                  <h3 className="font-display text-lg font-bold text-white">
+                    No active enrollments yet
+                  </h3>
                   <p className="mt-1 text-xs text-indigo-200">
                     Explore available courses in the catalog and begin your professional training.
                   </p>
@@ -206,8 +209,12 @@ export default function LearnerDashboardPage() {
                   >
                     <PlayCircle className="h-4 w-4 text-indigo-700" />
                     {nextUpPercent > 0
-                      ? (lang === "am" ? "ትምህርት ቀጥል" : "Resume Course")
-                      : (lang === "am" ? "ትምህርት ጀምር" : "Start Course")}
+                      ? lang === 'am'
+                        ? 'ትምህርት ቀጥል'
+                        : 'Resume Course'
+                      : lang === 'am'
+                        ? 'ትምህርት ጀምር'
+                        : 'Start Course'}
                   </Button>
                 </Link>
               ) : null}
@@ -217,7 +224,7 @@ export default function LearnerDashboardPage() {
                   size="md"
                   className="border-white/20 text-white hover:bg-white/10"
                 >
-                  {tr(lang, "myCourses")}
+                  {tr(lang, 'myCourses')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -239,7 +246,7 @@ export default function LearnerDashboardPage() {
                 size={140}
                 strokeWidth={12}
                 subtitle="Avg Progress"
-                color={avgProgress >= 80 ? "#10b981" : avgProgress >= 40 ? "#6366f1" : "#f59e0b"}
+                color={avgProgress >= 80 ? '#10b981' : avgProgress >= 40 ? '#6366f1' : '#f59e0b'}
               />
             </div>
           </div>
@@ -247,15 +254,21 @@ export default function LearnerDashboardPage() {
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center">
             <div>
               <p className="text-[11px] font-semibold text-emerald-700">Completed</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">{completed.length}</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+                {completed.length}
+              </p>
             </div>
             <div className="border-x border-slate-200">
               <p className="text-[11px] font-semibold text-indigo-700">In Progress</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">{inProgress.length}</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+                {inProgress.length}
+              </p>
             </div>
             <div>
               <p className="text-[11px] font-semibold text-slate-500">Not Started</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">{notStarted.length}</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+                {notStarted.length}
+              </p>
             </div>
           </div>
         </div>
@@ -263,7 +276,7 @@ export default function LearnerDashboardPage() {
 
       {/* Upcoming Scheduled Live Sessions */}
       <PageSection
-        title={lang === "en" ? "Upcoming Live Sessions" : "ቀጣይ የቀጥታ ስልጠናዎች"}
+        title={lang === 'en' ? 'Upcoming Live Sessions' : 'ቀጣይ የቀጥታ ስልጠናዎች'}
         description="Scheduled interactive video sessions for your courses. Join directly inside LMS."
         action={
           <Link href="/learner/live-sessions">
@@ -284,15 +297,15 @@ export default function LearnerDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
               const dateStr = new Date(session.scheduledAt).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
               });
               const timeStr = new Date(session.scheduledAt).toLocaleTimeString(undefined, {
-                hour: "2-digit",
-                minute: "2-digit",
+                hour: '2-digit',
+                minute: '2-digit',
               });
-              const isLive = session.status === "LIVE";
+              const isLive = session.status === 'LIVE';
 
               return (
                 <div
@@ -301,8 +314,8 @@ export default function LearnerDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <Badge variant={isLive ? "green" : "blue"}>
-                        {isLive ? "● LIVE NOW" : "SCHEDULED"}
+                      <Badge variant={isLive ? 'green' : 'blue'}>
+                        {isLive ? '● LIVE NOW' : 'SCHEDULED'}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
                         {session.durationMinutes} mins
@@ -310,7 +323,7 @@ export default function LearnerDashboardPage() {
                     </div>
 
                     <h4 className="mt-3 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                      {lang === "am" && session.titleAm ? session.titleAm : session.titleEn}
+                      {lang === 'am' && session.titleAm ? session.titleAm : session.titleEn}
                     </h4>
                     {(() => {
                       const cTitle = courses.find((c) => c.id === session.courseId)?.title;
@@ -335,10 +348,12 @@ export default function LearnerDashboardPage() {
                     <Button
                       size="sm"
                       onClick={() => setActiveLiveSession(session)}
-                      className={isLive ? "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" : "flex-1"}
+                      className={
+                        isLive ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white' : 'flex-1'
+                      }
                     >
                       <Video className="h-3.5 w-3.5" />
-                      {isLive ? "Join Live (In-LMS)" : "Join Session"}
+                      {isLive ? 'Join Live (In-LMS)' : 'Join Session'}
                     </Button>
                     <Button
                       size="sm"
@@ -360,7 +375,8 @@ export default function LearnerDashboardPage() {
             </div>
             <p className="mt-3 text-xs font-semibold text-slate-700">No scheduled sessions</p>
             <p className="mt-1 text-xs text-slate-400">
-              Your trainers have not scheduled any upcoming live video sessions for your courses yet.
+              Your trainers have not scheduled any upcoming live video sessions for your courses
+              yet.
             </p>
           </div>
         )}
@@ -377,8 +393,12 @@ export default function LearnerDashboardPage() {
                   <Video className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-display text-sm font-semibold text-slate-900">{tr(lang, "liveSessions")}</p>
-                  <p className="text-xs text-slate-500">{upcomingSessions.length} available sessions</p>
+                  <p className="font-display text-sm font-semibold text-slate-900">
+                    {tr(lang, 'liveSessions')}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {upcomingSessions.length} available sessions
+                  </p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-indigo-500" />
@@ -394,7 +414,9 @@ export default function LearnerDashboardPage() {
                   <Award className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-display text-sm font-semibold text-slate-900">{tr(lang, "certificates")}</p>
+                  <p className="font-display text-sm font-semibold text-slate-900">
+                    {tr(lang, 'certificates')}
+                  </p>
                   <p className="text-xs text-slate-500">{completed.length} earned certificates</p>
                 </div>
               </div>

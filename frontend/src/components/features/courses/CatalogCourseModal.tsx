@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -14,16 +14,16 @@ import {
   Paperclip,
   Target,
   UserRound,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Badge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { RichContent } from "@/components/ui/RichContent";
-import { useLms } from "@/lib/lms-store";
-import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
-import type { ApiAssessment } from "@/lib/api/types";
-import { getItemAttachments } from "./wizard-components";
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { RichContent } from '@/components/ui/RichContent';
+import { useLms } from '@/lib/lms-store';
+import { fetchAssessment, fetchCourseAssessments } from '@/lib/api/quiz';
+import type { ApiAssessment } from '@/lib/api/types';
+import { getItemAttachments } from './wizard-components';
 
 interface CatalogCourseModalProps {
   open: boolean;
@@ -32,15 +32,13 @@ interface CatalogCourseModalProps {
 }
 
 function formatDuration(minutes: number): string {
-  if (!minutes || minutes <= 0) return "Self-paced";
+  if (!minutes || minutes <= 0) return 'Self-paced';
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
-  if (hours > 0) return `${hours} hr${hours > 1 ? "s" : ""}`;
+  if (hours > 0) return `${hours} hr${hours > 1 ? 's' : ''}`;
   return `${mins} min`;
 }
-
-
 
 /**
  * Pre-enrollment course preview for the learner catalog. Shows a transparent,
@@ -159,7 +157,6 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     }
   };
 
-
   return (
     <WorkspaceDetailOverlay
       open={open}
@@ -168,9 +165,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
       subtitle={`${course.code} · ${course.category}`}
       badge={
         <div className="flex items-center gap-2">
-          <Badge variant={courseLevelVariant(course.level)}>
-            {courseLevelLabel(course.level)}
-          </Badge>
+          <Badge variant={courseLevelVariant(course.level)}>{courseLevelLabel(course.level)}</Badge>
           <Badge variant="blue">Open for Enrollment</Badge>
         </div>
       }
@@ -185,7 +180,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           ) : (
             <BookOpen className="h-4 w-4" />
           )}
-          {enrolling ? "Enrolling…" : "Enroll Now"}
+          {enrolling ? 'Enrolling…' : 'Enroll Now'}
         </Button>
       }
     >
@@ -246,7 +241,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               ) : null}
               <div className="inline-flex items-center gap-1.5 text-slate-500">
                 <Globe2 className="h-3.5 w-3.5 text-slate-400" />
-                <span>Language: {course.language || "English"}</span>
+                <span>Language: {course.language || 'English'}</span>
               </div>
               <div className="inline-flex items-center gap-1.5 text-slate-500">
                 <Clock className="h-3.5 w-3.5 text-slate-400" />
@@ -261,7 +256,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-2xs"
             >
               <BookOpen className="h-3.5 w-3.5" />
-              {enrolling ? "Enrolling…" : "Enroll Now"}
+              {enrolling ? 'Enrolling…' : 'Enroll Now'}
             </Button>
           </div>
         </div>
@@ -275,9 +270,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                 Modules
               </span>
             </div>
-            <p className="mt-1 text-lg font-bold text-slate-900">
-              {course.modules.length}
-            </p>
+            <p className="mt-1 text-lg font-bold text-slate-900">{course.modules.length}</p>
             <p className="text-[11px] text-slate-400">Structured units</p>
           </div>
 
@@ -311,7 +304,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               </span>
             </div>
             <p className="mt-1 text-lg font-bold text-slate-900">
-              {totalDurationMin > 0 ? `${totalDurationMin}m` : "Self-paced"}
+              {totalDurationMin > 0 ? `${totalDurationMin}m` : 'Self-paced'}
             </p>
             <p className="text-[11px] text-slate-400">Study estimate</p>
           </div>
@@ -335,10 +328,10 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               </span>
             </div>
             <p className="mt-1 text-lg font-bold text-slate-900">
-              {totalQuestions > 0 ? `${totalQuestions} Qs` : "Included"}
+              {totalQuestions > 0 ? `${totalQuestions} Qs` : 'Included'}
             </p>
             <p className="text-[11px] text-slate-400">
-              {finalAssessment ? `${finalAssessment.passingScore}% pass mark` : "Certified"}
+              {finalAssessment ? `${finalAssessment.passingScore}% pass mark` : 'Certified'}
             </p>
           </div>
         </div>
@@ -391,16 +384,14 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               Delivery Method
             </span>
             <div className="font-semibold text-slate-800 capitalize">
-              {(course.deliveryMethod || "self_paced").replace("_", " ")}
+              {(course.deliveryMethod || 'self_paced').replace('_', ' ')}
             </div>
           </div>
           <div>
             <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">
               Primary Language
             </span>
-            <div className="font-semibold text-slate-800">
-              {course.language || "English"}
-            </div>
+            <div className="font-semibold text-slate-800">{course.language || 'English'}</div>
           </div>
           {course.prerequisites ? (
             <div className="sm:col-span-2 lg:col-span-4 border-t border-slate-200/70 pt-2.5 mt-1">
@@ -420,8 +411,6 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           </div>
         ) : null}
 
-
-
         {/* Prominent Bottom Enroll CTA Banner */}
         <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 sm:p-7 text-white shadow-md flex flex-wrap items-center justify-between gap-5">
           <div className="space-y-1.5 max-w-xl">
@@ -432,7 +421,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-indigo-100 leading-relaxed">
-              Enroll now for immediate access to interactive video streams, study notes, downloadable documents, assignments, and accredited certification.
+              Enroll now for immediate access to interactive video streams, study notes,
+              downloadable documents, assignments, and accredited certification.
             </p>
           </div>
 
@@ -446,7 +436,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
             ) : (
               <BookOpen className="h-4 w-4 mr-2" />
             )}
-            {enrolling ? "Enrolling…" : "Enroll in Course"}
+            {enrolling ? 'Enrolling…' : 'Enroll in Course'}
           </Button>
         </div>
       </div>

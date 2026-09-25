@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Globe } from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { cn } from "@/lib/utils";
+import { Globe } from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { cn } from '@/lib/utils';
 
 export interface LanguageToggleProps {
   className?: string;
@@ -18,15 +18,13 @@ export function LanguageToggle({
   const { lang, updateLocale } = useLms();
 
   const options = [
-    { key: "en" as const, label: "EN", full: "English" },
-    { key: "am" as const, label: "አማ", full: "አማርኛ" },
+    { key: 'en' as const, label: 'EN', full: 'English' },
+    { key: 'am' as const, label: 'አማ', full: 'አማርኛ' },
   ];
 
   return (
-    <div className={cn("inline-flex items-center gap-1.5", className)}>
-      {showIcon && (
-        <Globe className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />
-      )}
+    <div className={cn('inline-flex items-center gap-1.5', className)}>
+      {showIcon && <Globe className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />}
       <div
         role="group"
         aria-label="Language selection"
@@ -43,11 +41,11 @@ export function LanguageToggle({
               aria-pressed={isActive}
               aria-label={`Switch language to ${option.full}`}
               className={cn(
-                "rounded-lg font-semibold transition-all duration-200 active:scale-95",
-                compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
+                'rounded-lg font-semibold transition-all duration-200 active:scale-95',
+                compact ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-500/25 ring-1 ring-white/20"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-500/25 ring-1 ring-white/20'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50',
               )}
             >
               {option.label}

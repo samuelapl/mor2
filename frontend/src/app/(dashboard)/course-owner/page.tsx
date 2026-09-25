@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import Link from "next/link";
+import { useMemo } from 'react';
+import Link from 'next/link';
 import {
   ArrowRight,
   BookOpen,
@@ -11,28 +11,28 @@ import {
   Globe2,
   Plus,
   UsersRound,
-} from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { usePagination } from "@/lib/usePagination";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import { StatCard } from "@/components/ui/StatCard";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { CourseCard } from "@/components/features/courses/CourseCard";
-import { DonutChart, BarChart } from "@/components/ui/charts";
+} from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import { StatCard } from '@/components/ui/StatCard';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { CourseCard } from '@/components/features/courses/CourseCard';
+import { DonutChart, BarChart } from '@/components/ui/charts';
 
 export default function CourseOwnerDashboardPage() {
   const { courses } = useLms();
   const { lang } = useTranslation();
-  const isAmharic = lang === "am";
+  const isAmharic = lang === 'am';
 
   const owned = courses;
-  const drafts = owned.filter((c) => c.status === "draft");
-  const review = owned.filter((c) => c.status === "under_review");
-  const approved = owned.filter((c) => c.status === "approved");
+  const drafts = owned.filter((c) => c.status === 'draft');
+  const review = owned.filter((c) => c.status === 'under_review');
+  const approved = owned.filter((c) => c.status === 'approved');
   const published = owned.filter((c) => c.published);
 
   const totalLearners = useMemo(() => {
@@ -44,24 +44,24 @@ export default function CourseOwnerDashboardPage() {
   // Donut chart: Course Status Distribution
   const courseStatusSegments = [
     {
-      label: isAmharic ? "የታተሙ" : "Published",
+      label: isAmharic ? 'የታተሙ' : 'Published',
       value: published.length,
-      color: "#10b981",
+      color: '#10b981',
     },
     {
-      label: isAmharic ? "የጸደቁ (ያልታተሙ)" : "Approved (Unpublished)",
+      label: isAmharic ? 'የጸደቁ (ያልታተሙ)' : 'Approved (Unpublished)',
       value: approved.filter((c) => !c.published).length,
-      color: "#06b6d4",
+      color: '#06b6d4',
     },
     {
-      label: isAmharic ? "በግምገማ ላይ" : "Under Review",
+      label: isAmharic ? 'በግምገማ ላይ' : 'Under Review',
       value: review.length,
-      color: "#6366f1",
+      color: '#6366f1',
     },
     {
-      label: isAmharic ? "ረቂቆች" : "Drafts",
+      label: isAmharic ? 'ረቂቆች' : 'Drafts',
       value: drafts.length,
-      color: "#f59e0b",
+      color: '#f59e0b',
     },
   ];
 
@@ -76,47 +76,47 @@ export default function CourseOwnerDashboardPage() {
         subLabel: isAmharic
           ? `${c.enrolledLearnerIds.length} ሰልጣኞች`
           : `${c.enrolledLearnerIds.length} learners`,
-        color: "#6366f1",
+        color: '#6366f1',
       }));
   }, [owned, isAmharic]);
 
   return (
     <PageShell
       role="course_owner"
-      title={isAmharic ? "የኮርስ ባለቤት ዳሽቦርድ" : "Course Owner Dashboard"}
+      title={isAmharic ? 'የኮርስ ባለቤት ዳሽቦርድ' : 'Course Owner Dashboard'}
       description={
         isAmharic
-          ? "ስርዓተ-ትምህርቶችን ያዘጋጁ፣ ለግምገማ ያቅርቡ፣ የማጽደቅ ደረጃዎችን ይከታተሉ እና የተማሪዎችን ምዝገባ ይቆጣጠሩ።"
-          : "Design curriculum, submit courses for content review, track approval milestones, and monitor student enrollment."
+          ? 'ስርዓተ-ትምህርቶችን ያዘጋጁ፣ ለግምገማ ያቅርቡ፣ የማጽደቅ ደረጃዎችን ይከታተሉ እና የተማሪዎችን ምዝገባ ይቆጣጠሩ።'
+          : 'Design curriculum, submit courses for content review, track approval milestones, and monitor student enrollment.'
       }
     >
       {/* Top Stat KPI Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={BookOpen}
-          label={isAmharic ? "ጠቅላላ ኮርሶች" : "Total courses"}
+          label={isAmharic ? 'ጠቅላላ ኮርሶች' : 'Total courses'}
           value={owned.length}
-          hint={isAmharic ? "በእርስዎ ቡድን የተዘጋጁ" : "Created by your team"}
+          hint={isAmharic ? 'በእርስዎ ቡድን የተዘጋጁ' : 'Created by your team'}
         />
         <StatCard
           icon={ClipboardList}
-          label={isAmharic ? "በግምገማ ላይ" : "In review"}
+          label={isAmharic ? 'በግምገማ ላይ' : 'In review'}
           value={review.length}
-          hint={isAmharic ? "የአጽዳቂ ግምገማ የሚጠብቁ" : "Pending reviewer approval"}
+          hint={isAmharic ? 'የአጽዳቂ ግምገማ የሚጠብቁ' : 'Pending reviewer approval'}
           iconClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           icon={CheckCircle2}
-          label={isAmharic ? "የጸደቁ" : "Approved"}
+          label={isAmharic ? 'የጸደቁ' : 'Approved'}
           value={approved.length}
           hint={isAmharic ? `${published.length} የታተሙ` : `${published.length} published`}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={UsersRound}
-          label={isAmharic ? "ጠቅላላ ሰልጣኞች" : "Total learners"}
+          label={isAmharic ? 'ጠቅላላ ሰልጣኞች' : 'Total learners'}
           value={totalLearners}
-          hint={isAmharic ? "በስርዓተ-ትምህርትዎ ውስጥ" : "Across your curriculum"}
+          hint={isAmharic ? 'በስርዓተ-ትምህርትዎ ውስጥ' : 'Across your curriculum'}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
       </div>
@@ -125,24 +125,24 @@ export default function CourseOwnerDashboardPage() {
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 to-slate-50 p-5 shadow-soft">
         <div>
           <h3 className="font-display text-sm font-bold text-slate-900">
-            {isAmharic ? "ሙያዊ ስልጠናዎችን ያዘጋጁ እና ያትሙ" : "Design & Publish Professional Courses"}
+            {isAmharic ? 'ሙያዊ ስልጠናዎችን ያዘጋጁ እና ያትሙ' : 'Design & Publish Professional Courses'}
           </h3>
           <p className="mt-0.5 text-xs text-slate-500">
             {isAmharic
-              ? "ምዕራፎችን፣ ትምህርቶችን፣ ምዘናዎችን ያዋቅሩ እና ለይዘት አጽዳቂዎች ያቅርቡ።"
-              : "Build rich modules, lessons, assessments, and submit to content approvers."}
+              ? 'ምዕራፎችን፣ ትምህርቶችን፣ ምዘናዎችን ያዋቅሩ እና ለይዘት አጽዳቂዎች ያቅርቡ።'
+              : 'Build rich modules, lessons, assessments, and submit to content approvers.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/course-owner/create-course">
             <Button size="sm">
               <Plus className="h-4 w-4" />
-              {isAmharic ? "አዲስ ኮርስ ፍጠር" : "Create New Course"}
+              {isAmharic ? 'አዲስ ኮርስ ፍጠር' : 'Create New Course'}
             </Button>
           </Link>
           <Link href="/course-owner/content-status">
             <Button variant="outline" size="sm">
-              {isAmharic ? "የማጽደቅ ሂደት እይ" : "Review Pipeline"}
+              {isAmharic ? 'የማጽደቅ ሂደት እይ' : 'Review Pipeline'}
             </Button>
           </Link>
         </div>
@@ -156,15 +156,15 @@ export default function CourseOwnerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? "የኮርሶች የሂደት ሁኔታ" : "Course Lifecycle Distribution"}
+                  {isAmharic ? 'የኮርሶች የሂደት ሁኔታ' : 'Course Lifecycle Distribution'}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic ? "ያዘጋጇቸው ኮርሶች ወቅታዊ ደረጃ" : "Status of courses you created"}
+                  {isAmharic ? 'ያዘጋጇቸው ኮርሶች ወቅታዊ ደረጃ' : 'Status of courses you created'}
                 </p>
               </div>
               <Link href="/course-owner/content-status">
                 <Button variant="outline" size="sm">
-                  {isAmharic ? "ሁኔታ" : "Status"}
+                  {isAmharic ? 'ሁኔታ' : 'Status'}
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
@@ -172,16 +172,18 @@ export default function CourseOwnerDashboardPage() {
             <div className="mt-6">
               <DonutChart
                 segments={courseStatusSegments}
-                centerLabel={isAmharic ? "ኮርሶች" : "Courses"}
+                centerLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
                 centerValue={owned.length}
-                emptyText={isAmharic ? "ምንም የተዘጋጀ ኮርስ የለም" : "No courses created"}
+                emptyText={isAmharic ? 'ምንም የተዘጋጀ ኮርስ የለም' : 'No courses created'}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>{isAmharic ? `ረቂቆች: ${drafts.length}` : `Drafts: ${drafts.length}`}</span>
             <span className="font-semibold text-emerald-600">
-              {isAmharic ? `${approved.length} ለህትመት ዝግጁ የሆኑ` : `${approved.length} approved for release`}
+              {isAmharic
+                ? `${approved.length} ለህትመት ዝግጁ የሆኑ`
+                : `${approved.length} approved for release`}
             </span>
           </div>
         </div>
@@ -192,10 +194,12 @@ export default function CourseOwnerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? "ብዙ ተማሪ የተመዘገበባቸው ኮርሶች" : "Top Courses by Enrollment"}
+                  {isAmharic ? 'ብዙ ተማሪ የተመዘገበባቸው ኮርሶች' : 'Top Courses by Enrollment'}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic ? "በእያንዳንዱ ኮርስ የተመዘገቡ ተማሪዎች ብዛት" : "Student enrollment numbers per course"}
+                  {isAmharic
+                    ? 'በእያንዳንዱ ኮርስ የተመዘገቡ ተማሪዎች ብዛት'
+                    : 'Student enrollment numbers per course'}
                 </p>
               </div>
               <Badge variant="blue">
@@ -205,15 +209,19 @@ export default function CourseOwnerDashboardPage() {
             <div className="mt-6">
               <BarChart
                 items={topEnrolledBars}
-                emptyText={isAmharic ? "ምንም የምዝገባ መረጃ የለም።" : "No enrollment data available."}
+                emptyText={isAmharic ? 'ምንም የምዝገባ መረጃ የለም።' : 'No enrollment data available.'}
                 barColor="#6366f1"
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span>{isAmharic ? `ጠቅላላ የተዘጋጁ ኮርሶች: ${owned.length}` : `Total courses created: ${owned.length}`}</span>
+            <span>
+              {isAmharic
+                ? `ጠቅላላ የተዘጋጁ ኮርሶች: ${owned.length}`
+                : `Total courses created: ${owned.length}`}
+            </span>
             <Link href="/courses" className="font-semibold text-indigo-600 hover:underline">
-              {isAmharic ? "ሁሉንም ኮርሶች እይ →" : "View all courses →"}
+              {isAmharic ? 'ሁሉንም ኮርሶች እይ →' : 'View all courses →'}
             </Link>
           </div>
         </div>
@@ -221,16 +229,16 @@ export default function CourseOwnerDashboardPage() {
 
       {/* My Courses Catalog Section with Modern Pagination */}
       <PageSection
-        title={isAmharic ? "የእኔ ኮርሶች" : "My Courses"}
+        title={isAmharic ? 'የእኔ ኮርሶች' : 'My Courses'}
         description={
           isAmharic
-            ? "የእርስዎ የስልጠና ካታሎግ ከአርትዖት እና የማጽደቅ ሁኔታ ጋር።"
-            : "Your course catalog with editing access and approval status."
+            ? 'የእርስዎ የስልጠና ካታሎግ ከአርትዖት እና የማጽደቅ ሁኔታ ጋር።'
+            : 'Your course catalog with editing access and approval status.'
         }
         action={
           <Link href="/courses">
             <Button variant="outline" size="sm">
-              {isAmharic ? "ሁሉንም ኮርሶች እይ" : "View all courses"}
+              {isAmharic ? 'ሁሉንም ኮርሶች እይ' : 'View all courses'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -241,15 +249,15 @@ export default function CourseOwnerDashboardPage() {
             <CourseCard key={course.id} course={course}>
               <Link href={`/courses`}>
                 <Button size="sm" variant="outline">
-                  {isAmharic ? "ስርዓተ-ትምህርት አስተዳድር" : "Manage Curriculum"}
+                  {isAmharic ? 'ስርዓተ-ትምህርት አስተዳድር' : 'Manage Curriculum'}
                 </Button>
               </Link>
-              {course.status === "under_review" ? (
-                <Badge variant="blue">{isAmharic ? "በግምገማ ላይ" : "Under review"}</Badge>
-              ) : course.status === "draft" ? (
-                <Badge variant="amber">{isAmharic ? "ረቂቅ" : "Draft"}</Badge>
+              {course.status === 'under_review' ? (
+                <Badge variant="blue">{isAmharic ? 'በግምገማ ላይ' : 'Under review'}</Badge>
+              ) : course.status === 'draft' ? (
+                <Badge variant="amber">{isAmharic ? 'ረቂቅ' : 'Draft'}</Badge>
               ) : (
-                <Badge variant="green">{isAmharic ? "የጸደቀ" : "Approved"}</Badge>
+                <Badge variant="green">{isAmharic ? 'የጸደቀ' : 'Approved'}</Badge>
               )}
             </CourseCard>
           ))}
@@ -267,20 +275,20 @@ export default function CourseOwnerDashboardPage() {
 
       {/* Catalog Pipeline Summary */}
       <PageSection
-        title={isAmharic ? "የግምገማ እና የህትመት ሂደት" : "Review & Publishing Pipeline"}
+        title={isAmharic ? 'የግምገማ እና የህትመት ሂደት' : 'Review & Publishing Pipeline'}
         description={
           isAmharic
-            ? "በግምገማ ሂደት ውስጥ ያሉ ኮርሶች ወቅታዊ ደረጃ።"
-            : "Current standing of courses in the review process."
+            ? 'በግምገማ ሂደት ውስጥ ያሉ ኮርሶች ወቅታዊ ደረጃ።'
+            : 'Current standing of courses in the review process.'
         }
       >
         <div className="grid gap-4 md:grid-cols-3">
-          {(["draft", "under_review", "approved"] as const).map((status) => {
+          {(['draft', 'under_review', 'approved'] as const).map((status) => {
             const items = owned.filter((c) => c.status === status);
             const labels: Record<string, string> = {
-              draft: isAmharic ? "የረቂቅ ደረጃ" : "Draft Stage",
-              under_review: isAmharic ? "በግምገማ ላይ" : "Under Review",
-              approved: isAmharic ? "የጸደቀ እና ዝግጁ" : "Approved & Ready",
+              draft: isAmharic ? 'የረቂቅ ደረጃ' : 'Draft Stage',
+              under_review: isAmharic ? 'በግምገማ ላይ' : 'Under Review',
+              approved: isAmharic ? 'የጸደቀ እና ዝግጁ' : 'Approved & Ready',
             };
             return (
               <div
@@ -291,14 +299,10 @@ export default function CourseOwnerDashboardPage() {
                   <p className="text-sm font-semibold text-slate-800">{labels[status]}</p>
                   <Badge
                     variant={
-                      status === "approved"
-                        ? "green"
-                        : status === "under_review"
-                        ? "blue"
-                        : "amber"
+                      status === 'approved' ? 'green' : status === 'under_review' ? 'blue' : 'amber'
                     }
                   >
-                    {items.length} {isAmharic ? "ኮርሶች" : items.length === 1 ? "course" : "courses"}
+                    {items.length} {isAmharic ? 'ኮርሶች' : items.length === 1 ? 'course' : 'courses'}
                   </Badge>
                 </div>
                 {items.length > 0 ? (
@@ -310,13 +314,13 @@ export default function CourseOwnerDashboardPage() {
                     ))}
                     {items.length > 3 && (
                       <li className="text-[11px] text-slate-400 italic">
-                        +{items.length - 3} {isAmharic ? "ተጨማሪ" : "more"}
+                        +{items.length - 3} {isAmharic ? 'ተጨማሪ' : 'more'}
                       </li>
                     )}
                   </ul>
                 ) : (
                   <p className="mt-3 text-xs text-slate-400">
-                    {isAmharic ? "በዚህ ደረጃ ውስጥ ምንም ኮርስ የለም።" : "No courses in this stage."}
+                    {isAmharic ? 'በዚህ ደረጃ ውስጥ ምንም ኮርስ የለም።' : 'No courses in this stage.'}
                   </p>
                 )}
               </div>

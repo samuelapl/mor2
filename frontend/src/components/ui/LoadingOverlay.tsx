@@ -1,5 +1,5 @@
-import { Spinner } from "@/components/ui/Spinner";
-import { cn } from "@/lib/utils";
+import { Spinner } from '@/components/ui/Spinner';
+import { cn } from '@/lib/utils';
 
 interface LoadingOverlayProps {
   message?: string;
@@ -8,7 +8,7 @@ interface LoadingOverlayProps {
 }
 
 export function LoadingOverlay({
-  message = "Processing...",
+  message = 'Processing...',
   className,
   fullscreen = false,
 }: LoadingOverlayProps) {
@@ -17,10 +17,8 @@ export function LoadingOverlay({
       role="status"
       aria-live="polite"
       className={cn(
-        "flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-xs z-40 transition-all duration-200",
-        fullscreen
-          ? "fixed inset-0"
-          : "absolute inset-0 rounded-inherit",
+        'flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-xs z-40 transition-all duration-200',
+        fullscreen ? 'fixed inset-0' : 'absolute inset-0 rounded-inherit',
         className,
       )}
     >

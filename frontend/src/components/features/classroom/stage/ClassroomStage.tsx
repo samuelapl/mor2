@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import type { Course } from "@/types";
-import type { ApiCourseProgress } from "@/lib/api/types";
-import type { ClassroomActiveContent } from "../types";
-import { DocumentStage } from "./DocumentStage";
-import { MediaStage } from "./MediaStage";
-import { AssignmentStage } from "./AssignmentStage";
-import { QuizStage } from "./QuizStage";
-import { CourseOverviewStage } from "./CourseOverviewStage";
-import { ModuleOverviewStage } from "./ModuleOverviewStage";
-import { CertificateStage } from "./CertificateStage";
-import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Course } from '@/types';
+import type { ApiCourseProgress } from '@/lib/api/types';
+import type { ClassroomActiveContent } from '../types';
+import { DocumentStage } from './DocumentStage';
+import { MediaStage } from './MediaStage';
+import { AssignmentStage } from './AssignmentStage';
+import { QuizStage } from './QuizStage';
+import { CourseOverviewStage } from './CourseOverviewStage';
+import { ModuleOverviewStage } from './ModuleOverviewStage';
+import { CertificateStage } from './CertificateStage';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface ClassroomStageProps {
   activeContent: ClassroomActiveContent | null;
@@ -40,8 +40,8 @@ export function ClassroomStage({
       <div className="flex h-full items-center justify-center p-8 text-center text-slate-400">
         <p className="text-sm">
           {tBilingual(
-            "Select a lesson, topic, or quiz from the curriculum sidebar.",
-            "ከስርዓተ-ትምህርቱ ማውጫ ትምህርት፣ ርዕስ ወይም ፈተና ይምረጡ።"
+            'Select a lesson, topic, or quiz from the curriculum sidebar.',
+            'ከስርዓተ-ትምህርቱ ማውጫ ትምህርት፣ ርዕስ ወይም ፈተና ይምረጡ።',
           )}
         </p>
       </div>
@@ -53,7 +53,7 @@ export function ClassroomStage({
 
   // 1. If active item is a Quiz (Lesson, Module, or Final)
   // 1. If active item is Course Overview & Objectives
-  if (item.type === "COURSE_OVERVIEW") {
+  if (item.type === 'COURSE_OVERVIEW') {
     return (
       <CourseOverviewStage
         course={course}
@@ -64,7 +64,7 @@ export function ClassroomStage({
   }
 
   // 2. If active item is Module Overview & Objectives
-  if (item.type === "MODULE_OVERVIEW" && module) {
+  if (item.type === 'MODULE_OVERVIEW' && module) {
     return (
       <ModuleOverviewStage
         module={module}
@@ -76,20 +76,20 @@ export function ClassroomStage({
   }
 
   // 3. If active item is a Quiz (Lesson, Module, or Final)
-  if (item.type === "QUIZ") {
+  if (item.type === 'QUIZ') {
     return (
       <QuizStage
         assessment={assessment || item.assessment || null}
         quizKind={item.quizKind}
         courseTitle={courseTitle}
         unlocked={item.unlocked}
-        onStartQuiz={() => onTakeQuiz(assessment?.id || item.quizId || "")}
+        onStartQuiz={() => onTakeQuiz(assessment?.id || item.quizId || '')}
       />
     );
   }
 
   // 4. If active item is Certificate of Completion
-  if (item.type === "CERTIFICATE") {
+  if (item.type === 'CERTIFICATE') {
     return (
       <CertificateStage
         course={course}
@@ -102,14 +102,14 @@ export function ClassroomStage({
 
   // Active target is either the sub-lesson (if selected) or the parent lesson
   const currentTarget = subLesson ?? lesson;
-  const currentContentType = (currentTarget?.contentType || "DOCUMENT").toUpperCase();
+  const currentContentType = (currentTarget?.contentType || 'DOCUMENT').toUpperCase();
 
   const badgeLabel = subLesson
     ? `Topic ${item.moduleIndex + 1}.${(item.lessonIndex ?? 0) + 1}.${(item.subIndex ?? 0) + 1}`
     : `Lesson ${item.moduleIndex + 1}.${(item.lessonIndex ?? 0) + 1}`;
 
   // 2. If active item is an Assignment
-  if (currentContentType === "ASSIGNMENT" && currentTarget) {
+  if (currentContentType === 'ASSIGNMENT' && currentTarget) {
     return (
       <AssignmentStage
         courseId={courseId}
@@ -122,10 +122,7 @@ export function ClassroomStage({
   }
 
   // 3. If active item is a Video or Audio stream
-  if (
-    (currentContentType === "VIDEO" || currentContentType === "AUDIO") &&
-    currentTarget
-  ) {
+  if ((currentContentType === 'VIDEO' || currentContentType === 'AUDIO') && currentTarget) {
     return (
       <MediaStage
         title={currentTarget.title}
@@ -154,4 +151,3 @@ export function ClassroomStage({
     />
   );
 }
-

@@ -5,7 +5,8 @@ export class UpdatePolicyDto {
   @ApiPropertyOptional({
     minimum: 0,
     maximum: 100,
-    description: '% of durationMinutes required before completion (fractional values allowed, e.g. 0.3)',
+    description:
+      '% of durationMinutes required before completion (fractional values allowed, e.g. 0.3)',
   })
   @IsOptional()
   @IsNumber()
@@ -13,7 +14,10 @@ export class UpdatePolicyDto {
   @Max(100)
   timeSpentPercent?: number;
 
-  @ApiPropertyOptional({ minimum: 0, description: 'Minutes to wait after exhausting attempts before a retake is allowed (0 = never)' })
+  @ApiPropertyOptional({
+    minimum: 0,
+    description: 'Minutes to wait after exhausting attempts before a retake is allowed (0 = never)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

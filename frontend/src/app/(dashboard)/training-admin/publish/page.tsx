@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import RedirectTo from "@/components/shared/RedirectTo";
+import RedirectTo from '@/components/shared/RedirectTo';
 
 export default function PublishCoursesPage() {
   return <RedirectTo href="/courses" />;

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Eye } from "lucide-react";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { fetchLiveSessions } from "@/lib/api/monitoring";
-import { usePagination } from "@/lib/usePagination";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import PageShell from "@/components/shared/PageShell";
-import { Button } from "@/components/ui/Button";
-import { Pagination } from "@/components/ui/Pagination";
-import { TableSkeleton } from "@/components/ui/Skeleton";
-import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
+import { useEffect, useState } from 'react';
+import { Eye } from 'lucide-react';
+import type { ApiLiveSession } from '@/lib/api/types';
+import { fetchLiveSessions } from '@/lib/api/monitoring';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { SessionTable, type SessionRow } from '@/components/features/sessions/SessionTable';
+import { SessionDetailModal } from '@/components/features/sessions/SessionDetailModal';
 
 export default function CalendarPage() {
   const { tBilingual } = useTranslation();
@@ -25,9 +25,7 @@ export default function CalendarPage() {
     fetchLiveSessions({ limit: 100 })
       .then((res) => {
         if (!cancelled) {
-          setSessions(
-            res.data.filter((s) => s.status === "SCHEDULED" || s.status === "LIVE"),
-          );
+          setSessions(res.data.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE'));
         }
       })
       .catch(() => {
@@ -45,17 +43,20 @@ export default function CalendarPage() {
     session,
     courseTitle: session.course.titleEn,
     courseCode: session.course.code,
-    trainerName: "—",
+    trainerName: '—',
   }));
-  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(rows, 5);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    rows,
+    5,
+  );
 
   return (
     <PageShell
       role="training_admin"
-      title={tBilingual("Training Calendar", "የስልጠና የቀን መቁጠሪያ")}
+      title={tBilingual('Training Calendar', 'የስልጠና የቀን መቁጠሪያ')}
       description={tBilingual(
-        "Upcoming live training sessions across all courses.",
-        "በሁሉም ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።"
+        'Upcoming live training sessions across all courses.',
+        'በሁሉም ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።',
       )}
     >
       {loading ? (
@@ -69,7 +70,7 @@ export default function CalendarPage() {
             extra={(row) => (
               <Button size="sm" variant="outline" onClick={() => setSelectedId(row.session.id)}>
                 <Eye className="h-3.5 w-3.5" />
-                {tBilingual("Details", "ዝርዝሮች")}
+                {tBilingual('Details', 'ዝርዝሮች')}
               </Button>
             )}
           />
@@ -88,7 +89,7 @@ export default function CalendarPage() {
       <SessionDetailModal
         open={selectedId !== null}
         onClose={() => setSelectedId(null)}
-        sessionId={selectedId ?? ""}
+        sessionId={selectedId ?? ''}
       />
     </PageShell>
   );

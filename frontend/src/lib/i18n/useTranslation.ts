@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback } from "react";
-import { useLms } from "@/lib/lms-store";
-import type { Lang, Role } from "@/types";
+import { useCallback } from 'react';
+import { useLms } from '@/lib/lms-store';
+import type { Lang, Role } from '@/types';
 import {
   COMMON_TRANSLATIONS,
   NAV_TRANSLATIONS,
@@ -10,7 +10,7 @@ import {
   ROLE_DESCRIPTIONS,
   getTranslation,
   type TranslationEntry,
-} from "./translations";
+} from './translations';
 
 export type BilingualInput = string | { en: string; am: string };
 
@@ -19,7 +19,7 @@ export function useTranslation() {
 
   const t = useCallback(
     (key: string, fallback?: string | { en?: string; am?: string }): string => {
-      if (typeof fallback === "object") {
+      if (typeof fallback === 'object') {
         return getTranslation(key, lang, fallback);
       }
       if (COMMON_TRANSLATIONS[key]) {
@@ -30,41 +30,41 @@ export function useTranslation() {
       }
       return fallback ?? key;
     },
-    [lang]
+    [lang],
   );
 
   const tBilingual = useCallback(
     (enOrEntry: BilingualInput, amFallback?: string): string => {
-      if (typeof enOrEntry === "object" && enOrEntry !== null) {
-        return lang === "am" ? enOrEntry.am : enOrEntry.en;
+      if (typeof enOrEntry === 'object' && enOrEntry !== null) {
+        return lang === 'am' ? enOrEntry.am : enOrEntry.en;
       }
-      return lang === "am" ? (amFallback ?? enOrEntry) : enOrEntry;
+      return lang === 'am' ? (amFallback ?? enOrEntry) : enOrEntry;
     },
-    [lang]
+    [lang],
   );
 
   const tRole = useCallback(
     (role?: Role | string | null): string => {
-      if (!role) return "";
+      if (!role) return '';
       return ROLE_TRANSLATIONS[role as Role]?.[lang] ?? role;
     },
-    [lang]
+    [lang],
   );
 
   const tRoleDesc = useCallback(
     (role?: Role | string | null): string => {
-      if (!role) return "";
-      return ROLE_DESCRIPTIONS[role as Role]?.[lang] ?? "";
+      if (!role) return '';
+      return ROLE_DESCRIPTIONS[role as Role]?.[lang] ?? '';
     },
-    [lang]
+    [lang],
   );
 
   const tNav = useCallback(
     (label?: string | null): string => {
-      if (!label) return "";
+      if (!label) return '';
       return NAV_TRANSLATIONS[label]?.[lang] ?? label;
     },
-    [lang]
+    [lang],
   );
 
   return {
@@ -77,8 +77,8 @@ export function useTranslation() {
     setLang,
     updateLocale,
     currentUser,
-    isAmharic: lang === "am",
-    isEnglish: lang === "en",
+    isAmharic: lang === 'am',
+    isEnglish: lang === 'en',
   };
 }
 

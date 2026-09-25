@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Award,
   Check,
@@ -16,20 +16,20 @@ import {
   QrCode,
   Send,
   ShieldCheck,
-    Stamp,
+  Stamp,
   Trash2,
   Type,
   Upload,
   X,
-} from "lucide-react";
-import { usePagination } from "@/lib/usePagination";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { toast } from "@/lib/toast";
+} from 'lucide-react';
+import { usePagination } from '@/lib/usePagination';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { toast } from '@/lib/toast';
 import {
   activateCertificateTemplate,
   createCertificateTemplate,
@@ -37,42 +37,44 @@ import {
   duplicateCertificateTemplate,
   fetchCertificateTemplates,
   updateCertificateTemplate,
-} from "@/lib/api/certificates";
-import { uploadAttachment, uploadCertificateTemplate } from "@/lib/api/files";
-import type {
-  ApiCertificateField,
-  ApiCertificateTemplate,
-} from "@/lib/api/types";
-import { cn } from "@/lib/utils";
-import { CertificateRenderer } from "./CertificateRenderer";
+} from '@/lib/api/certificates';
+import { uploadAttachment, uploadCertificateTemplate } from '@/lib/api/files';
+import type { ApiCertificateField, ApiCertificateTemplate } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
+import { CertificateRenderer } from './CertificateRenderer';
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10";
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10';
 
-const labelClass = "mb-1 block text-[11px] font-bold text-slate-600 uppercase tracking-wider";
+const labelClass = 'mb-1 block text-[11px] font-bold text-slate-600 uppercase tracking-wider';
 
 export function CertificateTemplatesAdmin() {
   const [templates, setTemplates] = useState<ApiCertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [deletingTemplate, setDeletingTemplate] = useState<{ id: string; name: string } | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const [flash, setFlash] = useState<string | null>(null);
   const [flashOk, setFlashOk] = useState(true);
 
   // Editor states
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<ApiCertificateTemplate | null>(null);
-  const [activeTab, setActiveTab] = useState<"assets" | "text" | "background">("assets");
+  const [activeTab, setActiveTab] = useState<'assets' | 'text' | 'background'>('assets');
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [fields, setFields] = useState<ApiCertificateField[]>([]);
   const [uploadingAssetKey, setUploadingAssetKey] = useState<string | null>(null);
 
-  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(templates, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    templates,
+    6,
+  );
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -140,7 +142,7 @@ export function CertificateTemplatesAdmin() {
       const localPreviewUrl = URL.createObjectURL(file);
       updateField(key, { imageUrl: localPreviewUrl, visible: true });
 
-      const uploaded = await uploadAttachment(file, { purpose: "certificate_asset" });
+      const uploaded = await uploadAttachment(file, { purpose: 'certificate_asset' });
       if (uploaded.fileUrl) {
         updateField(key, { imageUrl: uploaded.fileUrl });
       }
@@ -164,7 +166,7 @@ export function CertificateTemplatesAdmin() {
     };
     setFields((prev) => [...prev, newStamp]);
     setSelectedFieldKey(newKey);
-    notify(true, "Added new stamp. Drag it on the canvas to place it.");
+    notify(true, 'Added new stamp. Drag it on the canvas to place it.');
   };
 
   const removeStamp = (key: string) => {
@@ -179,14 +181,14 @@ export function CertificateTemplatesAdmin() {
       key: newKey,
       x: 50,
       y: 82,
-      text: "",
-      title: "",
+      text: '',
+      title: '',
       width: 130,
       visible: true,
     };
     setFields((prev) => [...prev, newSig]);
     setSelectedFieldKey(newKey);
-    notify(true, "Added new signature. Drag it on the canvas to place it.");
+    notify(true, 'Added new signature. Drag it on the canvas to place it.');
   };
 
   const removeSignature = (key: string) => {
@@ -196,32 +198,126 @@ export function CertificateTemplatesAdmin() {
 
   const openCreate = () => {
     setEditing(null);
-    setName("New Executive Certificate Template");
-    setDescription("Professional certificate template featuring customizable company logo, dynamic QR code, stamps, and signatures.");
+    setName('New Executive Certificate Template');
+    setDescription(
+      'Professional certificate template featuring customizable company logo, dynamic QR code, stamps, and signatures.',
+    );
     setBackgroundUrl(null);
     setBackgroundFile(null);
     setFields([
-      { key: "companyLogo", x: 14, y: 12, width: 140, text: "Analyst Skill", title: "eLearning Platform", visible: true },
-      { key: "qrCode", x: 10, y: 28, size: 68, visible: true },
-      { key: "verifiedBadge", x: 88, y: 12, size: 75, text: "VERIFIED", visible: true },
-      { key: "certificateTitle", x: 50, y: 20, size: 36, text: "Certificate of Training", color: "#1e293b", bold: true, align: "center" },
-      { key: "preamble", x: 50, y: 26, size: 13, text: "THIS IS TO CERTIFY THAT", color: "#64748b", align: "center" },
-      { key: "holderName", x: 50, y: 36, size: 38, color: "#0f172a", bold: true, align: "center" },
-      { key: "completionText", x: 50, y: 44, size: 13, text: "has successfully completed the training course", color: "#64748b", align: "center" },
-      { key: "courseTitle", x: 50, y: 52, size: 24, color: "#1e293b", bold: true, align: "center" },
-      { key: "courseDescription", x: 50, y: 60, size: 12, text: "by participating & completing all modules and passing all evaluation tests.", color: "#64748b", align: "center" },
-      { key: "courseHours", x: 15, y: 70, size: 12, color: "#1e293b", align: "left" },
-      { key: "issuedAt", x: 85, y: 70, size: 12, color: "#1e293b", align: "right" },
-      { key: "courseHours", x: 18, y: 72, size: 12, text: "Course Hours :", color: "#1e293b", align: "left", visible: true },
-      { key: "issuedAt", x: 82, y: 72, size: 12, text: "Date :", color: "#1e293b", align: "right", visible: true },
-      { key: "stamp", x: 50, y: 82, size: 85, visible: true },
-      { key: "signature1", x: 22, y: 82, text: "MD. Morshedul Alam ACMA", title: "CEO, Analyst Skill", width: 130, visible: true },
-      { key: "signature2", x: 78, y: 82, text: "Authorized Signatory", title: "Director General, Ministry of Revenues", width: 130, visible: true },
-      { key: "footerNote", x: 50, y: 96, size: 9, text: "~ Ministry of Revenues ETIMS Academy · Verified Credential ~", color: "#64748b", align: "center" },
-      { key: "signature1", x: 50, y: 82, text: "", title: "", width: 130, visible: true },
-      { key: "footerNote", x: 50, y: 96, size: 9, text: "~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~", color: "#64748b", align: "center", visible: true },
+      {
+        key: 'companyLogo',
+        x: 14,
+        y: 12,
+        width: 140,
+        text: 'Analyst Skill',
+        title: 'eLearning Platform',
+        visible: true,
+      },
+      { key: 'qrCode', x: 10, y: 28, size: 68, visible: true },
+      { key: 'verifiedBadge', x: 88, y: 12, size: 75, text: 'VERIFIED', visible: true },
+      {
+        key: 'certificateTitle',
+        x: 50,
+        y: 20,
+        size: 36,
+        text: 'Certificate of Training',
+        color: '#1e293b',
+        bold: true,
+        align: 'center',
+      },
+      {
+        key: 'preamble',
+        x: 50,
+        y: 26,
+        size: 13,
+        text: 'THIS IS TO CERTIFY THAT',
+        color: '#64748b',
+        align: 'center',
+      },
+      { key: 'holderName', x: 50, y: 36, size: 38, color: '#0f172a', bold: true, align: 'center' },
+      {
+        key: 'completionText',
+        x: 50,
+        y: 44,
+        size: 13,
+        text: 'has successfully completed the training course',
+        color: '#64748b',
+        align: 'center',
+      },
+      { key: 'courseTitle', x: 50, y: 52, size: 24, color: '#1e293b', bold: true, align: 'center' },
+      {
+        key: 'courseDescription',
+        x: 50,
+        y: 60,
+        size: 12,
+        text: 'by participating & completing all modules and passing all evaluation tests.',
+        color: '#64748b',
+        align: 'center',
+      },
+      { key: 'courseHours', x: 15, y: 70, size: 12, color: '#1e293b', align: 'left' },
+      { key: 'issuedAt', x: 85, y: 70, size: 12, color: '#1e293b', align: 'right' },
+      {
+        key: 'courseHours',
+        x: 18,
+        y: 72,
+        size: 12,
+        text: 'Course Hours :',
+        color: '#1e293b',
+        align: 'left',
+        visible: true,
+      },
+      {
+        key: 'issuedAt',
+        x: 82,
+        y: 72,
+        size: 12,
+        text: 'Date :',
+        color: '#1e293b',
+        align: 'right',
+        visible: true,
+      },
+      { key: 'stamp', x: 50, y: 82, size: 85, visible: true },
+      {
+        key: 'signature1',
+        x: 22,
+        y: 82,
+        text: 'MD. Morshedul Alam ACMA',
+        title: 'CEO, Analyst Skill',
+        width: 130,
+        visible: true,
+      },
+      {
+        key: 'signature2',
+        x: 78,
+        y: 82,
+        text: 'Authorized Signatory',
+        title: 'Director General, Ministry of Revenues',
+        width: 130,
+        visible: true,
+      },
+      {
+        key: 'footerNote',
+        x: 50,
+        y: 96,
+        size: 9,
+        text: '~ Ministry of Revenues ETIMS Academy · Verified Credential ~',
+        color: '#64748b',
+        align: 'center',
+      },
+      { key: 'signature1', x: 50, y: 82, text: '', title: '', width: 130, visible: true },
+      {
+        key: 'footerNote',
+        x: 50,
+        y: 96,
+        size: 9,
+        text: '~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~',
+        color: '#64748b',
+        align: 'center',
+        visible: true,
+      },
     ]);
-    setActiveTab("assets");
+    setActiveTab('assets');
     setSelectedFieldKey(null);
     setEditorOpen(true);
   };
@@ -229,18 +325,18 @@ export function CertificateTemplatesAdmin() {
   const openEdit = (template: ApiCertificateTemplate) => {
     setEditing(template);
     setName(template.name);
-    setDescription(template.description ?? "");
+    setDescription(template.description ?? '');
     setBackgroundUrl(template.backgroundUrl);
     setBackgroundFile(null);
     setFields(Array.isArray(template.fields) ? [...template.fields] : []);
-    setActiveTab("assets");
+    setActiveTab('assets');
     setSelectedFieldKey(null);
     setEditorOpen(true);
   };
 
   const save = async () => {
     if (!name.trim()) {
-      notify(false, "Template name is required.");
+      notify(false, 'Template name is required.');
       return;
     }
     setBusy(true);
@@ -251,7 +347,7 @@ export function CertificateTemplatesAdmin() {
           const upload = await uploadCertificateTemplate(backgroundFile);
           resolvedBackground = upload.backgroundUrl;
         } catch {
-          notify(false, "Background image upload failed.");
+          notify(false, 'Background image upload failed.');
           setBusy(false);
           return;
         }
@@ -284,7 +380,10 @@ export function CertificateTemplatesAdmin() {
     setBusy(true);
     try {
       await activateCertificateTemplate(id);
-      notify(true, "Template activated! All new course completions will now issue this certificate design.");
+      notify(
+        true,
+        'Template activated! All new course completions will now issue this certificate design.',
+      );
       await refresh();
     } catch (err: any) {
       notify(false, `Failed to activate: ${err.message || err}`);
@@ -297,7 +396,7 @@ export function CertificateTemplatesAdmin() {
     setBusy(true);
     try {
       await duplicateCertificateTemplate(id);
-      notify(true, "Template duplicated. You can now customize it independently.");
+      notify(true, 'Template duplicated. You can now customize it independently.');
       await refresh();
     } catch (err: any) {
       notify(false, `Failed to duplicate: ${err.message || err}`);
@@ -324,7 +423,7 @@ export function CertificateTemplatesAdmin() {
   // Live draft template for visual renderer preview
   const liveDraftTemplate: ApiCertificateTemplate = useMemo(() => {
     return {
-      id: editing?.id || "preview-id",
+      id: editing?.id || 'preview-id',
       name,
       description,
       isActive: editing?.isActive ?? false,
@@ -338,50 +437,54 @@ export function CertificateTemplatesAdmin() {
   }, [editing, name, description, backgroundUrl, fields]);
 
   // Derived asset fields
-  const logoField = getField("companyLogo") || getField("logo") || {
-    key: "companyLogo",
-    x: 14,
+  const logoField = getField('companyLogo') ||
+    getField('logo') || {
+      key: 'companyLogo',
+      x: 14,
+      y: 12,
+      width: 140,
+      text: 'Analyst Skill',
+      visible: true,
+    };
+  const qrField = getField('qrCode') || { key: 'qrCode', x: 10, y: 28, size: 68, visible: true };
+  const verifiedBadgeField = getField('verifiedBadge') || {
+    key: 'verifiedBadge',
+    x: 88,
     y: 12,
-    width: 140,
-    text: "Analyst Skill",
+    text: 'VERIFIED',
     visible: true,
   };
-  const qrField = getField("qrCode") || { key: "qrCode", x: 10, y: 28, size: 68, visible: true };
-  const verifiedBadgeField = getField("verifiedBadge") || { key: "verifiedBadge", x: 88, y: 12, text: "VERIFIED", visible: true };
-  const titleField = getField("certificateTitle") || getField("headerTitle");
-  const courseHoursField = getField("courseHours") || {
-    key: "courseHours",
+  const titleField = getField('certificateTitle') || getField('headerTitle');
+  const courseHoursField = getField('courseHours') || {
+    key: 'courseHours',
     x: 18,
     y: 72,
-    text: "Course Hours :",
+    text: 'Course Hours :',
     visible: true,
   };
-  const issuedAtField = getField("issuedAt") || {
-    key: "issuedAt",
+  const issuedAtField = getField('issuedAt') || {
+    key: 'issuedAt',
     x: 82,
     y: 72,
-    text: "Date :",
+    text: 'Date :',
     visible: true,
   };
-  const footerNoteField = getField("footerNote") || {
-    key: "footerNote",
+  const footerNoteField = getField('footerNote') || {
+    key: 'footerNote',
     x: 50,
     y: 96,
-    text: "~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~",
+    text: '~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~',
     visible: true,
   };
 
   // Stamps & Signatures lists
   const stampFields = useMemo(() => {
-    return fields.filter((f) => f.key === "stamp" || f.key.startsWith("stamp"));
+    return fields.filter((f) => f.key === 'stamp' || f.key.startsWith('stamp'));
   }, [fields]);
 
   const signatureFields = useMemo(() => {
     return fields.filter(
-      (f) =>
-        f.key === "signature" ||
-        f.key.startsWith("signature") ||
-        f.key.startsWith("sig_"),
+      (f) => f.key === 'signature' || f.key.startsWith('signature') || f.key.startsWith('sig_'),
     );
   }, [fields]);
 
@@ -413,10 +516,10 @@ export function CertificateTemplatesAdmin() {
       {flash && (
         <div
           className={cn(
-            "rounded-xl border p-3.5 text-xs font-medium flex items-center justify-between gap-3 shadow-2xs animate-fade-in",
+            'rounded-xl border p-3.5 text-xs font-medium flex items-center justify-between gap-3 shadow-2xs animate-fade-in',
             flashOk
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-rose-200 bg-rose-50 text-rose-800",
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-rose-200 bg-rose-50 text-rose-800',
           )}
         >
           <div className="flex items-center gap-2">
@@ -450,17 +553,17 @@ export function CertificateTemplatesAdmin() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {pageItems.map((template) => {
-            const hasStamp = (template.fields ?? []).some((f) => f.key.startsWith("stamp"));
-            const hasSigs = (template.fields ?? []).some((f) => f.key.startsWith("sig"));
+            const hasStamp = (template.fields ?? []).some((f) => f.key.startsWith('stamp'));
+            const hasSigs = (template.fields ?? []).some((f) => f.key.startsWith('sig'));
 
             return (
               <div
                 key={template.id}
                 className={cn(
-                  "flex flex-col justify-between overflow-hidden rounded-2xl border bg-white transition-all duration-200 hover:shadow-md",
+                  'flex flex-col justify-between overflow-hidden rounded-2xl border bg-white transition-all duration-200 hover:shadow-md',
                   template.isActive
-                    ? "border-amber-400 ring-2 ring-amber-400/20 shadow-xs"
-                    : "border-slate-200/90 shadow-2xs",
+                    ? 'border-amber-400 ring-2 ring-amber-400/20 shadow-xs'
+                    : 'border-slate-200/90 shadow-2xs',
                 )}
               >
                 <div>
@@ -485,18 +588,21 @@ export function CertificateTemplatesAdmin() {
 
                     <div className="absolute left-3 top-3 flex items-center gap-2">
                       <Badge
-                        variant={template.isActive ? "amber" : "slate"}
+                        variant={template.isActive ? 'amber' : 'slate'}
                         className={cn(
-                          "shadow-xs font-bold text-[11px]",
-                          template.isActive && "bg-amber-500 text-slate-950 border-amber-600",
+                          'shadow-xs font-bold text-[11px]',
+                          template.isActive && 'bg-amber-500 text-slate-950 border-amber-600',
                         )}
                       >
-                        {template.isActive ? "★ Active Template" : "Inactive"}
+                        {template.isActive ? '★ Active Template' : 'Inactive'}
                       </Badge>
                     </div>
 
                     <div className="absolute right-3 top-3">
-                      <Badge variant="outline" className="bg-slate-900/80 text-white border-white/20 text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="bg-slate-900/80 text-white border-white/20 text-[10px]"
+                      >
                         v{template.version}
                       </Badge>
                     </div>
@@ -516,7 +622,7 @@ export function CertificateTemplatesAdmin() {
                         {template.name}
                       </h3>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-                        {template.description || "No description provided."}
+                        {template.description || 'No description provided.'}
                       </p>
                     </div>
 
@@ -583,7 +689,9 @@ export function CertificateTemplatesAdmin() {
 
                       <button
                         type="button"
-                        onClick={() => setDeletingTemplate({ id: template.id, name: template.name })}
+                        onClick={() =>
+                          setDeletingTemplate({ id: template.id, name: template.name })
+                        }
                         disabled={busy}
                         title="Delete template"
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
@@ -613,7 +721,7 @@ export function CertificateTemplatesAdmin() {
       <WorkspaceDetailOverlay
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
-        title={editing ? `Customize: ${name}` : "Create Certificate Template"}
+        title={editing ? `Customize: ${name}` : 'Create Certificate Template'}
         subtitle="Drag brand assets directly on the live canvas to position them. Upload PNG stamps, dual signatures, and company logos."
         actions={
           <div className="flex items-center gap-2">
@@ -621,12 +729,8 @@ export function CertificateTemplatesAdmin() {
               Cancel
             </Button>
             <Button size="sm" disabled={busy} onClick={() => void save()} className="gap-1.5">
-              {busy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              {editing ? "Save Changes" : "Create Template"}
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {editing ? 'Save Changes' : 'Create Template'}
             </Button>
           </div>
         }
@@ -658,12 +762,12 @@ export function CertificateTemplatesAdmin() {
           <div className="flex border-b border-slate-200 gap-4">
             <button
               type="button"
-              onClick={() => setActiveTab("assets")}
+              onClick={() => setActiveTab('assets')}
               className={cn(
-                "pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5",
-                activeTab === "assets"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-500 hover:text-slate-800",
+                'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
+                activeTab === 'assets'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800',
               )}
             >
               <Stamp className="h-3.5 w-3.5" />
@@ -672,12 +776,12 @@ export function CertificateTemplatesAdmin() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("text")}
+              onClick={() => setActiveTab('text')}
               className={cn(
-                "pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5",
-                activeTab === "text"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-500 hover:text-slate-800",
+                'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
+                activeTab === 'text'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800',
               )}
             >
               <Type className="h-3.5 w-3.5" />
@@ -686,12 +790,12 @@ export function CertificateTemplatesAdmin() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("background")}
+              onClick={() => setActiveTab('background')}
               className={cn(
-                "pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5",
-                activeTab === "background"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-500 hover:text-slate-800",
+                'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
+                activeTab === 'background'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800',
               )}
             >
               <ImagePlus className="h-3.5 w-3.5" />
@@ -707,11 +811,12 @@ export function CertificateTemplatesAdmin() {
               <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/70 to-blue-50/40 p-3.5 text-xs text-indigo-900 flex items-start gap-2.5">
                 <Move className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong>Visual Drag Positioning:</strong> Drag any logo, stamp, signature, or QR code directly on the preview to place it. No manual X/Y coordinates needed!
+                  <strong>Visual Drag Positioning:</strong> Drag any logo, stamp, signature, or QR
+                  code directly on the preview to place it. No manual X/Y coordinates needed!
                 </p>
               </div>
 
-              {activeTab === "assets" && (
+              {activeTab === 'assets' && (
                 <div className="space-y-4">
                   {/* 1. Company Logo Asset */}
                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
@@ -721,7 +826,9 @@ export function CertificateTemplatesAdmin() {
                           <ImagePlus className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Company Logo &amp; Brand</h4>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Company Logo &amp; Brand
+                          </h4>
                           <p className="text-[10px] text-slate-400">Drag on preview to position</p>
                         </div>
                       </div>
@@ -729,7 +836,9 @@ export function CertificateTemplatesAdmin() {
                         <input
                           type="checkbox"
                           checked={logoField.visible !== false}
-                          onChange={(e) => updateField(logoField.key, { visible: e.target.checked })}
+                          onChange={(e) =>
+                            updateField(logoField.key, { visible: e.target.checked })
+                          }
                           className="rounded accent-indigo-600"
                         />
                         Visible
@@ -771,7 +880,9 @@ export function CertificateTemplatesAdmin() {
                       ) : (
                         <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
                           <Upload className="h-3.5 w-3.5 text-slate-500" />
-                          {uploadingAssetKey === logoField.key ? "Uploading Logo…" : "Upload Company Logo (PNG / JPG)"}
+                          {uploadingAssetKey === logoField.key
+                            ? 'Uploading Logo…'
+                            : 'Upload Company Logo (PNG / JPG)'}
                           <input
                             type="file"
                             accept="image/*"
@@ -789,7 +900,7 @@ export function CertificateTemplatesAdmin() {
                       <div>
                         <label className={labelClass}>Brand Name</label>
                         <input
-                          value={logoField.text ?? "Analyst Skill"}
+                          value={logoField.text ?? 'Analyst Skill'}
                           onChange={(e) => updateField(logoField.key, { text: e.target.value })}
                           className={inputClass}
                         />
@@ -797,7 +908,7 @@ export function CertificateTemplatesAdmin() {
                       <div>
                         <label className={labelClass}>Subtitle / Tagline</label>
                         <input
-                          value={logoField.title ?? "eLearning Platform"}
+                          value={logoField.title ?? 'eLearning Platform'}
                           onChange={(e) => updateField(logoField.key, { title: e.target.value })}
                           className={inputClass}
                         />
@@ -814,7 +925,9 @@ export function CertificateTemplatesAdmin() {
                         min={60}
                         max={240}
                         value={logoField.width ?? 140}
-                        onChange={(e) => updateField(logoField.key, { width: Number(e.target.value) })}
+                        onChange={(e) =>
+                          updateField(logoField.key, { width: Number(e.target.value) })
+                        }
                         className="w-full accent-indigo-600"
                       />
                     </div>
@@ -828,8 +941,12 @@ export function CertificateTemplatesAdmin() {
                           <Stamp className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Official Stamps &amp; Seals</h4>
-                          <p className="text-[10px] text-slate-400">Upload PNG seal &amp; drag to position</p>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Official Stamps &amp; Seals
+                          </h4>
+                          <p className="text-[10px] text-slate-400">
+                            Upload PNG seal &amp; drag to position
+                          </p>
                         </div>
                       </div>
 
@@ -846,17 +963,18 @@ export function CertificateTemplatesAdmin() {
 
                     {stampFields.length === 0 ? (
                       <p className="text-xs text-slate-400 text-center py-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        No stamps currently added. Click &ldquo;Add Stamp&rdquo; to place an official seal.
+                        No stamps currently added. Click &ldquo;Add Stamp&rdquo; to place an
+                        official seal.
                       </p>
                     ) : (
                       stampFields.map((stamp, idx) => (
                         <div
                           key={stamp.key}
                           className={cn(
-                            "p-3 rounded-xl border space-y-3 transition-all",
+                            'p-3 rounded-xl border space-y-3 transition-all',
                             selectedFieldKey === stamp.key
-                              ? "border-amber-400 bg-amber-50/20 ring-1 ring-amber-400/30"
-                              : "border-slate-200 bg-slate-50/50",
+                              ? 'border-amber-400 bg-amber-50/20 ring-1 ring-amber-400/30'
+                              : 'border-slate-200 bg-slate-50/50',
                           )}
                         >
                           <div className="flex items-center justify-between">
@@ -869,7 +987,9 @@ export function CertificateTemplatesAdmin() {
                                 <input
                                   type="checkbox"
                                   checked={stamp.visible !== false}
-                                  onChange={(e) => updateField(stamp.key, { visible: e.target.checked })}
+                                  onChange={(e) =>
+                                    updateField(stamp.key, { visible: e.target.checked })
+                                  }
                                   className="rounded accent-amber-600 mr-1"
                                 />
                                 Visible
@@ -919,7 +1039,9 @@ export function CertificateTemplatesAdmin() {
                           ) : (
                             <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50/50 transition">
                               <Upload className="h-3.5 w-3.5 text-amber-600" />
-                              {uploadingAssetKey === stamp.key ? "Uploading Stamp PNG…" : "Upload Stamp PNG Image"}
+                              {uploadingAssetKey === stamp.key
+                                ? 'Uploading Stamp PNG…'
+                                : 'Upload Stamp PNG Image'}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -943,7 +1065,9 @@ export function CertificateTemplatesAdmin() {
                               min={40}
                               max={160}
                               value={stamp.size ?? 85}
-                              onChange={(e) => updateField(stamp.key, { size: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateField(stamp.key, { size: Number(e.target.value) })
+                              }
                               className="w-full accent-amber-600"
                             />
                           </div>
@@ -964,8 +1088,12 @@ export function CertificateTemplatesAdmin() {
                           <PenTool className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Authorized Signatories</h4>
-                          <p className="text-[10px] text-slate-400">Add signatures &amp; drag anywhere</p>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Authorized Signatories
+                          </h4>
+                          <p className="text-[10px] text-slate-400">
+                            Add signatures &amp; drag anywhere
+                          </p>
                         </div>
                       </div>
 
@@ -982,17 +1110,18 @@ export function CertificateTemplatesAdmin() {
 
                     {signatureFields.length === 0 ? (
                       <p className="text-xs text-slate-400 text-center py-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        No signatories added. Click &ldquo;Add Signatory&rdquo; to place a signature.
+                        No signatories added. Click &ldquo;Add Signatory&rdquo; to place a
+                        signature.
                       </p>
                     ) : (
                       signatureFields.map((sig, idx) => (
                         <div
                           key={sig.key}
                           className={cn(
-                            "p-3.5 rounded-xl border space-y-3 transition-all",
+                            'p-3.5 rounded-xl border space-y-3 transition-all',
                             selectedFieldKey === sig.key
-                              ? "border-emerald-400 bg-emerald-50/20 ring-1 ring-emerald-400/30"
-                              : "border-slate-200 bg-slate-50/50",
+                              ? 'border-emerald-400 bg-emerald-50/20 ring-1 ring-emerald-400/30'
+                              : 'border-slate-200 bg-slate-50/50',
                           )}
                         >
                           <div className="flex items-center justify-between">
@@ -1005,7 +1134,9 @@ export function CertificateTemplatesAdmin() {
                                 <input
                                   type="checkbox"
                                   checked={sig.visible !== false}
-                                  onChange={(e) => updateField(sig.key, { visible: e.target.checked })}
+                                  onChange={(e) =>
+                                    updateField(sig.key, { visible: e.target.checked })
+                                  }
                                   className="rounded accent-emerald-600 mr-1"
                                 />
                                 Visible
@@ -1025,7 +1156,7 @@ export function CertificateTemplatesAdmin() {
                             <div>
                               <label className={labelClass}>Signer Name</label>
                               <input
-                                value={sig.text ?? ""}
+                                value={sig.text ?? ''}
                                 onChange={(e) => updateField(sig.key, { text: e.target.value })}
                                 placeholder="e.g. Authorized Signatory"
                                 className={inputClass}
@@ -1034,7 +1165,7 @@ export function CertificateTemplatesAdmin() {
                             <div>
                               <label className={labelClass}>Signer Title</label>
                               <input
-                                value={sig.title ?? ""}
+                                value={sig.title ?? ''}
                                 onChange={(e) => updateField(sig.key, { title: e.target.value })}
                                 placeholder="e.g. Executive Director"
                                 className={inputClass}
@@ -1076,7 +1207,9 @@ export function CertificateTemplatesAdmin() {
                           ) : (
                             <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-50/50 transition">
                               <Upload className="h-3.5 w-3.5 text-emerald-600" />
-                              {uploadingAssetKey === sig.key ? "Uploading Signature…" : "Upload Signature PNG (Transparent)"}
+                              {uploadingAssetKey === sig.key
+                                ? 'Uploading Signature…'
+                                : 'Upload Signature PNG (Transparent)'}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -1100,7 +1233,9 @@ export function CertificateTemplatesAdmin() {
                               min={80}
                               max={220}
                               value={sig.width ?? 130}
-                              onChange={(e) => updateField(sig.key, { width: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateField(sig.key, { width: Number(e.target.value) })
+                              }
                               className="w-full accent-emerald-600"
                             />
                           </div>
@@ -1121,8 +1256,12 @@ export function CertificateTemplatesAdmin() {
                           <QrCode className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Dynamic QR Verification &amp; Badge</h4>
-                          <p className="text-[10px] text-slate-400">Drag QR &amp; adjust size live</p>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Dynamic QR Verification &amp; Badge
+                          </h4>
+                          <p className="text-[10px] text-slate-400">
+                            Drag QR &amp; adjust size live
+                          </p>
                         </div>
                       </div>
                       <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
@@ -1155,8 +1294,10 @@ export function CertificateTemplatesAdmin() {
                       <div className="flex-1 mr-3">
                         <label className={labelClass}>Verified Badge Text</label>
                         <input
-                          value={verifiedBadgeField.text ?? "VERIFIED"}
-                          onChange={(e) => updateField(verifiedBadgeField.key, { text: e.target.value })}
+                          value={verifiedBadgeField.text ?? 'VERIFIED'}
+                          onChange={(e) =>
+                            updateField(verifiedBadgeField.key, { text: e.target.value })
+                          }
                           className={inputClass}
                         />
                       </div>
@@ -1164,7 +1305,9 @@ export function CertificateTemplatesAdmin() {
                         <input
                           type="checkbox"
                           checked={verifiedBadgeField.visible !== false}
-                          onChange={(e) => updateField(verifiedBadgeField.key, { visible: e.target.checked })}
+                          onChange={(e) =>
+                            updateField(verifiedBadgeField.key, { visible: e.target.checked })
+                          }
                           className="rounded accent-indigo-600"
                         />
                         Badge Visible
@@ -1180,8 +1323,12 @@ export function CertificateTemplatesAdmin() {
                           <Move className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Course Hours &amp; Issue Date</h4>
-                          <p className="text-[10px] text-slate-400">Dynamic student data · Drag on canvas to place</p>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Course Hours &amp; Issue Date
+                          </h4>
+                          <p className="text-[10px] text-slate-400">
+                            Dynamic student data · Drag on canvas to place
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1189,20 +1336,26 @@ export function CertificateTemplatesAdmin() {
                     <div className="grid grid-cols-2 gap-3 pt-1">
                       <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">Course Hours</label>
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Course Hours
+                          </label>
                           <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={courseHoursField.visible !== false}
-                              onChange={(e) => updateField(courseHoursField.key, { visible: e.target.checked })}
+                              onChange={(e) =>
+                                updateField(courseHoursField.key, { visible: e.target.checked })
+                              }
                               className="rounded accent-indigo-600"
                             />
                             Show
                           </label>
                         </div>
                         <input
-                          value={courseHoursField.text ?? "Course Hours :"}
-                          onChange={(e) => updateField(courseHoursField.key, { text: e.target.value })}
+                          value={courseHoursField.text ?? 'Course Hours :'}
+                          onChange={(e) =>
+                            updateField(courseHoursField.key, { text: e.target.value })
+                          }
                           placeholder="Prefix, e.g. Course Hours :"
                           className={inputClass}
                         />
@@ -1210,19 +1363,23 @@ export function CertificateTemplatesAdmin() {
 
                       <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">Date of Issue</label>
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Date of Issue
+                          </label>
                           <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={issuedAtField.visible !== false}
-                              onChange={(e) => updateField(issuedAtField.key, { visible: e.target.checked })}
+                              onChange={(e) =>
+                                updateField(issuedAtField.key, { visible: e.target.checked })
+                              }
                               className="rounded accent-indigo-600"
                             />
                             Show
                           </label>
                         </div>
                         <input
-                          value={issuedAtField.text ?? "Date :"}
+                          value={issuedAtField.text ?? 'Date :'}
                           onChange={(e) => updateField(issuedAtField.key, { text: e.target.value })}
                           placeholder="Prefix, e.g. Date :"
                           className={inputClass}
@@ -1230,7 +1387,8 @@ export function CertificateTemplatesAdmin() {
                       </div>
                     </div>
                     <p className="text-[10px] text-slate-400 italic">
-                      💡 Course hours and issue date are dynamic. Drag either label directly on the canvas preview to reposition.
+                      💡 Course hours and issue date are dynamic. Drag either label directly on the
+                      canvas preview to reposition.
                     </p>
                   </div>
 
@@ -1243,14 +1401,20 @@ export function CertificateTemplatesAdmin() {
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-slate-900">Platform Footer Note</h4>
-                          <p className="text-[10px] text-slate-400">Accreditation statement at the bottom</p>
+                          <p className="text-[10px] text-slate-400">
+                            Accreditation statement at the bottom
+                          </p>
                         </div>
                       </div>
                       <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={footerNoteField.visible !== false && Boolean(footerNoteField.text)}
-                          onChange={(e) => updateField(footerNoteField.key, { visible: e.target.checked })}
+                          checked={
+                            footerNoteField.visible !== false && Boolean(footerNoteField.text)
+                          }
+                          onChange={(e) =>
+                            updateField(footerNoteField.key, { visible: e.target.checked })
+                          }
                           className="rounded accent-indigo-600"
                         />
                         Visible
@@ -1259,8 +1423,10 @@ export function CertificateTemplatesAdmin() {
 
                     <div>
                       <textarea
-                        value={footerNoteField.text ?? ""}
-                        onChange={(e) => updateField(footerNoteField.key, { text: e.target.value, visible: true })}
+                        value={footerNoteField.text ?? ''}
+                        onChange={(e) =>
+                          updateField(footerNoteField.key, { text: e.target.value, visible: true })
+                        }
                         placeholder="e.g. ~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~"
                         rows={2}
                         className={inputClass}
@@ -1270,7 +1436,9 @@ export function CertificateTemplatesAdmin() {
                     <div className="flex items-center justify-between pt-1">
                       <button
                         type="button"
-                        onClick={() => updateField(footerNoteField.key, { text: "", visible: false })}
+                        onClick={() =>
+                          updateField(footerNoteField.key, { text: '', visible: false })
+                        }
                         className="text-xs text-rose-600 hover:text-rose-700 font-semibold"
                       >
                         Remove / Clear Note
@@ -1279,7 +1447,7 @@ export function CertificateTemplatesAdmin() {
                         type="button"
                         onClick={() =>
                           updateField(footerNoteField.key, {
-                            text: "~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~",
+                            text: '~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~',
                             visible: true,
                           })
                         }
@@ -1292,15 +1460,17 @@ export function CertificateTemplatesAdmin() {
                 </div>
               )}
 
-              {activeTab === "text" && (
+              {activeTab === 'text' && (
                 <div className="space-y-4">
                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">Certificate Header &amp; Statements</h4>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Certificate Header &amp; Statements
+                    </h4>
                     <div>
                       <label className={labelClass}>Main Certificate Title</label>
                       <input
-                        value={titleField?.text ?? "Certificate of Training"}
-                        onChange={(e) => updateField("certificateTitle", { text: e.target.value })}
+                        value={titleField?.text ?? 'Certificate of Training'}
+                        onChange={(e) => updateField('certificateTitle', { text: e.target.value })}
                         className={inputClass}
                       />
                     </div>
@@ -1308,32 +1478,38 @@ export function CertificateTemplatesAdmin() {
                       <label className={labelClass}>Title Color</label>
                       <input
                         type="color"
-                        value={titleField?.color ?? "#1e293b"}
-                        onChange={(e) => updateField("certificateTitle", { color: e.target.value })}
+                        value={titleField?.color ?? '#1e293b'}
+                        onChange={(e) => updateField('certificateTitle', { color: e.target.value })}
                         className="h-8 w-16 cursor-pointer rounded-lg border border-slate-200 bg-white p-0.5"
                       />
                     </div>
                     <div>
                       <label className={labelClass}>Preamble Text</label>
                       <input
-                        value={getField("preamble")?.text ?? "THIS IS TO CERTIFY THAT"}
-                        onChange={(e) => updateField("preamble", { text: e.target.value })}
+                        value={getField('preamble')?.text ?? 'THIS IS TO CERTIFY THAT'}
+                        onChange={(e) => updateField('preamble', { text: e.target.value })}
                         className={inputClass}
                       />
                     </div>
                     <div>
                       <label className={labelClass}>Completion Phrase</label>
                       <input
-                        value={getField("completionText")?.text ?? "has successfully completed the training course"}
-                        onChange={(e) => updateField("completionText", { text: e.target.value })}
+                        value={
+                          getField('completionText')?.text ??
+                          'has successfully completed the training course'
+                        }
+                        onChange={(e) => updateField('completionText', { text: e.target.value })}
                         className={inputClass}
                       />
                     </div>
                     <div>
                       <label className={labelClass}>Evaluation Description</label>
                       <textarea
-                        value={getField("courseDescription")?.text ?? "by participating & completing all modules and passing all evaluation tests."}
-                        onChange={(e) => updateField("courseDescription", { text: e.target.value })}
+                        value={
+                          getField('courseDescription')?.text ??
+                          'by participating & completing all modules and passing all evaluation tests.'
+                        }
+                        onChange={(e) => updateField('courseDescription', { text: e.target.value })}
                         rows={2}
                         className={inputClass}
                       />
@@ -1342,24 +1518,32 @@ export function CertificateTemplatesAdmin() {
 
                   {/* Course Hours & Issue Date in Typography tab as well */}
                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">Course Hours &amp; Date Metadata Labels</h4>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Course Hours &amp; Date Metadata Labels
+                    </h4>
                     <div className="grid grid-cols-2 gap-3 pt-1">
                       <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">Course Hours</label>
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Course Hours
+                          </label>
                           <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={courseHoursField.visible !== false}
-                              onChange={(e) => updateField(courseHoursField.key, { visible: e.target.checked })}
+                              onChange={(e) =>
+                                updateField(courseHoursField.key, { visible: e.target.checked })
+                              }
                               className="rounded accent-indigo-600"
                             />
                             Show
                           </label>
                         </div>
                         <input
-                          value={courseHoursField.text ?? "Course Hours :"}
-                          onChange={(e) => updateField(courseHoursField.key, { text: e.target.value })}
+                          value={courseHoursField.text ?? 'Course Hours :'}
+                          onChange={(e) =>
+                            updateField(courseHoursField.key, { text: e.target.value })
+                          }
                           placeholder="Prefix, e.g. Course Hours :"
                           className={inputClass}
                         />
@@ -1367,19 +1551,23 @@ export function CertificateTemplatesAdmin() {
 
                       <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">Date of Issue</label>
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Date of Issue
+                          </label>
                           <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={issuedAtField.visible !== false}
-                              onChange={(e) => updateField(issuedAtField.key, { visible: e.target.checked })}
+                              onChange={(e) =>
+                                updateField(issuedAtField.key, { visible: e.target.checked })
+                              }
                               className="rounded accent-indigo-600"
                             />
                             Show
                           </label>
                         </div>
                         <input
-                          value={issuedAtField.text ?? "Date :"}
+                          value={issuedAtField.text ?? 'Date :'}
                           onChange={(e) => updateField(issuedAtField.key, { text: e.target.value })}
                           placeholder="Prefix, e.g. Date :"
                           className={inputClass}
@@ -1395,8 +1583,12 @@ export function CertificateTemplatesAdmin() {
                       <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={footerNoteField.visible !== false && Boolean(footerNoteField.text)}
-                          onChange={(e) => updateField(footerNoteField.key, { visible: e.target.checked })}
+                          checked={
+                            footerNoteField.visible !== false && Boolean(footerNoteField.text)
+                          }
+                          onChange={(e) =>
+                            updateField(footerNoteField.key, { visible: e.target.checked })
+                          }
                           className="rounded accent-indigo-600"
                         />
                         Visible
@@ -1404,8 +1596,10 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     <textarea
-                      value={footerNoteField.text ?? ""}
-                      onChange={(e) => updateField(footerNoteField.key, { text: e.target.value, visible: true })}
+                      value={footerNoteField.text ?? ''}
+                      onChange={(e) =>
+                        updateField(footerNoteField.key, { text: e.target.value, visible: true })
+                      }
                       placeholder="e.g. ~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~"
                       rows={2}
                       className={inputClass}
@@ -1414,7 +1608,9 @@ export function CertificateTemplatesAdmin() {
                     <div className="flex items-center justify-between pt-1">
                       <button
                         type="button"
-                        onClick={() => updateField(footerNoteField.key, { text: "", visible: false })}
+                        onClick={() =>
+                          updateField(footerNoteField.key, { text: '', visible: false })
+                        }
                         className="text-xs text-rose-600 hover:text-rose-700 font-semibold"
                       >
                         Remove / Clear Note
@@ -1423,7 +1619,7 @@ export function CertificateTemplatesAdmin() {
                         type="button"
                         onClick={() =>
                           updateField(footerNoteField.key, {
-                            text: "~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~",
+                            text: '~ Analyst Skill is a professional e-Learning platform. Verify this certificate online ~',
                             visible: true,
                           })
                         }
@@ -1436,10 +1632,12 @@ export function CertificateTemplatesAdmin() {
                 </div>
               )}
 
-              {activeTab === "background" && (
+              {activeTab === 'background' && (
                 <div className="space-y-4">
                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">Custom Background Canvas (PNG / JPG)</h4>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Custom Background Canvas (PNG / JPG)
+                    </h4>
                     <p className="text-xs text-slate-500">
                       Upload a full-bleed A4 landscape border or background artwork. When omitted,
                       the high-fidelity geometric vector frame renders automatically.
@@ -1448,7 +1646,7 @@ export function CertificateTemplatesAdmin() {
                     <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 p-6 text-center hover:bg-slate-50 transition">
                       <ImagePlus className="h-8 w-8 text-slate-400 mb-2" />
                       <span className="text-xs font-semibold text-indigo-600">
-                        {backgroundFile ? backgroundFile.name : "Click to select background image"}
+                        {backgroundFile ? backgroundFile.name : 'Click to select background image'}
                       </span>
                       <span className="text-[10px] text-slate-400 mt-1">
                         Recommended: 1754 × 1240 px (A4 Landscape)
@@ -1515,7 +1713,8 @@ export function CertificateTemplatesAdmin() {
               </div>
 
               <p className="text-[11px] text-slate-400 text-center pt-1">
-                Click &amp; drag any logo, stamp, signature, or QR code on the canvas. Sizing sliders update instantly in the preview.
+                Click &amp; drag any logo, stamp, signature, or QR code on the canvas. Sizing
+                sliders update instantly in the preview.
               </p>
             </div>
           </div>

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import { COMMON_TRANSLATIONS } from "@/lib/i18n/translations";
-import type { Role } from "@/types";
+import type { ReactNode } from 'react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
+import type { Role } from '@/types';
 
 export interface BilingualText {
   en: string;
@@ -19,23 +19,17 @@ interface PageShellProps {
   showLanguageToggle?: boolean;
 }
 
-export default function PageShell({
-  role,
-  title,
-  description,
-  actions,
-  children,
-}: PageShellProps) {
+export default function PageShell({ role, title, description, actions, children }: PageShellProps) {
   const { lang, tRole } = useTranslation();
-  const isAmharic = lang === "am";
+  const isAmharic = lang === 'am';
 
   const renderText = (value?: string | BilingualText | ReactNode): ReactNode => {
     if (!value) return null;
-    if (typeof value === "object" && value !== null && "en" in value && "am" in value) {
+    if (typeof value === 'object' && value !== null && 'en' in value && 'am' in value) {
       const b = value as BilingualText;
       return isAmharic ? b.am : b.en;
     }
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       // Check if known common translation key or English text matches
       for (const entry of Object.values(COMMON_TRANSLATIONS)) {
         if (entry.en.toLowerCase() === value.toLowerCase()) {

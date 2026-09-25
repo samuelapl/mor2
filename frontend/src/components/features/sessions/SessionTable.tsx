@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { Table, TableRow, Td } from "@/components/ui/Table";
-import { Badge } from "@/components/ui/Badge";
-import { Calendar, Clock } from "lucide-react";
+import type { ReactNode } from 'react';
+import type { ApiLiveSession } from '@/lib/api/types';
+import { Table, TableRow, Td } from '@/components/ui/Table';
+import { Badge } from '@/components/ui/Badge';
+import { Calendar, Clock } from 'lucide-react';
 
 export interface SessionRow {
   session: ApiLiveSession;
@@ -18,10 +18,10 @@ interface SessionTableProps {
 
 const formatDate = (value: string) => {
   try {
-    return new Date(value).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+    return new Date(value).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   } catch {
     return value;
@@ -30,30 +30,30 @@ const formatDate = (value: string) => {
 
 const formatTime = (value: string) => {
   try {
-    return new Date(value).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(value).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   } catch {
-    return "";
+    return '';
   }
 };
 
 function getInitials(name: string): string {
-  if (!name || name === "—") return "?";
+  if (!name || name === '—') return '?';
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 const STATUS_META: Record<
-  ApiLiveSession["status"],
-  { label: string; variant: "blue" | "green" | "slate" | "red" }
+  ApiLiveSession['status'],
+  { label: string; variant: 'blue' | 'green' | 'slate' | 'red' }
 > = {
-  SCHEDULED: { label: "Upcoming", variant: "blue" },
-  LIVE: { label: "LIVE", variant: "green" },
-  COMPLETED: { label: "Past", variant: "slate" },
-  CANCELLED: { label: "Cancelled", variant: "red" },
+  SCHEDULED: { label: 'Upcoming', variant: 'blue' },
+  LIVE: { label: 'LIVE', variant: 'green' },
+  COMPLETED: { label: 'Past', variant: 'slate' },
+  CANCELLED: { label: 'Cancelled', variant: 'red' },
 };
 
 export function SessionTable({ sessions, extra }: SessionTableProps) {
@@ -64,12 +64,12 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
   return (
     <Table
       columns={[
-        { name: "Schedule", className: "w-[170px]" },
-        { name: "Session", className: "min-w-[180px] max-w-[240px]" },
-        { name: "Course", className: "min-w-[180px] max-w-[240px]" },
-        { name: "Trainer", className: "w-[150px]" },
-        { name: "Status", className: "w-[130px]" },
-        { name: "Actions", className: "text-right" },
+        { name: 'Schedule', className: 'w-[170px]' },
+        { name: 'Session', className: 'min-w-[180px] max-w-[240px]' },
+        { name: 'Course', className: 'min-w-[180px] max-w-[240px]' },
+        { name: 'Trainer', className: 'w-[150px]' },
+        { name: 'Status', className: 'w-[130px]' },
+        { name: 'Actions', className: 'text-right' },
       ]}
     >
       {sorted.length === 0 ? (
@@ -82,11 +82,11 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
         sorted.map((row) => {
           const meta = STATUS_META[row.session.status] ?? {
             label: row.session.status,
-            variant: "slate" as const,
+            variant: 'slate' as const,
           };
           const enrolled = row.session.attendees ?? [];
           const present = enrolled.filter(
-            (a) => a.status === "PRESENT" || a.status === "LATE",
+            (a) => a.status === 'PRESENT' || a.status === 'LATE',
           ).length;
 
           return (
@@ -120,9 +120,9 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                   </p>
                   <p
                     className="mt-0.5 truncate text-[11px] text-slate-500"
-                    title={row.session.descriptionEn || "Live Classroom Session"}
+                    title={row.session.descriptionEn || 'Live Classroom Session'}
                   >
-                    {row.session.descriptionEn || "Live Classroom Session"}
+                    {row.session.descriptionEn || 'Live Classroom Session'}
                   </p>
                 </div>
               </Td>
@@ -164,7 +164,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
 
               {/* Status */}
               <Td className="whitespace-nowrap w-[130px]">
-                {row.session.status === "LIVE" ? (
+                {row.session.status === 'LIVE' ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200/80">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -175,17 +175,15 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                 ) : (
                   <Badge variant={meta.variant} dot>
                     {meta.label}
-                    {row.session.status !== "CANCELLED" && present > 0
+                    {row.session.status !== 'CANCELLED' && present > 0
                       ? ` · ${present} present`
-                      : ""}
+                      : ''}
                   </Badge>
                 )}
               </Td>
 
               {/* Actions Column */}
-              <Td className="text-right whitespace-nowrap pr-4">
-                {extra ? extra(row) : null}
-              </Td>
+              <Td className="text-right whitespace-nowrap pr-4">{extra ? extra(row) : null}</Td>
             </TableRow>
           );
         })

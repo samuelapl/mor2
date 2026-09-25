@@ -1,26 +1,26 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { Poppins } from "next/font/google";
-import AppProviders from "@/components/providers/AppProviders";
-import "./globals.css";
+import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import { Poppins } from 'next/font/google';
+import AppProviders from '@/components/providers/AppProviders';
+import './globals.css';
 
 const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-poppins",
-  display: "swap",
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-poppins',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "MoR E-Learning",
-    template: "%s | MoR Learning Management System",
+    default: 'MoR E-Learning',
+    template: '%s | MoR Learning Management System',
   },
-  description: "MoR Learning Management System",
+  description: 'MoR Learning Management System',
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
   },
 };
 

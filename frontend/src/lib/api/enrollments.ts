@@ -1,5 +1,5 @@
-import { api } from "./client";
-import type { ApiEnrollment, ApiPaginated } from "./types";
+import { api } from './client';
+import type { ApiEnrollment, ApiPaginated } from './types';
 
 export interface BulkEnrollResult {
   courseId: string;
@@ -9,14 +9,14 @@ export interface BulkEnrollResult {
 }
 
 export async function selfEnroll(courseId: string): Promise<ApiEnrollment> {
-  return api<ApiEnrollment>("enrollments/self", {
-    method: "POST",
+  return api<ApiEnrollment>('enrollments/self', {
+    method: 'POST',
     body: { courseId },
   });
 }
 
 export async function fetchMyEnrollments(): Promise<ApiPaginated<ApiEnrollment>> {
-  return api<ApiPaginated<ApiEnrollment>>("enrollments/me", {
+  return api<ApiPaginated<ApiEnrollment>>('enrollments/me', {
     query: { limit: 100 },
   });
 }
@@ -29,12 +29,9 @@ export async function fetchCourseEnrollments(
   });
 }
 
-export async function bulkEnroll(
-  courseId: string,
-  userIds: string[],
-): Promise<BulkEnrollResult> {
+export async function bulkEnroll(courseId: string, userIds: string[]): Promise<BulkEnrollResult> {
   return api<BulkEnrollResult>(`courses/${courseId}/enrollments`, {
-    method: "POST",
+    method: 'POST',
     body: { userIds },
   });
 }
@@ -44,7 +41,7 @@ export async function dropEnrollment(
   reason?: string,
 ): Promise<ApiEnrollment> {
   return api<ApiEnrollment>(`enrollments/${enrollmentId}/drop`, {
-    method: "PATCH",
+    method: 'PATCH',
     body: reason ? { reason } : {},
   });
 }

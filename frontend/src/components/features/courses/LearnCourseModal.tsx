@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   AlertCircle,
   Award,
@@ -30,32 +30,28 @@ import {
   Trash2,
   UploadCloud,
   Video,
-} from "lucide-react";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { RichContent } from "@/components/ui/RichContent";
-import { QuizTakerModal } from "@/components/features/quiz/QuizTakerModal";
-import { useLms } from "@/lib/lms-store";
-import { addLessonTime, fetchCourseProgress, markLessonComplete } from "@/lib/api/progress";
-import { fetchCourseDetail } from "@/lib/api/courses";
-import { courseFromDetail } from "@/lib/api/transform";
-import { uploadAttachment } from "@/lib/api/files";
-import { ApiError } from "@/lib/api/client";
+} from 'lucide-react';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { RichContent } from '@/components/ui/RichContent';
+import { QuizTakerModal } from '@/components/features/quiz/QuizTakerModal';
+import { useLms } from '@/lib/lms-store';
+import { addLessonTime, fetchCourseProgress, markLessonComplete } from '@/lib/api/progress';
+import { fetchCourseDetail } from '@/lib/api/courses';
+import { courseFromDetail } from '@/lib/api/transform';
+import { uploadAttachment } from '@/lib/api/files';
+import { ApiError } from '@/lib/api/client';
 import type {
   ApiCourseProgress,
   ApiProgressLesson,
   ApiProgressModule,
   ApiProgressSubLesson,
-} from "@/lib/api/types";
-import type { Course, Lesson, Module, UploadedResource } from "@/types";
-import { cn } from "@/lib/utils";
-import {
-  formatFileSize,
-  getItemAttachments,
-  getFileBadge,
-} from "./wizard-components";
+} from '@/lib/api/types';
+import type { Course, Lesson, Module, UploadedResource } from '@/types';
+import { cn } from '@/lib/utils';
+import { formatFileSize, getItemAttachments, getFileBadge } from './wizard-components';
 
 interface LearnCourseModalProps {
   open: boolean;
@@ -74,7 +70,7 @@ interface AssignmentSubmission {
 
 interface ActiveQuizContext {
   assessmentId: string;
-  kind: "lesson" | "module" | "final";
+  kind: 'lesson' | 'module' | 'final';
   moduleIndex: number;
   lessonIndex?: number;
   subIndex?: number;
@@ -84,19 +80,13 @@ function formatMMSS(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, "0")}`;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
 /**
  * Reusable card for attached resources with dedicated Open (view) and Download actions.
  */
-function AttachmentCard({
-  file,
-  label,
-}: {
-  file: UploadedResource;
-  label?: string;
-}) {
+function AttachmentCard({ file, label }: { file: UploadedResource; label?: string }) {
   const badge = getFileBadge(file);
   const Icon = badge.icon;
 
@@ -105,7 +95,7 @@ function AttachmentCard({
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border',
             badge.bgColor,
           )}
         >
@@ -224,7 +214,7 @@ export function LearnCourseModal({
       const uploaded = await uploadAttachment(file, {
         courseId,
         lessonId,
-        purpose: "attachment",
+        purpose: 'attachment',
       });
       saveSubmission(lessonId, {
         fileUrl: uploaded.fileUrl,
@@ -233,7 +223,7 @@ export function LearnCourseModal({
         submittedAt: new Date().toISOString(),
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to upload assignment file.";
+      const msg = err instanceof Error ? err.message : 'Failed to upload assignment file.';
       setAssignmentError((prev) => ({ ...prev, [lessonId]: msg }));
     } finally {
       setAssignmentUploading((prev) => ({ ...prev, [lessonId]: false }));
@@ -310,7 +300,7 @@ export function LearnCourseModal({
   const flushHeartbeat = useCallback(async (itemId: string) => {
     const ref = lastFlushRef.current;
     if (!ref || ref.itemId !== itemId) return null;
-    if (document.visibilityState !== "visible") return null;
+    if (document.visibilityState !== 'visible') return null;
 
     const now = Date.now();
     const deltaSeconds = Math.min(300, Math.round((now - ref.at) / 1000));
@@ -361,7 +351,7 @@ export function LearnCourseModal({
 
   const applyActionError = (itemId: string, err: unknown) => {
     if (err instanceof ApiError) {
-      if (err.reason === "TIME_NOT_MET") {
+      if (err.reason === 'TIME_NOT_MET') {
         const remaining = err.remainingSeconds ?? 0;
         setActionError((prev) => ({
           ...prev,
@@ -369,17 +359,17 @@ export function LearnCourseModal({
         }));
         return;
       }
-      if (err.reason === "ASSESSMENT_NOT_PASSED" || err.reason === "ASSESSMENT_REQUIRED") {
+      if (err.reason === 'ASSESSMENT_NOT_PASSED' || err.reason === 'ASSESSMENT_REQUIRED') {
         setActionError((prev) => ({
           ...prev,
-          [itemId]: "You must pass the assessment for this activity before continuing.",
+          [itemId]: 'You must pass the assessment for this activity before continuing.',
         }));
         return;
       }
-      if (err.reason === "LOCKED") {
+      if (err.reason === 'LOCKED') {
         setActionError((prev) => ({
           ...prev,
-          [itemId]: "This activity is locked. Refreshing your progress…",
+          [itemId]: 'This activity is locked. Refreshing your progress…',
         }));
         void refresh();
         return;
@@ -387,7 +377,7 @@ export function LearnCourseModal({
       setActionError((prev) => ({ ...prev, [itemId]: err.message }));
       return;
     }
-    setActionError((prev) => ({ ...prev, [itemId]: "Something went wrong. Please try again." }));
+    setActionError((prev) => ({ ...prev, [itemId]: 'Something went wrong. Please try again.' }));
   };
 
   const toggleModule = (moduleId: string) => {
@@ -532,11 +522,13 @@ export function LearnCourseModal({
     }
 
     const freshHeartbeat = await flushHeartbeat(item.id);
-    const spent = freshHeartbeat?.timeSpentSeconds ?? liveTime[item.id] ?? itemProg.timeSpentSeconds;
+    const spent =
+      freshHeartbeat?.timeSpentSeconds ?? liveTime[item.id] ?? itemProg.timeSpentSeconds;
     const required = freshHeartbeat?.requiredSeconds ?? itemProg.requiredSeconds;
     if (spent < required) {
       const remaining = Math.max(required - spent, 0);
-      const isCurrentlyOpen = subIndex !== undefined ? openSubLesson === item.id : openLesson === item.id;
+      const isCurrentlyOpen =
+        subIndex !== undefined ? openSubLesson === item.id : openLesson === item.id;
       if (!isCurrentlyOpen) {
         if (subIndex !== undefined) {
           setOpenLesson(lesson.id);
@@ -563,7 +555,7 @@ export function LearnCourseModal({
       quizPassedRef.current = false;
       setActiveQuiz({
         assessmentId: itemAssessment.id,
-        kind: "lesson",
+        kind: 'lesson',
         moduleIndex,
         lessonIndex,
         subIndex,
@@ -587,7 +579,7 @@ export function LearnCourseModal({
         quizPassedRef.current = false;
         setActiveQuiz({
           assessmentId: lessonProg.assessment.id,
-          kind: "lesson",
+          kind: 'lesson',
           moduleIndex,
           lessonIndex,
         });
@@ -607,13 +599,13 @@ export function LearnCourseModal({
     const moduleProg = findModuleProgress(mod.id);
     if (!moduleProg?.assessment) return;
     quizPassedRef.current = false;
-    setActiveQuiz({ assessmentId: moduleProg.assessment.id, kind: "module", moduleIndex });
+    setActiveQuiz({ assessmentId: moduleProg.assessment.id, kind: 'module', moduleIndex });
   };
 
   const openFinalAssessment = () => {
     if (!finalAssessment) return;
     quizPassedRef.current = false;
-    setActiveQuiz({ assessmentId: finalAssessment.id, kind: "final", moduleIndex: -1 });
+    setActiveQuiz({ assessmentId: finalAssessment.id, kind: 'final', moduleIndex: -1 });
   };
 
   const closeActiveQuiz = () => {
@@ -623,35 +615,37 @@ export function LearnCourseModal({
     setActiveQuiz(null);
     void refresh();
     if (!passed || !ctx) return;
-    if (ctx.kind === "lesson" && ctx.lessonIndex !== undefined) {
+    if (ctx.kind === 'lesson' && ctx.lessonIndex !== undefined) {
       advanceAfter(ctx.moduleIndex, ctx.lessonIndex, ctx.subIndex);
-    } else if (ctx.kind === "module") {
+    } else if (ctx.kind === 'module') {
       advanceToNextModule(ctx.moduleIndex);
     }
   };
 
   const renderActivityIcon = (type?: string) => {
     switch (type) {
-      case "VIDEO":
+      case 'VIDEO':
         return <Video className="h-4 w-4 text-rose-500" />;
-      case "AUDIO":
+      case 'AUDIO':
         return <Headphones className="h-4 w-4 text-purple-500" />;
-      case "PRESENTATION":
+      case 'PRESENTATION':
         return <Presentation className="h-4 w-4 text-amber-500" />;
-      case "INTERACTIVE":
+      case 'INTERACTIVE':
         return <ListChecks className="h-4 w-4 text-emerald-500" />;
-      case "EXTERNAL_LINK":
+      case 'EXTERNAL_LINK':
         return <ExternalLink className="h-4 w-4 text-indigo-500" />;
-      case "ASSIGNMENT":
+      case 'ASSIGNMENT':
         return <ClipboardList className="h-4 w-4 text-orange-500" />;
-      case "DOCUMENT":
+      case 'DOCUMENT':
       default:
         return <FileText className="h-4 w-4 text-blue-500" />;
     }
   };
 
   const renderVideoEmbed = (url: string) => {
-    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    const ytMatch = url.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+    );
     if (ytMatch) {
       return (
         <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
@@ -717,12 +711,17 @@ export function LearnCourseModal({
     return (
       <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
         <Clock className="h-3 w-3 shrink-0" />
-        <span className={cn("font-medium", satisfied ? "text-emerald-600" : "text-indigo-600 font-semibold")}>
+        <span
+          className={cn(
+            'font-medium',
+            satisfied ? 'text-emerald-600' : 'text-indigo-600 font-semibold',
+          )}
+        >
           {formatMMSS(spent)} / {formatMMSS(required)}
         </span>
         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200">
           <div
-            className={cn("h-full rounded-full", satisfied ? "bg-emerald-500" : "bg-indigo-500")}
+            className={cn('h-full rounded-full', satisfied ? 'bg-emerald-500' : 'bg-indigo-500')}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -735,7 +734,7 @@ export function LearnCourseModal({
     itemId: string,
     itemProg: ApiProgressLesson | ApiProgressSubLesson | undefined,
     onClick: () => void,
-    size: "sm" = "sm",
+    size: 'sm' = 'sm',
     customLabel?: string,
   ) => {
     if (!itemProg) return null;
@@ -747,12 +746,14 @@ export function LearnCourseModal({
     return (
       <Button
         size={size}
-        variant={needsAssessment ? "primary" : "success"}
+        variant={needsAssessment ? 'primary' : 'success'}
         disabled={actionBusyId === itemId}
         onClick={onClick}
         className={cn(
-          "shadow-2xs font-semibold gap-1.5",
-          needsAssessment ? "bg-indigo-600 hover:bg-indigo-700" : "bg-emerald-600 hover:bg-emerald-700 text-white",
+          'shadow-2xs font-semibold gap-1.5',
+          needsAssessment
+            ? 'bg-indigo-600 hover:bg-indigo-700'
+            : 'bg-emerald-600 hover:bg-emerald-700 text-white',
         )}
       >
         {actionBusyId === itemId ? (
@@ -762,7 +763,7 @@ export function LearnCourseModal({
         ) : (
           <Check className="h-3.5 w-3.5" />
         )}
-        {needsAssessment ? "Take Assessment" : customLabel || "Next"}
+        {needsAssessment ? 'Take Assessment' : customLabel || 'Next'}
       </Button>
     );
   };
@@ -781,7 +782,9 @@ export function LearnCourseModal({
     const moduleProg = mod ? findModuleProgress(mod.id) : undefined;
     const lessonProg = lesson ? findLessonProgress(moduleProg, lesson.id) : undefined;
     const itemProg =
-      subIndex !== undefined ? lessonProg?.subLessons?.find((s) => s.lessonId === item.id) : lessonProg;
+      subIndex !== undefined
+        ? lessonProg?.subLessons?.find((s) => s.lessonId === item.id)
+        : lessonProg;
     const isCompleted = itemProg?.completed ?? false;
     const error = actionError[item.id];
     const attachedTemplates = getItemAttachments(item);
@@ -796,14 +799,18 @@ export function LearnCourseModal({
           <div>
             <h4 className="text-sm font-bold text-slate-900">Assignment Brief & Instructions</h4>
             <p className="text-[11px] text-slate-500">
-              Review assignment requirements, download template resources, and upload your completed solution.
+              Review assignment requirements, download template resources, and upload your completed
+              solution.
             </p>
           </div>
         </div>
 
         {item.content ? (
           <div className="rounded-xl border border-slate-200 bg-white p-5 text-[15px] sm:text-base leading-relaxed text-slate-800 shadow-2xs">
-            <RichContent html={item.content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+            <RichContent
+              html={item.content}
+              className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+            />
           </div>
         ) : null}
 
@@ -844,11 +851,11 @@ export function LearnCourseModal({
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-900 truncate">{submission.fileName}</p>
                   <p className="text-[11px] text-emerald-800">
-                    {formatFileSize(submission.sizeBytes)} · Submitted{" "}
-                    {new Date(submission.submittedAt).toLocaleDateString()} at{" "}
+                    {formatFileSize(submission.sizeBytes)} · Submitted{' '}
+                    {new Date(submission.submittedAt).toLocaleDateString()} at{' '}
                     {new Date(submission.submittedAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>
@@ -902,7 +909,7 @@ export function LearnCourseModal({
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) void handleAssignmentUpload(item.id, file);
-                        e.target.value = "";
+                        e.target.value = '';
                       }}
                     />
                   </>
@@ -939,7 +946,9 @@ export function LearnCourseModal({
               ) : (
                 <Check className="mr-1.5 h-4 w-4" />
               )}
-              {submission ? "Submit Assignment & Complete Activity" : "Attach File Above to Complete"}
+              {submission
+                ? 'Submit Assignment & Complete Activity'
+                : 'Attach File Above to Complete'}
             </Button>
           ) : (
             <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 border border-emerald-200 text-xs font-semibold text-emerald-800">
@@ -1060,12 +1069,12 @@ export function LearnCourseModal({
               <div
                 key={module.id}
                 className={cn(
-                  "overflow-hidden rounded-2xl border transition-all duration-200 shadow-xs",
+                  'overflow-hidden rounded-2xl border transition-all duration-200 shadow-xs',
                   moduleLocked
-                    ? "border-slate-200/70 bg-slate-50/40 opacity-75"
+                    ? 'border-slate-200/70 bg-slate-50/40 opacity-75'
                     : isModuleCurrent
-                    ? "border-indigo-300 bg-white shadow-sm ring-1 ring-indigo-300/40"
-                    : "border-slate-200/90 bg-white",
+                      ? 'border-indigo-300 bg-white shadow-sm ring-1 ring-indigo-300/40'
+                      : 'border-slate-200/90 bg-white',
                 )}
               >
                 {/* Module Header Row */}
@@ -1074,42 +1083,44 @@ export function LearnCourseModal({
                   onClick={() => !moduleLocked && toggleModule(module.id)}
                   disabled={moduleLocked}
                   className={cn(
-                    "w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors group",
+                    'w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors group',
                     moduleLocked
-                      ? "cursor-not-allowed bg-slate-100/50 border-l-4 border-l-slate-300"
+                      ? 'cursor-not-allowed bg-slate-100/50 border-l-4 border-l-slate-300'
                       : isModuleCurrent
-                      ? "bg-indigo-50/70 border-b border-indigo-200/80 border-l-4 border-l-indigo-600"
-                      : isExpanded
-                      ? "bg-slate-50/80 border-b border-slate-200/80 border-l-4 border-l-indigo-500"
-                      : "bg-white hover:bg-slate-50/80 border-b border-slate-100 border-l-4 border-l-transparent",
+                        ? 'bg-indigo-50/70 border-b border-indigo-200/80 border-l-4 border-l-indigo-600'
+                        : isExpanded
+                          ? 'bg-slate-50/80 border-b border-slate-200/80 border-l-4 border-l-indigo-500'
+                          : 'bg-white hover:bg-slate-50/80 border-b border-slate-100 border-l-4 border-l-transparent',
                   )}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <span
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold border shadow-2xs transition-colors",
+                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold border shadow-2xs transition-colors',
                         moduleLocked
-                          ? "bg-slate-100 text-slate-400 border-slate-200"
+                          ? 'bg-slate-100 text-slate-400 border-slate-200'
                           : isModuleCurrent
-                          ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
-                          : isExpanded
-                          ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-indigo-50 text-indigo-700 border-indigo-200 group-hover:bg-indigo-100",
+                            ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
+                            : isExpanded
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 group-hover:bg-indigo-100',
                       )}
                     >
                       {moduleLocked ? (
                         <Lock className="h-3.5 w-3.5 text-slate-400" />
                       ) : isExpanded ? (
-                        "−"
+                        '−'
                       ) : (
-                        "+"
+                        '+'
                       )}
                     </span>
                     <div className="min-w-0">
                       <h3
                         className={cn(
-                          "text-sm font-bold transition truncate",
-                          isModuleCurrent ? "text-indigo-950 font-bold" : "text-slate-900 group-hover:text-indigo-600",
+                          'text-sm font-bold transition truncate',
+                          isModuleCurrent
+                            ? 'text-indigo-950 font-bold'
+                            : 'text-slate-900 group-hover:text-indigo-600',
                         )}
                       >
                         Module {moduleIndex + 1}: {module.title}
@@ -1118,7 +1129,8 @@ export function LearnCourseModal({
                         {totalCount} learning activities · {completedCount} completed
                         {moduleAttachments.length > 0 ? (
                           <span className="text-indigo-600 font-medium ml-2">
-                            · {moduleAttachments.length} reference file{moduleAttachments.length > 1 ? "s" : ""}
+                            · {moduleAttachments.length} reference file
+                            {moduleAttachments.length > 1 ? 's' : ''}
                           </span>
                         ) : null}
                       </p>
@@ -1201,23 +1213,23 @@ export function LearnCourseModal({
                           <div
                             key={lesson.id}
                             className={cn(
-                              "rounded-xl border transition-all duration-200 overflow-hidden shadow-2xs",
+                              'rounded-xl border transition-all duration-200 overflow-hidden shadow-2xs',
                               lessonLocked
-                                ? "border-slate-200/70 bg-slate-50/50 opacity-70"
+                                ? 'border-slate-200/70 bg-slate-50/50 opacity-70'
                                 : isLessonActive
-                                ? "border-indigo-500 bg-indigo-50/20 shadow-md ring-2 ring-indigo-500/20"
-                                : completedFlag
-                                ? "border-emerald-200/80 bg-emerald-50/15"
-                                : "border-slate-200/80 hover:border-indigo-300",
+                                  ? 'border-indigo-500 bg-indigo-50/20 shadow-md ring-2 ring-indigo-500/20'
+                                  : completedFlag
+                                    ? 'border-emerald-200/80 bg-emerald-50/15'
+                                    : 'border-slate-200/80 hover:border-indigo-300',
                             )}
                           >
                             {/* Lesson Summary Row */}
                             <div
                               className={cn(
-                                "flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors",
+                                'flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors',
                                 isLessonActive
-                                  ? "bg-gradient-to-r from-indigo-50/80 to-indigo-100/30 border-b border-indigo-200/70"
-                                  : "bg-white",
+                                  ? 'bg-gradient-to-r from-indigo-50/80 to-indigo-100/30 border-b border-indigo-200/70'
+                                  : 'bg-white',
                               )}
                             >
                               <button
@@ -1228,25 +1240,25 @@ export function LearnCourseModal({
                               >
                                 <span
                                   className={cn(
-                                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold shadow-2xs transition-colors",
+                                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold shadow-2xs transition-colors',
                                     lessonLocked
-                                      ? "bg-slate-50 text-slate-400 border-slate-200"
+                                      ? 'bg-slate-50 text-slate-400 border-slate-200'
                                       : isLessonActive
-                                      ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
-                                      : isOpen
-                                      ? "bg-indigo-600 text-white border-indigo-600"
-                                      : "bg-slate-100 text-slate-700 border-slate-200 group-hover:border-indigo-400 group-hover:text-indigo-700",
+                                        ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
+                                        : isOpen
+                                          ? 'bg-indigo-600 text-white border-indigo-600'
+                                          : 'bg-slate-100 text-slate-700 border-slate-200 group-hover:border-indigo-400 group-hover:text-indigo-700',
                                   )}
                                 >
-                                  {lessonLocked ? "•" : isOpen ? "−" : "+"}
+                                  {lessonLocked ? '•' : isOpen ? '−' : '+'}
                                 </span>
 
                                 <div
                                   className={cn(
-                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors',
                                     isLessonActive
-                                      ? "bg-indigo-100 border border-indigo-300/80 text-indigo-900"
-                                      : "bg-slate-100 group-hover:bg-indigo-50",
+                                      ? 'bg-indigo-100 border border-indigo-300/80 text-indigo-900'
+                                      : 'bg-slate-100 group-hover:bg-indigo-50',
                                   )}
                                 >
                                   {renderActivityIcon(lesson.contentType)}
@@ -1254,28 +1266,30 @@ export function LearnCourseModal({
                                 <div className="min-w-0 flex-1">
                                   <p
                                     className={cn(
-                                      "text-sm font-bold truncate transition-colors",
+                                      'text-sm font-bold truncate transition-colors',
                                       isLessonActive
-                                        ? "text-indigo-950 font-bold"
-                                        : "text-slate-800 group-hover:text-indigo-600",
+                                        ? 'text-indigo-950 font-bold'
+                                        : 'text-slate-800 group-hover:text-indigo-600',
                                     )}
                                   >
                                     Lesson {moduleIndex + 1}.{lessonIndex + 1}: {lesson.title}
                                   </p>
                                   <p className="text-[11px] text-slate-400 mt-0.5">
-                                    {lesson.durationMin || 15} min · {lesson.contentType || "DOCUMENT"}
+                                    {lesson.durationMin || 15} min ·{' '}
+                                    {lesson.contentType || 'DOCUMENT'}
                                     {lessonAttachments.length > 0 ? (
                                       <span className="text-indigo-600 font-medium ml-2">
-                                        · {lessonAttachments.length} file{lessonAttachments.length > 1 ? "s" : ""}
+                                        · {lessonAttachments.length} file
+                                        {lessonAttachments.length > 1 ? 's' : ''}
                                       </span>
                                     ) : null}
                                     {lessonProgress?.assessment ? (
                                       <span
                                         className={cn(
-                                          "font-semibold ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]",
+                                          'font-semibold ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]',
                                           lessonProgress.assessment.passed
-                                            ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
-                                            : "text-indigo-700 bg-indigo-50 border border-indigo-200",
+                                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                                            : 'text-indigo-700 bg-indigo-50 border border-indigo-200',
                                         )}
                                       >
                                         <BookOpenCheck className="h-2.5 w-2.5" />
@@ -1305,11 +1319,13 @@ export function LearnCourseModal({
                                     <Badge variant="blue" dot>
                                       Active Lesson
                                     </Badge>
-                                    {lesson.subLessons && lesson.subLessons.length > 0 ? null : (
-                                      renderNextButton(lesson.id, lessonProgress, () =>
-                                        void handleNext(moduleIndex, lessonIndex),
-                                      )
-                                    )}
+                                    {lesson.subLessons && lesson.subLessons.length > 0
+                                      ? null
+                                      : renderNextButton(
+                                          lesson.id,
+                                          lessonProgress,
+                                          () => void handleNext(moduleIndex, lessonIndex),
+                                        )}
                                   </div>
                                 ) : (
                                   <div className="flex items-center gap-2">
@@ -1317,11 +1333,13 @@ export function LearnCourseModal({
                                       <PlayCircle className="h-3 w-3 mr-1" />
                                       Available
                                     </Badge>
-                                    {lesson.subLessons && lesson.subLessons.length > 0 ? null : (
-                                      renderNextButton(lesson.id, lessonProgress, () =>
-                                        void handleNext(moduleIndex, lessonIndex),
-                                      )
-                                    )}
+                                    {lesson.subLessons && lesson.subLessons.length > 0
+                                      ? null
+                                      : renderNextButton(
+                                          lesson.id,
+                                          lessonProgress,
+                                          () => void handleNext(moduleIndex, lessonIndex),
+                                        )}
                                   </div>
                                 )}
                               </div>
@@ -1340,7 +1358,7 @@ export function LearnCourseModal({
                             {isOpen && !lessonLocked ? (
                               <div className="border-t border-indigo-200/80 bg-white p-5 space-y-5">
                                 {/* Video Embed if applicable */}
-                                {lesson.contentType === "VIDEO" && lesson.resourceUrl ? (
+                                {lesson.contentType === 'VIDEO' && lesson.resourceUrl ? (
                                   <div className="space-y-2">
                                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                       Video Lecture / Media:
@@ -1350,7 +1368,7 @@ export function LearnCourseModal({
                                 ) : null}
 
                                 {/* Audio Player if applicable */}
-                                {lesson.contentType === "AUDIO" && lesson.resourceUrl ? (
+                                {lesson.contentType === 'AUDIO' && lesson.resourceUrl ? (
                                   <div className="space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Headphones className="h-4 w-4 text-purple-600" />
@@ -1363,29 +1381,39 @@ export function LearnCourseModal({
                                 ) : null}
 
                                 {/* Lesson Attached Documents with Open & Download */}
-                                {lessonAttachments.length > 0 && lesson.contentType !== "ASSIGNMENT" ? (
+                                {lessonAttachments.length > 0 &&
+                                lesson.contentType !== 'ASSIGNMENT' ? (
                                   <div className="space-y-2">
                                     <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                       Lesson Files & Study Guides ({lessonAttachments.length}):
                                     </h5>
                                     <div className="grid gap-2">
                                       {lessonAttachments.map((file, i) => (
-                                        <AttachmentCard key={i} file={file} label="Lesson Material" />
+                                        <AttachmentCard
+                                          key={i}
+                                          file={file}
+                                          label="Lesson Material"
+                                        />
                                       ))}
                                     </div>
                                   </div>
                                 ) : null}
 
                                 {/* Assignment Section */}
-                                {lesson.contentType === "ASSIGNMENT" ? (
-                                  renderAssignmentSection(lesson, moduleIndex, lessonIndex, undefined)
-                                ) : null}
+                                {lesson.contentType === 'ASSIGNMENT'
+                                  ? renderAssignmentSection(
+                                      lesson,
+                                      moduleIndex,
+                                      lessonIndex,
+                                      undefined,
+                                    )
+                                  : null}
 
                                 {/* Generic resource link for other types */}
-                                {lesson.contentType !== "VIDEO" &&
-                                lesson.contentType !== "AUDIO" &&
-                                lesson.contentType !== "DOCUMENT" &&
-                                lesson.contentType !== "ASSIGNMENT" &&
+                                {lesson.contentType !== 'VIDEO' &&
+                                lesson.contentType !== 'AUDIO' &&
+                                lesson.contentType !== 'DOCUMENT' &&
+                                lesson.contentType !== 'ASSIGNMENT' &&
                                 lesson.resourceUrl ? (
                                   <div className="space-y-2">
                                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -1405,11 +1433,13 @@ export function LearnCourseModal({
                                       </h4>
                                     </div>
                                     <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
-                                      <RichContent html={lesson.content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+                                      <RichContent
+                                        html={lesson.content}
+                                        className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+                                      />
                                     </div>
                                   </div>
                                 ) : null}
-
 
                                 {/* Sub-lessons Tree with Auto-Expansion & Indigo Highlighting */}
                                 {lesson.subLessons && lesson.subLessons.length > 0 ? (
@@ -1421,15 +1451,17 @@ export function LearnCourseModal({
                                     >
                                       <span
                                         className={cn(
-                                          "flex h-5 w-5 items-center justify-center rounded font-mono text-xs font-bold border transition",
+                                          'flex h-5 w-5 items-center justify-center rounded font-mono text-xs font-bold border transition',
                                           subLessonsGroupOpen
-                                            ? "bg-indigo-600 text-white border-indigo-700 shadow-2xs"
-                                            : "bg-slate-200 text-slate-700 border-slate-300",
+                                            ? 'bg-indigo-600 text-white border-indigo-700 shadow-2xs'
+                                            : 'bg-slate-200 text-slate-700 border-slate-300',
                                         )}
                                       >
-                                        {subLessonsGroupOpen ? "−" : "+"}
+                                        {subLessonsGroupOpen ? '−' : '+'}
                                       </span>
-                                      <span>Sub-Lessons & Detailed Topics ({lesson.subLessons.length})</span>
+                                      <span>
+                                        Sub-Lessons & Detailed Topics ({lesson.subLessons.length})
+                                      </span>
                                     </button>
 
                                     {subLessonsGroupOpen && (
@@ -1455,20 +1487,22 @@ export function LearnCourseModal({
                                             <div
                                               key={sub.id}
                                               className={cn(
-                                                "rounded-xl border shadow-2xs overflow-hidden transition-all",
+                                                'rounded-xl border shadow-2xs overflow-hidden transition-all',
                                                 subLocked
-                                                  ? "opacity-60 border-slate-200 bg-slate-50/40"
+                                                  ? 'opacity-60 border-slate-200 bg-slate-50/40'
                                                   : isSubActive
-                                                  ? "border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/30"
-                                                  : subComplete
-                                                  ? "border-emerald-200 bg-emerald-50/15"
-                                                  : "border-slate-200 bg-white hover:border-indigo-300",
+                                                    ? 'border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/30'
+                                                    : subComplete
+                                                      ? 'border-emerald-200 bg-emerald-50/15'
+                                                      : 'border-slate-200 bg-white hover:border-indigo-300',
                                               )}
                                             >
                                               <div
                                                 className={cn(
-                                                  "flex flex-wrap items-center justify-between gap-3 p-3.5 transition-colors",
-                                                  isSubActive ? "bg-indigo-100/50" : "bg-transparent",
+                                                  'flex flex-wrap items-center justify-between gap-3 p-3.5 transition-colors',
+                                                  isSubActive
+                                                    ? 'bg-indigo-100/50'
+                                                    : 'bg-transparent',
                                                 )}
                                               >
                                                 <button
@@ -1481,23 +1515,23 @@ export function LearnCourseModal({
                                                 >
                                                   <span
                                                     className={cn(
-                                                      "flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold border transition",
+                                                      'flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold border transition',
                                                       subLocked
-                                                        ? "border-slate-200 bg-slate-100 text-slate-400"
+                                                        ? 'border-slate-200 bg-slate-100 text-slate-400'
                                                         : isSubActive
-                                                        ? "border-indigo-600 bg-indigo-600 text-white font-bold shadow-xs"
-                                                        : "border-slate-200 bg-slate-50 text-slate-700",
+                                                          ? 'border-indigo-600 bg-indigo-600 text-white font-bold shadow-xs'
+                                                          : 'border-slate-200 bg-slate-50 text-slate-700',
                                                     )}
                                                   >
-                                                    {subLocked ? "•" : isSubOpen ? "−" : "+"}
+                                                    {subLocked ? '•' : isSubOpen ? '−' : '+'}
                                                   </span>
                                                   <div className="min-w-0 flex-1">
                                                     <p
                                                       className={cn(
-                                                        "text-xs font-bold truncate transition-colors",
+                                                        'text-xs font-bold truncate transition-colors',
                                                         isSubActive
-                                                          ? "text-indigo-950 font-bold"
-                                                          : "text-slate-800 group-hover:text-indigo-700",
+                                                          ? 'text-indigo-950 font-bold'
+                                                          : 'text-slate-800 group-hover:text-indigo-700',
                                                       )}
                                                     >
                                                       {sub.title}
@@ -1506,7 +1540,8 @@ export function LearnCourseModal({
                                                       {sub.durationMin || 5} min · {sub.contentType}
                                                       {subAttachments.length > 0 ? (
                                                         <span className="text-indigo-600 font-medium ml-1.5">
-                                                          · {subAttachments.length} file{subAttachments.length > 1 ? "s" : ""}
+                                                          · {subAttachments.length} file
+                                                          {subAttachments.length > 1 ? 's' : ''}
                                                         </span>
                                                       ) : null}
                                                     </p>
@@ -1538,12 +1573,16 @@ export function LearnCourseModal({
                                                         sub.id,
                                                         subProgress,
                                                         () =>
-                                                          void handleNext(moduleIndex, lessonIndex, subIdx),
-                                                        "sm",
+                                                          void handleNext(
+                                                            moduleIndex,
+                                                            lessonIndex,
+                                                            subIdx,
+                                                          ),
+                                                        'sm',
                                                         lesson.subLessons &&
                                                           subIdx + 1 < lesson.subLessons.length
-                                                          ? "Next Topic →"
-                                                          : "Complete & Next Lesson →",
+                                                          ? 'Next Topic →'
+                                                          : 'Complete & Next Lesson →',
                                                       )}
                                                     </div>
                                                   ) : (
@@ -1551,9 +1590,13 @@ export function LearnCourseModal({
                                                       sub.id,
                                                       subProgress,
                                                       () =>
-                                                        void handleNext(moduleIndex, lessonIndex, subIdx),
-                                                      "sm",
-                                                      "Next",
+                                                        void handleNext(
+                                                          moduleIndex,
+                                                          lessonIndex,
+                                                          subIdx,
+                                                        ),
+                                                      'sm',
+                                                      'Next',
                                                     )
                                                   )}
                                                 </div>
@@ -1571,7 +1614,7 @@ export function LearnCourseModal({
                                               {/* Expanded Sub-lesson content */}
                                               {isSubOpen && !subLocked && (
                                                 <div className="border-t border-indigo-200 bg-indigo-50/20 p-4 space-y-4">
-                                                  {sub.contentType === "ASSIGNMENT" ? (
+                                                  {sub.contentType === 'ASSIGNMENT' ? (
                                                     renderAssignmentSection(
                                                       sub,
                                                       moduleIndex,
@@ -1580,11 +1623,13 @@ export function LearnCourseModal({
                                                     )
                                                   ) : (
                                                     <>
-                                                      {sub.contentType === "VIDEO" && sub.resourceUrl ? (
-                                                        renderVideoEmbed(sub.resourceUrl)
-                                                      ) : null}
+                                                      {sub.contentType === 'VIDEO' &&
+                                                      sub.resourceUrl
+                                                        ? renderVideoEmbed(sub.resourceUrl)
+                                                        : null}
 
-                                                      {sub.contentType === "AUDIO" && sub.resourceUrl ? (
+                                                      {sub.contentType === 'AUDIO' &&
+                                                      sub.resourceUrl ? (
                                                         <div className="space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-3">
                                                           <div className="flex items-center gap-2 mb-1">
                                                             <Headphones className="h-4 w-4 text-purple-600" />
@@ -1604,7 +1649,8 @@ export function LearnCourseModal({
                                                       {subAttachments.length > 0 ? (
                                                         <div className="space-y-2">
                                                           <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                                            Sub-Topic Files & Notes ({subAttachments.length}):
+                                                            Sub-Topic Files & Notes (
+                                                            {subAttachments.length}):
                                                           </h5>
                                                           <div className="grid gap-2">
                                                             {subAttachments.map((f, fi) => (
@@ -1620,7 +1666,10 @@ export function LearnCourseModal({
 
                                                       {sub.content ? (
                                                         <div className="rounded-xl border border-indigo-100 bg-white p-5 text-[15px] sm:text-base leading-relaxed text-slate-800 shadow-2xs prose prose-base max-w-none">
-                                                          <RichContent html={sub.content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+                                                          <RichContent
+                                                            html={sub.content}
+                                                            className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+                                                          />
                                                         </div>
                                                       ) : null}
 
@@ -1638,14 +1687,19 @@ export function LearnCourseModal({
                                                             sub.id,
                                                             subProgress,
                                                             () =>
-                                                              void handleNext(moduleIndex, lessonIndex, subIdx),
-                                                            "sm",
+                                                              void handleNext(
+                                                                moduleIndex,
+                                                                lessonIndex,
+                                                                subIdx,
+                                                              ),
+                                                            'sm',
                                                             lesson.subLessons &&
                                                               subIdx + 1 < lesson.subLessons.length
-                                                              ? "Next Topic →"
-                                                              : lessonProgress?.assessment && !lessonProgress.assessment.passed
-                                                                ? "Take Lesson Quiz →"
-                                                                : "Complete & Next Lesson →",
+                                                              ? 'Next Topic →'
+                                                              : lessonProgress?.assessment &&
+                                                                  !lessonProgress.assessment.passed
+                                                                ? 'Take Lesson Quiz →'
+                                                                : 'Complete & Next Lesson →',
                                                           )}
                                                         </div>
                                                       ) : null}
@@ -1662,149 +1716,157 @@ export function LearnCourseModal({
                                 ) : null}
 
                                 {/* Dedicated Lesson Assessment Checkpoint Card (Below Sub-lessons) */}
-                                {lessonProgress?.assessment ? (
-                                  (() => {
-                                    const allSubsDone =
-                                      !lesson.subLessons ||
-                                      lesson.subLessons.length === 0 ||
-                                      lesson.subLessons.every(
-                                        (s) =>
-                                          lessonProgress?.subLessons?.find((sp) => sp.lessonId === s.id)?.completed,
-                                      );
-                                    const isQuizUnlocked = allSubsDone && timeSatisfied;
-                                    const isPassed = lessonProgress.assessment.passed;
+                                {lessonProgress?.assessment
+                                  ? (() => {
+                                      const allSubsDone =
+                                        !lesson.subLessons ||
+                                        lesson.subLessons.length === 0 ||
+                                        lesson.subLessons.every(
+                                          (s) =>
+                                            lessonProgress?.subLessons?.find(
+                                              (sp) => sp.lessonId === s.id,
+                                            )?.completed,
+                                        );
+                                      const isQuizUnlocked = allSubsDone && timeSatisfied;
+                                      const isPassed = lessonProgress.assessment.passed;
 
-                                    return (
-                                      <div
-                                        className={cn(
-                                          "rounded-2xl border p-5 shadow-2xs transition-all mt-4",
-                                          isPassed
-                                            ? "border-emerald-200 bg-emerald-50/70"
-                                            : isQuizUnlocked
-                                            ? "border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-sky-50/40 to-indigo-50/80"
-                                            : "border-slate-200/80 bg-slate-50/70",
-                                        )}
-                                      >
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                          <div className="flex items-start sm:items-center gap-3.5">
-                                            <div
-                                              className={cn(
-                                                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-2xs",
-                                                isPassed
-                                                  ? "bg-emerald-600 text-white"
-                                                  : isQuizUnlocked
-                                                  ? "bg-indigo-600 text-white"
-                                                  : "bg-slate-200 text-slate-500",
-                                              )}
-                                            >
-                                              {isPassed ? (
-                                                <CheckCircle2 className="h-6 w-6" />
-                                              ) : isQuizUnlocked ? (
-                                                <BookOpenCheck className="h-6 w-6" />
-                                              ) : (
-                                                <Lock className="h-5 w-5" />
-                                              )}
-                                            </div>
-                                            <div className="space-y-1">
-                                              <div className="flex flex-wrap items-center gap-2">
-                                                <span
-                                                  className={cn(
-                                                    "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                                                    isPassed
-                                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                                      : isQuizUnlocked
-                                                      ? "bg-indigo-100 text-indigo-800 border-indigo-300"
-                                                      : "bg-slate-200 text-slate-600 border-slate-300",
-                                                  )}
-                                                >
-                                                  {isPassed
-                                                    ? "Quiz Passed"
-                                                    : isQuizUnlocked
-                                                    ? "Lesson Checkpoint Ready"
-                                                    : "Checkpoint Locked"}
-                                                </span>
-                                                <span className="text-[11px] text-slate-600 font-medium">
-                                                  Passing Score: <strong className="text-slate-900">{lessonProgress.assessment.passingScore}%</strong>
-                                                </span>
-                                              </div>
-                                              <h4
+                                      return (
+                                        <div
+                                          className={cn(
+                                            'rounded-2xl border p-5 shadow-2xs transition-all mt-4',
+                                            isPassed
+                                              ? 'border-emerald-200 bg-emerald-50/70'
+                                              : isQuizUnlocked
+                                                ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-sky-50/40 to-indigo-50/80'
+                                                : 'border-slate-200/80 bg-slate-50/70',
+                                          )}
+                                        >
+                                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                            <div className="flex items-start sm:items-center gap-3.5">
+                                              <div
                                                 className={cn(
-                                                  "text-sm font-bold",
-                                                  isQuizUnlocked || isPassed ? "text-slate-900" : "text-slate-600",
+                                                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-2xs',
+                                                  isPassed
+                                                    ? 'bg-emerald-600 text-white'
+                                                    : isQuizUnlocked
+                                                      ? 'bg-indigo-600 text-white'
+                                                      : 'bg-slate-200 text-slate-500',
                                                 )}
                                               >
-                                                {lessonProgress.assessment.titleEn || "Lesson Assessment"}
-                                              </h4>
-                                              <p className="text-xs text-slate-600">
-                                                {isPassed
-                                                  ? "You have completed this lesson quiz requirement."
-                                                  : isQuizUnlocked
-                                                  ? "All topics completed! Pass this quiz to complete the lesson and unlock the next lesson."
-                                                  : !allSubsDone
-                                                  ? `Complete all ${lesson.subLessons?.length ?? 0} sub-lesson topics above to unlock this quiz.`
-                                                  : `Spend ${formatMMSS(Math.max(0, required - spent))} more on this lesson to unlock this quiz.`}
-                                              </p>
+                                                {isPassed ? (
+                                                  <CheckCircle2 className="h-6 w-6" />
+                                                ) : isQuizUnlocked ? (
+                                                  <BookOpenCheck className="h-6 w-6" />
+                                                ) : (
+                                                  <Lock className="h-5 w-5" />
+                                                )}
+                                              </div>
+                                              <div className="space-y-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                  <span
+                                                    className={cn(
+                                                      'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border',
+                                                      isPassed
+                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                        : isQuizUnlocked
+                                                          ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
+                                                          : 'bg-slate-200 text-slate-600 border-slate-300',
+                                                    )}
+                                                  >
+                                                    {isPassed
+                                                      ? 'Quiz Passed'
+                                                      : isQuizUnlocked
+                                                        ? 'Lesson Checkpoint Ready'
+                                                        : 'Checkpoint Locked'}
+                                                  </span>
+                                                  <span className="text-[11px] text-slate-600 font-medium">
+                                                    Passing Score:{' '}
+                                                    <strong className="text-slate-900">
+                                                      {lessonProgress.assessment.passingScore}%
+                                                    </strong>
+                                                  </span>
+                                                </div>
+                                                <h4
+                                                  className={cn(
+                                                    'text-sm font-bold',
+                                                    isQuizUnlocked || isPassed
+                                                      ? 'text-slate-900'
+                                                      : 'text-slate-600',
+                                                  )}
+                                                >
+                                                  {lessonProgress.assessment.titleEn ||
+                                                    'Lesson Assessment'}
+                                                </h4>
+                                                <p className="text-xs text-slate-600">
+                                                  {isPassed
+                                                    ? 'You have completed this lesson quiz requirement.'
+                                                    : isQuizUnlocked
+                                                      ? 'All topics completed! Pass this quiz to complete the lesson and unlock the next lesson.'
+                                                      : !allSubsDone
+                                                        ? `Complete all ${lesson.subLessons?.length ?? 0} sub-lesson topics above to unlock this quiz.`
+                                                        : `Spend ${formatMMSS(Math.max(0, required - spent))} more on this lesson to unlock this quiz.`}
+                                                </p>
+                                              </div>
+                                            </div>
+
+                                            <div className="shrink-0 w-full sm:w-auto">
+                                              {isPassed ? (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => {
+                                                    if (lessonProgress.assessment) {
+                                                      quizPassedRef.current = false;
+                                                      setActiveQuiz({
+                                                        assessmentId: lessonProgress.assessment.id,
+                                                        kind: 'lesson',
+                                                        moduleIndex,
+                                                        lessonIndex,
+                                                      });
+                                                    }
+                                                  }}
+                                                  className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs border-emerald-300 text-emerald-800 hover:bg-emerald-100/70"
+                                                >
+                                                  <BookOpenCheck className="h-4 w-4" />
+                                                  <span>Review / Retake Quiz</span>
+                                                </Button>
+                                              ) : isQuizUnlocked ? (
+                                                <Button
+                                                  size="sm"
+                                                  variant="primary"
+                                                  onClick={() => {
+                                                    if (lessonProgress.assessment) {
+                                                      quizPassedRef.current = false;
+                                                      setActiveQuiz({
+                                                        assessmentId: lessonProgress.assessment.id,
+                                                        kind: 'lesson',
+                                                        moduleIndex,
+                                                        lessonIndex,
+                                                      });
+                                                    }
+                                                  }}
+                                                  className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-700/50"
+                                                >
+                                                  <BookOpenCheck className="h-4 w-4" />
+                                                  <span>Take Lesson Quiz →</span>
+                                                </Button>
+                                              ) : (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  disabled
+                                                  className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs opacity-60 cursor-not-allowed bg-slate-100 text-slate-500 border-slate-300"
+                                                >
+                                                  <Lock className="h-3.5 w-3.5" />
+                                                  <span>Quiz Locked</span>
+                                                </Button>
+                                              )}
                                             </div>
                                           </div>
-
-                                          <div className="shrink-0 w-full sm:w-auto">
-                                            {isPassed ? (
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                  if (lessonProgress.assessment) {
-                                                    quizPassedRef.current = false;
-                                                    setActiveQuiz({
-                                                      assessmentId: lessonProgress.assessment.id,
-                                                      kind: "lesson",
-                                                      moduleIndex,
-                                                      lessonIndex,
-                                                    });
-                                                  }
-                                                }}
-                                                className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs border-emerald-300 text-emerald-800 hover:bg-emerald-100/70"
-                                              >
-                                                <BookOpenCheck className="h-4 w-4" />
-                                                <span>Review / Retake Quiz</span>
-                                              </Button>
-                                            ) : isQuizUnlocked ? (
-                                              <Button
-                                                size="sm"
-                                                variant="primary"
-                                                onClick={() => {
-                                                  if (lessonProgress.assessment) {
-                                                    quizPassedRef.current = false;
-                                                    setActiveQuiz({
-                                                      assessmentId: lessonProgress.assessment.id,
-                                                      kind: "lesson",
-                                                      moduleIndex,
-                                                      lessonIndex,
-                                                    });
-                                                  }
-                                                }}
-                                                className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-700/50"
-                                              >
-                                                <BookOpenCheck className="h-4 w-4" />
-                                                <span>Take Lesson Quiz →</span>
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                disabled
-                                                className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs opacity-60 cursor-not-allowed bg-slate-100 text-slate-500 border-slate-300"
-                                              >
-                                                <Lock className="h-3.5 w-3.5" />
-                                                <span>Quiz Locked</span>
-                                              </Button>
-                                            )}
-                                          </div>
                                         </div>
-                                      </div>
-                                    );
-                                  })()
-                                ) : null}
+                                      );
+                                    })()
+                                  : null}
 
                                 {/* Footer Actions: Next */}
                                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/60 mt-4">
@@ -1822,50 +1884,52 @@ export function LearnCourseModal({
                                     ) : null}
                                   </div>
 
-                                  {!completedFlag && lesson.contentType !== "ASSIGNMENT" ? (
-                                    lesson.subLessons && lesson.subLessons.length > 0 ? (
-                                      (() => {
-                                        const allSubsDone = lesson.subLessons.every(
-                                          (s) =>
-                                            lessonProgress?.subLessons?.find((sp) => sp.lessonId === s.id)?.completed,
-                                        );
-                                        if (
-                                          allSubsDone &&
-                                          lessonProgress?.assessment &&
-                                          !lessonProgress.assessment.passed
-                                        ) {
-                                          return (
-                                            <Button
-                                              size="sm"
-                                              variant="primary"
-                                              disabled={actionBusyId === lesson.id}
-                                              onClick={() => {
-                                                if (lessonProgress.assessment) {
-                                                  quizPassedRef.current = false;
-                                                  setActiveQuiz({
-                                                    assessmentId: lessonProgress.assessment.id,
-                                                    kind: "lesson",
-                                                    moduleIndex,
-                                                    lessonIndex,
-                                                  });
-                                                }
-                                              }}
-                                              className="shadow-2xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700/50 gap-1.5"
-                                            >
-                                              <BookOpenCheck className="h-3.5 w-3.5 mr-1" />
-                                              <span>Take Lesson Quiz</span>
-                                              <span className="font-mono text-xs">→</span>
-                                            </Button>
+                                  {!completedFlag && lesson.contentType !== 'ASSIGNMENT'
+                                    ? lesson.subLessons && lesson.subLessons.length > 0
+                                      ? (() => {
+                                          const allSubsDone = lesson.subLessons.every(
+                                            (s) =>
+                                              lessonProgress?.subLessons?.find(
+                                                (sp) => sp.lessonId === s.id,
+                                              )?.completed,
                                           );
-                                        }
-                                        return null;
-                                      })()
-                                    ) : (
-                                      renderNextButton(lesson.id, lessonProgress, () =>
-                                        void handleNext(moduleIndex, lessonIndex),
-                                      )
-                                    )
-                                  ) : null}
+                                          if (
+                                            allSubsDone &&
+                                            lessonProgress?.assessment &&
+                                            !lessonProgress.assessment.passed
+                                          ) {
+                                            return (
+                                              <Button
+                                                size="sm"
+                                                variant="primary"
+                                                disabled={actionBusyId === lesson.id}
+                                                onClick={() => {
+                                                  if (lessonProgress.assessment) {
+                                                    quizPassedRef.current = false;
+                                                    setActiveQuiz({
+                                                      assessmentId: lessonProgress.assessment.id,
+                                                      kind: 'lesson',
+                                                      moduleIndex,
+                                                      lessonIndex,
+                                                    });
+                                                  }
+                                                }}
+                                                className="shadow-2xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700/50 gap-1.5"
+                                              >
+                                                <BookOpenCheck className="h-3.5 w-3.5 mr-1" />
+                                                <span>Take Lesson Quiz</span>
+                                                <span className="font-mono text-xs">→</span>
+                                              </Button>
+                                            );
+                                          }
+                                          return null;
+                                        })()
+                                      : renderNextButton(
+                                          lesson.id,
+                                          lessonProgress,
+                                          () => void handleNext(moduleIndex, lessonIndex),
+                                        )
+                                    : null}
                                 </div>
                               </div>
                             ) : null}
@@ -1881,7 +1945,11 @@ export function LearnCourseModal({
                     ) : null}
 
                     {/* Prominent Module Checkpoint Banner */}
-                    {!moduleCompleted && moduleAssessment && !moduleAssessment.passed && moduleContentDone && moduleTimeSatisfied ? (
+                    {!moduleCompleted &&
+                    moduleAssessment &&
+                    !moduleAssessment.passed &&
+                    moduleContentDone &&
+                    moduleTimeSatisfied ? (
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50/90 p-4 shadow-sm">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-2xs">
@@ -1892,7 +1960,8 @@ export function LearnCourseModal({
                               Module Checkpoint Ready
                             </p>
                             <p className="text-xs text-indigo-700">
-                              All lessons in this module are completed. Pass the module assessment to unlock the next module.
+                              All lessons in this module are completed. Pass the module assessment
+                              to unlock the next module.
                             </p>
                           </div>
                         </div>
@@ -1920,13 +1989,15 @@ export function LearnCourseModal({
                               moduleTimeSatisfied,
                             )
                           ) : (
-                            <p className="text-[11px] text-slate-400">No minimum time requirement.</p>
+                            <p className="text-[11px] text-slate-400">
+                              No minimum time requirement.
+                            </p>
                           )}
                         </div>
                         {moduleAssessment ? (
                           <Button
                             size="sm"
-                            variant={moduleAssessment.passed ? "outline" : "primary"}
+                            variant={moduleAssessment.passed ? 'outline' : 'primary'}
                             disabled={
                               !moduleContentDone || !moduleTimeSatisfied || moduleAssessment.passed
                             }
@@ -1941,8 +2012,8 @@ export function LearnCourseModal({
                               <>
                                 <BookOpenCheck className="h-3.5 w-3.5 mr-1" />
                                 {moduleContentDone && moduleTimeSatisfied
-                                  ? "Take Module Assessment"
-                                  : "Complete Lessons First"}
+                                  ? 'Take Module Assessment'
+                                  : 'Complete Lessons First'}
                               </>
                             )}
                           </Button>
@@ -1979,10 +2050,10 @@ export function LearnCourseModal({
         {showQuiz && finalAssessment ? (
           <div
             className={cn(
-              "rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all",
+              'rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all',
               contentCompleted
-                ? "border-indigo-300 bg-gradient-to-br from-indigo-50/60 to-violet-50/60"
-                : "border-slate-200 bg-slate-50/70 opacity-80",
+                ? 'border-indigo-300 bg-gradient-to-br from-indigo-50/60 to-violet-50/60'
+                : 'border-slate-200 bg-slate-50/70 opacity-80',
             )}
           >
             <div className="space-y-1">
@@ -2005,7 +2076,8 @@ export function LearnCourseModal({
                 )}
               </div>
               <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-                Demonstrate your comprehension of the complete course curriculum. Achieving the passing mark awards your accredited completion certificate.
+                Demonstrate your comprehension of the complete course curriculum. Achieving the
+                passing mark awards your accredited completion certificate.
               </p>
             </div>
 
@@ -2014,9 +2086,9 @@ export function LearnCourseModal({
                 disabled={!contentCompleted}
                 onClick={openFinalAssessment}
                 className={cn(
-                  "shadow-md gap-1.5 font-bold",
-                  !contentCompleted && "opacity-50 cursor-not-allowed",
-                  contentCompleted && "bg-indigo-600 hover:bg-indigo-700 text-white",
+                  'shadow-md gap-1.5 font-bold',
+                  !contentCompleted && 'opacity-50 cursor-not-allowed',
+                  contentCompleted && 'bg-indigo-600 hover:bg-indigo-700 text-white',
                 )}
               >
                 {contentCompleted ? (
@@ -2024,7 +2096,7 @@ export function LearnCourseModal({
                 ) : (
                   <Lock className="h-4 w-4" />
                 )}
-                {contentCompleted ? "Take Final Assessment" : "Locked"}
+                {contentCompleted ? 'Take Final Assessment' : 'Locked'}
               </Button>
             ) : null}
           </div>
@@ -2040,7 +2112,8 @@ export function LearnCourseModal({
               <div>
                 <p className="text-sm font-bold">Congratulations! You completed this course.</p>
                 <p className="text-xs text-emerald-700 mt-0.5">
-                  You have fulfilled all curriculum requirements. Your accredited certificate is issued.
+                  You have fulfilled all curriculum requirements. Your accredited certificate is
+                  issued.
                 </p>
               </div>
             </div>
@@ -2061,8 +2134,8 @@ export function LearnCourseModal({
                 <p className="text-sm font-bold text-slate-700">Course Certificate — Locked</p>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {contentCompleted && finalAssessment && !finalAssessment.passed
-                    ? "Pass the Final Assessment above to unlock your certificate."
-                    : "Complete every module and pass the Final Assessment to unlock your official certificate."}
+                    ? 'Pass the Final Assessment above to unlock your certificate.'
+                    : 'Complete every module and pass the Final Assessment to unlock your official certificate.'}
                 </p>
               </div>
             </div>

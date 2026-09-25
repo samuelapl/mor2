@@ -1,40 +1,40 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Bell, CheckCheck, Search } from "lucide-react";
-import { getRoleFromPath, ROLE_LABELS } from "@/constants/roles";
-import { useLms } from "@/lib/lms-store";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { Bell, CheckCheck, Search } from 'lucide-react';
+import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
+import { useLms } from '@/lib/lms-store';
 import {
   fetchMyNotifications,
   fetchUnreadCount,
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/lib/api/notifications";
-import type { ApiNotification } from "@/lib/api/types";
-import { cn } from "@/lib/utils";
-import AccountModal from "@/components/shared/account/AccountModal";
-import LanguageToggle from "@/components/shared/LanguageToggle";
-import { useTranslation } from "@/lib/i18n/useTranslation";
+} from '@/lib/api/notifications';
+import type { ApiNotification } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
+import AccountModal from '@/components/shared/account/AccountModal';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 function getInitials(label: string) {
   return label
-    .split(" ")
+    .split(' ')
     .map((word) => word[0])
     .slice(0, 2)
-    .join("")
+    .join('')
     .toUpperCase();
 }
 
-interface ApiNotificationListItem extends ApiNotification { }
+interface ApiNotificationListItem extends ApiNotification {}
 
 export default function Header() {
   const pathname = usePathname();
   const { currentUser } = useLms();
   const { lang, tRole } = useTranslation();
-  const isAmharic = lang === "am";
+  const isAmharic = lang === 'am';
   const role = currentUser?.role ?? getRoleFromPath(pathname);
-  const roleLabel = role ? tRole(role) : (isAmharic ? "ዳሽቦርድ" : "Dashboard");
+  const roleLabel = role ? tRole(role) : isAmharic ? 'ዳሽቦርድ' : 'Dashboard';
   const demoUser = currentUser;
 
   const [unread, setUnread] = useState(0);
@@ -70,8 +70,8 @@ export default function Header() {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
   const readOne = async (id: string) => {
@@ -92,14 +92,14 @@ export default function Header() {
     } catch {
       // ignore
     }
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, readAt: new Date().toISOString() })),
-    );
+    setNotifications((prev) => prev.map((n) => ({ ...n, readAt: new Date().toISOString() })));
     setUnread(0);
   };
 
-  const title = (n: ApiNotificationListItem) => (isAmharic ? (n.titleAm ?? n.titleEn) : (n.titleEn ?? n.titleAm));
-  const bodyText = (n: ApiNotificationListItem) => (isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm));
+  const title = (n: ApiNotificationListItem) =>
+    isAmharic ? (n.titleAm ?? n.titleEn) : (n.titleEn ?? n.titleAm);
+  const bodyText = (n: ApiNotificationListItem) =>
+    isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm);
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
@@ -108,7 +108,7 @@ export default function Header() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder={isAmharic ? "ኮርሶችን፣ ተጠቃሚዎችን ፈልግ..." : "Search courses, users..."}
+            placeholder={isAmharic ? 'ኮርሶችን፣ ተጠቃሚዎችን ፈልግ...' : 'Search courses, users...'}
             className="h-9 w-64 rounded-xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none backdrop-blur transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
           />
         </div>
@@ -120,7 +120,7 @@ export default function Header() {
         <div className="relative" ref={panelRef}>
           <button
             type="button"
-            aria-label={isAmharic ? "ማሳወቂያዎች" : "Notifications"}
+            aria-label={isAmharic ? 'ማሳወቂያዎች' : 'Notifications'}
             onClick={() => {
               if (!open) void load();
               setOpen((prev) => !prev);
@@ -130,7 +130,7 @@ export default function Header() {
             <Bell className="h-4 w-4" />
             {unread > 0 ? (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                {unread > 9 ? "9+" : unread}
+                {unread > 9 ? '9+' : unread}
               </span>
             ) : null}
           </button>
@@ -139,7 +139,7 @@ export default function Header() {
             <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                 <p className="text-sm font-semibold text-slate-900">
-                  {isAmharic ? "ማሳወቂያዎች" : "Notifications"}
+                  {isAmharic ? 'ማሳወቂያዎች' : 'Notifications'}
                 </p>
                 <button
                   type="button"
@@ -147,13 +147,13 @@ export default function Header() {
                   className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
-                  {isAmharic ? "ሁሉንም አንብብ" : "Mark all read"}
+                  {isAmharic ? 'ሁሉንም አንብብ' : 'Mark all read'}
                 </button>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-slate-400">
-                    {isAmharic ? "ምንም ማሳወቂያዎች የሉም" : "No notifications yet"}
+                    {isAmharic ? 'ምንም ማሳወቂያዎች የሉም' : 'No notifications yet'}
                   </p>
                 ) : (
                   notifications.map((n) => (
@@ -162,14 +162,14 @@ export default function Header() {
                       type="button"
                       onClick={() => void readOne(n.id)}
                       className={cn(
-                        "flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50/60",
-                        !n.readAt ? "bg-indigo-50/40" : "",
+                        'flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50/60',
+                        !n.readAt ? 'bg-indigo-50/40' : '',
                       )}
                     >
                       <span
                         className={cn(
-                          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                          n.readAt ? "bg-slate-200" : "bg-indigo-500",
+                          'mt-1.5 h-2 w-2 shrink-0 rounded-full',
+                          n.readAt ? 'bg-slate-200' : 'bg-indigo-500',
                         )}
                       />
                       <span className="min-w-0">
@@ -211,7 +211,7 @@ export default function Header() {
             </div>
           )}
           <div className="hidden text-left leading-tight lg:block">
-            <p className="text-sm font-medium text-slate-900">{demoUser?.name ?? "Demo User"}</p>
+            <p className="text-sm font-medium text-slate-900">{demoUser?.name ?? 'Demo User'}</p>
             <p className="text-[11px] text-slate-500">{demoUser?.email}</p>
           </div>
         </button>

@@ -1,10 +1,9 @@
-import { getAccessToken } from "./client";
+import { getAccessToken } from './client';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
 
 function url(path: string): string {
-  return `${API_BASE_URL.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+  return `${API_BASE_URL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }
 
 function headers(): Record<string, string> {
@@ -15,14 +14,16 @@ function headers(): Record<string, string> {
 /** Uploads a course cover image via multipart/form-data. */
 export async function uploadCover(courseId: string, file: File): Promise<string> {
   const form = new FormData();
-  form.append("file", file);
+  form.append('file', file);
   return postForm(`files/cover/${courseId}`, form, (data) =>
-    typeof data.thumbnailUrl === "string" ? data.thumbnailUrl : "",
+    typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : '',
   );
 }
 
 const isUuid = (val?: string): boolean =>
-  Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val));
+  Boolean(
+    val && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val),
+  );
 
 /** Uploads a course material (video / pdf / audio / presentation / document) as an attachment. */
 export async function uploadAttachment(
@@ -30,42 +31,40 @@ export async function uploadAttachment(
   opts: { moduleId?: string; lessonId?: string; courseId?: string; purpose?: string } = {},
 ): Promise<{ fileUrl: string; id: string; fileName: string; sizeBytes: number; fileType: string }> {
   const form = new FormData();
-  form.append("file", file);
-  form.append("purpose", opts.purpose || "attachment");
-  if (opts.courseId && isUuid(opts.courseId)) form.append("courseId", opts.courseId);
-  if (opts.moduleId && isUuid(opts.moduleId)) form.append("moduleId", opts.moduleId);
-  if (opts.lessonId && isUuid(opts.lessonId)) form.append("lessonId", opts.lessonId);
-  const text = await postFormText("files/upload", form);
+  form.append('file', file);
+  form.append('purpose', opts.purpose || 'attachment');
+  if (opts.courseId && isUuid(opts.courseId)) form.append('courseId', opts.courseId);
+  if (opts.moduleId && isUuid(opts.moduleId)) form.append('moduleId', opts.moduleId);
+  if (opts.lessonId && isUuid(opts.lessonId)) form.append('lessonId', opts.lessonId);
+  const text = await postFormText('files/upload', form);
   const parsed = JSON.parse(text) as any;
   const data = parsed?.data ?? parsed;
   return {
-    fileUrl: data?.fileUrl ?? "",
-    id: data?.id ?? "",
+    fileUrl: data?.fileUrl ?? '',
+    id: data?.id ?? '',
     fileName: data?.fileName ?? file.name,
     sizeBytes: data?.sizeBytes ?? file.size,
-    fileType: data?.fileType ?? file.type ?? "application/octet-stream",
+    fileType: data?.fileType ?? file.type ?? 'application/octet-stream',
   };
 }
 
 /** Uploads a profile avatar for the signed-in user; persists avatarUrl server-side. */
 export async function uploadAvatar(file: File): Promise<string> {
   const form = new FormData();
-  form.append("file", file);
-  return postForm("files/avatar", form, (data) =>
-    typeof data.avatarUrl === "string" ? data.avatarUrl : "",
+  form.append('file', file);
+  return postForm('files/avatar', form, (data) =>
+    typeof data.avatarUrl === 'string' ? data.avatarUrl : '',
   );
 }
 
 /** Uploads a certificate template background image. */
-export async function uploadCertificateTemplate(
-  file: File,
-): Promise<{ backgroundUrl: string }> {
+export async function uploadCertificateTemplate(file: File): Promise<{ backgroundUrl: string }> {
   const form = new FormData();
-  form.append("file", file);
-  form.append("purpose", "certificate_template");
-  const text = await postFormText("files/certificate-template", form);
+  form.append('file', file);
+  form.append('purpose', 'certificate_template');
+  const text = await postFormText('files/certificate-template', form);
   const parsed = JSON.parse(text) as { data?: { backgroundUrl?: string } };
-  return { backgroundUrl: parsed?.data?.backgroundUrl ?? "" };
+  return { backgroundUrl: parsed?.data?.backgroundUrl ?? '' };
 }
 
 async function postForm(
@@ -74,18 +73,18 @@ async function postForm(
   pick: (data: Record<string, unknown>) => string,
 ): Promise<string> {
   const res = await fetch(url(path), {
-    method: "POST",
+    method: 'POST',
     headers: headers(),
     body: form,
-    credentials: "include",
+    credentials: 'include',
   });
   if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
+    const errorText = await res.text().catch(() => '');
     let errorMsg = `Upload failed (${res.status})`;
     try {
       const json = JSON.parse(errorText);
       if (json.message) {
-        errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
+        errorMsg = Array.isArray(json.message) ? json.message.join(', ') : json.message;
       }
     } catch {
       // ignore
@@ -98,18 +97,18 @@ async function postForm(
 
 async function postFormText(path: string, form: FormData): Promise<string> {
   const res = await fetch(url(path), {
-    method: "POST",
+    method: 'POST',
     headers: headers(),
     body: form,
-    credentials: "include",
+    credentials: 'include',
   });
   if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
+    const errorText = await res.text().catch(() => '');
     let errorMsg = `Upload failed (${res.status})`;
     try {
       const json = JSON.parse(errorText);
       if (json.message) {
-        errorMsg = Array.isArray(json.message) ? json.message.join(", ") : json.message;
+        errorMsg = Array.isArray(json.message) ? json.message.join(', ') : json.message;
       }
     } catch {
       // ignore

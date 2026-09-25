@@ -1,10 +1,15 @@
-import type { ReactNode } from "react";
-import { BookOpen, Clock, FileText, Layers, ListChecks } from "lucide-react";
-import type { Course } from "@/types";
-import { Card } from "@/components/ui/Card";
-import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { RichContent } from "@/components/ui/RichContent";
+import type { ReactNode } from 'react';
+import { BookOpen, Clock, FileText, Layers, ListChecks } from 'lucide-react';
+import type { Course } from '@/types';
+import { Card } from '@/components/ui/Card';
+import {
+  Badge,
+  CourseStatusBadge,
+  courseLevelLabel,
+  courseLevelVariant,
+} from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { RichContent } from '@/components/ui/RichContent';
 
 interface CourseCardProps {
   course: Course;
@@ -23,13 +28,9 @@ export function CourseCard({
   onClick,
   showStatus = true,
 }: CourseCardProps) {
-  const lessonCount = course.modules.reduce(
-    (sum, module) => sum + module.lessons.length,
-    0,
-  );
+  const lessonCount = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
   const durationMin = course.modules.reduce(
-    (sum, module) =>
-      sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
+    (sum, module) => sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
     0,
   );
   const attachmentCount = course.attachments?.length ?? 0;
@@ -62,13 +63,9 @@ export function CourseCard({
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           {showStatus && (
-            <CourseStatusBadge
-              status={course.published ? "published" : course.status}
-            />
+            <CourseStatusBadge status={course.published ? 'published' : course.status} />
           )}
-          <Badge variant={courseLevelVariant(course.level)}>
-            {courseLevelLabel(course.level)}
-          </Badge>
+          <Badge variant={courseLevelVariant(course.level)}>{courseLevelLabel(course.level)}</Badge>
           {extraBadge}
         </div>
       </div>
@@ -95,11 +92,11 @@ export function CourseCard({
         {attachmentCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
             <FileText className="h-3.5 w-3.5 text-indigo-500/70" />
-            {attachmentCount} {attachmentCount === 1 ? "file" : "files"}
+            {attachmentCount} {attachmentCount === 1 ? 'file' : 'files'}
           </span>
         ) : null}
       </div>
-      {typeof progress === "number" ? (
+      {typeof progress === 'number' ? (
         <div className="mt-3 space-y-1">
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <span>Progress</span>
@@ -108,9 +105,7 @@ export function CourseCard({
           <ProgressBar value={progress} />
         </div>
       ) : null}
-      {children ? (
-        <div className="mt-4 flex flex-wrap gap-2">{children}</div>
-      ) : null}
+      {children ? <div className="mt-4 flex flex-wrap gap-2">{children}</div> : null}
     </Card>
   );
 }

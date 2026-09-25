@@ -517,7 +517,12 @@ export class ProgressService {
             await this.prisma.lessonCompletion.upsert({
               where: { userId_lessonId: { userId, lessonId: lesson.parentId } },
               update: { completed: true, completedAt: new Date(), lastAccessed: new Date() },
-              create: { userId, lessonId: lesson.parentId, completed: true, completedAt: new Date() },
+              create: {
+                userId,
+                lessonId: lesson.parentId,
+                completed: true,
+                completedAt: new Date(),
+              },
             });
           }
         }

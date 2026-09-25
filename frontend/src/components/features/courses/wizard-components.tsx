@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Placeholder from "@tiptap/extension-placeholder";
+import { useState, useEffect } from 'react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
 import {
   Bold,
   Italic,
@@ -26,71 +26,71 @@ import {
   Presentation,
   Trash2,
   Upload,
-} from "lucide-react";
-import type { UploadedResource } from "@/types";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import type { UploadedResource } from '@/types';
+import { cn } from '@/lib/utils';
 
 const TOOLBAR_BUTTONS = [
   {
     icon: Bold,
-    title: "Bold",
+    title: 'Bold',
     run: (e: Editor) => e.chain().focus().toggleBold().run(),
-    isActive: (e: Editor) => e.isActive("bold"),
+    isActive: (e: Editor) => e.isActive('bold'),
   },
   {
     icon: Italic,
-    title: "Italic",
+    title: 'Italic',
     run: (e: Editor) => e.chain().focus().toggleItalic().run(),
-    isActive: (e: Editor) => e.isActive("italic"),
+    isActive: (e: Editor) => e.isActive('italic'),
   },
   {
     icon: UnderlineIcon,
-    title: "Underline",
+    title: 'Underline',
     run: (e: Editor) => e.chain().focus().toggleUnderline().run(),
-    isActive: (e: Editor) => e.isActive("underline"),
+    isActive: (e: Editor) => e.isActive('underline'),
   },
   {
     icon: Strikethrough,
-    title: "Strikethrough",
+    title: 'Strikethrough',
     run: (e: Editor) => e.chain().focus().toggleStrike().run(),
-    isActive: (e: Editor) => e.isActive("strike"),
+    isActive: (e: Editor) => e.isActive('strike'),
   },
   {
     icon: Heading2,
-    title: "Heading 2",
+    title: 'Heading 2',
     run: (e: Editor) => e.chain().focus().toggleHeading({ level: 2 }).run(),
-    isActive: (e: Editor) => e.isActive("heading", { level: 2 }),
+    isActive: (e: Editor) => e.isActive('heading', { level: 2 }),
   },
   {
     icon: Heading3,
-    title: "Heading 3",
+    title: 'Heading 3',
     run: (e: Editor) => e.chain().focus().toggleHeading({ level: 3 }).run(),
-    isActive: (e: Editor) => e.isActive("heading", { level: 3 }),
+    isActive: (e: Editor) => e.isActive('heading', { level: 3 }),
   },
   {
     icon: List,
-    title: "Bullet List",
+    title: 'Bullet List',
     run: (e: Editor) => e.chain().focus().toggleBulletList().run(),
-    isActive: (e: Editor) => e.isActive("bulletList"),
+    isActive: (e: Editor) => e.isActive('bulletList'),
   },
   {
     icon: ListOrdered,
-    title: "Ordered List",
+    title: 'Ordered List',
     run: (e: Editor) => e.chain().focus().toggleOrderedList().run(),
-    isActive: (e: Editor) => e.isActive("orderedList"),
+    isActive: (e: Editor) => e.isActive('orderedList'),
   },
   {
     icon: Quote,
-    title: "Blockquote",
+    title: 'Blockquote',
     run: (e: Editor) => e.chain().focus().toggleBlockquote().run(),
-    isActive: (e: Editor) => e.isActive("blockquote"),
+    isActive: (e: Editor) => e.isActive('blockquote'),
   },
 ];
 
 export function RichEditor({
   value,
   onChange,
-  placeholder = "Enter content here…",
+  placeholder = 'Enter content here…',
   minHeight = 140,
 }: {
   value: string;
@@ -107,7 +107,7 @@ export function RichEditor({
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none",
+          'before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none',
       }),
     ],
     content: value,
@@ -145,8 +145,8 @@ export function RichEditor({
               onClick={() => btn.run(editor)}
               title={btn.title}
               className={cn(
-                "rounded-md p-1.5 text-slate-600 transition hover:bg-slate-200/70 hover:text-slate-900",
-                active && "bg-indigo-100 text-indigo-700 hover:bg-indigo-100",
+                'rounded-md p-1.5 text-slate-600 transition hover:bg-slate-200/70 hover:text-slate-900',
+                active && 'bg-indigo-100 text-indigo-700 hover:bg-indigo-100',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -162,7 +162,7 @@ export function RichEditor({
 export function CompactRichEditor({
   value,
   onChange,
-  placeholder = "Enter question statement, prompt, or scenario…",
+  placeholder = 'Enter question statement, prompt, or scenario…',
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -177,13 +177,13 @@ export function CompactRichEditor({
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none",
+          'before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none',
       }),
     ],
     content: value,
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none px-3 py-2 text-slate-800 focus:outline-none min-h-[48px]",
+        class: 'prose prose-sm max-w-none px-3 py-2 text-slate-800 focus:outline-none min-h-[48px]',
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -208,8 +208,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("bold") && "bg-indigo-100 text-indigo-700 font-bold",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('bold') && 'bg-indigo-100 text-indigo-700 font-bold',
           )}
           title="Bold"
         >
@@ -219,8 +219,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("italic") && "bg-indigo-100 text-indigo-700",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('italic') && 'bg-indigo-100 text-indigo-700',
           )}
           title="Italic"
         >
@@ -230,8 +230,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("underline") && "bg-indigo-100 text-indigo-700",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('underline') && 'bg-indigo-100 text-indigo-700',
           )}
           title="Underline"
         >
@@ -242,8 +242,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("bulletList") && "bg-indigo-100 text-indigo-700",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('bulletList') && 'bg-indigo-100 text-indigo-700',
           )}
           title="Bullet List"
         >
@@ -253,8 +253,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("orderedList") && "bg-indigo-100 text-indigo-700",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('orderedList') && 'bg-indigo-100 text-indigo-700',
           )}
           title="Numbered List"
         >
@@ -264,8 +264,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCode().run()}
           className={cn(
-            "rounded p-1 text-slate-600 hover:bg-slate-200/70",
-            editor.isActive("code") && "bg-indigo-100 text-indigo-700",
+            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
+            editor.isActive('code') && 'bg-indigo-100 text-indigo-700',
           )}
           title="Code"
         >
@@ -278,7 +278,7 @@ export function CompactRichEditor({
 }
 
 export function formatFileSize(bytes?: number): string {
-  if (!bytes || bytes <= 0) return "";
+  if (!bytes || bytes <= 0) return '';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
@@ -305,7 +305,7 @@ export function getItemAttachments(item: {
     if (url) {
       map.set(url, {
         id: raw.id,
-        name: raw.name || raw.fileName || url.split("/").pop() || "Attached File",
+        name: raw.name || raw.fileName || url.split('/').pop() || 'Attached File',
         url: url,
         size: raw.size ?? raw.sizeBytes ?? undefined,
         type: raw.type || raw.fileType || undefined,
@@ -317,11 +317,11 @@ export function getItemAttachments(item: {
   if (
     item.resourceUrl &&
     !map.has(item.resourceUrl) &&
-    item.contentType !== "VIDEO" &&
-    item.contentType !== "AUDIO"
+    item.contentType !== 'VIDEO' &&
+    item.contentType !== 'AUDIO'
   ) {
     map.set(item.resourceUrl, {
-      name: item.fileName || item.resourceUrl.split("/").pop() || "Attached File",
+      name: item.fileName || item.resourceUrl.split('/').pop() || 'Attached File',
       url: item.resourceUrl,
       size: item.fileSize || undefined,
     });
@@ -334,59 +334,58 @@ export function getItemAttachments(item: {
  * Determines appropriate icon and color based on file extension or URL.
  */
 export function getFileBadge(file: UploadedResource) {
-  const url = (file.url || "").toLowerCase();
-  const name = (file.name || "").toLowerCase();
-  const ext = name.split(".").pop() || url.split(".").pop() || "";
+  const url = (file.url || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  const ext = name.split('.').pop() || url.split('.').pop() || '';
 
-  if (["pdf"].includes(ext)) {
+  if (['pdf'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-rose-50 text-rose-700 border-rose-200",
-      badgeLabel: "PDF",
+      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      badgeLabel: 'PDF',
     };
   }
-  if (["doc", "docx"].includes(ext)) {
+  if (['doc', 'docx'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-blue-50 text-blue-700 border-blue-200",
-      badgeLabel: "Word",
+      bgColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      badgeLabel: 'Word',
     };
   }
-  if (["xls", "xlsx", "csv"].includes(ext)) {
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return {
       icon: FileSpreadsheet,
-      bgColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      badgeLabel: "Spreadsheet",
+      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      badgeLabel: 'Spreadsheet',
     };
   }
-  if (["ppt", "pptx"].includes(ext)) {
+  if (['ppt', 'pptx'].includes(ext)) {
     return {
       icon: Presentation,
-      bgColor: "bg-orange-50 text-orange-700 border-orange-200",
-      badgeLabel: "Presentation",
+      bgColor: 'bg-orange-50 text-orange-700 border-orange-200',
+      badgeLabel: 'Presentation',
     };
   }
-  if (["mp4", "webm", "mov", "mkv"].includes(ext)) {
+  if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
     return {
       icon: Film,
-      bgColor: "bg-purple-50 text-purple-700 border-purple-200",
-      badgeLabel: "Video",
+      bgColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      badgeLabel: 'Video',
     };
   }
-  if (["mp3", "wav", "m4a", "aac"].includes(ext)) {
+  if (['mp3', 'wav', 'm4a', 'aac'].includes(ext)) {
     return {
       icon: Headphones,
-      bgColor: "bg-amber-50 text-amber-700 border-amber-200",
-      badgeLabel: "Audio",
+      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      badgeLabel: 'Audio',
     };
   }
   return {
     icon: Paperclip,
-    bgColor: "bg-slate-100 text-slate-700 border-slate-200",
-    badgeLabel: ext.toUpperCase() || "File",
+    bgColor: 'bg-slate-100 text-slate-700 border-slate-200',
+    badgeLabel: ext.toUpperCase() || 'File',
   };
 }
-
 
 export interface MultiFileUploaderProps {
   id: string;
@@ -401,7 +400,7 @@ export interface MultiFileUploaderProps {
   onRemove: (fileIdOrUrl: string) => void;
   placeholderText?: string;
   descriptionText?: string;
-  theme?: "indigo" | "emerald" | "orange" | "slate";
+  theme?: 'indigo' | 'emerald' | 'orange' | 'slate';
 }
 
 export function MultiFileUploader({
@@ -410,22 +409,22 @@ export function MultiFileUploader({
   legacyUrl,
   legacyName,
   legacySize,
-  accept = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg",
+  accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.zip,.png,.jpg,.jpeg',
   uploading = false,
   uploadError = null,
   onUpload,
   onRemove,
-  placeholderText = "Upload file(s) or drag and drop",
-  descriptionText = "Supports multiple files (PDFs, docs, spreadsheets, slides, archives). Previously uploaded files are preserved.",
-  theme = "indigo",
+  placeholderText = 'Upload file(s) or drag and drop',
+  descriptionText = 'Supports multiple files (PDFs, docs, spreadsheets, slides, archives). Previously uploaded files are preserved.',
+  theme = 'indigo',
 }: MultiFileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const allFiles: UploadedResource[] = [...files];
   if (allFiles.length === 0 && legacyUrl) {
     allFiles.push({
-      id: "legacy",
-      name: legacyName || legacyUrl.split("/").pop() || "Attached File",
+      id: 'legacy',
+      name: legacyName || legacyUrl.split('/').pop() || 'Attached File',
       url: legacyUrl,
       size: legacySize || 0,
     });
@@ -433,24 +432,24 @@ export function MultiFileUploader({
 
   const themeClasses = {
     indigo: {
-      activeBorder: "border-indigo-500 bg-indigo-50/50",
-      icon: "text-indigo-500",
-      badge: "bg-indigo-50 text-indigo-700",
+      activeBorder: 'border-indigo-500 bg-indigo-50/50',
+      icon: 'text-indigo-500',
+      badge: 'bg-indigo-50 text-indigo-700',
     },
     emerald: {
-      activeBorder: "border-emerald-500 bg-emerald-50/50",
-      icon: "text-emerald-500",
-      badge: "bg-emerald-50 text-emerald-700",
+      activeBorder: 'border-emerald-500 bg-emerald-50/50',
+      icon: 'text-emerald-500',
+      badge: 'bg-emerald-50 text-emerald-700',
     },
     orange: {
-      activeBorder: "border-orange-500 bg-orange-50/50",
-      icon: "text-orange-500",
-      badge: "bg-orange-50 text-orange-700",
+      activeBorder: 'border-orange-500 bg-orange-50/50',
+      icon: 'text-orange-500',
+      badge: 'bg-orange-50 text-orange-700',
     },
     slate: {
-      activeBorder: "border-slate-500 bg-slate-50/50",
-      icon: "text-slate-500",
-      badge: "bg-slate-100 text-slate-700",
+      activeBorder: 'border-slate-500 bg-slate-50/50',
+      icon: 'text-slate-500',
+      badge: 'bg-slate-100 text-slate-700',
     },
   }[theme];
 
@@ -464,7 +463,12 @@ export function MultiFileUploader({
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3.5 text-xs shadow-2xs hover:border-slate-300 transition"
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", themeClasses.badge)}>
+                <div
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                    themeClasses.badge,
+                  )}
+                >
                   <FileText className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -519,10 +523,10 @@ export function MultiFileUploader({
           }
         }}
         className={cn(
-          "relative rounded-xl border border-dashed p-3 text-center transition",
+          'relative rounded-xl border border-dashed p-3 text-center transition',
           isDragging
             ? themeClasses.activeBorder
-            : "border-slate-300 bg-slate-50/40 hover:border-slate-400 hover:bg-slate-50/80",
+            : 'border-slate-300 bg-slate-50/40 hover:border-slate-400 hover:bg-slate-50/80',
         )}
       >
         <input
@@ -535,7 +539,7 @@ export function MultiFileUploader({
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) {
               onUpload(Array.from(e.target.files));
-              e.target.value = "";
+              e.target.value = '';
             }
           }}
         />
@@ -551,7 +555,7 @@ export function MultiFileUploader({
           ) : (
             <>
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition">
-                <Upload className={cn("h-4 w-4", themeClasses.icon)} />
+                <Upload className={cn('h-4 w-4', themeClasses.icon)} />
                 <span>{placeholderText}</span>
               </div>
               <p className="text-[11px] text-slate-400 max-w-md">{descriptionText}</p>
@@ -560,10 +564,7 @@ export function MultiFileUploader({
         </label>
       </div>
 
-      {uploadError ? (
-        <p className="text-xs text-red-600 font-medium">{uploadError}</p>
-      ) : null}
+      {uploadError ? <p className="text-xs text-red-600 font-medium">{uploadError}</p> : null}
     </div>
   );
 }
-

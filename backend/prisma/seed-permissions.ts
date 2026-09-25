@@ -14,11 +14,20 @@ interface RoleDef {
   dashboardPath: string;
 }
 
+// eslint-disable-next-line prettier/prettier
 // Source of truth: ROLE-PERMISSION-SPEC.md §5 (registry) and §6 (seed matrix).
 export const ROLES: RoleDef[] = [
   { name: RoleName.COURSE_OWNER, label: 'Course Owner', dashboardPath: '/course-owner' },
-  { name: RoleName.CONTENT_APPROVER, label: 'Content Approver', dashboardPath: '/content-approver' },
-  { name: RoleName.TRAINING_ADMIN, label: 'Training Administrator', dashboardPath: '/training-admin' },
+  {
+    name: RoleName.CONTENT_APPROVER,
+    label: 'Content Approver',
+    dashboardPath: '/content-approver',
+  },
+  {
+    name: RoleName.TRAINING_ADMIN,
+    label: 'Training Administrator',
+    dashboardPath: '/training-admin',
+  },
   { name: RoleName.TRAINER, label: 'Trainer', dashboardPath: '/trainer' },
   { name: RoleName.LEARNER, label: 'Learner', dashboardPath: '/learner' },
   { name: RoleName.SYSTEM_ADMIN, label: 'System Administrator', dashboardPath: '/system-admin' },
@@ -26,67 +35,336 @@ export const ROLES: RoleDef[] = [
 
 export const PERMISSIONS: PermissionDef[] = [
   // Course
-  { code: 'course.create', resource: 'course', action: 'create', scope: 'ALL', description: 'Create course' },
-  { code: 'course.update.own', resource: 'course', action: 'update', scope: 'OWN', description: 'Update own course' },
-  { code: 'course.update.all', resource: 'course', action: 'update', scope: 'ALL', description: 'Update any course' },
-  { code: 'course.view.own', resource: 'course', action: 'view', scope: 'OWN', description: 'View created courses' },
-  { code: 'course.view.all', resource: 'course', action: 'view', scope: 'ALL', description: 'View all courses' },
-  { code: 'course.view.assigned', resource: 'course', action: 'view', scope: 'OWN', description: 'View courses assigned to me (trainers)' },
-  { code: 'course.browse', resource: 'course', action: 'browse', scope: 'ALL', description: 'Browse published catalog' },
-  { code: 'course.submit_approval', resource: 'course', action: 'submit_approval', scope: 'ALL', description: 'Request approval' },
-  { code: 'course.approve_reject', resource: 'course', action: 'approve_reject', scope: 'ALL', description: 'Approve or reject a course under review' },
-  { code: 'course.publish', resource: 'course', action: 'publish', scope: 'ALL', description: 'Publish course' },
-  { code: 'course.unpublish', resource: 'course', action: 'unpublish', scope: 'ALL', description: 'Unpublish course' },
-  { code: 'course.archive', resource: 'course', action: 'archive', scope: 'ALL', description: 'Archive course (Owner: DRAFT only, enforced in service layer)' },
-  { code: 'course.delete', resource: 'course', action: 'delete', scope: 'ALL', description: 'Delete course (Owner: DRAFT only, enforced in service layer)' },
-  { code: 'course.assign_trainer', resource: 'course', action: 'assign_trainer', scope: 'ALL', description: 'Assign trainer' },
-  { code: 'course.manage_curriculum', resource: 'course', action: 'manage_curriculum', scope: 'ALL', description: 'Manage modules & lessons' },
-  { code: 'course.view_enrollments', resource: 'course', action: 'view_enrollments', scope: 'ALL', description: 'View course enrollments' },
+  {
+    code: 'course.create',
+    resource: 'course',
+    action: 'create',
+    scope: 'ALL',
+    description: 'Create course',
+  },
+  {
+    code: 'course.update.own',
+    resource: 'course',
+    action: 'update',
+    scope: 'OWN',
+    description: 'Update own course',
+  },
+  {
+    code: 'course.update.all',
+    resource: 'course',
+    action: 'update',
+    scope: 'ALL',
+    description: 'Update any course',
+  },
+  {
+    code: 'course.view.own',
+    resource: 'course',
+    action: 'view',
+    scope: 'OWN',
+    description: 'View created courses',
+  },
+  {
+    code: 'course.view.all',
+    resource: 'course',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View all courses',
+  },
+  {
+    code: 'course.view.assigned',
+    resource: 'course',
+    action: 'view',
+    scope: 'OWN',
+    description: 'View courses assigned to me (trainers)',
+  },
+  {
+    code: 'course.browse',
+    resource: 'course',
+    action: 'browse',
+    scope: 'ALL',
+    description: 'Browse published catalog',
+  },
+  {
+    code: 'course.submit_approval',
+    resource: 'course',
+    action: 'submit_approval',
+    scope: 'ALL',
+    description: 'Request approval',
+  },
+  {
+    code: 'course.approve_reject',
+    resource: 'course',
+    action: 'approve_reject',
+    scope: 'ALL',
+    description: 'Approve or reject a course under review',
+  },
+  {
+    code: 'course.publish',
+    resource: 'course',
+    action: 'publish',
+    scope: 'ALL',
+    description: 'Publish course',
+  },
+  {
+    code: 'course.unpublish',
+    resource: 'course',
+    action: 'unpublish',
+    scope: 'ALL',
+    description: 'Unpublish course',
+  },
+  {
+    code: 'course.archive',
+    resource: 'course',
+    action: 'archive',
+    scope: 'ALL',
+    description: 'Archive course (Owner: DRAFT only, enforced in service layer)',
+  },
+  {
+    code: 'course.delete',
+    resource: 'course',
+    action: 'delete',
+    scope: 'ALL',
+    description: 'Delete course (Owner: DRAFT only, enforced in service layer)',
+  },
+  {
+    code: 'course.assign_trainer',
+    resource: 'course',
+    action: 'assign_trainer',
+    scope: 'ALL',
+    description: 'Assign trainer',
+  },
+  {
+    code: 'course.manage_curriculum',
+    resource: 'course',
+    action: 'manage_curriculum',
+    scope: 'ALL',
+    description: 'Manage modules & lessons',
+  },
+  {
+    code: 'course.view_enrollments',
+    resource: 'course',
+    action: 'view_enrollments',
+    scope: 'ALL',
+    description: 'View course enrollments',
+  },
 
   // Assessment / Quiz
-  { code: 'quiz.create', resource: 'quiz', action: 'create', scope: 'ALL', description: 'Create quiz / assessment' },
-  { code: 'quiz.grade', resource: 'quiz', action: 'grade', scope: 'ALL', description: 'Grade submissions' },
-  { code: 'assessment.submit', resource: 'assessment', action: 'submit', scope: 'OWN', description: 'Take quiz' },
+  {
+    code: 'quiz.create',
+    resource: 'quiz',
+    action: 'create',
+    scope: 'ALL',
+    description: 'Create quiz / assessment',
+  },
+  {
+    code: 'quiz.grade',
+    resource: 'quiz',
+    action: 'grade',
+    scope: 'ALL',
+    description: 'Grade submissions',
+  },
+  {
+    code: 'assessment.submit',
+    resource: 'assessment',
+    action: 'submit',
+    scope: 'OWN',
+    description: 'Take quiz',
+  },
   // Question Bank — dedicated permission to view and manage the question bank
-  { code: 'question_bank.manage', resource: 'question_bank', action: 'manage', scope: 'ALL', description: 'Access and manage the question bank (create, edit, delete questions)' },
+  {
+    code: 'question_bank.manage',
+    resource: 'question_bank',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Access and manage the question bank (create, edit, delete questions)',
+  },
 
   // Attendance
-  { code: 'attendance.view', resource: 'attendance', action: 'view', scope: 'ALL', description: 'View attendance' },
-  { code: 'attendance.manage', resource: 'attendance', action: 'manage', scope: 'ALL', description: 'Mark attendance' },
-  { code: 'attendance.override', resource: 'attendance', action: 'override', scope: 'ALL', description: 'Override attendance record' },
-  { code: 'attendance.checkin', resource: 'attendance', action: 'checkin', scope: 'OWN', description: 'Learner self check-in' },
+  {
+    code: 'attendance.view',
+    resource: 'attendance',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View attendance',
+  },
+  {
+    code: 'attendance.manage',
+    resource: 'attendance',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Mark attendance',
+  },
+  {
+    code: 'attendance.override',
+    resource: 'attendance',
+    action: 'override',
+    scope: 'ALL',
+    description: 'Override attendance record',
+  },
+  {
+    code: 'attendance.checkin',
+    resource: 'attendance',
+    action: 'checkin',
+    scope: 'OWN',
+    description: 'Learner self check-in',
+  },
 
   // Results & Students
-  { code: 'result.view.all', resource: 'result', action: 'view', scope: 'ALL', description: 'View results / scores (any learner)' },
-  { code: 'result.view.own', resource: 'result', action: 'view', scope: 'OWN', description: 'View own results / scores' },
-  { code: 'student.view', resource: 'student', action: 'view', scope: 'ALL', description: 'View enrolled students' },
-  { code: 'student.manage', resource: 'student', action: 'manage', scope: 'ALL', description: 'Enroll / drop learners (bulk)' },
-  { code: 'enrollment.self', resource: 'enrollment', action: 'self', scope: 'OWN', description: 'Self-enroll / drop' },
-  { code: 'enrollment.view_all', resource: 'enrollment', action: 'view_all', scope: 'ALL', description: 'View enrollment listings across every course/user (admin-wide, not the per-course view)' },
+  {
+    code: 'result.view.all',
+    resource: 'result',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View results / scores (any learner)',
+  },
+  {
+    code: 'result.view.own',
+    resource: 'result',
+    action: 'view',
+    scope: 'OWN',
+    description: 'View own results / scores',
+  },
+  {
+    code: 'student.view',
+    resource: 'student',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View enrolled students',
+  },
+  {
+    code: 'student.manage',
+    resource: 'student',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Enroll / drop learners (bulk)',
+  },
+  {
+    code: 'enrollment.self',
+    resource: 'enrollment',
+    action: 'self',
+    scope: 'OWN',
+    description: 'Self-enroll / drop',
+  },
+  {
+    code: 'enrollment.view_all',
+    resource: 'enrollment',
+    action: 'view_all',
+    scope: 'ALL',
+    description:
+      'View enrollment listings across every course/user (admin-wide, not the per-course view)',
+  },
 
   // Live Sessions
-  { code: 'live_session.manage_all', resource: 'live_session', action: 'manage_all', scope: 'ALL', description: 'Manage all sessions' },
-  { code: 'live_session.manage_own', resource: 'live_session', action: 'manage_own', scope: 'OWN', description: 'Manage own sessions' },
+  {
+    code: 'live_session.manage_all',
+    resource: 'live_session',
+    action: 'manage_all',
+    scope: 'ALL',
+    description: 'Manage all sessions',
+  },
+  {
+    code: 'live_session.manage_own',
+    resource: 'live_session',
+    action: 'manage_own',
+    scope: 'OWN',
+    description: 'Manage own sessions',
+  },
 
   // Progress
-  { code: 'progress.view', resource: 'progress', action: 'view', scope: 'ALL', description: "View learners' progress" },
-  { code: 'progress.mark_own', resource: 'progress', action: 'mark', scope: 'OWN', description: 'Mark own lesson complete' },
+  {
+    code: 'progress.view',
+    resource: 'progress',
+    action: 'view',
+    scope: 'ALL',
+    description: "View learners' progress",
+  },
+  {
+    code: 'progress.mark_own',
+    resource: 'progress',
+    action: 'mark',
+    scope: 'OWN',
+    description: 'Mark own lesson complete',
+  },
 
   // Certificate
-  { code: 'certificate.view', resource: 'certificate', action: 'view', scope: 'OWN', description: 'View own certificate' },
-  { code: 'certificate.manage', resource: 'certificate', action: 'manage', scope: 'ALL', description: 'Manage templates & issue' },
+  {
+    code: 'certificate.view',
+    resource: 'certificate',
+    action: 'view',
+    scope: 'OWN',
+    description: 'View own certificate',
+  },
+  {
+    code: 'certificate.manage',
+    resource: 'certificate',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage templates & issue',
+  },
 
   // Users & System
   { code: 'user.view', resource: 'user', action: 'view', scope: 'ALL', description: 'View users' },
-  { code: 'user.manage', resource: 'user', action: 'manage', scope: 'ALL', description: 'Manage users (create, bulk, approve, reset)' },
+  {
+    code: 'user.manage',
+    resource: 'user',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage users (create, bulk, approve, reset)',
+  },
   { code: 'role.view', resource: 'role', action: 'view', scope: 'ALL', description: 'View roles' },
-  { code: 'role.manage', resource: 'role', action: 'manage', scope: 'ALL', description: 'Manage roles & assignment' },
-  { code: 'permission.manage', resource: 'permission', action: 'manage', scope: 'ALL', description: 'Edit permission matrix' },
-  { code: 'dashboard.stats', resource: 'dashboard', action: 'stats', scope: 'ALL', description: 'View admin dashboard stats' },
-  { code: 'audit.view', resource: 'audit', action: 'view', scope: 'ALL', description: 'View audit logs' },
+  {
+    code: 'role.manage',
+    resource: 'role',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage roles & assignment',
+  },
+  {
+    code: 'permission.manage',
+    resource: 'permission',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Edit permission matrix',
+  },
+  {
+    code: 'dashboard.stats',
+    resource: 'dashboard',
+    action: 'stats',
+    scope: 'ALL',
+    description: 'View admin dashboard stats',
+  },
+  {
+    code: 'audit.view',
+    resource: 'audit',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View audit logs',
+  },
 
   // Course policy (time-spent %, retake cooldown)
-  { code: 'course_policy.manage', resource: 'course_policy', action: 'manage', scope: 'ALL', description: 'Manage course completion policy (time-spent %, retake cooldown)' },
+  {
+    code: 'course_policy.manage',
+    resource: 'course_policy',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage course completion policy (time-spent %, retake cooldown)',
+  },
+
+  // Course Feedback & Quality Evaluations
+  {
+    code: 'feedback.manage',
+    resource: 'feedback',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage course feedback evaluations',
+  },
+  {
+    code: 'feedback.view',
+    resource: 'feedback',
+    action: 'view',
+    scope: 'ALL',
+    description: 'View course feedback evaluations',
+  },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).
@@ -137,6 +415,8 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'user.view',
     'dashboard.stats',
     'course_policy.manage',
+    'feedback.manage',
+    'feedback.view',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',
@@ -181,7 +461,12 @@ export async function seedPermissions(prisma: PrismaClient) {
   for (const p of PERMISSIONS) {
     const permission = await prisma.permission.upsert({
       where: { code: p.code },
-      update: { resource: p.resource, action: p.action, scope: p.scope, description: p.description },
+      update: {
+        resource: p.resource,
+        action: p.action,
+        scope: p.scope,
+        description: p.description,
+      },
       create: {
         code: p.code,
         resource: p.resource,
@@ -194,12 +479,17 @@ export async function seedPermissions(prisma: PrismaClient) {
   }
 
   console.log('  Seeding role → permission matrix...');
-  for (const [roleName, codes] of Object.entries(ROLE_PERMISSION_MATRIX) as [RoleName, string[]][]) {
+  for (const [roleName, codes] of Object.entries(ROLE_PERMISSION_MATRIX) as [
+    RoleName,
+    string[],
+  ][]) {
     const roleId = roleIdByName.get(roleName)!;
     for (const code of codes) {
       const permissionId = permissionIdByCode.get(code);
       if (!permissionId) {
-        throw new Error(`Seed matrix references unknown permission code "${code}" for role ${roleName}`);
+        throw new Error(
+          `Seed matrix references unknown permission code "${code}" for role ${roleName}`,
+        );
       }
       await prisma.rolePermission.upsert({
         where: { roleId_permissionId: { roleId, permissionId } },
@@ -252,7 +542,9 @@ export async function seedPermissions(prisma: PrismaClient) {
     const courseOwnerRoleId = roleIdByName.get(RoleName.COURSE_OWNER);
     await prisma.rolePermission.deleteMany({
       where: {
-        roleId: { in: [trainerRoleId, courseOwnerRoleId].filter((id): id is string => Boolean(id)) },
+        roleId: {
+          in: [trainerRoleId, courseOwnerRoleId].filter((id): id is string => Boolean(id)),
+        },
         permissionId: attendanceManagePerm,
       },
     });

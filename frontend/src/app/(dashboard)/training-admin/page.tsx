@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   ArrowRight,
   BookOpenCheck,
@@ -11,27 +11,27 @@ import {
   Globe2,
   UsersRound,
   Video,
-} from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { useDashboardStats } from "@/lib/api/useDashboardStats";
-import { fetchLiveSessions } from "@/lib/api/monitoring";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { usePagination } from "@/lib/usePagination";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import { StatCard } from "@/components/ui/StatCard";
-import { Card, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { DonutChart, BarChart } from "@/components/ui/charts";
+} from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { useDashboardStats } from '@/lib/api/useDashboardStats';
+import { fetchLiveSessions } from '@/lib/api/monitoring';
+import type { ApiLiveSession } from '@/lib/api/types';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import { StatCard } from '@/components/ui/StatCard';
+import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { DonutChart, BarChart } from '@/components/ui/charts';
 
 export default function TrainingAdminDashboardPage() {
   const { courses } = useLms();
   const { stats } = useDashboardStats();
   const { lang } = useTranslation();
-  const isAmharic = lang === "am";
+  const isAmharic = lang === 'am';
 
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
@@ -58,9 +58,9 @@ export default function TrainingAdminDashboardPage() {
   }, []);
 
   const published = courses.filter((c) => c.published);
-  const underReview = courses.filter((c) => c.status === "under_review");
-  const drafts = courses.filter((c) => c.status === "draft");
-  const publishNext = courses.filter((c) => c.status === "approved" && !c.published);
+  const underReview = courses.filter((c) => c.status === 'under_review');
+  const drafts = courses.filter((c) => c.status === 'draft');
+  const publishNext = courses.filter((c) => c.status === 'approved' && !c.published);
   const publishNextPage = usePagination(publishNext, 6);
 
   const totalCourses = stats?.totals.courses ?? courses.length;
@@ -68,34 +68,32 @@ export default function TrainingAdminDashboardPage() {
   const activeEnrollments = stats?.statuses.activeEnrollments ?? 0;
   const totalSessions = stats?.totals.liveSessions ?? sessions.length;
 
-  const upcomingSessions = sessions.filter(
-    (s) => s.status === "SCHEDULED" || s.status === "LIVE"
-  );
-  const completedSessions = sessions.filter((s) => s.status === "COMPLETED");
+  const upcomingSessions = sessions.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE');
+  const completedSessions = sessions.filter((s) => s.status === 'COMPLETED');
 
   const quickLinks = [
     {
-      href: "/courses",
-      title: isAmharic ? "ኮርሶች" : "Courses",
+      href: '/courses',
+      title: isAmharic ? 'ኮርሶች' : 'Courses',
       description: isAmharic
-        ? "ኮርሶችን ይመርምሩ፣ የጸደቁትን ያትሙ እና የህይወት ዑደትን ያስተዳድሩ።"
-        : "Inspect every course, publish approved ones, and manage lifecycle states.",
+        ? 'ኮርሶችን ይመርምሩ፣ የጸደቁትን ያትሙ እና የህይወት ዑደትን ያስተዳድሩ።'
+        : 'Inspect every course, publish approved ones, and manage lifecycle states.',
       icon: BookOpenCheck,
     },
     {
-      href: "/training-admin/enrollments",
-      title: isAmharic ? "የተማሪዎች ምዝገባ" : "Learner Enrollments",
+      href: '/training-admin/enrollments',
+      title: isAmharic ? 'የተማሪዎች ምዝገባ' : 'Learner Enrollments',
       description: isAmharic
-        ? "ተማሪዎችን በተናጠል ወይም በጅምላ ወደ ኮርሶች ይመድቡ።"
-        : "Assign learners to courses individually or in batches.",
+        ? 'ተማሪዎችን በተናጠል ወይም በጅምላ ወደ ኮርሶች ይመድቡ።'
+        : 'Assign learners to courses individually or in batches.',
       icon: UsersRound,
     },
     {
-      href: "/training-admin/sessions",
-      title: isAmharic ? "የቀጥታ ስልጠናዎች" : "Live Sessions",
+      href: '/training-admin/sessions',
+      title: isAmharic ? 'የቀጥታ ስልጠናዎች' : 'Live Sessions',
       description: isAmharic
-        ? "ስልጠናዎችን ያቅዱ እና የአሰልጣኞችን ክትትል ይቆጣጠሩ።"
-        : "Schedule sessions and monitor facilitator attendance.",
+        ? 'ስልጠናዎችን ያቅዱ እና የአሰልጣኞችን ክትትል ይቆጣጠሩ።'
+        : 'Schedule sessions and monitor facilitator attendance.',
       icon: Video,
     },
   ];
@@ -103,88 +101,92 @@ export default function TrainingAdminDashboardPage() {
   // Donut chart: Course Catalog Pipeline
   const coursePipelineSegments = [
     {
-      label: isAmharic ? "የታተሙ" : "Published",
+      label: isAmharic ? 'የታተሙ' : 'Published',
       value: publishedCourses,
-      color: "#10b981",
+      color: '#10b981',
     },
     {
-      label: isAmharic ? "የጸደቁ (ያልታተሙ)" : "Approved (Unpublished)",
+      label: isAmharic ? 'የጸደቁ (ያልታተሙ)' : 'Approved (Unpublished)',
       value: publishNext.length,
-      color: "#06b6d4",
+      color: '#06b6d4',
     },
     {
-      label: isAmharic ? "በግምገማ ላይ" : "Under Review",
+      label: isAmharic ? 'በግምገማ ላይ' : 'Under Review',
       value: underReview.length,
-      color: "#6366f1",
+      color: '#6366f1',
     },
     {
-      label: isAmharic ? "ረቂቆች" : "Drafts",
+      label: isAmharic ? 'ረቂቆች' : 'Drafts',
       value: drafts.length,
-      color: "#94a3b8",
+      color: '#94a3b8',
     },
   ];
 
   // Donut chart: Live Training Sessions
   const sessionSegments = [
     {
-      label: isAmharic ? "የመጪ" : "Upcoming",
-      value: sessions.filter((s) => s.status === "SCHEDULED").length,
-      color: "#6366f1",
+      label: isAmharic ? 'የመጪ' : 'Upcoming',
+      value: sessions.filter((s) => s.status === 'SCHEDULED').length,
+      color: '#6366f1',
     },
     {
-      label: isAmharic ? "በቀጥታ ስርጭት ላይ" : "Live Now",
-      value: sessions.filter((s) => s.status === "LIVE").length,
-      color: "#10b981",
+      label: isAmharic ? 'በቀጥታ ስርጭት ላይ' : 'Live Now',
+      value: sessions.filter((s) => s.status === 'LIVE').length,
+      color: '#10b981',
     },
     {
-      label: isAmharic ? "የተጠናቀቁ" : "Completed",
+      label: isAmharic ? 'የተጠናቀቁ' : 'Completed',
       value: completedSessions.length,
-      color: "#94a3b8",
+      color: '#94a3b8',
     },
     {
-      label: isAmharic ? "የተሰረዙ" : "Cancelled",
-      value: sessions.filter((s) => s.status === "CANCELLED").length,
-      color: "#f43f5e",
+      label: isAmharic ? 'የተሰረዙ' : 'Cancelled',
+      value: sessions.filter((s) => s.status === 'CANCELLED').length,
+      color: '#f43f5e',
     },
   ];
 
   return (
     <PageShell
       role="training_admin"
-      title={isAmharic ? "የስልጠና አስተዳዳሪ ዳሽቦርድ" : "Training Administrator Dashboard"}
+      title={isAmharic ? 'የስልጠና አስተዳዳሪ ዳሽቦርድ' : 'Training Administrator Dashboard'}
       description={
         isAmharic
-          ? "የስልጠና ክፍለ-ጊዜዎችን ያቀናብሩ፣ የተማሪዎችን ምዝገባ ይቆጣጠሩ፣ የኮርሶችን ህትመት ይቆጣጠሩ እና የቀን መቁጠሪያዎችን ይከታተሉ።"
-          : "Manage enterprise courses, oversee learner enrollments, release approved content, and schedule interactive training."
+          ? 'የስልጠና ክፍለ-ጊዜዎችን ያቀናብሩ፣ የተማሪዎችን ምዝገባ ይቆጣጠሩ፣ የኮርሶችን ህትመት ይቆጣጠሩ እና የቀን መቁጠሪያዎችን ይከታተሉ።'
+          : 'Manage enterprise courses, oversee learner enrollments, release approved content, and schedule interactive training.'
       }
     >
       {/* Top Stat KPI Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={BookOpenCheck}
-          label={isAmharic ? "ጠቅላላ ኮርሶች" : "Total courses"}
+          label={isAmharic ? 'ጠቅላላ ኮርሶች' : 'Total courses'}
           value={totalCourses}
-          hint={isAmharic ? "በሁሉም ደረጃዎች ያሉ" : "Across all lifecycle stages"}
+          hint={isAmharic ? 'በሁሉም ደረጃዎች ያሉ' : 'Across all lifecycle stages'}
         />
         <StatCard
           icon={Globe2}
-          label={isAmharic ? "የታተሙ ኮርሶች" : "Published catalog"}
+          label={isAmharic ? 'የታተሙ ኮርሶች' : 'Published catalog'}
           value={publishedCourses}
-          hint={isAmharic ? "ለተማሪዎች ዝግጁ የሆኑ" : "Available to learners"}
+          hint={isAmharic ? 'ለተማሪዎች ዝግጁ የሆኑ' : 'Available to learners'}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={UsersRound}
-          label={isAmharic ? "ንቁ ምዝገባዎች" : "Active enrollments"}
+          label={isAmharic ? 'ንቁ ምዝገባዎች' : 'Active enrollments'}
           value={activeEnrollments}
-          hint={isAmharic ? "በመማር ሂደት ላይ ያሉ" : "Currently in progress"}
+          hint={isAmharic ? 'በመማር ሂደት ላይ ያሉ' : 'Currently in progress'}
           iconClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           icon={Video}
-          label={isAmharic ? "የቀጥታ ስልጠናዎች" : "Live sessions"}
+          label={isAmharic ? 'የቀጥታ ስልጠናዎች' : 'Live sessions'}
           value={totalSessions}
-          hint={isAmharic ? `${upcomingSessions.length} የታቀዱ` : `${upcomingSessions.length} upcoming scheduled`}
+          hint={
+            isAmharic
+              ? `${upcomingSessions.length} የታቀዱ`
+              : `${upcomingSessions.length} upcoming scheduled`
+          }
           iconClassName="bg-indigo-50 text-indigo-600"
         />
       </div>
@@ -197,10 +199,12 @@ export default function TrainingAdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? "የኮርስ ካታሎግ ሂደት" : "Course Catalog Pipeline"}
+                  {isAmharic ? 'የኮርስ ካታሎግ ሂደት' : 'Course Catalog Pipeline'}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic ? "የኮርሶች ወቅታዊ የህትመት እና የግምገማ ሁኔታ" : "Status of courses across development and release"}
+                  {isAmharic
+                    ? 'የኮርሶች ወቅታዊ የህትመት እና የግምገማ ሁኔታ'
+                    : 'Status of courses across development and release'}
                 </p>
               </div>
               <Badge variant="blue">
@@ -210,7 +214,7 @@ export default function TrainingAdminDashboardPage() {
             <div className="mt-6 flex justify-center">
               <DonutChart
                 segments={coursePipelineSegments}
-                centerLabel={isAmharic ? "ኮርሶች" : "Courses"}
+                centerLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
                 centerValue={totalCourses}
               />
             </div>
@@ -219,7 +223,11 @@ export default function TrainingAdminDashboardPage() {
             <span className="font-medium text-emerald-600">
               {isAmharic ? `${publishedCourses} የታተሙ` : `${publishedCourses} published`}
             </span>
-            <span>{isAmharic ? `${publishNext.length} ለመታተም ዝግጁ` : `${publishNext.length} ready to release`}</span>
+            <span>
+              {isAmharic
+                ? `${publishNext.length} ለመታተም ዝግጁ`
+                : `${publishNext.length} ready to release`}
+            </span>
           </div>
         </div>
 
@@ -229,15 +237,17 @@ export default function TrainingAdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? "የቀጥታ ስልጠናዎች ሁኔታ" : "Live Training Schedule"}
+                  {isAmharic ? 'የቀጥታ ስልጠናዎች ሁኔታ' : 'Live Training Schedule'}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic ? "የተመደቡ እና የተካሄዱ ስልጠናዎች ክፍፍል" : "Overview of live classes and facilitator sessions"}
+                  {isAmharic
+                    ? 'የተመደቡ እና የተካሄዱ ስልጠናዎች ክፍፍል'
+                    : 'Overview of live classes and facilitator sessions'}
                 </p>
               </div>
               <Link href="/training-admin/sessions">
                 <Button variant="outline" size="sm">
-                  {isAmharic ? "ክፍለ-ጊዜዎች" : "Sessions"}
+                  {isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
@@ -245,15 +255,21 @@ export default function TrainingAdminDashboardPage() {
             <div className="mt-6 flex justify-center">
               <DonutChart
                 segments={sessionSegments}
-                centerLabel={isAmharic ? "ክፍለ-ጊዜዎች" : "Sessions"}
+                centerLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
                 centerValue={sessions.length}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span>{isAmharic ? `የተጠናቀቁ: ${completedSessions.length}` : `Completed: ${completedSessions.length}`}</span>
+            <span>
+              {isAmharic
+                ? `የተጠናቀቁ: ${completedSessions.length}`
+                : `Completed: ${completedSessions.length}`}
+            </span>
             <span className="font-medium text-indigo-600">
-              {isAmharic ? `${upcomingSessions.length} የታቀዱ` : `${upcomingSessions.length} scheduled`}
+              {isAmharic
+                ? `${upcomingSessions.length} የታቀዱ`
+                : `${upcomingSessions.length} scheduled`}
             </span>
           </div>
         </div>
@@ -261,8 +277,10 @@ export default function TrainingAdminDashboardPage() {
 
       {/* Quick Actions */}
       <PageSection
-        title={isAmharic ? "ፈጣን ተግባራት" : "Quick actions"}
-        description={isAmharic ? "የስልጠና አስተዳደር ዋና ተግባራት" : "Operational controls for training operations."}
+        title={isAmharic ? 'ፈጣን ተግባራት' : 'Quick actions'}
+        description={
+          isAmharic ? 'የስልጠና አስተዳደር ዋና ተግባራት' : 'Operational controls for training operations.'
+        }
       >
         <div className="grid gap-4 sm:grid-cols-3">
           {quickLinks.map((link) => {
@@ -278,7 +296,7 @@ export default function TrainingAdminDashboardPage() {
                     <CardDescription>{link.description}</CardDescription>
                   </div>
                   <p className="mt-3 flex items-center gap-1 text-xs font-medium text-indigo-500 transition-transform duration-200 group-hover:translate-x-0.5">
-                    {isAmharic ? "ክፈት" : "Open workspace"}
+                    {isAmharic ? 'ክፈት' : 'Open workspace'}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </p>
                 </Card>
@@ -290,12 +308,16 @@ export default function TrainingAdminDashboardPage() {
 
       {/* Live Training Sessions List */}
       <PageSection
-        title={isAmharic ? "የቀጥታ ስልጠና መርሐግብር" : "Live training schedule"}
-        description={isAmharic ? "በቅርብ ጊዜ የታቀዱ የቀጥታ የቪዲዮ ስልጠናዎች።" : "Upcoming interactive sessions for learners."}
+        title={isAmharic ? 'የቀጥታ ስልጠና መርሐግብር' : 'Live training schedule'}
+        description={
+          isAmharic
+            ? 'በቅርብ ጊዜ የታቀዱ የቀጥታ የቪዲዮ ስልጠናዎች።'
+            : 'Upcoming interactive sessions for learners.'
+        }
         action={
           <Link href="/training-admin/sessions">
             <Button variant="outline" size="sm">
-              {isAmharic ? "ሁሉንም ስልጠናዎች እይ" : "All live sessions"}
+              {isAmharic ? 'ሁሉንም ስልጠናዎች እይ' : 'All live sessions'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -310,16 +332,22 @@ export default function TrainingAdminDashboardPage() {
         ) : upcomingSessions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
-              const isLive = session.status === "LIVE";
-              const dateStr = new Date(session.scheduledAt).toLocaleDateString(isAmharic ? "am-ET" : undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              });
-              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(isAmharic ? "am-ET" : undefined, {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+              const isLive = session.status === 'LIVE';
+              const dateStr = new Date(session.scheduledAt).toLocaleDateString(
+                isAmharic ? 'am-ET' : undefined,
+                {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              );
+              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(
+                isAmharic ? 'am-ET' : undefined,
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                },
+              );
 
               return (
                 <div
@@ -328,11 +356,17 @@ export default function TrainingAdminDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <Badge variant={isLive ? "green" : "blue"}>
-                        {isLive ? (isAmharic ? "● የቀጥታ ስርጭት" : "● LIVE NOW") : (isAmharic ? "የታቀደ" : "SCHEDULED")}
+                      <Badge variant={isLive ? 'green' : 'blue'}>
+                        {isLive
+                          ? isAmharic
+                            ? '● የቀጥታ ስርጭት'
+                            : '● LIVE NOW'
+                          : isAmharic
+                            ? 'የታቀደ'
+                            : 'SCHEDULED'}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
-                        {session.durationMinutes} {isAmharic ? "ደቂቃ" : "mins"}
+                        {session.durationMinutes} {isAmharic ? 'ደቂቃ' : 'mins'}
                       </span>
                     </div>
 
@@ -341,7 +375,8 @@ export default function TrainingAdminDashboardPage() {
                     </h4>
                     {(() => {
                       const c = courses.find((course) => course.id === session.courseId);
-                      const cTitle = isAmharic && (c as any)?.titleAm ? (c as any).titleAm : c?.title;
+                      const cTitle =
+                        isAmharic && (c as any)?.titleAm ? (c as any).titleAm : c?.title;
                       return cTitle ? (
                         <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
                       ) : null;
@@ -361,11 +396,11 @@ export default function TrainingAdminDashboardPage() {
 
                   <div className="mt-5 border-t border-slate-100 pt-3 flex items-center justify-between">
                     <span className="text-xs text-slate-400">
-                      {isAmharic ? "ክፍለ-ጊዜ ቁጥር:" : "Session ID:"} {session.id.slice(0, 6)}
+                      {isAmharic ? 'ክፍለ-ጊዜ ቁጥር:' : 'Session ID:'} {session.id.slice(0, 6)}
                     </span>
                     <Link href="/training-admin/sessions">
                       <Button size="sm" variant="outline">
-                        {isAmharic ? "አስተዳድር" : "Manage"}
+                        {isAmharic ? 'አስተዳድር' : 'Manage'}
                       </Button>
                     </Link>
                   </div>
@@ -379,12 +414,12 @@ export default function TrainingAdminDashboardPage() {
               <Video className="h-5 w-5" />
             </div>
             <p className="mt-3 text-xs font-semibold text-slate-700">
-              {isAmharic ? "ምንም የታቀደ የቀጥታ ስልጠና የለም" : "No live sessions scheduled"}
+              {isAmharic ? 'ምንም የታቀደ የቀጥታ ስልጠና የለም' : 'No live sessions scheduled'}
             </p>
             <p className="mt-1 text-xs text-slate-400">
               {isAmharic
-                ? "ለኮርሶች የቀጥታ ስልጠና ክፍለ-ጊዜዎችን ያቅዱ እና አስተባባሪዎችን ይመድቡ።"
-                : "Schedule interactive webinars or classroom sessions for learners."}
+                ? 'ለኮርሶች የቀጥታ ስልጠና ክፍለ-ጊዜዎችን ያቅዱ እና አስተባባሪዎችን ይመድቡ።'
+                : 'Schedule interactive webinars or classroom sessions for learners.'}
             </p>
           </div>
         )}
@@ -392,16 +427,16 @@ export default function TrainingAdminDashboardPage() {
 
       {/* Ready to Publish Section with Modern Pagination */}
       <PageSection
-        title={isAmharic ? "ለመታተም ዝግጁ የሆኑ" : "Ready to publish"}
+        title={isAmharic ? 'ለመታተም ዝግጁ የሆኑ' : 'Ready to publish'}
         description={
           isAmharic
-            ? "በይዘት አጽዳቂዎች የጸደቁ እና ይፋዊ ህትመት የሚጠብቁ ኮርሶች።"
-            : "Courses approved by content reviewers awaiting public release."
+            ? 'በይዘት አጽዳቂዎች የጸደቁ እና ይፋዊ ህትመት የሚጠብቁ ኮርሶች።'
+            : 'Courses approved by content reviewers awaiting public release.'
         }
         action={
           <Link href="/courses">
             <Button variant="outline" size="sm">
-              {isAmharic ? "የህትመት ማዕከል" : "Publishing center"}
+              {isAmharic ? 'የህትመት ማዕከል' : 'Publishing center'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -416,20 +451,21 @@ export default function TrainingAdminDashboardPage() {
                   className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft"
                 >
                   <div className="flex items-center justify-between">
-                    <Badge variant="blue">{isAmharic ? "የጸደቀ" : "Approved"}</Badge>
+                    <Badge variant="blue">{isAmharic ? 'የጸደቀ' : 'Approved'}</Badge>
                     <span className="text-xs text-slate-400">{course.code}</span>
                   </div>
                   <h4 className="mt-3 font-display text-sm font-bold text-slate-900 line-clamp-1">
                     {isAmharic && (course as any).titleAm ? (course as any).titleAm : course.title}
                   </h4>
                   <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-                    {course.description || (isAmharic ? "ምንም መግለጫ አልተሰጠም።" : "No description provided.")}
+                    {course.description ||
+                      (isAmharic ? 'ምንም መግለጫ አልተሰጠም።' : 'No description provided.')}
                   </p>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                     <span className="text-xs text-slate-400">{course.category}</span>
                     <Link href="/courses">
                       <Button size="sm" variant="outline">
-                        {isAmharic ? "ኮርስ አትም" : "Publish course"}
+                        {isAmharic ? 'ኮርስ አትም' : 'Publish course'}
                       </Button>
                     </Link>
                   </div>
@@ -449,7 +485,9 @@ export default function TrainingAdminDashboardPage() {
         ) : (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
             <p className="text-xs text-slate-400">
-              {isAmharic ? "በአሁኑ ጊዜ ህትመት የሚጠብቅ ኮርስ የለም።" : "No courses currently waiting for publication."}
+              {isAmharic
+                ? 'በአሁኑ ጊዜ ህትመት የሚጠብቅ ኮርስ የለም።'
+                : 'No courses currently waiting for publication.'}
             </p>
           </div>
         )}

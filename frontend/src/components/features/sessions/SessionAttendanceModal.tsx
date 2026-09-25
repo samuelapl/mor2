@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Check,
@@ -16,21 +16,21 @@ import {
   Users,
   UserX,
   X,
-} from "lucide-react";
-import type { ApiAttendance, ApiLiveSession, BackendAttendanceStatus } from "@/lib/api/types";
+} from 'lucide-react';
+import type { ApiAttendance, ApiLiveSession, BackendAttendanceStatus } from '@/lib/api/types';
 import {
   bulkMarkAttendance,
   fetchLiveSession,
   fetchSessionAttendance,
   markAttendance,
   sendSessionAttendanceReport,
-} from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Table, Td } from "@/components/ui/Table";
+} from '@/lib/api/monitoring';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Table, Td } from '@/components/ui/Table';
 
 interface SessionAttendanceModalProps {
   open: boolean;
@@ -38,11 +38,7 @@ interface SessionAttendanceModalProps {
   sessionId: string;
 }
 
-export function SessionAttendanceModal({
-  open,
-  onClose,
-  sessionId,
-}: SessionAttendanceModalProps) {
+export function SessionAttendanceModal({ open, onClose, sessionId }: SessionAttendanceModalProps) {
   const { courses, users, userName, currentUser } = useLms();
   const { can } = usePermissions();
 
@@ -53,14 +49,14 @@ export function SessionAttendanceModal({
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [sendingReport, setSendingReport] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Permissions strictly checked:
   // canManage: can change statuses, bulk mark, override
   // canView: can view roster, status, stay time (read-only)
-  const canManage = can("attendance.manage");
-  const canView = can("attendance.view") || canManage;
+  const canManage = can('attendance.manage');
+  const canView = can('attendance.view') || canManage;
 
   const loadData = async () => {
     if (!sessionId || !open) return;
@@ -73,7 +69,7 @@ export function SessionAttendanceModal({
       setSession(sess);
       setAttendanceRecords(records);
     } catch (err) {
-      console.error("Failed to load session attendance:", err);
+      console.error('Failed to load session attendance:', err);
     } finally {
       setLoading(false);
     }
@@ -126,7 +122,7 @@ export function SessionAttendanceModal({
       const record = attendanceByUser.get(userId);
       const userObj = users.find((u) => u.id === userId) || record?.user;
       const displayName = userObj
-        ? `${userObj.firstName || ""} ${userObj.lastName || ""}`.trim() || userObj.email
+        ? `${userObj.firstName || ''} ${userObj.lastName || ''}`.trim() || userObj.email
         : userName(userId);
 
       const sessionDur = session?.durationMinutes || 30;
@@ -136,34 +132,42 @@ export function SessionAttendanceModal({
       return {
         userId,
         name: displayName,
-        email: userObj?.email || "—",
+        email: userObj?.email || '—',
         record,
-        status: (record?.status ?? "ABSENT") as BackendAttendanceStatus,
-        checkInMethod: record?.checkInMethod || "VIRTUAL",
+        status: (record?.status ?? 'ABSENT') as BackendAttendanceStatus,
+        checkInMethod: record?.checkInMethod || 'VIRTUAL',
         joinedAt: record?.joinedAt,
         durationMinutes: stayMin,
         percentage: pct,
       };
     });
-  }, [enrolledStudentIds, attendanceRecords, session?.attendees, attendanceByUser, users, userName, session?.durationMinutes]);
+  }, [
+    enrolledStudentIds,
+    attendanceRecords,
+    session?.attendees,
+    attendanceByUser,
+    users,
+    userName,
+    session?.durationMinutes,
+  ]);
 
   const filteredRoster = useMemo(() => {
     return studentRoster.filter((item) => {
       const matchesSearch =
-        searchQuery === "" ||
+        searchQuery === '' ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
+      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [studentRoster, searchQuery, statusFilter]);
 
   const presentCount = studentRoster.filter(
-    (a) => a.status === "PRESENT" || a.status === "LATE",
+    (a) => a.status === 'PRESENT' || a.status === 'LATE',
   ).length;
-  const absentCount = studentRoster.filter((a) => a.status === "ABSENT").length;
-  const lateCount = studentRoster.filter((a) => a.status === "LATE").length;
-  const excusedCount = studentRoster.filter((a) => a.status === "EXCUSED").length;
+  const absentCount = studentRoster.filter((a) => a.status === 'ABSENT').length;
+  const lateCount = studentRoster.filter((a) => a.status === 'LATE').length;
+  const excusedCount = studentRoster.filter((a) => a.status === 'EXCUSED').length;
   const attendanceRate =
     studentRoster.length > 0 ? Math.round((presentCount / studentRoster.length) * 100) : 0;
 
@@ -191,15 +195,15 @@ export function SessionAttendanceModal({
             sessionId,
             userId,
             status,
-            checkInMethod: "VIRTUAL",
-            joinedAt: status === "PRESENT" ? new Date().toISOString() : undefined,
+            checkInMethod: 'VIRTUAL',
+            joinedAt: status === 'PRESENT' ? new Date().toISOString() : undefined,
           } as ApiAttendance,
         ];
       });
       setFlash(`Attendance marked as ${status}.`);
       setTimeout(() => setFlash(null), 3000);
     } catch (err: any) {
-      setFlash(err?.message || "Failed to update attendance status.");
+      setFlash(err?.message || 'Failed to update attendance status.');
     } finally {
       setUpdatingUserId(null);
     }
@@ -211,14 +215,14 @@ export function SessionAttendanceModal({
     try {
       const records = studentRoster.map((item) => ({
         userId: item.userId,
-        status: "PRESENT" as BackendAttendanceStatus,
+        status: 'PRESENT' as BackendAttendanceStatus,
       }));
       await bulkMarkAttendance({ sessionId, records });
       await loadData();
-      setFlash("All enrolled learners marked as Present.");
+      setFlash('All enrolled learners marked as Present.');
       setTimeout(() => setFlash(null), 4000);
     } catch (err: any) {
-      setFlash(err?.message || "Failed to bulk mark attendance.");
+      setFlash(err?.message || 'Failed to bulk mark attendance.');
     } finally {
       setBulkUpdating(false);
     }
@@ -230,10 +234,10 @@ export function SessionAttendanceModal({
     try {
       await sendSessionAttendanceReport(sessionId);
       await loadData();
-      setFlash("Attendance report calculated and dispatched successfully.");
+      setFlash('Attendance report calculated and dispatched successfully.');
       setTimeout(() => setFlash(null), 4000);
     } catch {
-      setFlash("Failed to dispatch attendance report.");
+      setFlash('Failed to dispatch attendance report.');
     } finally {
       setSendingReport(false);
     }
@@ -241,7 +245,15 @@ export function SessionAttendanceModal({
 
   const handleExportCsv = () => {
     if (studentRoster.length === 0) return;
-    const headers = ["Learner Name", "Email", "Status", "Check-in Method", "Joined At", "Stay (Minutes)", "Percentage"];
+    const headers = [
+      'Learner Name',
+      'Email',
+      'Status',
+      'Check-in Method',
+      'Joined At',
+      'Stay (Minutes)',
+      'Percentage',
+    ];
     const rows = studentRoster.map((r) => [
       `"${r.name}"`,
       `"${r.email}"`,
@@ -251,12 +263,15 @@ export function SessionAttendanceModal({
       r.durationMinutes,
       `${r.percentage}%`,
     ]);
-    const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `attendance_${session?.course?.code || "session"}_${sessionId.slice(0, 8)}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `attendance_${session?.course?.code || 'session'}_${sessionId.slice(0, 8)}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -274,11 +289,15 @@ export function SessionAttendanceModal({
             <Users className="h-4 w-4" />
           </span>
           <span className="truncate">
-            {session ? `Attendance: ${session.titleEn}` : "Session Attendance"}
+            {session ? `Attendance: ${session.titleEn}` : 'Session Attendance'}
           </span>
         </div>
       }
-      subtitle={session ? `${session.course?.code || "COURSE"} · ${session.course?.titleEn || session.course?.code}` : undefined}
+      subtitle={
+        session
+          ? `${session.course?.code || 'COURSE'} · ${session.course?.titleEn || session.course?.code}`
+          : undefined
+      }
       badge={
         canManage ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
@@ -321,7 +340,7 @@ export function SessionAttendanceModal({
                 className="h-8 gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
               >
                 <Send className="h-3.5 w-3.5 text-indigo-600" />
-                {sendingReport ? "Calculating…" : "Calculate & Send Report"}
+                {sendingReport ? 'Calculating…' : 'Calculate & Send Report'}
               </Button>
 
               <Button
@@ -331,7 +350,7 @@ export function SessionAttendanceModal({
                 className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs"
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                {bulkUpdating ? "Marking All…" : "Mark All Present"}
+                {bulkUpdating ? 'Marking All…' : 'Mark All Present'}
               </Button>
             </>
           )}
@@ -352,7 +371,9 @@ export function SessionAttendanceModal({
             </div>
             <h3 className="text-base font-bold text-slate-800">Attendance Restricted</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              You do not currently have the &quot;View attendance&quot; or &quot;Mark attendance&quot; permission. Contact the system administrator if you need access to this session&apos;s attendance records.
+              You do not currently have the &quot;View attendance&quot; or &quot;Mark
+              attendance&quot; permission. Contact the system administrator if you need access to
+              this session&apos;s attendance records.
             </p>
           </div>
         ) : (
@@ -385,7 +406,8 @@ export function SessionAttendanceModal({
                   <Clock className="h-4 w-4 text-indigo-500" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {presentCount} <span className="text-sm font-normal text-slate-400">({lateCount} late)</span>
+                  {presentCount}{' '}
+                  <span className="text-sm font-normal text-slate-400">({lateCount} late)</span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Active or on-time attendees</p>
               </div>
@@ -396,7 +418,10 @@ export function SessionAttendanceModal({
                   <UserX className="h-4 w-4 text-rose-500" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {absentCount} <span className="text-sm font-normal text-slate-400">({excusedCount} excused)</span>
+                  {absentCount}{' '}
+                  <span className="text-sm font-normal text-slate-400">
+                    ({excusedCount} excused)
+                  </span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Missing participation records</p>
               </div>
@@ -411,8 +436,8 @@ export function SessionAttendanceModal({
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {canManage
-                      ? "Select status pills to mark attendance or click Mark All Present."
-                      : "Verified attendance statuses, check-in timestamps, and stay calculations (Read-only)."}
+                      ? 'Select status pills to mark attendance or click Mark All Present.'
+                      : 'Verified attendance statuses, check-in timestamps, and stay calculations (Read-only).'}
                   </p>
                 </div>
 
@@ -424,7 +449,7 @@ export function SessionAttendanceModal({
                     disabled={loading}
                     className="h-8 gap-1 text-xs text-slate-600"
                   >
-                    <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                    <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                   </Button>
                 </div>
@@ -444,18 +469,20 @@ export function SessionAttendanceModal({
                 </div>
 
                 <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs">
-                  {(["ALL", "PRESENT", "LATE", "ABSENT", "EXCUSED"] as const).map((filter) => (
+                  {(['ALL', 'PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as const).map((filter) => (
                     <button
                       key={filter}
                       type="button"
                       onClick={() => setStatusFilter(filter)}
                       className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${
                         statusFilter === filter
-                          ? "bg-white text-slate-900 shadow-xs font-semibold"
-                          : "text-slate-600 hover:text-slate-900"
+                          ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      {filter === "ALL" ? "All Roster" : filter.charAt(0) + filter.slice(1).toLowerCase()}
+                      {filter === 'ALL'
+                        ? 'All Roster'
+                        : filter.charAt(0) + filter.slice(1).toLowerCase()}
                     </button>
                   ))}
                 </div>
@@ -465,19 +492,19 @@ export function SessionAttendanceModal({
               {filteredRoster.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-xs text-slate-400">
                   {studentRoster.length === 0
-                    ? "No enrolled learners found for this course session yet."
-                    : "No learners match the current filter or search criteria."}
+                    ? 'No enrolled learners found for this course session yet.'
+                    : 'No learners match the current filter or search criteria.'}
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-200/80">
                   <Table
                     columns={[
-                      "Learner",
-                      "Check-in Method",
-                      "Stay Duration",
-                      "Current Status",
+                      'Learner',
+                      'Check-in Method',
+                      'Stay Duration',
+                      'Current Status',
                       // Only show Quick Mark column if the user has attendance.manage!
-                      ...(canManage ? ["Manage Attendance Status"] : []),
+                      ...(canManage ? ['Manage Attendance Status'] : []),
                     ]}
                   >
                     {filteredRoster.map((item) => {
@@ -494,9 +521,9 @@ export function SessionAttendanceModal({
                             </span>
                             {item.joinedAt ? (
                               <div className="text-[10px] text-slate-400 mt-0.5">
-                                {new Date(item.joinedAt).toLocaleTimeString("en-US", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
+                                {new Date(item.joinedAt).toLocaleTimeString('en-US', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
                                 })}
                               </div>
                             ) : null}
@@ -504,14 +531,16 @@ export function SessionAttendanceModal({
                           <Td className="py-2.5">
                             <div className="flex items-center gap-1.5 text-xs text-slate-700">
                               <span className="font-medium">{item.durationMinutes}m</span>
-                              <span className="text-[10px] text-slate-400">({item.percentage}%)</span>
+                              <span className="text-[10px] text-slate-400">
+                                ({item.percentage}%)
+                              </span>
                             </div>
                             <div className="h-1.5 w-16 rounded-full bg-slate-100 overflow-hidden mt-1">
                               <div
                                 className={`h-full ${
                                   item.percentage >= (session?.attendanceThreshold ?? 60)
-                                    ? "bg-emerald-500"
-                                    : "bg-amber-400"
+                                    ? 'bg-emerald-500'
+                                    : 'bg-amber-400'
                                 }`}
                                 style={{ width: `${Math.min(100, item.percentage)}%` }}
                               />
@@ -520,13 +549,13 @@ export function SessionAttendanceModal({
                           <Td className="py-2.5">
                             <Badge
                               variant={
-                                item.status === "PRESENT"
-                                  ? "green"
-                                  : item.status === "LATE"
-                                  ? "blue"
-                                  : item.status === "EXCUSED"
-                                  ? "blue"
-                                  : "slate"
+                                item.status === 'PRESENT'
+                                  ? 'green'
+                                  : item.status === 'LATE'
+                                    ? 'blue'
+                                    : item.status === 'EXCUSED'
+                                      ? 'blue'
+                                      : 'slate'
                               }
                               dot
                             >
@@ -537,39 +566,44 @@ export function SessionAttendanceModal({
                           {canManage && (
                             <Td className="py-2.5 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                {(["PRESENT", "LATE", "ABSENT", "EXCUSED"] as BackendAttendanceStatus[]).map(
-                                  (targetStatus) => {
-                                    const isCurrent = item.status === targetStatus;
-                                    return (
-                                      <button
-                                        key={targetStatus}
-                                        type="button"
-                                        disabled={isUpdating}
-                                        onClick={() => handleMarkStatus(item.userId, targetStatus)}
-                                        title={`Mark ${targetStatus}`}
-                                        className={`rounded-md px-2 py-1 text-[10px] font-bold transition ${
-                                          isCurrent
-                                            ? targetStatus === "PRESENT"
-                                              ? "bg-emerald-600 text-white shadow-xs"
-                                              : targetStatus === "LATE"
-                                              ? "bg-amber-500 text-white shadow-xs"
-                                              : targetStatus === "EXCUSED"
-                                              ? "bg-blue-600 text-white shadow-xs"
-                                              : "bg-slate-700 text-white shadow-xs"
-                                            : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
-                                        }`}
-                                      >
-                                        {targetStatus === "PRESENT"
-                                          ? "Present"
-                                          : targetStatus === "LATE"
-                                          ? "Late"
-                                          : targetStatus === "ABSENT"
-                                          ? "Absent"
-                                          : "Excused"}
-                                      </button>
-                                    );
-                                  },
-                                )}
+                                {(
+                                  [
+                                    'PRESENT',
+                                    'LATE',
+                                    'ABSENT',
+                                    'EXCUSED',
+                                  ] as BackendAttendanceStatus[]
+                                ).map((targetStatus) => {
+                                  const isCurrent = item.status === targetStatus;
+                                  return (
+                                    <button
+                                      key={targetStatus}
+                                      type="button"
+                                      disabled={isUpdating}
+                                      onClick={() => handleMarkStatus(item.userId, targetStatus)}
+                                      title={`Mark ${targetStatus}`}
+                                      className={`rounded-md px-2 py-1 text-[10px] font-bold transition ${
+                                        isCurrent
+                                          ? targetStatus === 'PRESENT'
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : targetStatus === 'LATE'
+                                              ? 'bg-amber-500 text-white shadow-xs'
+                                              : targetStatus === 'EXCUSED'
+                                                ? 'bg-blue-600 text-white shadow-xs'
+                                                : 'bg-slate-700 text-white shadow-xs'
+                                          : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      {targetStatus === 'PRESENT'
+                                        ? 'Present'
+                                        : targetStatus === 'LATE'
+                                          ? 'Late'
+                                          : targetStatus === 'ABSENT'
+                                            ? 'Absent'
+                                            : 'Excused'}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </Td>
                           )}

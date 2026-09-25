@@ -1,19 +1,8 @@
-import type { HTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from 'react';
+import { cn } from '@/lib/utils';
 
-export function Skeleton({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "animate-pulse rounded-lg bg-slate-200/80",
-        className,
-      )}
-      {...props}
-    />
-  );
+export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('animate-pulse rounded-lg bg-slate-200/80', className)} {...props} />;
 }
 
 export function TableSkeleton({
@@ -28,16 +17,13 @@ export function TableSkeleton({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs",
+        'overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs',
         className,
       )}
     >
       <div className="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3.5 flex gap-4">
         {Array.from({ length: columns }).map((_, i) => (
-          <Skeleton
-            key={`th-${i}`}
-            className={cn("h-3.5", i === 0 ? "w-36" : "flex-1")}
-          />
+          <Skeleton key={`th-${i}`} className={cn('h-3.5', i === 0 ? 'w-36' : 'flex-1')} />
         ))}
       </div>
       <div className="divide-y divide-slate-100">
@@ -47,8 +33,8 @@ export function TableSkeleton({
               <Skeleton
                 key={`td-${r}-${c}`}
                 className={cn(
-                  "h-4",
-                  c === 0 ? "w-44" : c === columns - 1 ? "w-20 ml-auto" : "flex-1",
+                  'h-4',
+                  c === 0 ? 'w-44' : c === columns - 1 ? 'w-20 ml-auto' : 'flex-1',
                 )}
               />
             ))}
@@ -59,15 +45,9 @@ export function TableSkeleton({
   );
 }
 
-export function CardSkeleton({
-  count = 3,
-  className,
-}: {
-  count?: number;
-  className?: string;
-}) {
+export function CardSkeleton({ count = 3, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5", className)}>
+    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5', className)}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`card-skel-${i}`}
@@ -91,15 +71,9 @@ export function CardSkeleton({
   );
 }
 
-export function StatCardSkeleton({
-  count = 4,
-  className,
-}: {
-  count?: number;
-  className?: string;
-}) {
+export function StatCardSkeleton({ count = 4, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
+    <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4', className)}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`stat-skel-${i}`}

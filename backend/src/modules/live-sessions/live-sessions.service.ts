@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
@@ -44,7 +50,9 @@ export class LiveSessionsService {
       },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        trainer: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+        },
       },
     });
 
@@ -95,7 +103,9 @@ export class LiveSessionsService {
     return session;
   }
 
-  async findAll(query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string }) {
+  async findAll(
+    query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
+  ) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
@@ -114,7 +124,9 @@ export class LiveSessionsService {
         orderBy,
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
           attendees: true,
         },
       }),
@@ -129,7 +141,9 @@ export class LiveSessionsService {
       where: { id },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        trainer: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+        },
         attendees: {
           include: {
             user: {
@@ -167,14 +181,23 @@ export class LiveSessionsService {
         meetingPassword: dto.meetingPassword,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         durationMinutes: dto.durationMinutes,
-        status: dto.status !== undefined ? dto.status : dto.scheduledAt ? SessionStatus.SCHEDULED : undefined,
-        trainerId: dto.trainerId !== undefined ? (dto.trainerId || null) : undefined,
-        allowViewAttendance: dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
-        attendanceThreshold: dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
+        status:
+          dto.status !== undefined
+            ? dto.status
+            : dto.scheduledAt
+              ? SessionStatus.SCHEDULED
+              : undefined,
+        trainerId: dto.trainerId !== undefined ? dto.trainerId || null : undefined,
+        allowViewAttendance:
+          dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
+        attendanceThreshold:
+          dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
       },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        trainer: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+        },
       },
     });
   }
@@ -187,9 +210,9 @@ export class LiveSessionsService {
       : 'Guest';
 
     const isStaff = user
-      ? user.roles?.some((r) =>
+      ? (user.roles?.some((r) =>
           ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-        ) ?? false
+        ) ?? false)
       : false;
 
     let externalUrl = session.externalUrl?.trim() || '';
@@ -249,9 +272,10 @@ export class LiveSessionsService {
   ): Promise<{ token: string; wsUrl: string; roomName: string }> {
     const session = await this.findById(sessionId);
 
-    const isStaff = user.roles?.some((r) =>
-      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-    ) ?? false;
+    const isStaff =
+      user.roles?.some((r) =>
+        ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+      ) ?? false;
     const isSessionTrainer = session.trainerId === user.id;
     const isAuthorizedStaff = isStaff || isSessionTrainer;
 
@@ -293,9 +317,14 @@ export class LiveSessionsService {
               status: 'ACTIVE',
             },
           });
-          this.logger.log(`Auto-enrolled learner ${user.id} into course ${session.courseId} on session ${sessionId} join`);
+          this.logger.log(
+            `Auto-enrolled learner ${user.id} into course ${session.courseId} on session ${sessionId} join`,
+          );
         } catch (enrollErr) {
-          this.logger.warn(`Could not auto-enroll learner ${user.id} in course ${session.courseId}:`, enrollErr);
+          this.logger.warn(
+            `Could not auto-enroll learner ${user.id} in course ${session.courseId}:`,
+            enrollErr,
+          );
         }
       }
     }
@@ -331,7 +360,9 @@ export class LiveSessionsService {
         orderBy: { scheduledAt: 'asc' },
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
         },
       }),
       this.prisma.liveSession.count({ where }),
@@ -344,17 +375,14 @@ export class LiveSessionsService {
    * Submit learner response for an interactive in-room live quiz.
    * Scores response, creates an immutable audit attendance log, and returns score.
    */
-  async submitQuizResponse(
-    sessionId: string,
-    user: AuthenticatedUser,
-    dto: SubmitLiveQuizDto,
-  ) {
+  async submitQuizResponse(sessionId: string, user: AuthenticatedUser, dto: SubmitLiveQuizDto) {
     const session = await this.findById(sessionId);
 
     // Verify enrollment if learner
-    const isStaff = user.roles?.some((r) =>
-      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-    ) ?? false;
+    const isStaff =
+      user.roles?.some((r) =>
+        ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+      ) ?? false;
     const isSessionTrainer = session.trainerId === user.id;
     if (!isStaff && !isSessionTrainer) {
       const enrollment = await this.prisma.enrollment.findUnique({
@@ -566,7 +594,8 @@ export class LiveSessionsService {
 
     const totalResponses = logs.length;
     const totalCorrect = logs.filter((l) => (l.metadata as any)?.isCorrect).length;
-    const overallAccuracy = totalResponses > 0 ? Math.round((totalCorrect / totalResponses) * 100) : 0;
+    const overallAccuracy =
+      totalResponses > 0 ? Math.round((totalCorrect / totalResponses) * 100) : 0;
 
     return {
       sessionId,
@@ -578,4 +607,3 @@ export class LiveSessionsService {
     };
   }
 }
-

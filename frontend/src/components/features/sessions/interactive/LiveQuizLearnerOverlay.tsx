@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   XCircle,
@@ -17,15 +17,15 @@ import {
   Minimize2,
   Maximize2,
   Minus,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { submitLiveSessionQuizResponse } from "@/lib/api/monitoring";
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { submitLiveSessionQuizResponse } from '@/lib/api/monitoring';
 import type {
   LiveKitDataEvent,
   LiveQuizOption,
   LiveQuizPayload,
   LiveQuizRevealPayload,
-} from "@/types/livekit-events";
+} from '@/types/livekit-events';
 
 interface LiveQuizLearnerOverlayProps {
   sessionId: string;
@@ -45,8 +45,8 @@ interface LiveQuizLearnerOverlayProps {
 }
 
 function stripHtmlTags(str?: string | null): string {
-  if (!str) return "";
-  return str.replace(/<[^>]*>/g, "").trim();
+  if (!str) return '';
+  return str.replace(/<[^>]*>/g, '').trim();
 }
 
 export function LiveQuizLearnerOverlay({
@@ -108,10 +108,7 @@ export function LiveQuizLearnerOverlay({
     }
   }, [quiz?.id, quiz?.questionIndex, allQuestions]);
 
-  const safeIndex = Math.min(
-    Math.max(0, viewingIndex),
-    Math.max(0, allQuestions.length - 1)
-  );
+  const safeIndex = Math.min(Math.max(0, viewingIndex), Math.max(0, allQuestions.length - 1));
   const currentQuestion = allQuestions[safeIndex] || quiz;
   // True while the question on screen is the one the trainer is currently running.
   const isCurrentActive = Boolean(quiz && currentQuestion && currentQuestion.id === quiz.id);
@@ -142,7 +139,7 @@ export function LiveQuizLearnerOverlay({
   useEffect(() => {
     if (sessionKey && sessionKey !== lastSessionKeyRef.current) {
       const isPartOfExisting = allQuestions.some(
-        (q) => q.id === lastSessionKeyRef.current?.split("_")[0]
+        (q) => q.id === lastSessionKeyRef.current?.split('_')[0],
       );
       if (!isPartOfExisting) {
         setAnswersMap({});
@@ -179,7 +176,7 @@ export function LiveQuizLearnerOverlay({
   }, [quiz, calcRemaining]);
 
   // Current question answers and submission status
-  const currentQId = currentQuestion?.id || "";
+  const currentQId = currentQuestion?.id || '';
   const selectedOptionIds = answersMap[currentQId] || [];
   const submitted = Boolean(submittedMap[currentQId]);
 
@@ -221,13 +218,21 @@ export function LiveQuizLearnerOverlay({
         void handleSubmit();
       }
     }
-  }, [secondsRemaining, quiz, currentQuestion, submitted, selectedOptionIds, submitting, isRevealed]);
+  }, [
+    secondsRemaining,
+    quiz,
+    currentQuestion,
+    submitted,
+    selectedOptionIds,
+    submitting,
+    isRevealed,
+  ]);
 
   // Option selection handler
   const handleSelectOption = (optId: string) => {
     if (!currentQuestion || isLocked) return;
 
-    if (currentQuestion.type === "MULTIPLE_CHOICE") {
+    if (currentQuestion.type === 'MULTIPLE_CHOICE') {
       const next = selectedOptionIds.includes(optId)
         ? selectedOptionIds.filter((id) => id !== optId)
         : [...selectedOptionIds, optId];
@@ -242,14 +247,11 @@ export function LiveQuizLearnerOverlay({
     if (!currentQuestion || selectedOptionIds.length === 0 || submitted || submitting) return;
     setSubmitting(true);
 
-    const elapsed = Math.max(
-      1,
-      (currentQuestion.timeLimitSeconds || 30) - secondsRemaining
-    );
+    const elapsed = Math.max(1, (currentQuestion.timeLimitSeconds || 30) - secondsRemaining);
 
     // 1. Instant Data Channel broadcast (< 50ms)
     onBroadcast({
-      type: "QUIZ_ANSWER",
+      type: 'QUIZ_ANSWER',
       payload: {
         questionId: currentQuestion.id,
         userId,
@@ -271,7 +273,7 @@ export function LiveQuizLearnerOverlay({
         responseDurationSeconds: elapsed,
       });
     } catch (err) {
-      console.warn("Could not log live quiz response to backend:", err);
+      console.warn('Could not log live quiz response to backend:', err);
     }
   };
 
@@ -287,15 +289,17 @@ export function LiveQuizLearnerOverlay({
     return [];
   }, [isRevealed, questionReveal, currentQuestion]);
 
-  const resolvedExplanationEn = isRevealed && currentQuestion
-    ? questionReveal?.explanationEn ||
-      currentQuestion.explanationEn ||
-      (currentQuestion as any).explanation
-    : undefined;
+  const resolvedExplanationEn =
+    isRevealed && currentQuestion
+      ? questionReveal?.explanationEn ||
+        currentQuestion.explanationEn ||
+        (currentQuestion as any).explanation
+      : undefined;
 
-  const resolvedExplanationAm = isRevealed && currentQuestion
-    ? questionReveal?.explanationAm || currentQuestion.explanationAm
-    : undefined;
+  const resolvedExplanationAm =
+    isRevealed && currentQuestion
+      ? questionReveal?.explanationAm || currentQuestion.explanationAm
+      : undefined;
 
   // Correctness evaluation for current question
   const isCorrect =
@@ -306,24 +310,23 @@ export function LiveQuizLearnerOverlay({
     selectedOptionIds.every((id) => resolvedCorrectOptionIds.includes(id));
 
   const timerLimit = currentQuestion?.timeLimitSeconds || 30;
-  const timerPercent = Math.min(
-    100,
-    Math.max(0, (secondsRemaining / timerLimit) * 100)
-  );
+  const timerPercent = Math.min(100, Math.max(0, (secondsRemaining / timerLimit) * 100));
 
   const fallbackExplanation = useMemo(() => {
-    if (!isRevealed || !currentQuestion) return "";
+    if (!isRevealed || !currentQuestion) return '';
     const correctNames = resolvedCorrectOptionIds
       .map((id) => {
         const oIdx = currentQuestion.options.findIndex((o) => o.id === id);
         const opt = oIdx >= 0 ? currentQuestion.options[oIdx] : null;
-        return opt ? `Option ${String.fromCharCode(65 + oIdx)} ("${stripHtmlTags(opt.textEn)}")` : id;
+        return opt
+          ? `Option ${String.fromCharCode(65 + oIdx)} ("${stripHtmlTags(opt.textEn)}")`
+          : id;
       })
       .filter(Boolean);
     if (correctNames.length > 0) {
-      return `The correct answer is ${correctNames.join(", ")}. Verified according to course guidelines.`;
+      return `The correct answer is ${correctNames.join(', ')}. Verified according to course guidelines.`;
     }
-    return "The correct answer has been verified according to course guidelines.";
+    return 'The correct answer has been verified according to course guidelines.';
   }, [isRevealed, currentQuestion, resolvedCorrectOptionIds]);
 
   if (!currentQuestion) return null;
@@ -351,12 +354,12 @@ export function LiveQuizLearnerOverlay({
             </div>
             <p className="text-[10px] text-slate-400">
               {isRevealed
-                ? "Answers Revealed • Click to view"
+                ? 'Answers Revealed • Click to view'
                 : submitted
-                ? "Answer Submitted • Click to view"
-                : secondsRemaining > 0
-                ? `${secondsRemaining}s remaining • Click to open`
-                : "Time Expired • Click to view"}
+                  ? 'Answer Submitted • Click to view'
+                  : secondsRemaining > 0
+                    ? `${secondsRemaining}s remaining • Click to open`
+                    : 'Time Expired • Click to view'}
             </p>
           </div>
           <Maximize2 className="h-4 w-4 text-indigo-400 ml-1" />
@@ -373,15 +376,15 @@ export function LiveQuizLearnerOverlay({
           <div
             className={`h-full transition-all duration-500 ${
               isLocked
-                ? "bg-slate-300"
+                ? 'bg-slate-300'
                 : secondsRemaining <= 5
-                ? "bg-red-500 animate-pulse"
-                : secondsRemaining <= 10
-                ? "bg-amber-500"
-                : "bg-indigo-600"
+                  ? 'bg-red-500 animate-pulse'
+                  : secondsRemaining <= 10
+                    ? 'bg-amber-500'
+                    : 'bg-indigo-600'
             }`}
             style={{
-              width: !isCurrentActive || isLocked ? "100%" : `${timerPercent}%`,
+              width: !isCurrentActive || isLocked ? '100%' : `${timerPercent}%`,
             }}
           />
         </div>
@@ -397,7 +400,7 @@ export function LiveQuizLearnerOverlay({
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 truncate block">
                   {currentQuestion.trainerName
                     ? `${currentQuestion.trainerName} asks:`
-                    : "Live Classroom Question"}
+                    : 'Live Classroom Question'}
                 </span>
               </div>
             </div>
@@ -408,8 +411,8 @@ export function LiveQuizLearnerOverlay({
                 <span
                   className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                     secondsRemaining <= 5
-                      ? "border-red-300 bg-red-50 text-red-700 animate-pulse"
-                      : "border-slate-200 bg-slate-100 text-slate-700"
+                      ? 'border-red-300 bg-red-50 text-red-700 animate-pulse'
+                      : 'border-slate-200 bg-slate-100 text-slate-700'
                   }`}
                 >
                   <Clock className="h-3 w-3" />
@@ -456,14 +459,16 @@ export function LiveQuizLearnerOverlay({
           {/* Multi-Question Quick Switcher Pills (allows learner to jump between questions anytime) */}
           {allQuestions.length > 1 && (
             <div className="flex items-center gap-1.5 overflow-x-auto pt-2 mt-2 border-t border-slate-100/90 no-scrollbar">
-              <span className="text-[11px] font-semibold text-slate-500 shrink-0 mr-1">Questions:</span>
+              <span className="text-[11px] font-semibold text-slate-500 shrink-0 mr-1">
+                Questions:
+              </span>
               {allQuestions.map((q, qIdx) => {
                 const isAnswered = Boolean(submittedMap[q.id]);
                 const isSelectedTab = safeIndex === qIdx;
                 const isRevealedTab = Boolean(
                   revealsByQuestionId[q.id] ||
                   (revealData?.allReveals && revealData.allReveals[q.id]) ||
-                  (revealData && (revealData.questionId === q.id || !revealData.questionId))
+                  (revealData && (revealData.questionId === q.id || !revealData.questionId)),
                 );
 
                 return (
@@ -473,12 +478,12 @@ export function LiveQuizLearnerOverlay({
                     onClick={() => setViewingIndex(qIdx)}
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 ${
                       isSelectedTab
-                        ? "bg-indigo-600 text-white shadow-xs"
+                        ? 'bg-indigo-600 text-white shadow-xs'
                         : isRevealedTab
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                        : isAnswered
-                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold"
-                        : "bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100"
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                          : isAnswered
+                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold'
+                            : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
                     }`}
                   >
                     <span>Q{qIdx + 1}</span>
@@ -508,37 +513,34 @@ export function LiveQuizLearnerOverlay({
           <div className="space-y-2.5">
             {currentQuestion.options.map((opt, idx) => {
               const isSelected = selectedOptionIds.includes(opt.id);
-              const isThisCorrect =
-                isRevealed && resolvedCorrectOptionIds.includes(opt.id);
+              const isThisCorrect = isRevealed && resolvedCorrectOptionIds.includes(opt.id);
               const isSelectedWrong = isRevealed && isSelected && !isThisCorrect;
               const votes = questionReveal?.distribution?.[opt.id] ?? 0;
               const totalVotes = questionReveal?.totalResponses ?? 0;
-              const votePercent =
-                totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+              const votePercent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
 
               let borderClass =
-                "border-slate-200 bg-slate-50/70 hover:bg-slate-100/80 hover:border-slate-300 text-slate-800";
+                'border-slate-200 bg-slate-50/70 hover:bg-slate-100/80 hover:border-slate-300 text-slate-800';
               if (!isLocked && isSelected) {
                 borderClass =
-                  "border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20";
+                  'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20';
               }
               if (isLocked && !isRevealed) {
                 if (isSelected) {
                   borderClass =
-                    "border-indigo-500 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-2xs font-semibold";
+                    'border-indigo-500 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-2xs font-semibold';
                 } else {
-                  borderClass = "border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60";
+                  borderClass = 'border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60';
                 }
               }
               if (isRevealed) {
                 if (isThisCorrect) {
                   borderClass =
-                    "border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs";
+                    'border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs';
                 } else if (isSelectedWrong) {
-                  borderClass =
-                    "border-red-400 bg-red-50 text-red-950 ring-1 ring-red-400/20";
+                  borderClass = 'border-red-400 bg-red-50 text-red-950 ring-1 ring-red-400/20';
                 } else {
-                  borderClass = "border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60";
+                  borderClass = 'border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60';
                 }
               }
 
@@ -554,7 +556,7 @@ export function LiveQuizLearnerOverlay({
                   {isRevealed && totalVotes > 0 && (
                     <div
                       className={`absolute top-0 bottom-0 left-0 transition-all duration-700 opacity-20 pointer-events-none ${
-                        isThisCorrect ? "bg-emerald-400" : "bg-slate-400"
+                        isThisCorrect ? 'bg-emerald-400' : 'bg-slate-400'
                       }`}
                       style={{ width: `${votePercent}%` }}
                     />
@@ -564,12 +566,12 @@ export function LiveQuizLearnerOverlay({
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold mt-0.5 ${
                         isRevealed && isThisCorrect
-                          ? "bg-emerald-600 text-white shadow-2xs"
+                          ? 'bg-emerald-600 text-white shadow-2xs'
                           : isRevealed && isSelectedWrong
-                          ? "bg-red-500 text-white shadow-2xs"
-                          : isSelected
-                          ? "bg-indigo-600 text-white shadow-2xs"
-                          : "bg-white border border-slate-200 text-slate-600"
+                            ? 'bg-red-500 text-white shadow-2xs'
+                            : isSelected
+                              ? 'bg-indigo-600 text-white shadow-2xs'
+                              : 'bg-white border border-slate-200 text-slate-600'
                       }`}
                     >
                       {String.fromCharCode(65 + idx)}
@@ -597,7 +599,7 @@ export function LiveQuizLearnerOverlay({
                     {isRevealed && isThisCorrect && (
                       <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        {isSelected ? "Correct!" : "Correct"}
+                        {isSelected ? 'Correct!' : 'Correct'}
                       </span>
                     )}
                     {isRevealed && isSelectedWrong && (
@@ -631,12 +633,12 @@ export function LiveQuizLearnerOverlay({
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-indigo-950 text-xs">
-                  {submitted ? "Response Recorded" : "Time Expired"}
+                  {submitted ? 'Response Recorded' : 'Time Expired'}
                 </p>
                 <p className="text-[11px] text-indigo-700 mt-0.5 leading-relaxed">
                   {submitted
-                    ? "Your response has been registered. You can proceed to the next question, or wait for the trainer to reveal the correct answers."
-                    : "The question timer ended. The trainer will reveal the correct answers to the room shortly."}
+                    ? 'Your response has been registered. You can proceed to the next question, or wait for the trainer to reveal the correct answers.'
+                    : 'The question timer ended. The trainer will reveal the correct answers to the room shortly.'}
                 </p>
               </div>
             </div>
@@ -647,10 +649,10 @@ export function LiveQuizLearnerOverlay({
             <div
               className={`rounded-2xl p-4 text-xs space-y-2 border shadow-xs animate-in fade-in duration-200 ${
                 isCorrect
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
                   : selectedOptionIds.length > 0
-                  ? "border-amber-200 bg-amber-50 text-amber-950"
-                  : "border-slate-200 bg-slate-50 text-slate-900"
+                    ? 'border-amber-200 bg-amber-50 text-amber-950'
+                    : 'border-slate-200 bg-slate-50 text-slate-900'
               }`}
             >
               <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
@@ -663,18 +665,14 @@ export function LiveQuizLearnerOverlay({
                   <>
                     <XCircle className="h-4 w-4 text-rose-600 shrink-0" />
                     <span>
-                      Not quite. The correct answer is{" "}
+                      Not quite. The correct answer is{' '}
                       <span className="font-extrabold underline">
                         {resolvedCorrectOptionIds
                           .map((id) => {
-                            const oIdx = currentQuestion.options.findIndex(
-                              (o) => o.id === id
-                            );
-                            return oIdx >= 0
-                              ? `Option ${String.fromCharCode(65 + oIdx)}`
-                              : id;
+                            const oIdx = currentQuestion.options.findIndex((o) => o.id === id);
+                            return oIdx >= 0 ? `Option ${String.fromCharCode(65 + oIdx)}` : id;
                           })
-                          .join(", ")}
+                          .join(', ')}
                       </span>
                       .
                     </span>
@@ -683,18 +681,14 @@ export function LiveQuizLearnerOverlay({
                   <>
                     <Clock className="h-4 w-4 text-amber-600 shrink-0" />
                     <span>
-                      Time expired before you answered. The correct answer was{" "}
+                      Time expired before you answered. The correct answer was{' '}
                       <span className="font-extrabold underline">
                         {resolvedCorrectOptionIds
                           .map((id) => {
-                            const oIdx = currentQuestion.options.findIndex(
-                              (o) => o.id === id
-                            );
-                            return oIdx >= 0
-                              ? `Option ${String.fromCharCode(65 + oIdx)}`
-                              : id;
+                            const oIdx = currentQuestion.options.findIndex((o) => o.id === id);
+                            return oIdx >= 0 ? `Option ${String.fromCharCode(65 + oIdx)}` : id;
                           })
-                          .join(", ")}
+                          .join(', ')}
                       </span>
                       .
                     </span>
@@ -711,7 +705,9 @@ export function LiveQuizLearnerOverlay({
                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-600 text-white shadow-2xs">
                   <BookOpen className="h-3 w-3" />
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-indigo-950">Explanation for the Correct Answer:</span>
+                <span className="text-xs sm:text-sm font-bold text-indigo-950">
+                  Explanation for the Correct Answer:
+                </span>
               </div>
               {resolvedExplanationEn ? (
                 <p className="text-slate-800 leading-relaxed text-xs sm:text-sm pl-7 font-medium">
@@ -759,9 +755,7 @@ export function LiveQuizLearnerOverlay({
                 variant="outline"
                 disabled={safeIndex >= allQuestions.length - 1}
                 onClick={() =>
-                  setViewingIndex((prev) =>
-                    Math.min(allQuestions.length - 1, prev + 1)
-                  )
+                  setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
                 }
                 className="gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold h-8 px-2.5 shadow-2xs"
                 title="Go to next question"
@@ -777,12 +771,12 @@ export function LiveQuizLearnerOverlay({
               ) : !isRevealed ? (
                 <span className="flex items-center gap-1.5 text-slate-600 font-medium">
                   <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                  {submitted ? "Response submitted" : "Time expired"}
+                  {submitted ? 'Response submitted' : 'Time expired'}
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
                   <Check className="h-3.5 w-3.5 text-emerald-600" />
-                  {isCorrect ? "Correct answer!" : "Answers revealed"}
+                  {isCorrect ? 'Correct answer!' : 'Answers revealed'}
                 </span>
               )}
             </div>
@@ -797,9 +791,7 @@ export function LiveQuizLearnerOverlay({
                     size="sm"
                     variant="outline"
                     onClick={() =>
-                      setViewingIndex((prev) =>
-                        Math.min(allQuestions.length - 1, prev + 1)
-                      )
+                      setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
                     }
                     className="gap-1 border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold h-8 px-3"
                   >
@@ -809,32 +801,26 @@ export function LiveQuizLearnerOverlay({
                 )}
                 <Button
                   size="sm"
-                  disabled={
-                    selectedOptionIds.length === 0 ||
-                    secondsRemaining <= 0 ||
-                    submitting
-                  }
+                  disabled={selectedOptionIds.length === 0 || secondsRemaining <= 0 || submitting}
                   onClick={handleSubmit}
                   className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs h-8 px-4"
                 >
                   <Send className="h-3.5 w-3.5" />
-                  {submitting ? "Submitting…" : "Submit Answer"}
+                  {submitting ? 'Submitting…' : 'Submit Answer'}
                 </Button>
               </div>
             ) : !isRevealed ? (
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-lg">
                   <Check className="h-3 w-3 text-indigo-600" />
-                  {submitted ? "Submitted" : "Time Expired"}
+                  {submitted ? 'Submitted' : 'Time Expired'}
                 </span>
 
                 {allQuestions.length > 1 && safeIndex < allQuestions.length - 1 && (
                   <Button
                     size="sm"
                     onClick={() =>
-                      setViewingIndex((prev) =>
-                        Math.min(allQuestions.length - 1, prev + 1)
-                      )
+                      setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
                     }
                     className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-8 px-3.5 shadow-xs"
                     title="Advance to next question even though time is not up"
@@ -850,9 +836,7 @@ export function LiveQuizLearnerOverlay({
                   <Button
                     size="sm"
                     onClick={() =>
-                      setViewingIndex((prev) =>
-                        Math.min(allQuestions.length - 1, prev + 1)
-                      )
+                      setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
                     }
                     className="gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-8 px-3 shadow-xs"
                   >

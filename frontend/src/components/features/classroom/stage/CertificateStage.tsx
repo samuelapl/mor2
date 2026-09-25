@@ -1,33 +1,35 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   Award,
   CheckCircle2,
   Download,
   Lock,
   Printer,
-    ExternalLink,
   Copy,
   Check,
   ShieldCheck,
   Loader2,
   AlertCircle,
-} from "lucide-react";
-import type { Course } from "@/types";
+} from 'lucide-react';
+import type { Course } from '@/types';
 import type {
   ApiCourseProgress,
   ApiCertificate,
   ApiCertificateTemplate,
   ApiUser,
-} from "@/lib/api/types";
+} from '@/lib/api/types';
 import {
   fetchMyCertificates,
   claimCertificate,
   fetchActiveCertificateTemplate,
-} from "@/lib/api/certificates";
-import { fetchMyProfile } from "@/lib/api/users";
-import { CertificateRenderer } from "../../certificates/CertificateRenderer";
+} from '@/lib/api/certificates';
+import { fetchMyProfile } from '@/lib/api/users';
+import { CertificateRenderer } from '../../certificates/CertificateRenderer';
+import { CourseFeedbackSurvey } from './CourseFeedbackSurvey';
+import { hasSubmittedFeedback } from '@/lib/api/feedback';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CertificateStageProps {
   course: Course;
@@ -36,12 +38,8 @@ interface CertificateStageProps {
   unlocked: boolean;
 }
 
-export function CertificateStage({
-  course,
-  progress,
-  courseId,
-  unlocked,
-}: CertificateStageProps) {
+export function CertificateStage({ course, progress, courseId, unlocked }: CertificateStageProps) {
+  const { tBilingual } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [certificate, setCertificate] = useState<ApiCertificate | null>(null);
@@ -49,14 +47,15 @@ export function CertificateStage({
   const [user, setUser] = useState<ApiUser | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedbackDone, setFeedbackDone] = useState(false);
 
   const isCompleted =
     unlocked ||
     Boolean(progress?.courseCompletion.certificateEligible) ||
     Boolean(
       progress?.courseCompletion.contentCompleted &&
-        (!progress?.courseCompletion.finalAssessment ||
-          progress?.courseCompletion.finalAssessmentPassed),
+      (!progress?.courseCompletion.finalAssessment ||
+        progress?.courseCompletion.finalAssessmentPassed),
     );
 
   useEffect(() => {
@@ -73,7 +72,13 @@ export function CertificateStage({
         ]);
 
         if (!mounted) return;
-        if (profile) setUser(profile);
+        if (profile) {
+          setUser(profile);
+          const alreadySubmitted = hasSubmittedFeedback(courseId, profile.id);
+          if (alreadySubmitted) {
+            setFeedbackDone(true);
+          }
+        }
         if (activeTpl) setTemplate(activeTpl);
 
         const existing = myCerts.find(
@@ -82,8 +87,10 @@ export function CertificateStage({
 
         if (existing) {
           setCertificate(existing);
-        } else if (isCompleted) {
-          // Attempt automatic claim
+        } else if (
+          isCompleted &&
+          (feedbackDone || (profile && hasSubmittedFeedback(courseId, profile.id)))
+        ) {
           try {
             setClaiming(true);
             const claimed = await claimCertificate(courseId);
@@ -91,13 +98,13 @@ export function CertificateStage({
               setCertificate(claimed);
             }
           } catch (claimErr) {
-            console.warn("Notice claiming certificate:", claimErr);
+            console.warn('Notice claiming certificate:', claimErr);
           } finally {
             if (mounted) setClaiming(false);
           }
         }
       } catch (err: any) {
-        if (mounted) setError(err.message || "Failed to load certificate data.");
+        if (mounted) setError(err.message || 'Failed to load certificate data.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -108,7 +115,7 @@ export function CertificateStage({
     return () => {
       mounted = false;
     };
-  }, [courseId, isCompleted]);
+  }, [courseId, isCompleted, feedbackDone]);
 
   const handlePrint = () => {
     window.print();
@@ -116,7 +123,7 @@ export function CertificateStage({
 
   const handleDownloadPdf = () => {
     if (certificate?.downloadUrl) {
-      window.open(certificate.downloadUrl, "_blank");
+      window.open(certificate.downloadUrl, '_blank');
     } else {
       window.print();
     }
@@ -132,21 +139,21 @@ export function CertificateStage({
   };
 
   const recipientName =
-    `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
+    `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() ||
     (certificate?.user?.firstName
       ? `${certificate.user.firstName} ${certificate.user.lastName}`.trim()
-      : "Meron Kassa");
+      : 'Meron Kassa');
 
   const issueDateFormatted = certificate?.issuedAt
-    ? new Date(certificate.issuedAt).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
+    ? new Date(certificate.issuedAt).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       })
-    : new Date().toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
+    : new Date().toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       });
 
   const estimatedHours =
@@ -160,7 +167,12 @@ export function CertificateStage({
     return (
       <div className="flex h-full min-h-[450px] flex-col items-center justify-center gap-3 p-8 text-center text-slate-500">
         <Loader2 className="h-7 w-7 animate-spin text-amber-500" />
-        <p className="text-sm font-medium">Retrieving official certification credentials…</p>
+        <p className="text-sm font-medium">
+          {tBilingual(
+            'Retrieving official certification credentials…',
+            'ይፋዊ የሰርተፊኬት መረጃዎችን በማምጣት ላይ…',
+          )}
+        </p>
       </div>
     );
   }
@@ -185,14 +197,16 @@ export function CertificateStage({
           <div className="space-y-1.5 max-w-xl mx-auto">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/90 px-3 py-1 text-xs font-semibold text-amber-900">
               <Award className="h-3.5 w-3.5" />
-              Verified Certificate of Completion
+              {tBilingual('Verified Certificate of Completion', 'የተረጋገጠ የማጠናቀቂያ ሰርተፊኬት')}
             </span>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              Certificate Currently Locked
+              {tBilingual('Certificate Currently Locked', 'ሰርተፊኬቱ በአሁኑ ጊዜ ተቆልፏል')}
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Complete all lessons, exercises, and required assessments to unlock your verified
-              credential issued by the Ministry of Revenues.
+              {tBilingual(
+                'Complete all lessons, exercises, and required assessments to unlock your verified credential issued by the Ministry of Revenues.',
+                'በገቢዎች ሚኒስቴር የተሰጠውን ይፋዊ ማረጋገጫ ለመክፈት ሁሉንም ትምህርቶች፣ መልመጃዎች እና አስፈላጊ ፈተናዎችን ያጠናቅቁ።',
+              )}
             </p>
           </div>
 
@@ -200,7 +214,9 @@ export function CertificateStage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto text-left pt-4">
             <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-700">Course Lessons Completed</span>
+                <span className="text-slate-700">
+                  {tBilingual('Course Lessons Completed', 'የተጠናቀቁ የኮርስ ትምህርቶች')}
+                </span>
                 <span className="font-mono text-indigo-600">
                   {completedLessons}/{totalLessons} ({overallPercent}%)
                 </span>
@@ -215,21 +231,29 @@ export function CertificateStage({
 
             <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-700">Final Certification Exam</span>
+                <span className="text-slate-700">
+                  {tBilingual('Final Certification Exam', 'የማጠቃለያ የምስክር ወረቀት ፈተና')}
+                </span>
                 {finalPassed ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Passed
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {tBilingual('Passed', 'አልፏል')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-amber-600 font-bold">
-                    <Lock className="h-3.5 w-3.5" /> Required
+                    <Lock className="h-3.5 w-3.5" /> {tBilingual('Required', 'ያስፈልጋል')}
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-slate-500">
                 {finalAssessment
-                  ? "Achieve passing score on the final assessment"
-                  : "All curriculum topics must be reviewed"}
+                  ? tBilingual(
+                      'Achieve passing score on the final assessment',
+                      'በማጠቃለያ ፈተናው የማለፊያ ውጤት ያግኙ',
+                    )
+                  : tBilingual(
+                      'All curriculum topics must be reviewed',
+                      'ሁሉም የስርዓተ-ትምህርት ርዕሶች መከለስ አለባቸው',
+                    )}
               </p>
             </div>
           </div>
@@ -240,11 +264,13 @@ export function CertificateStage({
           <div className="absolute inset-0 bg-slate-900/5 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6 text-center">
             <div className="rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-800 shadow-md flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-amber-500" />
-              Official Certificate Sample Preview
+              {tBilingual('Official Certificate Sample Preview', 'ይፋዊ የሰርተፊኬት ቅድመ-ዕይታ')}
             </div>
             <p className="text-xs text-slate-600 mt-2 max-w-sm">
-              Your name, official digital signature, QR verification key, and course ID will be minted
-              automatically once complete.
+              {tBilingual(
+                'Your name, official digital signature, QR verification key, and course ID will be minted automatically once complete.',
+                'ስምዎ፣ ይፋዊ ዲጂታል ፊርማ፣ የQR ማረጋገጫ ቁልፍ እና የኮርስ መለያ ኮርሱን ሲያጠናቅቁ በራስ-ሰር ይዘጋጃሉ።',
+              )}
             </p>
           </div>
 
@@ -264,7 +290,35 @@ export function CertificateStage({
     );
   }
 
-  // 2. Unlocked State: Certificate Ready or Claiming
+  // 2. Pre-Certificate Feedback Gate:
+  // If the course is completed, but the student hasn't completed feedback yet, show the survey!
+  const userFeedbackGiven =
+    feedbackDone || (user ? hasSubmittedFeedback(courseId, user.id) : false);
+
+  if (!userFeedbackGiven) {
+    return (
+      <CourseFeedbackSurvey
+        course={course}
+        user={user}
+        onSubmitted={async () => {
+          setFeedbackDone(true);
+          if (!certificate) {
+            try {
+              setClaiming(true);
+              const claimed = await claimCertificate(courseId);
+              if (claimed) setCertificate(claimed);
+            } catch (claimErr) {
+              console.warn('Notice claiming certificate:', claimErr);
+            } finally {
+              setClaiming(false);
+            }
+          }
+        }}
+      />
+    );
+  }
+
+  // 3. Unlocked State: Certificate Ready or Claiming
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in print:p-0 print:m-0">
       {/* Celebration Header Card (Hidden on Print) */}
@@ -273,18 +327,21 @@ export function CertificateStage({
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              Course Completed &amp; Certified
+              {tBilingual('Course Completed & Certified', 'ኮርሱ ተጠናቅቆ ሰርተፊኬት ተሰጥቷል')}
             </span>
             <span className="text-xs text-slate-500 font-mono">
-              Cert #{certificate?.certificateNumber || "ETIMS-2026-PENDING"}
+              Cert #{certificate?.certificateNumber || 'ETIMS-2026-PENDING'}
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            Official Certificate of Completion <Award className="h-5 w-5 text-amber-500 shrink-0" />
+            {tBilingual('Official Certificate of Completion', 'ይፋዊ የማጠናቀቂያ ሰርተፊኬት')}{' '}
+            <Award className="h-5 w-5 text-amber-500 shrink-0" />
           </h2>
           <p className="text-xs md:text-sm text-slate-600">
-            Congratulations, <strong className="text-slate-800">{recipientName}</strong>! Your
-            credentials have been officially validated and archived by the Ministry of Revenues.
+            {tBilingual(
+              `Congratulations, ${recipientName}! Your credentials have been officially validated and archived by the Ministry of Revenues.`,
+              `እንኳን ደስ አለዎት፣ ${recipientName}! የእርስዎ የትምህርት ማስረጃዎች በይፋ ተረጋግጠው በገቢዎች ሚኒስቴር ተመዝግበዋል።`,
+            )}
           </p>
         </div>
 
@@ -298,12 +355,12 @@ export function CertificateStage({
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-600" />
-                Copied Link
+                {tBilingual('Copied Link', 'ሊንኩ ተቀድቷል')}
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5 text-slate-500" />
-                Copy Verification
+                {tBilingual('Copy Verification', 'ማረጋገጫ ቅዳ')}
               </>
             )}
           </button>
@@ -314,7 +371,7 @@ export function CertificateStage({
             className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
           >
             <Printer className="h-3.5 w-3.5 text-slate-600" />
-            Print
+            {tBilingual('Print', 'አትም')}
           </button>
 
           <button
@@ -323,7 +380,7 @@ export function CertificateStage({
             className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-slate-950 text-amber-400 hover:bg-slate-900 text-xs font-bold shadow-sm transition"
           >
             <Download className="h-3.5 w-3.5" />
-            Download PDF
+            {tBilingual('Download PDF', 'ፒዲኤፍ አውርድ')}
           </button>
         </div>
       </div>
@@ -342,8 +399,8 @@ export function CertificateStage({
           studentName={recipientName}
           courseTitle={course.title}
           completionDate={issueDateFormatted}
-          certificateNumber={certificate?.certificateNumber || "ETIMS-CERT-2026-001"}
-          verificationCode={certificate?.verificationCode || "VERIFY-ETIMS"}
+          certificateNumber={certificate?.certificateNumber || 'ETIMS-CERT-2026-001'}
+          verificationCode={certificate?.verificationCode || 'VERIFY-ETIMS'}
           durationHours={estimatedHours}
         />
       </div>
@@ -351,11 +408,18 @@ export function CertificateStage({
       {/* Verification footer note */}
       <div className="text-center text-xs text-slate-400 pb-8 print:hidden">
         <p>
-          This credential can be publicly verified at{" "}
+          {tBilingual(
+            'This credential can be publicly verified at',
+            'ይህ የትምህርት ማስረጃ በይፋ ሊረጋገጥ የሚችለው በ',
+          )}{' '}
           <span className="font-mono text-slate-600">
-            {typeof window !== "undefined" ? window.location.origin : ""}/verify
-          </span>{" "}
-          using code <strong className="font-mono text-slate-700">{certificate?.verificationCode || "—"}</strong>.
+            {typeof window !== 'undefined' ? window.location.origin : ''}/verify
+          </span>{' '}
+          {tBilingual('using code', 'በማረጋገጫ ኮድ')}{' '}
+          <strong className="font-mono text-slate-700">
+            {certificate?.verificationCode || '—'}
+          </strong>
+          .
         </p>
       </div>
     </div>

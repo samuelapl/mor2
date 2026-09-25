@@ -1,17 +1,17 @@
-import { api } from "./client";
+import { api } from './client';
 import type {
   ApiCertificate,
   ApiCertificateTemplate,
   CreateCertificateTemplateBody,
   UpdateCertificateTemplateBody,
-} from "./types";
+} from './types';
 
 /* -------------------------------------------------------------------------- */
 /*  Certificates                                                                */
 /* -------------------------------------------------------------------------- */
 
 export async function fetchMyCertificates(): Promise<ApiCertificate[]> {
-  return api<ApiCertificate[]>("certificates/me");
+  return api<ApiCertificate[]>('certificates/me');
 }
 
 export async function fetchCertificate(id: string): Promise<ApiCertificate> {
@@ -20,7 +20,7 @@ export async function fetchCertificate(id: string): Promise<ApiCertificate> {
 
 export async function claimCertificate(courseId: string): Promise<ApiCertificate> {
   return api<ApiCertificate>(`certificates/claim?courseId=${encodeURIComponent(courseId)}`, {
-    method: "POST",
+    method: 'POST',
   });
 }
 
@@ -29,7 +29,7 @@ export async function fetchCertificateDownloadUrl(id: string): Promise<{ downloa
 }
 
 export async function revokeCertificate(id: string): Promise<void> {
-  await api<unknown>(`certificates/${id}`, { method: "DELETE" });
+  await api<unknown>(`certificates/${id}`, { method: 'DELETE' });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -37,11 +37,11 @@ export async function revokeCertificate(id: string): Promise<void> {
 /* -------------------------------------------------------------------------- */
 
 export async function fetchCertificateTemplates(): Promise<ApiCertificateTemplate[]> {
-  return api<ApiCertificateTemplate[]>("certificate-templates");
+  return api<ApiCertificateTemplate[]>('certificate-templates');
 }
 
 export async function fetchActiveCertificateTemplate(): Promise<ApiCertificateTemplate | null> {
-  return api<ApiCertificateTemplate>("certificate-templates/active");
+  return api<ApiCertificateTemplate>('certificate-templates/active');
 }
 
 export async function fetchCertificateTemplate(id: string): Promise<ApiCertificateTemplate> {
@@ -51,24 +51,24 @@ export async function fetchCertificateTemplate(id: string): Promise<ApiCertifica
 export async function createCertificateTemplate(
   body: CreateCertificateTemplateBody,
 ): Promise<ApiCertificateTemplate> {
-  return api<ApiCertificateTemplate>("certificate-templates", { method: "POST", body });
+  return api<ApiCertificateTemplate>('certificate-templates', { method: 'POST', body });
 }
 
 export async function updateCertificateTemplate(
   id: string,
   body: UpdateCertificateTemplateBody,
 ): Promise<ApiCertificateTemplate> {
-  return api<ApiCertificateTemplate>(`certificate-templates/${id}`, { method: "PATCH", body });
+  return api<ApiCertificateTemplate>(`certificate-templates/${id}`, { method: 'PATCH', body });
 }
 
 export async function activateCertificateTemplate(id: string): Promise<ApiCertificateTemplate> {
-  return api<ApiCertificateTemplate>(`certificate-templates/${id}/activate`, { method: "POST" });
+  return api<ApiCertificateTemplate>(`certificate-templates/${id}/activate`, { method: 'POST' });
 }
 
 export async function duplicateCertificateTemplate(id: string): Promise<ApiCertificateTemplate> {
-  return api<ApiCertificateTemplate>(`certificate-templates/${id}/duplicate`, { method: "POST" });
+  return api<ApiCertificateTemplate>(`certificate-templates/${id}/duplicate`, { method: 'POST' });
 }
 
 export async function deleteCertificateTemplate(id: string): Promise<void> {
-  await api<unknown>(`certificate-templates/${id}`, { method: "DELETE" });
+  await api<unknown>(`certificate-templates/${id}`, { method: 'DELETE' });
 }

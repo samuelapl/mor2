@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { getRoleFromPath, ROLE_PATHS } from "@/constants/roles";
-import { PERMISSION_GATED_PATHS } from "@/constants/navigation";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
+import { useEffect, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { getRoleFromPath, ROLE_PATHS } from '@/constants/roles';
+import { PERMISSION_GATED_PATHS } from '@/constants/navigation';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
 
 function getGatedPermissions(pathname: string): string[] | undefined {
   if (PERMISSION_GATED_PATHS[pathname]) {
@@ -36,7 +36,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     if (!currentUser) {
-      router.replace("/login");
+      router.replace('/login');
       return;
     }
     if (blocked) {

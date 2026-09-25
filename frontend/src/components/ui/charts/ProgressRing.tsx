@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ProgressRingProps {
   percentage: number;
@@ -19,7 +19,7 @@ export function ProgressRing({
   strokeWidth = 10,
   title,
   subtitle,
-  color = "#4f46e5",
+  color = '#4f46e5',
   className,
 }: ProgressRingProps) {
   const safePercent = Math.min(100, Math.max(0, Math.round(percentage)));
@@ -28,7 +28,10 @@ export function ProgressRing({
   const strokeDashoffset = circumference - (safePercent / 100) * circumference;
 
   return (
-    <div className={cn("relative flex items-center justify-center shrink-0", className)} style={{ width: size, height: size }}>
+    <div
+      className={cn('relative flex items-center justify-center shrink-0', className)}
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90 transform">
         <circle
           cx={size / 2}

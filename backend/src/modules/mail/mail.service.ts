@@ -27,7 +27,9 @@ export class MailService {
         auth: user && pass ? { user, pass } : undefined,
       });
       const port = this.configService.get<string>('SMTP_PORT') || '465';
-      this.logger.log(`SMTP transporter initialized: ${host}:${port} (secure: ${this.configService.get<string>('SMTP_SECURE', 'true') === 'true'})`);
+      this.logger.log(
+        `SMTP transporter initialized: ${host}:${port} (secure: ${this.configService.get<string>('SMTP_SECURE', 'true') === 'true'})`,
+      );
     } else {
       this.transporter = null;
       this.logger.warn(

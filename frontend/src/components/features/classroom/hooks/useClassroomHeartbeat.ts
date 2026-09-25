@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { addLessonTime } from "@/lib/api/progress";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { addLessonTime } from '@/lib/api/progress';
 
 interface UseClassroomHeartbeatProps {
   activeItemId: string | null;
@@ -34,7 +34,7 @@ export function useClassroomHeartbeat({
     async (itemId: string) => {
       const ref = lastFlushRef.current;
       if (!ref || ref.itemId !== itemId) return null;
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") return null;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return null;
 
       const now = Date.now();
       const deltaSeconds = Math.min(300, Math.round((now - ref.at) / 1000));
@@ -66,7 +66,7 @@ export function useClassroomHeartbeat({
 
     // 1. Tick local seconds every 1 second when active & tab is visible
     const tickInterval = setInterval(() => {
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
 
       setLiveSeconds((prev) => {
         const current = (prev[activeItemId] ?? initialSeconds) + 1;
@@ -103,5 +103,3 @@ export function useClassroomHeartbeat({
     flushHeartbeat,
   };
 }
-
-

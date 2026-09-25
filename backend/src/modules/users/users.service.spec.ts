@@ -8,7 +8,14 @@ jest.mock('bcrypt', () => ({
 }));
 
 function buildUser(roles: RoleName[]): AuthenticatedUser {
-  return { id: 'admin-1', email: 'a@example.com', firstName: 'A', lastName: 'Dmin', roles, sid: 'sid-1' };
+  return {
+    id: 'admin-1',
+    email: 'a@example.com',
+    firstName: 'A',
+    lastName: 'Dmin',
+    roles,
+    sid: 'sid-1',
+  };
 }
 
 function row(overrides: Partial<BulkCreateUserItemDto> = {}): BulkCreateUserItemDto {
@@ -39,9 +46,7 @@ describe('UsersService.bulkCreate', () => {
         })),
       },
       role: {
-        findMany: jest
-          .fn()
-          .mockResolvedValue(Object.values(RoleName).map((name) => ({ name }))),
+        findMany: jest.fn().mockResolvedValue(Object.values(RoleName).map((name) => ({ name }))),
       },
     };
     service = new UsersService(prisma, {} as any, {} as any);
@@ -147,7 +152,13 @@ describe('UsersService.softDelete', () => {
   let target: any;
 
   beforeEach(() => {
-    target = { id: 'u2', email: 'abebe@example.com', password: 'x', deletedAt: null, roles: [{ role: RoleName.LEARNER }] };
+    target = {
+      id: 'u2',
+      email: 'abebe@example.com',
+      password: 'x',
+      deletedAt: null,
+      roles: [{ role: RoleName.LEARNER }],
+    };
     prisma = {
       user: {
         findUnique: jest.fn(async () => target),
@@ -171,16 +182,16 @@ describe('UsersService.softDelete', () => {
   });
 
   it('refuses to delete yourself', async () => {
-    await expect(
-      service.softDelete('admin-1', buildUser([RoleName.SYSTEM_ADMIN])),
-    ).rejects.toThrow('You cannot delete your own account');
+    await expect(service.softDelete('admin-1', buildUser([RoleName.SYSTEM_ADMIN]))).rejects.toThrow(
+      'You cannot delete your own account',
+    );
   });
 
   it('only lets a System Admin delete a System Admin', async () => {
     target.roles = [{ role: RoleName.SYSTEM_ADMIN }];
-    await expect(
-      service.softDelete('u2', buildUser([RoleName.TRAINING_ADMIN])),
-    ).rejects.toThrow('Only a System Admin can delete a System Admin');
+    await expect(service.softDelete('u2', buildUser([RoleName.TRAINING_ADMIN]))).rejects.toThrow(
+      'Only a System Admin can delete a System Admin',
+    );
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

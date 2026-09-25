@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 import {
   Check,
   ChevronDown,
@@ -12,13 +12,13 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
-} from "lucide-react";
-import type { Question, QuestionType, UploadedResource } from "@/types";
-import { Button } from "@/components/ui/Button";
-import { uploadAttachment } from "@/lib/api/files";
-import { toast } from "@/lib/toast";
-import { inputClass, labelClass, uid } from "./wizard-types";
-import { CompactRichEditor, MultiFileUploader } from "./wizard-components";
+} from 'lucide-react';
+import type { Question, QuestionType, UploadedResource } from '@/types';
+import { Button } from '@/components/ui/Button';
+import { uploadAttachment } from '@/lib/api/files';
+import { toast } from '@/lib/toast';
+import { inputClass, labelClass, uid } from './wizard-types';
+import { CompactRichEditor, MultiFileUploader } from './wizard-components';
 
 export interface StepFinalAssessmentProps {
   quizTitle: string;
@@ -47,21 +47,21 @@ export interface StepFinalAssessmentProps {
   editingCourseId?: string;
 }
 
-function blankQuestion(type: QuestionType = "multiple_choice"): Question {
+function blankQuestion(type: QuestionType = 'multiple_choice'): Question {
   return {
-    id: uid("q"),
+    id: uid('q'),
     type,
-    text: "",
-    options: type === "true_false" ? ["True", "False"] : ["", ""],
+    text: '',
+    options: type === 'true_false' ? ['True', 'False'] : ['', ''],
     correctIndex: 0,
     points: 10,
   };
 }
 
 function optionsForType(type: QuestionType): string[] {
-  if (type === "true_false") return ["True", "False"];
-  if (type === "short_answer") return [];
-  return ["", "", "", ""];
+  if (type === 'true_false') return ['True', 'False'];
+  if (type === 'short_answer') return [];
+  return ['', '', '', ''];
 }
 
 export function StepFinalAssessment({
@@ -114,7 +114,7 @@ export function StepFinalAssessment({
     setQuestions((prev) =>
       prev.map((q, i) =>
         i === index
-          ? { ...q, type, options: optionsForType(type), correctIndex: 0, answerText: "" }
+          ? { ...q, type, options: optionsForType(type), correctIndex: 0, answerText: '' }
           : q,
       ),
     );
@@ -141,7 +141,7 @@ export function StepFinalAssessment({
       });
       onSuccess(res.fileUrl);
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to upload image");
+      onError(err instanceof Error ? err.message : 'Failed to upload image');
     }
   };
 
@@ -152,7 +152,8 @@ export function StepFinalAssessment({
           Final Assessment & Completion Rules
         </h3>
         <p className="text-xs text-slate-500">
-          Configure completion prerequisites, server-enforced timer limits, pass marks, and questions.
+          Configure completion prerequisites, server-enforced timer limits, pass marks, and
+          questions.
         </p>
       </div>
 
@@ -188,7 +189,9 @@ export function StepFinalAssessment({
               min={1}
               max={100}
               value={passMark}
-              onChange={(e) => setPassMark(Math.max(1, Math.min(100, parseInt(e.target.value) || 70)))}
+              onChange={(e) =>
+                setPassMark(Math.max(1, Math.min(100, parseInt(e.target.value) || 70)))
+              }
               className={inputClass}
             />
           </div>
@@ -271,7 +274,8 @@ export function StepFinalAssessment({
               Assessment Reference Document / Exam Briefing (Optional)
             </h4>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Upload an exam scenario, reference formula sheet, case study document, or dataset for the final assessment.
+              Upload an exam scenario, reference formula sheet, case study document, or dataset for
+              the final assessment.
             </p>
           </div>
           {assessmentUploading && (
@@ -305,7 +309,7 @@ export function StepFinalAssessment({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Question Bank ({questions.length} question{questions.length !== 1 ? "s" : ""})
+            Question Bank ({questions.length} question{questions.length !== 1 ? 's' : ''})
           </h4>
           <div className="flex items-center gap-2">
             {bankQuestions.length > 0 && (
@@ -318,7 +322,7 @@ export function StepFinalAssessment({
                     ...prev,
                     ...bankQuestions.map((bq) => ({
                       ...bq,
-                      id: uid("q"),
+                      id: uid('q'),
                     })),
                   ]);
                 }}
@@ -337,7 +341,9 @@ export function StepFinalAssessment({
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
             <FileQuestion className="mx-auto h-8 w-8 text-slate-400" />
             <p className="mt-2 text-sm font-semibold text-slate-700">No questions added yet</p>
-            <p className="text-xs text-slate-500">Add multiple choice, true/false, or short answer questions.</p>
+            <p className="text-xs text-slate-500">
+              Add multiple choice, true/false, or short answer questions.
+            </p>
             <Button size="sm" onClick={addQuestion} className="mt-4 gap-1.5">
               <Plus className="h-4 w-4" /> Add Question
             </Button>
@@ -349,9 +355,7 @@ export function StepFinalAssessment({
               className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <span className="text-xs font-bold text-indigo-700">
-                  Question {qIdx + 1}
-                </span>
+                <span className="text-xs font-bold text-indigo-700">Question {qIdx + 1}</span>
 
                 <div className="flex items-center gap-2">
                   <select
@@ -410,7 +414,7 @@ export function StepFinalAssessment({
               <div>
                 <label className={labelClass}>Question Prompt * (Interactive Rich Text)</label>
                 <CompactRichEditor
-                  value={q.text || ""}
+                  value={q.text || ''}
                   placeholder="Enter question statement, scenario, or prompt (format with bold, italic, bullets)…"
                   onChange={(html) => patchQuestion(qIdx, { text: html })}
                 />
@@ -419,7 +423,9 @@ export function StepFinalAssessment({
               {/* Question Diagram / Image Attachment */}
               <div className="pt-1 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-600">Question Diagram / Reference Image (Optional)</span>
+                  <span className="text-[11px] font-semibold text-slate-600">
+                    Question Diagram / Reference Image (Optional)
+                  </span>
                   {q.imageUrl && (
                     <button
                       type="button"
@@ -433,7 +439,11 @@ export function StepFinalAssessment({
                 {q.imageUrl ? (
                   <div className="relative inline-block rounded-xl border border-slate-200 overflow-hidden bg-slate-50 p-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={q.imageUrl} alt="Question diagram" className="max-h-40 max-w-full rounded-lg object-contain" />
+                    <img
+                      src={q.imageUrl}
+                      alt="Question diagram"
+                      className="max-h-40 max-w-full rounded-lg object-contain"
+                    />
                   </div>
                 ) : (
                   <div>
@@ -464,7 +474,7 @@ export function StepFinalAssessment({
                 )}
               </div>
 
-              {q.type === "multiple_choice" ? (
+              {q.type === 'multiple_choice' ? (
                 <div className="space-y-2">
                   <label className={labelClass}>Answer Options (Select the correct answer)</label>
                   {q.options.map((opt, optIdx) => (
@@ -486,12 +496,15 @@ export function StepFinalAssessment({
                     </div>
                   ))}
                 </div>
-              ) : q.type === "true_false" ? (
+              ) : q.type === 'true_false' ? (
                 <div className="space-y-2">
                   <label className={labelClass}>Correct Answer</label>
                   <div className="flex items-center gap-4">
-                    {["True", "False"].map((opt, optIdx) => (
-                      <label key={opt} className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    {['True', 'False'].map((opt, optIdx) => (
+                      <label
+                        key={opt}
+                        className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700"
+                      >
                         <input
                           type="radio"
                           name={`tf-${q.id}`}
@@ -509,7 +522,7 @@ export function StepFinalAssessment({
                   <label className={labelClass}>Sample Correct Answer / Rubric</label>
                   <input
                     type="text"
-                    value={q.answerText ?? ""}
+                    value={q.answerText ?? ''}
                     placeholder="Expected answer keywords or phrase"
                     onChange={(e) => patchQuestion(qIdx, { answerText: e.target.value })}
                     className={inputClass}
@@ -523,7 +536,7 @@ export function StepFinalAssessment({
         {questions.length > 0 && (
           <div className="pt-3 flex items-center justify-between border-t border-slate-100">
             <span className="text-xs text-slate-500 font-medium">
-              {questions.length} question{questions.length !== 1 ? "s" : ""} configured
+              {questions.length} question{questions.length !== 1 ? 's' : ''} configured
             </span>
             <Button size="sm" onClick={addQuestion} className="gap-1.5 shadow-xs">
               <Plus className="h-4 w-4" /> Add Question
@@ -534,4 +547,3 @@ export function StepFinalAssessment({
     </div>
   );
 }
-

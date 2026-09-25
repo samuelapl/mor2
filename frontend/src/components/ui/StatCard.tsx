@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   icon: LucideIcon;
@@ -25,7 +25,7 @@ export function StatCard({ icon: Icon, label, value, hint, iconClassName }: Stat
         </div>
         <div
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 shadow-sm ring-1 ring-slate-900/5 transition-transform duration-200 group-hover:scale-110",
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 shadow-sm ring-1 ring-slate-900/5 transition-transform duration-200 group-hover:scale-110',
             iconClassName,
           )}
         >

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Hand, X, Check, Users } from "lucide-react";
-import type { RaisedHandEntry } from "@/types/livekit-events";
+import React, { useState } from 'react';
+import { Hand, X, Check, Users } from 'lucide-react';
+import type { RaisedHandEntry } from '@/types/livekit-events';
 
 interface HandRaiseIndicatorProps {
   isTrainer: boolean;
@@ -77,7 +77,7 @@ export function HandRaiseIndicator({
           </span>
           <Hand className="h-4 w-4 text-amber-600 animate-pulse" />
           <span className="text-xs font-bold text-slate-900">
-            {raisedHands.length === 1 ? "Hand Raised" : "Hands Raised"}
+            {raisedHands.length === 1 ? 'Hand Raised' : 'Hands Raised'}
           </span>
         </button>
 
@@ -108,9 +108,7 @@ export function HandRaiseIndicator({
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
                       {idx + 1}
                     </span>
-                    <span className="font-semibold text-slate-800 truncate">
-                      {entry.userName}
-                    </span>
+                    <span className="font-semibold text-slate-800 truncate">{entry.userName}</span>
                   </div>
 
                   <button

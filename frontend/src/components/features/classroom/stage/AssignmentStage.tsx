@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { CheckCircle2, FileSpreadsheet, FileUp, Loader2, Trash2, Upload } from "lucide-react";
-import type { Lesson, UploadedResource } from "@/types";
-import { RichContent } from "@/components/ui/RichContent";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
-import { uploadAttachment } from "@/lib/api/files";
-import { ClassroomAttachments } from "../ClassroomAttachments";
+import { useState } from 'react';
+import { CheckCircle2, FileSpreadsheet, FileUp, Loader2, Trash2, Upload } from 'lucide-react';
+import type { Lesson, UploadedResource } from '@/types';
+import { RichContent } from '@/components/ui/RichContent';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { uploadAttachment } from '@/lib/api/files';
+import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface AssignmentStageProps {
   courseId: string;
@@ -53,7 +53,7 @@ export function AssignmentStage({
       const uploaded = await uploadAttachment(file, {
         courseId,
         lessonId: lesson.id,
-        purpose: "assignment_submission",
+        purpose: 'assignment_submission',
       });
       const data: SubmittedFile = {
         fileUrl: uploaded.fileUrl,
@@ -69,7 +69,7 @@ export function AssignmentStage({
       }
       if (onSubmitted) onSubmitted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload assignment file.");
+      setError(err instanceof Error ? err.message : 'Failed to upload assignment file.');
     } finally {
       setUploading(false);
     }
@@ -97,7 +97,7 @@ export function AssignmentStage({
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
             <FileSpreadsheet className="h-3 w-3 text-emerald-500" />
             Practical Assignment
-            {durationMin ? ` · ${durationMin} min` : ""}
+            {durationMin ? ` · ${durationMin} min` : ''}
           </span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">{lesson.title}</h2>
@@ -110,11 +110,15 @@ export function AssignmentStage({
         </h3>
         {lesson.content ? (
           <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
-            <RichContent html={lesson.content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+            <RichContent
+              html={lesson.content}
+              className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+            />
           </div>
         ) : (
           <p className="text-sm text-slate-500">
-            Follow the instructions provided in the attached starter workbook and upload your completed solution below.
+            Follow the instructions provided in the attached starter workbook and upload your
+            completed solution below.
           </p>
         )}
       </div>

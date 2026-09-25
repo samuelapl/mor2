@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { Trash2, Upload } from "lucide-react";
-import type { CourseLevel } from "@/types";
-import { COURSE_CATEGORIES } from "@/constants/course-categories";
-import { cn } from "@/lib/utils";
-import { inputClass, labelClass } from "./wizard-types";
-import { RichEditor } from "./wizard-components";
+import type React from 'react';
+import { Trash2, Upload } from 'lucide-react';
+import type { CourseLevel } from '@/types';
+import { COURSE_CATEGORIES } from '@/constants/course-categories';
+import { cn } from '@/lib/utils';
+import { inputClass, labelClass } from './wizard-types';
+import { RichEditor } from './wizard-components';
 
 export interface StepCourseDetailsProps {
   title: string;
@@ -106,10 +106,12 @@ export function StepCourseDetails({
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. TAX-201"
             disabled={isEdit}
-            className={cn(inputClass, isEdit && "opacity-75 cursor-not-allowed bg-slate-50")}
+            className={cn(inputClass, isEdit && 'opacity-75 cursor-not-allowed bg-slate-50')}
           />
           {isEdit ? (
-            <p className="mt-1 text-[11px] text-slate-400">Course code cannot be changed once created.</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Course code cannot be changed once created.
+            </p>
           ) : null}
         </div>
 
@@ -183,7 +185,7 @@ export function StepCourseDetails({
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
           >
             <Upload className="h-4 w-4 text-indigo-500" />
-            {coverPreview ? "Change Cover Image" : "Upload Cover Image"}
+            {coverPreview ? 'Change Cover Image' : 'Upload Cover Image'}
           </button>
         </div>
       </div>
@@ -251,4 +253,3 @@ export function StepCourseDetails({
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 
 export function usePagination<T>(items: T[], initialPageSize: number = 10) {
   const [page, setPage] = useState(1);
@@ -37,4 +37,3 @@ export function usePagination<T>(items: T[], initialPageSize: number = 10) {
 }
 
 export default usePagination;
-

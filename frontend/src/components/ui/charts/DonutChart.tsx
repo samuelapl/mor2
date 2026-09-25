@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { cn } from "@/lib/utils";
+import React, { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface DonutSegment {
   label: string;
@@ -26,7 +26,7 @@ export function DonutChart({
   centerValue,
   size = 180,
   className,
-  emptyText = "No data",
+  emptyText = 'No data',
   showLegend = true,
 }: DonutChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -54,19 +54,26 @@ export function DonutChart({
     };
   });
 
-  const displayCenterValue =
-    centerValue !== undefined ? centerValue : total > 0 ? total : 0;
+  const displayCenterValue = centerValue !== undefined ? centerValue : total > 0 ? total : 0;
   const displayCenterLabel =
     centerLabel !== undefined
       ? centerLabel
       : hoveredIdx !== null && segments[hoveredIdx]
-      ? segments[hoveredIdx].label
-      : "Total";
+        ? segments[hoveredIdx].label
+        : 'Total';
 
   return (
-    <div className={cn("flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-around", className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-around',
+        className,
+      )}
+    >
       {/* SVG Container */}
-      <div className="relative shrink-0 flex items-center justify-center" style={{ width: size, height: size }}>
+      <div
+        className="relative shrink-0 flex items-center justify-center"
+        style={{ width: size, height: size }}
+      >
         <svg
           viewBox="0 0 100 100"
           className="w-full h-full -rotate-90 transform"
@@ -120,7 +127,7 @@ export function DonutChart({
         {/* Center label & number */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-2">
           <span className="font-display text-xl font-bold tracking-tight text-slate-900 leading-none">
-            {total === 0 ? "—" : displayCenterValue}
+            {total === 0 ? '—' : displayCenterValue}
           </span>
           <span className="mt-1 text-[11px] font-medium text-slate-500 uppercase tracking-wider max-w-[80px] truncate leading-tight">
             {total === 0 ? emptyText : displayCenterLabel}
@@ -142,8 +149,10 @@ export function DonutChart({
                 <div
                   key={seg.idx}
                   className={cn(
-                    "flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer text-xs",
-                    isHovered ? "bg-slate-100/90 font-semibold" : "hover:bg-slate-50 text-slate-600"
+                    'flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer text-xs',
+                    isHovered
+                      ? 'bg-slate-100/90 font-semibold'
+                      : 'hover:bg-slate-50 text-slate-600',
                   )}
                   onMouseEnter={() => setHoveredIdx(seg.idx)}
                   onMouseLeave={() => setHoveredIdx(null)}

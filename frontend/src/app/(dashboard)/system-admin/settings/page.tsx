@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { CheckCircle2, Lock, Save, ShieldCheck } from "lucide-react";
-import { fetchSystemSettings, updateSystemSettings } from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
-import PageShell from "@/components/shared/PageShell";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Lock, Save, ShieldCheck } from 'lucide-react';
+import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
+import { useLms } from '@/lib/lms-store';
+import PageShell from '@/components/shared/PageShell';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { cn } from '@/lib/utils';
 
 export default function SystemSettingsPage() {
   const { lang, setLang } = useLms();
   const { tBilingual } = useTranslation();
-  const [sessionTimeout, setSessionTimeout] = useState("60");
+  const [sessionTimeout, setSessionTimeout] = useState('60');
   const [notifications, setNotifications] = useState(true);
   const [openRegistration, setOpenRegistration] = useState(false);
   const [ssoEnabled, setSSOEnabled] = useState(true);
@@ -30,9 +30,11 @@ export default function SystemSettingsPage() {
       .then((settings) => {
         if (!cancelled && settings) {
           if (settings.session_timeout) setSessionTimeout(settings.session_timeout);
-          if (settings.notifications !== undefined) setNotifications(settings.notifications === "true");
-          if (settings.open_registration !== undefined) setOpenRegistration(settings.open_registration === "true");
-          if (settings.sso_enabled !== undefined) setSSOEnabled(settings.sso_enabled === "true");
+          if (settings.notifications !== undefined)
+            setNotifications(settings.notifications === 'true');
+          if (settings.open_registration !== undefined)
+            setOpenRegistration(settings.open_registration === 'true');
+          if (settings.sso_enabled !== undefined) setSSOEnabled(settings.sso_enabled === 'true');
         }
       })
       .catch(() => {})
@@ -45,14 +47,14 @@ export default function SystemSettingsPage() {
   }, []);
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+    'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
   const toggleClass = (active: boolean) =>
     cn(
-      "relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer",
+      'relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer',
       active
-        ? "bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30"
-        : "bg-slate-300",
+        ? 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30'
+        : 'bg-slate-300',
     );
 
   const save = async () => {
@@ -69,7 +71,7 @@ export default function SystemSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to persist system settings.");
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to persist system settings.');
     } finally {
       setSaving(false);
     }
@@ -78,10 +80,10 @@ export default function SystemSettingsPage() {
   return (
     <PageShell
       role="system_admin"
-      title={tBilingual("System Settings", "የስርዓት ቅንብሮች")}
+      title={tBilingual('System Settings', 'የስርዓት ቅንብሮች')}
       description={tBilingual(
-        "Configure platform defaults, institutional security, and system preferences.",
-        "የመድረኩን ነባሪዎች፣ ተቋማዊ ደህንነት እና የስርዓት ምርጫዎችን ያዋቅሩ።"
+        'Configure platform defaults, institutional security, and system preferences.',
+        'የመድረኩን ነባሪዎች፣ ተቋማዊ ደህንነት እና የስርዓት ምርጫዎችን ያዋቅሩ።',
       )}
     >
       <div className="max-w-2xl space-y-6 pb-8">
@@ -95,25 +97,25 @@ export default function SystemSettingsPage() {
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              {tBilingual("System name", "የስርዓቱ ስም")}
+              {tBilingual('System name', 'የስርዓቱ ስም')}
             </label>
             <input
               value={tBilingual(
-                "Ministry of Revenues — Learning Management System",
-                "የገቢዎች ሚኒስቴር — የትምህርት ማኔጅመንት ስርዓት"
+                'Ministry of Revenues — Learning Management System',
+                'የገቢዎች ሚኒስቴር — የትምህርት ማኔጅመንት ስርዓት',
               )}
               readOnly
-              className={cn(inputClass, "bg-slate-50")}
+              className={cn(inputClass, 'bg-slate-50')}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                {tBilingual("Default language", "ነባሪ ቋንቋ")}
+                {tBilingual('Default language', 'ነባሪ ቋንቋ')}
               </label>
               <select
                 value={lang}
-                onChange={(event) => setLang(event.target.value as "en" | "am")}
+                onChange={(event) => setLang(event.target.value as 'en' | 'am')}
                 className={inputClass}
               >
                 <option value="en">English (እንግሊዝኛ)</option>
@@ -122,7 +124,7 @@ export default function SystemSettingsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                {tBilingual("Session timeout (minutes)", "የክፍለ-ጊዜ ማብቂያ (በደቂቃዎች)")}
+                {tBilingual('Session timeout (minutes)', 'የክፍለ-ጊዜ ማብቂያ (በደቂቃዎች)')}
               </label>
               <input
                 type="number"
@@ -140,28 +142,28 @@ export default function SystemSettingsPage() {
         <div className="divide-y divide-slate-100/80 rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
           {[
             {
-              label: tBilingual("Email notifications", "የኢሜይል ማሳወቂያዎች"),
+              label: tBilingual('Email notifications', 'የኢሜይል ማሳወቂያዎች'),
               description: tBilingual(
-                "Send email updates and session reminders to users and trainers.",
-                "ለተጠቃሚዎች እና አሰልጣኞች የኢሜይል ዝማኔዎችን እና የክፍለ-ጊዜ ማስታወሻዎችን ይላኩ።"
+                'Send email updates and session reminders to users and trainers.',
+                'ለተጠቃሚዎች እና አሰልጣኞች የኢሜይል ዝማኔዎችን እና የክፍለ-ጊዜ ማስታወሻዎችን ይላኩ።',
               ),
               value: notifications,
               set: setNotifications,
             },
             {
-              label: tBilingual("Open registration", "ክፍት ምዝገባ"),
+              label: tBilingual('Open registration', 'ክፍት ምዝገባ'),
               description: tBilingual(
-                "Allow new users to self-register via the login page.",
-                "አዲስ ተጠቃሚዎች በመግቢያ ገጹ በኩል ራሳቸውን እንዲመዘግቡ ይፍቀዱ።"
+                'Allow new users to self-register via the login page.',
+                'አዲስ ተጠቃሚዎች በመግቢያ ገጹ በኩል ራሳቸውን እንዲመዘግቡ ይፍቀዱ።',
               ),
               value: openRegistration,
               set: setOpenRegistration,
             },
             {
-              label: tBilingual("SSO / e-services integration", "የ SSO / የኢ-አገልግሎቶች ቅንጅት"),
+              label: tBilingual('SSO / e-services integration', 'የ SSO / የኢ-አገልግሎቶች ቅንጅት'),
               description: tBilingual(
-                "Single sign-on with the MoR eServices portal.",
-                "ከገቢዎች ሚኒስቴር የኢ-አገልግሎቶች መግቢያ ጋር የተዋሃደ አንድ ወጥ መግቢያ (SSO)።"
+                'Single sign-on with the MoR eServices portal.',
+                'ከገቢዎች ሚኒስቴር የኢ-አገልግሎቶች መግቢያ ጋር የተዋሃደ አንድ ወጥ መግቢያ (SSO)።',
               ),
               value: ssoEnabled,
               set: setSSOEnabled,
@@ -181,8 +183,8 @@ export default function SystemSettingsPage() {
               >
                 <span
                   className={cn(
-                    "inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-xs",
-                    setting.value ? "translate-x-5" : "translate-x-0.5",
+                    'inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-xs',
+                    setting.value ? 'translate-x-5' : 'translate-x-0.5',
                   )}
                 />
               </button>
@@ -191,16 +193,20 @@ export default function SystemSettingsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={save} disabled={saving} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
             <Save className="h-4 w-4" />
             {saving
-              ? tBilingual("Saving settings…", "ቅንብሮችን በማስቀመጥ ላይ…")
-              : tBilingual("Save Settings", "ቅንብሮችን አስቀምጥ")}
+              ? tBilingual('Saving settings…', 'ቅንብሮችን በማስቀመጥ ላይ…')
+              : tBilingual('Save Settings', 'ቅንብሮችን አስቀምጥ')}
           </Button>
           {saved && (
             <Badge variant="green" className="flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              {tBilingual("Settings updated successfully", "ቅንብሮች በተሳካ ሁኔታ ተዘምነዋል")}
+              {tBilingual('Settings updated successfully', 'ቅንብሮች በተሳካ ሁኔታ ተዘምነዋል')}
             </Badge>
           )}
         </div>

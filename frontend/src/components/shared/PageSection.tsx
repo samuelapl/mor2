@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import { COMMON_TRANSLATIONS } from "@/lib/i18n/translations";
+import type { ReactNode } from 'react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
 
 export interface BilingualText {
   en: string;
@@ -22,18 +22,18 @@ export default function PageSection({
   description,
   action,
   children,
-  className = "mb-8",
+  className = 'mb-8',
 }: PageSectionProps) {
   const { lang } = useTranslation();
-  const isAmharic = lang === "am";
+  const isAmharic = lang === 'am';
 
   const renderText = (value?: string | BilingualText | ReactNode): ReactNode => {
     if (!value) return null;
-    if (typeof value === "object" && value !== null && "en" in value && "am" in value) {
+    if (typeof value === 'object' && value !== null && 'en' in value && 'am' in value) {
       const b = value as BilingualText;
       return isAmharic ? b.am : b.en;
     }
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       for (const entry of Object.values(COMMON_TRANSLATIONS)) {
         if (entry.en.toLowerCase() === value.toLowerCase()) {
           return isAmharic ? entry.am : entry.en;

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { PendingCourseApprovals } from "@/components/features/courses/PendingCourseApprovals";
-import PageShell from "@/components/shared/PageShell";
+import { PendingCourseApprovals } from '@/components/features/courses/PendingCourseApprovals';
+import PageShell from '@/components/shared/PageShell';
 
 export default function AdminPendingCourseApprovalsPage() {
   return (

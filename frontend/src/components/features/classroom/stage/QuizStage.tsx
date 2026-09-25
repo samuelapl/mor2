@@ -1,13 +1,22 @@
-"use client";
+'use client';
 
-import { Award, BookOpenCheck, CheckCircle2, Clock, HelpCircle, Lock, RotateCcw, GraduationCap } from "lucide-react";
-import type { ApiAttachedAssessment } from "@/lib/api/types";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import {
+  Award,
+  BookOpenCheck,
+  CheckCircle2,
+  Clock,
+  HelpCircle,
+  Lock,
+  RotateCcw,
+  GraduationCap,
+} from 'lucide-react';
+import type { ApiAttachedAssessment } from '@/lib/api/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
 interface QuizStageProps {
   assessment: ApiAttachedAssessment | null;
-  quizKind?: "LESSON_ASSESSMENT" | "MODULE_ASSESSMENT" | "FINAL_ASSESSMENT";
+  quizKind?: 'LESSON_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'FINAL_ASSESSMENT';
   courseTitle: string;
   unlocked: boolean;
   onStartQuiz: () => void;
@@ -29,24 +38,21 @@ export function QuizStage({
   }
 
   const isPassed = assessment.passed;
-  const isFinal = quizKind === "FINAL_ASSESSMENT";
-  const isModule = quizKind === "MODULE_ASSESSMENT";
+  const isFinal = quizKind === 'FINAL_ASSESSMENT';
+  const isModule = quizKind === 'MODULE_ASSESSMENT';
 
   const badgeText = isFinal
-    ? "Final Certification Exam"
+    ? 'Final Certification Exam'
     : isModule
-    ? "Module Checkpoint Assessment"
-    : "Lesson Assessment";
+      ? 'Module Checkpoint Assessment'
+      : 'Lesson Assessment';
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="border-b border-slate-200 pb-4 space-y-2">
         <div className="flex items-center gap-2">
-          <Badge
-            variant={isPassed ? "green" : isFinal ? "blue" : "indigo"}
-            className="text-xs"
-          >
+          <Badge variant={isPassed ? 'green' : isFinal ? 'blue' : 'indigo'} className="text-xs">
             {badgeText}
           </Badge>
           {isPassed ? (
@@ -67,20 +73,20 @@ export function QuizStage({
       <div
         className={`rounded-2xl border p-8 space-y-6 shadow-sm transition ${
           isPassed
-            ? "border-emerald-200 bg-emerald-50/40"
+            ? 'border-emerald-200 bg-emerald-50/40'
             : unlocked
-            ? "border-indigo-200 bg-gradient-to-b from-indigo-50/60 to-white"
-            : "border-slate-200 bg-slate-50 opacity-75"
+              ? 'border-indigo-200 bg-gradient-to-b from-indigo-50/60 to-white'
+              : 'border-slate-200 bg-slate-50 opacity-75'
         }`}
       >
         <div className="flex items-center gap-4">
           <div
             className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${
               isPassed
-                ? "border-emerald-300 bg-emerald-100 text-emerald-700 shadow-sm"
+                ? 'border-emerald-300 bg-emerald-100 text-emerald-700 shadow-sm'
                 : unlocked
-                ? "border-indigo-300 bg-indigo-100 text-indigo-700 shadow-sm"
-                : "border-slate-300 bg-slate-200 text-slate-400"
+                  ? 'border-indigo-300 bg-indigo-100 text-indigo-700 shadow-sm'
+                  : 'border-slate-300 bg-slate-200 text-slate-400'
             }`}
           >
             {isPassed ? (
@@ -99,17 +105,17 @@ export function QuizStage({
           <div>
             <h3 className="text-lg font-bold text-slate-900">
               {isPassed
-                ? "Assessment Passed!"
+                ? 'Assessment Passed!'
                 : unlocked
-                ? "Ready to Begin Assessment"
-                : "Assessment Locked"}
+                  ? 'Ready to Begin Assessment'
+                  : 'Assessment Locked'}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               {isPassed
                 ? `You passed this assessment. You can review your questions or retake to practice further.`
                 : unlocked
-                ? `Test your knowledge with multiple choice and scenario questions to demonstrate your mastery.`
-                : `Complete preceding lessons and required study time to unlock this assessment.`}
+                  ? `Test your knowledge with multiple choice and scenario questions to demonstrate your mastery.`
+                  : `Complete preceding lessons and required study time to unlock this assessment.`}
             </p>
           </div>
         </div>
@@ -124,15 +130,13 @@ export function QuizStage({
           </div>
 
           <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Result
-            </p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Result</p>
             <p
               className={`text-base font-bold mt-1 ${
-                isPassed ? "text-emerald-600" : "text-slate-500"
+                isPassed ? 'text-emerald-600' : 'text-slate-500'
               }`}
             >
-              {isPassed ? "Passed ✅" : "Incomplete"}
+              {isPassed ? 'Passed ✅' : 'Incomplete'}
             </p>
           </div>
 
@@ -159,8 +163,8 @@ export function QuizStage({
             onClick={onStartQuiz}
             className={`w-full sm:w-auto font-semibold shadow-sm ${
               isPassed
-                ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >
             {isPassed ? (

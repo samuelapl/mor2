@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowUpDown,
@@ -12,19 +12,19 @@ import {
   UserPlus,
   UsersRound,
   X,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { TableSkeleton } from "@/components/ui/Skeleton";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { toast } from "@/lib/toast";
-import { useLms } from "@/lib/lms-store";
-import { dropEnrollment, fetchCourseEnrollments } from "@/lib/api/enrollments";
-import { fetchCourseLearnersProgress } from "@/lib/api/progress";
-import { usePagination } from "@/lib/usePagination";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { toast } from '@/lib/toast';
+import { useLms } from '@/lib/lms-store';
+import { dropEnrollment, fetchCourseEnrollments } from '@/lib/api/enrollments';
+import { fetchCourseLearnersProgress } from '@/lib/api/progress';
+import { usePagination } from '@/lib/usePagination';
+import { cn } from '@/lib/utils';
 
 interface EnrolledLearnerItem {
   enrollmentId: string;
@@ -33,19 +33,19 @@ interface EnrolledLearnerItem {
   email: string;
   department: string;
   enrolledAt: string;
-  status: "ACTIVE" | "COMPLETED" | "DROPPED" | string;
+  status: 'ACTIVE' | 'COMPLETED' | 'DROPPED' | string;
   progressPercent: number;
   completedLessons: number;
   totalLessons: number;
 }
 
 const AVATAR_COLORS = [
-  "from-indigo-500 to-violet-600",
-  "from-blue-500 to-cyan-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-  "from-purple-500 to-indigo-600",
+  'from-indigo-500 to-violet-600',
+  'from-blue-500 to-cyan-600',
+  'from-emerald-500 to-teal-600',
+  'from-amber-500 to-orange-600',
+  'from-rose-500 to-pink-600',
+  'from-purple-500 to-indigo-600',
 ];
 
 function getAvatarColor(id: string): string {
@@ -53,26 +53,26 @@ function getAvatarColor(id: string): string {
   for (let i = 0; i < id.length; i++) {
     hash = (hash + id.charCodeAt(i)) % AVATAR_COLORS.length;
   }
-  return AVATAR_COLORS[hash] ?? "from-indigo-500 to-violet-600";
+  return AVATAR_COLORS[hash] ?? 'from-indigo-500 to-violet-600';
 }
 
 function getInitials(name: string): string {
-  if (!name) return "?";
+  if (!name) return '?';
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function stripHtml(html?: string): string {
-  if (!html) return "";
-  return html.replace(/<[^>]*>?/gm, "").trim();
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, '').trim();
 }
 
 export function EnrollmentForm() {
   const { courses, users, enrollLearners } = useLms();
 
   // Selected Course
-  const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
+  const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
 
   // Roster Data States
   const [roster, setRoster] = useState<EnrolledLearnerItem[]>([]);
@@ -80,13 +80,17 @@ export function EnrollmentForm() {
   const [rosterError, setRosterError] = useState<string | null>(null);
 
   // Search, Filter & Sort States
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED" | "DROPPED">("ALL");
-  const [sortBy, setSortBy] = useState<"name" | "progress_desc" | "progress_asc" | "date_desc">("progress_desc");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'DROPPED'>(
+    'ALL',
+  );
+  const [sortBy, setSortBy] = useState<'name' | 'progress_desc' | 'progress_asc' | 'date_desc'>(
+    'progress_desc',
+  );
 
   // Enroll & Withdraw Modal States
   const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [userToEnroll, setUserToEnroll] = useState("");
+  const [userToEnroll, setUserToEnroll] = useState('');
   const [enrolling, setEnrolling] = useState(false);
   const [withdrawingLearner, setWithdrawingLearner] = useState<EnrolledLearnerItem | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -108,81 +112,85 @@ export function EnrollmentForm() {
 
   // Unenrolled learners eligible for enrollment
   const unenrolledUsers = useMemo(() => {
-    return users.filter((u) => u.role === "learner" && !enrolledUserIds.has(u.id));
+    return users.filter((u) => u.role === 'learner' && !enrolledUserIds.has(u.id));
   }, [users, enrolledUserIds]);
 
   // Load enrolled students roster and progress for the active course
-  const loadRoster = useCallback(async (cId: string) => {
-    if (!cId) return;
-    setLoadingRoster(true);
-    setRosterError(null);
+  const loadRoster = useCallback(
+    async (cId: string) => {
+      if (!cId) return;
+      setLoadingRoster(true);
+      setRosterError(null);
 
-    try {
-      const [enrollmentsRes, progressRes] = await Promise.allSettled([
-        fetchCourseEnrollments(cId),
-        fetchCourseLearnersProgress(cId),
-      ]);
+      try {
+        const [enrollmentsRes, progressRes] = await Promise.allSettled([
+          fetchCourseEnrollments(cId),
+          fetchCourseLearnersProgress(cId),
+        ]);
 
-      const enrollments = enrollmentsRes.status === "fulfilled" ? enrollmentsRes.value.data : [];
-      const progressList = progressRes.status === "fulfilled" ? progressRes.value.learners : [];
-      const totalLessons = progressRes.status === "fulfilled" ? progressRes.value.totalLessons : 0;
+        const enrollments = enrollmentsRes.status === 'fulfilled' ? enrollmentsRes.value.data : [];
+        const progressList = progressRes.status === 'fulfilled' ? progressRes.value.learners : [];
+        const totalLessons =
+          progressRes.status === 'fulfilled' ? progressRes.value.totalLessons : 0;
 
-      // Index progress by userId
-      const progressMap = new Map<string, (typeof progressList)[0]>();
-      for (const p of progressList) {
-        progressMap.set(p.userId, p);
-      }
-
-      const items: EnrolledLearnerItem[] = enrollments.map((enrollment) => {
-        const directoryUser = userMap.get(enrollment.userId);
-        const progressItem = progressMap.get(enrollment.userId);
-
-        let resolvedName = enrollment.userId;
-        if (directoryUser?.name) {
-          resolvedName = directoryUser.name;
-        } else if (enrollment.user) {
-          resolvedName = `${enrollment.user.firstName} ${enrollment.user.lastName}`.trim();
-        } else if (progressItem) {
-          resolvedName = `${progressItem.firstName} ${progressItem.lastName}`.trim();
+        // Index progress by userId
+        const progressMap = new Map<string, (typeof progressList)[0]>();
+        for (const p of progressList) {
+          progressMap.set(p.userId, p);
         }
 
-        const resolvedEmail =
-          directoryUser?.email ??
-          enrollment.user?.email ??
-          progressItem?.email ??
-          "No email recorded";
+        const items: EnrolledLearnerItem[] = enrollments.map((enrollment) => {
+          const directoryUser = userMap.get(enrollment.userId);
+          const progressItem = progressMap.get(enrollment.userId);
 
-        const resolvedDepartment =
-          directoryUser?.department ??
-          "General Revenue";
+          let resolvedName = enrollment.userId;
+          if (directoryUser?.name) {
+            resolvedName = directoryUser.name;
+          } else if (enrollment.user) {
+            resolvedName = `${enrollment.user.firstName} ${enrollment.user.lastName}`.trim();
+          } else if (progressItem) {
+            resolvedName = `${progressItem.firstName} ${progressItem.lastName}`.trim();
+          }
 
-        const resolvedProgress =
-          progressItem?.progressPercent ??
-          (selectedCourse?.progress ? selectedCourse.progress[enrollment.userId] ?? 0 : 0);
+          const resolvedEmail =
+            directoryUser?.email ??
+            enrollment.user?.email ??
+            progressItem?.email ??
+            'No email recorded';
 
-        const resolvedCompletedLessons = progressItem?.completedLessons ?? 0;
+          const resolvedDepartment = directoryUser?.department ?? 'General Revenue';
 
-        return {
-          enrollmentId: enrollment.id,
-          userId: enrollment.userId,
-          name: resolvedName,
-          email: resolvedEmail,
-          department: resolvedDepartment,
-          enrolledAt: enrollment.enrolledAt || enrollment.createdAt,
-          status: enrollment.status,
-          progressPercent: resolvedProgress,
-          completedLessons: resolvedCompletedLessons,
-          totalLessons: totalLessons || 0,
-        };
-      });
+          const resolvedProgress =
+            progressItem?.progressPercent ??
+            (selectedCourse?.progress ? (selectedCourse.progress[enrollment.userId] ?? 0) : 0);
 
-      setRoster(items);
-    } catch (err) {
-      setRosterError(err instanceof Error ? err.message : "Failed to load enrolled students roster.");
-    } finally {
-      setLoadingRoster(false);
-    }
-  }, [selectedCourse, userMap]);
+          const resolvedCompletedLessons = progressItem?.completedLessons ?? 0;
+
+          return {
+            enrollmentId: enrollment.id,
+            userId: enrollment.userId,
+            name: resolvedName,
+            email: resolvedEmail,
+            department: resolvedDepartment,
+            enrolledAt: enrollment.enrolledAt || enrollment.createdAt,
+            status: enrollment.status,
+            progressPercent: resolvedProgress,
+            completedLessons: resolvedCompletedLessons,
+            totalLessons: totalLessons || 0,
+          };
+        });
+
+        setRoster(items);
+      } catch (err) {
+        setRosterError(
+          err instanceof Error ? err.message : 'Failed to load enrolled students roster.',
+        );
+      } finally {
+        setLoadingRoster(false);
+      }
+    },
+    [selectedCourse, userMap],
+  );
 
   // Refetch roster when selected course changes
   useEffect(() => {
@@ -194,22 +202,22 @@ export function EnrollmentForm() {
   // Handle single learner enrollment
   const handleEnroll = async () => {
     if (!selectedCourse?.id || !userToEnroll) {
-      toast.error("Please select a learner to enroll.");
+      toast.error('Please select a learner to enroll.');
       return;
     }
     setEnrolling(true);
     try {
       const res = await enrollLearners(selectedCourse.id, [userToEnroll]);
       if (res.ok) {
-        toast.success("Learner enrolled successfully!");
+        toast.success('Learner enrolled successfully!');
         setShowEnrollModal(false);
-        setUserToEnroll("");
+        setUserToEnroll('');
         void loadRoster(selectedCourse.id);
       } else {
-        toast.error(res.message || "Failed to enroll learner.");
+        toast.error(res.message || 'Failed to enroll learner.');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Enrollment failed.");
+      toast.error(err instanceof Error ? err.message : 'Enrollment failed.');
     } finally {
       setEnrolling(false);
     }
@@ -220,14 +228,14 @@ export function EnrollmentForm() {
     if (!withdrawingLearner) return;
     setWithdrawing(true);
     try {
-      await dropEnrollment(withdrawingLearner.enrollmentId, "Withdrawn by training admin");
+      await dropEnrollment(withdrawingLearner.enrollmentId, 'Withdrawn by training admin');
       toast.success(`${withdrawingLearner.name} has been withdrawn from this course.`);
       setWithdrawingLearner(null);
       if (selectedCourse?.id) {
         void loadRoster(selectedCourse.id);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to withdraw learner.");
+      toast.error(err instanceof Error ? err.message : 'Failed to withdraw learner.');
     } finally {
       setWithdrawing(false);
     }
@@ -236,8 +244,10 @@ export function EnrollmentForm() {
   // Metrics for current course roster
   const metrics = useMemo(() => {
     const total = roster.length;
-    const active = roster.filter((r) => r.status === "ACTIVE").length;
-    const completed = roster.filter((r) => r.status === "COMPLETED" || r.progressPercent === 100).length;
+    const active = roster.filter((r) => r.status === 'ACTIVE').length;
+    const completed = roster.filter(
+      (r) => r.status === 'COMPLETED' || r.progressPercent === 100,
+    ).length;
     const avgProgress =
       total > 0
         ? Math.round(roster.reduce((sum, item) => sum + item.progressPercent, 0) / total)
@@ -250,7 +260,7 @@ export function EnrollmentForm() {
     let result = [...roster];
 
     // Status filter
-    if (statusFilter !== "ALL") {
+    if (statusFilter !== 'ALL') {
       result = result.filter((item) => item.status === statusFilter);
     }
 
@@ -267,16 +277,16 @@ export function EnrollmentForm() {
 
     // Sorting
     result.sort((a, b) => {
-      if (sortBy === "name") {
+      if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       }
-      if (sortBy === "progress_desc") {
+      if (sortBy === 'progress_desc') {
         return b.progressPercent - a.progressPercent;
       }
-      if (sortBy === "progress_asc") {
+      if (sortBy === 'progress_asc') {
         return a.progressPercent - b.progressPercent;
       }
-      if (sortBy === "date_desc") {
+      if (sortBy === 'date_desc') {
         return new Date(b.enrolledAt).getTime() - new Date(a.enrolledAt).getTime();
       }
       return 0;
@@ -286,15 +296,18 @@ export function EnrollmentForm() {
   }, [roster, statusFilter, searchQuery, sortBy]);
 
   // Pagination for roster
-  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filteredRoster, 10);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    filteredRoster,
+    10,
+  );
 
   const formatEnrollDate = (dateStr?: string) => {
-    if (!dateStr) return "—";
+    if (!dateStr) return '—';
     try {
-      return new Date(dateStr).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       });
     } catch {
       return dateStr;
@@ -327,13 +340,14 @@ export function EnrollmentForm() {
                 onChange={(e) => {
                   setCourseId(e.target.value);
                   setPage(1);
-                  setSearchQuery("");
+                  setSearchQuery('');
                 }}
                 className="w-full appearance-none rounded-xl border border-slate-200/90 bg-white py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-800 shadow-sm outline-none transition hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
               >
                 {courses.map((course) => (
                   <option key={course.id} value={course.id}>
-                    {course.code} — {course.title} ({course.enrolledLearnerIds?.length ?? 0} enrolled)
+                    {course.code} — {course.title} ({course.enrolledLearnerIds?.length ?? 0}{' '}
+                    enrolled)
                   </option>
                 ))}
               </select>
@@ -343,9 +357,7 @@ export function EnrollmentForm() {
             </div>
 
             {plainDescription ? (
-              <p className="line-clamp-1 text-xs text-slate-500">
-                {plainDescription}
-              </p>
+              <p className="line-clamp-1 text-xs text-slate-500">{plainDescription}</p>
             ) : null}
           </div>
 
@@ -384,7 +396,7 @@ export function EnrollmentForm() {
               Total Enrolled
             </p>
             <p className="mt-1 font-display text-xl font-bold text-slate-900">
-              {loadingRoster ? "…" : metrics.total}
+              {loadingRoster ? '…' : metrics.total}
             </p>
           </div>
 
@@ -393,7 +405,7 @@ export function EnrollmentForm() {
               Active Learners
             </p>
             <p className="mt-1 font-display text-xl font-bold text-emerald-800">
-              {loadingRoster ? "…" : metrics.active}
+              {loadingRoster ? '…' : metrics.active}
             </p>
           </div>
 
@@ -402,7 +414,7 @@ export function EnrollmentForm() {
               Completed
             </p>
             <p className="mt-1 font-display text-xl font-bold text-blue-800">
-              {loadingRoster ? "…" : metrics.completed}
+              {loadingRoster ? '…' : metrics.completed}
             </p>
           </div>
 
@@ -411,7 +423,7 @@ export function EnrollmentForm() {
               Avg. Completion
             </p>
             <p className="mt-1 font-display text-xl font-bold text-violet-800">
-              {loadingRoster ? "…" : `${metrics.avgProgress}%`}
+              {loadingRoster ? '…' : `${metrics.avgProgress}%`}
             </p>
           </div>
         </div>
@@ -438,7 +450,7 @@ export function EnrollmentForm() {
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -448,7 +460,7 @@ export function EnrollmentForm() {
 
             {/* Status Filter Buttons */}
             <div className="hidden sm:flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs shadow-xs">
-              {(["ALL", "ACTIVE", "COMPLETED", "DROPPED"] as const).map((st) => (
+              {(['ALL', 'ACTIVE', 'COMPLETED', 'DROPPED'] as const).map((st) => (
                 <button
                   key={st}
                   type="button"
@@ -457,13 +469,13 @@ export function EnrollmentForm() {
                     setPage(1);
                   }}
                   className={cn(
-                    "rounded-lg px-2.5 py-1 text-xs font-semibold transition",
+                    'rounded-lg px-2.5 py-1 text-xs font-semibold transition',
                     statusFilter === st
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                   )}
                 >
-                  {st === "ALL" ? "All" : st.charAt(0) + st.slice(1).toLowerCase()}
+                  {st === 'ALL' ? 'All' : st.charAt(0) + st.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -512,12 +524,12 @@ export function EnrollmentForm() {
             <h3 className="text-sm font-bold text-slate-900">
               {roster.length === 0
                 ? `No learners enrolled in "${selectedCourse?.title}" yet`
-                : "No matching learners found"}
+                : 'No matching learners found'}
             </h3>
             <p className="mt-1 text-xs text-slate-500 max-w-sm">
               {roster.length === 0
-                ? "There are currently no learners enrolled in this course."
-                : "Try clearing or modifying your search filter."}
+                ? 'There are currently no learners enrolled in this course.'
+                : 'Try clearing or modifying your search filter.'}
             </p>
           </div>
         ) : (
@@ -549,7 +561,7 @@ export function EnrollmentForm() {
                           <div className="flex items-center gap-3">
                             <div
                               className={cn(
-                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xs font-bold text-white shadow-sm",
+                                'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xs font-bold text-white shadow-sm',
                                 avatarGradient,
                               )}
                             >
@@ -559,9 +571,7 @@ export function EnrollmentForm() {
                               <p className="font-semibold text-slate-900 truncate">
                                 {learner.name}
                               </p>
-                              <p className="text-xs text-slate-400 truncate">
-                                {learner.email}
-                              </p>
+                              <p className="text-xs text-slate-400 truncate">{learner.email}</p>
                             </div>
                           </div>
                         </td>
@@ -602,21 +612,21 @@ export function EnrollmentForm() {
                           <div className="flex items-center justify-end gap-2">
                             <Badge
                               variant={
-                                learner.status === "COMPLETED" || learner.progressPercent === 100
-                                  ? "blue"
-                                  : learner.status === "ACTIVE"
-                                    ? "green"
-                                    : "slate"
+                                learner.status === 'COMPLETED' || learner.progressPercent === 100
+                                  ? 'blue'
+                                  : learner.status === 'ACTIVE'
+                                    ? 'green'
+                                    : 'slate'
                               }
                               dot
                             >
-                              {learner.status === "COMPLETED" || learner.progressPercent === 100
-                                ? "Completed"
-                                : learner.status === "ACTIVE"
-                                  ? "Active"
-                                  : "Dropped"}
+                              {learner.status === 'COMPLETED' || learner.progressPercent === 100
+                                ? 'Completed'
+                                : learner.status === 'ACTIVE'
+                                  ? 'Active'
+                                  : 'Dropped'}
                             </Badge>
-                            {learner.status === "ACTIVE" && (
+                            {learner.status === 'ACTIVE' && (
                               <button
                                 type="button"
                                 title={`Withdraw ${learner.name}`}
@@ -659,7 +669,8 @@ export function EnrollmentForm() {
               <div>
                 <h3 className="text-base font-bold text-slate-900">Enroll Learner</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Enroll a student into <span className="font-semibold text-slate-700">{selectedCourse?.title}</span>
+                  Enroll a student into{' '}
+                  <span className="font-semibold text-slate-700">{selectedCourse?.title}</span>
                 </p>
               </div>
               <button
@@ -688,7 +699,7 @@ export function EnrollmentForm() {
                   <option value="">-- Choose a learner --</option>
                   {unenrolledUsers.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.email}) — {u.department || "No Dept"}
+                      {u.name} ({u.email}) — {u.department || 'No Dept'}
                     </option>
                   ))}
                 </select>

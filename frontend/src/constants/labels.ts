@@ -1,5 +1,5 @@
-import type { Lang } from "@/types";
-import { COMMON_TRANSLATIONS } from "@/lib/i18n/translations";
+import type { Lang } from '@/types';
+import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
 
 export type TranslationKey = keyof typeof COMMON_TRANSLATIONS | string;
 

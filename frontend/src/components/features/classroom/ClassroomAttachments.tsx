@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Download, ExternalLink } from "lucide-react";
-import type { UploadedResource } from "@/types";
-import { formatFileSize, getFileBadge } from "@/components/features/courses/wizard-components";
-import { cn } from "@/lib/utils";
+import { Download, ExternalLink } from 'lucide-react';
+import type { UploadedResource } from '@/types';
+import { formatFileSize, getFileBadge } from '@/components/features/courses/wizard-components';
+import { cn } from '@/lib/utils';
 
 interface ClassroomAttachmentsProps {
   files: UploadedResource[];
@@ -13,13 +13,13 @@ interface ClassroomAttachmentsProps {
 
 export function ClassroomAttachments({
   files,
-  label = "Attached Resource",
+  label = 'Attached Resource',
   className,
 }: ClassroomAttachmentsProps) {
   if (!files || files.length === 0) return null;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn('space-y-2', className)}>
       <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
         Lab Materials & Attachments ({files.length})
       </p>
@@ -37,7 +37,7 @@ export function ClassroomAttachments({
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
                     badge.bgColor,
                   )}
                 >
@@ -84,4 +84,3 @@ export function ClassroomAttachments({
     </div>
   );
 }
-

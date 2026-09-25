@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useEffect, useState, type FormEvent } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Hash, KeyRound, Lock, ShieldCheck } from "lucide-react";
-import { useLms } from "@/lib/lms-store";
+import { useEffect, useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Check, Hash, KeyRound, Lock, ShieldCheck } from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
 import {
   readFirstLoginChallenge,
   resendFirstLoginCode,
   verifyFirstLoginCode,
-} from "@/lib/api/auth";
-import { MIN_PASSWORD_LENGTH, passwordIssues } from "@/constants/auth";
-import { ROLE_PATHS } from "@/constants/roles";
-import { useTranslation } from "@/lib/i18n/useTranslation";
-import { LanguageToggle } from "@/components/shared/LanguageToggle";
+} from '@/lib/api/auth';
+import { MIN_PASSWORD_LENGTH, passwordIssues } from '@/constants/auth';
+import { ROLE_PATHS } from '@/constants/roles';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
-const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 
 /** Matches the backend's resend cooldown. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -26,7 +26,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 type Challenge = { challengeToken: string; email: string };
 
 const submitClass =
-  "flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50";
+  'flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50';
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -46,8 +46,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
   return (
-    <li className={`flex items-center gap-1.5 ${met ? "text-emerald-600" : "text-slate-400"}`}>
-      <Check className={`h-3 w-3 ${met ? "opacity-100" : "opacity-30"}`} />
+    <li className={`flex items-center gap-1.5 ${met ? 'text-emerald-600' : 'text-slate-400'}`}>
+      <Check className={`h-3 w-3 ${met ? 'opacity-100' : 'opacity-30'}`} />
       {children}
     </li>
   );
@@ -61,10 +61,10 @@ export default function FirstLoginForm() {
   // undefined = not read yet (sessionStorage is client-only), null = missing.
   const [challenge, setChallenge] = useState<Challenge | null | undefined>(undefined);
   // The code is checked on its own first; the password form only opens once it passes.
-  const [step, setStep] = useState<"code" | "password">("code");
-  const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [step, setStep] = useState<'code' | 'password'>('code');
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -87,11 +87,11 @@ export default function FirstLoginForm() {
     return (
       <Shell>
         <p className="text-center text-sm text-slate-500">
-          {tBilingual("Your password-change session has expired. ", "የይለፍ ቃል መቀየሪያ ክፍለ-ጊዜዎ አልቋል። ")}
+          {tBilingual('Your password-change session has expired. ', 'የይለፍ ቃል መቀየሪያ ክፍለ-ጊዜዎ አልቋል። ')}
           <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-700">
-            {tBilingual("Sign in again", "እንደገና ይግቡ")}
-          </Link>{" "}
-          {tBilingual("to get a new code.", "አዲስ ኮድ ለማግኘት።")}
+            {tBilingual('Sign in again', 'እንደገና ይግቡ')}
+          </Link>{' '}
+          {tBilingual('to get a new code.', 'አዲስ ኮድ ለማግኘት።')}
         </p>
       </Shell>
     );
@@ -103,19 +103,14 @@ export default function FirstLoginForm() {
     setNotice(null);
     try {
       const res = await resendFirstLoginCode(challenge.challengeToken);
-      setNotice(
-        tBilingual(
-          `A new code was sent to ${res.email}.`,
-          `አዲስ ኮድ ወደ ${res.email} ተልኳል።`
-        )
-      );
+      setNotice(tBilingual(`A new code was sent to ${res.email}.`, `አዲስ ኮድ ወደ ${res.email} ተልኳል።`));
       setCooldown(RESEND_COOLDOWN_SECONDS);
-      setCode("");
+      setCode('');
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : tBilingual("Could not resend the code. Try again.", "ኮዱን መላክ አልተቻለም። እንደገና ይሞክሩ።")
+          : tBilingual('Could not resend the code. Try again.', 'ኮዱን መላክ አልተቻለም። እንደገና ይሞክሩ።'),
       );
     } finally {
       setResending(false);
@@ -125,7 +120,7 @@ export default function FirstLoginForm() {
   const handleVerify = async (event: FormEvent) => {
     event.preventDefault();
     if (code.length !== 6) {
-      setError(tBilingual("Enter all 6 digits.", "ሁሉንም 6 አሃዞች ያስገቡ።"));
+      setError(tBilingual('Enter all 6 digits.', 'ሁሉንም 6 አሃዞች ያስገቡ።'));
       return;
     }
     setError(null);
@@ -133,12 +128,15 @@ export default function FirstLoginForm() {
     setSaving(true);
     try {
       await verifyFirstLoginCode(challenge.challengeToken, code);
-      setStep("password");
+      setStep('password');
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : tBilingual("Invalid or expired code. Try again.", "ልክ ያልሆነ ወይም ጊዜው ያለፈበት ኮድ። እንደገና ይሞክሩ።")
+          : tBilingual(
+              'Invalid or expired code. Try again.',
+              'ልክ ያልሆነ ወይም ጊዜው ያለፈበት ኮድ። እንደገና ይሞክሩ።',
+            ),
       );
     } finally {
       setSaving(false);
@@ -153,7 +151,7 @@ export default function FirstLoginForm() {
       return;
     }
     if (password !== confirm) {
-      setError(tBilingual("Passwords do not match.", "የይለፍ ቃሎች አይዛመዱም።"));
+      setError(tBilingual('Passwords do not match.', 'የይለፍ ቃሎች አይዛመዱም።'));
       return;
     }
     setError(null);
@@ -172,12 +170,12 @@ export default function FirstLoginForm() {
   };
 
   const backToCode = () => {
-    setStep("code");
+    setStep('code');
     setError(null);
     setNotice(null);
   };
 
-  const sessionExpired = error?.toLowerCase().includes("sign in again") ?? false;
+  const sessionExpired = error?.toLowerCase().includes('sign in again') ?? false;
 
   const messages = (
     <>
@@ -189,10 +187,10 @@ export default function FirstLoginForm() {
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
-          {error}{" "}
+          {error}{' '}
           {sessionExpired ? (
             <Link href="/login" className="underline hover:text-red-800">
-              {tBilingual("Go to sign in.", "ወደ መግቢያ ገጽ ይሂዱ።")}
+              {tBilingual('Go to sign in.', 'ወደ መግቢያ ገጽ ይሂዱ።')}
             </Link>
           ) : null}
         </div>
@@ -200,7 +198,7 @@ export default function FirstLoginForm() {
     </>
   );
 
-  if (step === "code") {
+  if (step === 'code') {
     return (
       <Shell>
         <div className="text-center">
@@ -208,22 +206,22 @@ export default function FirstLoginForm() {
             <ShieldCheck className="h-7 w-7" />
           </div>
           <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-            {tBilingual("Verify your email", "ኢሜይልዎን ያረጋግጡ")}
+            {tBilingual('Verify your email', 'ኢሜይልዎን ያረጋግጡ')}
           </h1>
           <p className="mt-1.5 text-sm text-slate-500">
             {tBilingual(
-              "Your account was created by an administrator. We sent a 6-digit code to ",
-              "አካውንትዎ በአስተዳዳሪ ተፈጥሯል። ባለ 6-አሃዝ ኮድ ልከናል ወደ "
+              'Your account was created by an administrator. We sent a 6-digit code to ',
+              'አካውንትዎ በአስተዳዳሪ ተፈጥሯል። ባለ 6-አሃዝ ኮድ ልከናል ወደ ',
             )}
             <span className="font-semibold text-slate-800">{challenge.email}</span>
-            {tBilingual(" — enter it below to continue.", " — ለመቀጠል ከታች ያስገቡት።")}
+            {tBilingual(' — enter it below to continue.', ' — ለመቀጠል ከታች ያስገቡት።')}
           </p>
         </div>
 
         <form onSubmit={handleVerify} className="mt-7 space-y-4">
           <div>
             <label htmlFor="code" className={labelClass}>
-              {tBilingual("Verification code", "የማረጋገጫ ኮድ")}
+              {tBilingual('Verification code', 'የማረጋገጫ ኮድ')}
             </label>
             <div className="relative">
               <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -236,7 +234,7 @@ export default function FirstLoginForm() {
                 maxLength={6}
                 value={code}
                 onChange={(e) => {
-                  setCode(e.target.value.replace(/\D/g, ""));
+                  setCode(e.target.value.replace(/\D/g, ''));
                   setError(null);
                 }}
                 placeholder="123456"
@@ -256,8 +254,8 @@ export default function FirstLoginForm() {
                   className="font-semibold text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
                 >
                   {resending
-                    ? tBilingual("Sending…", "በመላክ ላይ…")
-                    : tBilingual("Resend code", "ኮዱን በድጋሚ ላክ")}
+                    ? tBilingual('Sending…', 'በመላክ ላይ…')
+                    : tBilingual('Resend code', 'ኮዱን በድጋሚ ላክ')}
                 </button>
               )}
             </div>
@@ -265,14 +263,10 @@ export default function FirstLoginForm() {
 
           {messages}
 
-          <button
-            type="submit"
-            disabled={saving || code.length !== 6}
-            className={submitClass}
-          >
+          <button type="submit" disabled={saving || code.length !== 6} className={submitClass}>
             {saving
-              ? tBilingual("Verifying…", "በማረጋገጥ ላይ…")
-              : tBilingual("Verify code", "ኮዱን አረጋግጥ")}
+              ? tBilingual('Verifying…', 'በማረጋገጥ ላይ…')
+              : tBilingual('Verify code', 'ኮዱን አረጋግጥ')}
           </button>
         </form>
 
@@ -282,7 +276,7 @@ export default function FirstLoginForm() {
             className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            {tBilingual("Back to sign in", "ወደ መግቢያ ገጽ ተመለስ")}
+            {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
           </Link>
         </p>
       </Shell>
@@ -296,12 +290,12 @@ export default function FirstLoginForm() {
           <KeyRound className="h-7 w-7" />
         </div>
         <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-          {tBilingual("Set your own password", "የራስዎን የይለፍ ቃል ያስገቡ")}
+          {tBilingual('Set your own password', 'የራስዎን የይለፍ ቃል ያስገቡ')}
         </h1>
         <p className="mt-1.5 text-sm text-slate-500">
           {tBilingual(
-            "Email verified. Choose a new password for your account.",
-            "ኢሜይልዎ ተረጋግጧል። ለአካውንትዎ አዲስ የይለፍ ቃል ይምረጡ።"
+            'Email verified. Choose a new password for your account.',
+            'ኢሜይልዎ ተረጋግጧል። ለአካውንትዎ አዲስ የይለፍ ቃል ይምረጡ።',
           )}
         </p>
       </div>
@@ -309,7 +303,7 @@ export default function FirstLoginForm() {
       <form onSubmit={handleSubmit} className="mt-7 space-y-4">
         <div>
           <label htmlFor="password" className={labelClass}>
-            {tBilingual("New password", "አዲስ የይለፍ ቃል")}
+            {tBilingual('New password', 'አዲስ የይለፍ ቃል')}
           </label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -332,7 +326,7 @@ export default function FirstLoginForm() {
 
         <div>
           <label htmlFor="confirm" className={labelClass}>
-            {tBilingual("Confirm password", "የይለፍ ቃል አረጋግጥ")}
+            {tBilingual('Confirm password', 'የይለፍ ቃል አረጋግጥ')}
           </label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -356,14 +350,10 @@ export default function FirstLoginForm() {
           <Rule met={password.length >= MIN_PASSWORD_LENGTH}>
             {tBilingual(`${MIN_PASSWORD_LENGTH}+ characters`, `${MIN_PASSWORD_LENGTH}+ ቁምፊዎች`)}
           </Rule>
-          <Rule met={/[A-Za-z]/.test(password)}>
-            {tBilingual("A letter", "ፊደል")}
-          </Rule>
-          <Rule met={/[0-9]/.test(password)}>
-            {tBilingual("A number", "ቁጥር")}
-          </Rule>
+          <Rule met={/[A-Za-z]/.test(password)}>{tBilingual('A letter', 'ፊደል')}</Rule>
+          <Rule met={/[0-9]/.test(password)}>{tBilingual('A number', 'ቁጥር')}</Rule>
           <Rule met={password.length > 0 && password === confirm}>
-            {tBilingual("Passwords match", "የይለፍ ቃሎች ይዛመዳሉ")}
+            {tBilingual('Passwords match', 'የይለፍ ቃሎች ይዛመዳሉ')}
           </Rule>
         </ul>
 
@@ -371,8 +361,8 @@ export default function FirstLoginForm() {
 
         <button type="submit" disabled={saving} className={submitClass}>
           {saving
-            ? tBilingual("Saving…", "በማስቀመጥ ላይ…")
-            : tBilingual("Set password and continue", "የይለፍ ቃል አዘጋጅተህ ቀጥል")}
+            ? tBilingual('Saving…', 'በማስቀመጥ ላይ…')
+            : tBilingual('Set password and continue', 'የይለፍ ቃል አዘጋጅተህ ቀጥል')}
         </button>
       </form>
 
@@ -383,7 +373,7 @@ export default function FirstLoginForm() {
           className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {tBilingual("Back to verification", "ወደ ማረጋገጫ ተመለስ")}
+          {tBilingual('Back to verification', 'ወደ ማረጋገጫ ተመለስ')}
         </button>
       </p>
     </Shell>

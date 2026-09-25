@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   CalendarDays,
   Clock,
@@ -20,17 +20,17 @@ import {
   BookOpen,
   User,
   Key,
-} from "lucide-react";
-import type { ApiLiveSession } from "@/lib/api/types";
-import { fetchLiveSession } from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { RichContent } from "@/components/ui/RichContent";
-import { LiveSessionWorkspace } from "./LiveSessionWorkspace";
-import { SessionAttendanceModal } from "./SessionAttendanceModal";
+} from 'lucide-react';
+import type { ApiLiveSession } from '@/lib/api/types';
+import { fetchLiveSession } from '@/lib/api/monitoring';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { RichContent } from '@/components/ui/RichContent';
+import { LiveSessionWorkspace } from './LiveSessionWorkspace';
+import { SessionAttendanceModal } from './SessionAttendanceModal';
 
 interface SessionDetailModalProps {
   open: boolean;
@@ -42,31 +42,31 @@ interface SessionDetailModalProps {
 }
 
 const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
+  new Date(value).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
   });
 
 const formatTime = (value: string) =>
-  new Date(value).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
 const STATUS_META: Record<
-  ApiLiveSession["status"],
-  { label: string; variant: "blue" | "green" | "slate" | "red" }
+  ApiLiveSession['status'],
+  { label: string; variant: 'blue' | 'green' | 'slate' | 'red' }
 > = {
-  SCHEDULED: { label: "Upcoming", variant: "blue" },
-  LIVE: { label: "LIVE NOW", variant: "green" },
-  COMPLETED: { label: "Completed", variant: "slate" },
-  CANCELLED: { label: "Cancelled", variant: "red" },
+  SCHEDULED: { label: 'Upcoming', variant: 'blue' },
+  LIVE: { label: 'LIVE NOW', variant: 'green' },
+  COMPLETED: { label: 'Completed', variant: 'slate' },
+  CANCELLED: { label: 'Cancelled', variant: 'red' },
 };
 
 export function SessionDetailModal({
   open,
   onClose,
   sessionId,
-  userRole = "trainer",
+  userRole = 'trainer',
   onOpenAttendance,
   onJoin,
 }: SessionDetailModalProps) {
@@ -76,7 +76,7 @@ export function SessionDetailModal({
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
 
-  const canViewAttendance = can("attendance.view") || can("attendance.manage");
+  const canViewAttendance = can('attendance.view') || can('attendance.manage');
 
   useEffect(() => {
     if (!open || !sessionId) {
@@ -100,23 +100,23 @@ export function SessionDetailModal({
 
   const meta = STATUS_META[session.status];
   const course = courses.find((c) => c.id === session.courseId) || session.course;
-  const courseTitle = (course as any)?.title || (course as any)?.titleEn || "Training Program";
+  const courseTitle = (course as any)?.title || (course as any)?.titleEn || 'Training Program';
   const trainerObj = session.trainerId
     ? users.find((u) => u.id === session.trainerId) || session.trainer
     : session.trainer;
   const trainerDisplayName = trainerObj
-    ? `${trainerObj.firstName || ""} ${trainerObj.lastName || ""}`.trim() || trainerObj.email
+    ? `${trainerObj.firstName || ''} ${trainerObj.lastName || ''}`.trim() || trainerObj.email
     : session.trainerId
       ? userName(session.trainerId)
-      : "Institutional Trainer";
+      : 'Institutional Trainer';
 
   return (
     <>
       <WorkspaceDetailOverlay
         open={open && !liveWorkspaceOpen}
         onClose={onClose}
-        title={session.titleEn || "Session Details"}
-        subtitle={`${course?.code || "COURSE"} · ${courseTitle}`}
+        title={session.titleEn || 'Session Details'}
+        subtitle={`${course?.code || 'COURSE'} · ${courseTitle}`}
         badge={
           <Badge variant={meta.variant} dot>
             {meta.label}
@@ -203,7 +203,7 @@ export function SessionDetailModal({
                 <div>
                   <p className="text-[11px] font-medium text-slate-400">Conferencing Platform</p>
                   <p className="text-xs font-semibold text-slate-900 mt-0.5">
-                    {session.platform || "IN-LMS (Jitsi / BigBlueButton)"}
+                    {session.platform || 'IN-LMS (Jitsi / BigBlueButton)'}
                   </p>
                   <p className="text-[11px] text-slate-500">Interactive live classroom</p>
                 </div>
@@ -235,7 +235,7 @@ export function SessionDetailModal({
               </div>
               <p className="text-sm font-bold text-slate-900">{trainerDisplayName}</p>
               <p className="text-xs text-slate-500">
-                {trainerObj?.email || "Platform Assigned Instructor"}
+                {trainerObj?.email || 'Platform Assigned Instructor'}
               </p>
             </div>
           </div>

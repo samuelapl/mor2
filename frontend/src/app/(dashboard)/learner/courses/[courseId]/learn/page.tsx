@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useParams } from "next/navigation";
-import { ClassroomShell } from "@/components/features/classroom/ClassroomShell";
+import { useParams } from 'next/navigation';
+import { ClassroomShell } from '@/components/features/classroom/ClassroomShell';
 
 interface LearnPageProps {
   params: {
@@ -11,8 +11,7 @@ interface LearnPageProps {
 
 export default function LearnCoursePage({ params }: LearnPageProps) {
   const routeParams = useParams();
-  const courseId =
-    (params?.courseId as string) || (routeParams?.courseId as string) || "";
+  const courseId = (params?.courseId as string) || (routeParams?.courseId as string) || '';
 
   if (!courseId) {
     return (
@@ -24,4 +23,3 @@ export default function LearnCoursePage({ params }: LearnPageProps) {
 
   return <ClassroomShell courseId={courseId} />;
 }
-

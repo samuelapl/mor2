@@ -1,4 +1,4 @@
-import { deriveCategory } from "@/constants/course-categories";
+import { deriveCategory } from '@/constants/course-categories';
 import type {
   ActionResult,
   Attachment,
@@ -8,7 +8,7 @@ import type {
   UploadedResource,
   User,
   UserStatus,
-} from "@/types";
+} from '@/types';
 import type {
   ApiApproval,
   ApiAttachment,
@@ -28,37 +28,37 @@ import type {
   CreateModuleBody,
   LocalizedText,
   UpdateCourseBody,
-} from "./types";
-import type { Lesson, Module } from "@/types";
+} from './types';
+import type { Lesson, Module } from '@/types';
 
 /* -------------------------------------------------------------------------- */
 /*  Role mapping                                                               */
 /* -------------------------------------------------------------------------- */
 
 const ROLE_API_TO_FE: Record<BackendRoleName, Role> = {
-  SYSTEM_ADMIN: "system_admin",
-  TRAINING_ADMIN: "training_admin",
-  COURSE_OWNER: "course_owner",
-  TRAINER: "trainer",
-  CONTENT_APPROVER: "content_approver",
-  LEARNER: "learner",
+  SYSTEM_ADMIN: 'system_admin',
+  TRAINING_ADMIN: 'training_admin',
+  COURSE_OWNER: 'course_owner',
+  TRAINER: 'trainer',
+  CONTENT_APPROVER: 'content_approver',
+  LEARNER: 'learner',
 };
 
 const ROLE_FE_TO_API: Record<Role, BackendRoleName> = {
-  system_admin: "SYSTEM_ADMIN",
-  training_admin: "TRAINING_ADMIN",
-  course_owner: "COURSE_OWNER",
-  trainer: "TRAINER",
-  content_approver: "CONTENT_APPROVER",
-  learner: "LEARNER",
+  system_admin: 'SYSTEM_ADMIN',
+  training_admin: 'TRAINING_ADMIN',
+  course_owner: 'COURSE_OWNER',
+  trainer: 'TRAINER',
+  content_approver: 'CONTENT_APPROVER',
+  learner: 'LEARNER',
 };
 
 export function roleFromApi(code: BackendRoleName): Role {
-  return ROLE_API_TO_FE[code] ?? "learner";
+  return ROLE_API_TO_FE[code] ?? 'learner';
 }
 
 export function roleToApi(role: Role): BackendRoleName {
-  return ROLE_FE_TO_API[role] ?? "LEARNER";
+  return ROLE_FE_TO_API[role] ?? 'LEARNER';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -66,45 +66,45 @@ export function roleToApi(role: Role): BackendRoleName {
 /* -------------------------------------------------------------------------- */
 
 const STATUS_FE_TO_API: Record<string, BackendCourseStatus> = {
-  draft: "DRAFT",
-  under_review: "PENDING_APPROVAL",
-  approved: "APPROVED",
-  published: "PUBLISHED",
-  rejected: "REJECTED",
-  archived: "ARCHIVED",
+  draft: 'DRAFT',
+  under_review: 'PENDING_APPROVAL',
+  approved: 'APPROVED',
+  published: 'PUBLISHED',
+  rejected: 'REJECTED',
+  archived: 'ARCHIVED',
 };
 
-export function statusFromApi(status: BackendCourseStatus): Course["status"] {
+export function statusFromApi(status: BackendCourseStatus): Course['status'] {
   switch (status) {
-    case "DRAFT":
-      return "draft";
-    case "PENDING_APPROVAL":
-      return "under_review";
-    case "APPROVED":
-      return "approved";
-    case "PUBLISHED":
-      return "published";
-    case "REJECTED":
-      return "rejected";
-    case "ARCHIVED":
-      return "archived";
+    case 'DRAFT':
+      return 'draft';
+    case 'PENDING_APPROVAL':
+      return 'under_review';
+    case 'APPROVED':
+      return 'approved';
+    case 'PUBLISHED':
+      return 'published';
+    case 'REJECTED':
+      return 'rejected';
+    case 'ARCHIVED':
+      return 'archived';
   }
 }
 
-const LEVEL_API_TO_FE: Record<BackendCourseLevel, Course["level"]> = {
-  BASIC: "basic",
-  INTERMEDIATE: "intermediate",
-  ADVANCED: "advanced",
+const LEVEL_API_TO_FE: Record<BackendCourseLevel, Course['level']> = {
+  BASIC: 'basic',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
 };
 
-const LEVEL_FE_TO_API: Record<Course["level"], BackendCourseLevel> = {
-  basic: "BASIC",
-  intermediate: "INTERMEDIATE",
-  advanced: "ADVANCED",
+const LEVEL_FE_TO_API: Record<Course['level'], BackendCourseLevel> = {
+  basic: 'BASIC',
+  intermediate: 'INTERMEDIATE',
+  advanced: 'ADVANCED',
 };
 
-export function levelFromApi(level: BackendCourseLevel | undefined): Course["level"] {
-  return level ? LEVEL_API_TO_FE[level] : "basic";
+export function levelFromApi(level: BackendCourseLevel | undefined): Course['level'] {
+  return level ? LEVEL_API_TO_FE[level] : 'basic';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -112,29 +112,29 @@ export function levelFromApi(level: BackendCourseLevel | undefined): Course["lev
 /* -------------------------------------------------------------------------- */
 
 export function userFromApi(user: ApiUser): User {
-  const primaryRole = user.roles?.[0]?.role ?? "LEARNER";
+  const primaryRole = user.roles?.[0]?.role ?? 'LEARNER';
   const registration = user.registrationStatus ?? null;
   let status: UserStatus;
-  if (registration === "PENDING") status = "pending";
-  else if (registration === "REJECTED") status = "rejected";
-  else status = user.isActive ? "active" : "suspended";
+  if (registration === 'PENDING') status = 'pending';
+  else if (registration === 'REJECTED') status = 'rejected';
+  else status = user.isActive ? 'active' : 'suspended';
   return {
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
-    phone: user.phone ?? "",
+    phone: user.phone ?? '',
     tin: user.tin ?? null,
     avatarUrl: user.avatarUrl ?? null,
-    locale: user.locale === "am" ? "am" : "en",
-    password: "",
+    locale: user.locale === 'am' ? 'am' : 'en',
+    password: '',
     role: roleFromApi(primaryRole),
     // Other users' permissions aren't returned by this endpoint — only login/refresh
     // return the signed-in user's effective permissions.
     roles: (user.roles ?? []).map((r) => roleFromApi(r.role)),
     permissions: [],
-    department: "",
+    department: '',
     status,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -160,14 +160,14 @@ export function userFromAuth(
     lastName: payload.lastName,
     name: `${payload.firstName} ${payload.lastName}`,
     email: payload.email,
-    phone: "",
+    phone: '',
     avatarUrl: payload.avatarUrl ?? null,
-    password: "",
-    role: roleFromApi(payload.roles?.[0]?.role ?? "LEARNER"),
+    password: '',
+    role: roleFromApi(payload.roles?.[0]?.role ?? 'LEARNER'),
     roles: (payload.roles ?? []).map((r) => roleFromApi(r.role)),
     permissions,
-    department: "",
-    status: "active",
+    department: '',
+    status: 'active',
     createdAt: new Date().toISOString(),
   };
 }
@@ -177,28 +177,28 @@ export function userFromAuth(
 /* -------------------------------------------------------------------------- */
 
 function bilingual(value?: string | null): string {
-  return value ?? "";
+  return value ?? '';
 }
 
 export function courseFromApi(course: ApiCourseListItem): Course {
   return {
     id: course.id,
     code: course.code,
-    title: course.titleEn ?? "",
+    title: course.titleEn ?? '',
     category: course.category || deriveCategory(course.titleEn, course.descriptionEn),
     department: course.department ?? undefined,
     targetAudience: course.targetAudience ?? undefined,
     deliveryMethod: course.deliveryMethod ?? undefined,
-    language: course.language ?? "en",
+    language: course.language ?? 'en',
     prerequisites: course.prerequisites ?? undefined,
     objectives: course.objectivesEn || course.objectivesAm || undefined,
-    description: course.descriptionEn ?? "",
+    description: course.descriptionEn ?? '',
     version: course.version,
-    ownerId: course.owners?.[0]?.userId ?? "",
+    ownerId: course.owners?.[0]?.userId ?? '',
     trainerId: null,
     status: statusFromApi(course.status),
     level: levelFromApi(course.level),
-    published: course.status === "PUBLISHED",
+    published: course.status === 'PUBLISHED',
     createdAt: course.createdAt,
     cover: course.thumbnailUrl ?? null,
     enrolledLearnerIds: [],
@@ -213,7 +213,7 @@ function approvalFromApi(approval: ApiApproval): {
   by?: string;
   at?: string;
 } {
-  if (approval.status !== "REJECTED" || !approval.comments) return {};
+  if (approval.status !== 'REJECTED' || !approval.comments) return {};
   return {
     reason: approval.comments,
     by: approval.approver
@@ -223,12 +223,10 @@ function approvalFromApi(approval: ApiApproval): {
   };
 }
 
-export function courseFromDetail(
-  apiCourse: ApiCourseDetail,
-): Course {
+export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
   const base = courseFromApi(apiCourse);
   const rejections = (apiCourse.approvals ?? [])
-    .filter((a) => a.status === "REJECTED")
+    .filter((a) => a.status === 'REJECTED')
     .sort((a, b) => new Date(b.decidedAt).getTime() - new Date(a.decidedAt).getTime());
 
   const latest = rejections[0] ? approvalFromApi(rejections[0]) : {};
@@ -251,7 +249,7 @@ export function attachmentFromApi(attachment: ApiAttachment): Attachment {
   return {
     id: attachment.id,
     name: attachment.fileName,
-    type: attachment.fileType.startsWith("video") ? "video" : "pdf",
+    type: attachment.fileType.startsWith('video') ? 'video' : 'pdf',
     url: attachment.fileUrl,
   };
 }
@@ -266,11 +264,13 @@ export function uploadedResourceFromApi(attachment: ApiAttachment): UploadedReso
   };
 }
 
-export function uploadedResourceToApiAttachment(resource: UploadedResource): CreateCurriculumAttachmentBody {
+export function uploadedResourceToApiAttachment(
+  resource: UploadedResource,
+): CreateCurriculumAttachmentBody {
   return {
     fileName: resource.name,
     fileUrl: resource.url,
-    fileType: resource.type || "application/octet-stream",
+    fileType: resource.type || 'application/octet-stream',
     sizeBytes: resource.size || 0,
   };
 }
@@ -279,8 +279,8 @@ export function moduleFromApi(mod: ApiModule): Module {
   const attachments: UploadedResource[] = (mod.attachments ?? []).map(uploadedResourceFromApi);
   if (attachments.length === 0 && mod.resourceUrl) {
     attachments.push({
-      id: "legacy",
-      name: mod.fileName || mod.resourceUrl.split("/").pop() || "Resource",
+      id: 'legacy',
+      name: mod.fileName || mod.resourceUrl.split('/').pop() || 'Resource',
       url: mod.resourceUrl,
       size: mod.fileSize || 0,
     });
@@ -288,7 +288,7 @@ export function moduleFromApi(mod: ApiModule): Module {
 
   return {
     id: mod.id,
-    title: mod.titleEn ?? "",
+    title: mod.titleEn ?? '',
     description: mod.descriptionEn ?? undefined,
     objectives: mod.objectivesEn || mod.objectivesAm || undefined,
     durationMinutes: mod.durationMinutes ?? undefined,
@@ -306,8 +306,8 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
   const attachments: UploadedResource[] = (lesson.attachments ?? []).map(uploadedResourceFromApi);
   if (attachments.length === 0 && lesson.resourceUrl) {
     attachments.push({
-      id: "legacy",
-      name: lesson.fileName || lesson.resourceUrl.split("/").pop() || "Resource",
+      id: 'legacy',
+      name: lesson.fileName || lesson.resourceUrl.split('/').pop() || 'Resource',
       url: lesson.resourceUrl,
       size: lesson.fileSize || 0,
     });
@@ -315,8 +315,8 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
 
   return {
     id: lesson.id,
-    title: lesson.titleEn ?? "",
-    content: lesson.contentEn ?? "",
+    title: lesson.titleEn ?? '',
+    content: lesson.contentEn ?? '',
     durationMin: lesson.durationMinutes ?? 15,
     unlocked: lesson.unlocked,
     contentType: lesson.contentType,
@@ -346,17 +346,13 @@ export function courseToCreateBody(input: {
   objectives?: string;
   description?: string;
   ownerId?: string;
-  level?: Course["level"];
+  level?: Course['level'];
 }): CreateCourseBody {
   return {
-    code: input.code || "TBD-000",
+    code: input.code || 'TBD-000',
     title: { en: input.title, am: input.title },
-    description: input.description
-      ? { en: input.description, am: input.description }
-      : undefined,
-    objectives: input.objectives
-      ? { en: input.objectives, am: input.objectives }
-      : undefined,
+    description: input.description ? { en: input.description, am: input.description } : undefined,
+    objectives: input.objectives ? { en: input.objectives, am: input.objectives } : undefined,
     category: input.category,
     department: input.department,
     targetAudience: input.targetAudience,
@@ -378,16 +374,12 @@ export function courseToUpdateBody(input: {
   deliveryMethod?: string;
   language?: string;
   prerequisites?: string;
-  level?: Course["level"];
+  level?: Course['level'];
 }): UpdateCourseBody {
   return {
     title: { en: input.title, am: input.title },
-    description: input.description
-      ? { en: input.description, am: input.description }
-      : undefined,
-    objectives: input.objectives
-      ? { en: input.objectives, am: input.objectives }
-      : undefined,
+    description: input.description ? { en: input.description, am: input.description } : undefined,
+    objectives: input.objectives ? { en: input.objectives, am: input.objectives } : undefined,
     category: input.category,
     department: input.department,
     targetAudience: input.targetAudience,
@@ -439,7 +431,7 @@ export function moduleToCreateBody(input: {
       titleEn: l.titleEn,
       titleAm: l.titleAm ?? l.titleEn,
       contentEn: l.contentEn,
-      contentType: l.contentType ?? "DOCUMENT",
+      contentType: l.contentType ?? 'DOCUMENT',
       durationMinutes: l.durationMinutes,
       resourceUrl: l.resourceUrl,
       attachments: l.attachments,
@@ -447,7 +439,7 @@ export function moduleToCreateBody(input: {
         titleEn: sub.titleEn,
         titleAm: sub.titleAm ?? sub.titleEn,
         contentEn: sub.contentEn,
-        contentType: sub.contentType ?? "DOCUMENT",
+        contentType: sub.contentType ?? 'DOCUMENT',
         durationMinutes: sub.durationMinutes,
         resourceUrl: sub.resourceUrl,
         attachments: sub.attachments,
