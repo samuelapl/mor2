@@ -45,7 +45,7 @@ import {
 } from "@/lib/api/monitoring";
 import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from "@/lib/api/types";
 import { useLms } from "@/lib/lms-store";
-import { DynamicAttendanceModal } from "./DynamicAttendanceModal";
+import { DynamicAttendanceModal } from "../shared/DynamicAttendanceModal";
 import { DisconnectReason } from "livekit-client";
 
 // LiveKit — only imported when session.platform === "LIVEKIT"

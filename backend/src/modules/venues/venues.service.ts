@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
 import { CreateVenueDto, UpdateVenueDto } from './dto';
+import { InPersonSessionsService } from '@modules/live-sessions/in-person/in-person-sessions.service';
 
 @Injectable()
 export class VenuesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inPersonSessions: InPersonSessionsService,
+  ) {}
 
   async findAll(query?: { branch?: string; search?: string; isActive?: boolean }) {
     const where: any = {};
@@ -156,26 +160,13 @@ export class VenuesService {
   ) {
     const venue = await this.findOne(venueId);
 
-    const start = new Date(scheduledAt);
-    const end = new Date(start.getTime() + durationMinutes * 60000);
-
-    // Find overlapping sessions in the same venue
-    const sessions = await this.prisma.liveSession.findMany({
-      where: {
-        venueId,
-        id: excludeSessionId ? { not: excludeSessionId } : undefined,
-        status: { in: ['SCHEDULED', 'LIVE'] },
-      },
-      include: {
-        course: { select: { titleEn: true, code: true } },
-      },
-    });
-
-    const conflictingSession = sessions.find((s) => {
-      const sStart = new Date(s.scheduledAt);
-      const sEnd = new Date(sStart.getTime() + s.durationMinutes * 60000);
-      return start < sEnd && end > sStart;
-    });
+    // Same overlap rule the server enforces when a session is scheduled.
+    const conflictingSession = await this.inPersonSessions.findVenueConflict(
+      venueId,
+      scheduledAt,
+      durationMinutes,
+      excludeSessionId,
+    );
 
     return {
       available: !conflictingSession,

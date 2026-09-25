@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
+import { Building2,
   ArrowRight,
   BookOpen,
   Calendar,
@@ -33,8 +33,9 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Table, Td } from "@/components/ui/Table";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { DonutChart, BarChart } from "@/components/ui/charts";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
+import { LiveSessionWorkspace } from "@/components/features/sessions/virtual/LiveSessionWorkspace";
+import { SessionDetailModal } from "@/components/features/sessions/shared/SessionDetailModal";
+import { isInPersonSession } from "@/lib/session-mode";
 
 const QUICK_LINKS = [
   {
@@ -405,14 +406,23 @@ export default function TrainerDashboardPage() {
                   </div>
 
                   <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-3">
-                    <Button
-                      size="sm"
-                      onClick={() => setActiveLiveSession(session)}
-                      className={isLive ? "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" : "flex-1"}
-                    >
-                      <Video className="h-3.5 w-3.5" />
-                      {isLive ? "Start Meeting (In-LMS)" : "Start Session"}
-                    </Button>
+                    {isInPersonSession(session) ? (
+                      <Link href="/trainer/attendance" className="flex-1">
+                        <Button size="sm" className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                          <Building2 className="h-3.5 w-3.5" />
+                          Classroom Attendance
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveLiveSession(session)}
+                        className={isLive ? "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" : "flex-1"}
+                      >
+                        <Video className="h-3.5 w-3.5" />
+                        {isLive ? "Start Meeting (In-LMS)" : "Start Session"}
+                      </Button>
+                    )}
                     <Link href="/trainer/sessions">
                       <Button size="sm" variant="outline" title="Session Details & Attendance">
                         <ClipboardCheck className="h-3.5 w-3.5" />

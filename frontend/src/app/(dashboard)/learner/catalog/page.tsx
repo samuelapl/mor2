@@ -11,11 +11,9 @@ import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
 import { CourseCard } from "@/components/features/courses/CourseCard";
 import { CatalogCourseModal } from "@/components/features/courses/CatalogCourseModal";
-import {
-  EnrolledCourseActions,
-  isInPersonEnrollment,
-} from "@/components/features/courses/EnrolledCourseActions";
-import { VenueDetailModal } from "@/components/features/venues/VenueDetailModal";
+import { EnrolledCourseActions } from "@/components/features/courses/EnrolledCourseActions";
+import { isInPersonEnrollment } from "@/lib/session-mode";
+import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { Pagination } from "@/components/ui/Pagination";
@@ -110,6 +108,8 @@ export default function LearnerCatalogPage() {
                 course={course}
                 showStatus={false}
                 progress={enrolled ? percent : undefined}
+                deliveryMode={enrolled ? (isPerson ? "IN_PERSON_ONLY" : "ONLINE_ONLY") : undefined}
+                deliveryDetail={enrolled ? enrollment?.venue?.branch : undefined}
                 onClick={() => {
                   if (enrolled) {
                     router.push(`/learner/courses/${course.id}/learn`);
@@ -137,6 +137,7 @@ export default function LearnerCatalogPage() {
                 ) : (
                   <Button
                     size="sm"
+                    className="w-full"
                     onClick={(event) => {
                       event.stopPropagation();
                       setOpenCourseId(course.id);

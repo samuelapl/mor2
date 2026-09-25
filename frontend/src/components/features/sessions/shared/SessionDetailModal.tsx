@@ -30,8 +30,9 @@ import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent } from "@/components/ui/RichContent";
-import { LiveSessionWorkspace } from "./LiveSessionWorkspace";
+import { LiveSessionWorkspace } from "../virtual/LiveSessionWorkspace";
 import { SessionAttendanceModal } from "./SessionAttendanceModal";
+import { isInPersonSession } from "@/lib/session-mode";
 
 interface SessionDetailModalProps {
   open: boolean;
@@ -144,7 +145,7 @@ export function SessionDetailModal({
               </Button>
             )}
 
-            {session.sessionType === "IN_PERSON" ? (
+            {isInPersonSession(session) ? (
               <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-xs py-1 px-2.5">
                 📍 Physical Venue Session
               </Badge>
@@ -204,7 +205,7 @@ export function SessionDetailModal({
               </div>
 
               <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-                {session.sessionType === "IN_PERSON" ? (
+                {isInPersonSession(session) ? (
                   <>
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                       <Building2 className="h-4 w-4" />

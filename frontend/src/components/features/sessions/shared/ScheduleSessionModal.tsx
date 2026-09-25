@@ -5,17 +5,7 @@ import {
   Video,
   Sparkles,
   Building2,
-  Calendar,
-  Clock,
-  Plus,
-  Trash2,
-  Users,
-  MapPin,
   ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle,
-  MonitorPlay,
   RefreshCw,
   UserCheck,
 } from "lucide-react";
@@ -31,6 +21,12 @@ import { createBatchLiveSessions, fetchVenues } from "@/lib/api/venues";
 import type { ApiUser, ApiVenue, SessionType } from "@/lib/api/types";
 import { SearchableCourseSelect } from "./SearchableCourseSelect";
 import { SearchableTrainerSelect } from "./SearchableTrainerSelect";
+import {
+  VenueAllocationStep,
+  createVenueRow,
+  type InPersonVenueRow,
+  type VenueRowDefaults,
+} from "../in-person/VenueAllocationStep";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -42,15 +38,6 @@ interface ScheduleSessionModalProps {
 }
 
 type PlatformChoice = "LIVEKIT" | "JITSI" | "GOOGLE_MEET" | "ZOOM" | "BIGBLUEBUTTON" | "MS_TEAMS" | "CUSTOM";
-
-interface InPersonVenueRow {
-  key: string;
-  venueId: string;
-  trainerId: string;
-  date: string;
-  time: string;
-  duration: number;
-}
 
 export function ScheduleSessionModal({
   open,
@@ -144,6 +131,17 @@ export function ScheduleSessionModal({
 
   const courseTrainers = availableTrainers.filter((t) => courseTrainerIds.has(t.id));
 
+  // New venue rows start from the step-1 schedule and the course's trainer (if qualified).
+  const venueRowDefaults: VenueRowDefaults = {
+    date,
+    time,
+    duration,
+    fallbackTrainerId:
+      (selectedCourse?.trainerId && courseTrainers.length > 0 ? selectedCourse.trainerId : "") ||
+      availableTrainers[0]?.id ||
+      "",
+  };
+
   const generateJitsiUrl = () => {
     const course = courses.find((c) => c.id === courseId);
     const code = (course?.code || "TRAINING").replace(/[^a-zA-Z0-9]/g, "");
@@ -185,87 +183,10 @@ export function ScheduleSessionModal({
 
     // Initialize venue rows if empty
     if (venueRows.length === 0) {
-      const defaultVenue = venues[0];
-      // Try to find a trainer affiliated with this venue, or fallback to course trainer or first trainer
-      const affiliatedTrainer = defaultVenue
-        ? availableTrainers.find((t) => (t as any).primaryVenueId === defaultVenue.id)
-        : null;
-
-      const initialTrainerId =
-        affiliatedTrainer?.id ||
-        (selectedCourse?.trainerId && courseTrainers.length > 0 ? selectedCourse.trainerId : "") ||
-        availableTrainers[0]?.id ||
-        "";
-
-      setVenueRows([
-        {
-          key: `row-${Date.now()}-1`,
-          venueId: defaultVenue?.id ?? "",
-          trainerId: initialTrainerId,
-          date,
-          time,
-          duration,
-        },
-      ]);
+      setVenueRows([createVenueRow(venues[0], availableTrainers, venueRowDefaults, 1)]);
     }
 
     setInPersonStep(2);
-  };
-
-  const handleAddVenueRow = () => {
-    // Pick next unused venue if available
-    const usedVenueIds = new Set(venueRows.map((r) => r.venueId));
-    const nextVenue = venues.find((v) => !usedVenueIds.has(v.id)) || venues[0];
-
-    const affiliatedTrainer = nextVenue
-      ? availableTrainers.find((t) => (t as any).primaryVenueId === nextVenue.id)
-      : null;
-
-    const rowTrainerId =
-      affiliatedTrainer?.id ||
-      (selectedCourse?.trainerId && courseTrainers.length > 0 ? selectedCourse.trainerId : "") ||
-      availableTrainers[0]?.id ||
-      "";
-
-    setVenueRows((prev) => [
-      ...prev,
-      {
-        key: `row-${Date.now()}-${prev.length + 1}`,
-        venueId: nextVenue?.id ?? "",
-        trainerId: rowTrainerId,
-        date,
-        time,
-        duration,
-      },
-    ]);
-  };
-
-  const handleRemoveVenueRow = (key: string) => {
-    if (venueRows.length <= 1) {
-      toast.error("At least one venue classroom allocation is required.");
-      return;
-    }
-    setVenueRows((prev) => prev.filter((r) => r.key !== key));
-  };
-
-  const handleUpdateVenueRow = (key: string, patch: Partial<InPersonVenueRow>) => {
-    setVenueRows((prev) =>
-      prev.map((r) => {
-        if (r.key !== key) return r;
-        const updated = { ...r, ...patch };
-
-        // Auto-select affiliated trainer when venue changes (if current row trainer is empty)
-        if (patch.venueId && patch.venueId !== r.venueId) {
-          const affiliated = availableTrainers.find(
-            (t) => (t as any).primaryVenueId === patch.venueId,
-          );
-          if (affiliated) {
-            updated.trainerId = affiliated.id;
-          }
-        }
-        return updated;
-      }),
-    );
   };
 
   // Submit Handler for Virtual Live Session
@@ -816,213 +737,18 @@ export function ScheduleSessionModal({
         {/* IN-PERSON STEP 2: INTERACTIVE MULTI-VENUE ALLOCATION TABLE    */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {sessionType === "IN_PERSON" && inPersonStep === 2 ? (
-          <div className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-indigo-600" />
-                  Step 2: Allocate Physical Venues &amp; Branch Instructors
-                </h4>
-                <p className="text-xs text-slate-500">
-                  Add multiple branch locations to run this training session simultaneously across the Ministry.
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleAddVenueRow}
-                className="gap-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Another Venue / Room
-              </Button>
-            </div>
-
-            {/* Venues Allocation Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-                <thead className="bg-slate-50 font-semibold text-slate-700">
-                  <tr>
-                    <th className="px-3.5 py-3 min-w-[200px]">Venue / Classroom *</th>
-                    <th className="px-3 py-3 min-w-[190px]">Assigned Trainer *</th>
-                    <th className="px-3 py-3 w-[140px]">Date *</th>
-                    <th className="px-3 py-3 w-[110px]">Time *</th>
-                    <th className="px-3 py-3 w-[90px]">Duration</th>
-                    <th className="px-3 py-3 w-[80px] text-center">Capacity</th>
-                    <th className="px-3 py-3 w-[50px] text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {venueRows.map((row, idx) => {
-                    const rowVenue = venues.find((v) => v.id === row.venueId);
-                    return (
-                      <tr key={row.key} className="hover:bg-slate-50/50 transition">
-                        {/* Venue selector */}
-                        <td className="px-3.5 py-2.5">
-                          <select
-                            value={row.venueId}
-                            onChange={(e) => handleUpdateVenueRow(row.key, { venueId: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
-                          >
-                            <option value="">Select a Venue…</option>
-                            {venues.map((v) => (
-                              <option key={v.id} value={v.id}>
-                                {v.branch} — {v.name} ({v.capacity} seats)
-                              </option>
-                            ))}
-                          </select>
-                          {rowVenue?.building ? (
-                            <p className="mt-1 text-[11px] text-slate-400 truncate">
-                              📍 {rowVenue.building}
-                            </p>
-                          ) : null}
-                        </td>
-
-                        {/* Trainer selector */}
-                        <td className="px-3 py-2.5">
-                          <select
-                            value={row.trainerId}
-                            onChange={(e) => handleUpdateVenueRow(row.key, { trainerId: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
-                          >
-                            <option value="">Select Trainer…</option>
-                            {availableTrainers.map((t) => {
-                              const isAffiliated = (t as any).primaryVenueId === row.venueId;
-                              return (
-                                <option key={t.id} value={t.id}>
-                                  {t.firstName} {t.lastName} {isAffiliated ? "★ (Primary Venue)" : ""}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </td>
-
-                        {/* Date */}
-                        <td className="px-3 py-2.5">
-                          <input
-                            type="date"
-                            value={row.date}
-                            onChange={(e) => handleUpdateVenueRow(row.key, { date: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
-                          />
-                        </td>
-
-                        {/* Time */}
-                        <td className="px-3 py-2.5">
-                          <input
-                            type="time"
-                            value={row.time}
-                            onChange={(e) => handleUpdateVenueRow(row.key, { time: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
-                          />
-                        </td>
-
-                        {/* Duration */}
-                        <td className="px-3 py-2.5">
-                          <input
-                            type="number"
-                            min={15}
-                            step={15}
-                            value={row.duration}
-                            onChange={(e) => handleUpdateVenueRow(row.key, { duration: Number(e.target.value) })}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
-                          />
-                        </td>
-
-                        {/* Seat Capacity Badge */}
-                        <td className="px-3 py-2.5 text-center">
-                          <Badge variant="indigo" className="text-[10px] font-bold">
-                            {rowVenue?.capacity ?? "—"}
-                          </Badge>
-                        </td>
-
-                        {/* Delete row */}
-                        <td className="px-3 py-2.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveVenueRow(row.key)}
-                            disabled={venueRows.length <= 1}
-                            className={cn(
-                              "rounded-lg p-1.5 transition",
-                              venueRows.length <= 1
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-400 hover:bg-red-50 hover:text-red-600",
-                            )}
-                            title="Remove Venue Row"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Total summary */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100 text-xs">
-              <div className="flex items-center gap-4">
-                <span className="font-semibold text-slate-700">
-                  Allocated Venues: <strong className="text-indigo-600">{venueRows.length}</strong>
-                </span>
-                <span className="font-semibold text-slate-700">
-                  Total Seat Capacity:{" "}
-                  <strong className="text-emerald-600">
-                    {venueRows.reduce((acc, r) => {
-                      const v = venues.find((x) => x.id === r.venueId);
-                      return acc + (v?.capacity || 0);
-                    }, 0)}{" "}
-                    Seats
-                  </strong>
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Each row creates an independent in-person session linked to that physical classroom.
-              </p>
-            </div>
-
-            {error ? (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
-            ) : null}
-
-            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setInPersonStep(1)}
-                className="gap-2 text-xs"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back to Basic Details</span>
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleInPersonSubmit}
-                  disabled={submitting}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-xs"
-                >
-                  {submitting ? (
-                    <>
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                      Creating Sessions…
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Create {venueRows.length} In-Person Sessions
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <VenueAllocationStep
+            rows={venueRows}
+            onRowsChange={setVenueRows}
+            venues={venues}
+            trainers={availableTrainers}
+            defaults={venueRowDefaults}
+            error={error}
+            submitting={submitting}
+            onBack={() => setInPersonStep(1)}
+            onCancel={onClose}
+            onSubmit={handleInPersonSubmit}
+          />
         ) : null}
       </div>
     </WorkspaceDetailOverlay>

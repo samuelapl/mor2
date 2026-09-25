@@ -47,8 +47,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Td } from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { ClassroomQrModal } from "@/components/features/attendance/ClassroomQrModal";
+import { ClassroomQrModal } from "@/components/features/sessions/in-person/ClassroomQrModal";
 import { toast } from "@/lib/toast";
+import { isInPersonSession } from "@/lib/session-mode";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-US", {
@@ -318,7 +319,7 @@ export default function TrainerAttendancePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {(activeSession?.sessionType === "IN_PERSON" || Boolean(activeSession?.venueId)) && (
+              {isInPersonSession(activeSession) && (
                 <Button
                   size="sm"
                   onClick={() => setQrModalOpen(true)}
@@ -374,7 +375,7 @@ export default function TrainerAttendancePage() {
               <span>·</span>
               <span>Platform: {activeSession.platform || "JITSI"}</span>
 
-              {(activeSession.sessionType === "IN_PERSON" || Boolean(activeSession.venue)) && (
+              {isInPersonSession(activeSession) && (
                 <>
                   <span>·</span>
                   <span className="inline-flex items-center gap-1.5 font-semibold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">

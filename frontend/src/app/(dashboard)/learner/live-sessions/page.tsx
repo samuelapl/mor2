@@ -24,13 +24,14 @@ import PageShell from "@/components/shared/PageShell";
 import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
+import { SessionTable, type SessionRow } from "@/components/features/sessions/shared/SessionTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { DynamicAttendanceModal } from "@/components/features/sessions/DynamicAttendanceModal";
-import { LearnerCheckInModal } from "@/components/features/attendance/LearnerCheckInModal";
-import { VenueDetailModal } from "@/components/features/venues/VenueDetailModal";
+import { LiveSessionWorkspace } from "@/components/features/sessions/virtual/LiveSessionWorkspace";
+import { DynamicAttendanceModal } from "@/components/features/sessions/shared/DynamicAttendanceModal";
+import { LearnerCheckInModal } from "@/components/features/sessions/in-person/LearnerCheckInModal";
+import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
+import { isInPersonSession } from "@/lib/session-mode";
 
 export default function LearnerLiveSessionsPage() {
   const { lang, courses: allCourses, currentUser } = useLms();
@@ -192,7 +193,7 @@ export default function LearnerLiveSessionsPage() {
             extra={(row) => {
               const isCheckedIn = joined.includes(row.session.id);
               const isLoading = loadingJoinId === row.session.id;
-              const isPerson = row.session.sessionType === "IN_PERSON" || Boolean(row.session.venueId);
+              const isPerson = isInPersonSession(row.session);
 
               return (
                 <div className="flex items-center justify-end gap-1.5">

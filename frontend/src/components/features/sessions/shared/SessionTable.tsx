@@ -3,6 +3,7 @@ import type { ApiLiveSession } from "@/lib/api/types";
 import { Table, TableRow, Td } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Calendar, Clock } from "lucide-react";
+import { isInPersonSession } from "@/lib/session-mode";
 
 export interface SessionRow {
   session: ApiLiveSession;
@@ -119,7 +120,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                     >
                       {row.session.titleEn}
                     </p>
-                    {row.session.sessionType === "IN_PERSON" ? (
+                    {isInPersonSession(row.session) ? (
                       <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 border border-amber-200">
                         In-Person
                       </span>
@@ -129,7 +130,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                       </span>
                     )}
                   </div>
-                  {row.session.sessionType === "IN_PERSON" && row.session.venue ? (
+                  {isInPersonSession(row.session) && row.session.venue ? (
                     <p
                       className="mt-0.5 truncate text-[11px] font-medium text-amber-800"
                       title={`${row.session.venue.branch} — ${row.session.venue.name} (${row.session.venue.capacity} seats)`}

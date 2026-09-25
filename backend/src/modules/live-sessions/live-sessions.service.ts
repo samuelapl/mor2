@@ -1,22 +1,90 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EnrollmentStatus, Prisma, SessionPlatform, SessionStatus, SessionType } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CourseStatus,
+  EnrollmentStatus,
+  Prisma,
+  RoleName,
+  SessionPlatform,
+  SessionStatus,
+  SessionType,
+} from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
-import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto, CreateBatchSessionDto } from './dto';
-import { BigBlueButtonProvider } from './providers/bigbluebutton.provider';
-import { LiveKitProvider } from './providers/livekit.provider';
-import { LiveKitConfig } from '@config/app.config';
+import {
+  CreateSessionDto,
+  UpdateSessionDto,
+  SubmitLiveQuizDto,
+  CreateBatchSessionDto,
+} from './dto';
+import { VirtualSessionsService } from './virtual/virtual-sessions.service';
+import { isInPersonEnrollment, isInPersonSession } from './session-mode';
+import { InPersonSessionsService } from './in-person/in-person-sessions.service';
+import { PermissionsService } from '@modules/permissions/permissions.service';
+
+/**
+ * Which sessions a user may list:
+ * - `all`      — System Admin or live_session.manage_all
+ * - `hosted`   — live_session.manage_own: only sessions they are the assigned trainer of
+ * - `enrolled` — everyone else (learners): only sessions of courses they are enrolled in
+ */
+type SessionVisibility =
+  | { kind: 'all' }
+  | { kind: 'hosted' | 'enrolled'; where: Prisma.LiveSessionWhereInput };
 
 @Injectable()
 export class LiveSessionsService {
-  private readonly logger = new Logger(LiveSessionsService.name);
-
   constructor(
     private readonly prisma: PrismaService,
-    private readonly bbbProvider: BigBlueButtonProvider,
-    private readonly liveKitProvider: LiveKitProvider,
+    private readonly virtualSessions: VirtualSessionsService,
+    private readonly inPersonSessions: InPersonSessionsService,
+    private readonly permissions: PermissionsService,
   ) {}
+
+  private async sessionVisibility(user: AuthenticatedUser): Promise<SessionVisibility> {
+    if (user.roles.includes(RoleName.SYSTEM_ADMIN)) return { kind: 'all' };
+    const codes = await this.permissions.effectivePermissions(user.roles);
+    if (codes.includes('live_session.manage_all')) return { kind: 'all' };
+    if (codes.includes('live_session.manage_own')) {
+      return { kind: 'hosted', where: { trainerId: user.id } };
+    }
+    return { kind: 'enrolled', where: await this.enrolledSessionsWhere(user.id) };
+  }
+
+  /**
+   * Sessions a learner's enrollments entitle them to see. In-person enrollments see only their
+   * booked session (or, without a booking, in-person sessions at their venue); online
+   * enrollments see only virtual sessions.
+   */
+  private async enrolledSessionsWhere(userId: string): Promise<Prisma.LiveSessionWhereInput> {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        userId,
+        status: { in: [EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED] },
+      },
+      select: { courseId: true, sessionId: true, venueId: true, deliveryMode: true },
+    });
+    if (enrollments.length === 0) return { id: { in: [] } };
+
+    return {
+      OR: enrollments.map((e): Prisma.LiveSessionWhereInput => {
+        if (!isInPersonEnrollment(e)) {
+          return { courseId: e.courseId, sessionType: SessionType.VIRTUAL, venueId: null };
+        }
+        if (e.sessionId) {
+          return { id: e.sessionId, courseId: e.courseId };
+        }
+        return e.venueId
+          ? { courseId: e.courseId, venueId: e.venueId }
+          : { courseId: e.courseId, sessionType: SessionType.IN_PERSON };
+      }),
+    };
+  }
 
   async create(courseId: string, dto: CreateSessionDto) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
@@ -25,31 +93,46 @@ export class LiveSessionsService {
       throw new NotFoundException('Course not found');
     }
 
-    const isVenueSession = Boolean(dto.venueId || dto.sessionType === SessionType.IN_PERSON);
-    const session = await this.prisma.liveSession.create({
-      data: {
-        courseId,
-        titleAm: dto.titleAm,
-        titleEn: dto.titleEn,
-        descriptionAm: dto.descriptionAm,
-        descriptionEn: dto.descriptionEn,
-        sessionType: dto.sessionType || (isVenueSession ? SessionType.IN_PERSON : SessionType.VIRTUAL),
-        platform: dto.platform || (isVenueSession ? SessionPlatform.IN_PERSON : SessionPlatform.LIVEKIT),
-        venueId: dto.venueId || null,
-        externalUrl: dto.externalUrl,
-        meetingId: dto.meetingId,
-        meetingPassword: dto.meetingPassword,
-        scheduledAt: new Date(dto.scheduledAt),
-        durationMinutes: dto.durationMinutes,
-        trainerId: dto.trainerId || null,
-        allowViewAttendance: dto.allowViewAttendance ?? false,
-        attendanceThreshold: dto.attendanceThreshold ?? 60,
-      },
-      include: {
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
-        venue: true,
-      },
+    const isVenueSession = isInPersonSession(dto);
+    const session = await this.prisma.$transaction(async (tx) => {
+      if (dto.venueId) {
+        await this.inPersonSessions.assertVenueAvailable(
+          dto.venueId,
+          new Date(dto.scheduledAt),
+          dto.durationMinutes,
+          undefined,
+          tx,
+        );
+      }
+      return tx.liveSession.create({
+        data: {
+          courseId,
+          titleAm: dto.titleAm,
+          titleEn: dto.titleEn,
+          descriptionAm: dto.descriptionAm,
+          descriptionEn: dto.descriptionEn,
+          sessionType:
+            dto.sessionType || (isVenueSession ? SessionType.IN_PERSON : SessionType.VIRTUAL),
+          platform:
+            dto.platform || (isVenueSession ? SessionPlatform.IN_PERSON : SessionPlatform.LIVEKIT),
+          venueId: dto.venueId || null,
+          externalUrl: dto.externalUrl,
+          meetingId: dto.meetingId,
+          meetingPassword: dto.meetingPassword,
+          scheduledAt: new Date(dto.scheduledAt),
+          durationMinutes: dto.durationMinutes,
+          trainerId: dto.trainerId || null,
+          allowViewAttendance: dto.allowViewAttendance ?? false,
+          attendanceThreshold: dto.attendanceThreshold ?? 60,
+        },
+        include: {
+          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
+          venue: true,
+        },
+      });
     });
 
     // Notify all enrolled learners, assigned trainers, and active learners about the new live session (best-effort)
@@ -111,39 +194,45 @@ export class LiveSessionsService {
       throw new BadRequestException('At least one venue session must be provided');
     }
 
-    const createdSessions: any[] = [];
+    // All-or-nothing: a conflict in any row (including with an earlier row of the same batch)
+    // rolls back the whole batch instead of leaving it half-created.
+    const createdSessions = await this.prisma.$transaction(async (tx) => {
+      const created: any[] = [];
+      for (const item of dto.venueSessions) {
+        const venue = await this.inPersonSessions.assertVenueAvailable(
+          item.venueId,
+          new Date(item.scheduledAt),
+          item.durationMinutes,
+          undefined,
+          tx,
+        );
 
-    for (const item of dto.venueSessions) {
-      const venue = await this.prisma.venue.findUnique({
-        where: { id: item.venueId },
-      });
-      if (!venue) {
-        throw new NotFoundException(`Venue ${item.venueId} not found`);
+        const session = await tx.liveSession.create({
+          data: {
+            courseId: dto.courseId,
+            titleAm: dto.titleAm || dto.titleEn,
+            titleEn: `${dto.titleEn} (${venue.branch} - ${venue.name})`,
+            descriptionAm: dto.descriptionAm,
+            descriptionEn: dto.descriptionEn,
+            sessionType: SessionType.IN_PERSON,
+            platform: SessionPlatform.IN_PERSON,
+            venueId: item.venueId,
+            trainerId: item.trainerId || null,
+            scheduledAt: new Date(item.scheduledAt),
+            durationMinutes: item.durationMinutes,
+          },
+          include: {
+            course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+            trainer: {
+              select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+            },
+            venue: true,
+          },
+        });
+        created.push(session);
       }
-
-      const session = await this.prisma.liveSession.create({
-        data: {
-          courseId: dto.courseId,
-          titleAm: dto.titleAm || dto.titleEn,
-          titleEn: `${dto.titleEn} (${venue.branch} - ${venue.name})`,
-          descriptionAm: dto.descriptionAm,
-          descriptionEn: dto.descriptionEn,
-          sessionType: SessionType.IN_PERSON,
-          platform: SessionPlatform.IN_PERSON,
-          venueId: item.venueId,
-          trainerId: item.trainerId || null,
-          scheduledAt: new Date(item.scheduledAt),
-          durationMinutes: item.durationMinutes,
-        },
-        include: {
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
-          venue: true,
-        },
-      });
-
-      createdSessions.push(session);
-    }
+      return created;
+    });
 
     return {
       message: `Successfully scheduled ${createdSessions.length} in-person classroom session(s).`,
@@ -152,15 +241,37 @@ export class LiveSessionsService {
     };
   }
 
-  async findAll(query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string }) {
+  async findAll(
+    query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
+    user: AuthenticatedUser,
+  ) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
+    const visibility = await this.sessionVisibility(user);
+
+    let visible: Prisma.LiveSessionWhereInput | undefined;
+    if (visibility.kind === 'enrolled' && query.courseId) {
+      // Before enrolling, a learner may browse a published course's in-person sessions to pick a seat.
+      visible = {
+        OR: [
+          visibility.where,
+          {
+            course: { status: CourseStatus.PUBLISHED },
+            status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
+            OR: [{ sessionType: SessionType.IN_PERSON }, { venueId: { not: null } }],
+          },
+        ],
+      };
+    } else if (visibility.kind !== 'all') {
+      visible = visibility.where;
+    }
 
     const where: Prisma.LiveSessionWhereInput = {
       deletedAt: null,
       ...(query.status ? { status: query.status } : {}),
       ...(query.courseId ? { courseId: query.courseId } : {}),
       ...(query.trainerId ? { trainerId: query.trainerId } : {}),
+      ...(visible ? { AND: [visible] } : {}),
     };
 
     const [sessions, total] = await Promise.all([
@@ -171,15 +282,26 @@ export class LiveSessionsService {
         orderBy,
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
           venue: true,
           attendees: true,
+          _count: { select: { enrollments: { where: { status: EnrollmentStatus.ACTIVE } } } },
         },
       }),
       this.prisma.liveSession.count({ where }),
     ]);
 
-    return buildPaginatedResponse(sessions, total, page, limit);
+    // bookedSeats = active enrollments holding a seat — the same count the booking check uses.
+    // Learners get the seat count but not other people's attendance rows.
+    const withSeats = sessions.map(({ _count, attendees, ...session }) => ({
+      ...session,
+      ...(visibility.kind === 'enrolled' ? {} : { attendees }),
+      bookedSeats: _count.enrollments,
+    }));
+
+    return buildPaginatedResponse(withSeats, total, page, limit);
   }
 
   async findById(id: string) {
@@ -187,7 +309,9 @@ export class LiveSessionsService {
       where: { id },
       include: {
         course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        trainer: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+        },
         venue: true,
         attendees: {
           include: {
@@ -213,71 +337,56 @@ export class LiveSessionsService {
       throw new BadRequestException('Cannot update a completed session without rescheduling');
     }
 
-    return this.prisma.liveSession.update({
-      where: { id },
-      data: {
-        titleAm: dto.titleAm,
-        titleEn: dto.titleEn,
-        descriptionAm: dto.descriptionAm,
-        descriptionEn: dto.descriptionEn,
-        platform: dto.platform,
-        externalUrl: dto.externalUrl,
-        meetingId: dto.meetingId,
-        meetingPassword: dto.meetingPassword,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
-        durationMinutes: dto.durationMinutes,
-        status: dto.status !== undefined ? dto.status : dto.scheduledAt ? SessionStatus.SCHEDULED : undefined,
-        trainerId: dto.trainerId !== undefined ? (dto.trainerId || null) : undefined,
-        allowViewAttendance: dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
-        attendanceThreshold: dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
-      },
-      include: {
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
-      },
+    const rescheduled = dto.scheduledAt !== undefined || dto.durationMinutes !== undefined;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Moving an in-person session in time must not collide with another booking in its room.
+      if (existing.venueId && rescheduled) {
+        await this.inPersonSessions.assertVenueAvailable(
+          existing.venueId,
+          dto.scheduledAt ? new Date(dto.scheduledAt) : existing.scheduledAt,
+          dto.durationMinutes ?? existing.durationMinutes,
+          id,
+          tx,
+        );
+      }
+      return tx.liveSession.update({
+        where: { id },
+        data: {
+          titleAm: dto.titleAm,
+          titleEn: dto.titleEn,
+          descriptionAm: dto.descriptionAm,
+          descriptionEn: dto.descriptionEn,
+          platform: dto.platform,
+          externalUrl: dto.externalUrl,
+          meetingId: dto.meetingId,
+          meetingPassword: dto.meetingPassword,
+          scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+          durationMinutes: dto.durationMinutes,
+          status:
+            dto.status !== undefined
+              ? dto.status
+              : dto.scheduledAt
+                ? SessionStatus.SCHEDULED
+                : undefined,
+          trainerId: dto.trainerId !== undefined ? dto.trainerId || null : undefined,
+          allowViewAttendance:
+            dto.allowViewAttendance !== undefined ? dto.allowViewAttendance : undefined,
+          attendanceThreshold:
+            dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
+        },
+        include: {
+          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
+        },
+      });
     });
   }
 
   async getJoinUrl(id: string, user?: AuthenticatedUser) {
-    const session = await this.findById(id);
-
-    const userName = user
-      ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
-      : 'Guest';
-
-    const isStaff = user
-      ? user.roles?.some((r) =>
-          ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-        ) ?? false
-      : false;
-
-    let externalUrl = session.externalUrl?.trim() || '';
-    if (externalUrl && !externalUrl.startsWith('http://') && !externalUrl.startsWith('https://')) {
-      externalUrl = `https://${externalUrl}`;
-    }
-
-    // BigBlueButton session
-    if (session.meetingId?.startsWith('bbb-') || externalUrl.includes('/bigbluebutton/')) {
-      const meetingId = session.meetingId || `bbb-${session.id}`;
-      const joinUrl = this.bbbProvider.generateJoinUrl({
-        meetingId,
-        fullName: userName,
-        isModerator: Boolean(isStaff),
-        password: session.meetingPassword || undefined,
-      });
-      return { joinUrl, platform: session.platform };
-    }
-
-    // Jitsi Meet — inject display name and suppress the "Asking to join / Log in" screen
-    if (externalUrl && (externalUrl.includes('meet.jit.si') || externalUrl.includes('jitsi'))) {
-      const baseUrl = externalUrl.split('#')[0];
-      // prejoinConfig.enabled=false disables the pre-join page; requireDisplayName=false
-      // prevents the login prompt from blocking guest entry; enableWelcomePage=false prevents welcome page
-      const jitsiJoinUrl = `${baseUrl}#userInfo.displayName="${encodeURIComponent(userName)}"&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableWelcomePage=false&config.disableDeepLinking=true`;
-      return { joinUrl: jitsiJoinUrl, platform: session.platform };
-    }
-
-    return { joinUrl: externalUrl, platform: session.platform };
+    return this.virtualSessions.getJoinUrl(await this.findById(id), user);
   }
 
   async changeStatus(id: string, status: SessionStatus) {
@@ -298,141 +407,26 @@ export class LiveSessionsService {
     });
   }
 
-  /**
-   * Generate a LiveKit access token for a participant joining a LIVEKIT-platform session.
-   * Verifies that the session exists and is active, and that learners are enrolled.
-   */
   async getLiveKitToken(
     sessionId: string,
     user: AuthenticatedUser,
   ): Promise<{ token: string; wsUrl: string; roomName: string }> {
-    const session = await this.findById(sessionId);
-
-    const isStaff = user.roles?.some((r) =>
-      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-    ) ?? false;
-    const isSessionTrainer = session.trainerId === user.id;
-    const isAuthorizedStaff = isStaff || isSessionTrainer;
-
-    if (session.status !== SessionStatus.SCHEDULED && session.status !== SessionStatus.LIVE) {
-      if (isAuthorizedStaff) {
-        await this.prisma.liveSession.update({
-          where: { id: sessionId },
-          data: { status: SessionStatus.LIVE, actualEndedAt: null },
-        });
-      } else {
-        throw new BadRequestException('Session is not scheduled or live');
-      }
-    } else if (session.status === SessionStatus.SCHEDULED && isAuthorizedStaff) {
-      await this.prisma.liveSession.update({
-        where: { id: sessionId },
-        data: { status: SessionStatus.LIVE, actualStartedAt: new Date() },
-      });
-    }
-
-    // Learners must be actively enrolled in the course.
-    // If not yet enrolled for an active/scheduled session, auto-enroll them so they can participate seamlessly!
-    if (!isAuthorizedStaff) {
-      const enrollment = await this.prisma.enrollment.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
-      });
-      if (!enrollment || enrollment.status !== 'ACTIVE') {
-        try {
-          await this.prisma.enrollment.upsert({
-            where: { userId_courseId: { userId: user.id, courseId: session.courseId } },
-            update: {
-              status: 'ACTIVE',
-              droppedAt: null,
-              droppedReason: null,
-              droppedBy: null,
-            },
-            create: {
-              userId: user.id,
-              courseId: session.courseId,
-              status: 'ACTIVE',
-            },
-          });
-          this.logger.log(`Auto-enrolled learner ${user.id} into course ${session.courseId} on session ${sessionId} join`);
-        } catch (enrollErr) {
-          this.logger.warn(`Could not auto-enroll learner ${user.id} in course ${session.courseId}:`, enrollErr);
-        }
-      }
-    }
-
-    const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-    const roomName = session.id;
-
-    const token = await this.liveKitProvider.generateToken(roomName, {
-      identity: user.id,
-      name: displayName,
-      isTrainer: isAuthorizedStaff,
-      metadata: { role: isAuthorizedStaff ? 'trainer' : 'learner', sessionId },
-    });
-
-    return { token, wsUrl: LiveKitConfig.url, roomName };
+    return this.virtualSessions.getLiveKitToken(await this.findById(sessionId), user);
   }
 
   async upcomingForUser(
-    userId?: string,
+    user: AuthenticatedUser,
     query: PaginationQuery & { courseId?: string } = {},
   ) {
     const { page, limit, skip } = buildPaginationArgs(query);
+    const visibility = await this.sessionVisibility(user);
 
-    let where: Prisma.LiveSessionWhereInput = {
+    const where: Prisma.LiveSessionWhereInput = {
       status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
       deletedAt: null,
+      ...(query.courseId ? { courseId: query.courseId } : {}),
+      ...(visibility.kind !== 'all' ? { AND: [visibility.where] } : {}),
     };
-
-    if (query.courseId) {
-      where.courseId = query.courseId;
-    }
-
-    if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        include: { roles: true },
-      });
-
-      const roleNames = user?.roles.map((r) => r.role) ?? [];
-      const isStaff = roleNames.some((r) =>
-        ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-      );
-
-      if (!isStaff) {
-        // Learner: each enrollment decides which of its course's sessions are visible.
-        // In-person enrollments see only their booked session (or, without a booking,
-        // in-person sessions at their venue); online enrollments see only virtual sessions.
-        const enrollments = await this.prisma.enrollment.findMany({
-          where: {
-            userId,
-            status: { in: [EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED] },
-          },
-          select: { courseId: true, sessionId: true, venueId: true, deliveryMode: true },
-        });
-
-        if (enrollments.length === 0) {
-          return buildPaginatedResponse([], 0, page, limit);
-        }
-
-        const perEnrollment: Prisma.LiveSessionWhereInput[] = enrollments.map((e) => {
-          const isInPerson =
-            e.deliveryMode === 'IN_PERSON_ONLY' ||
-            (Boolean(e.venueId) && e.deliveryMode !== 'ONLINE_ONLY');
-
-          if (!isInPerson) {
-            return { courseId: e.courseId, sessionType: SessionType.VIRTUAL, venueId: null };
-          }
-          if (e.sessionId) {
-            return { id: e.sessionId, courseId: e.courseId };
-          }
-          return e.venueId
-            ? { courseId: e.courseId, venueId: e.venueId }
-            : { courseId: e.courseId, sessionType: SessionType.IN_PERSON };
-        });
-
-        where = { ...where, AND: [{ OR: perEnrollment }] };
-      }
-    }
 
     const [sessions, total] = await Promise.all([
       this.prisma.liveSession.findMany({
@@ -442,7 +436,9 @@ export class LiveSessionsService {
         orderBy: { scheduledAt: 'asc' },
         include: {
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+          trainer: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
           venue: true,
         },
       }),
@@ -456,17 +452,14 @@ export class LiveSessionsService {
    * Submit learner response for an interactive in-room live quiz.
    * Scores response, creates an immutable audit attendance log, and returns score.
    */
-  async submitQuizResponse(
-    sessionId: string,
-    user: AuthenticatedUser,
-    dto: SubmitLiveQuizDto,
-  ) {
+  async submitQuizResponse(sessionId: string, user: AuthenticatedUser, dto: SubmitLiveQuizDto) {
     const session = await this.findById(sessionId);
 
     // Verify enrollment if learner
-    const isStaff = user.roles?.some((r) =>
-      ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
-    ) ?? false;
+    const isStaff =
+      user.roles?.some((r) =>
+        ['TRAINER', 'COURSE_OWNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN'].includes(r),
+      ) ?? false;
     const isSessionTrainer = session.trainerId === user.id;
     if (!isStaff && !isSessionTrainer) {
       const enrollment = await this.prisma.enrollment.findUnique({
@@ -678,7 +671,8 @@ export class LiveSessionsService {
 
     const totalResponses = logs.length;
     const totalCorrect = logs.filter((l) => (l.metadata as any)?.isCorrect).length;
-    const overallAccuracy = totalResponses > 0 ? Math.round((totalCorrect / totalResponses) * 100) : 0;
+    const overallAccuracy =
+      totalResponses > 0 ? Math.round((totalCorrect / totalResponses) * 100) : 0;
 
     return {
       sessionId,
@@ -690,4 +684,3 @@ export class LiveSessionsService {
     };
   }
 }
-

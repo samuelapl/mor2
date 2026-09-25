@@ -136,6 +136,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'result.view.all',
     'student.view',
     'live_session.manage_own',
+    'live_session.manage_all',
     'progress.view',
     'user.view',
     'dashboard.stats',

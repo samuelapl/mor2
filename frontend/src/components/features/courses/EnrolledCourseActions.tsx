@@ -2,18 +2,7 @@
 
 import Link from "next/link";
 import { Award, Calendar, CheckCircle2, MapPin, PlayCircle } from "lucide-react";
-import type { ApiEnrollment } from "@/lib/api/types";
-import type { Course } from "@/types";
 import { Button } from "@/components/ui/Button";
-
-/** True when the learner attends this course in a physical classroom. */
-export function isInPersonEnrollment(course: Course, enrollment?: ApiEnrollment) {
-  return (
-    enrollment?.deliveryMode === "IN_PERSON_ONLY" ||
-    (Boolean(enrollment?.venueId) && enrollment?.deliveryMode !== "ONLINE_ONLY") ||
-    course.deliveryMode === "IN_PERSON_ONLY"
-  );
-}
 
 interface EnrolledCourseActionsProps {
   courseId: string;

@@ -9,8 +9,8 @@ import PageShell from "@/components/shared/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { SessionTable, type SessionRow } from "@/components/features/sessions/SessionTable";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
+import { SessionTable, type SessionRow } from "@/components/features/sessions/shared/SessionTable";
+import { SessionDetailModal } from "@/components/features/sessions/shared/SessionDetailModal";
 
 export default function CalendarPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);

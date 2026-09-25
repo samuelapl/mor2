@@ -12,13 +12,11 @@ import LanguageToggle from "@/components/shared/LanguageToggle";
 import { Badge } from "@/components/ui/Badge";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { CourseCard } from "@/components/features/courses/CourseCard";
-import {
-  EnrolledCourseActions,
-  isInPersonEnrollment,
-} from "@/components/features/courses/EnrolledCourseActions";
+import { EnrolledCourseActions } from "@/components/features/courses/EnrolledCourseActions";
+import { isInPersonEnrollment } from "@/lib/session-mode";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
-import { VenueDetailModal } from "@/components/features/venues/VenueDetailModal";
+import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
 import type { ApiVenue } from "@/lib/api/types";
 
 export default function LearnerCoursesPage() {
@@ -154,26 +152,14 @@ export default function LearnerCoursesPage() {
               showStatus={false}
               progress={loading ? 0 : percent}
               onClick={() => router.push(`/learner/courses/${course.id}/learn`)}
+              deliveryMode={isPerson ? "IN_PERSON_ONLY" : "ONLINE_ONLY"}
+              deliveryDetail={enrollment?.venue?.branch}
               extraBadge={
-                <div className="flex flex-col items-end gap-1">
-                  {isPerson ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">
-                      <Building2 className="h-3 w-3" />
-                      {enrollment?.venue?.branch || "In-Person Classroom"}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 border border-sky-200">
-                      <Laptop className="h-3 w-3" />
-                      Pure Online
-                    </span>
-                  )}
-
-                  {done ? (
-                    <Badge variant="green">{tr(lang, "completed")}</Badge>
-                  ) : (
-                    <Badge variant="blue">{percent}%</Badge>
-                  )}
-                </div>
+                done ? (
+                  <Badge variant="green">{tr(lang, "completed")}</Badge>
+                ) : (
+                  <Badge variant="blue">{percent}%</Badge>
+                )
               }
             >
               <EnrolledCourseActions

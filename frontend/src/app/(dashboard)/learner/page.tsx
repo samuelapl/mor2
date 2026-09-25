@@ -30,9 +30,10 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { DonutChart, ProgressRing } from "@/components/ui/charts";
-import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
-import { VenueDetailModal } from "@/components/features/venues/VenueDetailModal";
+import { LiveSessionWorkspace } from "@/components/features/sessions/virtual/LiveSessionWorkspace";
+import { SessionDetailModal } from "@/components/features/sessions/shared/SessionDetailModal";
+import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
+import { isInPersonEnrollment, isInPersonSession } from "@/lib/session-mode";
 
 export default function LearnerDashboardPage() {
   const { courses, lang, currentUser, getEnrollmentForCourse } = useLms();
@@ -107,11 +108,7 @@ export default function LearnerDashboardPage() {
     let inP = 0;
     for (const c of enrolled) {
       const enr = getEnrollmentForCourse(c.id);
-      const isPerson =
-        enr?.deliveryMode === "IN_PERSON_ONLY" ||
-        (Boolean(enr?.venueId) && enr?.deliveryMode !== "ONLINE_ONLY") ||
-        c.deliveryMode === "IN_PERSON_ONLY";
-      if (isPerson) inP++;
+      if (isInPersonEnrollment(c, enr)) inP++;
       else on++;
     }
     return { onlineCount: on, inPersonCount: inP };
@@ -317,7 +314,7 @@ export default function LearnerDashboardPage() {
                 minute: "2-digit",
               });
               const isLive = session.status === "LIVE";
-              const isPerson = session.sessionType === "IN_PERSON" || Boolean(session.venueId);
+              const isPerson = isInPersonSession(session);
 
               return (
                 <div

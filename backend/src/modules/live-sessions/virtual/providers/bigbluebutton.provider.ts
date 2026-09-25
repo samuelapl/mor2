@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { JoinableSession, JoinParticipant, JoinUrlProvider } from './video-provider';
 
 export interface BbbMeetingConfig {
   meetingId: string;
@@ -18,7 +19,7 @@ export interface BbbJoinConfig {
 }
 
 @Injectable()
-export class BigBlueButtonProvider {
+export class BigBlueButtonProvider implements JoinUrlProvider {
   private readonly logger = new Logger(BigBlueButtonProvider.name);
   private readonly baseUrl: string;
   private readonly secret: string;
@@ -73,6 +74,20 @@ export class BigBlueButtonProvider {
     const apiEndpoint = this.baseUrl.endsWith('/api') ? this.baseUrl : `${this.baseUrl}/api`;
 
     return `${apiEndpoint}/${callName}?${queryString}${separator}checksum=${checksum}`;
+  }
+
+  /** BigBlueButton sessions are recognised by a `bbb-` meeting id or a BBB server link. */
+  supports(session: JoinableSession, externalUrl: string): boolean {
+    return Boolean(session.meetingId?.startsWith('bbb-')) || externalUrl.includes('/bigbluebutton/');
+  }
+
+  buildJoinUrl(session: JoinableSession, _externalUrl: string, participant: JoinParticipant): string {
+    return this.generateJoinUrl({
+      meetingId: session.meetingId || `bbb-${session.id}`,
+      fullName: participant.displayName,
+      isModerator: participant.isModerator,
+      password: session.meetingPassword || undefined,
+    });
   }
 
   /**
