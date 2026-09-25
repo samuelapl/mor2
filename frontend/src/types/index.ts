@@ -20,6 +20,8 @@ export type CourseStatus =
 
 export type CourseLevel = "basic" | "intermediate" | "advanced";
 
+export type CourseDeliveryMode = "ONLINE_ONLY" | "IN_PERSON_ONLY" | "BOTH";
+
 export interface RoleInfo {
   key: Role;
   label: string;
@@ -50,6 +52,14 @@ export interface User {
   lastLogin?: string | null;
   /** Admin-set password not yet replaced by the user (first-login change pending). */
   mustChangePassword?: boolean;
+  primaryVenueId?: string | null;
+  primaryVenue?: {
+    id: string;
+    name: string;
+    branch: string;
+    building?: string | null;
+    capacity: number;
+  } | null;
 }
 
 export interface UploadedResource {
@@ -139,6 +149,7 @@ export interface Course {
   department?: string;
   targetAudience?: string;
   deliveryMethod?: string;
+  deliveryMode?: CourseDeliveryMode;
   language?: string;
   prerequisites?: string;
   objectives?: string;

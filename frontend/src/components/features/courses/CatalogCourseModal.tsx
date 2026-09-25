@@ -1,28 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertCircle,
   Award,
   BookOpen,
   BookOpenCheck,
+  Building2,
+  Calendar,
+  Check,
+  CheckCircle2,
   ClipboardPen,
   Clock,
   Globe2,
+  Info,
+  Laptop,
   Layers,
   ListChecks,
   Loader2,
+  MapPin,
   Paperclip,
+  Radio,
   Sparkles,
   UserRound,
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
 import { Badge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RichContent } from "@/components/ui/RichContent";
 import { useLms } from "@/lib/lms-store";
 import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
-import type { ApiAssessment } from "@/lib/api/types";
+import { fetchLiveSessions } from "@/lib/api/monitoring";
+import type { ApiAssessment, ApiLiveSession } from "@/lib/api/types";
 import { getItemAttachments } from "./wizard-components";
 
 interface CatalogCourseModalProps {
@@ -40,7 +52,29 @@ function formatDuration(minutes: number): string {
   return `${mins} min`;
 }
 
+function formatDate(value: string): string {
+  try {
+    return new Date(value).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return value;
+  }
+}
 
+function formatTime(value: string): string {
+  try {
+    return new Date(value).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return value;
+  }
+}
 
 /**
  * Pre-enrollment course preview for the learner catalog. Shows a transparent,
@@ -53,8 +87,66 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   const course = courseById(courseId);
 
   const [enrolling, setEnrolling] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Set once doEnroll succeeds so the "already enrolled" redirect below doesn't double-navigate.
+  const justEnrolledRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<ApiAssessment[]>([]);
+
+  // Delivery mode & Session selection
+  const defaultMode: "ONLINE_ONLY" | "IN_PERSON_ONLY" =
+    course?.deliveryMode === "IN_PERSON_ONLY" ? "IN_PERSON_ONLY" : "ONLINE_ONLY";
+  const [selectedDeliveryMode, setSelectedDeliveryMode] =
+    useState<"ONLINE_ONLY" | "IN_PERSON_ONLY">(defaultMode);
+  const [availableSessions, setAvailableSessions] = useState<ApiLiveSession[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+
+  useEffect(() => {
+    if (course?.deliveryMode === "IN_PERSON_ONLY") {
+      setSelectedDeliveryMode("IN_PERSON_ONLY");
+    } else if (course?.deliveryMode === "ONLINE_ONLY") {
+      setSelectedDeliveryMode("ONLINE_ONLY");
+    }
+  }, [course?.deliveryMode]);
+
+  // Fetch in-person scheduled sessions for this course
+  useEffect(() => {
+    if (!open || !courseId) return;
+    let cancelled = false;
+    setLoadingSessions(true);
+    fetchLiveSessions({ courseId, status: "SCHEDULED", limit: 50 })
+      .then((res) => {
+        if (!cancelled) {
+          const inPerson = res.data.filter(
+            (s) => s.sessionType === "IN_PERSON" || Boolean(s.venueId),
+          );
+          setAvailableSessions(inPerson);
+          if (inPerson.length > 0) {
+            const firstAvailable = inPerson.find((s) => {
+              const cap = s.venue?.capacity ?? 30;
+              const booked = s.attendees?.length ?? 0;
+              return cap - booked > 0;
+            });
+            if (firstAvailable) {
+              setSelectedSessionId(firstAvailable.id);
+            } else {
+              setSelectedSessionId(inPerson[0].id);
+            }
+          }
+          setLoadingSessions(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableSessions([]);
+          setLoadingSessions(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, courseId]);
 
   // Fetch course assessments for quiz question count & stats
   useEffect(() => {
@@ -137,7 +229,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   const enrolled = me && course ? course.enrolledLearnerIds.includes(me) : false;
 
   useEffect(() => {
-    if (open && enrolled && courseId) {
+    if (open && enrolled && courseId && !justEnrolledRef.current) {
       onClose();
       router.push(`/learner/courses/${courseId}/learn`);
     }
@@ -146,14 +238,54 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   // Early return if not loaded or enrolled
   if (!course || enrolled) return null;
 
+  const isSeatFull =
+    selectedDeliveryMode === "IN_PERSON_ONLY" &&
+    (() => {
+      const chosen = availableSessions.find((s) => s.id === selectedSessionId);
+      if (!chosen) return false;
+      const cap = chosen.venue?.capacity ?? 30;
+      const booked = chosen.attendees?.length ?? 0;
+      return cap - booked <= 0;
+    })();
+
+  const canEnroll =
+    !enrolling &&
+    !isSeatFull &&
+    (selectedDeliveryMode !== "IN_PERSON_ONLY" ||
+      availableSessions.length === 0 ||
+      Boolean(selectedSessionId));
+
+  const enrollButtonLabel = enrolling
+    ? "Processing Enrollment…"
+    : isSeatFull
+    ? "Classroom Full"
+    : selectedDeliveryMode === "IN_PERSON_ONLY"
+    ? "Reserve Seat & Enroll"
+    : "Enroll in Online Course";
+
+  const chosenSession = availableSessions.find((s) => s.id === selectedSessionId);
+
   const doEnroll = async () => {
     setEnrolling(true);
     setError(null);
-    const result = await enrollSelf(courseId);
+    let result;
+    if (selectedDeliveryMode === "IN_PERSON_ONLY") {
+      result = await enrollSelf(courseId, {
+        deliveryMode: "IN_PERSON_ONLY",
+        venueId: chosenSession?.venueId || undefined,
+        sessionId: chosenSession?.id,
+      });
+    } else {
+      result = await enrollSelf(courseId, {
+        deliveryMode: "ONLINE_ONLY",
+      });
+    }
     setEnrolling(false);
+    setConfirmOpen(false);
     if (!result.ok) {
       setError(result.message);
     } else {
+      justEnrolledRef.current = true;
       onClose();
       router.push(`/learner/courses/${courseId}/learn`);
     }
@@ -161,6 +293,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
 
   return (
+    <>
     <WorkspaceDetailOverlay
       open={open}
       onClose={onClose}
@@ -176,20 +309,32 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
       }
       actions={
         <Button
-          onClick={() => void doEnroll()}
-          disabled={enrolling}
-          className="shadow-sm font-semibold gap-2 bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+          onClick={() => setConfirmOpen(true)}
+          disabled={!canEnroll}
+          className="shadow-sm font-semibold gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white transition-colors"
         >
           {enrolling ? (
             <Loader2 className="h-4 w-4 animate-spin" />
+          ) : selectedDeliveryMode === "IN_PERSON_ONLY" ? (
+            <Building2 className="h-4 w-4" />
           ) : (
             <BookOpen className="h-4 w-4" />
           )}
-          {enrolling ? "Enrolling…" : "Enroll Now"}
+          {enrollButtonLabel}
         </Button>
       }
     >
       <div className="w-full space-y-7 pb-8">
+        {error ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-800 shadow-xs">
+            <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-bold text-rose-900">Enrollment Notice</p>
+              <p className="mt-0.5 leading-relaxed">{error}</p>
+            </div>
+          </div>
+        ) : null}
+
         {/* Hero Cover Image & Header Details */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs">
           {course.cover ? (
@@ -256,12 +401,18 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
             <Button
               size="sm"
-              onClick={() => void doEnroll()}
-              disabled={enrolling}
-              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-2xs"
+              onClick={() => setConfirmOpen(true)}
+              disabled={!canEnroll}
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-2xs"
             >
-              <BookOpen className="h-3.5 w-3.5" />
-              {enrolling ? "Enrolling…" : "Enroll Now"}
+              {enrolling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : selectedDeliveryMode === "IN_PERSON_ONLY" ? (
+                <Building2 className="h-3.5 w-3.5" />
+              ) : (
+                <BookOpen className="h-3.5 w-3.5" />
+              )}
+              {enrollButtonLabel}
             </Button>
           </div>
         </div>
@@ -341,6 +492,248 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               {finalAssessment ? `${finalAssessment.passingScore}% pass mark` : "Certified"}
             </p>
           </div>
+        </div>
+
+        {/* Delivery Mode & Classroom Selection */}
+        <div className="rounded-2xl border border-indigo-200/90 bg-gradient-to-b from-indigo-50/50 via-white to-white p-5 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+                Enrollment Options
+              </span>
+              <h3 className="text-base font-bold text-slate-900">
+                Course Training Delivery Mode
+              </h3>
+            </div>
+            <span className="text-xs font-medium text-slate-500">
+              Select how you prefer to attend this training
+            </span>
+          </div>
+
+          {/* Mode Selector */}
+          {course.deliveryMode === "BOTH" ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setSelectedDeliveryMode("ONLINE_ONLY")}
+                className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
+                  selectedDeliveryMode === "ONLINE_ONLY"
+                    ? "border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs"
+                    : "border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 border border-sky-200">
+                      <Laptop className="h-3.5 w-3.5" />
+                      🌐 Pure Online
+                    </span>
+                    <span
+                      className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                        selectedDeliveryMode === "ONLINE_ONLY"
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      {selectedDeliveryMode === "ONLINE_ONLY" && (
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      )}
+                    </span>
+                  </div>
+                  <h4 className="mt-2.5 text-sm font-bold text-slate-900">
+                    Self-Paced Online Learning
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                    Study anytime, anywhere with interactive lessons, quizzes, and instant certificate issuance upon passing.
+                  </p>
+                </div>
+                <div className="mt-3 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Instant Access Upon Enrollment
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedDeliveryMode("IN_PERSON_ONLY")}
+                className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
+                  selectedDeliveryMode === "IN_PERSON_ONLY"
+                    ? "border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs"
+                    : "border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                      <Building2 className="h-3.5 w-3.5" />
+                      🏢 In-Person Classroom
+                    </span>
+                    <span
+                      className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                        selectedDeliveryMode === "IN_PERSON_ONLY"
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      {selectedDeliveryMode === "IN_PERSON_ONLY" && (
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      )}
+                    </span>
+                  </div>
+                  <h4 className="mt-2.5 text-sm font-bold text-slate-900">
+                    Ministry Branch Classroom Training
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                    Attend scheduled instructor-led sessions at an official Ministry training hall with direct trainer guidance.
+                  </p>
+                </div>
+                <div className="mt-3 text-[11px] font-medium text-amber-700 flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  Limited Classroom Capacity & Seat Reservation
+                </div>
+              </button>
+            </div>
+          ) : course.deliveryMode === "IN_PERSON_ONLY" ? (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
+              <Building2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Mandatory In-Person Training</p>
+                <p className="mt-0.5 text-amber-800">
+                  This course is exclusively delivered through physical classroom sessions at Ethiopian Ministry of Revenues branch venues. Please reserve your seat in a scheduled session below.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/80 p-3.5 text-xs text-sky-900">
+              <Laptop className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Pure Online Training</p>
+                <p className="mt-0.5 text-sky-800">
+                  This course is delivered 100% online through interactive modules, multimedia lessons, and knowledge checks.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* In-Person Session Picker */}
+          {selectedDeliveryMode === "IN_PERSON_ONLY" && (
+            <div className="mt-4 space-y-3 pt-3 border-t border-slate-200/80">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">
+                  Select Training Venue & Scheduled Session:
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {availableSessions.length} session{availableSessions.length === 1 ? "" : "s"} scheduled
+                </span>
+              </div>
+
+              {loadingSessions ? (
+                <div className="flex items-center justify-center p-6 text-xs text-slate-500 gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                  Loading scheduled classroom sessions…
+                </div>
+              ) : availableSessions.length === 0 ? (
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 text-xs text-amber-800 flex items-start gap-2.5">
+                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">No classroom sessions scheduled yet</p>
+                    <p className="mt-0.5">
+                      Training coordinators have not yet scheduled in-person sessions for this course. Please contact your branch training administrator or check back soon.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {availableSessions.map((session) => {
+                    const venue = session.venue;
+                    const capacity = venue?.capacity ?? 30;
+                    const booked = session.attendees?.length ?? 0;
+                    const seatsLeft = Math.max(0, capacity - booked);
+                    const isFull = seatsLeft <= 0;
+                    const isSelected = selectedSessionId === session.id;
+
+                    return (
+                      <div
+                        key={session.id}
+                        onClick={() => {
+                          if (!isFull) setSelectedSessionId(session.id);
+                        }}
+                        className={`relative rounded-xl border p-3.5 text-left transition-all ${
+                          isFull
+                            ? "opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed"
+                            : isSelected
+                            ? "border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20 cursor-pointer shadow-xs"
+                            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                              <MapPin className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                              <span>{venue?.branch || "Ministry Branch"}</span>
+                              <span className="text-slate-400">·</span>
+                              <span className="font-semibold text-slate-700">{venue?.name || "Room"}</span>
+                            </div>
+                            {venue?.building ? (
+                              <p className="text-[11px] text-slate-500 mt-0.5 ml-5">
+                                Building: {venue.building}
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <span
+                            className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? "border-indigo-600 bg-indigo-600 text-white"
+                                : "border-slate-300 bg-white"
+                            }`}
+                          >
+                            {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                          </span>
+                        </div>
+
+                        {/* Date & Time */}
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-slate-400" />
+                            {formatDate(session.scheduledAt)}
+                          </span>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-slate-400" />
+                            {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
+                          </span>
+                        </div>
+
+                        {/* Trainer & Seat Capacity Meter */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-600 truncate max-w-[130px]">
+                            {session.trainer
+                              ? `${session.trainer.firstName} ${session.trainer.lastName}`
+                              : "Assigned Trainer"}
+                          </span>
+
+                          {isFull ? (
+                            <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                              Classroom Full
+                            </span>
+                          ) : seatsLeft <= 5 ? (
+                            <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                              Only {seatsLeft} seat{seatsLeft === 1 ? "" : "s"} left
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              {seatsLeft} of {capacity} seats available
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Course Overview */}
@@ -437,8 +830,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           </div>
 
           <Button
-            onClick={() => void doEnroll()}
-            disabled={enrolling}
+            onClick={() => setConfirmOpen(true)}
+            disabled={!canEnroll}
             className="bg-white text-indigo-700 hover:bg-indigo-50 shadow-md font-bold text-sm px-6 py-2.5 shrink-0 transition-transform active:scale-95"
           >
             {enrolling ? (
@@ -451,5 +844,50 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
         </div>
       </div>
     </WorkspaceDetailOverlay>
+
+    <ConfirmModal
+      open={confirmOpen}
+      onClose={() => !enrolling && setConfirmOpen(false)}
+      onConfirm={() => void doEnroll()}
+      isLoading={enrolling}
+      variant="primary"
+      title="Confirm Enrollment"
+      confirmText={selectedDeliveryMode === "IN_PERSON_ONLY" ? "Reserve Seat & Enroll" : "Confirm & Enroll"}
+      description={
+        <div className="space-y-2">
+          <p>
+            You are about to enroll in <strong className="text-slate-900">{course.title}</strong> ({course.code}).
+          </p>
+          <ul className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+            <li>
+              <span className="text-slate-500">Delivery: </span>
+              <strong className="text-slate-800">
+                {selectedDeliveryMode === "IN_PERSON_ONLY" ? "In-Person Classroom" : "Pure Online"}
+              </strong>
+            </li>
+            {selectedDeliveryMode === "IN_PERSON_ONLY" && chosenSession ? (
+              <>
+                <li>
+                  <span className="text-slate-500">Session: </span>
+                  <strong className="text-slate-800">
+                    {chosenSession.titleEn} · {new Date(chosenSession.scheduledAt).toLocaleString()}
+                  </strong>
+                </li>
+                {chosenSession.venue ? (
+                  <li>
+                    <span className="text-slate-500">Venue: </span>
+                    <strong className="text-slate-800">
+                      {chosenSession.venue.name} · {chosenSession.venue.branch}
+                    </strong>
+                  </li>
+                ) : null}
+              </>
+            ) : null}
+          </ul>
+          <p className="text-xs text-slate-500">You will be taken to the course once enrollment is complete.</p>
+        </div>
+      }
+    />
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  Building2,
   CalendarDays,
   Clock,
   ExternalLink,
@@ -143,21 +144,27 @@ export function SessionDetailModal({
               </Button>
             )}
 
-            <Button
-              size="sm"
-              onClick={() => {
-                if (onJoin) {
-                  onJoin();
-                  onClose();
-                } else {
-                  setLiveWorkspaceOpen(true);
-                }
-              }}
-              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
-            >
-              <MonitorPlay className="h-4 w-4" />
-              Join Session Room
-            </Button>
+            {session.sessionType === "IN_PERSON" ? (
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-xs py-1 px-2.5">
+                📍 Physical Venue Session
+              </Badge>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (onJoin) {
+                    onJoin();
+                    onClose();
+                  } else {
+                    setLiveWorkspaceOpen(true);
+                  }
+                }}
+                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
+              >
+                <MonitorPlay className="h-4 w-4" />
+                Join Session Room
+              </Button>
+            )}
           </div>
         }
       >
@@ -197,16 +204,37 @@ export function SessionDetailModal({
               </div>
 
               <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-                  <Video className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium text-slate-400">Conferencing Platform</p>
-                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
-                    {session.platform || "IN-LMS (Jitsi / BigBlueButton)"}
-                  </p>
-                  <p className="text-[11px] text-slate-500">Interactive live classroom</p>
-                </div>
+                {session.sessionType === "IN_PERSON" ? (
+                  <>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-400">Physical Training Venue</p>
+                      <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                        {session.venue?.name || "In-Person Classroom"}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {session.venue
+                          ? `${session.venue.branch} • ${session.venue.capacity} Seats`
+                          : "Classroom Venue"}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                      <Video className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-400">Conferencing Platform</p>
+                      <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                        {session.platform || "IN-LMS (LiveKit / WebRTC)"}
+                      </p>
+                      <p className="text-[11px] text-slate-500">Interactive live classroom</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

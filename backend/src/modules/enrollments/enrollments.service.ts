@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EnrollmentStatus, NotificationType, Prisma } from '@prisma/client';
+import { CourseDeliveryMode, EnrollmentStatus, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { PaginationQuery } from '@common/interfaces';
@@ -66,11 +66,75 @@ export class EnrollmentsService {
       }
     }
 
+    let finalVenueId: string | null = null;
+    let finalSessionId: string | null = null;
+
+    const deliveryMode =
+      dto.deliveryMode ||
+      (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY
+        ? CourseDeliveryMode.IN_PERSON_ONLY
+        : CourseDeliveryMode.ONLINE_ONLY);
+
+    if (deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+      if (course.deliveryMode === CourseDeliveryMode.ONLINE_ONLY) {
+        throw new BadRequestException('This course is only available in online mode');
+      }
+
+      if (dto.sessionId) {
+        const session = await this.prisma.liveSession.findUnique({
+          where: { id: dto.sessionId },
+          include: { venue: true },
+        });
+
+        if (!session || session.deletedAt) {
+          throw new NotFoundException('Selected in-person session not found');
+        }
+        if (session.courseId !== dto.courseId) {
+          throw new BadRequestException('Selected session does not belong to this course');
+        }
+
+        const venue = session.venue;
+        if (!venue) {
+          throw new BadRequestException('Selected session does not have a physical venue assigned');
+        }
+
+        // Enforce seat capacity limit!
+        const enrolledCount = await this.prisma.enrollment.count({
+          where: {
+            sessionId: dto.sessionId,
+            status: EnrollmentStatus.ACTIVE,
+          },
+        });
+
+        if (enrolledCount >= venue.capacity) {
+          throw new BadRequestException(
+            `Classroom full! Venue "${venue.name}" (${venue.branch}) has reached its maximum seat capacity (${venue.capacity} seats). Please select another session or venue.`,
+          );
+        }
+
+        finalSessionId = session.id;
+        finalVenueId = venue.id;
+      } else if (dto.venueId) {
+        const venue = await this.prisma.venue.findUnique({ where: { id: dto.venueId } });
+        if (!venue) throw new NotFoundException('Selected venue not found');
+        finalVenueId = venue.id;
+      } else if (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+        throw new BadRequestException('Please select an in-person training session to reserve your seat');
+      }
+    } else {
+      if (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+        throw new BadRequestException('This course requires in-person classroom attendance');
+      }
+    }
+
     try {
       const enrollment = await this.prisma.enrollment.upsert({
         where: { userId_courseId: { userId, courseId: dto.courseId } },
         update: {
           status: EnrollmentStatus.ACTIVE,
+          deliveryMode,
+          venueId: finalVenueId,
+          sessionId: finalSessionId,
           completedAt: null,
           droppedAt: null,
           droppedReason: null,
@@ -80,9 +144,29 @@ export class EnrollmentsService {
           userId,
           courseId: dto.courseId,
           status: EnrollmentStatus.ACTIVE,
+          deliveryMode,
+          venueId: finalVenueId,
+          sessionId: finalSessionId,
         },
-        include: { course: true },
+        include: { course: true, venue: true },
       });
+
+      // If an in-person session was booked, ensure attendance entry exists for trainer roster
+      if (finalSessionId) {
+        try {
+          await this.prisma.attendance.upsert({
+            where: { sessionId_userId: { sessionId: finalSessionId, userId } },
+            update: {},
+            create: {
+              sessionId: finalSessionId,
+              userId,
+              status: 'ABSENT',
+            },
+          });
+        } catch {
+          // non-fatal
+        }
+      }
 
       await this.notifyEnrollment(userId, dto.courseId, course.titleEn || course.titleAm, !!existing);
 
@@ -113,6 +197,7 @@ export class EnrollmentsService {
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          venue: true,
         },
       }),
       this.prisma.enrollment.count({ where }),
@@ -133,7 +218,7 @@ export class EnrollmentsService {
         skip,
         take: limit,
         orderBy,
-        include: { course: true },
+        include: { course: true, venue: true },
       }),
       this.prisma.enrollment.count({ where }),
     ]);
@@ -155,6 +240,7 @@ export class EnrollmentsService {
         orderBy,
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          venue: true,
         },
       }),
       this.prisma.enrollment.count({ where }),

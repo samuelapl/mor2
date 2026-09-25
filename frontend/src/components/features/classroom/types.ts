@@ -46,6 +46,7 @@ export interface ClassroomFlatItem {
   durationMin?: number;
   contentType?: string;
   assessment?: ApiAttachedAssessment | null;
+  isInPersonLocked?: boolean;
 }
 
 export interface ClassroomActiveContent {

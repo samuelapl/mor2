@@ -54,7 +54,7 @@ export class UsersService {
         skip,
         take: limit,
         orderBy,
-        include: { roles: true },
+        include: { roles: true, primaryVenue: true },
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -65,7 +65,7 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { roles: true },
+      include: { roles: true, primaryVenue: true },
     });
 
     if (!user || user.deletedAt) {
@@ -81,7 +81,7 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id },
       data: dto,
-      include: { roles: true },
+      include: { roles: true, primaryVenue: true },
     });
 
     return this.sanitizeUser(updated);
@@ -312,10 +312,12 @@ export class UsersService {
         registrationStatus: ApprovalStatus.APPROVED,
         isActive: true,
         mustChangePassword: true,
+        primaryVenueId: dto.primaryVenueId || null,
         roles: {
           create: { role: dto.role },
         },
       },
+      include: { roles: true, primaryVenue: true },
     });
 
     return { message: 'Actor registered', user: this.sanitizeUser(user) };

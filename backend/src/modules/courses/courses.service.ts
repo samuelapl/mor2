@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   ApprovalStatus,
+  CourseDeliveryMode,
   CourseStatus,
   EnrollmentStatus,
   NotificationType,
@@ -360,6 +361,7 @@ export class CoursesService {
         department: dto.department,
         targetAudience: dto.targetAudience,
         deliveryMethod: dto.deliveryMethod,
+        deliveryMode: dto.deliveryMode ?? CourseDeliveryMode.BOTH,
         language: dto.language ?? 'en',
         prerequisites: dto.prerequisites,
         estimatedHours: dto.estimatedHours,
@@ -408,6 +410,7 @@ export class CoursesService {
     if (dto.department !== undefined) data.department = dto.department;
     if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
     if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
+    if (dto.deliveryMode !== undefined) data.deliveryMode = dto.deliveryMode;
     if (dto.language !== undefined) data.language = dto.language;
     if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;

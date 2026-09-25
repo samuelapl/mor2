@@ -31,6 +31,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @ApiPropertyOptional({ example: 'venue_uuid' })
+  @IsOptional()
+  @IsString()
+  primaryVenueId?: string;
 }
 
 export class ChangePasswordDto {

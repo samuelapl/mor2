@@ -1,21 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Award,
   BookOpen,
+  Building2,
   Calendar,
   CheckCircle2,
   Clock,
   ExternalLink,
+  Laptop,
+  MapPin,
   PlayCircle,
   Sparkles,
   Video,
 } from "lucide-react";
 import { fetchUpcomingSessions } from "@/lib/api/monitoring";
-import type { ApiLiveSession } from "@/lib/api/types";
+import type { ApiLiveSession, ApiVenue } from "@/lib/api/types";
 import { useLms } from "@/lib/lms-store";
 import { useCourseProgress } from "@/lib/api/useCourseProgress";
 import { tr } from "@/constants/labels";
@@ -29,9 +32,10 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { DonutChart, ProgressRing } from "@/components/ui/charts";
 import { LiveSessionWorkspace } from "@/components/features/sessions/LiveSessionWorkspace";
 import { SessionDetailModal } from "@/components/features/sessions/SessionDetailModal";
+import { VenueDetailModal } from "@/components/features/venues/VenueDetailModal";
 
 export default function LearnerDashboardPage() {
-  const { courses, lang, currentUser } = useLms();
+  const { courses, lang, currentUser, getEnrollmentForCourse } = useLms();
   const me = currentUser?.id ?? "";
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress } = useCourseProgress(enrolled.map((c) => c.id));
@@ -42,6 +46,12 @@ export default function LearnerDashboardPage() {
   // Modals / Workspaces
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
+  const [venueModalData, setVenueModalData] = useState<{
+    venue: ApiVenue;
+    session?: ApiLiveSession;
+    courseTitle?: string;
+    courseCode?: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +101,22 @@ export default function LearnerDashboardPage() {
     { label: "Not Started", value: notStarted.length, color: "#94a3b8" },
   ];
 
+  // Compute counts for online vs in-person courses
+  const { onlineCount, inPersonCount } = useMemo(() => {
+    let on = 0;
+    let inP = 0;
+    for (const c of enrolled) {
+      const enr = getEnrollmentForCourse(c.id);
+      const isPerson =
+        enr?.deliveryMode === "IN_PERSON_ONLY" ||
+        (Boolean(enr?.venueId) && enr?.deliveryMode !== "ONLINE_ONLY") ||
+        c.deliveryMode === "IN_PERSON_ONLY";
+      if (isPerson) inP++;
+      else on++;
+    }
+    return { onlineCount: on, inPersonCount: inP };
+  }, [enrolled, getEnrollmentForCourse]);
+
   return (
     <PageShell
       role="learner"
@@ -119,14 +145,14 @@ export default function LearnerDashboardPage() {
           icon={BookOpen}
           label={tr(lang, "myCourses")}
           value={enrolled.length}
-          hint="Enrolled programs"
+          hint={`${onlineCount} Online · ${inPersonCount} In-Person`}
         />
         <StatCard
-          icon={PlayCircle}
-          label={tr(lang, "inProgress")}
-          value={inProgress.length}
-          hint="Active courses"
-          iconClassName="bg-indigo-50 text-indigo-600"
+          icon={Building2}
+          label="In-Person Classroom"
+          value={inPersonCount}
+          hint="Regional branch venues"
+          iconClassName="bg-amber-50 text-amber-700"
         />
         <StatCard
           icon={CheckCircle2}
@@ -140,7 +166,7 @@ export default function LearnerDashboardPage() {
           label={tr(lang, "averageProgress")}
           value={`${avgProgress}%`}
           hint="Platform average"
-          iconClassName="bg-amber-50 text-amber-600"
+          iconClassName="bg-indigo-50 text-indigo-600"
         />
       </div>
 
@@ -291,6 +317,7 @@ export default function LearnerDashboardPage() {
                 minute: "2-digit",
               });
               const isLive = session.status === "LIVE";
+              const isPerson = session.sessionType === "IN_PERSON" || Boolean(session.venueId);
 
               return (
                 <div
@@ -299,8 +326,12 @@ export default function LearnerDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <Badge variant={isLive ? "green" : "blue"}>
-                        {isLive ? "● LIVE NOW" : "SCHEDULED"}
+                      <Badge variant={isLive ? "green" : isPerson ? "amber" : "blue"}>
+                        {isLive
+                          ? "● LIVE NOW"
+                          : isPerson
+                          ? "🏢 IN-PERSON CLASSROOM"
+                          : "VIRTUAL LECTURE"}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
                         {session.durationMinutes} mins
@@ -316,6 +347,16 @@ export default function LearnerDashboardPage() {
                         <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
                       ) : null;
                     })()}
+
+                    {/* Venue tag for in-person */}
+                    {session.venue && (
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
+                        <MapPin className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                        <span className="truncate">
+                          {session.venue.branch} · {session.venue.name}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
@@ -346,6 +387,57 @@ export default function LearnerDashboardPage() {
                     >
                       Details
                     </Button>
+                    {isPerson ? (
+                      <>
+                        <Link href="/learner/live-sessions" className="flex-1">
+                          <Button
+                            size="sm"
+                            className="w-full gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold"
+                          >
+                            <Building2 className="h-3.5 w-3.5" />
+                            Classroom Check-In
+                          </Button>
+                        </Link>
+                        {session.venue ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const c = courses.find((c) => c.id === session.courseId);
+                              setVenueModalData({
+                                venue: session.venue!,
+                                session,
+                                courseTitle: c?.title,
+                                courseCode: c?.code,
+                              });
+                            }}
+                            title="Venue & Room Details"
+                            className="text-xs"
+                          >
+                            Venue
+                          </Button>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => setActiveLiveSession(session)}
+                          className={isLive ? "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" : "flex-1"}
+                        >
+                          <Video className="h-3.5 w-3.5" />
+                          {isLive ? "Join Live (In-LMS)" : "Join Session"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDetailSessionId(session.id)}
+                          title="Session Details"
+                        >
+                          Details
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -421,6 +513,17 @@ export default function LearnerDashboardPage() {
             setDetailSessionId(null);
             if (s) setActiveLiveSession(s);
           }}
+        />
+      ) : null}
+
+      {venueModalData ? (
+        <VenueDetailModal
+          open
+          onClose={() => setVenueModalData(null)}
+          venue={venueModalData.venue}
+          session={venueModalData.session}
+          courseTitle={venueModalData.courseTitle}
+          courseCode={venueModalData.courseCode}
         />
       ) : null}
     </PageShell>

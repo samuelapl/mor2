@@ -5,6 +5,7 @@ import {
   Award,
   BookOpen,
   BookOpenCheck,
+  Building2,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -434,17 +435,22 @@ export function ClassroomSidebar({
           (() => {
             const finalItem = flatItems.find((i) => i.quizKind === "FINAL_ASSESSMENT")!;
             const isActive = activeKey === finalItem.key;
+            const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
 
             return (
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => finalItem.unlocked && onSelectItem(finalItem)}
-                  disabled={!finalItem.unlocked}
+                  onClick={() => isClickable && onSelectItem(finalItem)}
+                  disabled={!isClickable}
                   className={cn(
                     "w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs",
                     isActive
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      ? finalItem.isInPersonLocked
+                        ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                        : "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      : finalItem.isInPersonLocked
+                      ? "bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80 cursor-pointer"
                       : finalItem.unlocked
                       ? finalItem.completed
                         ? "bg-emerald-50 border-emerald-300 text-emerald-950"
@@ -453,15 +459,30 @@ export function ClassroomSidebar({
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
+                    {finalItem.isInPersonLocked ? (
+                      <Building2 className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-amber-600")} />
+                    ) : (
+                      <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
+                    )}
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold truncate">Final Course Assessment</p>
-                      <p className="text-[10px] opacity-80 mt-0.5">Required for Certification</p>
+                      <p className={cn("text-[10px] mt-0.5", isActive ? "text-amber-100" : "opacity-80")}>
+                        {finalItem.isInPersonLocked ? "In-Person Classroom Evaluation" : "Required for Certification"}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    {!finalItem.unlocked ? (
+                    {finalItem.isInPersonLocked ? (
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1",
+                          isActive ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800",
+                        )}
+                      >
+                        In-Person
+                      </span>
+                    ) : !finalItem.unlocked ? (
                       <Lock className="h-3.5 w-3.5" />
                     ) : finalItem.completed ? (
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -514,13 +535,21 @@ export function ClassroomSidebar({
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold truncate">Certificate of Completion</p>
                     <p className="text-[10px] opacity-75 mt-0.5 truncate">
-                      {isUnlocked ? "Verified & Ready to View" : "Complete course to unlock"}
+                      {isUnlocked
+                        ? "Verified & Ready to View"
+                        : certItem.isInPersonLocked
+                        ? "Issued upon classroom completion"
+                        : "Complete course to unlock"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  {!isUnlocked ? (
+                  {certItem.isInPersonLocked ? (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                      In-Person
+                    </span>
+                  ) : !isUnlocked ? (
                     <Lock className="h-3.5 w-3.5 text-slate-400" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />

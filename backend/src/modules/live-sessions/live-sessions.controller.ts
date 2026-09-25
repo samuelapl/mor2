@@ -16,7 +16,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { LiveSessionsService } from './live-sessions.service';
-import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto } from './dto';
+import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto, CreateBatchSessionDto } from './dto';
 import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -49,6 +49,13 @@ export class LiveSessionsController {
   @ApiOperation({ summary: 'Upcoming sessions for my enrolled courses' })
   async upcoming(@CurrentUser() user: AuthenticatedUser | undefined, @Query() query: PaginationQuery) {
     return this.liveSessionsService.upcomingForUser(user?.id, query);
+  }
+
+  @Post('live-sessions/batch')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
+  @ApiOperation({ summary: 'Schedule batch in-person classroom sessions across multiple venues' })
+  async createBatch(@Body() dto: CreateBatchSessionDto) {
+    return this.liveSessionsService.createBatch(dto);
   }
 
   // ─── IMPORTANT: specific routes before :id wildcard ───────────────────────

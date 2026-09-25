@@ -32,7 +32,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import type { CourseLevel, Question, UploadedResource } from "@/types";
+import type { CourseDeliveryMode, CourseLevel, Question, UploadedResource } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
@@ -46,6 +46,7 @@ export interface StepReviewSubmitProps {
   code: string;
   category: string;
   level: CourseLevel;
+  deliveryMode?: CourseDeliveryMode;
   description: string;
   objectives: string;
   department?: string;
@@ -247,6 +248,7 @@ export function StepReviewSubmit({
   code,
   category,
   level,
+  deliveryMode = "BOTH",
   description,
   objectives,
   department,
@@ -521,6 +523,21 @@ export function StepReviewSubmit({
                 className="font-bold tracking-wider"
               >
                 {level.toUpperCase()}
+              </Badge>
+              <Badge
+                className={cn(
+                  "font-medium",
+                  deliveryMode === "ONLINE_ONLY" && "bg-sky-50 text-sky-700 border-sky-200",
+                  deliveryMode === "IN_PERSON_ONLY" && "bg-amber-50 text-amber-700 border-amber-200",
+                  deliveryMode === "BOTH" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                )}
+                variant="outline"
+              >
+                {deliveryMode === "ONLINE_ONLY"
+                  ? "🌐 Pure Online"
+                  : deliveryMode === "IN_PERSON_ONLY"
+                    ? "🏢 In-Person Only"
+                    : "🔄 Flexible (Online & In-Person)"}
               </Badge>
             </div>
 

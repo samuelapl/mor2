@@ -112,18 +112,38 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
               {/* Session Title & Description */}
               <Td className="min-w-[180px] max-w-[240px]">
                 <div className="min-w-0">
-                  <p
-                    className="truncate text-xs font-semibold text-slate-900"
-                    title={row.session.titleEn}
-                  >
-                    {row.session.titleEn}
-                  </p>
-                  <p
-                    className="mt-0.5 truncate text-[11px] text-slate-500"
-                    title={row.session.descriptionEn || "Live Classroom Session"}
-                  >
-                    {row.session.descriptionEn || "Live Classroom Session"}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p
+                      className="truncate text-xs font-semibold text-slate-900"
+                      title={row.session.titleEn}
+                    >
+                      {row.session.titleEn}
+                    </p>
+                    {row.session.sessionType === "IN_PERSON" ? (
+                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 border border-amber-200">
+                        In-Person
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded bg-sky-50 px-1.5 py-0.5 text-[9px] font-semibold text-sky-700 border border-sky-200">
+                        Virtual
+                      </span>
+                    )}
+                  </div>
+                  {row.session.sessionType === "IN_PERSON" && row.session.venue ? (
+                    <p
+                      className="mt-0.5 truncate text-[11px] font-medium text-amber-800"
+                      title={`${row.session.venue.branch} — ${row.session.venue.name} (${row.session.venue.capacity} seats)`}
+                    >
+                      📍 {row.session.venue.branch} — {row.session.venue.name}
+                    </p>
+                  ) : (
+                    <p
+                      className="mt-0.5 truncate text-[11px] text-slate-500"
+                      title={row.session.descriptionEn || "Live Classroom Session"}
+                    >
+                      {row.session.descriptionEn || "Live Classroom Session"}
+                    </p>
+                  )}
                 </div>
               </Td>
 

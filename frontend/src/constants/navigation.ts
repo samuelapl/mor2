@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   BarChart3,
   BookOpen,
+  Building2,
   CalendarDays,
   CalendarRange,
   ClipboardCheck,
@@ -114,6 +115,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: "/trainer/question-bank",
       icon: FileQuestion,
       permission: "question_bank.manage",
+    },
+    {
+      label: "Venues & Facilities",
+      href: "/training-admin/venues",
+      icon: Building2,
+      permission: "venue.manage",
     },
   ],
   trainer: [
@@ -251,6 +258,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: "course_policy.manage",
     },
     {
+      label: "Venues & Facilities",
+      href: "/training-admin/venues",
+      icon: Building2,
+      permission: "venue.manage",
+    },
+    {
       label: "System Settings",
       href: "/system-admin/settings",
       icon: Settings,
@@ -282,6 +295,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   "/training-admin/sessions": ["live_session.manage_all"],
   "/trainer/sessions": ["live_session.manage_own", "live_session.manage_all"],
   "/learner/live-sessions": ["attendance.checkin", "course.browse"],
+  "/training-admin/venues": ["venue.manage"],
   "/training-admin/enrollments": ["student.manage", "student.view", "enrollment.view_all"],
   "/trainer/question-bank": ["question_bank.manage"],
   "/trainer/create-quiz": ["quiz.create"],

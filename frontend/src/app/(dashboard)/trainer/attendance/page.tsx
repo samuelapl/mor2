@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   Award,
+  Building2,
   Calendar,
   CalendarDays,
   Check,
@@ -16,6 +17,7 @@ import {
   Info,
   Loader2,
   MapPin,
+  QrCode,
   RefreshCw,
   Search,
   ShieldAlert,
@@ -45,6 +47,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Td } from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
 import { TableSkeleton } from "@/components/ui/Skeleton";
+import { ClassroomQrModal } from "@/components/features/attendance/ClassroomQrModal";
 import { toast } from "@/lib/toast";
 
 const formatDate = (value: string) =>
@@ -69,6 +72,9 @@ export default function TrainerAttendancePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // QR Check-in modal
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Override dialog
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
@@ -312,6 +318,17 @@ export default function TrainerAttendancePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {(activeSession?.sessionType === "IN_PERSON" || Boolean(activeSession?.venueId)) && (
+                <Button
+                  size="sm"
+                  onClick={() => setQrModalOpen(true)}
+                  className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-2xs"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  Classroom QR & PIN Check-In
+                </Button>
+              )}
+
               <Button
                 size="sm"
                 variant="outline"
@@ -356,6 +373,19 @@ export default function TrainerAttendancePage() {
               </Badge>
               <span>·</span>
               <span>Platform: {activeSession.platform || "JITSI"}</span>
+
+              {(activeSession.sessionType === "IN_PERSON" || Boolean(activeSession.venue)) && (
+                <>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    <Building2 className="h-3.5 w-3.5 text-amber-700" />
+                    <span>In-Person Classroom:</span>
+                    <span className="font-bold text-slate-900">
+                      {activeSession.venue?.branch || "Ministry Center"} · {activeSession.venue?.name || "Classroom"} (Max: {activeSession.venue?.capacity ?? 30} seats)
+                    </span>
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -674,6 +704,20 @@ export default function TrainerAttendancePage() {
           </div>
         </div>
       )}
+
+      {/* Classroom QR & PIN Modal */}
+      {activeSession && qrModalOpen ? (
+        <ClassroomQrModal
+          open={qrModalOpen}
+          onClose={() => {
+            setQrModalOpen(false);
+            if (activeSession) void loadAttendanceForSession(activeSession.id);
+          }}
+          session={activeSession}
+          totalStudents={totalStudents}
+          presentCount={presentCount}
+        />
+      ) : null}
     </PageShell>
   );
 }

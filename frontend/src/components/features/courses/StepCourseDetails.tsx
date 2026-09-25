@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { Trash2, Upload } from "lucide-react";
-import type { CourseLevel } from "@/types";
+import type { CourseDeliveryMode, CourseLevel } from "@/types";
 import { COURSE_CATEGORIES } from "@/constants/course-categories";
 import { cn } from "@/lib/utils";
 import { inputClass, labelClass } from "./wizard-types";
@@ -19,6 +19,8 @@ export interface StepCourseDetailsProps {
   setCategory: (val: string) => void;
   level: CourseLevel;
   setLevel: (val: CourseLevel) => void;
+  deliveryMode: CourseDeliveryMode;
+  setDeliveryMode: (val: CourseDeliveryMode) => void;
   description: string;
   setDescription: (val: string) => void;
   objectives: string;
@@ -48,6 +50,8 @@ export function StepCourseDetails({
   setCategory,
   level,
   setLevel,
+  deliveryMode,
+  setDeliveryMode,
   description,
   setDescription,
   objectives,
@@ -141,6 +145,68 @@ export function StepCourseDetails({
               <option value="advanced">Advanced</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>Course Delivery Format *</label>
+        <p className="text-xs text-slate-500 mb-2.5">
+          Select whether this course is taught purely online, requires a physical venue, or can be taken in both settings.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => setDeliveryMode("ONLINE_ONLY")}
+            className={cn(
+              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
+              deliveryMode === "ONLINE_ONLY"
+                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+            )}
+          >
+            <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
+              <span className="text-base">🌐</span> Pure Online Only
+            </div>
+            <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
+              100% digital self-paced web modules, video streams, and digital quizzes. No physical venue required.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDeliveryMode("IN_PERSON_ONLY")}
+            className={cn(
+              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
+              deliveryMode === "IN_PERSON_ONLY"
+                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+            )}
+          >
+            <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
+              <span className="text-base">📍</span> In-Person Only
+            </div>
+            <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
+              Requires physical attendance at a Ministry room/venue. Capped by room seat capacity.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDeliveryMode("BOTH")}
+            className={cn(
+              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
+              deliveryMode === "BOTH"
+                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+            )}
+          >
+            <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
+              <span className="text-base">🔄</span> Both (Flexible)
+            </div>
+            <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
+              Available self-paced online, AND admins can schedule in-person classroom batches at physical venues.
+            </p>
+          </button>
         </div>
       </div>
 

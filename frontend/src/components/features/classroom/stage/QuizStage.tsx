@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, BookOpenCheck, CheckCircle2, Clock, HelpCircle, Lock, RotateCcw, Sparkles } from "lucide-react";
+import { Award, BookOpenCheck, Building2, CheckCircle2, Clock, HelpCircle, Lock, RotateCcw, Sparkles } from "lucide-react";
 import type { ApiAttachedAssessment } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ interface QuizStageProps {
   quizKind?: "LESSON_ASSESSMENT" | "MODULE_ASSESSMENT" | "FINAL_ASSESSMENT";
   courseTitle: string;
   unlocked: boolean;
+  isInPersonLocked?: boolean;
   onStartQuiz: () => void;
 }
 
@@ -18,6 +19,7 @@ export function QuizStage({
   quizKind,
   courseTitle,
   unlocked,
+  isInPersonLocked,
   onStartQuiz,
 }: QuizStageProps) {
   if (!assessment) {
@@ -37,6 +39,78 @@ export function QuizStage({
     : isModule
     ? "Module Checkpoint Assessment"
     : "Lesson Assessment";
+
+  if (isInPersonLocked) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="border-b border-slate-200 pb-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="amber" className="text-xs">
+              In-Person Evaluation
+            </Badge>
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              Administered at Training Venue
+            </span>
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">{assessment.titleEn}</h2>
+          <p className="text-sm text-slate-500">{courseTitle}</p>
+        </div>
+
+        {/* Main Box */}
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50/60 to-white p-8 space-y-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300 bg-amber-100 text-amber-700 shadow-sm">
+              <Building2 className="h-8 w-8" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">
+                In-Person Classroom Evaluation
+              </h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                This course requires in-person attendance and practical evaluation. The final assessment is administered directly in the classroom by your assigned trainer. Digital submission is disabled for physical practicum courses.
+              </p>
+            </div>
+          </div>
+
+          {/* 3-Stat Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Passing Score
+              </p>
+              <p className="text-base font-bold text-slate-900 mt-1">{assessment.passingScore}%</p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Evaluation Format
+              </p>
+              <p className="text-base font-bold text-amber-700 mt-1">In-Person Exam</p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status</p>
+              <p className="text-base font-bold text-amber-700 mt-1">Trainer Administered 🏛️</p>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+            <Button
+              type="button"
+              size="md"
+              disabled
+              className="w-full sm:w-auto font-semibold shadow-sm bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+            >
+              <Building2 className="h-4 w-4 mr-2" /> Conducted In-Person by Trainer
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

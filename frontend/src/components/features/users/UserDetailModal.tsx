@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CheckCircle2, ShieldCheck, ShieldOff, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, ShieldCheck, ShieldOff, XCircle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Badge, UserStatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -99,6 +99,17 @@ export function UserDetailModal({
               }
             />
             <Row label="Status" value={<UserStatusBadge status={user.status} />} />
+            {user.primaryVenue ? (
+              <Row
+                label="Primary Venue"
+                value={
+                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                    <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                    {user.primaryVenue.branch} — {user.primaryVenue.name}
+                  </span>
+                }
+              />
+            ) : null}
             <Row label="Member since" value={new Date(user.createdAt).toLocaleDateString()} />
             <Row
               label="Last login"

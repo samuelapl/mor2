@@ -85,6 +85,9 @@ export const PERMISSIONS: PermissionDef[] = [
   { code: 'dashboard.stats', resource: 'dashboard', action: 'stats', scope: 'ALL', description: 'View admin dashboard stats' },
   { code: 'audit.view', resource: 'audit', action: 'view', scope: 'ALL', description: 'View audit logs' },
 
+  // Venues & Facilities
+  { code: 'venue.manage', resource: 'venue', action: 'manage', scope: 'ALL', description: 'Manage training venues & facilities (create, edit, delete)' },
+
   // Course policy (time-spent %, retake cooldown)
   { code: 'course_policy.manage', resource: 'course_policy', action: 'manage', scope: 'ALL', description: 'Manage course completion policy (time-spent %, retake cooldown)' },
 ];
@@ -137,6 +140,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'user.view',
     'dashboard.stats',
     'course_policy.manage',
+    'venue.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',

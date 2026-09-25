@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { ApiEnrollment, ApiPaginated } from "./types";
+import type { ApiEnrollment, ApiPaginated, SelfEnrollInput } from "./types";
 
 export interface BulkEnrollResult {
   courseId: string;
@@ -8,10 +8,11 @@ export interface BulkEnrollResult {
   skipped: number;
 }
 
-export async function selfEnroll(courseId: string): Promise<ApiEnrollment> {
+export async function selfEnroll(input: string | SelfEnrollInput): Promise<ApiEnrollment> {
+  const body = typeof input === "string" ? { courseId: input } : input;
   return api<ApiEnrollment>("enrollments/self", {
     method: "POST",
-    body: { courseId },
+    body,
   });
 }
 

@@ -109,6 +109,8 @@ export interface ApiUser {
   updatedAt: string;
   deletedAt: string | null;
   roles: ApiUserRole[];
+  primaryVenueId?: string | null;
+  primaryVenue?: ApiVenue | null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -156,6 +158,7 @@ export interface ApiCourseListItem {
   department?: string | null;
   targetAudience?: string | null;
   deliveryMethod?: string | null;
+  deliveryMode?: CourseDeliveryMode;
   language?: string | null;
   objectivesAm?: string | null;
   objectivesEn?: string | null;
@@ -247,6 +250,10 @@ export interface ApiEnrollment {
   userId: string;
   courseId: string;
   status: BackendEnrollmentStatus;
+  deliveryMode?: CourseDeliveryMode;
+  venueId?: string | null;
+  sessionId?: string | null;
+  venue?: ApiVenue | null;
   enrolledAt: string;
   completedAt: string | null;
   droppedAt: string | null;
@@ -255,7 +262,14 @@ export interface ApiEnrollment {
   createdAt: string;
   updatedAt: string;
   user?: { id: string; firstName: string; lastName: string; email: string };
-  course?: { id: string; titleEn: string; titleAm: string; code: string };
+  course?: { id: string; titleEn: string; titleAm: string; code: string; deliveryMode?: CourseDeliveryMode };
+}
+
+export interface SelfEnrollInput {
+  courseId: string;
+  deliveryMode?: CourseDeliveryMode;
+  venueId?: string;
+  sessionId?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -540,10 +554,62 @@ export interface ApiDashboardStats {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Venues & Delivery Modes                                                   */
+/* -------------------------------------------------------------------------- */
+
+export type CourseDeliveryMode = "ONLINE_ONLY" | "IN_PERSON_ONLY" | "BOTH";
+export type SessionType = "VIRTUAL" | "IN_PERSON";
+
+export interface ApiVenue {
+  id: string;
+  name: string;
+  building?: string | null;
+  branch: string;
+  capacity: number;
+  facilities: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  trainers?: { id: string; firstName: string; lastName: string; email: string }[];
+  _count?: {
+    sessions?: number;
+    trainers?: number;
+    enrollments?: number;
+  };
+}
+
+export interface CreateVenueInput {
+  name: string;
+  building?: string;
+  branch: string;
+  capacity: number;
+  facilities?: string[];
+  isActive?: boolean;
+}
+
+export type UpdateVenueInput = Partial<CreateVenueInput>;
+
+export interface VenueSessionBatchItem {
+  venueId: string;
+  trainerId?: string;
+  scheduledAt: string;
+  durationMinutes: number;
+}
+
+export interface CreateBatchSessionInput {
+  courseId: string;
+  titleEn: string;
+  titleAm?: string;
+  descriptionEn?: string;
+  descriptionAm?: string;
+  venueSessions: VenueSessionBatchItem[];
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */
 
-export type BackendSessionPlatform = "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
+export type BackendSessionPlatform = "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" | "IN_PERSON";
 export type BackendSessionStatus = "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
 export type BackendAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 export type BackendCheckInMethod = "VIRTUAL" | "QR" | "GPS" | "BIOMETRIC";
@@ -555,6 +621,9 @@ export interface ApiLiveSession {
   titleEn: string;
   descriptionAm: string | null;
   descriptionEn: string | null;
+  sessionType?: SessionType;
+  venueId?: string | null;
+  venue?: ApiVenue | null;
   platform: BackendSessionPlatform;
   externalUrl: string | null;
   meetingId: string | null;
@@ -714,6 +783,7 @@ export interface CreateCourseBody {
   department?: string;
   targetAudience?: string;
   deliveryMethod?: string;
+  deliveryMode?: CourseDeliveryMode;
   language?: string;
   prerequisites?: string;
   estimatedHours?: number;
@@ -731,6 +801,7 @@ export interface UpdateCourseBody {
   department?: string;
   targetAudience?: string;
   deliveryMethod?: string;
+  deliveryMode?: CourseDeliveryMode;
   language?: string;
   prerequisites?: string;
   estimatedHours?: number;
@@ -850,6 +921,7 @@ export interface CreateActorBody {
   role: BackendRoleName;
   phone?: string;
   locale?: "en" | "am";
+  primaryVenueId?: string;
 }
 
 export interface CreateActorResult {
