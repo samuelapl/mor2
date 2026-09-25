@@ -1,11 +1,16 @@
-import type { ReactNode } from "react";
-import { BookOpen, Clock } from "lucide-react";
-import type { Course, CourseDeliveryMode } from "@/types";
-import { Card } from "@/components/ui/Card";
-import { Badge, CourseStatusBadge, courseLevelLabel, courseLevelVariant } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { RichContent } from "@/components/ui/RichContent";
-import { DeliveryModeBadge } from "./DeliveryModeBadge";
+import type { ReactNode } from 'react';
+import { BookOpen, Clock } from 'lucide-react';
+import type { Course, CourseDeliveryMode } from '@/types';
+import { Card } from '@/components/ui/Card';
+import {
+  Badge,
+  CourseStatusBadge,
+  courseLevelLabel,
+  courseLevelVariant,
+} from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { RichContent } from '@/components/ui/RichContent';
+import { DeliveryModeBadge } from './DeliveryModeBadge';
 
 interface CourseCardProps {
   course: Course;
@@ -31,8 +36,7 @@ export function CourseCard({
   deliveryDetail,
 }: CourseCardProps) {
   const durationMin = course.modules.reduce(
-    (sum, module) =>
-      sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
+    (sum, module) => sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
     0,
   );
 
@@ -64,13 +68,9 @@ export function CourseCard({
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           {showStatus && (
-            <CourseStatusBadge
-              status={course.published ? "published" : course.status}
-            />
+            <CourseStatusBadge status={course.published ? 'published' : course.status} />
           )}
-          <Badge variant={courseLevelVariant(course.level)}>
-            {courseLevelLabel(course.level)}
-          </Badge>
+          <Badge variant={courseLevelVariant(course.level)}>{courseLevelLabel(course.level)}</Badge>
           {extraBadge}
         </div>
       </div>
@@ -86,9 +86,12 @@ export function CourseCard({
           <Clock className="h-3.5 w-3.5 text-indigo-500/70" />
           {durationMin} min
         </span>
-        <DeliveryModeBadge mode={deliveryMode ?? course.deliveryMode ?? "BOTH"} detail={deliveryDetail} />
+        <DeliveryModeBadge
+          mode={deliveryMode ?? course.deliveryMode ?? 'BOTH'}
+          detail={deliveryDetail}
+        />
       </div>
-      {typeof progress === "number" ? (
+      {typeof progress === 'number' ? (
         <div className="mt-3 space-y-1">
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <span>Progress</span>
@@ -97,9 +100,7 @@ export function CourseCard({
           <ProgressBar value={progress} />
         </div>
       ) : null}
-      {children ? (
-        <div className="mt-auto flex flex-wrap gap-2 pt-4">{children}</div>
-      ) : null}
+      {children ? <div className="mt-auto flex flex-wrap gap-2 pt-4">{children}</div> : null}
     </Card>
   );
 }

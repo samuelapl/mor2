@@ -28,7 +28,9 @@ export class LiveKitProvider {
 
   isConfigured(): boolean {
     return Boolean(
-      LiveKitConfig.url && LiveKitConfig.apiKey !== 'devkey' && LiveKitConfig.apiSecret !== 'secret',
+      LiveKitConfig.url &&
+      LiveKitConfig.apiKey !== 'devkey' &&
+      LiveKitConfig.apiSecret !== 'secret',
     );
   }
 

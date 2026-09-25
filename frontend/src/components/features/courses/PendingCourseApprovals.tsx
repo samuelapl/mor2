@@ -1,41 +1,41 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { Check, Eye, X } from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { usePagination } from "@/lib/usePagination";
-import { Table, Td } from "@/components/ui/Table";
-import { Button } from "@/components/ui/Button";
-import { Badge, CourseStatusBadge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
-import { Pagination } from "@/components/ui/Pagination";
-import { CourseDetailModal } from "@/components/features/courses/CourseDetailModal";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { FilterBar } from "@/components/ui/FilterBar";
-import { RichTextArea } from "@/components/ui/RichTextArea";
-import { COURSE_CATEGORIES } from "@/constants/course-categories";
-import { toast } from "@/lib/toast";
+import { useMemo, useState } from 'react';
+import { Check, Eye, X } from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { usePagination } from '@/lib/usePagination';
+import { Table, Td } from '@/components/ui/Table';
+import { Button } from '@/components/ui/Button';
+import { Badge, CourseStatusBadge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
+import { CourseDetailModal } from '@/components/features/courses/CourseDetailModal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { RichTextArea } from '@/components/ui/RichTextArea';
+import { COURSE_CATEGORIES } from '@/constants/course-categories';
+import { toast } from '@/lib/toast';
 
 export function PendingCourseApprovals() {
   const { courses, userName, approveCourse, rejectCourse } = useLms();
   const { can } = usePermissions();
-  const canApprove = can("course.approve_reject");
-  const canReject = can("course.approve_reject");
+  const canApprove = can('course.approve_reject');
+  const canReject = can('course.approve_reject');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('all');
 
   const pending = useMemo(() => {
     const q = search.trim().toLowerCase();
     return courses.filter((course) => {
-      if (course.status !== "under_review") return false;
-      if (category !== "all" && course.category !== category) return false;
+      if (course.status !== 'under_review') return false;
+      if (category !== 'all' && course.category !== category) return false;
       if (!q) return true;
       const owner = userName(course.ownerId).toLowerCase();
       return (
@@ -46,7 +46,10 @@ export function PendingCourseApprovals() {
     });
   }, [courses, userName, search, category]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(pending, 5);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    pending,
+    5,
+  );
   const targetCourseData = courses.find((c) => c.id === rejectId);
 
   const confirmReject = async () => {
@@ -56,12 +59,14 @@ export function PendingCourseApprovals() {
     setModalBusy(false);
     if (!result.ok) {
       setReasonError(result.message);
-      toast.error(result.message || "Failed to reject course.");
+      toast.error(result.message || 'Failed to reject course.');
       return;
     }
-    toast.success("Course rejected and moved back to draft. The owner has been notified with your reason.");
+    toast.success(
+      'Course rejected and moved back to draft. The owner has been notified with your reason.',
+    );
     setRejectId(null);
-    setReason("");
+    setReason('');
     setReasonError(null);
   };
 
@@ -70,36 +75,37 @@ export function PendingCourseApprovals() {
     const result = await approveCourse(courseId);
     setBusyId(null);
     if (result.ok) {
-      toast.success("Course approved. It is now awaiting publication by the Training Administrator.");
+      toast.success(
+        'Course approved. It is now awaiting publication by the Training Administrator.',
+      );
     } else {
-      toast.error(result.message || "Failed to approve course.");
+      toast.error(result.message || 'Failed to approve course.');
     }
   };
 
   return (
     <>
-
       <FilterBar
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search course, code or owner…"
         selects={[
           {
-            id: "category",
-            label: "Category",
+            id: 'category',
+            label: 'Category',
             value: category,
             onChange: setCategory,
             options: [
-              { value: "all", label: "All" },
+              { value: 'all', label: 'All' },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
         ]}
         onClear={() => {
-          setSearch("");
-          setCategory("all");
+          setSearch('');
+          setCategory('all');
         }}
-        hasActiveFilters={search !== "" || category !== "all"}
+        hasActiveFilters={search !== '' || category !== 'all'}
       />
 
       {pending.length === 0 ? (
@@ -108,7 +114,7 @@ export function PendingCourseApprovals() {
           description="Nothing matches the current filters, or the approval queue is empty."
         />
       ) : (
-        <Table columns={["Course name", "Course owner", "Created date", "Status", "Actions"]}>
+        <Table columns={['Course name', 'Course owner', 'Created date', 'Status', 'Actions']}>
           {pageItems.map((course) => (
             <tr key={course.id}>
               <Td>
@@ -132,7 +138,9 @@ export function PendingCourseApprovals() {
                     isLoading={busyId === course.id}
                     loadingText="Approving…"
                     disabled={!canApprove || busyId !== null}
-                    title={!canApprove ? "You no longer have permission to approve courses" : undefined}
+                    title={
+                      !canApprove ? 'You no longer have permission to approve courses' : undefined
+                    }
                     onClick={() => confirmApprove(course.id)}
                   >
                     <Check className="h-3.5 w-3.5" />
@@ -142,10 +150,12 @@ export function PendingCourseApprovals() {
                     size="sm"
                     variant="danger"
                     disabled={!canReject || busyId !== null}
-                    title={!canReject ? "You no longer have permission to reject courses" : undefined}
+                    title={
+                      !canReject ? 'You no longer have permission to reject courses' : undefined
+                    }
                     onClick={() => {
                       setRejectId(course.id);
-                      setReason("");
+                      setReason('');
                       setReasonError(null);
                     }}
                   >
@@ -158,12 +168,20 @@ export function PendingCourseApprovals() {
           ))}
         </Table>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
 
       <CourseDetailModal
         open={selectedId !== null}
         onClose={() => setSelectedId(null)}
-        courseId={selectedId ?? ""}
+        courseId={selectedId ?? ''}
         reviewActions={
           selectedId
             ? {
@@ -174,7 +192,7 @@ export function PendingCourseApprovals() {
                 onReject: () => {
                   setRejectId(selectedId);
                   setSelectedId(null);
-                  setReason("");
+                  setReason('');
                   setReasonError(null);
                 },
               }
@@ -187,11 +205,11 @@ export function PendingCourseApprovals() {
         open={rejectId !== null}
         onClose={() => {
           setRejectId(null);
-          setReason("");
+          setReason('');
           setReasonError(null);
         }}
         title="Reject Course"
-        subtitle={targetCourseData ? `${targetCourseData.code} — ${targetCourseData.title}` : ""}
+        subtitle={targetCourseData ? `${targetCourseData.code} — ${targetCourseData.title}` : ''}
         footer={
           <>
             <Button
@@ -199,7 +217,7 @@ export function PendingCourseApprovals() {
               disabled={modalBusy}
               onClick={() => {
                 setRejectId(null);
-                setReason("");
+                setReason('');
               }}
             >
               Cancel
@@ -230,7 +248,6 @@ export function PendingCourseApprovals() {
           error={reasonError}
         />
       </Modal>
-
     </>
   );
 }

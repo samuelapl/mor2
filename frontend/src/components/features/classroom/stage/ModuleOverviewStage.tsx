@@ -1,22 +1,13 @@
-"use client";
+'use client';
 
-import {
-  BookOpen,
-  Sparkles,
-  Target,
-  ArrowRight,
-  Layers,
-  Clock,
-  CheckCircle2,
-  FileText,
-} from "lucide-react";
-import type { Module, UploadedResource } from "@/types";
-import type { ApiProgressModule } from "@/lib/api/types";
-import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
-import { ClassroomAttachments } from "../ClassroomAttachments";
+import { BookOpen, Target, ArrowRight, Layers, Clock, CheckCircle2, FileText } from 'lucide-react';
+import type { Module, UploadedResource } from '@/types';
+import type { ApiProgressModule } from '@/lib/api/types';
+import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface ModuleOverviewStageProps {
   module: Module;
@@ -26,7 +17,7 @@ interface ModuleOverviewStageProps {
 }
 
 function cleanModuleTitle(rawTitle: string): string {
-  return rawTitle.replace(/^Module\s+\d+[\s:.-]*/i, "").trim();
+  return rawTitle.replace(/^Module\s+\d+[\s:.-]*/i, '').trim();
 }
 
 export function ModuleOverviewStage({
@@ -47,7 +38,10 @@ export function ModuleOverviewStage({
   const totalDurationMin =
     module.durationMinutes ??
     module.lessons.reduce(
-      (acc, l) => acc + (l.durationMin || 0) + (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0),
+      (acc, l) =>
+        acc +
+        (l.durationMin || 0) +
+        (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0),
       0,
     );
 
@@ -79,7 +73,8 @@ export function ModuleOverviewStage({
             Module {moduleIndex + 1}: {cleanModuleTitle(module.title)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Carefully review the module overview, key learning objectives, and attached study references before starting.
+            Carefully review the module overview, key learning objectives, and attached study
+            references before starting.
           </p>
         </div>
 
@@ -90,7 +85,7 @@ export function ModuleOverviewStage({
             <div>
               <p className="text-[10px] font-semibold text-slate-400 uppercase">Lessons & Topics</p>
               <p className="text-xs font-bold text-slate-800">
-                {totalLessons} Lessons {totalSubLessons > 0 ? `· ${totalSubLessons} Topics` : ""}
+                {totalLessons} Lessons {totalSubLessons > 0 ? `· ${totalSubLessons} Topics` : ''}
               </p>
             </div>
           </div>
@@ -100,7 +95,7 @@ export function ModuleOverviewStage({
             <div>
               <p className="text-[10px] font-semibold text-slate-400 uppercase">Module Duration</p>
               <p className="text-xs font-bold text-slate-800">
-                {totalDurationMin > 0 ? `${totalDurationMin} min` : "Self-paced"}
+                {totalDurationMin > 0 ? `${totalDurationMin} min` : 'Self-paced'}
               </p>
             </div>
           </div>
@@ -127,7 +122,7 @@ export function ModuleOverviewStage({
             onClick={onStartLessons}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
-            <span>{completedLessons > 0 ? "Continue Module Lessons" : "Start Module Lessons"}</span>
+            <span>{completedLessons > 0 ? 'Continue Module Lessons' : 'Start Module Lessons'}</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
@@ -169,10 +164,7 @@ export function ModuleOverviewStage({
       {/* Module Attached Reference Documents */}
       {moduleAttachments.length > 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3">
-          <ClassroomAttachments
-            files={moduleAttachments}
-            label="Module Reference Material"
-          />
+          <ClassroomAttachments files={moduleAttachments} label="Module Reference Material" />
         </div>
       ) : null}
 
@@ -191,4 +183,3 @@ export function ModuleOverviewStage({
     </div>
   );
 }
-

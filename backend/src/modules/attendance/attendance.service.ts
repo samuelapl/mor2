@@ -79,7 +79,9 @@ export class AttendanceService {
           checkInMethod: method,
           ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
           ...(method === CheckInMethod.BIOMETRIC ? { biometricVerified: true } : {}),
-          notes: existing.notes ? `${existing.notes} | Self check-in via ${method}` : `Self check-in via ${method}`,
+          notes: existing.notes
+            ? `${existing.notes} | Self check-in via ${method}`
+            : `Self check-in via ${method}`,
         },
       });
     }
@@ -128,11 +130,14 @@ export class AttendanceService {
       },
       update: {
         status: dto.status,
-        durationMinutes: dto.durationMinutes !== undefined ? dto.durationMinutes : existing?.durationMinutes,
+        durationMinutes:
+          dto.durationMinutes !== undefined ? dto.durationMinutes : existing?.durationMinutes,
         joinedAt:
           dto.status === AttendanceStatus.PRESENT
             ? (existing?.joinedAt ?? new Date())
-            : (dto.status === AttendanceStatus.ABSENT ? null : existing?.joinedAt),
+            : dto.status === AttendanceStatus.ABSENT
+              ? null
+              : existing?.joinedAt,
         notes: dto.notes !== undefined ? dto.notes : existing?.notes,
       },
       create: {
@@ -181,7 +186,8 @@ export class AttendanceService {
           },
           update: {
             status: record.status,
-            durationMinutes: record.durationMinutes !== undefined ? record.durationMinutes : undefined,
+            durationMinutes:
+              record.durationMinutes !== undefined ? record.durationMinutes : undefined,
             joinedAt: record.status === AttendanceStatus.PRESENT ? new Date() : undefined,
             notes: record.notes !== undefined ? record.notes : undefined,
           },
@@ -376,11 +382,14 @@ export class AttendanceService {
 
     const addSeconds = Math.max(1, Math.min(120, elapsedSeconds));
     const newActiveSeconds = (existing?.activeSeconds ?? 0) + addSeconds;
-    const rawPercentage = sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
+    const rawPercentage =
+      sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
     const percentage = Math.min(100, Math.round(rawPercentage));
 
     const newStatus =
-      percentage >= threshold ? AttendanceStatus.PRESENT : (existing?.status ?? AttendanceStatus.ABSENT);
+      percentage >= threshold
+        ? AttendanceStatus.PRESENT
+        : (existing?.status ?? AttendanceStatus.ABSENT);
 
     const updated = await this.prisma.attendance.upsert({
       where: { sessionId_userId: { sessionId, userId } },
@@ -432,7 +441,11 @@ export class AttendanceService {
         attendanceId: existing.id,
         eventType: 'LEAVE',
         timestamp: new Date(),
-        metadata: { percentage: existing.percentage, status: existing.status, source: 'client_api' },
+        metadata: {
+          percentage: existing.percentage,
+          status: existing.status,
+          source: 'client_api',
+        },
       },
     });
 
@@ -548,13 +561,14 @@ export class AttendanceService {
 
     const prevActiveSeconds = existing?.activeSeconds ?? 0;
     const newActiveSeconds = prevActiveSeconds + Math.max(0, segmentDurationSeconds);
-    const rawPercentage = sessionTotalSeconds > 0
-      ? (newActiveSeconds / sessionTotalSeconds) * 100
-      : 0;
+    const rawPercentage =
+      sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
     const percentage = Math.min(100, Math.round(rawPercentage));
     const threshold = await this.getDefaultAttendanceThreshold();
     const newStatus =
-      percentage >= threshold ? AttendanceStatus.PRESENT : (existing?.status ?? AttendanceStatus.ABSENT);
+      percentage >= threshold
+        ? AttendanceStatus.PRESENT
+        : (existing?.status ?? AttendanceStatus.ABSENT);
 
     await this.prisma.attendance.upsert({
       where: { sessionId_userId: { sessionId, userId } },
@@ -612,4 +626,3 @@ export class AttendanceService {
     }
   }
 }
-

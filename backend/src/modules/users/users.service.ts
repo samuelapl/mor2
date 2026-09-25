@@ -212,7 +212,11 @@ export class UsersService {
         return;
       }
       if (role === RoleName.SYSTEM_ADMIN && !actorIsSystemAdmin) {
-        skipped.push({ row, email, reason: 'Only a System Admin can assign the System Admin role' });
+        skipped.push({
+          row,
+          email,
+          reason: 'Only a System Admin can assign the System Admin role',
+        });
         return;
       }
 
@@ -255,7 +259,14 @@ export class UsersService {
             mustChangePassword: true,
             roles: { create: { role: row.role } },
           },
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true, tin: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            tin: true,
+          },
         });
         created.push({ row: row.row, ...user, password: row.password, role: row.role });
       } catch (err) {

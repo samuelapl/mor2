@@ -1,5 +1,5 @@
-import { api } from "./client";
-import type { ApiCourseProgress, ApiLearnerProgress } from "./types";
+import { api } from './client';
+import type { ApiCourseProgress, ApiLearnerProgress } from './types';
 
 /* -------------------------------------------------------------------------- */
 /*  Progress                                                                   */
@@ -21,7 +21,7 @@ export async function markLessonComplete(
   lessonId: string,
   body: { completed: boolean; lastPosition?: number },
 ): Promise<unknown> {
-  return api<unknown>(`progress/lessons/${lessonId}/complete`, { method: "PATCH", body });
+  return api<unknown>(`progress/lessons/${lessonId}/complete`, { method: 'PATCH', body });
 }
 
 export interface LessonTimeResult {
@@ -36,7 +36,7 @@ export async function addLessonTime(
   secondsDelta: number,
 ): Promise<LessonTimeResult> {
   return api<LessonTimeResult>(`progress/lessons/${lessonId}/time`, {
-    method: "PATCH",
+    method: 'PATCH',
     body: { secondsDelta },
   });
 }

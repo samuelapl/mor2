@@ -1,24 +1,14 @@
 export type Role =
-  | "course_owner"
-  | "content_approver"
-  | "training_admin"
-  | "trainer"
-  | "learner"
-  | "system_admin";
+  'course_owner' | 'content_approver' | 'training_admin' | 'trainer' | 'learner' | 'system_admin';
 
-export type Lang = "en" | "am";
+export type Lang = 'en' | 'am';
 
-export type UserStatus = "pending" | "active" | "rejected" | "suspended";
+export type UserStatus = 'pending' | 'active' | 'rejected' | 'suspended';
 
 export type CourseStatus =
-  | "draft"
-  | "under_review"
-  | "approved"
-  | "published"
-  | "rejected"
-  | "archived";
+  'draft' | 'under_review' | 'approved' | 'published' | 'rejected' | 'archived';
 
-export type CourseLevel = "basic" | "intermediate" | "advanced";
+export type CourseLevel = 'basic' | 'intermediate' | 'advanced';
 
 export type CourseDeliveryMode = "ONLINE_ONLY" | "IN_PERSON_ONLY" | "BOTH";
 
@@ -102,7 +92,7 @@ export interface Module {
   unlocked?: boolean;
 }
 
-export type QuestionType = "multiple_choice" | "true_false" | "short_answer";
+export type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer';
 
 export interface Question {
   id: string;
@@ -128,7 +118,7 @@ export interface Quiz {
   attachments?: UploadedResource[];
 }
 
-export type AttachmentType = "video" | "pdf";
+export type AttachmentType = 'video' | 'pdf';
 
 export interface Attachment {
   id: string;
@@ -176,5 +166,4 @@ export interface Course {
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
 export type LoginResult =
-  | { ok: true; role: Role }
-  | { ok: false; message: string; passwordChangeRequired?: true };
+  { ok: true; role: Role } | { ok: false; message: string; passwordChangeRequired?: true };

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Award,
@@ -22,25 +22,22 @@ import {
   Paperclip,
   Radio,
   Sparkles,
+  Target,
   UserRound,
   Users,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import {
-  Badge,
-  courseLevelLabel,
-  courseLevelVariant,
-} from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { RichContent } from "@/components/ui/RichContent";
-import { useLms } from "@/lib/lms-store";
-import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
-import { fetchLiveSessions } from "@/lib/api/monitoring";
-import type { ApiAssessment, ApiLiveSession } from "@/lib/api/types";
-import { getItemAttachments } from "./wizard-components";
-import { isInPersonSession } from "@/lib/session-mode";
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { RichContent } from '@/components/ui/RichContent';
+import { useLms } from '@/lib/lms-store';
+import { fetchAssessment, fetchCourseAssessments } from '@/lib/api/quiz';
+import { fetchLiveSessions } from '@/lib/api/monitoring';
+import type { ApiAssessment, ApiLiveSession } from '@/lib/api/types';
+import { getItemAttachments } from './wizard-components';
+import { isInPersonSession } from '@/lib/session-mode';
 
 interface CatalogCourseModalProps {
   open: boolean;
@@ -49,21 +46,21 @@ interface CatalogCourseModalProps {
 }
 
 function formatDuration(minutes: number): string {
-  if (!minutes || minutes <= 0) return "Self-paced";
+  if (!minutes || minutes <= 0) return 'Self-paced';
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
-  if (hours > 0) return `${hours} hr${hours > 1 ? "s" : ""}`;
+  if (hours > 0) return `${hours} hr${hours > 1 ? 's' : ''}`;
   return `${mins} min`;
 }
 
 function formatDate(value: string): string {
   try {
-    return new Date(value).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+    return new Date(value).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   } catch {
     return value;
@@ -72,9 +69,9 @@ function formatDate(value: string): string {
 
 function formatTime(value: string): string {
   try {
-    return new Date(value).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(value).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   } catch {
     return value;
@@ -91,11 +88,7 @@ function bookedSeatCount(session: ApiLiveSession) {
   return session.bookedSeats ?? session.attendees?.length ?? 0;
 }
 
-export function CatalogCourseModal({
-  open,
-  onClose,
-  courseId,
-}: CatalogCourseModalProps) {
+export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseModalProps) {
   const router = useRouter();
   const { courseById, currentUser, userName, enrollSelf } = useLms();
   const course = courseById(courseId);
@@ -108,24 +101,20 @@ export function CatalogCourseModal({
   const [assessments, setAssessments] = useState<ApiAssessment[]>([]);
 
   // Delivery mode & Session selection
-  const defaultMode: "ONLINE_ONLY" | "IN_PERSON_ONLY" =
-    course?.deliveryMode === "IN_PERSON_ONLY"
-      ? "IN_PERSON_ONLY"
-      : "ONLINE_ONLY";
+  const defaultMode: 'ONLINE_ONLY' | 'IN_PERSON_ONLY' =
+    course?.deliveryMode === 'IN_PERSON_ONLY' ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY';
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<
-    "ONLINE_ONLY" | "IN_PERSON_ONLY"
+    'ONLINE_ONLY' | 'IN_PERSON_ONLY'
   >(defaultMode);
-  const [availableSessions, setAvailableSessions] = useState<ApiLiveSession[]>(
-    [],
-  );
+  const [availableSessions, setAvailableSessions] = useState<ApiLiveSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
-  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [selectedSessionId, setSelectedSessionId] = useState<string>('');
 
   useEffect(() => {
-    if (course?.deliveryMode === "IN_PERSON_ONLY") {
-      setSelectedDeliveryMode("IN_PERSON_ONLY");
-    } else if (course?.deliveryMode === "ONLINE_ONLY") {
-      setSelectedDeliveryMode("ONLINE_ONLY");
+    if (course?.deliveryMode === 'IN_PERSON_ONLY') {
+      setSelectedDeliveryMode('IN_PERSON_ONLY');
+    } else if (course?.deliveryMode === 'ONLINE_ONLY') {
+      setSelectedDeliveryMode('ONLINE_ONLY');
     }
   }, [course?.deliveryMode]);
 
@@ -134,7 +123,7 @@ export function CatalogCourseModal({
     if (!open || !courseId) return;
     let cancelled = false;
     setLoadingSessions(true);
-    fetchLiveSessions({ courseId, status: "SCHEDULED", limit: 50 })
+    fetchLiveSessions({ courseId, status: 'SCHEDULED', limit: 50 })
       .then((res) => {
         if (!cancelled) {
           const inPerson = res.data.filter((s) => isInPersonSession(s));
@@ -173,9 +162,7 @@ export function CatalogCourseModal({
       try {
         const list = await fetchCourseAssessments(courseId);
         if (cancelled || list.length === 0) return;
-        const details = await Promise.all(
-          list.map((item) => fetchAssessment(item.id)),
-        );
+        const details = await Promise.all(list.map((item) => fetchAssessment(item.id)));
         if (!cancelled) setAssessments(details);
       } catch {
         // assessments best effort
@@ -187,11 +174,7 @@ export function CatalogCourseModal({
   }, [open, courseId]);
   // Aggregated totals (unconditionally declared at top level)
   const totalLessons = useMemo(
-    () =>
-      (course?.modules || []).reduce(
-        (sum, m) => sum + (m.lessons?.length || 0),
-        0,
-      ),
+    () => (course?.modules || []).reduce((sum, m) => sum + (m.lessons?.length || 0), 0),
     [course?.modules],
   );
 
@@ -199,11 +182,7 @@ export function CatalogCourseModal({
     () =>
       (course?.modules || []).reduce(
         (sum, m) =>
-          sum +
-          (m.lessons || []).reduce(
-            (sSum, l) => sSum + (l.subLessons?.length || 0),
-            0,
-          ),
+          sum + (m.lessons || []).reduce((sSum, l) => sSum + (l.subLessons?.length || 0), 0),
         0,
       ),
     [course?.modules],
@@ -253,8 +232,7 @@ export function CatalogCourseModal({
   }, [assessments]);
 
   const me = currentUser?.id;
-  const enrolled =
-    me && course ? course.enrolledLearnerIds.includes(me) : false;
+  const enrolled = me && course ? course.enrolledLearnerIds.includes(me) : false;
 
   useEffect(() => {
     if (open && enrolled && courseId && !justEnrolledRef.current) {
@@ -267,7 +245,7 @@ export function CatalogCourseModal({
   if (!course || enrolled) return null;
 
   const isSeatFull =
-    selectedDeliveryMode === "IN_PERSON_ONLY" &&
+    selectedDeliveryMode === 'IN_PERSON_ONLY' &&
     (() => {
       const chosen = availableSessions.find((s) => s.id === selectedSessionId);
       if (!chosen) return false;
@@ -279,35 +257,33 @@ export function CatalogCourseModal({
   const canEnroll =
     !enrolling &&
     !isSeatFull &&
-    (selectedDeliveryMode !== "IN_PERSON_ONLY" ||
+    (selectedDeliveryMode !== 'IN_PERSON_ONLY' ||
       availableSessions.length === 0 ||
       Boolean(selectedSessionId));
 
   const enrollButtonLabel = enrolling
-    ? "Processing Enrollment…"
+    ? 'Processing Enrollment…'
     : isSeatFull
-      ? "Classroom Full"
-      : selectedDeliveryMode === "IN_PERSON_ONLY"
-        ? "Reserve Seat & Enroll"
-        : "Enroll in Online Course";
+      ? 'Classroom Full'
+      : selectedDeliveryMode === 'IN_PERSON_ONLY'
+        ? 'Reserve Seat & Enroll'
+        : 'Enroll in Online Course';
 
-  const chosenSession = availableSessions.find(
-    (s) => s.id === selectedSessionId,
-  );
+  const chosenSession = availableSessions.find((s) => s.id === selectedSessionId);
 
   const doEnroll = async () => {
     setEnrolling(true);
     setError(null);
     let result;
-    if (selectedDeliveryMode === "IN_PERSON_ONLY") {
+    if (selectedDeliveryMode === 'IN_PERSON_ONLY') {
       result = await enrollSelf(courseId, {
-        deliveryMode: "IN_PERSON_ONLY",
+        deliveryMode: 'IN_PERSON_ONLY',
         venueId: chosenSession?.venueId || undefined,
         sessionId: chosenSession?.id,
       });
     } else {
       result = await enrollSelf(courseId, {
-        deliveryMode: "ONLINE_ONLY",
+        deliveryMode: 'ONLINE_ONLY',
       });
     }
     setEnrolling(false);
@@ -344,7 +320,7 @@ export function CatalogCourseModal({
           >
             {enrolling ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : selectedDeliveryMode === "IN_PERSON_ONLY" ? (
+            ) : selectedDeliveryMode === 'IN_PERSON_ONLY' ? (
               <Building2 className="h-4 w-4" />
             ) : (
               <BookOpen className="h-4 w-4" />
@@ -405,9 +381,7 @@ export function CatalogCourseModal({
                     {courseLevelLabel(course.level)}
                   </span>
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight text-white">
-                  {course.title}
-                </h1>
+                <h1 className="text-2xl font-bold tracking-tight text-white">{course.title}</h1>
               </div>
             )}
 
@@ -422,13 +396,11 @@ export function CatalogCourseModal({
                 ) : null}
                 <div className="inline-flex items-center gap-1.5 text-slate-500">
                   <Globe2 className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Language: {course.language || "English"}</span>
+                  <span>Language: {course.language || 'English'}</span>
                 </div>
                 <div className="inline-flex items-center gap-1.5 text-slate-500">
                   <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  <span>
-                    {formatDuration(totalDurationMin)} est. completion
-                  </span>
+                  <span>{formatDuration(totalDurationMin)} est. completion</span>
                 </div>
               </div>
 
@@ -440,7 +412,7 @@ export function CatalogCourseModal({
               >
                 {enrolling ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : selectedDeliveryMode === "IN_PERSON_ONLY" ? (
+                ) : selectedDeliveryMode === 'IN_PERSON_ONLY' ? (
                   <Building2 className="h-3.5 w-3.5" />
                 ) : (
                   <BookOpen className="h-3.5 w-3.5" />
@@ -459,9 +431,7 @@ export function CatalogCourseModal({
                   Modules
                 </span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {course.modules.length}
-              </p>
+              <p className="mt-1 text-lg font-bold text-slate-900">{course.modules.length}</p>
               <p className="text-[11px] text-slate-400">Structured units</p>
             </div>
 
@@ -472,9 +442,7 @@ export function CatalogCourseModal({
                   Lessons
                 </span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalLessons}
-              </p>
+              <p className="mt-1 text-lg font-bold text-slate-900">{totalLessons}</p>
               <p className="text-[11px] text-slate-400">Core lectures</p>
             </div>
 
@@ -485,9 +453,7 @@ export function CatalogCourseModal({
                   Sub-Lessons
                 </span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalSubLessons}
-              </p>
+              <p className="mt-1 text-lg font-bold text-slate-900">{totalSubLessons}</p>
               <p className="text-[11px] text-slate-400">Topic deep-dives</p>
             </div>
 
@@ -499,7 +465,7 @@ export function CatalogCourseModal({
                 </span>
               </div>
               <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalDurationMin > 0 ? `${totalDurationMin}m` : "Self-paced"}
+                {totalDurationMin > 0 ? `${totalDurationMin}m` : 'Self-paced'}
               </p>
               <p className="text-[11px] text-slate-400">Study estimate</p>
             </div>
@@ -511,9 +477,7 @@ export function CatalogCourseModal({
                   Materials
                 </span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalAttachments}
-              </p>
+              <p className="mt-1 text-lg font-bold text-slate-900">{totalAttachments}</p>
               <p className="text-[11px] text-slate-400">Attached files</p>
             </div>
 
@@ -525,12 +489,10 @@ export function CatalogCourseModal({
                 </span>
               </div>
               <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalQuestions > 0 ? `${totalQuestions} Qs` : "Included"}
+                {totalQuestions > 0 ? `${totalQuestions} Qs` : 'Included'}
               </p>
               <p className="text-[11px] text-slate-400">
-                {finalAssessment
-                  ? `${finalAssessment.passingScore}% pass mark`
-                  : "Certified"}
+                {finalAssessment ? `${finalAssessment.passingScore}% pass mark` : 'Certified'}
               </p>
             </div>
           </div>
@@ -552,15 +514,15 @@ export function CatalogCourseModal({
             </div>
 
             {/* Mode Selector */}
-            {course.deliveryMode === "BOTH" ? (
+            {course.deliveryMode === 'BOTH' ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedDeliveryMode("ONLINE_ONLY")}
+                  onClick={() => setSelectedDeliveryMode('ONLINE_ONLY')}
                   className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
-                    selectedDeliveryMode === "ONLINE_ONLY"
-                      ? "border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs"
-                      : "border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white"
+                    selectedDeliveryMode === 'ONLINE_ONLY'
+                      ? 'border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs'
+                      : 'border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white'
                   }`}
                 >
                   <div>
@@ -571,12 +533,12 @@ export function CatalogCourseModal({
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                          selectedDeliveryMode === "ONLINE_ONLY"
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-300"
+                          selectedDeliveryMode === 'ONLINE_ONLY'
+                            ? 'border-indigo-600 bg-indigo-600 text-white'
+                            : 'border-slate-300'
                         }`}
                       >
-                        {selectedDeliveryMode === "ONLINE_ONLY" && (
+                        {selectedDeliveryMode === 'ONLINE_ONLY' && (
                           <Check className="h-2.5 w-2.5 stroke-[3]" />
                         )}
                       </span>
@@ -585,8 +547,8 @@ export function CatalogCourseModal({
                       Self-Paced Online Learning
                     </h4>
                     <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-                      Study anytime, anywhere with interactive lessons, quizzes,
-                      and instant certificate issuance upon passing.
+                      Study anytime, anywhere with interactive lessons, quizzes, and instant
+                      certificate issuance upon passing.
                     </p>
                   </div>
                   <div className="mt-3 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
@@ -597,11 +559,11 @@ export function CatalogCourseModal({
 
                 <button
                   type="button"
-                  onClick={() => setSelectedDeliveryMode("IN_PERSON_ONLY")}
+                  onClick={() => setSelectedDeliveryMode('IN_PERSON_ONLY')}
                   className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
-                    selectedDeliveryMode === "IN_PERSON_ONLY"
-                      ? "border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs"
-                      : "border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white"
+                    selectedDeliveryMode === 'IN_PERSON_ONLY'
+                      ? 'border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs'
+                      : 'border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white'
                   }`}
                 >
                   <div>
@@ -612,12 +574,12 @@ export function CatalogCourseModal({
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                          selectedDeliveryMode === "IN_PERSON_ONLY"
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-300"
+                          selectedDeliveryMode === 'IN_PERSON_ONLY'
+                            ? 'border-indigo-600 bg-indigo-600 text-white'
+                            : 'border-slate-300'
                         }`}
                       >
-                        {selectedDeliveryMode === "IN_PERSON_ONLY" && (
+                        {selectedDeliveryMode === 'IN_PERSON_ONLY' && (
                           <Check className="h-2.5 w-2.5 stroke-[3]" />
                         )}
                       </span>
@@ -626,8 +588,8 @@ export function CatalogCourseModal({
                       Ministry Branch Classroom Training
                     </h4>
                     <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-                      Attend scheduled instructor-led sessions at an official
-                      Ministry training hall with direct trainer guidance.
+                      Attend scheduled instructor-led sessions at an official Ministry training hall
+                      with direct trainer guidance.
                     </p>
                   </div>
                   <div className="mt-3 text-[11px] font-medium text-amber-700 flex items-center gap-1">
@@ -636,16 +598,15 @@ export function CatalogCourseModal({
                   </div>
                 </button>
               </div>
-            ) : course.deliveryMode === "IN_PERSON_ONLY" ? (
+            ) : course.deliveryMode === 'IN_PERSON_ONLY' ? (
               <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
                 <Building2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">Mandatory In-Person Training</p>
                   <p className="mt-0.5 text-amber-800">
-                    This course is exclusively delivered through physical
-                    classroom sessions at Ethiopian Ministry of Revenues branch
-                    venues. Please reserve your seat in a scheduled session
-                    below.
+                    This course is exclusively delivered through physical classroom sessions at
+                    Ethiopian Ministry of Revenues branch venues. Please reserve your seat in a
+                    scheduled session below.
                   </p>
                 </div>
               </div>
@@ -655,15 +616,15 @@ export function CatalogCourseModal({
                 <div>
                   <p className="font-semibold">Pure Online Training</p>
                   <p className="mt-0.5 text-sky-800">
-                    This course is delivered 100% online through interactive
-                    modules, multimedia lessons, and knowledge checks.
+                    This course is delivered 100% online through interactive modules, multimedia
+                    lessons, and knowledge checks.
                   </p>
                 </div>
               </div>
             )}
 
             {/* In-Person Session Picker */}
-            {selectedDeliveryMode === "IN_PERSON_ONLY" && (
+            {selectedDeliveryMode === 'IN_PERSON_ONLY' && (
               <div className="mt-4 space-y-3 pt-3 border-t border-slate-200/80">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">
@@ -671,7 +632,7 @@ export function CatalogCourseModal({
                   </span>
                   <span className="text-[11px] text-slate-500">
                     {availableSessions.length} session
-                    {availableSessions.length === 1 ? "" : "s"} scheduled
+                    {availableSessions.length === 1 ? '' : 's'} scheduled
                   </span>
                 </div>
 
@@ -684,13 +645,11 @@ export function CatalogCourseModal({
                   <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 text-xs text-amber-800 flex items-start gap-2.5">
                     <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold">
-                        No classroom sessions scheduled yet
-                      </p>
+                      <p className="font-semibold">No classroom sessions scheduled yet</p>
                       <p className="mt-0.5">
-                        Training coordinators have not yet scheduled in-person
-                        sessions for this course. Please contact your branch
-                        training administrator or check back soon.
+                        Training coordinators have not yet scheduled in-person sessions for this
+                        course. Please contact your branch training administrator or check back
+                        soon.
                       </p>
                     </div>
                   </div>
@@ -712,22 +671,20 @@ export function CatalogCourseModal({
                           }}
                           className={`relative rounded-xl border p-3.5 text-left transition-all ${
                             isFull
-                              ? "opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed"
+                              ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
                               : isSelected
-                                ? "border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20 cursor-pointer shadow-xs"
-                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer"
+                                ? 'border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20 cursor-pointer shadow-xs'
+                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                                 <MapPin className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-                                <span>
-                                  {venue?.branch || "Ministry Branch"}
-                                </span>
+                                <span>{venue?.branch || 'Ministry Branch'}</span>
                                 <span className="text-slate-400">·</span>
                                 <span className="font-semibold text-slate-700">
-                                  {venue?.name || "Room"}
+                                  {venue?.name || 'Room'}
                                 </span>
                               </div>
                               {venue?.building ? (
@@ -740,13 +697,11 @@ export function CatalogCourseModal({
                             <span
                               className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
                                 isSelected
-                                  ? "border-indigo-600 bg-indigo-600 text-white"
-                                  : "border-slate-300 bg-white"
+                                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                                  : 'border-slate-300 bg-white'
                               }`}
                             >
-                              {isSelected && (
-                                <Check className="h-2.5 w-2.5 stroke-[3]" />
-                              )}
+                              {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                             </span>
                           </div>
 
@@ -759,8 +714,7 @@ export function CatalogCourseModal({
                             <span>·</span>
                             <span className="inline-flex items-center gap-1">
                               <Clock className="h-3 w-3 text-slate-400" />
-                              {formatTime(session.scheduledAt)} (
-                              {session.durationMinutes}m)
+                              {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
                             </span>
                           </div>
 
@@ -769,7 +723,7 @@ export function CatalogCourseModal({
                             <span className="text-slate-600 truncate max-w-[130px]">
                               {session.trainer
                                 ? `${session.trainer.firstName} ${session.trainer.lastName}`
-                                : "Assigned Trainer"}
+                                : 'Assigned Trainer'}
                             </span>
 
                             {isFull ? (
@@ -779,7 +733,7 @@ export function CatalogCourseModal({
                             ) : seatsLeft <= 5 ? (
                               <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                                 Only {seatsLeft} seat
-                                {seatsLeft === 1 ? "" : "s"} left
+                                {seatsLeft === 1 ? '' : 's'} left
                               </span>
                             ) : (
                               <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
@@ -810,7 +764,7 @@ export function CatalogCourseModal({
           {course.objectives ? (
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 shadow-xs space-y-2">
               <div className="flex items-center gap-2 text-indigo-900">
-                <Sparkles className="h-4 w-4 text-indigo-600" />
+                <Target className="h-4 w-4 text-indigo-600" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900">
                   Course Learning Objectives & Outcomes
                 </h3>
@@ -828,11 +782,7 @@ export function CatalogCourseModal({
                 Department / Ministry
               </span>
               <div className="font-semibold text-slate-800">
-                <RichContent
-                  inline
-                  html={course.department}
-                  placeholder="Ministry of Revenues"
-                />
+                <RichContent inline html={course.department} placeholder="Ministry of Revenues" />
               </div>
             </div>
             <div>
@@ -852,16 +802,14 @@ export function CatalogCourseModal({
                 Delivery Method
               </span>
               <div className="font-semibold text-slate-800 capitalize">
-                {(course.deliveryMethod || "self_paced").replace("_", " ")}
+                {(course.deliveryMethod || 'self_paced').replace('_', ' ')}
               </div>
             </div>
             <div>
               <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">
                 Primary Language
               </span>
-              <div className="font-semibold text-slate-800">
-                {course.language || "English"}
-              </div>
+              <div className="font-semibold text-slate-800">{course.language || 'English'}</div>
             </div>
             {course.prerequisites ? (
               <div className="sm:col-span-2 lg:col-span-4 border-t border-slate-200/70 pt-2.5 mt-1">
@@ -891,9 +839,8 @@ export function CatalogCourseModal({
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-indigo-100 leading-relaxed">
-                Enroll now for immediate access to interactive video streams,
-                study notes, downloadable documents, assignments, and accredited
-                certification.
+                Enroll now for immediate access to interactive video streams, study notes,
+                downloadable documents, assignments, and accredited certification.
               </p>
             </div>
 
@@ -907,7 +854,7 @@ export function CatalogCourseModal({
               ) : (
                 <BookOpen className="h-4 w-4 mr-2" />
               )}
-              {enrolling ? "Enrolling…" : "Enroll in Course"}
+              {enrolling ? 'Enrolling…' : 'Enroll in Course'}
             </Button>
           </div>
         </div>
@@ -921,32 +868,29 @@ export function CatalogCourseModal({
         variant="primary"
         title="Confirm Enrollment"
         confirmText={
-          selectedDeliveryMode === "IN_PERSON_ONLY"
-            ? "Reserve Seat & Enroll"
-            : "Confirm & Enroll"
+          selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'Reserve Seat & Enroll' : 'Confirm & Enroll'
         }
         description={
           <div className="space-y-2">
             <p>
-              You are about to enroll in{" "}
-              <strong className="text-slate-900">{course.title}</strong> (
-              {course.code}).
+              You are about to enroll in <strong className="text-slate-900">{course.title}</strong>{' '}
+              ({course.code}).
             </p>
             <ul className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
               <li>
                 <span className="text-slate-500">Delivery: </span>
                 <strong className="text-slate-800">
-                  {selectedDeliveryMode === "IN_PERSON_ONLY"
-                    ? "In-Person Classroom"
-                    : "Pure Online"}
+                  {selectedDeliveryMode === 'IN_PERSON_ONLY'
+                    ? 'In-Person Classroom'
+                    : 'Pure Online'}
                 </strong>
               </li>
-              {selectedDeliveryMode === "IN_PERSON_ONLY" && chosenSession ? (
+              {selectedDeliveryMode === 'IN_PERSON_ONLY' && chosenSession ? (
                 <>
                   <li>
                     <span className="text-slate-500">Session: </span>
                     <strong className="text-slate-800">
-                      {chosenSession.titleEn} ·{" "}
+                      {chosenSession.titleEn} ·{' '}
                       {new Date(chosenSession.scheduledAt).toLocaleString()}
                     </strong>
                   </li>
@@ -954,8 +898,7 @@ export function CatalogCourseModal({
                     <li>
                       <span className="text-slate-500">Venue: </span>
                       <strong className="text-slate-800">
-                        {chosenSession.venue.name} ·{" "}
-                        {chosenSession.venue.branch}
+                        {chosenSession.venue.name} · {chosenSession.venue.branch}
                       </strong>
                     </li>
                   ) : null}

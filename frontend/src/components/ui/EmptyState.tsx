@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Construction } from "lucide-react";
+import type { ReactNode } from 'react';
+import { Construction } from 'lucide-react';
 
 interface EmptyStateProps {
   title?: string;
@@ -8,8 +8,8 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  title = "Nothing here yet",
-  description = "Content will appear here once records are added.",
+  title = 'Nothing here yet',
+  description = 'Content will appear here once records are added.',
   children,
 }: EmptyStateProps) {
   return (
@@ -18,12 +18,8 @@ export function EmptyState({
       <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-500 shadow-sm ring-1 ring-indigo-200/60">
         <Construction className="h-7 w-7" />
       </div>
-      <h2 className="relative mt-4 font-display text-sm font-semibold text-slate-700">
-        {title}
-      </h2>
-      <p className="relative mt-1 max-w-sm text-xs leading-relaxed text-slate-400">
-        {description}
-      </p>
+      <h2 className="relative mt-4 font-display text-sm font-semibold text-slate-700">{title}</h2>
+      <p className="relative mt-1 max-w-sm text-xs leading-relaxed text-slate-400">{description}</p>
       {children ? <div className="relative mt-4">{children}</div> : null}
     </div>
   );

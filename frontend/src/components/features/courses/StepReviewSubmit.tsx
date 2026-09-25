@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from 'react';
 import {
   Award,
   BookOpen,
@@ -30,15 +30,14 @@ import {
   Pencil,
   Presentation,
   ShieldCheck,
-  Sparkles,
-} from "lucide-react";
-import type { CourseDeliveryMode, CourseLevel, Question, UploadedResource } from "@/types";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
-import { cn } from "@/lib/utils";
-import type { LessonDraft, ModuleDraft, WizardContentType } from "./wizard-types";
-import { formatFileSize } from "./wizard-components";
+} from 'lucide-react';
+import type { CourseDeliveryMode, CourseLevel, Question, UploadedResource } from '@/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
+import { cn } from '@/lib/utils';
+import type { LessonDraft, ModuleDraft, WizardContentType } from './wizard-types';
+import { formatFileSize } from './wizard-components';
 
 export interface StepReviewSubmitProps {
   title: string;
@@ -88,7 +87,7 @@ function getItemAttachments(item: {
 
   if (item.resourceUrl && !map.has(item.resourceUrl)) {
     map.set(item.resourceUrl, {
-      name: item.fileName || item.resourceUrl.split("/").pop() || "Attached File",
+      name: item.fileName || item.resourceUrl.split('/').pop() || 'Attached File',
       url: item.resourceUrl,
       size: item.fileSize,
     });
@@ -101,56 +100,56 @@ function getItemAttachments(item: {
  * Determines appropriate icon and color based on file extension or URL.
  */
 function getFileBadge(file: UploadedResource) {
-  const url = (file.url || "").toLowerCase();
-  const name = (file.name || "").toLowerCase();
-  const ext = name.split(".").pop() || url.split(".").pop() || "";
+  const url = (file.url || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  const ext = name.split('.').pop() || url.split('.').pop() || '';
 
-  if (["pdf"].includes(ext)) {
+  if (['pdf'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-rose-50 text-rose-700 border-rose-200",
-      badgeLabel: "PDF",
+      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      badgeLabel: 'PDF',
     };
   }
-  if (["doc", "docx"].includes(ext)) {
+  if (['doc', 'docx'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-blue-50 text-blue-700 border-blue-200",
-      badgeLabel: "Word",
+      bgColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      badgeLabel: 'Word',
     };
   }
-  if (["xls", "xlsx", "csv"].includes(ext)) {
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return {
       icon: FileSpreadsheet,
-      bgColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      badgeLabel: "Spreadsheet",
+      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      badgeLabel: 'Spreadsheet',
     };
   }
-  if (["ppt", "pptx"].includes(ext)) {
+  if (['ppt', 'pptx'].includes(ext)) {
     return {
       icon: Presentation,
-      bgColor: "bg-orange-50 text-orange-700 border-orange-200",
-      badgeLabel: "Presentation",
+      bgColor: 'bg-orange-50 text-orange-700 border-orange-200',
+      badgeLabel: 'Presentation',
     };
   }
-  if (["mp4", "webm", "mov", "mkv"].includes(ext)) {
+  if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
     return {
       icon: Film,
-      bgColor: "bg-purple-50 text-purple-700 border-purple-200",
-      badgeLabel: "Video",
+      bgColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      badgeLabel: 'Video',
     };
   }
-  if (["mp3", "wav", "m4a", "aac"].includes(ext)) {
+  if (['mp3', 'wav', 'm4a', 'aac'].includes(ext)) {
     return {
       icon: Headphones,
-      bgColor: "bg-amber-50 text-amber-700 border-amber-200",
-      badgeLabel: "Audio",
+      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      badgeLabel: 'Audio',
     };
   }
   return {
     icon: Paperclip,
-    bgColor: "bg-slate-100 text-slate-700 border-slate-200",
-    badgeLabel: ext.toUpperCase() || "File",
+    bgColor: 'bg-slate-100 text-slate-700 border-slate-200',
+    badgeLabel: ext.toUpperCase() || 'File',
   };
 }
 
@@ -160,14 +159,14 @@ function getFileBadge(file: UploadedResource) {
 function AttachmentCard({ file }: { file: UploadedResource }) {
   const badge = getFileBadge(file);
   const Icon = badge.icon;
-  const fileName = file.name || file.url.split("/").pop() || "Attachment";
+  const fileName = file.name || file.url.split('/').pop() || 'Attachment';
 
   return (
     <div className="group flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
             badge.bgColor,
           )}
         >
@@ -224,21 +223,45 @@ function AttachmentCard({ file }: { file: UploadedResource }) {
  */
 function getContentTypeBadge(type: WizardContentType) {
   switch (type) {
-    case "VIDEO":
-      return { label: "Video Lesson", icon: Film, color: "text-purple-700 bg-purple-50 border-purple-200" };
-    case "AUDIO":
-      return { label: "Audio Lesson", icon: Headphones, color: "text-amber-700 bg-amber-50 border-amber-200" };
-    case "DOCUMENT":
-      return { label: "Document / Reading", icon: FileText, color: "text-blue-700 bg-blue-50 border-blue-200" };
-    case "PRESENTATION":
-      return { label: "Slide Presentation", icon: Presentation, color: "text-orange-700 bg-orange-50 border-orange-200" };
-    case "QUIZ":
-    case "ASSESSMENT":
-      return { label: "Quiz Assessment", icon: FileQuestion, color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
-    case "ASSIGNMENT":
-      return { label: "Graded Assignment", icon: Award, color: "text-rose-700 bg-rose-50 border-rose-200" };
+    case 'VIDEO':
+      return {
+        label: 'Video Lesson',
+        icon: Film,
+        color: 'text-purple-700 bg-purple-50 border-purple-200',
+      };
+    case 'AUDIO':
+      return {
+        label: 'Audio Lesson',
+        icon: Headphones,
+        color: 'text-amber-700 bg-amber-50 border-amber-200',
+      };
+    case 'DOCUMENT':
+      return {
+        label: 'Document / Reading',
+        icon: FileText,
+        color: 'text-blue-700 bg-blue-50 border-blue-200',
+      };
+    case 'PRESENTATION':
+      return {
+        label: 'Slide Presentation',
+        icon: Presentation,
+        color: 'text-orange-700 bg-orange-50 border-orange-200',
+      };
+    case 'QUIZ':
+    case 'ASSESSMENT':
+      return {
+        label: 'Quiz Assessment',
+        icon: FileQuestion,
+        color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      };
+    case 'ASSIGNMENT':
+      return {
+        label: 'Graded Assignment',
+        icon: Award,
+        color: 'text-rose-700 bg-rose-50 border-rose-200',
+      };
     default:
-      return { label: type, icon: BookOpen, color: "text-slate-700 bg-slate-100 border-slate-200" };
+      return { label: type, icon: BookOpen, color: 'text-slate-700 bg-slate-100 border-slate-200' };
   }
 }
 
@@ -248,7 +271,7 @@ export function StepReviewSubmit({
   code,
   category,
   level,
-  deliveryMode = "BOTH",
+  deliveryMode = 'BOTH',
   description,
   objectives,
   department,
@@ -424,27 +447,39 @@ export function StepReviewSubmit({
       {/* ── Summary Stats Badges Bar ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Modules</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Modules
+          </p>
           <p className="mt-1 text-xl font-bold text-slate-900">{modules.length}</p>
         </div>
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Lessons</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Lessons
+          </p>
           <p className="mt-1 text-xl font-bold text-slate-900">{totalLessons}</p>
         </div>
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Sub-Lessons</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Sub-Lessons
+          </p>
           <p className="mt-1 text-xl font-bold text-slate-900">{totalSubLessons}</p>
         </div>
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Attachments</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Attachments
+          </p>
           <p className="mt-1 text-xl font-bold text-indigo-600">{totalAttachments}</p>
         </div>
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Questions</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Questions
+          </p>
           <p className="mt-1 text-xl font-bold text-emerald-600">{questions.length}</p>
         </div>
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Est. Time</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Est. Time
+          </p>
           <p className="mt-1 text-xl font-bold text-slate-900">
             {totalEstimatedDurationMin >= 60
               ? `${Math.floor(totalEstimatedDurationMin / 60)}h ${totalEstimatedDurationMin % 60}m`
@@ -482,11 +517,7 @@ export function StepReviewSubmit({
             {coverPreview ? (
               <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-2xs aspect-video md:aspect-[4/3]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={coverPreview}
-                  alt="Course Cover"
-                  className="h-full w-full object-cover"
-                />
+                <img src={coverPreview} alt="Course Cover" className="h-full w-full object-cover" />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center aspect-video md:aspect-[4/3]">
@@ -513,31 +544,33 @@ export function StepReviewSubmit({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Badge variant="outline" className="border-slate-300 text-slate-700 bg-slate-50 font-medium">
+              <Badge
+                variant="outline"
+                className="border-slate-300 text-slate-700 bg-slate-50 font-medium"
+              >
                 {category}
               </Badge>
               <Badge
-                variant={
-                  level === "advanced" ? "red" : level === "intermediate" ? "blue" : "green"
-                }
+                variant={level === 'advanced' ? 'red' : level === 'intermediate' ? 'blue' : 'green'}
                 className="font-bold tracking-wider"
               >
                 {level.toUpperCase()}
               </Badge>
               <Badge
                 className={cn(
-                  "font-medium",
-                  deliveryMode === "ONLINE_ONLY" && "bg-sky-50 text-sky-700 border-sky-200",
-                  deliveryMode === "IN_PERSON_ONLY" && "bg-amber-50 text-amber-700 border-amber-200",
-                  deliveryMode === "BOTH" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                  'font-medium',
+                  deliveryMode === 'ONLINE_ONLY' && 'bg-sky-50 text-sky-700 border-sky-200',
+                  deliveryMode === 'IN_PERSON_ONLY' &&
+                    'bg-amber-50 text-amber-700 border-amber-200',
+                  deliveryMode === 'BOTH' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 )}
                 variant="outline"
               >
-                {deliveryMode === "ONLINE_ONLY"
-                  ? "🌐 Pure Online"
-                  : deliveryMode === "IN_PERSON_ONLY"
-                    ? "🏢 In-Person Only"
-                    : "🔄 Flexible (Online & In-Person)"}
+                {deliveryMode === 'ONLINE_ONLY'
+                  ? '🌐 Pure Online'
+                  : deliveryMode === 'IN_PERSON_ONLY'
+                    ? '🏢 In-Person Only'
+                    : '🔄 Flexible (Online & In-Person)'}
               </Badge>
             </div>
 
@@ -671,23 +704,23 @@ export function StepReviewSubmit({
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />
-                        {module.durationMinutes ? `${module.durationMinutes} min` : "60 min"}
+                        {module.durationMinutes ? `${module.durationMinutes} min` : '60 min'}
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                         <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                        {module.lessons.length} Lesson{module.lessons.length !== 1 ? "s" : ""}
+                        {module.lessons.length} Lesson{module.lessons.length !== 1 ? 's' : ''}
                       </span>
                       {moduleAttachments.length > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
                           <Paperclip className="h-3.5 w-3.5" />
                           {moduleAttachments.length} Attachment
-                          {moduleAttachments.length !== 1 ? "s" : ""}
+                          {moduleAttachments.length !== 1 ? 's' : ''}
                         </span>
                       ) : null}
                       <button
                         type="button"
                         className="rounded-lg p-1 text-slate-400 hover:text-slate-600"
-                        title={isModExpanded ? "Collapse Module" : "Expand Module"}
+                        title={isModExpanded ? 'Collapse Module' : 'Expand Module'}
                       >
                         {isModExpanded ? (
                           <ChevronUp className="h-5 w-5" />
@@ -719,7 +752,9 @@ export function StepReviewSubmit({
                         <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-2.5">
                           <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 uppercase tracking-wider">
                             <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-                            <span>Module Attachments & Reference Materials ({moduleAttachments.length})</span>
+                            <span>
+                              Module Attachments & Reference Materials ({moduleAttachments.length})
+                            </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {moduleAttachments.map((file, fIdx) => (
@@ -776,7 +811,7 @@ export function StepReviewSubmit({
                                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                                       <span
                                         className={cn(
-                                          "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold",
+                                          'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold',
                                           lessonBadge.color,
                                         )}
                                       >
@@ -787,11 +822,17 @@ export function StepReviewSubmit({
                                         {lesson.durationMin || 15} min
                                       </span>
                                       {lesson.required === false ? (
-                                        <Badge variant="outline" className="text-slate-500 border-slate-300">
+                                        <Badge
+                                          variant="outline"
+                                          className="text-slate-500 border-slate-300"
+                                        >
                                           Optional
                                         </Badge>
                                       ) : (
-                                        <Badge variant="slate" className="bg-slate-100 text-slate-700">
+                                        <Badge
+                                          variant="slate"
+                                          className="bg-slate-100 text-slate-700"
+                                        >
                                           Required
                                         </Badge>
                                       )}
@@ -804,7 +845,7 @@ export function StepReviewSubmit({
                                       <button
                                         type="button"
                                         className="rounded p-1 text-slate-400 hover:text-slate-600"
-                                        title={isLessExpanded ? "Collapse Lesson" : "Expand Lesson"}
+                                        title={isLessExpanded ? 'Collapse Lesson' : 'Expand Lesson'}
                                       >
                                         {isLessExpanded ? (
                                           <ChevronUp className="h-4 w-4" />
@@ -830,7 +871,8 @@ export function StepReviewSubmit({
                                           />
                                         ) : (
                                           <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-2.5 text-xs text-amber-700 italic">
-                                            ⚠ No reading notes or instructions written for this lesson.
+                                            ⚠ No reading notes or instructions written for this
+                                            lesson.
                                           </div>
                                         )}
                                       </div>
@@ -853,7 +895,7 @@ export function StepReviewSubmit({
                                       )}
 
                                       {/* Assignment Configuration Preview (if ASSIGNMENT) */}
-                                      {lesson.contentType === "ASSIGNMENT" && (
+                                      {lesson.contentType === 'ASSIGNMENT' && (
                                         <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 space-y-2">
                                           <p className="font-bold text-rose-900 text-xs flex items-center gap-1.5">
                                             <Award className="h-4 w-4 text-rose-600" />
@@ -861,19 +903,25 @@ export function StepReviewSubmit({
                                           </p>
                                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                                             <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">Max Marks: </span>
+                                              <span className="text-slate-500 font-medium">
+                                                Max Marks:{' '}
+                                              </span>
                                               <span className="font-bold text-slate-800">
                                                 {lesson.assignmentMaxMarks || 100}
                                               </span>
                                             </div>
                                             <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">Due Date: </span>
+                                              <span className="text-slate-500 font-medium">
+                                                Due Date:{' '}
+                                              </span>
                                               <span className="font-bold text-slate-800">
-                                                {lesson.assignmentDueDate || "No deadline"}
+                                                {lesson.assignmentDueDate || 'No deadline'}
                                               </span>
                                             </div>
                                             <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">Max File Size: </span>
+                                              <span className="text-slate-500 font-medium">
+                                                Max File Size:{' '}
+                                              </span>
                                               <span className="font-bold text-slate-800">
                                                 {lesson.assignmentMaxFileSizeMb || 50} MB
                                               </span>
@@ -911,7 +959,7 @@ export function StepReviewSubmit({
                                               >
                                                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
                                                   <span className="font-bold text-emerald-800 text-xs">
-                                                    Q{qIdx + 1}:{" "}
+                                                    Q{qIdx + 1}:{' '}
                                                     <span className="font-medium text-slate-700">
                                                       {q.text}
                                                     </span>
@@ -921,16 +969,16 @@ export function StepReviewSubmit({
                                                   </span>
                                                 </div>
 
-                                                {q.type === "multiple_choice" && (
+                                                {q.type === 'multiple_choice' && (
                                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                                     {q.options.map((opt, optIdx) => (
                                                       <div
                                                         key={optIdx}
                                                         className={cn(
-                                                          "flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs",
+                                                          'flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs',
                                                           q.correctIndex === optIdx
-                                                            ? "bg-emerald-50 border-emerald-300 font-semibold text-emerald-900"
-                                                            : "bg-slate-50 border-slate-200 text-slate-600",
+                                                            ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900'
+                                                            : 'bg-slate-50 border-slate-200 text-slate-600',
                                                         )}
                                                       >
                                                         <span className="font-mono text-[11px] text-slate-400">
@@ -945,22 +993,22 @@ export function StepReviewSubmit({
                                                   </div>
                                                 )}
 
-                                                {q.type === "true_false" && (
+                                                {q.type === 'true_false' && (
                                                   <div className="flex items-center gap-2">
-                                                    {["True", "False"].map((opt, optIdx) => (
+                                                    {['True', 'False'].map((opt, optIdx) => (
                                                       <span
                                                         key={opt}
                                                         className={cn(
-                                                          "px-2.5 py-1 rounded-md border text-xs font-semibold",
+                                                          'px-2.5 py-1 rounded-md border text-xs font-semibold',
                                                           q.correctIndex === optIdx
-                                                            ? "bg-emerald-50 border-emerald-300 text-emerald-900"
-                                                            : "bg-slate-50 border-slate-200 text-slate-500",
+                                                            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                                            : 'bg-slate-50 border-slate-200 text-slate-500',
                                                         )}
                                                       >
-                                                        {opt}{" "}
+                                                        {opt}{' '}
                                                         {q.correctIndex === optIdx
-                                                          ? "✓ (Correct)"
-                                                          : ""}
+                                                          ? '✓ (Correct)'
+                                                          : ''}
                                                       </span>
                                                     ))}
                                                   </div>
@@ -1008,7 +1056,7 @@ export function StepReviewSubmit({
                                                     <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                       <span
                                                         className={cn(
-                                                          "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold border",
+                                                          'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold border',
                                                           subBadge.color,
                                                         )}
                                                       >
@@ -1025,7 +1073,9 @@ export function StepReviewSubmit({
                                                   {sub.content && stripHtmlTags(sub.content) ? (
                                                     <div
                                                       className="rounded-lg bg-slate-50/70 p-2.5 text-slate-700 text-xs leading-relaxed prose prose-xs max-w-none border border-slate-100"
-                                                      dangerouslySetInnerHTML={{ __html: sub.content }}
+                                                      dangerouslySetInnerHTML={{
+                                                        __html: sub.content,
+                                                      }}
                                                     />
                                                   ) : null}
 
@@ -1079,7 +1129,7 @@ export function StepReviewSubmit({
               </h4>
             </div>
             <p className="text-xs text-slate-500">
-              {quizTitle || "Comprehensive Final Examination"}
+              {quizTitle || 'Comprehensive Final Examination'}
             </p>
           </div>
 
@@ -1106,7 +1156,7 @@ export function StepReviewSubmit({
           <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
             <p className="text-slate-500 font-medium">Time Limit</p>
             <p className="text-lg font-bold text-slate-900 mt-1">
-              {timeLimitMinutes ? `${timeLimitMinutes} min` : "No limit"}
+              {timeLimitMinutes ? `${timeLimitMinutes} min` : 'No limit'}
             </p>
           </div>
           <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
@@ -1147,7 +1197,8 @@ export function StepReviewSubmit({
 
           {questions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-amber-800 text-xs">
-              ⚠ No assessment questions added yet. Learners will complete the course without an exam.
+              ⚠ No assessment questions added yet. Learners will complete the course without an
+              exam.
             </div>
           ) : (
             <div className="space-y-3">
@@ -1161,12 +1212,15 @@ export function StepReviewSubmit({
                       <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white text-[11px] font-bold">
                         {qIdx + 1}
                       </span>
-                      <Badge variant="slate" className="font-semibold text-slate-700 bg-white border-slate-200">
-                        {q.type === "multiple_choice"
-                          ? "Multiple Choice"
-                          : q.type === "true_false"
-                            ? "True / False"
-                            : "Short Answer"}
+                      <Badge
+                        variant="slate"
+                        className="font-semibold text-slate-700 bg-white border-slate-200"
+                      >
+                        {q.type === 'multiple_choice'
+                          ? 'Multiple Choice'
+                          : q.type === 'true_false'
+                            ? 'True / False'
+                            : 'Short Answer'}
                       </Badge>
                     </div>
                     <span className="font-bold text-indigo-700 text-xs">
@@ -1177,7 +1231,7 @@ export function StepReviewSubmit({
                   {/* Question Prompt */}
                   <div
                     className="font-medium text-slate-800 text-sm prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: q.text || "<em>No question prompt</em>" }}
+                    dangerouslySetInnerHTML={{ __html: q.text || '<em>No question prompt</em>' }}
                   />
 
                   {/* Question Image if present */}
@@ -1193,7 +1247,7 @@ export function StepReviewSubmit({
                   ) : null}
 
                   {/* Multiple Choice Options */}
-                  {q.type === "multiple_choice" && (
+                  {q.type === 'multiple_choice' && (
                     <div className="space-y-1.5 pt-1">
                       {q.options.map((opt, optIdx) => {
                         const isCorrect = q.correctIndex === optIdx;
@@ -1201,18 +1255,18 @@ export function StepReviewSubmit({
                           <div
                             key={optIdx}
                             className={cn(
-                              "flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition",
+                              'flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition',
                               isCorrect
-                                ? "bg-emerald-50 border-emerald-300 font-semibold text-emerald-900 shadow-2xs"
-                                : "bg-white border-slate-200 text-slate-600",
+                                ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900 shadow-2xs'
+                                : 'bg-white border-slate-200 text-slate-600',
                             )}
                           >
                             <span
                               className={cn(
-                                "flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs font-bold",
+                                'flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs font-bold',
                                 isCorrect
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-slate-100 text-slate-500",
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-slate-100 text-slate-500',
                               )}
                             >
                               {String.fromCharCode(65 + optIdx)}
@@ -1233,24 +1287,22 @@ export function StepReviewSubmit({
                   )}
 
                   {/* True / False Options */}
-                  {q.type === "true_false" && (
+                  {q.type === 'true_false' && (
                     <div className="flex items-center gap-3 pt-1">
-                      {["True", "False"].map((opt, optIdx) => {
+                      {['True', 'False'].map((opt, optIdx) => {
                         const isCorrect = q.correctIndex === optIdx;
                         return (
                           <span
                             key={opt}
                             className={cn(
-                              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs",
+                              'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs',
                               isCorrect
-                                ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold"
-                                : "bg-white border-slate-200 text-slate-500",
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
+                                : 'bg-white border-slate-200 text-slate-500',
                             )}
                           >
                             {opt}
-                            {isCorrect && (
-                              <Check className="h-3.5 w-3.5 text-emerald-600" />
-                            )}
+                            {isCorrect && <Check className="h-3.5 w-3.5 text-emerald-600" />}
                           </span>
                         );
                       })}
@@ -1258,7 +1310,7 @@ export function StepReviewSubmit({
                   )}
 
                   {/* Short Answer Rubric */}
-                  {q.type === "short_answer" && (
+                  {q.type === 'short_answer' && (
                     <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
                       <span className="font-semibold text-slate-700 block mb-1">
                         Expected Keywords & Grading Rubric:

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { AlertCircle, AlertTriangle } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import type { ReactNode } from 'react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 interface ConfirmModalProps {
   open?: boolean;
@@ -14,7 +14,7 @@ interface ConfirmModalProps {
   description: ReactNode;
   confirmText?: string;
   cancelText?: string;
-  variant?: "danger" | "primary" | "warning";
+  variant?: 'danger' | 'primary' | 'warning';
   isLoading?: boolean;
 }
 
@@ -25,19 +25,19 @@ export function ConfirmModal({
   onConfirm,
   title,
   description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
-  variant = "danger",
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  variant = 'danger',
   isLoading = false,
 }: ConfirmModalProps) {
   const isModalOpen = Boolean(open ?? isOpen);
-  const Icon = variant === "danger" ? AlertCircle : AlertTriangle;
+  const Icon = variant === 'danger' ? AlertCircle : AlertTriangle;
   const iconColor =
-    variant === "danger"
-      ? "text-rose-600 bg-rose-50 border-rose-100"
-      : variant === "warning"
-      ? "text-amber-600 bg-amber-50 border-amber-100"
-      : "text-indigo-600 bg-indigo-50 border-indigo-100";
+    variant === 'danger'
+      ? 'text-rose-600 bg-rose-50 border-rose-100'
+      : variant === 'warning'
+        ? 'text-amber-600 bg-amber-50 border-amber-100'
+        : 'text-indigo-600 bg-indigo-50 border-indigo-100';
 
   return (
     <Modal
@@ -49,18 +49,12 @@ export function ConfirmModal({
       size="md"
       footer={
         <div className="flex w-full items-center justify-end gap-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="md"
-            disabled={isLoading}
-            onClick={onClose}
-          >
+          <Button type="button" variant="outline" size="md" disabled={isLoading} onClick={onClose}>
             {cancelText}
           </Button>
           <Button
             type="button"
-            variant={variant === "warning" ? "primary" : variant}
+            variant={variant === 'warning' ? 'primary' : variant}
             size="md"
             isLoading={isLoading}
             onClick={onConfirm}
@@ -77,9 +71,7 @@ export function ConfirmModal({
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-slate-600 leading-relaxed">
-            {description}
-          </div>
+          <div className="text-sm text-slate-600 leading-relaxed">{description}</div>
         </div>
       </div>
     </Modal>

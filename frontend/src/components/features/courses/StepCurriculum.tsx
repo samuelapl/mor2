@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 import {
   Award,
   ChevronDown,
@@ -18,18 +18,18 @@ import {
   Minus,
   Plus,
   Presentation,
-  Sparkles,
+  MousePointerClick,
   Trash2,
   Upload,
   Video,
   X,
-} from "lucide-react";
-import type { Question, QuestionType, UploadedResource } from "@/types";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { RichTextArea } from "@/components/ui/RichTextArea";
-import { cn } from "@/lib/utils";
-import { uploadAttachment } from "@/lib/api/files";
+} from 'lucide-react';
+import type { Question, QuestionType, UploadedResource } from '@/types';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { RichTextArea } from '@/components/ui/RichTextArea';
+import { cn } from '@/lib/utils';
+import { uploadAttachment } from '@/lib/api/files';
 import {
   inputClass,
   labelClass,
@@ -37,8 +37,8 @@ import {
   type LessonDraft,
   type ModuleDraft,
   type WizardContentType,
-} from "./wizard-types";
-import { CompactRichEditor, MultiFileUploader, RichEditor } from "./wizard-components";
+} from './wizard-types';
+import { CompactRichEditor, MultiFileUploader, RichEditor } from './wizard-components';
 
 export interface StepCurriculumProps {
   modules: ModuleDraft[];
@@ -52,12 +52,12 @@ export interface StepCurriculumProps {
   editingCourseId?: string;
 }
 
-function blankQuestion(type: QuestionType = "multiple_choice"): Question {
+function blankQuestion(type: QuestionType = 'multiple_choice'): Question {
   return {
-    id: uid("q"),
+    id: uid('q'),
     type,
-    text: "",
-    options: type === "true_false" ? ["True", "False"] : ["", ""],
+    text: '',
+    options: type === 'true_false' ? ['True', 'False'] : ['', ''],
     correctIndex: 0,
     points: 10,
   };
@@ -96,14 +96,14 @@ export function StepCurriculum({
     });
 
   const addModule = () => {
-    const id = uid("mod");
+    const id = uid('mod');
     setModules((prev) => [
       ...prev,
       {
         id,
-        title: "",
-        description: "",
-        objectives: "",
+        title: '',
+        description: '',
+        objectives: '',
         durationMinutes: 60,
         lessons: [],
       },
@@ -135,21 +135,17 @@ export function StepCurriculum({
     });
   };
 
-  const addLesson = (
-    moduleId: string,
-    type: WizardContentType = "DOCUMENT",
-    presetTitle = "",
-  ) => {
-    const lessonId = uid("les");
+  const addLesson = (moduleId: string, type: WizardContentType = 'DOCUMENT', presetTitle = '') => {
+    const lessonId = uid('les');
     const defaultTitle =
       presetTitle ||
-      (type === "ASSIGNMENT"
-        ? "Module Assignment"
-        : type === "QUIZ"
-          ? "Module Quiz"
-          : type === "ASSESSMENT"
-            ? "Module Assessment"
-            : "");
+      (type === 'ASSIGNMENT'
+        ? 'Module Assignment'
+        : type === 'QUIZ'
+          ? 'Module Quiz'
+          : type === 'ASSESSMENT'
+            ? 'Module Assessment'
+            : '');
     setModules((prev) =>
       prev.map((m) =>
         m.id === moduleId
@@ -160,21 +156,22 @@ export function StepCurriculum({
                 {
                   id: lessonId,
                   title: defaultTitle,
-                  content: "",
-                  durationMin: type === "ASSIGNMENT" ? 30 : type === "ASSESSMENT" ? 45 : 15,
+                  content: '',
+                  durationMin: type === 'ASSIGNMENT' ? 30 : type === 'ASSESSMENT' ? 45 : 15,
                   contentType: type,
-                  resourceUrl: "",
+                  resourceUrl: '',
                   required: true,
                   subLessons: [],
-                  assignmentMaxMarks: type === "ASSIGNMENT" ? 100 : undefined,
-                  assignmentInstructions: type === "ASSIGNMENT" ? "" : undefined,
-                  assignmentFileTypes: type === "ASSIGNMENT" ? ["PDF", "DOCX", "PPTX"] : undefined,
-                  assignmentMaxFileSizeMb: type === "ASSIGNMENT" ? 10 : undefined,
+                  assignmentMaxMarks: type === 'ASSIGNMENT' ? 100 : undefined,
+                  assignmentInstructions: type === 'ASSIGNMENT' ? '' : undefined,
+                  assignmentFileTypes: type === 'ASSIGNMENT' ? ['PDF', 'DOCX', 'PPTX'] : undefined,
+                  assignmentMaxFileSizeMb: type === 'ASSIGNMENT' ? 10 : undefined,
                   quizQuestions:
-                    type === "QUIZ" || type === "ASSESSMENT" ? [blankQuestion()] : undefined,
-                  quizPassMark: type === "QUIZ" || type === "ASSESSMENT" ? 70 : undefined,
-                  quizTimeLimitMinutes: type === "QUIZ" ? 20 : type === "ASSESSMENT" ? 45 : undefined,
-                  quizAttemptsAllowed: type === "QUIZ" ? 3 : type === "ASSESSMENT" ? 2 : undefined,
+                    type === 'QUIZ' || type === 'ASSESSMENT' ? [blankQuestion()] : undefined,
+                  quizPassMark: type === 'QUIZ' || type === 'ASSESSMENT' ? 70 : undefined,
+                  quizTimeLimitMinutes:
+                    type === 'QUIZ' ? 20 : type === 'ASSESSMENT' ? 45 : undefined,
+                  quizAttemptsAllowed: type === 'QUIZ' ? 3 : type === 'ASSESSMENT' ? 2 : undefined,
                   quizShuffle: false,
                   assessmentAllowEarlySubmit: true,
                   assessmentAutoSubmitOnExpire: true,
@@ -225,8 +222,8 @@ export function StepCurriculum({
   const addSubLesson = (
     moduleId: string,
     lessonId: string,
-    type: WizardContentType = "DOCUMENT",
-    presetTitle = "",
+    type: WizardContentType = 'DOCUMENT',
+    presetTitle = '',
   ) => {
     setModules((prev) =>
       prev.map((m) => {
@@ -236,16 +233,16 @@ export function StepCurriculum({
           lessons: m.lessons.map((l) => {
             if (l.id !== lessonId) return l;
             const subs = l.subLessons ?? [];
-            const subId = uid("sub");
+            const subId = uid('sub');
             const defaultTitle =
               presetTitle ||
-              (type === "ASSIGNMENT"
-                ? "Lesson Assignment"
-                : type === "QUIZ"
-                  ? "Lesson Quiz"
-                  : type === "ASSESSMENT"
-                    ? "Lesson Assessment"
-                    : "");
+              (type === 'ASSIGNMENT'
+                ? 'Lesson Assignment'
+                : type === 'QUIZ'
+                  ? 'Lesson Quiz'
+                  : type === 'ASSESSMENT'
+                    ? 'Lesson Assessment'
+                    : '');
             return {
               ...l,
               subLessons: [
@@ -253,20 +250,21 @@ export function StepCurriculum({
                 {
                   id: subId,
                   title: defaultTitle,
-                  content: "",
-                  durationMin: type === "ASSIGNMENT" ? 30 : type === "ASSESSMENT" ? 30 : 10,
+                  content: '',
+                  durationMin: type === 'ASSIGNMENT' ? 30 : type === 'ASSESSMENT' ? 30 : 10,
                   contentType: type,
-                  resourceUrl: "",
+                  resourceUrl: '',
                   required: true,
-                  assignmentMaxMarks: type === "ASSIGNMENT" ? 100 : undefined,
-                  assignmentInstructions: type === "ASSIGNMENT" ? "" : undefined,
-                  assignmentFileTypes: type === "ASSIGNMENT" ? ["PDF", "DOCX", "PPTX"] : undefined,
-                  assignmentMaxFileSizeMb: type === "ASSIGNMENT" ? 10 : undefined,
+                  assignmentMaxMarks: type === 'ASSIGNMENT' ? 100 : undefined,
+                  assignmentInstructions: type === 'ASSIGNMENT' ? '' : undefined,
+                  assignmentFileTypes: type === 'ASSIGNMENT' ? ['PDF', 'DOCX', 'PPTX'] : undefined,
+                  assignmentMaxFileSizeMb: type === 'ASSIGNMENT' ? 10 : undefined,
                   quizQuestions:
-                    type === "QUIZ" || type === "ASSESSMENT" ? [blankQuestion()] : undefined,
-                  quizPassMark: type === "QUIZ" || type === "ASSESSMENT" ? 70 : undefined,
-                  quizTimeLimitMinutes: type === "QUIZ" ? 15 : type === "ASSESSMENT" ? 30 : undefined,
-                  quizAttemptsAllowed: type === "QUIZ" ? 3 : type === "ASSESSMENT" ? 2 : undefined,
+                    type === 'QUIZ' || type === 'ASSESSMENT' ? [blankQuestion()] : undefined,
+                  quizPassMark: type === 'QUIZ' || type === 'ASSESSMENT' ? 70 : undefined,
+                  quizTimeLimitMinutes:
+                    type === 'QUIZ' ? 15 : type === 'ASSESSMENT' ? 30 : undefined,
+                  quizAttemptsAllowed: type === 'QUIZ' ? 3 : type === 'ASSESSMENT' ? 2 : undefined,
                   quizShuffle: false,
                   assessmentAllowEarlySubmit: true,
                   assessmentAutoSubmitOnExpire: true,
@@ -305,12 +303,7 @@ export function StepCurriculum({
     );
   };
 
-  const moveSubLesson = (
-    moduleId: string,
-    lessonId: string,
-    subLessonId: string,
-    dir: -1 | 1,
-  ) => {
+  const moveSubLesson = (moduleId: string, lessonId: string, subLessonId: string, dir: -1 | 1) => {
     setModules((prev) =>
       prev.map((m) => {
         if (m.id !== moduleId) return m;
@@ -367,8 +360,8 @@ export function StepCurriculum({
       const existingResources = [...(targetMod?.resources || targetMod?.attachments || [])];
       if (existingResources.length === 0 && targetMod?.resourceUrl) {
         existingResources.push({
-          id: "legacy",
-          name: targetMod.fileName || targetMod.resourceUrl.split("/").pop() || "Attached File",
+          id: 'legacy',
+          name: targetMod.fileName || targetMod.resourceUrl.split('/').pop() || 'Attached File',
           url: targetMod.resourceUrl,
           size: targetMod.fileSize || 0,
         });
@@ -394,15 +387,15 @@ export function StepCurriculum({
         uploading: false,
         resources: combined,
         attachments: combined,
-        resourceUrl: combined[0]?.url || "",
-        fileName: combined[0]?.name || "",
+        resourceUrl: combined[0]?.url || '',
+        fileName: combined[0]?.name || '',
         fileSize: combined[0]?.size || 0,
         uploadError: null,
       });
     } catch (err) {
       patchModule(moduleId, {
         uploading: false,
-        uploadError: err instanceof Error ? err.message : "Failed to upload module file(s)",
+        uploadError: err instanceof Error ? err.message : 'Failed to upload module file(s)',
       });
     }
   };
@@ -414,8 +407,8 @@ export function StepCurriculum({
     patchModule(moduleId, {
       resources: filtered,
       attachments: filtered,
-      resourceUrl: filtered[0]?.url || "",
-      fileName: filtered[0]?.name || "",
+      resourceUrl: filtered[0]?.url || '',
+      fileName: filtered[0]?.name || '',
       fileSize: filtered[0]?.size || 0,
     });
   };
@@ -453,8 +446,9 @@ export function StepCurriculum({
       const existingResources = [...(targetLesson?.resources || targetLesson?.attachments || [])];
       if (existingResources.length === 0 && targetLesson?.resourceUrl) {
         existingResources.push({
-          id: "legacy",
-          name: targetLesson.fileName || targetLesson.resourceUrl.split("/").pop() || "Attached File",
+          id: 'legacy',
+          name:
+            targetLesson.fileName || targetLesson.resourceUrl.split('/').pop() || 'Attached File',
           url: targetLesson.resourceUrl,
           size: targetLesson.fileSize || 0,
         });
@@ -481,15 +475,15 @@ export function StepCurriculum({
         uploading: false,
         resources: combined,
         attachments: combined,
-        resourceUrl: combined[0]?.url || "",
-        fileName: combined[0]?.name || "",
+        resourceUrl: combined[0]?.url || '',
+        fileName: combined[0]?.name || '',
         fileSize: combined[0]?.size || 0,
         uploadError: null,
       });
     } catch (err) {
       updateTarget({
         uploading: false,
-        uploadError: err instanceof Error ? err.message : "Failed to upload file(s)",
+        uploadError: err instanceof Error ? err.message : 'Failed to upload file(s)',
       });
     }
   };
@@ -516,8 +510,8 @@ export function StepCurriculum({
     const patch: Partial<LessonDraft> = {
       resources: filtered,
       attachments: filtered,
-      resourceUrl: filtered[0]?.url || "",
-      fileName: filtered[0]?.name || "",
+      resourceUrl: filtered[0]?.url || '',
+      fileName: filtered[0]?.name || '',
       fileSize: filtered[0]?.size || 0,
     };
 
@@ -539,38 +533,34 @@ export function StepCurriculum({
       });
       onSuccess(res.fileUrl);
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to upload image");
+      onError(err instanceof Error ? err.message : 'Failed to upload image');
     }
   };
 
-  const renderTypeIcon = (type: WizardContentType, size = "h-4 w-4") => {
+  const renderTypeIcon = (type: WizardContentType, size = 'h-4 w-4') => {
     switch (type) {
-      case "VIDEO":
-        return <Video className={cn(size, "text-rose-600")} />;
-      case "AUDIO":
-        return <Headphones className={cn(size, "text-emerald-600")} />;
-      case "PRESENTATION":
-        return <Presentation className={cn(size, "text-amber-600")} />;
-      case "INTERACTIVE":
-        return <Sparkles className={cn(size, "text-violet-600")} />;
-      case "EXTERNAL_LINK":
-        return <ExternalLink className={cn(size, "text-blue-600")} />;
-      case "ASSIGNMENT":
-        return <ClipboardList className={cn(size, "text-orange-600")} />;
-      case "QUIZ":
-        return <FileQuestion className={cn(size, "text-indigo-600")} />;
-      case "ASSESSMENT":
-        return <Award className={cn(size, "text-emerald-600")} />;
+      case 'VIDEO':
+        return <Video className={cn(size, 'text-rose-600')} />;
+      case 'AUDIO':
+        return <Headphones className={cn(size, 'text-emerald-600')} />;
+      case 'PRESENTATION':
+        return <Presentation className={cn(size, 'text-amber-600')} />;
+      case 'INTERACTIVE':
+        return <MousePointerClick className={cn(size, 'text-violet-600')} />;
+      case 'EXTERNAL_LINK':
+        return <ExternalLink className={cn(size, 'text-blue-600')} />;
+      case 'ASSIGNMENT':
+        return <ClipboardList className={cn(size, 'text-orange-600')} />;
+      case 'QUIZ':
+        return <FileQuestion className={cn(size, 'text-indigo-600')} />;
+      case 'ASSESSMENT':
+        return <Award className={cn(size, 'text-emerald-600')} />;
       default:
-        return <FileText className={cn(size, "text-indigo-600")} />;
+        return <FileText className={cn(size, 'text-indigo-600')} />;
     }
   };
 
-  const renderContentInput = (
-    lesson: LessonDraft,
-    moduleId: string,
-    parentLessonId?: string,
-  ) => {
+  const renderContentInput = (lesson: LessonDraft, moduleId: string, parentLessonId?: string) => {
     const applyPatch = (val: Partial<LessonDraft>) => {
       if (parentLessonId) {
         patchSubLesson(moduleId, parentLessonId, lesson.id, val);
@@ -579,22 +569,22 @@ export function StepCurriculum({
       }
     };
 
-    if (lesson.contentType === "ASSIGNMENT") {
-      const allowedTypes = lesson.assignmentFileTypes ?? ["PDF", "DOCX", "PPTX"];
+    if (lesson.contentType === 'ASSIGNMENT') {
+      const allowedTypes = lesson.assignmentFileTypes ?? ['PDF', 'DOCX', 'PPTX'];
       const fileOptions = [
-        { id: "PDF", label: "PDF (.pdf)", icon: "📄" },
-        { id: "DOCX", label: "Word (.docx, .doc)", icon: "📝" },
-        { id: "PPTX", label: "PowerPoint (.pptx, .ppt)", icon: "📊" },
-        { id: "TXT", label: "Text / Markdown (.txt)", icon: "📋" },
-        { id: "XLSX", label: "Spreadsheet (.xlsx, .xls, .csv)", icon: "📈" },
-        { id: "TEXT_ENTRY", label: "Online Rich Text Entry", icon: "✍️" },
+        { id: 'PDF', label: 'PDF (.pdf)', icon: '📄' },
+        { id: 'DOCX', label: 'Word (.docx, .doc)', icon: '📝' },
+        { id: 'PPTX', label: 'PowerPoint (.pptx, .ppt)', icon: '📊' },
+        { id: 'TXT', label: 'Text / Markdown (.txt)', icon: '📋' },
+        { id: 'XLSX', label: 'Spreadsheet (.xlsx, .xls, .csv)', icon: '📈' },
+        { id: 'TEXT_ENTRY', label: 'Online Rich Text Entry', icon: '✍️' },
       ];
 
       const toggleFileType = (typeId: string) => {
         const next = allowedTypes.includes(typeId)
           ? allowedTypes.filter((t) => t !== typeId)
           : [...allowedTypes, typeId];
-        applyPatch({ assignmentFileTypes: next.length > 0 ? next : ["PDF"] });
+        applyPatch({ assignmentFileTypes: next.length > 0 ? next : ['PDF'] });
       };
 
       const setAllFileTypes = () => {
@@ -605,7 +595,8 @@ export function StepCurriculum({
         <div className="mt-3 rounded-2xl border border-orange-200/90 bg-orange-50/40 p-5 space-y-4 shadow-2xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 pb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-orange-800 flex items-center gap-1.5">
-              <ClipboardList className="h-4 w-4 text-orange-600" /> Assignment Details & Submission Setup
+              <ClipboardList className="h-4 w-4 text-orange-600" /> Assignment Details & Submission
+              Setup
             </span>
             <Badge variant="amber">Assignment</Badge>
           </div>
@@ -613,10 +604,11 @@ export function StepCurriculum({
           <div>
             <label className={labelClass}>Assignment Instructions & Prompt *</label>
             <p className="text-[11px] text-slate-500 mb-1.5">
-              Use rich text formatting (bold, italic, lists, headings) to clearly explain the assignment requirements, deliverables, and evaluation criteria.
+              Use rich text formatting (bold, italic, lists, headings) to clearly explain the
+              assignment requirements, deliverables, and evaluation criteria.
             </p>
             <RichEditor
-              value={lesson.assignmentInstructions || lesson.content || ""}
+              value={lesson.assignmentInstructions || lesson.content || ''}
               placeholder="Describe what the learner must research, prepare, write, and submit…"
               onChange={(html) => applyPatch({ assignmentInstructions: html, content: html })}
             />
@@ -648,10 +640,10 @@ export function StepCurriculum({
                     type="button"
                     onClick={() => toggleFileType(opt.id)}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all shadow-2xs",
+                      'flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all shadow-2xs',
                       isSelected
-                        ? "border-orange-500 bg-orange-500 text-white shadow-orange-500/20"
-                        : "border-slate-200 bg-slate-50/70 text-slate-700 hover:border-slate-300 hover:bg-white",
+                        ? 'border-orange-500 bg-orange-500 text-white shadow-orange-500/20'
+                        : 'border-slate-200 bg-slate-50/70 text-slate-700 hover:border-slate-300 hover:bg-white',
                     )}
                   >
                     <span>{opt.icon}</span>
@@ -665,7 +657,7 @@ export function StepCurriculum({
       );
     }
 
-    if (lesson.contentType === "QUIZ" || lesson.contentType === "ASSESSMENT") {
+    if (lesson.contentType === 'QUIZ' || lesson.contentType === 'ASSESSMENT') {
       const questions = lesson.quizQuestions ?? [];
       const patchQ = (qIdx: number, patch: Partial<Question>) => {
         const next = [...questions];
@@ -686,7 +678,9 @@ export function StepCurriculum({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2.5">
             <span className="text-xs font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
               <FileQuestion className="h-4 w-4 text-indigo-600" />
-              {lesson.contentType === "ASSESSMENT" ? "Lesson Assessment Questions" : "Lesson Quiz Questions"}
+              {lesson.contentType === 'ASSESSMENT'
+                ? 'Lesson Assessment Questions'
+                : 'Lesson Quiz Questions'}
             </span>
             <Button size="sm" variant="outline" onClick={addQ} className="gap-1 text-xs">
               <Plus className="h-3.5 w-3.5" /> Add Question
@@ -695,7 +689,10 @@ export function StepCurriculum({
 
           <div className="space-y-3">
             {questions.map((q, qIdx) => (
-              <div key={q.id || qIdx} className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-3 shadow-2xs">
+              <div
+                key={q.id || qIdx}
+                className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-3 shadow-2xs"
+              >
                 <div className="flex items-center justify-between">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
                     {qIdx + 1}
@@ -718,7 +715,7 @@ export function StepCurriculum({
                   />
                 </div>
 
-                {q.type === "multiple_choice" && (
+                {q.type === 'multiple_choice' && (
                   <div className="space-y-2">
                     <label className={labelClass}>Options (select correct answer)</label>
                     {q.options.map((opt, optIdx) => (
@@ -751,9 +748,14 @@ export function StepCurriculum({
 
           <div className="pt-2 flex items-center justify-between border-t border-indigo-100">
             <span className="text-xs text-indigo-700 font-medium">
-              {questions.length} question{questions.length !== 1 ? "s" : ""} added
+              {questions.length} question{questions.length !== 1 ? 's' : ''} added
             </span>
-            <Button size="sm" variant="outline" onClick={addQ} className="gap-1.5 text-xs font-semibold bg-white text-indigo-700 hover:bg-indigo-50 border-indigo-200">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={addQ}
+              className="gap-1.5 text-xs font-semibold bg-white text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+            >
               <Plus className="h-3.5 w-3.5" /> Add Question
             </Button>
           </div>
@@ -774,21 +776,21 @@ export function StepCurriculum({
           )}
         </div>
 
-        {lesson.contentType === "EXTERNAL_LINK" ? (
+        {lesson.contentType === 'EXTERNAL_LINK' ? (
           <div>
             <label className={labelClass}>External Resource URL</label>
             <div className="relative">
               <input
                 type="url"
-                value={lesson.resourceUrl ?? ""}
+                value={lesson.resourceUrl ?? ''}
                 placeholder="https://example.com/training-content"
                 onChange={(e) => applyPatch({ resourceUrl: e.target.value })}
-                className={cn(inputClass, "pl-9")}
+                className={cn(inputClass, 'pl-9')}
               />
               <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             </div>
           </div>
-        ) : lesson.contentType === "INTERACTIVE" ? (
+        ) : lesson.contentType === 'INTERACTIVE' ? (
           <div>
             <RichTextArea
               label="Interactive Activity Instructions & Guide"
@@ -801,40 +803,44 @@ export function StepCurriculum({
         ) : (
           <div>
             <label className={labelClass}>
-              {lesson.contentType === "VIDEO"
-                ? "Video Media File (MP4, WebM, OGG)"
-                : lesson.contentType === "AUDIO"
-                  ? "Audio Recording File (MP3, WAV, AAC, M4A)"
-                  : lesson.contentType === "PRESENTATION"
-                    ? "Presentation Slides (PPT, PPTX, PDF)"
-                    : "Course Document (PDF, Word DOC/DOCX, Spreadsheets, Text)"}
+              {lesson.contentType === 'VIDEO'
+                ? 'Video Media File (MP4, WebM, OGG)'
+                : lesson.contentType === 'AUDIO'
+                  ? 'Audio Recording File (MP3, WAV, AAC, M4A)'
+                  : lesson.contentType === 'PRESENTATION'
+                    ? 'Presentation Slides (PPT, PPTX, PDF)'
+                    : 'Course Document (PDF, Word DOC/DOCX, Spreadsheets, Text)'}
             </label>
 
             {lesson.uploadError ? (
               <p className="mt-1 text-xs text-red-600">{lesson.uploadError}</p>
             ) : null}
             <MultiFileUploader
-              id={`file-${lesson.id}-${parentLessonId || "parent"}`}
+              id={`file-${lesson.id}-${parentLessonId || 'parent'}`}
               files={lesson.resources || lesson.attachments}
               legacyUrl={lesson.resourceUrl}
               legacyName={lesson.fileName}
               legacySize={lesson.fileSize}
               accept={
-                lesson.contentType === "VIDEO"
-                  ? "video/mp4,video/webm,video/ogg"
-                  : lesson.contentType === "AUDIO"
-                    ? "audio/*"
-                    : lesson.contentType === "PRESENTATION"
-                      ? ".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-                      : ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                lesson.contentType === 'VIDEO'
+                  ? 'video/mp4,video/webm,video/ogg'
+                  : lesson.contentType === 'AUDIO'
+                    ? 'audio/*'
+                    : lesson.contentType === 'PRESENTATION'
+                      ? '.ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf'
+                      : '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
               }
               uploading={lesson.uploading}
               uploadError={lesson.uploadError}
               theme="indigo"
               placeholderText="Upload Lesson Files (batch drag & drop supported)"
               descriptionText="Attach multiple files, lecture notes, or slides to this lesson without replacing previous uploads."
-              onUpload={(files) => handleLessonFileUpload(files, moduleId, lesson.id, parentLessonId)}
-              onRemove={(fileIdOrUrl) => removeLessonFile(moduleId, lesson.id, fileIdOrUrl, parentLessonId)}
+              onUpload={(files) =>
+                handleLessonFileUpload(files, moduleId, lesson.id, parentLessonId)
+              }
+              onRemove={(fileIdOrUrl) =>
+                removeLessonFile(moduleId, lesson.id, fileIdOrUrl, parentLessonId)
+              }
             />
           </div>
         )}
@@ -855,11 +861,10 @@ export function StepCurriculum({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="font-display text-base font-bold text-slate-900">
-            Curriculum Builder
-          </h3>
+          <h3 className="font-display text-base font-bold text-slate-900">Curriculum Builder</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Build your course hierarchy: Modules → Lessons → Sub-lessons. Add assignments, media, and rich content.
+            Build your course hierarchy: Modules → Lessons → Sub-lessons. Add assignments, media,
+            and rich content.
           </p>
         </div>
         <Button size="sm" onClick={addModule} className="gap-1.5 shadow-xs">
@@ -915,7 +920,7 @@ export function StepCurriculum({
                     type="button"
                     onClick={() => toggleModule(mod.id)}
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 transition hover:bg-indigo-200"
-                    title={isModExpanded ? "Collapse module" : "Expand module"}
+                    title={isModExpanded ? 'Collapse module' : 'Expand module'}
                   >
                     {isModExpanded ? (
                       <Minus className="h-3.5 w-3.5" />
@@ -976,7 +981,7 @@ export function StepCurriculum({
                       <div>
                         <label className={labelClass}>Module Learning Objectives</label>
                         <RichEditor
-                          value={mod.objectives ?? ""}
+                          value={mod.objectives ?? ''}
                           placeholder="Specify the key learning objectives for this module…"
                           onChange={(html) => patchModule(mod.id, { objectives: html })}
                           minHeight={80}
@@ -985,7 +990,7 @@ export function StepCurriculum({
                       <div>
                         <label className={labelClass}>Module Description (Optional)</label>
                         <CompactRichEditor
-                          value={mod.description ?? ""}
+                          value={mod.description ?? ''}
                           placeholder="Brief summary of module scope and focus — supports bold, italic, and bullets"
                           onChange={(html) => patchModule(mod.id, { description: html })}
                         />
@@ -1009,16 +1014,16 @@ export function StepCurriculum({
                           className={inputClass}
                         />
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        Estimated study minutes.
-                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">Estimated study minutes.</p>
                     </div>
                   </div>
 
                   {/* Module Syllabus / Resource File */}
                   <div className="rounded-xl border border-slate-100 bg-white p-3.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className={labelClass}>Module Syllabus & Reference Materials (Optional)</label>
+                      <label className={labelClass}>
+                        Module Syllabus & Reference Materials (Optional)
+                      </label>
                       {mod.uploading && (
                         <span className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading module file…
@@ -1068,7 +1073,7 @@ export function StepCurriculum({
                                 type="button"
                                 onClick={() => toggleLesson(lesson.id)}
                                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 hover:bg-sky-200 transition"
-                                title={isLesExpanded ? "Collapse lesson" : "Expand lesson"}
+                                title={isLesExpanded ? 'Collapse lesson' : 'Expand lesson'}
                               >
                                 {isLesExpanded ? (
                                   <Minus className="h-3 w-3" />
@@ -1082,7 +1087,7 @@ export function StepCurriculum({
                               </span>
 
                               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200">
-                                {renderTypeIcon(lesson.contentType, "h-3.5 w-3.5")}
+                                {renderTypeIcon(lesson.contentType, 'h-3.5 w-3.5')}
                               </div>
 
                               <input
@@ -1136,7 +1141,10 @@ export function StepCurriculum({
                               </div>
 
                               {/* Required toggle */}
-                              <label className="flex items-center gap-1 cursor-pointer text-xs text-slate-600" title="Required for progression">
+                              <label
+                                className="flex items-center gap-1 cursor-pointer text-xs text-slate-600"
+                                title="Required for progression"
+                              >
                                 <input
                                   type="checkbox"
                                   checked={lesson.required !== false}
@@ -1198,8 +1206,10 @@ export function StepCurriculum({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        addSubLesson(mod.id, lesson.id, "DOCUMENT");
-                                        setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                                        addSubLesson(mod.id, lesson.id, 'DOCUMENT');
+                                        setExpandedSubLessons(
+                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
+                                        );
                                       }}
                                       className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-white px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-50 transition shadow-2xs"
                                     >
@@ -1208,8 +1218,10 @@ export function StepCurriculum({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        addSubLesson(mod.id, lesson.id, "QUIZ", "Lesson Quiz");
-                                        setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                                        addSubLesson(mod.id, lesson.id, 'QUIZ', 'Lesson Quiz');
+                                        setExpandedSubLessons(
+                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
+                                        );
                                       }}
                                       className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition shadow-2xs"
                                     >
@@ -1218,8 +1230,15 @@ export function StepCurriculum({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        addSubLesson(mod.id, lesson.id, "ASSIGNMENT", "Lesson Assignment");
-                                        setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                                        addSubLesson(
+                                          mod.id,
+                                          lesson.id,
+                                          'ASSIGNMENT',
+                                          'Lesson Assignment',
+                                        );
+                                        setExpandedSubLessons(
+                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
+                                        );
                                       }}
                                       className="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-50 transition shadow-2xs"
                                     >
@@ -1228,17 +1247,26 @@ export function StepCurriculum({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        addSubLesson(mod.id, lesson.id, "ASSESSMENT", "Lesson Assessment");
-                                        setExpandedSubLessons((prev) => new Set(Array.from(prev).concat(lesson.id)));
+                                        addSubLesson(
+                                          mod.id,
+                                          lesson.id,
+                                          'ASSESSMENT',
+                                          'Lesson Assessment',
+                                        );
+                                        setExpandedSubLessons(
+                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
+                                        );
                                       }}
                                       className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs"
                                     >
-                                      <Sparkles className="h-3.5 w-3.5" /> Assessment
+                                      <Award className="h-3.5 w-3.5" /> Assessment
                                     </button>
                                   </div>
                                 </div>
 
-                                {expandedSubLessons.has(lesson.id) && lesson.subLessons && lesson.subLessons.length > 0 ? (
+                                {expandedSubLessons.has(lesson.id) &&
+                                lesson.subLessons &&
+                                lesson.subLessons.length > 0 ? (
                                   <div className="space-y-2 pl-4 border-l-2 border-violet-200">
                                     {lesson.subLessons.map((sub, subIdx) => (
                                       <div
@@ -1251,7 +1279,7 @@ export function StepCurriculum({
                                               {modIdx + 1}.{lesIdx + 1}.{subIdx + 1}
                                             </span>
                                             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white border border-slate-200">
-                                              {renderTypeIcon(sub.contentType, "h-3 w-3")}
+                                              {renderTypeIcon(sub.contentType, 'h-3 w-3')}
                                             </div>
                                             <input
                                               type="text"
@@ -1283,7 +1311,9 @@ export function StepCurriculum({
                                               <option value="QUIZ">Quiz (Interactive)</option>
                                               <option value="ASSIGNMENT">Assignment</option>
                                               <option value="ASSESSMENT">Assessment (Exam)</option>
-                                              <option value="INTERACTIVE">Interactive Activity</option>
+                                              <option value="INTERACTIVE">
+                                                Interactive Activity
+                                              </option>
                                               <option value="EXTERNAL_LINK">Link</option>
                                             </select>
 
@@ -1305,7 +1335,9 @@ export function StepCurriculum({
 
                                             <button
                                               type="button"
-                                              onClick={() => moveSubLesson(mod.id, lesson.id, sub.id, -1)}
+                                              onClick={() =>
+                                                moveSubLesson(mod.id, lesson.id, sub.id, -1)
+                                              }
                                               disabled={subIdx === 0}
                                               className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
                                             >
@@ -1313,7 +1345,9 @@ export function StepCurriculum({
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => moveSubLesson(mod.id, lesson.id, sub.id, 1)}
+                                              onClick={() =>
+                                                moveSubLesson(mod.id, lesson.id, sub.id, 1)
+                                              }
                                               disabled={subIdx === lesson.subLessons!.length - 1}
                                               className="rounded p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
                                             >
@@ -1321,7 +1355,9 @@ export function StepCurriculum({
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => removeSubLesson(mod.id, lesson.id, sub.id)}
+                                              onClick={() =>
+                                                removeSubLesson(mod.id, lesson.id, sub.id)
+                                              }
                                               className="rounded p-1 text-slate-400 hover:text-red-600 transition"
                                             >
                                               <Trash2 className="h-3 w-3" />
@@ -1347,7 +1383,7 @@ export function StepCurriculum({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => addLesson(mod.id, "DOCUMENT")}
+                      onClick={() => addLesson(mod.id, 'DOCUMENT')}
                       className="gap-1.5 text-sky-700 border-sky-300 hover:bg-sky-50 shadow-2xs"
                     >
                       <Plus className="h-4 w-4" /> Add Lesson
@@ -1355,7 +1391,7 @@ export function StepCurriculum({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => addLesson(mod.id, "QUIZ", "Module Quiz")}
+                      onClick={() => addLesson(mod.id, 'QUIZ', 'Module Quiz')}
                       className="gap-1.5 text-indigo-700 border-indigo-300 hover:bg-indigo-50 shadow-2xs"
                     >
                       <FileQuestion className="h-4 w-4" /> Add Quiz
@@ -1363,7 +1399,7 @@ export function StepCurriculum({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => addLesson(mod.id, "ASSIGNMENT", "Module Assignment")}
+                      onClick={() => addLesson(mod.id, 'ASSIGNMENT', 'Module Assignment')}
                       className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50 shadow-2xs"
                     >
                       <ClipboardList className="h-4 w-4" /> Add Assignment
@@ -1371,16 +1407,18 @@ export function StepCurriculum({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => addLesson(mod.id, "ASSESSMENT", "Module Assessment")}
+                      onClick={() => addLesson(mod.id, 'ASSESSMENT', 'Module Assessment')}
                       className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 shadow-2xs"
                     >
-                      <Sparkles className="h-4 w-4" /> Add Assessment
+                      <Award className="h-4 w-4" /> Add Assessment
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="px-4 py-2 flex items-center gap-3 text-xs text-slate-500">
-                  <span>{mod.lessons.length} lesson{mod.lessons.length !== 1 ? "s" : ""}</span>
+                  <span>
+                    {mod.lessons.length} lesson{mod.lessons.length !== 1 ? 's' : ''}
+                  </span>
                   {mod.durationMinutes ? (
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" /> {mod.durationMinutes} min
@@ -1401,4 +1439,3 @@ export function StepCurriculum({
     </div>
   );
 }
-

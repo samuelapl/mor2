@@ -1,24 +1,16 @@
-import type { Course, Lesson, Module, UploadedResource } from "@/types";
+import type { Course, Lesson, Module, UploadedResource } from '@/types';
 import type {
   ApiAttachedAssessment,
   ApiCourseProgress,
   ApiProgressLesson,
   ApiProgressModule,
   ApiProgressSubLesson,
-} from "@/lib/api/types";
+} from '@/lib/api/types';
 
 export type ClassroomItemType =
-  | "COURSE_OVERVIEW"
-  | "MODULE_OVERVIEW"
-  | "LESSON"
-  | "SUB_LESSON"
-  | "QUIZ"
-  | "CERTIFICATE";
+  'COURSE_OVERVIEW' | 'MODULE_OVERVIEW' | 'LESSON' | 'SUB_LESSON' | 'QUIZ' | 'CERTIFICATE';
 
-export type ClassroomQuizKind =
-  | "LESSON_ASSESSMENT"
-  | "MODULE_ASSESSMENT"
-  | "FINAL_ASSESSMENT";
+export type ClassroomQuizKind = 'LESSON_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'FINAL_ASSESSMENT';
 
 export interface ClassroomSelection {
   type: ClassroomItemType;

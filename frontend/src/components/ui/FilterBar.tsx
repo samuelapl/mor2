@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Search, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Search, X } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export interface FilterOption {
   value: string;
@@ -26,12 +26,12 @@ interface FilterBarProps {
 }
 
 const inputClass =
-  "h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+  'h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
 export function FilterBar({
   search,
   onSearchChange,
-  searchPlaceholder = "Search…",
+  searchPlaceholder = 'Search…',
   selects = [],
   onClear,
   hasActiveFilters,
@@ -40,7 +40,10 @@ export function FilterBar({
     <div className="mb-5 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft ring-super-soft">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <div className="min-w-0 flex-1">
-          <label htmlFor="list-search" className="mb-1.5 block text-xs font-semibold text-slate-600">
+          <label
+            htmlFor="list-search"
+            className="mb-1.5 block text-xs font-semibold text-slate-600"
+          >
             Search
           </label>
           <div className="relative">
@@ -56,7 +59,10 @@ export function FilterBar({
         </div>
         {selects.map((select) => (
           <div key={select.id} className="w-full sm:w-44">
-            <label htmlFor={select.id} className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label
+              htmlFor={select.id}
+              className="mb-1.5 block text-xs font-semibold text-slate-600"
+            >
               {select.label}
             </label>
             <select

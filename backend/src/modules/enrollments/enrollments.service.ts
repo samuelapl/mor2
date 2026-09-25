@@ -46,7 +46,9 @@ export class EnrollmentsService {
         where: { userId_courseId: { userId, courseId: dto.courseId } },
       });
       if (cert) {
-        throw new BadRequestException('You have already completed this course and earned your certificate');
+        throw new BadRequestException(
+          'You have already completed this course and earned your certificate',
+        );
       }
 
       // If certificate was revoked or deleted, reset previous completions so learner can retake
@@ -136,7 +138,12 @@ export class EnrollmentsService {
         return saved;
       });
 
-      await this.notifyEnrollment(userId, dto.courseId, course.titleEn || course.titleAm, !!existing);
+      await this.notifyEnrollment(
+        userId,
+        dto.courseId,
+        course.titleEn || course.titleAm,
+        !!existing,
+      );
 
       return enrollment;
     } catch (err) {

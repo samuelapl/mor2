@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeft, Building2, CheckCircle2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import type { ApiUser, ApiVenue } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -26,7 +33,11 @@ export interface VenueRowDefaults {
 }
 
 /** Prefer the trainer whose primary venue this is; otherwise the fallback. */
-function trainerForVenue(venueId: string | undefined, trainers: ApiUser[], fallbackTrainerId: string) {
+function trainerForVenue(
+  venueId: string | undefined,
+  trainers: ApiUser[],
+  fallbackTrainerId: string,
+) {
   const affiliated = venueId
     ? trainers.find((t) => (t as any).primaryVenueId === venueId)
     : undefined;
@@ -80,7 +91,10 @@ export function VenueAllocationStep({
     // Pick next unused venue if available
     const usedVenueIds = new Set(rows.map((r) => r.venueId));
     const nextVenue = venues.find((v) => !usedVenueIds.has(v.id)) || venues[0];
-    onRowsChange([...rows, createVenueRow(nextVenue, trainers, defaults, rows.length + 1)]);
+    onRowsChange([
+      ...rows,
+      createVenueRow(nextVenue, trainers, defaults, rows.length + 1),
+    ]);
   };
 
   const handleRemoveRow = (key: string) => {
@@ -99,7 +113,9 @@ export function VenueAllocationStep({
 
         // Auto-select the affiliated trainer when the venue changes
         if (patch.venueId && patch.venueId !== r.venueId) {
-          const affiliated = trainers.find((t) => (t as any).primaryVenueId === patch.venueId);
+          const affiliated = trainers.find(
+            (t) => (t as any).primaryVenueId === patch.venueId,
+          );
           if (affiliated) {
             updated.trainerId = affiliated.id;
           }
@@ -123,7 +139,8 @@ export function VenueAllocationStep({
             Step 2: Allocate Physical Venues &amp; Branch Instructors
           </h4>
           <p className="text-xs text-slate-500">
-            Add multiple branch locations to run this training session simultaneously across the Ministry.
+            Add multiple branch locations to run this training session
+            simultaneously across the Ministry.
           </p>
         </div>
 
@@ -161,7 +178,9 @@ export function VenueAllocationStep({
                   <td className="px-3.5 py-2.5">
                     <select
                       value={row.venueId}
-                      onChange={(e) => handleUpdateRow(row.key, { venueId: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateRow(row.key, { venueId: e.target.value })
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
                     >
                       <option value="">Select a Venue…</option>
@@ -182,15 +201,19 @@ export function VenueAllocationStep({
                   <td className="px-3 py-2.5">
                     <select
                       value={row.trainerId}
-                      onChange={(e) => handleUpdateRow(row.key, { trainerId: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateRow(row.key, { trainerId: e.target.value })
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
                     >
                       <option value="">Select Trainer…</option>
                       {trainers.map((t) => {
-                        const isAffiliated = (t as any).primaryVenueId === row.venueId;
+                        const isAffiliated =
+                          (t as any).primaryVenueId === row.venueId;
                         return (
                           <option key={t.id} value={t.id}>
-                            {t.firstName} {t.lastName} {isAffiliated ? "★ (Primary Venue)" : ""}
+                            {t.firstName} {t.lastName}{" "}
+                            {isAffiliated ? "★ (Primary Venue)" : ""}
                           </option>
                         );
                       })}
@@ -202,7 +225,9 @@ export function VenueAllocationStep({
                     <input
                       type="date"
                       value={row.date}
-                      onChange={(e) => handleUpdateRow(row.key, { date: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateRow(row.key, { date: e.target.value })
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
                     />
                   </td>
@@ -212,7 +237,9 @@ export function VenueAllocationStep({
                     <input
                       type="time"
                       value={row.time}
-                      onChange={(e) => handleUpdateRow(row.key, { time: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateRow(row.key, { time: e.target.value })
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
                     />
                   </td>
@@ -224,7 +251,11 @@ export function VenueAllocationStep({
                       min={15}
                       step={15}
                       value={row.duration}
-                      onChange={(e) => handleUpdateRow(row.key, { duration: Number(e.target.value) })}
+                      onChange={(e) =>
+                        handleUpdateRow(row.key, {
+                          duration: Number(e.target.value),
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-xs text-slate-800 focus:border-indigo-400 focus:outline-hidden"
                     />
                   </td>
@@ -264,29 +295,44 @@ export function VenueAllocationStep({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100 text-xs">
         <div className="flex items-center gap-4">
           <span className="font-semibold text-slate-700">
-            Allocated Venues: <strong className="text-indigo-600">{rows.length}</strong>
+            Allocated Venues:{" "}
+            <strong className="text-indigo-600">{rows.length}</strong>
           </span>
           <span className="font-semibold text-slate-700">
-            Total Seat Capacity: <strong className="text-emerald-600">{totalSeats} Seats</strong>
+            Total Seat Capacity:{" "}
+            <strong className="text-emerald-600">{totalSeats} Seats</strong>
           </span>
         </div>
         <p className="text-[11px] text-slate-500">
-          Each row creates an independent in-person session linked to that physical classroom.
+          Each row creates an independent in-person session linked to that
+          physical classroom.
         </p>
       </div>
 
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+          {error}
+        </p>
       ) : null}
 
       <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-        <Button type="button" variant="outline" onClick={onBack} className="gap-2 text-xs">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          className="gap-2 text-xs"
+        >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Basic Details</span>
         </Button>
 
         <div className="flex items-center gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={submitting}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={submitting}
+          >
             Cancel
           </Button>
           <Button

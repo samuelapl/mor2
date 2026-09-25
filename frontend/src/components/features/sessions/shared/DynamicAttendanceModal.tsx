@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CalendarDays,
@@ -18,17 +18,17 @@ import {
   Users,
   UserX,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   fetchSessionAttendanceReport,
   fetchSessionAttendanceVisibility,
   sendSessionAttendanceReport,
-} from "@/lib/api/monitoring";
-import type { ApiAttendance, ApiAttendanceReport, ApiAttendanceVisibility } from "@/lib/api/types";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Table, Td } from "@/components/ui/Table";
+} from '@/lib/api/monitoring';
+import type { ApiAttendance, ApiAttendanceReport, ApiAttendanceVisibility } from '@/lib/api/types';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Table, Td } from '@/components/ui/Table';
 
 interface DynamicAttendanceModalProps {
   open: boolean;
@@ -39,11 +39,11 @@ interface DynamicAttendanceModalProps {
 }
 
 const formatDateTime = (val?: string | null) => {
-  if (!val) return "—";
-  return new Date(val).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  if (!val) return '—';
+  return new Date(val).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   });
 };
 
@@ -52,14 +52,14 @@ export function DynamicAttendanceModal({
   onClose,
   sessionId,
   sessionTitle,
-  userRole = "learner",
+  userRole = 'learner',
 }: DynamicAttendanceModalProps) {
   const [loading, setLoading] = useState(true);
   const [visibility, setVisibility] = useState<ApiAttendanceVisibility | null>(null);
   const [report, setReport] = useState<ApiAttendanceReport | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = async () => {
     if (!sessionId) return;
@@ -92,10 +92,12 @@ export function DynamicAttendanceModal({
     try {
       const res = await sendSessionAttendanceReport(sessionId);
       setReport(res);
-      setFlashMessage("Attendance report successfully calculated and notification sent to trainer!");
+      setFlashMessage(
+        'Attendance report successfully calculated and notification sent to trainer!',
+      );
       setTimeout(() => setFlashMessage(null), 4000);
     } catch {
-      setFlashMessage("Failed to dispatch attendance report.");
+      setFlashMessage('Failed to dispatch attendance report.');
     } finally {
       setSendingReport(false);
     }
@@ -105,43 +107,50 @@ export function DynamicAttendanceModal({
     if (!report || !report.attendees.length) return;
     const threshold = report.session.attendanceThreshold ?? 60;
     const headers = [
-      "Learner Name",
-      "Email",
-      "First Joined",
-      "Last Left",
-      "Rejoin Count",
-      "Stay Duration (Minutes)",
-      "Percentage",
-      "Threshold (%)",
-      "Status",
+      'Learner Name',
+      'Email',
+      'First Joined',
+      'Last Left',
+      'Rejoin Count',
+      'Stay Duration (Minutes)',
+      'Percentage',
+      'Threshold (%)',
+      'Status',
     ];
 
     const rows = report.attendees.map((a) => {
       const name = a.user
-        ? `${a.user.firstName || ""} ${a.user.lastName || ""}`.trim() || a.user.email
-        : "Participant";
-      const percentage = a.percentage ?? (a.durationMinutes ? Math.min(100, Math.round(((a.durationMinutes) / (report.session.durationMinutes || 30)) * 100)) : 0);
+        ? `${a.user.firstName || ''} ${a.user.lastName || ''}`.trim() || a.user.email
+        : 'Participant';
+      const percentage =
+        a.percentage ??
+        (a.durationMinutes
+          ? Math.min(
+              100,
+              Math.round((a.durationMinutes / (report.session.durationMinutes || 30)) * 100),
+            )
+          : 0);
       return [
         `"${name}"`,
-        `"${a.user?.email || ""}"`,
-        `"${a.joinedAt ? new Date(a.joinedAt).toLocaleString() : "Did not attend"}"`,
-        `"${a.leftAt ? new Date(a.leftAt).toLocaleString() : "—"}"`,
+        `"${a.user?.email || ''}"`,
+        `"${a.joinedAt ? new Date(a.joinedAt).toLocaleString() : 'Did not attend'}"`,
+        `"${a.leftAt ? new Date(a.leftAt).toLocaleString() : '—'}"`,
         a.rejoinCount ?? 0,
         a.durationMinutes ?? 0,
         `${percentage}%`,
         `${threshold}%`,
         a.status,
-      ].join(",");
+      ].join(',');
     });
 
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
     link.setAttribute(
-      "download",
-      `attendance_${report.session.courseCode || "session"}_${sessionId.slice(0, 8)}.csv`,
+      'download',
+      `attendance_${report.session.courseCode || 'session'}_${sessionId.slice(0, 8)}.csv`,
     );
     document.body.appendChild(link);
     link.click();
@@ -153,8 +162,8 @@ export function DynamicAttendanceModal({
     if (!searchQuery.trim()) return attendees;
     const q = searchQuery.toLowerCase();
     return attendees.filter((a) => {
-      const name = `${a.user?.firstName || ""} ${a.user?.lastName || ""}`.toLowerCase();
-      const email = (a.user?.email || "").toLowerCase();
+      const name = `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.toLowerCase();
+      const email = (a.user?.email || '').toLowerCase();
       return name.includes(q) || email.includes(q);
     });
   }, [attendees, searchQuery]);
@@ -163,9 +172,9 @@ export function DynamicAttendanceModal({
 
   const threshold = report?.session.attendanceThreshold ?? 60;
   const isTrainerOrAdmin =
-    userRole === "trainer" ||
-    userRole === "training_admin" ||
-    userRole === "system_admin" ||
+    userRole === 'trainer' ||
+    userRole === 'training_admin' ||
+    userRole === 'system_admin' ||
     Boolean(visibility?.isStaff);
 
   return (
@@ -178,14 +187,14 @@ export function DynamicAttendanceModal({
             <Users className="h-4 w-4" />
           </span>
           <span className="truncate">
-            {report?.session.titleEn || sessionTitle || "Session Attendees & Attendance"}
+            {report?.session.titleEn || sessionTitle || 'Session Attendees & Attendance'}
           </span>
         </div>
       }
       subtitle={
         report?.session
           ? `${report.session.courseCode} · ${report.session.courseTitle} · ${report.session.durationMinutes} Minutes Session Duration`
-          : "Real-time attendee stay calculation & attendance verification"
+          : 'Real-time attendee stay calculation & attendance verification'
       }
       badge={
         visibility?.canView ? (
@@ -202,7 +211,7 @@ export function DynamicAttendanceModal({
         <div className="flex items-center gap-2">
           {visibility?.canView && (
             <Button variant="ghost" size="sm" onClick={loadData} disabled={loading}>
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           )}
@@ -226,7 +235,7 @@ export function DynamicAttendanceModal({
                 className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
               >
                 <Send className="h-3.5 w-3.5" />
-                {sendingReport ? "Sending Report…" : "Send Report to Trainer"}
+                {sendingReport ? 'Sending Report…' : 'Send Report to Trainer'}
               </Button>
             </>
           )}
@@ -267,7 +276,10 @@ export function DynamicAttendanceModal({
                 Administrative Policy Rule:
               </div>
               <p>
-                When the system administrator enables <em>&quot;Permit All Actors to View Session Attendees &amp; Attendance&quot;</em> in Platform Settings, any participant can inspect real-time join times, stay durations, and verification statuses.
+                When the system administrator enables{' '}
+                <em>&quot;Permit All Actors to View Session Attendees &amp; Attendance&quot;</em> in
+                Platform Settings, any participant can inspect real-time join times, stay durations,
+                and verification statuses.
               </p>
             </div>
             <div className="mt-6">
@@ -290,8 +302,11 @@ export function DynamicAttendanceModal({
                     Attendance Calculation Rule: $\ge {threshold}\%$ Active Stay = Present
                   </p>
                   <p className="text-slate-600 text-[11px] mt-0.5">
-                    Total session length is {report?.session.durationMinutes || 30} minutes. Learners staying at least{" "}
-                    {Math.round(((report?.session.durationMinutes || 30) * threshold) / 100)} minutes across their join/rejoin intervals are verified as <strong>PRESENT</strong>; otherwise <strong>ABSENT</strong>.
+                    Total session length is {report?.session.durationMinutes || 30} minutes.
+                    Learners staying at least{' '}
+                    {Math.round(((report?.session.durationMinutes || 30) * threshold) / 100)}{' '}
+                    minutes across their join/rejoin intervals are verified as{' '}
+                    <strong>PRESENT</strong>; otherwise <strong>ABSENT</strong>.
                   </p>
                 </div>
               </div>
@@ -357,7 +372,8 @@ export function DynamicAttendanceModal({
                     Live Session Attendees &amp; Interval Audit
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Shows when each learner joined, left, rejoined, total active minutes, and calculated status.
+                    Shows when each learner joined, left, rejoined, total active minutes, and
+                    calculated status.
                   </p>
                 </div>
                 <input
@@ -376,30 +392,33 @@ export function DynamicAttendanceModal({
               ) : (
                 <Table
                   columns={[
-                    "Learner Name",
-                    "Join Time",
-                    "Left Time",
-                    "Rejoins",
-                    "Stay Duration",
-                    "Percentage",
-                    "Verified Status",
+                    'Learner Name',
+                    'Join Time',
+                    'Left Time',
+                    'Rejoins',
+                    'Stay Duration',
+                    'Percentage',
+                    'Verified Status',
                   ]}
                 >
                   {filteredAttendees.map((att) => {
                     const fullName = att.user
-                      ? `${att.user.firstName || ""} ${att.user.lastName || ""}`.trim() || att.user.email
-                      : "Participant";
-                    const isPresent = att.status === "PRESENT";
+                      ? `${att.user.firstName || ''} ${att.user.lastName || ''}`.trim() ||
+                        att.user.email
+                      : 'Participant';
+                    const isPresent = att.status === 'PRESENT';
                     const sessionDur = report?.session.durationMinutes || 30;
-                    const stayMin = att.durationMinutes ?? Math.floor((att.activeSeconds || 0) / 60);
-                    const pct = att.percentage ?? Math.min(100, Math.round((stayMin / sessionDur) * 100));
+                    const stayMin =
+                      att.durationMinutes ?? Math.floor((att.activeSeconds || 0) / 60);
+                    const pct =
+                      att.percentage ?? Math.min(100, Math.round((stayMin / sessionDur) * 100));
 
                     return (
                       <tr key={att.id} className="hover:bg-slate-50/80 transition-colors">
                         <Td>
                           <div>
                             <p className="font-semibold text-slate-900 text-xs">{fullName}</p>
-                            <p className="text-[10px] text-slate-400">{att.user?.email || "—"}</p>
+                            <p className="text-[10px] text-slate-400">{att.user?.email || '—'}</p>
                           </div>
                         </Td>
                         <Td className="text-xs text-slate-600 font-mono">
@@ -434,7 +453,7 @@ export function DynamicAttendanceModal({
                             <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${
-                                  pct >= threshold ? "bg-emerald-500" : "bg-rose-400"
+                                  pct >= threshold ? 'bg-emerald-500' : 'bg-rose-400'
                                 }`}
                                 style={{ width: `${Math.min(100, pct)}%` }}
                               />
@@ -446,7 +465,7 @@ export function DynamicAttendanceModal({
                         </Td>
                         <Td>
                           <Badge
-                            variant={isPresent ? "green" : "red"}
+                            variant={isPresent ? 'green' : 'red'}
                             dot
                             className="font-bold tracking-wide"
                           >

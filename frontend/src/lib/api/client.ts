@@ -5,10 +5,7 @@ export interface ApiEnvelope<T> {
 
 /** Policy-gating reason codes the backend attaches to some 403 responses. */
 export type ApiErrorReason =
-  | "TIME_NOT_MET"
-  | "ASSESSMENT_REQUIRED"
-  | "ASSESSMENT_NOT_PASSED"
-  | "LOCKED";
+  'TIME_NOT_MET' | 'ASSESSMENT_REQUIRED' | 'ASSESSMENT_NOT_PASSED' | 'LOCKED';
 
 export class ApiError extends Error {
   constructor(
@@ -19,7 +16,7 @@ export class ApiError extends Error {
     public readonly remainingSeconds?: number,
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
   }
 }
 
@@ -37,9 +34,8 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
   unauthorizedHandler = handler;
 }
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1";
-  
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
+
 /** Access token used by ApiClient; wired by the auth store. */
 let accessToken: string | null = null;
 export function setAccessToken(token: string | null): void {
@@ -51,12 +47,12 @@ export function getAccessToken(): string | null {
 }
 
 function getStoredAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("eltms_access_token");
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem('eltms_access_token');
 }
 
 export interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   headers?: Record<string, string>;
   /** Do not attempt a token refresh on 401. Used by auth endpoints themselves. */
@@ -66,10 +62,10 @@ export interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined>;
 }
 
-export function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const base = path.startsWith("http")
+export function buildUrl(path: string, query?: RequestOptions['query']): string {
+  const base = path.startsWith('http')
     ? path
-    : `${API_BASE_URL.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+    : `${API_BASE_URL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
   if (!query) return base;
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(query)) {
@@ -79,24 +75,21 @@ export function buildUrl(path: string, query?: RequestOptions["query"]): string 
   return qs ? `${base}?${qs}` : base;
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = options.headers ?? {};
   if (options.body !== undefined) {
-    headers["Content-Type"] ??= "application/json";
+    headers['Content-Type'] ??= 'application/json';
   }
 
   const send = async (useAccess: boolean): Promise<T> => {
     if (useAccess && accessToken) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
+      headers['Authorization'] = `Bearer ${accessToken}`;
     }
     const res = await fetch(buildUrl(path, options.query), {
-      method: options.method ?? "GET",
+      method: options.method ?? 'GET',
       headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (res.ok) {
@@ -117,9 +110,7 @@ export async function api<T>(
         reason?: ApiErrorReason;
         remainingSeconds?: number;
       };
-      message = Array.isArray(body.message)
-        ? body.message.join("; ")
-        : (body.message ?? message);
+      message = Array.isArray(body.message) ? body.message.join('; ') : (body.message ?? message);
       code = body.code;
       reason = body.reason;
       remainingSeconds = body.remainingSeconds;
@@ -132,12 +123,7 @@ export async function api<T>(
   try {
     return await send(true);
   } catch (err) {
-    if (
-      err instanceof ApiError &&
-      err.status === 401 &&
-      !options.skipAuthRetry &&
-      refreshHandler
-    ) {
+    if (err instanceof ApiError && err.status === 401 && !options.skipAuthRetry && refreshHandler) {
       const newToken = await refreshHandler();
       if (newToken) {
         accessToken = newToken;
@@ -157,7 +143,7 @@ export function toQuery(
   const out: Record<string, string | number | boolean | undefined> = {};
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined) continue;
-    out[k] = Array.isArray(v) ? v.join(",") : v;
+    out[k] = Array.isArray(v) ? v.join(',') : v;
   }
   return out;
 }
@@ -166,12 +152,12 @@ export function toQuery(
  * Like `api`, but for endpoints that do NOT send the JSON envelope
  * (e.g. CSV exports) — resolves with the raw response text.
  */
-export async function apiText(path: string, query?: RequestOptions["query"]): Promise<string> {
+export async function apiText(path: string, query?: RequestOptions['query']): Promise<string> {
   const headers: Record<string, string> = {};
   if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+    headers['Authorization'] = `Bearer ${accessToken}`;
   }
-  const res = await fetch(buildUrl(path, query), { headers, credentials: "include" });
+  const res = await fetch(buildUrl(path, query), { headers, credentials: 'include' });
   if (!res.ok) {
     throw new ApiError(`Request failed (${res.status})`, res.status);
   }

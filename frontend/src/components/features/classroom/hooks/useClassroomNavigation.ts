@@ -1,30 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { Course, Lesson, Module } from "@/types";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type { Course, Lesson, Module } from '@/types';
 import type {
   ApiAttachedAssessment,
   ApiCourseProgress,
   ApiProgressLesson,
   ApiProgressModule,
   ApiProgressSubLesson,
-} from "@/lib/api/types";
-import type {
-  ClassroomActiveContent,
-  ClassroomFlatItem,
-  ClassroomSelection,
-} from "../types";
-import { stripHtmlTags } from "@/components/ui/RichContent";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
+} from '@/lib/api/types';
+import type { ClassroomActiveContent, ClassroomFlatItem, ClassroomSelection } from '../types';
+import { stripHtmlTags } from '@/components/ui/RichContent';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
 
 interface UseClassroomNavigationProps {
   course: Course | null;
   progress: ApiCourseProgress | null;
 }
 
-export function useClassroomNavigation({
-  course,
-  progress,
-}: UseClassroomNavigationProps) {
+export function useClassroomNavigation({ course, progress }: UseClassroomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -63,15 +56,15 @@ export function useClassroomNavigation({
       (course.description && stripHtmlTags(course.description).trim()) ||
       (course.objectives && stripHtmlTags(course.objectives).trim()) ||
       (course.prerequisites && stripHtmlTags(course.prerequisites).trim()) ||
-      (getItemAttachments(course).length > 0),
+      getItemAttachments(course).length > 0,
     );
 
     if (hasCourseOverview) {
       items.push({
-        key: "course-overview",
-        type: "COURSE_OVERVIEW",
-        title: "Course Overview & Objectives",
-        moduleId: "course",
+        key: 'course-overview',
+        type: 'COURSE_OVERVIEW',
+        title: 'Course Overview & Objectives',
+        moduleId: 'course',
         moduleIndex: -1,
         unlocked: true,
         completed: true,
@@ -80,19 +73,19 @@ export function useClassroomNavigation({
 
     course.modules.forEach((mod, moduleIndex) => {
       const modProg = moduleProgressMap.get(mod.id);
-      const modUnlocked = modProg?.unlocked ?? (moduleIndex === 0);
+      const modUnlocked = modProg?.unlocked ?? moduleIndex === 0;
 
       // Module Overview & Objectives (if module has description, objectives, or attachments)
       const hasModuleOverview = Boolean(
         (mod.description && stripHtmlTags(mod.description).trim()) ||
         (mod.objectives && stripHtmlTags(mod.objectives).trim()) ||
-        (getItemAttachments(mod).length > 0),
+        getItemAttachments(mod).length > 0,
       );
 
       if (hasModuleOverview) {
         items.push({
           key: `module-overview-${mod.id}`,
-          type: "MODULE_OVERVIEW",
+          type: 'MODULE_OVERVIEW',
           title: `Module ${moduleIndex + 1} Overview & Objectives`,
           moduleId: mod.id,
           moduleIndex,
@@ -103,13 +96,14 @@ export function useClassroomNavigation({
 
       mod.lessons.forEach((lesson, lessonIndex) => {
         const lessonProg = lessonProgressMap.get(lesson.id);
-        const lessonUnlocked = modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
+        const lessonUnlocked =
+          modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
         const lessonCompleted = lessonProg?.completed ?? false;
 
         // 1. Parent Lesson Item
         items.push({
           key: `lesson-${lesson.id}`,
-          type: "LESSON",
+          type: 'LESSON',
           title: lesson.title,
           moduleId: mod.id,
           moduleIndex,
@@ -118,19 +112,19 @@ export function useClassroomNavigation({
           unlocked: lessonUnlocked,
           completed: lessonCompleted,
           durationMin: lesson.durationMin,
-          contentType: lesson.contentType || "DOCUMENT",
+          contentType: lesson.contentType || 'DOCUMENT',
         });
 
         // 2. Sub-Lesson Items (if any)
         if (lesson.subLessons && lesson.subLessons.length > 0) {
           lesson.subLessons.forEach((sub, subIndex) => {
             const subProg = lessonProg?.subLessons?.find((s) => s.lessonId === sub.id);
-            const subUnlocked = lessonUnlocked && (subProg?.unlocked ?? (subIndex === 0));
+            const subUnlocked = lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
             const subCompleted = subProg?.completed ?? false;
 
             items.push({
               key: `sub-${sub.id}`,
-              type: "SUB_LESSON",
+              type: 'SUB_LESSON',
               title: sub.title,
               moduleId: mod.id,
               moduleIndex,
@@ -141,7 +135,7 @@ export function useClassroomNavigation({
               unlocked: subUnlocked,
               completed: subCompleted,
               durationMin: sub.durationMin,
-              contentType: sub.contentType || "DOCUMENT",
+              contentType: sub.contentType || 'DOCUMENT',
             });
           });
         }
@@ -158,14 +152,14 @@ export function useClassroomNavigation({
 
           items.push({
             key: `quiz-${lessonAssessment.id}`,
-            type: "QUIZ",
-            title: "Lesson Assessment",
+            type: 'QUIZ',
+            title: 'Lesson Assessment',
             moduleId: mod.id,
             moduleIndex,
             lessonId: lesson.id,
             lessonIndex,
             quizId: lessonAssessment.id,
-            quizKind: "LESSON_ASSESSMENT",
+            quizKind: 'LESSON_ASSESSMENT',
             unlocked: quizUnlocked,
             completed: quizCompleted,
             assessment: lessonAssessment,
@@ -184,12 +178,12 @@ export function useClassroomNavigation({
 
         items.push({
           key: `quiz-${modAssessment.id}`,
-          type: "QUIZ",
-          title: "Module Assessment",
+          type: 'QUIZ',
+          title: 'Module Assessment',
           moduleId: mod.id,
           moduleIndex,
           quizId: modAssessment.id,
-          quizKind: "MODULE_ASSESSMENT",
+          quizKind: 'MODULE_ASSESSMENT',
           unlocked: quizUnlocked,
           completed: quizCompleted,
           assessment: modAssessment,
@@ -197,7 +191,7 @@ export function useClassroomNavigation({
       }
     });
 
-    const isInPerson = course?.deliveryMode === "IN_PERSON_ONLY";
+    const isInPerson = course?.deliveryMode === 'IN_PERSON_ONLY';
 
     // 5. Final Certification Assessment (if course has final assessment)
     const finalAssessment = progress?.courseCompletion.finalAssessment;
@@ -207,12 +201,12 @@ export function useClassroomNavigation({
 
       items.push({
         key: `quiz-${finalAssessment.id}`,
-        type: "QUIZ",
-        title: "Course Final Certification Assessment",
-        moduleId: "final",
+        type: 'QUIZ',
+        title: 'Course Final Certification Assessment',
+        moduleId: 'final',
         moduleIndex: 9999,
         quizId: finalAssessment.id,
-        quizKind: "FINAL_ASSESSMENT",
+        quizKind: 'FINAL_ASSESSMENT',
         unlocked: !isInPerson && contentCompleted,
         completed: finalPassed,
         assessment: finalAssessment,
@@ -229,10 +223,10 @@ export function useClassroomNavigation({
         (contentCompleted && (!finalAssessment || finalPassed)));
 
     items.push({
-      key: "course-certificate",
-      type: "CERTIFICATE",
-      title: "Certificate of Completion",
-      moduleId: "final",
+      key: 'course-certificate',
+      type: 'CERTIFICATE',
+      title: 'Certificate of Completion',
+      moduleId: 'final',
       moduleIndex: 10000,
       unlocked: isCompleted,
       completed: isCompleted,
@@ -246,24 +240,24 @@ export function useClassroomNavigation({
   const selectedKey = useMemo(() => {
     if (flatItems.length === 0) return null;
 
-    const quizParam = searchParams.get("quiz");
-    const subParam = searchParams.get("sub");
-    const lessonParam = searchParams.get("lesson");
-    const viewParam = searchParams.get("view");
-    const moduleParam = searchParams.get("module");
+    const quizParam = searchParams.get('quiz');
+    const subParam = searchParams.get('sub');
+    const lessonParam = searchParams.get('lesson');
+    const viewParam = searchParams.get('view');
+    const moduleParam = searchParams.get('module');
 
-    if (viewParam === "overview") {
-      const found = flatItems.find((i) => i.type === "COURSE_OVERVIEW");
+    if (viewParam === 'overview') {
+      const found = flatItems.find((i) => i.type === 'COURSE_OVERVIEW');
       if (found) return found.key;
     }
-    if (viewParam === "module" && moduleParam) {
+    if (viewParam === 'module' && moduleParam) {
       const found = flatItems.find(
-        (i) => i.moduleId === moduleParam && i.type === "MODULE_OVERVIEW",
+        (i) => i.moduleId === moduleParam && i.type === 'MODULE_OVERVIEW',
       );
       if (found) return found.key;
     }
-    if (viewParam === "certificate") {
-      const found = flatItems.find((i) => i.type === "CERTIFICATE");
+    if (viewParam === 'certificate') {
+      const found = flatItems.find((i) => i.type === 'CERTIFICATE');
       if (found) return found.key;
     }
     if (quizParam) {
@@ -276,7 +270,7 @@ export function useClassroomNavigation({
     }
     if (lessonParam) {
       // Find the lesson, or if it has sub-lessons and none specified, check for the lesson item itself
-      const found = flatItems.find((i) => i.lessonId === lessonParam && i.type === "LESSON");
+      const found = flatItems.find((i) => i.lessonId === lessonParam && i.type === 'LESSON');
       if (found) return found.key;
     }
 
@@ -285,9 +279,9 @@ export function useClassroomNavigation({
       (l) => l.completed,
     ).length;
     if (totalCompletedLessons === 0) {
-      const courseOverview = flatItems.find((i) => i.type === "COURSE_OVERVIEW");
+      const courseOverview = flatItems.find((i) => i.type === 'COURSE_OVERVIEW');
       if (courseOverview) return courseOverview.key;
-      const firstModuleOverview = flatItems.find((i) => i.type === "MODULE_OVERVIEW");
+      const firstModuleOverview = flatItems.find((i) => i.type === 'MODULE_OVERVIEW');
       if (firstModuleOverview) return firstModuleOverview.key;
     }
 
@@ -296,9 +290,9 @@ export function useClassroomNavigation({
       (i) =>
         i.unlocked &&
         !i.completed &&
-        i.type !== "COURSE_OVERVIEW" &&
-        i.type !== "MODULE_OVERVIEW" &&
-        i.type !== "CERTIFICATE",
+        i.type !== 'COURSE_OVERVIEW' &&
+        i.type !== 'MODULE_OVERVIEW' &&
+        i.type !== 'CERTIFICATE',
     );
     if (firstIncomplete) return firstIncomplete.key;
 
@@ -313,8 +307,7 @@ export function useClassroomNavigation({
     const item = flatItems.find((i) => i.key === selectedKey);
     if (!item) return null;
 
-    const isCourseLevel =
-      item.type === "COURSE_OVERVIEW" || item.type === "CERTIFICATE";
+    const isCourseLevel = item.type === 'COURSE_OVERVIEW' || item.type === 'CERTIFICATE';
     const mod = isCourseLevel
       ? undefined
       : course.modules.find((m) => m.id === item.moduleId) || course.modules[0];
@@ -345,8 +338,8 @@ export function useClassroomNavigation({
   useEffect(() => {
     if (
       activeContent?.item.moduleId &&
-      activeContent.item.moduleId !== "course" &&
-      activeContent.item.moduleId !== "final"
+      activeContent.item.moduleId !== 'course' &&
+      activeContent.item.moduleId !== 'final'
     ) {
       const modId = activeContent.item.moduleId;
       setExpandedModules((prev) => (prev[modId] ? prev : { ...prev, [modId]: true }));
@@ -357,26 +350,26 @@ export function useClassroomNavigation({
   const navigateTo = useCallback(
     (item: ClassroomFlatItem) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.delete("lesson");
-      params.delete("sub");
-      params.delete("quiz");
-      params.delete("view");
-      params.delete("module");
+      params.delete('lesson');
+      params.delete('sub');
+      params.delete('quiz');
+      params.delete('view');
+      params.delete('module');
 
-      if (item.type === "COURSE_OVERVIEW") {
-        params.set("view", "overview");
-      } else if (item.type === "MODULE_OVERVIEW") {
-        params.set("view", "module");
-        params.set("module", item.moduleId);
-      } else if (item.type === "CERTIFICATE") {
-        params.set("view", "certificate");
-      } else if (item.type === "QUIZ" && item.quizId) {
-        params.set("quiz", item.quizId);
-      } else if (item.type === "SUB_LESSON" && item.subLessonId) {
-        if (item.lessonId) params.set("lesson", item.lessonId);
-        params.set("sub", item.subLessonId);
+      if (item.type === 'COURSE_OVERVIEW') {
+        params.set('view', 'overview');
+      } else if (item.type === 'MODULE_OVERVIEW') {
+        params.set('view', 'module');
+        params.set('module', item.moduleId);
+      } else if (item.type === 'CERTIFICATE') {
+        params.set('view', 'certificate');
+      } else if (item.type === 'QUIZ' && item.quizId) {
+        params.set('quiz', item.quizId);
+      } else if (item.type === 'SUB_LESSON' && item.subLessonId) {
+        if (item.lessonId) params.set('lesson', item.lessonId);
+        params.set('sub', item.subLessonId);
       } else if (item.lessonId) {
-        params.set("lesson", item.lessonId);
+        params.set('lesson', item.lessonId);
       }
 
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -417,4 +410,3 @@ export function useClassroomNavigation({
     lessonProgressMap,
   };
 }
-

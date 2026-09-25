@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class QuestionBankService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateQuestionBankQuestionDto) {
     if (dto.courseId) {
@@ -72,10 +72,7 @@ export class QuestionBankService {
       where.courseId = null;
     } else if (query.courseId) {
       if (query.includeGlobal !== false) {
-        where.OR = [
-          { courseId: query.courseId },
-          { courseId: null },
-        ];
+        where.OR = [{ courseId: query.courseId }, { courseId: null }];
       } else {
         where.courseId = query.courseId;
       }
@@ -107,10 +104,7 @@ export class QuestionBankService {
       ];
 
       if (where.OR) {
-        where.AND = [
-          { OR: where.OR },
-          { OR: searchConditions },
-        ];
+        where.AND = [{ OR: where.OR }, { OR: searchConditions }];
         delete where.OR;
       } else {
         where.OR = searchConditions;
@@ -190,7 +184,9 @@ export class QuestionBankService {
         ...(dto.subLessonId !== undefined ? { subLessonId: dto.subLessonId } : {}),
         ...(dto.type !== undefined ? { type: dto.type } : {}),
         ...(dto.question !== undefined ? { question: dto.question } : {}),
-        ...(dto.options !== undefined ? { options: dto.options as unknown as Prisma.InputJsonValue } : {}),
+        ...(dto.options !== undefined
+          ? { options: dto.options as unknown as Prisma.InputJsonValue }
+          : {}),
         ...(dto.correctAnswer !== undefined ? { correctAnswer: dto.correctAnswer } : {}),
         ...(dto.points !== undefined ? { points: dto.points } : {}),
         ...(dto.category !== undefined ? { category: dto.category } : {}),

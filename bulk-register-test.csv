@@ -1,6 +1,0 @@
-first_name,last_name,email,phone,password,tin,role
-Abebe,Kebede,abebe.kebede@example.com,+251911000001,Welcome2026,0012345678,learner
-Sara,Ahmed,sara.ahmed@example.com,+251911000002,,,trainer
-Dawit,Tesfaye,dawit.tesfaye@example.com,+251911000003,Training2026,0023456789,Course Owner
-Hanna,Girma,hanna.girma@example.com,+251911000004,,0034567890,learner
-Yonas,Bekele,yonas.bekele@example.com,+251911000005,Approver2026,,content_approver

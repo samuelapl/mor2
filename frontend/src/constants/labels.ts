@@ -1,23 +1,14 @@
-import type { Lang } from "@/types";
+import type { Lang } from '@/types';
+import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
 
-const TRANSLATIONS = {
-  dashboard: { en: "Dashboard", am: "ዳሽቦርድ" },
-  myCourses: { en: "My Courses", am: "የእኔ ኮርሶች" },
-  continueLearning: { en: "Continue learning", am: "ትምህርት ቀጥል" },
-  startLearning: { en: "Start learning", am: "መማር ጀምር" },
-  completed: { en: "Completed", am: "የተጠናቀቀ" },
-  inProgress: { en: "In progress", am: "በመካሄድ ላይ" },
-  takeQuiz: { en: "Take quiz", am: "ፈተና ውሰድ" },
-  progress: { en: "Progress", am: "እድገት" },
-  certificates: { en: "Certificates", am: "ሰርተፊኬቶች" },
-  liveSessions: { en: "Live sessions", am: "የቀጥታ ስልጠና" },
-  upcoming: { en: "Upcoming sessions", am: "የመጪ ስልጠና" },
-  join: { en: "Join", am: "ተቀላቀል" },
-  averageProgress: { en: "Average progress", am: "አማካይ እድገት" },
-} as const;
-
-export type TranslationKey = keyof typeof TRANSLATIONS;
+export type TranslationKey = keyof typeof COMMON_TRANSLATIONS | string;
 
 export function tr(lang: Lang, key: TranslationKey): string {
-  return TRANSLATIONS[key][lang];
+  const entry = (COMMON_TRANSLATIONS as Record<string, { en: string; am: string }>)[key];
+  if (entry) {
+    return entry[lang] ?? entry.en;
+  }
+  return key;
 }
+
+export { COMMON_TRANSLATIONS as TRANSLATIONS };

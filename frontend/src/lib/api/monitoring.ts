@@ -1,4 +1,4 @@
-import { api, apiText } from "./client";
+import { api, apiText } from './client';
 import type {
   ApiAttendance,
   ApiAttendanceReport,
@@ -12,7 +12,7 @@ import type {
   BackendAttendanceStatus,
   BackendCheckInMethod,
   BackendSessionStatus,
-} from "./types";
+} from './types';
 
 /* -------------------------------------------------------------------------- */
 /*  Live sessions                                                              */
@@ -23,7 +23,7 @@ export interface ScheduleSessionBody {
   titleAm: string;
   descriptionEn?: string;
   descriptionAm?: string;
-  platform?: "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM";
+  platform?: 'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM';
   externalUrl?: string;
   meetingId?: string;
   meetingPassword?: string;
@@ -37,22 +37,20 @@ export interface ScheduleSessionBody {
 export function fetchLiveSessions(
   params: { page?: number; limit?: number; status?: string; courseId?: string } = {},
 ): Promise<ApiPaginated<ApiLiveSession>> {
-  return api<ApiPaginated<ApiLiveSession>>("live-sessions", {
+  return api<ApiPaginated<ApiLiveSession>>('live-sessions', {
     query: params as Record<string, string | number | undefined>,
   });
 }
 
 export function fetchUpcomingSessions(): Promise<ApiPaginated<ApiLiveSession>> {
-  return api<ApiPaginated<ApiLiveSession>>("live-sessions/upcoming/me");
+  return api<ApiPaginated<ApiLiveSession>>('live-sessions/upcoming/me');
 }
 
 export function fetchLiveSession(id: string): Promise<ApiLiveSession> {
   return api<ApiLiveSession>(`live-sessions/${id}`);
 }
 
-export function fetchSessionJoinUrl(
-  id: string,
-): Promise<{ joinUrl: string; platform: string }> {
+export function fetchSessionJoinUrl(id: string): Promise<{ joinUrl: string; platform: string }> {
   return api<{ joinUrl: string; platform: string }>(`live-sessions/${id}/join-url`);
 }
 
@@ -70,18 +68,18 @@ export function scheduleSession(
   courseId: string,
   body: ScheduleSessionBody,
 ): Promise<ApiLiveSession> {
-  return api<ApiLiveSession>(`courses/${courseId}/live-sessions`, { method: "POST", body });
+  return api<ApiLiveSession>(`courses/${courseId}/live-sessions`, { method: 'POST', body });
 }
 
 export function updateLiveSession(
   id: string,
   body: Partial<ScheduleSessionBody>,
 ): Promise<ApiLiveSession> {
-  return api<ApiLiveSession>(`live-sessions/${id}`, { method: "PATCH", body });
+  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'PATCH', body });
 }
 
 export function deleteLiveSession(id: string): Promise<ApiLiveSession> {
-  return api<ApiLiveSession>(`live-sessions/${id}`, { method: "DELETE" });
+  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE' });
 }
 
 export function setSessionStatus(
@@ -89,7 +87,7 @@ export function setSessionStatus(
   status: BackendSessionStatus,
 ): Promise<ApiLiveSession> {
   return api<ApiLiveSession>(`live-sessions/${id}/status`, {
-    method: "PATCH",
+    method: 'PATCH',
     body: { status },
   });
 }
@@ -107,7 +105,7 @@ export function fetchAttendanceSummary(sessionId: string): Promise<ApiAttendance
 }
 
 export function fetchMyAttendance(): Promise<ApiAttendance[]> {
-  return api<ApiAttendance[]>("attendance/me");
+  return api<ApiAttendance[]>('attendance/me');
 }
 
 export function markAttendance(body: {
@@ -117,7 +115,7 @@ export function markAttendance(body: {
   durationMinutes?: number;
   notes?: string;
 }): Promise<ApiAttendance> {
-  return api<ApiAttendance>("attendance", { method: "POST", body });
+  return api<ApiAttendance>('attendance', { method: 'POST', body });
 }
 
 export function bulkMarkAttendance(body: {
@@ -127,23 +125,23 @@ export function bulkMarkAttendance(body: {
     status: BackendAttendanceStatus;
   }>;
 }): Promise<ApiAttendance[]> {
-  return api<ApiAttendance[]>("attendance/bulk", { method: "POST", body });
+  return api<ApiAttendance[]>('attendance/bulk', { method: 'POST', body });
 }
 
 export function selfCheckIn(
   sessionId: string,
-  method: BackendCheckInMethod = "VIRTUAL",
+  method: BackendCheckInMethod = 'VIRTUAL',
   coords?: { latitude?: number; longitude?: number },
 ): Promise<ApiAttendance> {
   return api<ApiAttendance>(`attendance/checkin/${sessionId}?method=${method}`, {
-    method: "POST",
+    method: 'POST',
     body: coords ?? {},
   });
 }
 
 export function recordSessionJoin(sessionId: string): Promise<ApiAttendance> {
   return api<ApiAttendance>(`attendance/sessions/${sessionId}/join`, {
-    method: "POST",
+    method: 'POST',
   });
 }
 
@@ -166,20 +164,20 @@ export function recordSessionHeartbeat(
     threshold: number;
     sessionDurationMinutes: number;
   }>(`attendance/sessions/${sessionId}/heartbeat`, {
-    method: "POST",
+    method: 'POST',
     body: { activeSeconds },
   });
 }
 
 export function recordSessionLeave(sessionId: string): Promise<ApiAttendance | null> {
   return api<ApiAttendance | null>(`attendance/sessions/${sessionId}/leave`, {
-    method: "POST",
+    method: 'POST',
   });
 }
 
 export function sendSessionAttendanceReport(sessionId: string): Promise<ApiAttendanceReport> {
   return api<ApiAttendanceReport>(`attendance/sessions/${sessionId}/send-report`, {
-    method: "POST",
+    method: 'POST',
   });
 }
 
@@ -187,17 +185,21 @@ export function fetchSessionAttendanceReport(sessionId: string): Promise<ApiAtte
   return api<ApiAttendanceReport>(`attendance/sessions/${sessionId}/report`);
 }
 
-export function fetchSessionAttendanceVisibility(sessionId: string): Promise<ApiAttendanceVisibility> {
+export function fetchSessionAttendanceVisibility(
+  sessionId: string,
+): Promise<ApiAttendanceVisibility> {
   return api<ApiAttendanceVisibility>(`attendance/sessions/${sessionId}/visibility`);
 }
 
 export function fetchSystemSettings(): Promise<Record<string, string>> {
-  return api<Record<string, string>>("admin/settings");
+  return api<Record<string, string>>('admin/settings');
 }
 
-export function updateSystemSettings(body: Record<string, string>): Promise<Record<string, string>> {
-  return api<Record<string, string>>("admin/settings", {
-    method: "PATCH",
+export function updateSystemSettings(
+  body: Record<string, string>,
+): Promise<Record<string, string>> {
+  return api<Record<string, string>>('admin/settings', {
+    method: 'PATCH',
     body,
   });
 }
@@ -207,7 +209,7 @@ export function overrideAttendance(
   status: BackendAttendanceStatus,
 ): Promise<ApiAttendance> {
   return api<ApiAttendance>(`attendance/${attendanceId}/override`, {
-    method: "POST",
+    method: 'POST',
     body: { status },
   });
 }
@@ -223,7 +225,7 @@ export function submitLiveSessionQuizResponse(
   return api<{ isCorrect: boolean; score: number; explanation?: string }>(
     `live-sessions/${sessionId}/quiz-response`,
     {
-      method: "POST",
+      method: 'POST',
       body,
     },
   );
@@ -277,8 +279,6 @@ export function fetchLiveSessionQuizReport(sessionId: string): Promise<ApiLiveQu
   return api<ApiLiveQuizReport>(`live-sessions/${sessionId}/quiz-report`);
 }
 
-
-
 /* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -294,19 +294,19 @@ export interface AuditQuery {
 }
 
 export function fetchAuditLogs(query: AuditQuery = {}): Promise<ApiPaginated<ApiAuditLog>> {
-  return api<ApiPaginated<ApiAuditLog>>("audit", {
+  return api<ApiPaginated<ApiAuditLog>>('audit', {
     query: query as Record<string, string | number | undefined>,
   });
 }
 
 export function fetchAuditStats(from?: string, to?: string): Promise<ApiAuditStats> {
-  return api<ApiAuditStats>("audit/stats", {
+  return api<ApiAuditStats>('audit/stats', {
     query: { from, to },
   });
 }
 
 export function exportAuditCsv(): Promise<string> {
-  return apiText("audit/export");
+  return apiText('audit/export');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -314,5 +314,5 @@ export function exportAuditCsv(): Promise<string> {
 /* -------------------------------------------------------------------------- */
 
 export function fetchHealth(): Promise<ApiHealth> {
-  return api<ApiHealth>("health");
+  return api<ApiHealth>('health');
 }

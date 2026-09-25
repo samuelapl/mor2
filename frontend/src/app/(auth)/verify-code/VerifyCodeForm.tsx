@@ -1,27 +1,30 @@
-"use client";
+'use client';
 
-import { useRef, useState, type KeyboardEvent } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { forgotPassword, verifyResetCode } from "@/lib/api/auth";
+import { useRef, useState, type KeyboardEvent } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { forgotPassword, verifyResetCode } from '@/lib/api/auth';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 export default function VerifyCodeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") ?? "";
+  const email = searchParams.get('email') ?? '';
+  const { tBilingual } = useTranslation();
 
-  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const code = digits.join("");
+  const code = digits.join('');
 
   // Auto-advance to next box on input
   const handleDigit = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, "").slice(-1); // keep only last digit
+    const digit = value.replace(/\D/g, '').slice(-1); // keep only last digit
     const next = [...digits];
     next[index] = digit;
     setDigits(next);
@@ -33,41 +36,50 @@ export default function VerifyCodeForm() {
 
   // Move back on Backspace when box is already empty
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   // Paste full code at once (e.g. from email client)
   const handlePaste = (e: React.ClipboardEvent) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (pasted.length === 6) {
       e.preventDefault();
-      setDigits(pasted.split(""));
+      setDigits(pasted.split(''));
       inputRefs.current[5]?.focus();
     }
   };
 
   const handleContinue = async () => {
     if (code.length !== 6) {
-      setError("Enter all 6 digits.");
+      setError(tBilingual('Enter all 6 digits.', 'ሁሉንም 6 አሃዞች ያስገቡ።'));
       return;
     }
     if (!email) {
-      setError("Email is missing. Go back and enter your email again.");
+      setError(
+        tBilingual(
+          'Email is missing. Go back and enter your email again.',
+          'ኢሜይል አልተገኘም። ተመልሰው ኢሜይልዎን እንደገና ያስገቡ።',
+        ),
+      );
       return;
     }
     setVerifying(true);
     try {
       await verifyResetCode(email, code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid or expired code.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : tBilingual('Invalid or expired code.', 'ልክ ያልሆነ ወይም ጊዜው ያለፈበት ኮድ።'),
+      );
       setVerifying(false);
       return;
     }
     // Pass both email and code to the password-change page via query params
     router.push(
-      `/reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`
+      `/reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
     );
   };
 
@@ -77,10 +89,12 @@ export default function VerifyCodeForm() {
     setError(null);
     try {
       await forgotPassword(email);
-      setDigits(["", "", "", "", "", ""]);
+      setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch {
-      setError("Could not resend the code. Try again.");
+      setError(
+        tBilingual('Could not resend the code. Try again.', 'ኮዱን በድጋሚ መላክ አልተቻለም። እንደገና ይሞክሩ።'),
+      );
     } finally {
       setResending(false);
     }
@@ -89,39 +103,43 @@ export default function VerifyCodeForm() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageToggle />
+      </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
-
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <ShieldCheck className="h-7 w-7" />
             </div>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-              Check your email
+              {tBilingual('Check your email', 'ኢሜይልዎን ይመልከቱ')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              We sent a 6-digit code to{" "}
+              {tBilingual('We sent a 6-digit code to ', 'ባለ 6-አሃዝ ኮድ ልከናል ወደ ')}
               {email ? (
                 <span className="font-semibold text-indigo-500">{email}</span>
               ) : (
-                "your email"
+                tBilingual('your email', 'ኢሜይልዎ')
               )}
-              . It expires in 10 minutes.
+              {tBilingual('. It expires in 10 minutes.', '። በ10 ደቂቃ ውስጥ ያበቃል።')}
             </p>
           </div>
 
           {/* OTP boxes */}
           <div className="mt-8">
             <label className="mb-3 block text-xs font-semibold text-slate-600">
-              Verification code
+              {tBilingual('Verification code', 'የማረጋገጫ ኮድ')}
             </label>
             <div className="flex gap-2 sm:gap-3" onPaste={handlePaste}>
               {digits.map((digit, i) => (
                 <input
                   key={i}
-                  ref={(el) => { inputRefs.current[i] = el; }}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
@@ -142,13 +160,15 @@ export default function VerifyCodeForm() {
                 disabled={resending}
                 className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline disabled:opacity-50"
               >
-                {resending ? "Sending…" : "Resend code"}
+                {resending
+                  ? tBilingual('Sending…', 'በመላክ ላይ…')
+                  : tBilingual('Resend code', 'ኮዱን በድጋሚ ላክ')}
               </button>
               <Link
                 href="/forgot-password"
                 className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline"
               >
-                Wrong email?
+                {tBilingual('Wrong email?', 'የተሳሳተ ኢሜይል?')}
               </Link>
             </div>
           </div>
@@ -166,7 +186,7 @@ export default function VerifyCodeForm() {
             disabled={code.length !== 6 || verifying}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
-            {verifying ? "Verifying…" : "Continue"}
+            {verifying ? tBilingual('Verifying…', 'በማረጋገጥ ላይ…') : tBilingual('Continue', 'ቀጥል')}
           </button>
 
           <p className="mt-5 text-center text-sm text-slate-500">
@@ -175,7 +195,7 @@ export default function VerifyCodeForm() {
               className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back
+              {tBilingual('Back', 'ተመለስ')}
             </Link>
           </p>
         </div>

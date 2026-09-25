@@ -6,12 +6,15 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-poppins)", '"Poppins"', ...defaultTheme.fontFamily.sans],
+        sans: ["var(--font-poppins)", '"Poppins"', '"Noto Sans Ethiopic"', '"Nyala"', ...defaultTheme.fontFamily.sans],
         display: [
           "var(--font-poppins)",
           '"Poppins"',
+          '"Noto Sans Ethiopic"',
+          '"Nyala"',
           ...defaultTheme.fontFamily.sans,
         ],
+        amharic: ['"Noto Sans Ethiopic"', '"Nyala"', '"Abyssinica SIL"', "sans-serif"],
       },
       boxShadow: {
         soft: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.08)",

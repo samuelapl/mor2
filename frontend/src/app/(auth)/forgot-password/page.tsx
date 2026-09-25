@@ -1,25 +1,28 @@
-"use client";
+'use client';
 
-import { useState, type FormEvent } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, KeyRound, Loader2, Mail, Send } from "lucide-react";
-import { forgotPassword } from "@/lib/api/auth";
-import { isValidEmail } from "@/constants/auth";
+import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, KeyRound, Loader2, Mail, Send } from 'lucide-react';
+import { forgotPassword } from '@/lib/api/auth';
+import { isValidEmail } from '@/constants/auth';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const { tBilingual } = useTranslation();
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!isValidEmail(email)) {
-      setError("Enter a valid email address.");
+      setError(tBilingual('Enter a valid email address.', 'ትክክለኛ የኢሜይል አድራሻ ያስገቡ።'));
       return;
     }
     setError(null);
@@ -29,7 +32,11 @@ export default function ForgotPasswordPage() {
       // Pass email via query param so the next page knows where the code was sent
       router.push(`/verify-code?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send the code. Try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : tBilingual('Could not send the code. Try again.', 'ኮዱን መላክ አልተቻለም። እንደገና ይሞክሩ።'),
+      );
     } finally {
       setSending(false);
     }
@@ -38,20 +45,25 @@ export default function ForgotPasswordPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageToggle />
+      </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
-
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <KeyRound className="h-7 w-7" />
             </div>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-              Forgot your password?
+              {tBilingual('Forgot your password?', 'የይለፍ ቃልዎን ረሱት?')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              Enter your email and we&apos;ll send you a 6-digit reset code.
+              {tBilingual(
+                "Enter your email and we'll send you a 6-digit reset code.",
+                'ኢሜይልዎን ያስገቡ፤ ባለ 6-አሃዝ የይለፍ ቃል መቀየሪያ ኮድ እንልክልዎታለን።',
+              )}
             </p>
           </div>
 
@@ -59,7 +71,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-600">
-                Email address
+                {tBilingual('Email address', 'የኢሜይል አድራሻ')}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -70,11 +82,13 @@ export default function ForgotPasswordPage() {
                   autoComplete="email"
                   autoFocus
                   value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
                   placeholder="you@example.com"
                   className={inputClass}
                 />
-
               </div>
             </div>
 
@@ -92,18 +106,15 @@ export default function ForgotPasswordPage() {
               {sending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span>Sending…</span>
+                  <span>{tBilingual('Sending…', 'በመላክ ላይ…')}</span>
                 </>
               ) : (
                 <>
-                  <span>Send reset code</span>
+                  <span>{tBilingual('Send reset code', 'የመቀየሪያ ኮድ ላክ')}</span>
                   <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
             </button>
-
-
-
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-500">
@@ -112,7 +123,7 @@ export default function ForgotPasswordPage() {
               className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back to sign in
+              {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
             </Link>
           </p>
         </div>

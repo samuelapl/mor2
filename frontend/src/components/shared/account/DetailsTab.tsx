@@ -1,19 +1,14 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { ROLE_LABELS } from "@/constants/roles";
-import { roleFromApi } from "@/lib/api/transform";
-import type { ApiUser } from "@/lib/api/types";
+import type { ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { ROLE_LABELS } from '@/constants/roles';
+import { roleFromApi } from '@/lib/api/transform';
+import type { ApiUser } from '@/lib/api/types';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
-type BadgeVariant = Parameters<typeof Badge>[0]["variant"];
-
-function statusOf(user: ApiUser): { label: string; variant: BadgeVariant } {
-  if (user.registrationStatus === "PENDING") return { label: "Pending approval", variant: "amber" };
-  if (user.registrationStatus === "REJECTED") return { label: "Rejected", variant: "red" };
-  return user.isActive ? { label: "Active", variant: "green" } : { label: "Suspended", variant: "red" };
-}
+type BadgeVariant = Parameters<typeof Badge>[0]['variant'];
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -30,6 +25,8 @@ interface DetailsTabProps {
 }
 
 export default function DetailsTab({ profile, loading }: DetailsTabProps) {
+  const { tBilingual, tRole } = useTranslation();
+
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center py-12 text-slate-400">
@@ -38,28 +35,57 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
     );
   }
 
+  const statusOf = (user: ApiUser): { label: string; variant: BadgeVariant } => {
+    if (user.registrationStatus === 'PENDING') {
+      return { label: tBilingual('Pending approval', 'ማጽደቅ የሚጠብቅ'), variant: 'amber' };
+    }
+    if (user.registrationStatus === 'REJECTED') {
+      return { label: tBilingual('Rejected', 'ውድቅ የተደረገ'), variant: 'red' };
+    }
+    return user.isActive
+      ? { label: tBilingual('Active', 'ንቁ'), variant: 'green' }
+      : { label: tBilingual('Suspended', 'የታገደ'), variant: 'red' };
+  };
+
   const status = statusOf(profile);
 
   return (
     <div className="divide-y divide-slate-100">
-      <Row label="Email" value={profile.email} />
+      <Row label={tBilingual('Email', 'ኢሜይል')} value={profile.email} />
       <Row
-        label="Roles"
+        label={tBilingual('Roles', 'ሚናዎች')}
         value={
           <div className="flex flex-wrap justify-end gap-1.5">
-            {profile.roles.map((r) => (
-              <Badge key={r.id} variant="indigo">
-                {ROLE_LABELS[roleFromApi(r.role)]}
-              </Badge>
-            ))}
+            {profile.roles.map((r) => {
+              const roleKey = roleFromApi(r.role);
+              return (
+                <Badge key={r.id} variant="indigo">
+                  {tRole(roleKey) || ROLE_LABELS[roleKey]}
+                </Badge>
+              );
+            })}
           </div>
         }
       />
-      <Row label="Status" value={<Badge variant={status.variant} dot>{status.label}</Badge>} />
-      <Row label="Member since" value={new Date(profile.createdAt).toLocaleDateString()} />
       <Row
-        label="Last login"
-        value={profile.lastLogin ? new Date(profile.lastLogin).toLocaleString() : "Never"}
+        label={tBilingual('Status', 'ሁኔታ')}
+        value={
+          <Badge variant={status.variant} dot>
+            {status.label}
+          </Badge>
+        }
+      />
+      <Row
+        label={tBilingual('Member since', 'አባል የሆነበት ጊዜ')}
+        value={new Date(profile.createdAt).toLocaleDateString()}
+      />
+      <Row
+        label={tBilingual('Last login', 'የመጨረሻ መግቢያ')}
+        value={
+          profile.lastLogin
+            ? new Date(profile.lastLogin).toLocaleString()
+            : tBilingual('Never', 'አልገባም')
+        }
       />
     </div>
   );

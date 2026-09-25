@@ -1,12 +1,12 @@
-import { api } from "./client";
-import type { ApiDashboardStats, ApiLandingStats } from "./types";
+import { api } from './client';
+import type { ApiDashboardStats, ApiLandingStats } from './types';
 
 /* -------------------------------------------------------------------------- */
 /*  Public landing page                                                         */
 /* -------------------------------------------------------------------------- */
 
 export async function fetchLandingStats(): Promise<ApiLandingStats> {
-  return api<ApiLandingStats>("public/landing-stats");
+  return api<ApiLandingStats>('public/landing-stats');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -16,5 +16,5 @@ export async function fetchLandingStats(): Promise<ApiLandingStats> {
 export async function fetchDashboardStats(
   params: { from?: string; to?: string } = {},
 ): Promise<ApiDashboardStats> {
-  return api<ApiDashboardStats>("admin/dashboard/stats", { query: params });
+  return api<ApiDashboardStats>('admin/dashboard/stats', { query: params });
 }

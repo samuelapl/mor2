@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { AttendanceStatus, CheckInMethod } from '@prisma/client';
+import { CheckInMethod } from '@prisma/client';
 import { AttendanceService } from './attendance.service';
 import {
   CheckInDto,
@@ -80,10 +80,7 @@ export class AttendanceController {
   @Get('sessions/:sessionId/visibility')
   @ApiOperation({ summary: 'Get session attendance visibility for current user' })
   @ApiParam({ name: 'sessionId', type: String })
-  async visibility(
-    @Param('sessionId') sessionId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async visibility(@Param('sessionId') sessionId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.getVisibility(sessionId, user);
   }
 
@@ -98,10 +95,7 @@ export class AttendanceController {
   @Post('sessions/:sessionId/join')
   @ApiOperation({ summary: 'Record participant session join event' })
   @ApiParam({ name: 'sessionId', type: String })
-  async recordJoin(
-    @Param('sessionId') sessionId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async recordJoin(@Param('sessionId') sessionId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.recordJoin(sessionId, user.id);
   }
 
@@ -119,10 +113,7 @@ export class AttendanceController {
   @Post('sessions/:sessionId/leave')
   @ApiOperation({ summary: 'Record participant session leave event' })
   @ApiParam({ name: 'sessionId', type: String })
-  async recordLeave(
-    @Param('sessionId') sessionId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async recordLeave(@Param('sessionId') sessionId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.recordLeave(sessionId, user.id);
   }
 
@@ -136,10 +127,7 @@ export class AttendanceController {
   @Post('sessions/:sessionId/send-report')
   @ApiOperation({ summary: 'Calculate final session attendance report and notify trainer' })
   @ApiParam({ name: 'sessionId', type: String })
-  async sendReport(
-    @Param('sessionId') sessionId: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async sendReport(@Param('sessionId') sessionId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.sendReport(sessionId, user.id);
   }
 
@@ -149,4 +137,3 @@ export class AttendanceController {
     return this.attendanceService.findByUser(user.id);
   }
 }
-

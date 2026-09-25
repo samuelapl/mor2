@@ -1,3 +1,3 @@
-"use client";
+'use client';
 
-export { default } from "../question-bank/page";
+export { default } from '../question-bank/page';

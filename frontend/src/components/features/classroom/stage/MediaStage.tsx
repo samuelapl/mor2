@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Headphones, PlayCircle } from "lucide-react";
-import type { Lesson, UploadedResource } from "@/types";
-import { RichContent } from "@/components/ui/RichContent";
-import { Badge } from "@/components/ui/Badge";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
-import { ClassroomAttachments } from "../ClassroomAttachments";
+import { Headphones, PlayCircle } from 'lucide-react';
+import type { Lesson, UploadedResource } from '@/types';
+import { RichContent } from '@/components/ui/RichContent';
+import { Badge } from '@/components/ui/Badge';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface MediaStageProps {
   title: string;
   badgeLabel?: string;
   durationMin?: number;
-  contentType: "VIDEO" | "AUDIO";
+  contentType: 'VIDEO' | 'AUDIO';
   resourceUrl?: string | null;
   content?: string | null;
   lesson?: Lesson;
@@ -28,15 +28,14 @@ export function MediaStage({
 }: MediaStageProps) {
   const attachments: UploadedResource[] = lesson ? getItemAttachments(lesson) : [];
 
-  const isVideo = contentType === "VIDEO";
+  const isVideo = contentType === 'VIDEO';
   const isYoutube =
-    resourceUrl &&
-    (resourceUrl.includes("youtube.com") || resourceUrl.includes("youtu.be"));
+    resourceUrl && (resourceUrl.includes('youtube.com') || resourceUrl.includes('youtu.be'));
 
   const getYoutubeEmbed = (url: string) => {
     try {
-      if (url.includes("youtu.be/")) {
-        const id = url.split("youtu.be/")[1]?.split("?")[0];
+      if (url.includes('youtu.be/')) {
+        const id = url.split('youtu.be/')[1]?.split('?')[0];
         return `https://www.youtube.com/embed/${id}`;
       }
       const match = url.match(/[?&]v=([^&#]*)/);
@@ -57,9 +56,13 @@ export function MediaStage({
             </Badge>
           ) : null}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-            {isVideo ? <PlayCircle className="h-3 w-3 text-rose-500" /> : <Headphones className="h-3 w-3 text-amber-500" />}
-            {isVideo ? "Video Lecture" : "Audio Lecture"}
-            {durationMin ? ` · ${durationMin} min` : ""}
+            {isVideo ? (
+              <PlayCircle className="h-3 w-3 text-rose-500" />
+            ) : (
+              <Headphones className="h-3 w-3 text-amber-500" />
+            )}
+            {isVideo ? 'Video Lecture' : 'Audio Lecture'}
+            {durationMin ? ` · ${durationMin} min` : ''}
           </span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
@@ -106,7 +109,10 @@ export function MediaStage({
             Lecture Notes & Transcripts
           </h3>
           <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
-            <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+            <RichContent
+              html={content}
+              className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+            />
           </div>
         </div>
       )}

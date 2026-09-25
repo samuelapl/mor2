@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   Camera,
@@ -24,14 +24,13 @@ import {
   Send,
   Share2,
   ShieldAlert,
-  Sparkles,
   Users,
   Video,
   Volume2,
-} from "lucide-react";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+} from 'lucide-react';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import {
   fetchSessionAttendance,
   fetchSessionAttendanceVisibility,
@@ -42,32 +41,28 @@ import {
   selfCheckIn,
   fetchLiveKitToken,
   fetchSystemSettings,
-} from "@/lib/api/monitoring";
-import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from "@/lib/api/types";
-import { useLms } from "@/lib/lms-store";
-import { DynamicAttendanceModal } from "../shared/DynamicAttendanceModal";
-import { DisconnectReason } from "livekit-client";
+} from '@/lib/api/monitoring';
+import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from '@/lib/api/types';
+import { useLms } from '@/lib/lms-store';
+import { DynamicAttendanceModal } from '../shared/DynamicAttendanceModal';
+import { DisconnectReason } from 'livekit-client';
 
 // LiveKit — only imported when session.platform === "LIVEKIT"
-import "@livekit/components-styles";
-import {
-  LiveKitRoom,
-  VideoConference,
-  RoomAudioRenderer,
-} from "@livekit/components-react";
+import '@livekit/components-styles';
+import { LiveKitRoom, VideoConference, RoomAudioRenderer } from '@livekit/components-react';
 
 // Phase 2: Live Interactive Subsystem
-import { useLiveKitDataChannel } from "@/hooks/useLiveKitDataChannel";
+import { useLiveKitDataChannel } from '@/hooks/useLiveKitDataChannel';
 import type {
   LiveKitDataEvent,
   LiveQuizOption,
   LiveQuizPayload,
   LiveQuizRevealPayload,
   RaisedHandEntry,
-} from "@/types/livekit-events";
-import { LiveQuizTrainerControl } from "./interactive/LiveQuizTrainerControl";
-import { LiveQuizLearnerOverlay } from "./interactive/LiveQuizLearnerOverlay";
-import { HandRaiseIndicator } from "./interactive/HandRaiseIndicator";
+} from '@/types/livekit-events';
+import { LiveQuizTrainerControl } from './interactive/LiveQuizTrainerControl';
+import { LiveQuizLearnerOverlay } from './interactive/LiveQuizLearnerOverlay';
+import { HandRaiseIndicator } from './interactive/HandRaiseIndicator';
 
 interface LiveSessionWorkspaceProps {
   open: boolean;
@@ -76,7 +71,14 @@ interface LiveSessionWorkspaceProps {
   courseTitle?: string;
   courseCode?: string;
   trainerName?: string;
-  userRole?: "trainer" | "learner" | "training_admin" | "system_admin" | "course_owner" | "content_approver" | string;
+  userRole?:
+    | 'trainer'
+    | 'learner'
+    | 'training_admin'
+    | 'system_admin'
+    | 'course_owner'
+    | 'content_approver'
+    | string;
 }
 
 interface ChatMessage {
@@ -110,14 +112,12 @@ function LiveKitInteractiveLayer({
   courseCode: propCourseCode,
   attendees = [],
 }: LiveKitInteractiveLayerProps) {
-  const courseTitle = propCourseTitle || session.course?.titleEn || session.course?.titleAm || "";
-  const courseCode = propCourseCode || session.course?.code || "";
+  const courseTitle = propCourseTitle || session.course?.titleEn || session.course?.titleAm || '';
+  const courseCode = propCourseCode || session.course?.code || '';
 
-  const currentUserId = String(currentUser?.id || "guest");
+  const currentUserId = String(currentUser?.id || 'guest');
   const currentUserName =
-    currentUser?.name ||
-    currentUser?.firstName ||
-    (isStaff ? "Trainer" : "Learner");
+    currentUser?.name || currentUser?.firstName || (isStaff ? 'Trainer' : 'Learner');
 
   // Quiz state
   const [activeQuiz, setActiveQuiz] = useState<LiveQuizPayload | null>(null);
@@ -136,7 +136,9 @@ function LiveKitInteractiveLayer({
   >({});
 
   const [revealData, setRevealData] = useState<LiveQuizRevealPayload | null>(null);
-  const [revealsByQuestionId, setRevealsByQuestionId] = useState<Record<string, LiveQuizRevealPayload>>({});
+  const [revealsByQuestionId, setRevealsByQuestionId] = useState<
+    Record<string, LiveQuizRevealPayload>
+  >({});
   const [learnerDismissed, setLearnerDismissed] = useState(false);
 
   const [quizHistory, setQuizHistory] = useState<
@@ -165,7 +167,7 @@ function LiveKitInteractiveLayer({
   const processEvent = useCallback(
     (event: LiveKitDataEvent) => {
       switch (event.type) {
-        case "QUIZ_START":
+        case 'QUIZ_START':
           setLearnerDismissed(false);
           setActiveQuiz((currentActive) => {
             if (currentActive) {
@@ -186,7 +188,7 @@ function LiveKitInteractiveLayer({
           });
           setRevealData(null);
           break;
-        case "QUIZ_ANSWER":
+        case 'QUIZ_ANSWER':
           setAnswers((prev) => ({
             ...prev,
             [event.payload.userId]: {
@@ -198,7 +200,7 @@ function LiveKitInteractiveLayer({
             },
           }));
           break;
-        case "QUIZ_REVEAL":
+        case 'QUIZ_REVEAL':
           setLearnerDismissed(false);
           setRevealData(event.payload);
           setRevealsByQuestionId((prev) => {
@@ -231,7 +233,7 @@ function LiveKitInteractiveLayer({
                   ...h,
                   revealData: {
                     questionId: h.quiz.id,
-                    correctOptionIds: rev.correctOptionIds || h.quiz.correctOptionIds || ["0"],
+                    correctOptionIds: rev.correctOptionIds || h.quiz.correctOptionIds || ['0'],
                     explanationEn: rev.explanationEn || h.quiz.explanationEn,
                     explanationAm: rev.explanationAm || h.quiz.explanationAm,
                     distribution: rev.distribution || {},
@@ -240,10 +242,10 @@ function LiveKitInteractiveLayer({
                 };
               }
               return h;
-            })
+            }),
           );
           break;
-        case "QUIZ_CLOSE":
+        case 'QUIZ_CLOSE':
           setLearnerDismissed(true);
           setRevealData(null);
           setActiveQuiz((currentActive) => {
@@ -264,7 +266,7 @@ function LiveKitInteractiveLayer({
             return null;
           });
           break;
-        case "HAND_RAISE":
+        case 'HAND_RAISE':
           if (event.payload.raised) {
             setRaisedHands((prev) => {
               if (prev.some((h) => h.userId === event.payload.userId)) return prev;
@@ -281,9 +283,7 @@ function LiveKitInteractiveLayer({
               setMyHandRaised(true);
             }
           } else {
-            setRaisedHands((prev) =>
-              prev.filter((h) => h.userId !== event.payload.userId)
-            );
+            setRaisedHands((prev) => prev.filter((h) => h.userId !== event.payload.userId));
             if (event.payload.userId === currentUserId) {
               setMyHandRaised(false);
             }
@@ -291,7 +291,7 @@ function LiveKitInteractiveLayer({
           break;
       }
     },
-    [currentUserId]
+    [currentUserId],
   );
 
   // Hook into Data Channel for remote events
@@ -305,14 +305,14 @@ function LiveKitInteractiveLayer({
       processEvent(event);
       broadcast(event);
     },
-    [broadcast, processEvent]
+    [broadcast, processEvent],
   );
 
   const handleToggleMyHand = useCallback(() => {
     const nextState = !myHandRaised;
     setMyHandRaised(nextState);
     broadcast({
-      type: "HAND_RAISE",
+      type: 'HAND_RAISE',
       payload: {
         userId: currentUserId,
         userName: currentUserName,
@@ -327,16 +327,16 @@ function LiveKitInteractiveLayer({
       const entry = raisedHands.find((h) => h.userId === targetUserId);
       setRaisedHands((prev) => prev.filter((h) => h.userId !== targetUserId));
       broadcast({
-        type: "HAND_RAISE",
+        type: 'HAND_RAISE',
         payload: {
           userId: targetUserId,
-          userName: entry?.userName || "Participant",
+          userName: entry?.userName || 'Participant',
           raised: false,
           timestamp: Date.now(),
         },
       });
     },
-    [broadcast, raisedHands]
+    [broadcast, raisedHands],
   );
 
   const handleLowerAllHands = useCallback(() => {
@@ -344,7 +344,7 @@ function LiveKitInteractiveLayer({
     setRaisedHands([]);
     for (const h of currentList) {
       broadcast({
-        type: "HAND_RAISE",
+        type: 'HAND_RAISE',
         payload: {
           userId: h.userId,
           userName: h.userName,
@@ -412,7 +412,7 @@ function LiveKitInteractiveLayer({
             activeQuiz
               ? {
                   ...activeQuiz,
-                  type: activeQuiz.type || "SINGLE_CHOICE",
+                  type: activeQuiz.type || 'SINGLE_CHOICE',
                 }
               : null
           }
@@ -431,7 +431,12 @@ function LiveKitInteractiveLayer({
           onClose={() => setTrainerQuizModalOpen(false)}
           sessionId={session.id}
           courseId={session.courseId}
-          course={session.course || (courseTitle ? { id: session.courseId, titleEn: courseTitle, titleAm: "", code: courseCode } : undefined)}
+          course={
+            session.course ||
+            (courseTitle
+              ? { id: session.courseId, titleEn: courseTitle, titleAm: '', code: courseCode }
+              : undefined)
+          }
           trainerName={trainerName || currentUserName}
           onBroadcast={handleBroadcast}
           activeQuiz={activeQuiz}
@@ -462,21 +467,21 @@ export function LiveSessionWorkspace({
   courseTitle,
   courseCode,
   trainerName,
-  userRole = "learner",
+  userRole = 'learner',
 }: LiveSessionWorkspaceProps) {
   const { currentUser } = useLms();
 
   const isTrainerOrStaff =
-    userRole === "trainer" ||
-    userRole === "training_admin" ||
-    userRole === "system_admin" ||
-    userRole === "course_owner" ||
+    userRole === 'trainer' ||
+    userRole === 'training_admin' ||
+    userRole === 'system_admin' ||
+    userRole === 'course_owner' ||
     Boolean(currentUser?.id && session.trainerId === currentUser.id);
 
   const [trainerQuizModalOpen, setTrainerQuizModalOpen] = useState(false);
 
   // Conference modes
-  const [conferenceMode, setConferenceMode] = useState<"interactive" | "embedded">("interactive");
+  const [conferenceMode, setConferenceMode] = useState<'interactive' | 'embedded'>('interactive');
   const [isFullScreen, setIsFullScreen] = useState(true);
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -486,9 +491,9 @@ export function LiveSessionWorkspace({
   // LiveKit token state (only populated when session.platform === "LIVEKIT")
   const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
   const [liveKitWsUrl, setLiveKitWsUrl] = useState<string>(
-    process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
+    process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880',
   );
-  const isLiveKitSession = session.platform === "LIVEKIT";
+  const isLiveKitSession = session.platform === 'LIVEKIT';
 
   const toggleFullScreen = () => {
     const nextState = !isFullScreen;
@@ -508,8 +513,8 @@ export function LiveSessionWorkspace({
         setIsFullScreen(true);
       }
     };
-    document.addEventListener("fullscreenchange", onFsChange);
-    return () => document.removeEventListener("fullscreenchange", onFsChange);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
   // Live media streams & controls
@@ -517,14 +522,14 @@ export function LiveSessionWorkspace({
   const [cameraOn, setCameraOn] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
-  const [activeTab, setActiveTab] = useState<"video" | "chat" | "attendees">("video");
+  const [activeTab, setActiveTab] = useState<'video' | 'chat' | 'attendees'>('video');
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Live audience detection & stay calculation
   const [staySeconds, setStaySeconds] = useState(0);
   const [attendancePercentage, setAttendancePercentage] = useState(0);
-  const [attendanceStatus, setAttendanceStatus] = useState<"PRESENT" | "ABSENT">("ABSENT");
+  const [attendanceStatus, setAttendanceStatus] = useState<'PRESENT' | 'ABSENT'>('ABSENT');
   const [rejoinDetected, setRejoinDetected] = useState(false);
   const [policyThreshold, setPolicyThreshold] = useState<number>(session.attendanceThreshold ?? 60);
   const sessionDurationMinutes = session.durationMinutes > 0 ? session.durationMinutes : 30;
@@ -549,18 +554,18 @@ export function LiveSessionWorkspace({
   // In-session group chat
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
-      id: "1",
-      sender: trainerName || "Trainer",
-      text: `Welcome to "${session.titleEn || "Live Session"}". Real-time audience stay tracking is active (>= ${policyThreshold}% required for Present status). Feel free to ask questions here!`,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      id: '1',
+      sender: trainerName || 'Trainer',
+      text: `Welcome to "${session.titleEn || 'Live Session'}". Real-time audience stay tracking is active (>= ${policyThreshold}% required for Present status). Feel free to ask questions here!`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isSelf: false,
     },
   ]);
-  const [chatInput, setChatInput] = useState("");
+  const [chatInput, setChatInput] = useState('');
 
   const formatJitsiUrl = (url: string, name: string) => {
-    if (!url || (!url.includes("meet.jit.si") && !url.includes("jitsi"))) return url;
-    const baseUrl = url.split("#")[0];
+    if (!url || (!url.includes('meet.jit.si') && !url.includes('jitsi'))) return url;
+    const baseUrl = url.split('#')[0];
     return `${baseUrl}#userInfo.displayName="${encodeURIComponent(name)}"&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableWelcomePage=false&config.disableDeepLinking=true`;
   };
 
@@ -574,7 +579,7 @@ export function LiveSessionWorkspace({
     const displayName =
       currentUser?.name ||
       currentUser?.firstName ||
-      (userRole === "trainer" ? "Trainer" : "Participant");
+      (userRole === 'trainer' ? 'Trainer' : 'Participant');
 
     const init = async () => {
       try {
@@ -588,7 +593,7 @@ export function LiveSessionWorkspace({
             }
           } catch (tkErr: any) {
             if (!cancelled) {
-              const msg = tkErr?.message || "Could not obtain LiveKit access token.";
+              const msg = tkErr?.message || 'Could not obtain LiveKit access token.';
               setError(msg);
             }
           }
@@ -624,17 +629,17 @@ export function LiveSessionWorkspace({
               if ((joinRecord.rejoinCount ?? 0) > 0) setRejoinDetected(true);
               if (joinRecord.activeSeconds) setStaySeconds(joinRecord.activeSeconds);
               if (joinRecord.percentage) setAttendancePercentage(joinRecord.percentage);
-              if (joinRecord.status === "PRESENT") setAttendanceStatus("PRESENT");
+              if (joinRecord.status === 'PRESENT') setAttendanceStatus('PRESENT');
             }
           })
           .catch(() => {});
 
         // 4. Learner self check-in (best-effort)
-        if (userRole === "learner") {
-          void selfCheckIn(session.id, "VIRTUAL").catch(() => {});
+        if (userRole === 'learner') {
+          void selfCheckIn(session.id, 'VIRTUAL').catch(() => {});
         }
       } catch (err) {
-        if (!cancelled) setError("An error occurred while initializing the session room.");
+        if (!cancelled) setError('An error occurred while initializing the session room.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -651,7 +656,7 @@ export function LiveSessionWorkspace({
           if (update.threshold) setPolicyThreshold(update.threshold);
           setStaySeconds(update.activeSeconds);
           setAttendancePercentage(update.percentage);
-          setAttendanceStatus(update.status === "PRESENT" ? "PRESENT" : "ABSENT");
+          setAttendanceStatus(update.status === 'PRESENT' ? 'PRESENT' : 'ABSENT');
         }
       } catch {
         // Heartbeat retry on next interval
@@ -663,12 +668,12 @@ export function LiveSessionWorkspace({
       // Beacon dispatch
       navigator.sendBeacon(`/api/attendance/sessions/${session.id}/leave`);
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       cancelled = true;
       clearInterval(heartbeatTimer);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       // Disconnect local webcam stream on close
       if (localStream) {
         localStream.getTracks().forEach((track) => track.stop());
@@ -731,13 +736,13 @@ export function LiveSessionWorkspace({
     if (!chatInput.trim()) return;
     const newMsg: ChatMessage = {
       id: String(Date.now()),
-      sender: currentUser?.name || (userRole === "trainer" ? "Trainer" : "You"),
+      sender: currentUser?.name || (userRole === 'trainer' ? 'Trainer' : 'You'),
       text: chatInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isSelf: true,
     };
     setChatMessages((prev) => [...prev, newMsg]);
-    setChatInput("");
+    setChatInput('');
   };
 
   const handleLeaveSession = async () => {
@@ -758,20 +763,20 @@ export function LiveSessionWorkspace({
     ) {
       void handleLeaveSession();
     } else {
-      console.warn("LiveKit disconnect reason:", reason);
-      setError("Disconnected from LiveKit room. Click Retry Connection to rejoin.");
+      console.warn('LiveKit disconnect reason:', reason);
+      setError('Disconnected from LiveKit room. Click Retry Connection to rejoin.');
     }
   };
 
   if (!open) return null;
 
   const currentStayMinutes = Math.floor(staySeconds / 60);
-  const isPresent = attendanceStatus === "PRESENT" || attendancePercentage >= policyThreshold;
+  const isPresent = attendanceStatus === 'PRESENT' || attendancePercentage >= policyThreshold;
   const trainerDisplayName =
     trainerName ||
     (session.trainer
       ? `${session.trainer.firstName} ${session.trainer.lastName}`
-      : "Assigned Trainer");
+      : 'Assigned Trainer');
 
   return (
     <>
@@ -785,20 +790,18 @@ export function LiveSessionWorkspace({
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/20 text-red-400 border border-red-500/30">
               <Radio className="h-4 w-4 animate-pulse" />
             </span>
-            <span className="truncate text-white font-bold">{session.titleEn || "Live Training Session"}</span>
+            <span className="truncate text-white font-bold">
+              {session.titleEn || 'Live Training Session'}
+            </span>
           </div>
         }
-        subtitle={`${courseCode ? `${courseCode} · ` : ""}${courseTitle || "Training"} · Host: ${trainerDisplayName}`}
+        subtitle={`${courseCode ? `${courseCode} · ` : ''}${courseTitle || 'Training'} · Host: ${trainerDisplayName}`}
         badge={
           <div className="flex items-center gap-2">
             <Badge variant="green" dot>
               Live Room
             </Badge>
-            {rejoinDetected && (
-              <Badge variant="amber">
-                Rejoined Session
-              </Badge>
-            )}
+            {rejoinDetected && <Badge variant="amber">Rejoined Session</Badge>}
           </div>
         }
         actions={
@@ -807,11 +810,13 @@ export function LiveSessionWorkspace({
             <div
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-xs ${
                 isPresent
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                  : "border-amber-200 bg-amber-50 text-amber-800"
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
               }`}
               title={`Total stay duration: ${currentStayMinutes}m / ${sessionDurationMinutes}m (${attendancePercentage}%). ${
-                isPresent ? "Verified Present (>= " + policyThreshold + "%)" : "Stay >= " + policyThreshold + "% to be marked Present"
+                isPresent
+                  ? 'Verified Present (>= ' + policyThreshold + '%)'
+                  : 'Stay >= ' + policyThreshold + '% to be marked Present'
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
@@ -820,22 +825,24 @@ export function LiveSessionWorkspace({
               </span>
               <span
                 className={`h-2 w-2 rounded-full ${
-                  isPresent ? "bg-emerald-500 ring-4 ring-emerald-400/30" : "bg-amber-500 animate-ping"
+                  isPresent
+                    ? 'bg-emerald-500 ring-4 ring-emerald-400/30'
+                    : 'bg-amber-500 animate-ping'
                 }`}
               />
-              <span>{isPresent ? "Present" : "Tracking…"}</span>
+              <span>{isPresent ? 'Present' : 'Tracking…'}</span>
             </div>
 
             {/* Dynamic Attendance Modal Button */}
             <Button
               size="sm"
-              variant={visibility?.canView ? "outline" : "ghost"}
+              variant={visibility?.canView ? 'outline' : 'ghost'}
               onClick={() => setAttendanceModalOpen(true)}
               className="gap-1.5"
               title={
                 visibility?.canView
-                  ? "View live session attendees and stay calculation"
-                  : "Attendance view is restricted by system administrator"
+                  ? 'View live session attendees and stay calculation'
+                  : 'Attendance view is restricted by system administrator'
               }
             >
               <Users className="h-3.5 w-3.5" />
@@ -866,11 +873,11 @@ export function LiveSessionWorkspace({
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
                 <button
                   type="button"
-                  onClick={() => setConferenceMode("interactive")}
+                  onClick={() => setConferenceMode('interactive')}
                   className={`rounded-md px-2 py-1 font-medium transition ${
-                    conferenceMode === "interactive"
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                    conferenceMode === 'interactive'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   In-LMS Suite
@@ -878,11 +885,11 @@ export function LiveSessionWorkspace({
                 {joinUrl && (
                   <button
                     type="button"
-                    onClick={() => setConferenceMode("embedded")}
+                    onClick={() => setConferenceMode('embedded')}
                     className={`rounded-md px-2 py-1 font-medium transition ${
-                      conferenceMode === "embedded"
-                        ? "bg-white text-slate-900 shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                      conferenceMode === 'embedded'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     Jitsi / External
@@ -909,7 +916,7 @@ export function LiveSessionWorkspace({
               variant="outline"
               onClick={toggleFullScreen}
               className="gap-1.5 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
-              title={isFullScreen ? "Exit Full Screen" : "Full Screen Viewport"}
+              title={isFullScreen ? 'Exit Full Screen' : 'Full Screen Viewport'}
             >
               {isFullScreen ? (
                 <>
@@ -945,12 +952,17 @@ export function LiveSessionWorkspace({
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
                 <p className="text-sm font-medium">Connecting to virtual training room…</p>
                 <span className="text-xs text-indigo-300">
-                  {isLiveKitSession ? "Acquiring LiveKit access token…" : "Audience presence tracking initialized"}
+                  {isLiveKitSession
+                    ? 'Acquiring LiveKit access token…'
+                    : 'Audience presence tracking initialized'}
                 </span>
               </div>
             ) : isLiveKitSession && liveKitToken ? (
               /* ── Native LiveKit Room ───────────────────────────────────── */
-              <div className="flex-1 min-h-0 flex flex-col h-full w-full overflow-hidden" data-lk-theme="default">
+              <div
+                className="flex-1 min-h-0 flex flex-col h-full w-full overflow-hidden"
+                data-lk-theme="default"
+              >
                 <LiveKitRoom
                   token={liveKitToken}
                   serverUrl={liveKitWsUrl}
@@ -987,7 +999,8 @@ export function LiveSessionWorkspace({
                 <div className="text-center space-y-1">
                   <p className="text-base font-bold text-slate-100">Live Classroom Room Access</p>
                   <p className="text-xs text-center text-slate-400 max-w-md">
-                    {error || "Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course."}
+                    {error ||
+                      'Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course.'}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -1003,7 +1016,7 @@ export function LiveSessionWorkspace({
                           setError(null);
                         })
                         .catch((err: any) => {
-                          setError(err?.message || "Token fetch failed. Please try again.");
+                          setError(err?.message || 'Token fetch failed. Please try again.');
                         })
                         .finally(() => setLoading(false));
                     }}
@@ -1025,14 +1038,14 @@ export function LiveSessionWorkspace({
                   </Button>
                 </div>
               </div>
-            ) : conferenceMode === "embedded" && joinUrl ? (
+            ) : conferenceMode === 'embedded' && joinUrl ? (
               /* Embedded Jitsi/External Frame - 100% full screen with full native controls */
               <div className="flex-1 min-h-0 flex flex-col h-full w-full p-2 bg-slate-950 overflow-hidden">
                 <iframe
                   src={joinUrl}
                   allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
                   className="w-full h-full flex-1 min-h-0 border-0 rounded-2xl bg-black"
-                  title={session.titleEn || "Live Video Session"}
+                  title={session.titleEn || 'Live Video Session'}
                 />
               </div>
             ) : (
@@ -1048,8 +1061,12 @@ export function LiveSessionWorkspace({
                       Stay: {currentStayMinutes}m / {sessionDurationMinutes}m
                     </span>
                     <span className="text-slate-400">·</span>
-                    <span className={isPresent ? "text-emerald-400 font-bold" : "text-amber-400 font-semibold"}>
-                      {attendancePercentage}% ({isPresent ? "Present" : "Absent"})
+                    <span
+                      className={
+                        isPresent ? 'text-emerald-400 font-bold' : 'text-amber-400 font-semibold'
+                      }
+                    >
+                      {attendancePercentage}% ({isPresent ? 'Present' : 'Absent'})
                     </span>
                   </div>
 
@@ -1077,11 +1094,11 @@ export function LiveSessionWorkspace({
                         <Video className="h-9 w-9" />
                       </div>
                       <h4 className="text-base font-bold text-white tracking-wide">
-                        {session.titleEn || "Interactive Training Session"}
+                        {session.titleEn || 'Interactive Training Session'}
                       </h4>
                       <p className="mt-1 text-xs text-slate-400 max-w-sm">
-                        Live presentation feed active. Real-time participant detection and attendance
-                        tracking enabled.
+                        Live presentation feed active. Real-time participant detection and
+                        attendance tracking enabled.
                       </p>
                       <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 px-3 py-0.5 text-[11px] font-semibold text-indigo-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -1101,9 +1118,11 @@ export function LiveSessionWorkspace({
                   {/* Current User Webcam / Screen Tile */}
                   <div className="relative h-full min-h-[260px] rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center">
                     <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/60 backdrop-blur-xs px-2.5 py-1 text-[11px] font-semibold text-white">
-                      <span>{currentUser?.name || (userRole === "trainer" ? "Trainer" : "You")}</span>
+                      <span>
+                        {currentUser?.name || (userRole === 'trainer' ? 'Trainer' : 'You')}
+                      </span>
                       <span className="text-[10px] text-indigo-300">
-                        ({userRole === "trainer" ? "Host" : "Audience"})
+                        ({userRole === 'trainer' ? 'Host' : 'Audience'})
                       </span>
                     </div>
 
@@ -1130,10 +1149,14 @@ export function LiveSessionWorkspace({
                     <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
                       <span
                         className={`flex h-7 w-7 items-center justify-center rounded-lg text-white text-xs ${
-                          micOn ? "bg-emerald-600" : "bg-red-600/80"
+                          micOn ? 'bg-emerald-600' : 'bg-red-600/80'
                         }`}
                       >
-                        {micOn ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+                        {micOn ? (
+                          <Mic className="h-3.5 w-3.5" />
+                        ) : (
+                          <MicOff className="h-3.5 w-3.5" />
+                        )}
                       </span>
                     </div>
                   </div>
@@ -1144,68 +1167,76 @@ export function LiveSessionWorkspace({
                   {/* Microphone */}
                   <Button
                     size="sm"
-                    variant={micOn ? "primary" : "outline"}
+                    variant={micOn ? 'primary' : 'outline'}
                     onClick={handleToggleMic}
                     className={`gap-1.5 rounded-xl ${
                       micOn
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
-                    {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4 text-red-400" />}
-                    {micOn ? "Mute" : "Unmute"}
+                    {micOn ? (
+                      <Mic className="h-4 w-4" />
+                    ) : (
+                      <MicOff className="h-4 w-4 text-red-400" />
+                    )}
+                    {micOn ? 'Mute' : 'Unmute'}
                   </Button>
 
                   {/* Camera */}
                   <Button
                     size="sm"
-                    variant={cameraOn ? "primary" : "outline"}
+                    variant={cameraOn ? 'primary' : 'outline'}
                     onClick={handleToggleCamera}
                     className={`gap-1.5 rounded-xl ${
                       cameraOn
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                        : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
-                    {cameraOn ? <Camera className="h-4 w-4" /> : <CameraOff className="h-4 w-4 text-slate-400" />}
-                    {cameraOn ? "Stop Video" : "Start Video"}
+                    {cameraOn ? (
+                      <Camera className="h-4 w-4" />
+                    ) : (
+                      <CameraOff className="h-4 w-4 text-slate-400" />
+                    )}
+                    {cameraOn ? 'Stop Video' : 'Start Video'}
                   </Button>
 
                   {/* Screen Share */}
                   <Button
                     size="sm"
-                    variant={screenSharing ? "primary" : "outline"}
+                    variant={screenSharing ? 'primary' : 'outline'}
                     onClick={handleToggleScreenShare}
                     className={`gap-1.5 rounded-xl ${
                       screenSharing
-                        ? "bg-indigo-600 text-white"
-                        : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                        ? 'bg-indigo-600 text-white'
+                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     <Laptop className="h-4 w-4" />
-                    {screenSharing ? "Stop Share" : "Share Screen"}
+                    {screenSharing ? 'Stop Share' : 'Share Screen'}
                   </Button>
 
                   {/* Raise Hand */}
                   <Button
                     size="sm"
-                    variant={handRaised ? "primary" : "outline"}
+                    variant={handRaised ? 'primary' : 'outline'}
                     onClick={() => setHandRaised(!handRaised)}
                     className={`gap-1.5 rounded-xl ${
                       handRaised
-                        ? "bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold"
-                        : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                        ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold'
+                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     <Hand className="h-4 w-4" />
-                    {handRaised ? "Lower Hand" : "Raise Hand"}
+                    {handRaised ? 'Lower Hand' : 'Raise Hand'}
                   </Button>
 
                   {/* Chat Toggle */}
                   <Button
                     size="sm"
-                    variant={activeTab === "chat" ? "primary" : "outline"}
-                    onClick={() => setActiveTab(activeTab === "chat" ? "video" : "chat")}
+                    variant={activeTab === 'chat' ? 'primary' : 'outline'}
+                    onClick={() => setActiveTab(activeTab === 'chat' ? 'video' : 'chat')}
                     className="gap-1.5 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
                   >
                     <MessageSquare className="h-4 w-4" />
@@ -1218,14 +1249,16 @@ export function LiveSessionWorkspace({
                     variant="outline"
                     onClick={toggleFullScreen}
                     className="gap-1.5 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
-                    title={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
+                    title={isFullScreen ? 'Exit Fullscreen' : 'Fullscreen'}
                   >
                     {isFullScreen ? (
                       <Minimize2 className="h-4 w-4 text-indigo-400" />
                     ) : (
                       <Maximize2 className="h-4 w-4 text-indigo-400" />
                     )}
-                    <span className="hidden sm:inline">{isFullScreen ? "Exit FS" : "Fullscreen"}</span>
+                    <span className="hidden sm:inline">
+                      {isFullScreen ? 'Exit FS' : 'Fullscreen'}
+                    </span>
                   </Button>
                 </div>
               </div>
@@ -1233,7 +1266,7 @@ export function LiveSessionWorkspace({
           </div>
 
           {/* Right Sidebar: In-Session Chat or Attendees */}
-          {activeTab === "chat" && (
+          {activeTab === 'chat' && (
             <aside className="w-80 shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col text-slate-200">
               <div className="flex items-center justify-between border-b border-slate-800 p-4">
                 <div className="flex items-center gap-2">
@@ -1242,7 +1275,7 @@ export function LiveSessionWorkspace({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("video")}
+                  onClick={() => setActiveTab('video')}
                   className="text-slate-400 hover:text-white"
                 >
                   <Minimize2 className="h-4 w-4" />
@@ -1254,9 +1287,7 @@ export function LiveSessionWorkspace({
                 {chatMessages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex flex-col ${
-                      msg.isSelf ? "items-end" : "items-start"
-                    }`}
+                    className={`flex flex-col ${msg.isSelf ? 'items-end' : 'items-start'}`}
                   >
                     <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400">
                       <span className="font-semibold text-slate-300">{msg.sender}</span>
@@ -1266,8 +1297,8 @@ export function LiveSessionWorkspace({
                     <div
                       className={`rounded-2xl px-3.5 py-2 text-xs max-w-[85%] leading-relaxed ${
                         msg.isSelf
-                          ? "bg-indigo-600 text-white rounded-br-none"
-                          : "bg-slate-800 text-slate-200 border border-slate-700/60 rounded-bl-none"
+                          ? 'bg-indigo-600 text-white rounded-br-none'
+                          : 'bg-slate-800 text-slate-200 border border-slate-700/60 rounded-bl-none'
                       }`}
                     >
                       {msg.text}

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import type { ApiDashboardStats } from "@/lib/api/types";
-import { fetchDashboardStats } from "@/lib/api/dashboard";
+import { useEffect, useState } from 'react';
+import type { ApiDashboardStats } from '@/lib/api/types';
+import { fetchDashboardStats } from '@/lib/api/dashboard';
 
 /**
  * Loads the platform dashboard stats (system/training admins). Failures are
@@ -25,7 +25,7 @@ export function useDashboardStats() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unable to load stats.");
+          setError(err instanceof Error ? err.message : 'Unable to load stats.');
           setLoading(false);
         }
       });

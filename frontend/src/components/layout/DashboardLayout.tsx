@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+import type { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import Sidebar from '@/components/layout/Sidebar';
+import Header from '@/components/layout/Header';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -12,11 +12,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   // When inside the classroom, cover everything (no dashboard sidebar, no dashboard header)
   if (isClassroom) {
-    return (
-      <div className="relative h-screen w-screen overflow-hidden bg-slate-50">
-        {children}
-      </div>
-    );
+    return <div className="relative h-screen w-screen overflow-hidden bg-slate-50">{children}</div>;
   }
 
   // Regular dashboard layout

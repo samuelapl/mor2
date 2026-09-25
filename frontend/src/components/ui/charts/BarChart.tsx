@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface BarChartItem {
   label: string;
@@ -22,23 +22,21 @@ export function BarChart({
   items,
   maxValue,
   className,
-  emptyText = "No data available",
-  barColor = "#6366f1",
+  emptyText = 'No data available',
+  barColor = '#6366f1',
 }: BarChartProps) {
-  const max =
-    maxValue ??
-    (items.length > 0 ? Math.max(...items.map((i) => i.value), 1) : 1);
+  const max = maxValue ?? (items.length > 0 ? Math.max(...items.map((i) => i.value), 1) : 1);
 
   if (items.length === 0) {
     return (
-      <div className={cn("py-8 text-center text-xs text-slate-400 italic", className)}>
+      <div className={cn('py-8 text-center text-xs text-slate-400 italic', className)}>
         {emptyText}
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-3.5", className)}>
+    <div className={cn('space-y-3.5', className)}>
       {items.map((item, idx) => {
         const percent = Math.min(100, Math.round((Math.max(0, item.value) / max) * 100));
         const color = item.color || barColor;

@@ -21,7 +21,11 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     const moduleCompletions = new Map([['m1', false]]);
     const lessonCompletions = new Set(['l1', 'l2']);
 
-    const { moduleUnlocked } = computeSequentialUnlocks(modules, moduleCompletions, lessonCompletions);
+    const { moduleUnlocked } = computeSequentialUnlocks(
+      modules,
+      moduleCompletions,
+      lessonCompletions,
+    );
 
     expect(moduleUnlocked.get('m1')).toBe(true); // first module is always unlocked
     expect(moduleUnlocked.get('m2')).toBe(false);
@@ -31,7 +35,11 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     const moduleCompletions = new Map([['m1', true]]);
     const lessonCompletions = new Set(['l1', 'l2']);
 
-    const { moduleUnlocked } = computeSequentialUnlocks(modules, moduleCompletions, lessonCompletions);
+    const { moduleUnlocked } = computeSequentialUnlocks(
+      modules,
+      moduleCompletions,
+      lessonCompletions,
+    );
 
     expect(moduleUnlocked.get('m2')).toBe(true);
   });
@@ -40,7 +48,11 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     const moduleCompletions = new Map<string, boolean>(); // no row at all for m1
     const lessonCompletions = new Set(['l1', 'l2']);
 
-    const { moduleUnlocked } = computeSequentialUnlocks(modules, moduleCompletions, lessonCompletions);
+    const { moduleUnlocked } = computeSequentialUnlocks(
+      modules,
+      moduleCompletions,
+      lessonCompletions,
+    );
 
     expect(moduleUnlocked.get('m2')).toBe(false);
   });
@@ -64,7 +76,10 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
           {
             id: 'l1',
             order: 1,
-            subLessons: [{ id: 's1', order: 1 }, { id: 's2', order: 2 }],
+            subLessons: [
+              { id: 's1', order: 1 },
+              { id: 's2', order: 2 },
+            ],
             hasAssessment: true,
             assessmentPassed: false,
           },
@@ -74,7 +89,11 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     ];
 
     const lessonCompletions = new Set(['s1', 's2']); // all sub-lessons done, but quiz NOT passed
-    const { lessonUnlocked } = computeSequentialUnlocks(testModules, new Map([['m1', false]]), lessonCompletions);
+    const { lessonUnlocked } = computeSequentialUnlocks(
+      testModules,
+      new Map([['m1', false]]),
+      lessonCompletions,
+    );
 
     expect(lessonUnlocked.get('l1')).toBe(true);
     expect(lessonUnlocked.get('s1')).toBe(true);
@@ -91,7 +110,10 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
           {
             id: 'l1',
             order: 1,
-            subLessons: [{ id: 's1', order: 1 }, { id: 's2', order: 2 }],
+            subLessons: [
+              { id: 's1', order: 1 },
+              { id: 's2', order: 2 },
+            ],
             hasAssessment: true,
             assessmentPassed: true,
           },
@@ -101,7 +123,11 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     ];
 
     const lessonCompletions = new Set(['s1', 's2']);
-    const { lessonUnlocked } = computeSequentialUnlocks(testModules, new Map([['m1', false]]), lessonCompletions);
+    const { lessonUnlocked } = computeSequentialUnlocks(
+      testModules,
+      new Map([['m1', false]]),
+      lessonCompletions,
+    );
 
     expect(lessonUnlocked.get('l1')).toBe(true);
     expect(lessonUnlocked.get('l2')).toBe(true); // Lesson 2 unlocks!

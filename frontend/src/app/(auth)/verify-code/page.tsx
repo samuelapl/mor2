@@ -1,8 +1,8 @@
-import { Suspense } from "react";
-import VerifyCodeForm from "./VerifyCodeForm";
+import { Suspense } from 'react';
+import VerifyCodeForm from './VerifyCodeForm';
 
 export const metadata = {
-  title: "Enter Code · MoR Learning Management System",
+  title: 'Enter Code · MoR Learning Management System',
 };
 
 export default function VerifyCodePage() {

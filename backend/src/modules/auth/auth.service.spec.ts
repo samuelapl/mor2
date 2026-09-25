@@ -32,15 +32,24 @@ function buildPrisma(user: any) {
         resets.filter((row) => matches(row, where)).forEach((row) => Object.assign(row, data));
       }),
       create: jest.fn(async ({ data }: any) => {
-        const row = { id: `r${resets.length}`, attempts: 0, usedAt: null, createdAt: new Date(), ...data };
+        const row = {
+          id: `r${resets.length}`,
+          attempts: 0,
+          usedAt: null,
+          createdAt: new Date(),
+          ...data,
+        };
         resets.push(row);
         return row;
       }),
-      findFirst: jest.fn(async ({ where }: any) =>
-        [...resets].reverse().find((row) => matches(row, where)) ?? null,
+      findFirst: jest.fn(
+        async ({ where }: any) => [...resets].reverse().find((row) => matches(row, where)) ?? null,
       ),
       update: jest.fn(async ({ where, data }: any) =>
-        Object.assign(resets.find((row) => row.id === where.id), data),
+        Object.assign(
+          resets.find((row) => row.id === where.id),
+          data,
+        ),
       ),
     },
     refreshToken: {

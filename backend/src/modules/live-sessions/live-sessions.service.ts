@@ -34,8 +34,7 @@ import { PermissionsService } from '@modules/permissions/permissions.service';
  * - `enrolled` — everyone else (learners): only sessions of courses they are enrolled in
  */
 type SessionVisibility =
-  | { kind: 'all' }
-  | { kind: 'hosted' | 'enrolled'; where: Prisma.LiveSessionWhereInput };
+  { kind: 'all' } | { kind: 'hosted' | 'enrolled'; where: Prisma.LiveSessionWhereInput };
 
 @Injectable()
 export class LiveSessionsService {

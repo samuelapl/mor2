@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -9,15 +9,15 @@ import {
   useRef,
   useState,
   type ReactNode,
-} from "react";
+} from 'react';
 
-import { isValidEmail, passwordIssues } from "@/constants/auth";
+import { isValidEmail, passwordIssues } from '@/constants/auth';
 import {
   ApiError,
   setAccessToken,
   setRefreshHandler,
   setUnauthorizedHandler,
-} from "@/lib/api/client";
+} from '@/lib/api/client';
 import {
   clearFirstLoginChallenge,
   completeFirstLogin as apiCompleteFirstLogin,
@@ -28,7 +28,7 @@ import {
   type AuthResult,
   refresh as apiRefresh,
   register as apiRegister,
-} from "@/lib/api/auth";
+} from '@/lib/api/auth';
 import {
   fetchCourseDetail,
   fetchCourses,
@@ -40,13 +40,13 @@ import {
   requestApproval,
   reviewCourse,
   updateCourse as apiUpdateCourse,
-} from "@/lib/api/courses";
+} from '@/lib/api/courses';
 import {
   bulkEnroll,
   fetchCourseEnrollments,
   fetchMyEnrollments,
   selfEnroll,
-} from "@/lib/api/enrollments";
+} from '@/lib/api/enrollments';
 import {
   approveRegistration,
   assignRole,
@@ -60,21 +60,17 @@ import {
   rejectRegistration,
   removeRole,
   updateMyProfile,
-} from "@/lib/api/users";
-import {
-  getStoredAccessToken,
-  getStoredRefreshToken,
-  clearTokens,
-} from "@/lib/api/tokens";
+} from '@/lib/api/users';
+import { getStoredAccessToken, getStoredRefreshToken, clearTokens } from '@/lib/api/tokens';
 import {
   assignTrainer as apiAssignTrainer,
   unassignTrainer,
   deleteCourse as apiDeleteCourse,
   archiveCourse as apiArchiveCourse,
-} from "@/lib/api/courses";
-import { uploadAttachment, uploadCover } from "@/lib/api/files";
-import { createCourseAssessment, replaceAssessment } from "@/lib/api/quiz";
-import type { AssessmentQuestionInput } from "@/lib/api/quiz";
+} from '@/lib/api/courses';
+import { uploadAttachment, uploadCover } from '@/lib/api/files';
+import { createCourseAssessment, replaceAssessment } from '@/lib/api/quiz';
+import type { AssessmentQuestionInput } from '@/lib/api/quiz';
 import {
   courseFromDetail,
   courseToCreateBody,
@@ -83,13 +79,13 @@ import {
   roleToApi,
   uploadedResourceToApiAttachment,
   userFromApi,
-} from "@/lib/api/transform";
+} from '@/lib/api/transform';
 import type {
   ApiEnrollment,
   BulkCreateUserItem,
   BulkCreateUsersResult,
   CreateCurriculumAttachmentBody,
-} from "@/lib/api/types";
+} from '@/lib/api/types';
 import type {
   ActionResult,
   Attachment,
@@ -102,7 +98,7 @@ import type {
   Role,
   UploadedResource,
   User,
-} from "@/types";
+} from '@/types';
 
 interface RegisterInput {
   firstName: string;
@@ -155,9 +151,9 @@ function toAttachmentBodies(
   if (resourceUrl) {
     return [
       {
-        fileName: fileName || resourceUrl.split("/").pop() || "Resource",
+        fileName: fileName || resourceUrl.split('/').pop() || 'Resource',
         fileUrl: resourceUrl,
-        fileType: "application/octet-stream",
+        fileType: 'application/octet-stream',
         sizeBytes: fileSize || 0,
       },
     ];
@@ -167,18 +163,24 @@ function toAttachmentBodies(
 
 function normalizeLessonContentType(
   type?: string,
-): "DOCUMENT" | "INTERACTIVE" | "VIDEO" | "AUDIO" | "PRESENTATION" | "EXTERNAL_LINK" | "SCORM" {
-  if (!type) return "DOCUMENT";
-  if (type === "ASSIGNMENT") return "DOCUMENT";
-  if (type === "QUIZ" || type === "ASSESSMENT") return "INTERACTIVE";
+): 'DOCUMENT' | 'INTERACTIVE' | 'VIDEO' | 'AUDIO' | 'PRESENTATION' | 'EXTERNAL_LINK' | 'SCORM' {
+  if (!type) return 'DOCUMENT';
+  if (type === 'ASSIGNMENT') return 'DOCUMENT';
+  if (type === 'QUIZ' || type === 'ASSESSMENT') return 'INTERACTIVE';
   if (
-    ["DOCUMENT", "INTERACTIVE", "VIDEO", "AUDIO", "PRESENTATION", "EXTERNAL_LINK", "SCORM"].includes(
-      type,
-    )
+    [
+      'DOCUMENT',
+      'INTERACTIVE',
+      'VIDEO',
+      'AUDIO',
+      'PRESENTATION',
+      'EXTERNAL_LINK',
+      'SCORM',
+    ].includes(type)
   ) {
     return type as any;
   }
-  return "DOCUMENT";
+  return 'DOCUMENT';
 }
 
 interface LmsContextValue {
@@ -242,14 +244,8 @@ interface LmsContextValue {
     },
   ) => Promise<ActionResult>;
   saveCourseCover: (courseId: string, file: File) => Promise<ActionResult>;
-  assignTrainerToCourse: (
-    courseId: string,
-    trainerId: string,
-  ) => Promise<ActionResult>;
-  unassignTrainerFromCourse: (
-    courseId: string,
-    trainerId: string,
-  ) => Promise<ActionResult>;
+  assignTrainerToCourse: (courseId: string, trainerId: string) => Promise<ActionResult>;
+  unassignTrainerFromCourse: (courseId: string, trainerId: string) => Promise<ActionResult>;
   submitForApproval: (courseId: string) => Promise<ActionResult>;
   approveCourse: (courseId: string) => Promise<ActionResult>;
   rejectCourse: (courseId: string, reason: string) => Promise<ActionResult>;
@@ -258,10 +254,7 @@ interface LmsContextValue {
   unpublishCourse: (courseId: string) => Promise<ActionResult>;
   archiveCourse: (courseId: string) => Promise<ActionResult>;
   deleteCourse: (courseId: string) => Promise<ActionResult>;
-  enrollLearners: (
-    courseId: string,
-    learnerIds: string[],
-  ) => Promise<ActionResult>;
+  enrollLearners: (courseId: string, learnerIds: string[]) => Promise<ActionResult>;
   enrollSelf: (
     courseId: string,
     options?: {
@@ -274,16 +267,13 @@ interface LmsContextValue {
   getEnrollmentForCourse: (courseId: string) => ApiEnrollment | undefined;
   changeUserRole: (userId: string, role: Role) => Promise<ActionResult>;
   approveRegistrationRequest: (userId: string) => Promise<ActionResult>;
-  rejectRegistrationRequest: (
-    userId: string,
-    reason?: string,
-  ) => Promise<ActionResult>;
+  rejectRegistrationRequest: (userId: string, reason?: string) => Promise<ActionResult>;
   deactivateUser: (userId: string) => Promise<ActionResult>;
   reactivateUser: (userId: string) => Promise<ActionResult>;
   deleteUser: (userId: string) => Promise<ActionResult>;
   /** Suspends or deletes several users, reloading once. Failures are reported per user. */
   bulkUserAction: (
-    action: "suspend" | "delete",
+    action: 'suspend' | 'delete',
     userIds: string[],
   ) => Promise<{ ok: false; message: string } | { ok: true; succeeded: number; failed: string[] }>;
   bulkRegisterUsers: (
@@ -337,22 +327,43 @@ function questionToApi(q: {
   correctIndex: number;
   answerText?: string;
 }): AssessmentQuestionInput {
-  if (q.type === "short_answer") {
+  if (q.type === 'short_answer') {
     return {
       id: q.id,
-      type: "SHORT_ANSWER",
+      type: 'SHORT_ANSWER',
       question: q.text,
       options: [],
-      correctAnswer: (q.answerText ?? "").trim(),
+      correctAnswer: (q.answerText ?? '').trim(),
     };
   }
   return {
     id: q.id,
-    type: q.type === "true_false" ? "TRUE_FALSE" : "MULTIPLE_CHOICE",
+    type: q.type === 'true_false' ? 'TRUE_FALSE' : 'MULTIPLE_CHOICE',
     question: q.text,
     options: q.options,
     correctAnswer: q.correctIndex,
   };
+}
+
+export const LOCALE_STORAGE_KEY = 'eltms_locale';
+
+export function getStoredLocale(): Lang {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (stored === 'am' || stored === 'en') return stored;
+  } catch {}
+  return 'en';
+}
+
+export function persistLocale(locale: Lang): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.lang = locale;
+    }
+  } catch {}
 }
 
 export function LmsProvider({ children }: { children: ReactNode }) {
@@ -360,7 +371,22 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [myEnrollments, setMyEnrollments] = useState<ApiEnrollment[]>([]);
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLangState] = useState<Lang>('en');
+  const setLang = useCallback((nextLang: Lang) => {
+    setLangState(nextLang);
+    persistLocale(nextLang);
+  }, []);
+
+  // Synchronize stored language on initial client mount
+  useEffect(() => {
+    const stored = getStoredLocale();
+    if (stored) {
+      setLangState(stored);
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.lang = stored;
+      }
+    }
+  }, []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
 
@@ -396,9 +422,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     const current = user ?? currentUserRef.current;
     try {
       const list = await fetchCourses({ limit: 100 });
-      const details = await Promise.all(
-        list.data.map((course) => fetchCourseDetail(course.id)),
-      );
+      const details = await Promise.all(list.data.map((course) => fetchCourseDetail(course.id)));
 
       const names: Record<string, string> = {};
       const mapped = details.map((detail) => {
@@ -412,33 +436,29 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       });
 
       let next = mapped;
-      if (current?.role === "learner") {
+      if (current?.role === 'learner') {
         try {
           const mine = await fetchMyEnrollments();
           setMyEnrollments(mine.data);
           const enrolledCourseIds = new Set(
             mine.data
               .filter(
-                (enrollment) =>
-                  enrollment.status === "ACTIVE" ||
-                  enrollment.status === "COMPLETED",
+                (enrollment) => enrollment.status === 'ACTIVE' || enrollment.status === 'COMPLETED',
               )
               .map((enrollment) => enrollment.courseId),
           );
           next = next.map((course) => ({
             ...course,
-            enrolledLearnerIds: enrolledCourseIds.has(course.id)
-              ? [current.id]
-              : [],
+            enrolledLearnerIds: enrolledCourseIds.has(course.id) ? [current.id] : [],
           }));
         } catch {
           // learner cannot list course enrollments → keep empty
         }
       } else if (
-        current?.role === "course_owner" ||
-        current?.role === "training_admin" ||
-        current?.role === "system_admin" ||
-        current?.role === "trainer"
+        current?.role === 'course_owner' ||
+        current?.role === 'training_admin' ||
+        current?.role === 'system_admin' ||
+        current?.role === 'trainer'
       ) {
         const withEnrollments = await Promise.all(
           next.map(async (course) => {
@@ -452,7 +472,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               return {
                 ...course,
                 enrolledLearnerIds: res.data
-                  .filter((enrollment) => enrollment.status === "ACTIVE")
+                  .filter((enrollment) => enrollment.status === 'ACTIVE')
                   .map((enrollment) => enrollment.userId),
               };
             } catch {
@@ -463,10 +483,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         next = withEnrollments;
       }
 
-      if (
-        current?.role === "system_admin" ||
-        current?.role === "training_admin"
-      ) {
+      if (current?.role === 'system_admin' || current?.role === 'training_admin') {
         try {
           const res = await fetchUsers({ limit: 100 });
           const mappedUsers = res.data.map(userFromApi);
@@ -495,6 +512,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       setCurrentUser(res.user);
       currentUserRef.current = res.user;
       setUserNames({ [res.user.id]: res.user.name });
+      const storedLocale = getStoredLocale();
+      if (storedLocale) {
+        setLangState(storedLocale);
+        if (res.user.locale && res.user.locale !== storedLocale) {
+          void updateMyProfile({ locale: storedLocale }).catch(() => {});
+        }
+      } else if (res.user.locale === 'am' || res.user.locale === 'en') {
+        setLangState(res.user.locale);
+        persistLocale(res.user.locale);
+      }
       await reloadData(res.user);
       return { ok: true, role: res.user.role };
     },
@@ -505,32 +532,32 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string): Promise<LoginResult> => {
       try {
         const res = await apiLogin(email.trim(), password);
-        if ("passwordChangeRequired" in res) {
+        if ('passwordChangeRequired' in res) {
           saveFirstLoginChallenge({ challengeToken: res.challengeToken, email: res.email });
           return {
             ok: false,
             passwordChangeRequired: true,
-            message: "You need to set a new password before continuing.",
+            message: 'You need to set a new password before continuing.',
           };
         }
         return await enterSession(res);
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Unable to sign in. Please try again."),
+          message: errorMessage(err, 'Unable to sign in. Please try again.'),
         };
       }
     },
     [enterSession],
   );
 
-  const completeFirstLogin: LmsContextValue["completeFirstLogin"] = useCallback(
+  const completeFirstLogin: LmsContextValue['completeFirstLogin'] = useCallback(
     async ({ code, newPassword, confirmPassword }) => {
       const challenge = readFirstLoginChallenge();
       if (!challenge) {
         return {
           ok: false,
-          message: "Your password-change session has expired. Please sign in again.",
+          message: 'Your password-change session has expired. Please sign in again.',
         };
       }
       try {
@@ -545,7 +572,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Could not change your password. Please try again."),
+          message: errorMessage(err, 'Could not change your password. Please try again.'),
         };
       }
     },
@@ -576,22 +603,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const phone = input.phone.trim();
       const tin = input.tin?.trim();
 
-      if (
-        !firstName ||
-        !lastName ||
-        !email ||
-        !phone ||
-        !input.password
-      ) {
-        return { ok: false, message: "Please fill in all required fields." };
+      if (!firstName || !lastName || !email || !phone || !input.password) {
+        return { ok: false, message: 'Please fill in all required fields.' };
       }
       if (!isValidEmail(email)) {
-        return { ok: false, message: "Please enter a valid email address." };
+        return { ok: false, message: 'Please enter a valid email address.' };
       }
       const pwdError = passwordIssues(input.password);
       if (pwdError) return { ok: false, message: pwdError };
       if (input.password !== input.confirmPassword) {
-        return { ok: false, message: "Confirm password must match." };
+        return { ok: false, message: 'Confirm password must match.' };
       }
 
       try {
@@ -609,18 +630,18 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Registration failed. Please try again."),
+          message: errorMessage(err, 'Registration failed. Please try again.'),
         };
       }
     },
     [reloadData],
   );
 
-  const createCourse: LmsContextValue["createCourse"] = useCallback(
+  const createCourse: LmsContextValue['createCourse'] = useCallback(
     async (input) => {
       const owner = currentUserRef.current;
-      if (!owner || !hasPermission(owner, "course.create")) {
-        return { ok: false, message: "You are not allowed to create courses." };
+      if (!owner || !hasPermission(owner, 'course.create')) {
+        return { ok: false, message: 'You are not allowed to create courses.' };
       }
       let created;
       try {
@@ -659,20 +680,20 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             ? input.modules
             : [
                 {
-                  title: "Module 1: Introduction",
-                  description: "Course module",
-                  objectives: "Introduction to course concepts",
+                  title: 'Module 1: Introduction',
+                  description: 'Course module',
+                  objectives: 'Introduction to course concepts',
                   durationMinutes: 35,
                   lessons: [
                     {
-                      title: "Welcome and course overview",
-                      content: "",
+                      title: 'Welcome and course overview',
+                      content: '',
                       durationMin: 15,
                       subLessons: [],
                     },
                     {
-                      title: "Key concepts and definitions",
-                      content: "",
+                      title: 'Key concepts and definitions',
+                      content: '',
                       durationMin: 20,
                       subLessons: [],
                     },
@@ -685,7 +706,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             created.id,
             moduleToCreateBody({
               titleEn: mod.title,
-              descriptionEn: mod.description || "Course module",
+              descriptionEn: mod.description || 'Course module',
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
               attachments: toAttachmentBodies(
@@ -740,7 +761,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         // Final assessment (optional).
         if (input.quiz && input.quiz.questions.length > 0) {
           try {
-            const quizTitle = input.quiz.title.trim() || "Final Assessment";
+            const quizTitle = input.quiz.title.trim() || 'Final Assessment';
             await createCourseAssessment(created.id, {
               titleEn: quizTitle,
               titleAm: quizTitle,
@@ -759,14 +780,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to create course."),
+          message: errorMessage(err, 'Failed to create course.'),
         };
       }
     },
     [reloadData],
   );
 
-  const saveCourseCover: LmsContextValue["saveCourseCover"] = useCallback(
+  const saveCourseCover: LmsContextValue['saveCourseCover'] = useCallback(
     async (courseId, file) => {
       try {
         await uploadCover(courseId, file);
@@ -775,51 +796,49 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to upload cover."),
+          message: errorMessage(err, 'Failed to upload cover.'),
         };
       }
     },
     [reloadData],
   );
 
-  const assignTrainerToCourse: LmsContextValue["assignTrainerToCourse"] =
-    useCallback(
-      async (courseId, trainerId) => {
-        try {
-          await apiAssignTrainer(courseId, trainerId);
-          await reloadData(currentUserRef.current);
-          return { ok: true };
-        } catch (err) {
-          return {
-            ok: false,
-            message: errorMessage(err, "Failed to assign trainer."),
-          };
-        }
-      },
-      [reloadData],
-    );
+  const assignTrainerToCourse: LmsContextValue['assignTrainerToCourse'] = useCallback(
+    async (courseId, trainerId) => {
+      try {
+        await apiAssignTrainer(courseId, trainerId);
+        await reloadData(currentUserRef.current);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, 'Failed to assign trainer.'),
+        };
+      }
+    },
+    [reloadData],
+  );
 
-  const unassignTrainerFromCourse: LmsContextValue["unassignTrainerFromCourse"] =
-    useCallback(
-      async (courseId, trainerId) => {
-        try {
-          await unassignTrainer(courseId, trainerId);
-          await reloadData(currentUserRef.current);
-          return { ok: true };
-        } catch (err) {
-          return {
-            ok: false,
-            message: errorMessage(err, "Failed to remove trainer."),
-          };
-        }
-      },
-      [reloadData],
-    );
+  const unassignTrainerFromCourse: LmsContextValue['unassignTrainerFromCourse'] = useCallback(
+    async (courseId, trainerId) => {
+      try {
+        await unassignTrainer(courseId, trainerId);
+        await reloadData(currentUserRef.current);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, 'Failed to remove trainer.'),
+        };
+      }
+    },
+    [reloadData],
+  );
 
-  const bulkRegisterUsers: LmsContextValue["bulkRegisterUsers"] = useCallback(
+  const bulkRegisterUsers: LmsContextValue['bulkRegisterUsers'] = useCallback(
     async (rows) => {
       if (rows.length === 0) {
-        return { ok: false, message: "No users in the file." };
+        return { ok: false, message: 'No users in the file.' };
       }
       try {
         const result = await bulkCreateUsers(
@@ -838,14 +857,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to register users."),
+          message: errorMessage(err, 'Failed to register users.'),
         };
       }
     },
     [reloadData],
   );
 
-  const registerActor: LmsContextValue["registerActor"] = useCallback(
+  const registerActor: LmsContextValue['registerActor'] = useCallback(
     async (input) => {
       try {
         await createActor({
@@ -862,94 +881,88 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to register actor."),
+          message: errorMessage(err, 'Failed to register actor.'),
         };
       }
     },
     [reloadData],
   );
 
-  const updateProfile: LmsContextValue["updateProfile"] = useCallback(
-    async (input) => {
-      const current = currentUserRef.current;
-      if (!current) return { ok: false, message: "You must be signed in." };
-      try {
-        const updated = await updateMyProfile(input);
-        const merged: User = {
-          ...current,
-          firstName: updated.firstName,
-          lastName: updated.lastName,
-          name: `${updated.firstName} ${updated.lastName}`,
-          phone: updated.phone ?? "",
-          tin: updated.tin ?? null,
-          avatarUrl: updated.avatarUrl ?? current.avatarUrl ?? null,
-          locale: updated.locale === "am" ? "am" : "en",
-        };
-        setCurrentUser(merged);
-        currentUserRef.current = merged;
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, "Failed to update profile."),
-        };
-      }
-    },
-    [],
-  );
+  const updateProfile: LmsContextValue['updateProfile'] = useCallback(async (input) => {
+    const current = currentUserRef.current;
+    if (!current) return { ok: false, message: 'You must be signed in.' };
+    try {
+      const updated = await updateMyProfile(input);
+      const merged: User = {
+        ...current,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        name: `${updated.firstName} ${updated.lastName}`,
+        phone: updated.phone ?? '',
+        tin: updated.tin ?? null,
+        avatarUrl: updated.avatarUrl ?? current.avatarUrl ?? null,
+        locale: updated.locale === 'am' ? 'am' : 'en',
+      };
+      setCurrentUser(merged);
+      currentUserRef.current = merged;
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        message: errorMessage(err, 'Failed to update profile.'),
+      };
+    }
+  }, []);
 
-  const changePassword: LmsContextValue["changePassword"] = useCallback(
-    async (input) => {
-      try {
-        await changeMyPassword(input);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, "Failed to change password."),
-        };
-      }
-    },
-    [],
-  );
+  const changePassword: LmsContextValue['changePassword'] = useCallback(async (input) => {
+    try {
+      await changeMyPassword(input);
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        message: errorMessage(err, 'Failed to change password.'),
+      };
+    }
+  }, []);
 
-  const updateLocale: LmsContextValue["updateLocale"] = useCallback(
-    async (locale) => {
+  const updateLocale: LmsContextValue['updateLocale'] = useCallback(async (locale) => {
+    // 1. Immediately apply the language change locally so UI updates with zero latency
+    setLangState(locale);
+    persistLocale(locale);
+
+    // 2. If user is signed in, sync preference to profile in background
+    const current = currentUserRef.current;
+    if (current) {
+      const merged = { ...current, locale };
+      setCurrentUser(merged);
+      currentUserRef.current = merged;
+
       try {
         await updateMyProfile({ locale });
-        setLang(locale);
-        const current = currentUserRef.current;
-        if (current) {
-          const merged = { ...current, locale };
-          setCurrentUser(merged);
-          currentUserRef.current = merged;
-        }
-        return { ok: true };
       } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, "Failed to update language preference."),
-        };
+        console.warn('Could not sync language preference to remote profile:', err);
       }
-    },
-    [],
-  );
+    }
 
-  const updateCourse: LmsContextValue["updateCourse"] = useCallback(
+    return { ok: true };
+  }, []);
+
+  const updateCourse: LmsContextValue['updateCourse'] = useCallback(
     async (courseId, input) => {
       const owner = currentUserRef.current;
       const course = coursesRef.current.find((item) => item.id === courseId);
-      if (!course) return { ok: false, message: "Course not found." };
+      if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(hasPermission(owner, "course.update.own") || hasPermission(owner, "course.update.all"))
+        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all'))
       ) {
-        return { ok: false, message: "You are not allowed to edit this course." };
+        return { ok: false, message: 'You are not allowed to edit this course.' };
       }
-      if (course.status !== "draft" && course.status !== "rejected") {
+      if (course.status !== 'draft' && course.status !== 'rejected') {
         return {
           ok: false,
-          message: "Only draft or rejected courses can be edited.",
+          message: 'Only draft or rejected courses can be edited.',
         };
       }
       try {
@@ -965,28 +978,28 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to update course."),
+          message: errorMessage(err, 'Failed to update course.'),
         };
       }
     },
     [reloadData],
   );
 
-  const updateCourseFull: LmsContextValue["updateCourseFull"] = useCallback(
+  const updateCourseFull: LmsContextValue['updateCourseFull'] = useCallback(
     async (courseId, input) => {
       const owner = currentUserRef.current;
       const course = coursesRef.current.find((item) => item.id === courseId);
-      if (!course) return { ok: false, message: "Course not found." };
+      if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(hasPermission(owner, "course.update.own") || hasPermission(owner, "course.update.all"))
+        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all'))
       ) {
-        return { ok: false, message: "You are not allowed to edit this course." };
+        return { ok: false, message: 'You are not allowed to edit this course.' };
       }
-      if (course.status !== "draft" && course.status !== "rejected") {
+      if (course.status !== 'draft' && course.status !== 'rejected') {
         return {
           ok: false,
-          message: "Only draft or rejected courses can be edited.",
+          message: 'Only draft or rejected courses can be edited.',
         };
       }
       try {
@@ -1022,20 +1035,20 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             ? input.modules
             : [
                 {
-                  title: "Module 1: Introduction",
-                  description: "Course module",
-                  objectives: "Introduction to course concepts",
+                  title: 'Module 1: Introduction',
+                  description: 'Course module',
+                  objectives: 'Introduction to course concepts',
                   durationMinutes: 35,
                   lessons: [
                     {
-                      title: "Welcome and course overview",
-                      content: "",
+                      title: 'Welcome and course overview',
+                      content: '',
                       durationMin: 15,
                       subLessons: [],
                     },
                     {
-                      title: "Key concepts and definitions",
-                      content: "",
+                      title: 'Key concepts and definitions',
+                      content: '',
                       durationMin: 20,
                       subLessons: [],
                     },
@@ -1048,7 +1061,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           modulesToReplace.map((mod) =>
             moduleToCreateBody({
               titleEn: mod.title,
-              descriptionEn: mod.description || "Course module",
+              descriptionEn: mod.description || 'Course module',
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
               attachments: toAttachmentBodies(
@@ -1103,7 +1116,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         const quiz = input.quiz;
         if (quiz && quiz.questions.length > 0) {
           try {
-            const quizTitle = quiz.title.trim() || "Final Assessment";
+            const quizTitle = quiz.title.trim() || 'Final Assessment';
             await replaceAssessment(courseId, {
               titleEn: quizTitle,
               titleAm: quizTitle,
@@ -1122,7 +1135,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to update course."),
+          message: errorMessage(err, 'Failed to update course.'),
         };
       }
     },
@@ -1139,7 +1152,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to submit course."),
+          message: errorMessage(err, 'Failed to submit course.'),
         };
       }
     },
@@ -1150,13 +1163,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     async (courseId: string): Promise<ActionResult> => {
       const approver = currentUserRef.current;
       try {
-        await reviewCourse(courseId, { status: "APPROVED" });
+        await reviewCourse(courseId, { status: 'APPROVED' });
         await reloadData(approver);
         return { ok: true };
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to approve course."),
+          message: errorMessage(err, 'Failed to approve course.'),
         };
       }
     },
@@ -1168,16 +1181,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const approver = currentUserRef.current;
       const trimmed = reason.trim();
       if (!trimmed) {
-        return { ok: false, message: "A rejection reason is required." };
+        return { ok: false, message: 'A rejection reason is required.' };
       }
       try {
-        await reviewCourse(courseId, { status: "REJECTED", comments: trimmed });
+        await reviewCourse(courseId, { status: 'REJECTED', comments: trimmed });
         await reloadData(approver);
         return { ok: true };
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to reject course."),
+          message: errorMessage(err, 'Failed to reject course.'),
         };
       }
     },
@@ -1189,16 +1202,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       const approver = currentUserRef.current;
       const trimmed = reason.trim();
       if (!trimmed) {
-        return { ok: false, message: "A reason is required when requesting changes." };
+        return { ok: false, message: 'A reason is required when requesting changes.' };
       }
       try {
-        await reviewCourse(courseId, { status: "NEEDS_REVISION", comments: trimmed });
+        await reviewCourse(courseId, { status: 'NEEDS_REVISION', comments: trimmed });
         await reloadData(approver);
         return { ok: true };
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to request changes on course."),
+          message: errorMessage(err, 'Failed to request changes on course.'),
         };
       }
     },
@@ -1215,7 +1228,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to publish course."),
+          message: errorMessage(err, 'Failed to publish course.'),
         };
       }
     },
@@ -1232,7 +1245,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to unpublish course."),
+          message: errorMessage(err, 'Failed to unpublish course.'),
         };
       }
     },
@@ -1249,7 +1262,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to archive course."),
+          message: errorMessage(err, 'Failed to archive course.'),
         };
       }
     },
@@ -1266,7 +1279,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to delete course."),
+          message: errorMessage(err, 'Failed to delete course.'),
         };
       }
     },
@@ -1276,10 +1289,10 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const enrollLearners = useCallback(
     async (courseId: string, learnerIds: string[]): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "student.manage")) {
+      if (!admin || !hasPermission(admin, 'student.manage')) {
         return {
           ok: false,
-          message: "Only training administrators can enroll learners.",
+          message: 'Only training administrators can enroll learners.',
         };
       }
       try {
@@ -1289,7 +1302,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to enroll learners."),
+          message: errorMessage(err, 'Failed to enroll learners.'),
         };
       }
     },
@@ -1306,8 +1319,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       },
     ): Promise<ActionResult> => {
       const learner = currentUserRef.current;
-      if (!learner || !hasPermission(learner, "enrollment.self")) {
-        return { ok: false, message: "Only learners can self-enroll." };
+      if (!learner || !hasPermission(learner, 'enrollment.self')) {
+        return { ok: false, message: 'Only learners can self-enroll.' };
       }
       try {
         const enr = await selfEnroll({
@@ -1320,7 +1333,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         const message = errorMessage(
           err,
-          "Enrollment failed. The course may no longer be available.",
+          'Enrollment failed. The course may no longer be available.',
         );
         // The backend may say "already enrolled" even though our local
         // enrollment list is stale/out of sync — that's still the outcome
@@ -1353,14 +1366,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const changeUserRole = useCallback(
     async (userId: string, role: Role): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "role.manage")) {
+      if (!admin || !hasPermission(admin, 'role.manage')) {
         return {
           ok: false,
-          message: "Only system administrators can change roles.",
+          message: 'Only system administrators can change roles.',
         };
       }
       const user = usersRef.current.find((item) => item.id === userId);
-      if (!user) return { ok: false, message: "User not found." };
+      if (!user) return { ok: false, message: 'User not found.' };
       if (user.role === role) return { ok: true };
       try {
         await assignRole(userId, roleToApi(role));
@@ -1376,7 +1389,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to change role."),
+          message: errorMessage(err, 'Failed to change role.'),
         };
       }
     },
@@ -1386,10 +1399,10 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const approveRegistrationRequest = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
+      if (!admin || !hasPermission(admin, 'user.manage')) {
         return {
           ok: false,
-          message: "Only system administrators can manage registrations.",
+          message: 'Only system administrators can manage registrations.',
         };
       }
       try {
@@ -1399,7 +1412,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to approve registration."),
+          message: errorMessage(err, 'Failed to approve registration.'),
         };
       }
     },
@@ -1409,10 +1422,10 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const rejectRegistrationRequest = useCallback(
     async (userId: string, reason?: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
+      if (!admin || !hasPermission(admin, 'user.manage')) {
         return {
           ok: false,
-          message: "Only system administrators can manage registrations.",
+          message: 'Only system administrators can manage registrations.',
         };
       }
       try {
@@ -1422,7 +1435,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to reject registration."),
+          message: errorMessage(err, 'Failed to reject registration.'),
         };
       }
     },
@@ -1432,8 +1445,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const deactivateUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
-        return { ok: false, message: "You are not allowed to manage users." };
+      if (!admin || !hasPermission(admin, 'user.manage')) {
+        return { ok: false, message: 'You are not allowed to manage users.' };
       }
       try {
         await apiDeactivateUser(userId);
@@ -1442,7 +1455,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to deactivate user."),
+          message: errorMessage(err, 'Failed to deactivate user.'),
         };
       }
     },
@@ -1452,8 +1465,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const reactivateUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
-        return { ok: false, message: "You are not allowed to manage users." };
+      if (!admin || !hasPermission(admin, 'user.manage')) {
+        return { ok: false, message: 'You are not allowed to manage users.' };
       }
       try {
         await apiReactivateUser(userId);
@@ -1462,7 +1475,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to reactivate user."),
+          message: errorMessage(err, 'Failed to reactivate user.'),
         };
       }
     },
@@ -1472,8 +1485,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const deleteUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
-        return { ok: false, message: "You are not allowed to manage users." };
+      if (!admin || !hasPermission(admin, 'user.manage')) {
+        return { ok: false, message: 'You are not allowed to manage users.' };
       }
       try {
         await apiDeleteUser(userId);
@@ -1482,27 +1495,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, "Failed to delete user."),
+          message: errorMessage(err, 'Failed to delete user.'),
         };
       }
     },
     [reloadData],
   );
 
-  const bulkUserAction: LmsContextValue["bulkUserAction"] = useCallback(
+  const bulkUserAction: LmsContextValue['bulkUserAction'] = useCallback(
     async (action, userIds) => {
       const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, "user.manage")) {
-        return { ok: false, message: "You are not allowed to manage users." };
+      if (!admin || !hasPermission(admin, 'user.manage')) {
+        return { ok: false, message: 'You are not allowed to manage users.' };
       }
-      const run = action === "suspend" ? apiDeactivateUser : apiDeleteUser;
+      const run = action === 'suspend' ? apiDeactivateUser : apiDeleteUser;
       const failed: string[] = [];
       // A few requests at a time so a large selection doesn't flood the API.
       for (let i = 0; i < userIds.length; i += 5) {
         const batch = userIds.slice(i, i + 5);
         const results = await Promise.allSettled(batch.map((id) => run(id)));
         results.forEach((result, index) => {
-          if (result.status === "rejected") failed.push(batch[index]);
+          if (result.status === 'rejected') failed.push(batch[index]);
         });
       }
       await reloadData(admin);
@@ -1516,10 +1529,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [courses],
   );
 
-  const userName = useCallback(
-    (userId: string) => userNames[userId] ?? "Unknown",
-    [userNames],
-  );
+  const userName = useCallback((userId: string) => userNames[userId] ?? 'Unknown', [userNames]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1580,15 +1590,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       void refreshPermissions();
     };
 
-    window.addEventListener("mor_permissions_updated", handlePermissionsEvent);
-    window.addEventListener("storage", handlePermissionsEvent);
-    window.addEventListener("focus", handlePermissionsEvent);
+    window.addEventListener('mor_permissions_updated', handlePermissionsEvent);
+    window.addEventListener('storage', handlePermissionsEvent);
+    window.addEventListener('focus', handlePermissionsEvent);
 
     return () => {
       clearInterval(timer);
-      window.removeEventListener("mor_permissions_updated", handlePermissionsEvent);
-      window.removeEventListener("storage", handlePermissionsEvent);
-      window.removeEventListener("focus", handlePermissionsEvent);
+      window.removeEventListener('mor_permissions_updated', handlePermissionsEvent);
+      window.removeEventListener('storage', handlePermissionsEvent);
+      window.removeEventListener('focus', handlePermissionsEvent);
     };
   }, [currentUser, refreshPermissions]);
 
@@ -1690,7 +1700,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 export function useLms(): LmsContextValue {
   const context = useContext(LmsContext);
   if (!context) {
-    throw new Error("useLms must be used within an LmsProvider");
+    throw new Error('useLms must be used within an LmsProvider');
   }
   return context;
 }

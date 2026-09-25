@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { Trash2, Upload } from "lucide-react";
-import type { CourseDeliveryMode, CourseLevel } from "@/types";
-import { COURSE_CATEGORIES } from "@/constants/course-categories";
-import { cn } from "@/lib/utils";
-import { inputClass, labelClass } from "./wizard-types";
-import { RichEditor } from "./wizard-components";
+import type React from 'react';
+import { Trash2, Upload } from 'lucide-react';
+import type { CourseDeliveryMode, CourseLevel } from '@/types';
+import { COURSE_CATEGORIES } from '@/constants/course-categories';
+import { cn } from '@/lib/utils';
+import { inputClass, labelClass } from './wizard-types';
+import { RichEditor } from './wizard-components';
 
 export interface StepCourseDetailsProps {
   title: string;
@@ -110,10 +110,12 @@ export function StepCourseDetails({
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. TAX-201"
             disabled={isEdit}
-            className={cn(inputClass, isEdit && "opacity-75 cursor-not-allowed bg-slate-50")}
+            className={cn(inputClass, isEdit && 'opacity-75 cursor-not-allowed bg-slate-50')}
           />
           {isEdit ? (
-            <p className="mt-1 text-[11px] text-slate-400">Course code cannot be changed once created.</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Course code cannot be changed once created.
+            </p>
           ) : null}
         </div>
 
@@ -151,35 +153,37 @@ export function StepCourseDetails({
       <div>
         <label className={labelClass}>Course Delivery Format *</label>
         <p className="text-xs text-slate-500 mb-2.5">
-          Select whether this course is taught purely online, requires a physical venue, or can be taken in both settings.
+          Select whether this course is taught purely online, requires a physical venue, or can be
+          taken in both settings.
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           <button
             type="button"
-            onClick={() => setDeliveryMode("ONLINE_ONLY")}
+            onClick={() => setDeliveryMode('ONLINE_ONLY')}
             className={cn(
-              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
-              deliveryMode === "ONLINE_ONLY"
-                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+              'flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer',
+              deliveryMode === 'ONLINE_ONLY'
+                ? 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
             )}
           >
             <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
               <span className="text-base">🌐</span> Pure Online Only
             </div>
             <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
-              100% digital self-paced web modules, video streams, and digital quizzes. No physical venue required.
+              100% digital self-paced web modules, video streams, and digital quizzes. No physical
+              venue required.
             </p>
           </button>
 
           <button
             type="button"
-            onClick={() => setDeliveryMode("IN_PERSON_ONLY")}
+            onClick={() => setDeliveryMode('IN_PERSON_ONLY')}
             className={cn(
-              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
-              deliveryMode === "IN_PERSON_ONLY"
-                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+              'flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer',
+              deliveryMode === 'IN_PERSON_ONLY'
+                ? 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
             )}
           >
             <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
@@ -192,19 +196,20 @@ export function StepCourseDetails({
 
           <button
             type="button"
-            onClick={() => setDeliveryMode("BOTH")}
+            onClick={() => setDeliveryMode('BOTH')}
             className={cn(
-              "flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer",
-              deliveryMode === "BOTH"
-                ? "border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+              'flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer',
+              deliveryMode === 'BOTH'
+                ? 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
             )}
           >
             <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
               <span className="text-base">🔄</span> Both (Flexible)
             </div>
             <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
-              Available self-paced online, AND admins can schedule in-person classroom batches at physical venues.
+              Available self-paced online, AND admins can schedule in-person classroom batches at
+              physical venues.
             </p>
           </button>
         </div>
@@ -249,7 +254,7 @@ export function StepCourseDetails({
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
           >
             <Upload className="h-4 w-4 text-indigo-500" />
-            {coverPreview ? "Change Cover Image" : "Upload Cover Image"}
+            {coverPreview ? 'Change Cover Image' : 'Upload Cover Image'}
           </button>
         </div>
       </div>
@@ -317,4 +322,3 @@ export function StepCourseDetails({
     </div>
   );
 }
-

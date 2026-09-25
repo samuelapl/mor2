@@ -1,13 +1,17 @@
-"use client";
+'use client';
 
-import { BookOpen, BookOpenCheck, CheckCircle2, Lock } from "lucide-react";
-import type { Lesson, UploadedResource } from "@/types";
-import type { ApiAttachedAssessment, ApiProgressLesson, ApiProgressSubLesson } from "@/lib/api/types";
-import { RichContent } from "@/components/ui/RichContent";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { getItemAttachments } from "@/components/features/courses/wizard-components";
-import { ClassroomAttachments } from "../ClassroomAttachments";
+import { BookOpen, BookOpenCheck, CheckCircle2, Lock } from 'lucide-react';
+import type { Lesson, UploadedResource } from '@/types';
+import type {
+  ApiAttachedAssessment,
+  ApiProgressLesson,
+  ApiProgressSubLesson,
+} from '@/lib/api/types';
+import { RichContent } from '@/components/ui/RichContent';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface DocumentStageProps {
   title: string;
@@ -72,7 +76,10 @@ export function DocumentStage({
             </h3>
           </div>
           <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
-            <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+            <RichContent
+              html={content}
+              className="text-[15px] sm:text-base leading-relaxed text-slate-800"
+            />
           </div>
         </div>
       ) : (
@@ -94,10 +101,10 @@ export function DocumentStage({
           <div
             className={`rounded-2xl border p-5 sm:p-6 transition-all shadow-2xs ${
               isQuizPassed
-                ? "border-emerald-200 bg-emerald-50/60"
+                ? 'border-emerald-200 bg-emerald-50/60'
                 : isQuizUnlocked
-                ? "border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/80 ring-1 ring-indigo-500/20"
-                : "border-slate-200 bg-slate-50/70"
+                  ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/80 ring-1 ring-indigo-500/20'
+                  : 'border-slate-200 bg-slate-50/70'
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -105,10 +112,10 @@ export function DocumentStage({
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                     isQuizPassed
-                      ? "border-emerald-300 bg-emerald-100 text-emerald-700"
+                      ? 'border-emerald-300 bg-emerald-100 text-emerald-700'
                       : isQuizUnlocked
-                      ? "border-indigo-300 bg-indigo-100 text-indigo-700 shadow-2xs"
-                      : "border-slate-200 bg-slate-100 text-slate-400"
+                        ? 'border-indigo-300 bg-indigo-100 text-indigo-700 shadow-2xs'
+                        : 'border-slate-200 bg-slate-100 text-slate-400'
                   }`}
                 >
                   {isQuizPassed ? (
@@ -126,17 +133,17 @@ export function DocumentStage({
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                         isQuizPassed
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                           : isQuizUnlocked
-                          ? "bg-indigo-100 text-indigo-800 border-indigo-200"
-                          : "bg-slate-200 text-slate-600 border-slate-300"
+                            ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                            : 'bg-slate-200 text-slate-600 border-slate-300'
                       }`}
                     >
                       {isQuizPassed
-                        ? "Assessment Passed"
+                        ? 'Assessment Passed'
                         : isQuizUnlocked
-                        ? "Assessment Ready"
-                        : "Assessment Locked"}
+                          ? 'Assessment Ready'
+                          : 'Assessment Locked'}
                     </span>
                   </div>
 
@@ -144,8 +151,8 @@ export function DocumentStage({
                     {isQuizPassed
                       ? `You successfully passed this checkpoint assessment (Requirement: ${assessment.passingScore}%). Great job!`
                       : isQuizUnlocked
-                      ? `Passing score: ${assessment.passingScore}%. Test your understanding to unlock the next lesson.`
-                      : `Complete all preceding topics and required reading time to unlock this assessment.`}
+                        ? `Passing score: ${assessment.passingScore}%. Test your understanding to unlock the next lesson.`
+                        : `Complete all preceding topics and required reading time to unlock this assessment.`}
                   </p>
                 </div>
               </div>
@@ -158,16 +165,16 @@ export function DocumentStage({
                   onClick={() => onTakeQuiz(assessment.id)}
                   className={
                     isQuizPassed
-                      ? "border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50"
+                      ? 'border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50'
                       : isQuizUnlocked
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-                      : "bg-slate-200 text-slate-400"
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                        : 'bg-slate-200 text-slate-400'
                   }
                 >
                   {isQuizPassed ? (
-                    "Review / Retake Assessment"
+                    'Review / Retake Assessment'
                   ) : isQuizUnlocked ? (
-                    "Take Lesson Assessment →"
+                    'Take Lesson Assessment →'
                   ) : (
                     <>
                       <Lock className="h-3.5 w-3.5 mr-1" /> Assessment Locked

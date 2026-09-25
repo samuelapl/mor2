@@ -3,7 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import {
   Video,
-  Sparkles,
+  MonitorPlay,
   Building2,
   ArrowRight,
   RefreshCw,
@@ -499,7 +499,7 @@ export function ScheduleSessionModal({
             {platformType === "LIVEKIT" ? (
               <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1 text-xs">
                 <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                  <MonitorPlay className="h-3.5 w-3.5 text-indigo-600" />
                   <span>Native In-LMS LiveKit Room</span>
                 </div>
                 <p className="text-indigo-700">

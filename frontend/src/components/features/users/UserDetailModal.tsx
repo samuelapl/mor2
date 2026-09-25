@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ShieldCheck, ShieldOff, XCircle } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
-import { Badge, UserStatusBadge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { ROLE_LABELS, ROLES } from "@/constants/roles";
-import { usePermissions } from "@/lib/usePermissions";
-import type { Role, User } from "@/types";
+import type { ReactNode } from 'react';
+import { Building2, CheckCircle2, ShieldCheck, ShieldOff, XCircle } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Badge, UserStatusBadge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { ROLE_LABELS, ROLES } from '@/constants/roles';
+import { usePermissions } from '@/lib/usePermissions';
+import type { Role, User } from '@/types';
 
 function getInitials(name: string): string {
   return name
-    .split(" ")
+    .split(' ')
     .map((word) => word[0])
     .slice(0, 2)
-    .join("")
+    .join('')
     .toUpperCase();
 }
 
@@ -49,10 +49,16 @@ export function UserDetailModal({
   isLoading = false,
 }: UserDetailModalProps) {
   const { can } = usePermissions();
-  const canManage = can("user.manage");
+  const canManage = can('user.manage');
 
   return (
-    <Modal open={Boolean(user)} onClose={onClose} title="User details" subtitle={user?.email} size="md">
+    <Modal
+      open={Boolean(user)}
+      onClose={onClose}
+      title="User details"
+      subtitle={user?.email}
+      size="md"
+    >
       {user ? (
         <div className="space-y-5">
           <div className="flex items-center gap-4">
@@ -75,9 +81,9 @@ export function UserDetailModal({
           </div>
 
           <div className="divide-y divide-slate-100">
-            <Row label="Phone" value={user.phone || "—"} />
-            <Row label="Department" value={user.department || "—"} />
-            <Row label="TIN" value={user.tin || "—"} />
+            <Row label="Phone" value={user.phone || '—'} />
+            <Row label="Department" value={user.department || '—'} />
+            <Row label="TIN" value={user.tin || '—'} />
             <Row
               label="Role"
               value={
@@ -113,17 +119,17 @@ export function UserDetailModal({
             <Row label="Member since" value={new Date(user.createdAt).toLocaleDateString()} />
             <Row
               label="Last login"
-              value={user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Never"}
+              value={user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
             />
             <Row
               label="Last updated"
-              value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : "—"}
+              value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '—'}
             />
           </div>
 
           {canManage ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-              {user.status === "pending" ? (
+              {user.status === 'pending' ? (
                 <>
                   <Button
                     size="sm"
@@ -143,7 +149,7 @@ export function UserDetailModal({
                     <XCircle className="h-3.5 w-3.5" /> Reject
                   </Button>
                 </>
-              ) : user.status === "suspended" ? (
+              ) : user.status === 'suspended' ? (
                 <Button
                   size="sm"
                   variant="success"

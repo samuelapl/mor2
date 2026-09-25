@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { FileQuestion, Plus, Trash2 } from "lucide-react";
-import type { Course, Question, Quiz } from "@/types";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { ApiError } from "@/lib/api/client";
+import { useEffect, useState } from 'react';
+import { FileQuestion, Plus, Trash2 } from 'lucide-react';
+import type { Course, Question, Quiz } from '@/types';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ApiError } from '@/lib/api/client';
 import {
   createCourseAssessment,
   fetchAssessmentWithAnswers,
   fetchCourseAssessments,
   updateAssessment,
-} from "@/lib/api/quiz";
-import type { SaveAssessmentBody } from "@/lib/api/quiz";
-import { cn } from "@/lib/utils";
+} from '@/lib/api/quiz';
+import type { SaveAssessmentBody } from '@/lib/api/quiz';
+import { cn } from '@/lib/utils';
 
 interface QuizBuilderProps {
   course: Course;
@@ -29,9 +29,9 @@ const emptyQuiz = (course: Course): Quiz => ({
 
 const blankQuestion = (): Question => ({
   id: `qn-${Date.now()}`,
-  type: "multiple_choice",
-  text: "",
-  options: ["", "", "", ""],
+  type: 'multiple_choice',
+  text: '',
+  options: ['', '', '', ''],
   correctIndex: 0,
   points: 10,
 });
@@ -61,10 +61,10 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
           attemptsAllowed: detail.maxAttempts,
           questions: detail.questions.map((q) => ({
             id: q.id,
-            type: "multiple_choice" as const,
+            type: 'multiple_choice' as const,
             text: q.question,
             options: q.options,
-            correctIndex: typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+            correctIndex: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
             points: 10,
           })),
         });
@@ -80,9 +80,9 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
   }, [course.id]);
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+    'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
-  const labelClass = "mb-1.5 block text-xs font-semibold text-slate-600";
+  const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 
   const patchQuiz = (patch: Partial<Quiz>) => {
     setQuiz((prev) => ({ ...prev, ...patch }));
@@ -99,9 +99,7 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
   const patchOption = (index: number, optionIndex: number, value: string) => {
     const questions = quiz.questions.map((question, i) => {
       if (i !== index) return question;
-      const options = question.options.map((option, j) =>
-        j === optionIndex ? value : option,
-      );
+      const options = question.options.map((option, j) => (j === optionIndex ? value : option));
       return { ...question, options };
     });
     patchQuiz({ questions });
@@ -126,9 +124,9 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
       shuffleQuestions: false,
       questions: quiz.questions.map((question) => ({
         id: question.id,
-        type: "MULTIPLE_CHOICE" as const,
+        type: 'MULTIPLE_CHOICE' as const,
         question: question.text,
-        options: question.options.filter((option) => option.trim() !== ""),
+        options: question.options.filter((option) => option.trim() !== ''),
         correctAnswer: question.correctIndex,
       })),
     };
@@ -142,7 +140,7 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
       }
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to save quiz.");
+      setError(err instanceof ApiError ? err.message : 'Failed to save quiz.');
     } finally {
       setSaving(false);
     }
@@ -150,9 +148,9 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
 
   const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
   const canSave =
-    quiz.title.trim() !== "" &&
+    quiz.title.trim() !== '' &&
     quiz.questions.length > 0 &&
-    quiz.questions.every((q) => q.text.trim() !== "" && q.options.some((o) => o.trim() !== ""));
+    quiz.questions.every((q) => q.text.trim() !== '' && q.options.some((o) => o.trim() !== ''));
 
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft">
@@ -162,9 +160,15 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
             <FileQuestion className="h-4 w-4" />
           </span>
           <h3 className="font-display text-sm font-bold text-slate-900">Quiz Builder</h3>
-          <Badge variant="outline">{course.code} — {course.title}</Badge>
+          <Badge variant="outline">
+            {course.code} — {course.title}
+          </Badge>
         </div>
-        {saved ? <Badge variant="green" dot>Saved</Badge> : null}
+        {saved ? (
+          <Badge variant="green" dot>
+            Saved
+          </Badge>
+        ) : null}
       </div>
 
       {fetching ? (
@@ -212,12 +216,13 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
               </div>
             ) : (
               quiz.questions.map((question, index) => (
-                <div key={question.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                <div
+                  key={question.id}
+                  className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <label className="block flex-1">
-                      <span className={labelClass}>
-                        Question {index + 1}
-                      </span>
+                      <span className={labelClass}>Question {index + 1}</span>
                       <input
                         value={question.text}
                         onChange={(event) => patchQuestion(index, { text: event.target.value })}
@@ -231,7 +236,9 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
                         type="number"
                         min={1}
                         value={question.points}
-                        onChange={(event) => patchQuestion(index, { points: Number(event.target.value) })}
+                        onChange={(event) =>
+                          patchQuestion(index, { points: Number(event.target.value) })
+                        }
                         className={inputClass}
                       />
                     </label>
@@ -250,10 +257,10 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
                       <div
                         key={optionIndex}
                         className={cn(
-                          "flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors",
+                          'flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors',
                           question.correctIndex === optionIndex
-                            ? "border-indigo-300 bg-indigo-50/50"
-                            : "border-slate-200/80 bg-white",
+                            ? 'border-indigo-300 bg-indigo-50/50'
+                            : 'border-slate-200/80 bg-white',
                         )}
                       >
                         <input
@@ -266,7 +273,7 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
                         <input
                           value={option}
                           onChange={(event) => patchOption(index, optionIndex, event.target.value)}
-                          placeholder={`Option ${optionIndex + 1}${question.correctIndex === optionIndex ? " (correct)" : ""}`}
+                          placeholder={`Option ${optionIndex + 1}${question.correctIndex === optionIndex ? ' (correct)' : ''}`}
                           className="w-full border-transparent bg-transparent px-0.5 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-transparent"
                         />
                       </div>
@@ -281,7 +288,8 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-slate-500">
-              {quiz.questions.length} questions · {totalPoints} points total · pass mark {quiz.passMark}%
+              {quiz.questions.length} questions · {totalPoints} points total · pass mark{' '}
+              {quiz.passMark}%
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={addQuestion}>
@@ -289,7 +297,7 @@ export function QuizBuilder({ course }: QuizBuilderProps) {
                 Add question
               </Button>
               <Button type="button" onClick={save} disabled={!canSave || saving}>
-                {saving ? "Saving…" : "Save quiz"}
+                {saving ? 'Saving…' : 'Save quiz'}
               </Button>
             </div>
           </div>

@@ -15,4 +15,3 @@ export class SubmitLiveQuizDto {
   @IsNumber()
   responseDurationSeconds: number;
 }
-

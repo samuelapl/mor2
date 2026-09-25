@@ -1,23 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { cn } from "@/lib/utils";
-import { fetchMyProfile } from "@/lib/api/users";
-import type { ApiUser } from "@/lib/api/types";
-import ProfileTab from "./ProfileTab";
-import SecurityTab from "./SecurityTab";
-import DetailsTab from "./DetailsTab";
-import PreferencesTab from "./PreferencesTab";
+import { useEffect, useState } from 'react';
+import { Modal } from '@/components/ui/Modal';
+import { cn } from '@/lib/utils';
+import { fetchMyProfile } from '@/lib/api/users';
+import type { ApiUser } from '@/lib/api/types';
+import ProfileTab from './ProfileTab';
+import SecurityTab from './SecurityTab';
+import DetailsTab from './DetailsTab';
+import PreferencesTab from './PreferencesTab';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
-type TabKey = "profile" | "security" | "details" | "preferences";
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "profile", label: "Profile" },
-  { key: "security", label: "Security" },
-  { key: "details", label: "Details" },
-  { key: "preferences", label: "Preferences" },
-];
+type TabKey = 'profile' | 'security' | 'details' | 'preferences';
 
 interface AccountModalProps {
   open: boolean;
@@ -25,9 +19,17 @@ interface AccountModalProps {
 }
 
 export default function AccountModal({ open, onClose }: AccountModalProps) {
-  const [tab, setTab] = useState<TabKey>("profile");
+  const [tab, setTab] = useState<TabKey>('profile');
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(false);
+  const { tBilingual } = useTranslation();
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'profile', label: tBilingual('Profile', 'መገለጫ') },
+    { key: 'security', label: tBilingual('Security', 'ደህንነት') },
+    { key: 'details', label: tBilingual('Details', 'ዝርዝር መረጃ') },
+    { key: 'preferences', label: tBilingual('Preferences', 'ምርጫዎች') },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -42,21 +44,24 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Account settings"
-      subtitle="Manage your profile, security, and preferences"
+      title={tBilingual('Account settings', 'የመለያ ቅንብሮች')}
+      subtitle={tBilingual(
+        'Manage your profile, security, and preferences',
+        'የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ',
+      )}
       size="lg"
     >
       <div className="mb-5 flex gap-1 border-b border-slate-100 pb-3">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
               tab === t.key
-                ? "bg-indigo-50 text-indigo-600"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+                ? 'bg-indigo-50 text-indigo-600'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
             )}
           >
             {t.label}
@@ -64,12 +69,12 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
         ))}
       </div>
 
-      {tab === "profile" ? (
+      {tab === 'profile' ? (
         <ProfileTab profile={profile} loading={loading} onUpdated={setProfile} />
       ) : null}
-      {tab === "security" ? <SecurityTab /> : null}
-      {tab === "details" ? <DetailsTab profile={profile} loading={loading} /> : null}
-      {tab === "preferences" ? <PreferencesTab /> : null}
+      {tab === 'security' ? <SecurityTab /> : null}
+      {tab === 'details' ? <DetailsTab profile={profile} loading={loading} /> : null}
+      {tab === 'preferences' ? <PreferencesTab /> : null}
     </Modal>
   );
 }

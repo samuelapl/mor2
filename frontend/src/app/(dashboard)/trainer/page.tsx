@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { Building2,
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  Building2,
   ArrowRight,
   BookOpen,
   Calendar,
@@ -15,51 +16,34 @@ import { Building2,
   Presentation,
   UsersRound,
   Video,
-} from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { usePagination } from "@/lib/usePagination";
-import { fetchCourseAssessments } from "@/lib/api/quiz";
-import { fetchCourseLearnersProgress } from "@/lib/api/progress";
-import { fetchLiveSessions } from "@/lib/api/monitoring";
-import type { ApiLearnerProgress, ApiLiveSession } from "@/lib/api/types";
-import PageShell from "@/components/shared/PageShell";
-import PageSection from "@/components/shared/PageSection";
-import { StatCard } from "@/components/ui/StatCard";
-import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Pagination } from "@/components/ui/Pagination";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { Table, Td } from "@/components/ui/Table";
-import { CourseCard } from "@/components/features/courses/CourseCard";
-import { DonutChart, BarChart } from "@/components/ui/charts";
-import { LiveSessionWorkspace } from "@/components/features/sessions/virtual/LiveSessionWorkspace";
-import { SessionDetailModal } from "@/components/features/sessions/shared/SessionDetailModal";
-import { isInPersonSession } from "@/lib/session-mode";
-
-const QUICK_LINKS = [
-  {
-    href: "/trainer/sessions",
-    title: "My Live Sessions",
-    description: "Schedule, manage, and facilitate live classes.",
-    icon: Presentation,
-  },
-  {
-    href: "/trainer/question-bank",
-    title: "Question Bank & Quizzes",
-    description: "Author questions and assemble comprehensive quizzes.",
-    icon: FileQuestion,
-  },
-  {
-    href: "/trainer/sessions",
-    title: "My Sessions",
-    description: "Conduct scheduled training sessions and track attendance.",
-    icon: Presentation,
-  },
-];
+} from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { fetchCourseAssessments } from '@/lib/api/quiz';
+import { fetchCourseLearnersProgress } from '@/lib/api/progress';
+import { fetchLiveSessions } from '@/lib/api/monitoring';
+import type { ApiLearnerProgress, ApiLiveSession } from '@/lib/api/types';
+import PageShell from '@/components/shared/PageShell';
+import PageSection from '@/components/shared/PageSection';
+import { StatCard } from '@/components/ui/StatCard';
+import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Table, Td } from '@/components/ui/Table';
+import { CourseCard } from '@/components/features/courses/CourseCard';
+import { DonutChart, BarChart } from '@/components/ui/charts';
+import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
+import { isInPersonSession } from '@/lib/session-mode';
 
 export default function TrainerDashboardPage() {
   const { courses, currentUser } = useLms();
+  const { lang } = useTranslation();
+  const isAmharic = lang === 'am';
+
   const assigned = courses.filter((c) => c.trainerId === currentUser?.id);
 
   const [allSessions, setAllSessions] = useState<ApiLiveSession[]>([]);
@@ -78,7 +62,6 @@ export default function TrainerDashboardPage() {
     fetchLiveSessions({ limit: 100 })
       .then((res) => {
         if (cancelled) return;
-        // Filter sessions for courses assigned to this trainer
         const relevant = res.data.filter((s) => assignedIds.has(s.courseId));
         setAllSessions(relevant);
         setSessionsLoading(false);
@@ -95,12 +78,12 @@ export default function TrainerDashboardPage() {
   }, [currentUser?.id, assigned.length]);
 
   const upcomingSessions = allSessions.filter(
-    (s) => s.status === "SCHEDULED" || s.status === "LIVE"
+    (s) => s.status === 'SCHEDULED' || s.status === 'LIVE',
   );
-  const completedSessions = allSessions.filter((s) => s.status === "COMPLETED");
+  const completedSessions = allSessions.filter((s) => s.status === 'COMPLETED');
 
   const [quizReady, setQuizReady] = useState<Record<string, boolean>>({});
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [learners, setLearners] = useState<ApiLearnerProgress[] | null>(null);
   const [learnersError, setLearnersError] = useState<string | null>(null);
 
@@ -118,9 +101,7 @@ export default function TrainerDashboardPage() {
         }),
       );
       if (cancelled) return;
-      setQuizReady(
-        Object.fromEntries(entries.map((entry) => [entry.id, entry.hasQuiz])),
-      );
+      setQuizReady(Object.fromEntries(entries.map((entry) => [entry.id, entry.hasQuiz])));
     })();
     return () => {
       cancelled = true;
@@ -140,106 +121,141 @@ export default function TrainerDashboardPage() {
         if (!cancelled) setLearners(res.learners);
       })
       .catch(() => {
-        if (!cancelled) setLearnersError("Unable to load learner progress.");
+        if (!cancelled)
+          setLearnersError(
+            isAmharic ? 'የተማሪዎችን እድገት መጫን አልተቻለም።' : 'Unable to load learner progress.',
+          );
       });
     return () => {
       cancelled = true;
     };
-  }, [selectedCourseId]);
+  }, [selectedCourseId, isAmharic]);
 
   const quizzes = useMemo(
     () => assigned.filter((course) => quizReady[course.id]),
     [assigned, quizReady],
   );
-  const assignedPage = usePagination(assigned, 3);
+  const assignedPage = usePagination(assigned, 6);
+  const learnersPage = usePagination(learners ?? [], 8);
 
-  // Total unique learners across assigned courses
   const totalEnrolledLearners = useMemo(() => {
     const ids = new Set<string>();
     assigned.forEach((c) => c.enrolledLearnerIds.forEach((id) => ids.add(id)));
     return ids.size;
   }, [assigned]);
 
-  // Session status segments for Donut chart
-  const sessionStatusSegments = [
+  const quickLinks = [
     {
-      label: "Upcoming",
-      value: allSessions.filter((s) => s.status === "SCHEDULED").length,
-      color: "#6366f1",
+      href: '/trainer/sessions',
+      title: isAmharic ? 'የቀጥታ ስልጠናዎች' : 'My Live Sessions',
+      description: isAmharic
+        ? 'የቀጥታ ክፍሎችን ያቅዱ፣ ያስተዳድሩ እና ይመሩ።'
+        : 'Schedule, manage, and facilitate live classes.',
+      icon: Presentation,
     },
     {
-      label: "Live Now",
-      value: allSessions.filter((s) => s.status === "LIVE").length,
-      color: "#10b981",
+      href: '/trainer/question-bank',
+      title: isAmharic ? 'የጥያቄዎች ባንክ እና ፈተናዎች' : 'Question Bank & Quizzes',
+      description: isAmharic
+        ? 'ጥያቄዎችን ያዘጋጁ እና አጠቃላይ ፈተናዎችን ያዋቅሩ።'
+        : 'Author questions and assemble comprehensive quizzes.',
+      icon: FileQuestion,
     },
     {
-      label: "Completed",
-      value: completedSessions.length,
-      color: "#94a3b8",
-    },
-    {
-      label: "Cancelled",
-      value: allSessions.filter((s) => s.status === "CANCELLED").length,
-      color: "#f43f5e",
+      href: '/trainer/attendance',
+      title: isAmharic ? 'የስልጠና ክትትል' : 'Attendance Tracker',
+      description: isAmharic
+        ? 'የተማሪዎችን የክትትል ሁኔታ እና ቆይታ ይመዝግቡ።'
+        : 'Track check-ins, duration, and attendance records.',
+      icon: ClipboardCheck,
     },
   ];
 
-  // Learner completion metrics if course is selected
+  const sessionStatusSegments = [
+    {
+      label: isAmharic ? 'የመጪ' : 'Upcoming',
+      value: allSessions.filter((s) => s.status === 'SCHEDULED').length,
+      color: '#6366f1',
+    },
+    {
+      label: isAmharic ? 'በቀጥታ ስርጭት ላይ' : 'Live Now',
+      value: allSessions.filter((s) => s.status === 'LIVE').length,
+      color: '#10b981',
+    },
+    {
+      label: isAmharic ? 'የተጠናቀቁ' : 'Completed',
+      value: completedSessions.length,
+      color: '#94a3b8',
+    },
+    {
+      label: isAmharic ? 'የተሰረዙ' : 'Cancelled',
+      value: allSessions.filter((s) => s.status === 'CANCELLED').length,
+      color: '#f43f5e',
+    },
+  ];
+
   const learnerStatusSegments = useMemo(() => {
     if (!learners || learners.length === 0) return [];
     const completed = learners.filter((l) => l.progressPercent >= 100).length;
     const inProg = learners.filter((l) => l.progressPercent > 0 && l.progressPercent < 100).length;
     const notStarted = learners.filter((l) => l.progressPercent === 0).length;
     return [
-      { label: "Completed", value: completed, color: "#10b981" },
-      { label: "In Progress", value: inProg, color: "#6366f1" },
-      { label: "Not Started", value: notStarted, color: "#cbd5e1" },
+      { label: isAmharic ? 'የተጠናቀቁ' : 'Completed', value: completed, color: '#10b981' },
+      { label: isAmharic ? 'በመካሄድ ላይ' : 'In Progress', value: inProg, color: '#6366f1' },
+      { label: isAmharic ? 'ያልተጀመሩ' : 'Not Started', value: notStarted, color: '#cbd5e1' },
     ];
-  }, [learners]);
+  }, [learners, isAmharic]);
 
-  // Course enrollment comparison items for Bar chart
   const courseEnrollmentBars = useMemo(() => {
     return assigned.slice(0, 5).map((c) => ({
-      label: c.title,
+      label: isAmharic && (c as any).titleAm ? (c as any).titleAm : c.title,
       value: c.enrolledLearnerIds.length,
-      subLabel: `${c.enrolledLearnerIds.length} learners`,
-      color: "#6366f1",
+      subLabel: isAmharic
+        ? `${c.enrolledLearnerIds.length} ሰልጣኞች`
+        : `${c.enrolledLearnerIds.length} learners`,
+      color: '#6366f1',
     }));
-  }, [assigned]);
+  }, [assigned, isAmharic]);
 
   return (
     <PageShell
       role="trainer"
-      title="Trainer Dashboard"
-      description="Manage live training sessions, mark student attendance, author questions, and track learner achievement."
+      title={isAmharic ? 'የአሰልጣኝ ዳሽቦርድ' : 'Trainer Dashboard'}
+      description={
+        isAmharic
+          ? 'የቀጥታ ስልጠናዎችን ያካሂዱ፣ ፈተናዎችን ያዘጋጁ፣ የተማሪዎችን ተሳትፎ እና ክትትል ይቆጣጠሩ።'
+          : 'Manage live training sessions, mark student attendance, author questions, and track learner achievement.'
+      }
     >
       {/* Top Stat Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Presentation}
-          label="Assigned courses"
+          label={isAmharic ? 'የተመደቡ ኮርሶች' : 'Assigned courses'}
           value={assigned.length}
-          hint="Courses you facilitate"
+          hint={isAmharic ? 'እርስዎ የሚያሰለጥኗቸው ኮርሶች' : 'Courses you facilitate'}
         />
         <StatCard
           icon={Video}
-          label="Upcoming sessions"
+          label={isAmharic ? 'የመጪ ስልጠናዎች' : 'Upcoming sessions'}
           value={upcomingSessions.length}
-          hint={`${allSessions.length} total scheduled`}
+          hint={
+            isAmharic ? `ጠቅላላ ${allSessions.length} የታቀዱ` : `${allSessions.length} total scheduled`
+          }
           iconClassName="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           icon={UsersRound}
-          label="Total learners"
+          label={isAmharic ? 'ጠቅላላ ሰልጣኞች' : 'Total learners'}
           value={totalEnrolledLearners}
-          hint="Across assigned courses"
+          hint={isAmharic ? 'በተመደቡልዎ ኮርሶች ውስጥ' : 'Across assigned courses'}
           iconClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           icon={FileQuestion}
-          label="Quizzes ready"
+          label={isAmharic ? 'ዝግጁ ፈተናዎች' : 'Quizzes ready'}
           value={quizzes.length}
-          hint="From question bank"
+          hint={isAmharic ? 'ከጥያቄዎች ባንክ የተዋቀሩ' : 'From question bank'}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
       </div>
@@ -252,13 +268,17 @@ export default function TrainerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  Live Session Distribution
+                  {isAmharic ? 'የቀጥታ ስልጠናዎች ስርጭት' : 'Live Session Distribution'}
                 </h4>
-                <p className="text-xs text-slate-500">Breakdown of scheduled and completed training</p>
+                <p className="text-xs text-slate-500">
+                  {isAmharic
+                    ? 'የታቀዱ እና የተጠናቀቁ ክፍለ-ጊዜዎች ዝርዝር'
+                    : 'Breakdown of scheduled and completed training'}
+                </p>
               </div>
               <Link href="/trainer/sessions">
                 <Button variant="outline" size="sm">
-                  Sessions
+                  {isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
@@ -266,16 +286,22 @@ export default function TrainerDashboardPage() {
             <div className="mt-6">
               <DonutChart
                 segments={sessionStatusSegments}
-                centerLabel="Sessions"
+                centerLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
                 centerValue={allSessions.length}
-                emptyText="No sessions created"
+                emptyText={isAmharic ? 'ምንም ስልጠና አልተፈጠረም' : 'No sessions created'}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span>Completed training: {completedSessions.length}</span>
+            <span>
+              {isAmharic
+                ? `የተጠናቀቁ: ${completedSessions.length}`
+                : `Completed training: ${completedSessions.length}`}
+            </span>
             <span className="font-medium text-indigo-600">
-              {upcomingSessions.length} upcoming
+              {isAmharic
+                ? `${upcomingSessions.length} መጪዎች`
+                : `${upcomingSessions.length} upcoming`}
             </span>
           </div>
         </div>
@@ -286,33 +312,49 @@ export default function TrainerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  Enrollment by Course
+                  {isAmharic ? 'የተማሪዎች ምዝገባ በኮርስ' : 'Enrollment by Course'}
                 </h4>
-                <p className="text-xs text-slate-500">Student enrollment across your training catalog</p>
+                <p className="text-xs text-slate-500">
+                  {isAmharic
+                    ? 'በእርስዎ ኮርሶች የተመዘገቡ ተማሪዎች'
+                    : 'Student enrollment across your training catalog'}
+                </p>
               </div>
-              <Badge variant="blue">{assigned.length} Courses</Badge>
+              <Badge variant="blue">
+                {isAmharic ? `${assigned.length} ኮርሶች` : `${assigned.length} Courses`}
+              </Badge>
             </div>
             <div className="mt-6">
               <BarChart
                 items={courseEnrollmentBars}
-                emptyText="No courses assigned yet."
+                emptyText={isAmharic ? 'እስካሁን የተመደበ ኮርስ የለም።' : 'No courses assigned yet.'}
                 barColor="#4f46e5"
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span>Total enrolled students: {totalEnrolledLearners}</span>
-            <Link href="/trainer/sessions" className="font-semibold text-indigo-600 hover:underline">
-              View sessions & attendance →
+            <span>
+              {isAmharic
+                ? `ጠቅላላ ሰልጣኞች: ${totalEnrolledLearners}`
+                : `Total enrolled students: ${totalEnrolledLearners}`}
+            </span>
+            <Link
+              href="/trainer/sessions"
+              className="font-semibold text-indigo-600 hover:underline"
+            >
+              {isAmharic ? 'ክፍለ-ጊዜዎች እና ክትትል እይ →' : 'View sessions & attendance →'}
             </Link>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <PageSection title="Quick actions" description="Direct access to trainer workflows.">
+      <PageSection
+        title={isAmharic ? 'ፈጣን ተግባራት' : 'Quick actions'}
+        description={isAmharic ? 'የአሰልጣኝ የስራ ፍሰቶች ቀጥታ መዳረሻ' : 'Direct access to trainer workflows.'}
+      >
         <div className="grid gap-4 sm:grid-cols-3">
-          {QUICK_LINKS.map((link) => {
+          {quickLinks.map((link) => {
             const Icon = link.icon;
             return (
               <Link key={link.href} href={link.href} className="group">
@@ -325,7 +367,7 @@ export default function TrainerDashboardPage() {
                     <CardDescription>{link.description}</CardDescription>
                   </div>
                   <p className="mt-3 flex items-center gap-1 text-xs font-medium text-indigo-500 transition-transform duration-200 group-hover:translate-x-0.5">
-                    Open workspace
+                    {isAmharic ? 'ክፈት' : 'Open workspace'}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </p>
                 </Card>
@@ -337,12 +379,16 @@ export default function TrainerDashboardPage() {
 
       {/* Upcoming Sessions List */}
       <PageSection
-        title="Upcoming live sessions"
-        description="Sessions scheduled for your assigned courses."
+        title={isAmharic ? 'የመጪ የቀጥታ ስልጠናዎች' : 'Upcoming live sessions'}
+        description={
+          isAmharic
+            ? 'ለተመደቡልዎ ኮርሶች የታቀዱ የቀጥታ ክፍለ-ጊዜዎች።'
+            : 'Sessions scheduled for your assigned courses.'
+        }
         action={
           <Link href="/trainer/sessions">
             <Button variant="outline" size="sm">
-              All sessions
+              {isAmharic ? 'ሁሉም ክፍለ-ጊዜዎች' : 'All sessions'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -357,16 +403,22 @@ export default function TrainerDashboardPage() {
         ) : upcomingSessions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
-              const isLive = session.status === "LIVE";
-              const dateStr = new Date(session.scheduledAt).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              });
-              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(undefined, {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+              const isLive = session.status === 'LIVE';
+              const dateStr = new Date(session.scheduledAt).toLocaleDateString(
+                isAmharic ? 'am-ET' : undefined,
+                {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              );
+              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(
+                isAmharic ? 'am-ET' : undefined,
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                },
+              );
 
               return (
                 <div
@@ -375,19 +427,27 @@ export default function TrainerDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <Badge variant={isLive ? "green" : "blue"}>
-                        {isLive ? "● LIVE NOW" : "SCHEDULED"}
+                      <Badge variant={isLive ? 'green' : 'blue'}>
+                        {isLive
+                          ? isAmharic
+                            ? '● የቀጥታ ስርጭት'
+                            : '● LIVE NOW'
+                          : isAmharic
+                            ? 'የታቀደ'
+                            : 'SCHEDULED'}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
-                        {session.durationMinutes} mins
+                        {session.durationMinutes} {isAmharic ? 'ደቂቃ' : 'mins'}
                       </span>
                     </div>
 
                     <h4 className="mt-3 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                      {session.titleEn}
+                      {isAmharic ? session.titleAm || session.titleEn : session.titleEn}
                     </h4>
                     {(() => {
-                      const cTitle = courses.find((c) => c.id === session.courseId)?.title;
+                      const c = courses.find((course) => course.id === session.courseId);
+                      const cTitle =
+                        isAmharic && (c as any)?.titleAm ? (c as any).titleAm : c?.title;
                       return cTitle ? (
                         <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
                       ) : null;
@@ -408,23 +468,40 @@ export default function TrainerDashboardPage() {
                   <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-3">
                     {isInPersonSession(session) ? (
                       <Link href="/trainer/attendance" className="flex-1">
-                        <Button size="sm" className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                        <Button
+                          size="sm"
+                          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                        >
                           <Building2 className="h-3.5 w-3.5" />
-                          Classroom Attendance
+                          {isAmharic ? 'የክፍል መገኘት' : 'Classroom Attendance'}
                         </Button>
                       </Link>
                     ) : (
                       <Button
                         size="sm"
                         onClick={() => setActiveLiveSession(session)}
-                        className={isLive ? "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" : "flex-1"}
+                        className={
+                          isLive
+                            ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'flex-1'
+                        }
                       >
                         <Video className="h-3.5 w-3.5" />
-                        {isLive ? "Start Meeting (In-LMS)" : "Start Session"}
+                        {isLive
+                          ? isAmharic
+                            ? 'ስልጠና ጀምር'
+                            : 'Start Meeting'
+                          : isAmharic
+                            ? 'ስልጠና ክፈት'
+                            : 'Start Session'}
                       </Button>
                     )}
                     <Link href="/trainer/sessions">
-                      <Button size="sm" variant="outline" title="Session Details & Attendance">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title={isAmharic ? 'የስልጠና ዝርዝር እና ክትትል' : 'Session Details & Attendance'}
+                      >
                         <ClipboardCheck className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
@@ -438,18 +515,26 @@ export default function TrainerDashboardPage() {
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
               <Presentation className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-xs font-semibold text-slate-700">No scheduled sessions</p>
+            <p className="mt-3 text-xs font-semibold text-slate-700">
+              {isAmharic ? 'ምንም የታቀደ የቀጥታ ስልጠና የለም' : 'No scheduled sessions'}
+            </p>
             <p className="mt-1 text-xs text-slate-400">
-              Schedule live video sessions for your courses or review previously completed classes.
+              {isAmharic
+                ? 'ለኮርሶችዎ የቀጥታ ቪዲዮ ስልጠናዎችን ያቅዱ ወይም የተጠናቀቁ ክፍለ-ጊዜዎችን ይገምግሙ።'
+                : 'Schedule live video sessions for your courses or review previously completed classes.'}
             </p>
           </div>
         )}
       </PageSection>
 
-      {/* Assigned Courses Section */}
+      {/* Assigned Courses Section with Modern Pagination */}
       <PageSection
-        title="Assigned courses"
-        description="Courses assigned to you for instruction and assessment."
+        title={isAmharic ? 'የተመደቡ ኮርሶች' : 'Assigned courses'}
+        description={
+          isAmharic
+            ? 'ለማስተማር እና ለፈተና ዝግጅት የተመደቡልዎ ኮርሶች።'
+            : 'Courses assigned to you for instruction and assessment.'
+        }
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {assignedPage.pageItems.map((course) => (
@@ -458,15 +543,15 @@ export default function TrainerDashboardPage() {
               course={course}
               extraBadge={
                 quizReady[course.id] ? (
-                  <Badge variant="green">Quiz ready</Badge>
+                  <Badge variant="green">{isAmharic ? 'ፈተና ዝግጁ' : 'Quiz ready'}</Badge>
                 ) : (
-                  <Badge variant="outline">No quiz</Badge>
+                  <Badge variant="outline">{isAmharic ? 'ፈተና የለም' : 'No quiz'}</Badge>
                 )
               }
             >
               <Link href="/trainer/question-bank">
                 <Button size="sm" variant="outline">
-                  Question bank
+                  {isAmharic ? 'የጥያቄዎች ባንክ' : 'Question bank'}
                 </Button>
               </Link>
             </CourseCard>
@@ -476,26 +561,36 @@ export default function TrainerDashboardPage() {
           page={assignedPage.page}
           totalPages={assignedPage.totalPages}
           onPageChange={assignedPage.setPage}
+          totalItems={assigned.length}
+          pageSize={assignedPage.pageSize}
+          onPageSizeChange={assignedPage.setPageSize}
+          pageSizeOptions={[6, 12, 24, 48]}
         />
       </PageSection>
 
       {/* Learner Progress & Achievement */}
       <PageSection
-        title="Learner progress & performance"
-        description="Inspect student completion and progress across your training courses."
+        title={isAmharic ? 'የተማሪዎች እድገት እና ውጤት' : 'Learner progress & performance'}
+        description={
+          isAmharic
+            ? 'በስልጠና ኮርሶችዎ ውስጥ ያሉ የተማሪዎችን ማጠናቀቂያ እና እድገት ይከታተሉ።'
+            : 'Inspect student completion and progress across your training courses.'
+        }
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-600">Filter by Course:</label>
+            <label className="text-xs font-semibold text-slate-600">
+              {isAmharic ? 'በኮርስ አጣራ:' : 'Filter by Course:'}
+            </label>
             <select
               value={selectedCourseId}
               onChange={(event) => setSelectedCourseId(event.target.value)}
               className="rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
             >
-              <option value="">Select a course…</option>
+              <option value="">{isAmharic ? 'ኮርስ ይምረጡ…' : 'Select a course…'}</option>
               {assigned.map((course) => (
                 <option key={course.id} value={course.id}>
-                  {course.title}
+                  {isAmharic && (course as any).titleAm ? (course as any).titleAm : course.title}
                 </option>
               ))}
             </select>
@@ -503,9 +598,15 @@ export default function TrainerDashboardPage() {
 
           {learners && learners.length > 0 && (
             <div className="flex items-center gap-3 text-xs text-slate-500">
-              <span>{learners.length} Students Enrolled</span>
+              <span>
+                {isAmharic
+                  ? `${learners.length} የተመዘገቡ ተማሪዎች`
+                  : `${learners.length} Students Enrolled`}
+              </span>
               <span className="font-semibold text-emerald-600">
-                {learners.filter((l) => l.progressPercent >= 100).length} Completed
+                {isAmharic
+                  ? `${learners.filter((l) => l.progressPercent >= 100).length} ያጠናቀቁ`
+                  : `${learners.filter((l) => l.progressPercent >= 100).length} Completed`}
               </span>
             </div>
           )}
@@ -515,11 +616,19 @@ export default function TrainerDashboardPage() {
           <p className="text-sm text-red-500">{learnersError}</p>
         ) : learners === null ? (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <p className="text-xs text-slate-400">Choose a course above to inspect learner progress.</p>
+            <p className="text-xs text-slate-400">
+              {isAmharic
+                ? 'የተማሪዎችን እድገት ለማየት ከላይ ኮርስ ይምረጡ።'
+                : 'Choose a course above to inspect learner progress.'}
+            </p>
           </div>
         ) : learners.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <p className="text-xs text-slate-400">No enrolled learners in this course yet.</p>
+            <p className="text-xs text-slate-400">
+              {isAmharic
+                ? 'በዚህ ኮርስ ውስጥ እስካሁን የተመዘገበ ተማሪ የለም።'
+                : 'No enrolled learners in this course yet.'}
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -527,14 +636,20 @@ export default function TrainerDashboardPage() {
             <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-4">
               <DonutChart
                 segments={learnerStatusSegments}
-                centerLabel="Students"
+                centerLabel={isAmharic ? 'ሰልጣኞች' : 'Students'}
                 centerValue={learners.length}
-                size={140}
               />
             </div>
 
-            <Table columns={["Learner", "Email", "Progress", "Status"]}>
-              {learners.map((learner) => (
+            <Table
+              columns={[
+                isAmharic ? 'ተማሪ' : 'Learner',
+                isAmharic ? 'ኢሜይል' : 'Email',
+                isAmharic ? 'እድገት' : 'Progress',
+                isAmharic ? 'ሁኔታ' : 'Status',
+              ]}
+            >
+              {learnersPage.pageItems.map((learner) => (
                 <tr key={learner.userId}>
                   <Td>
                     <span className="font-medium text-slate-900">
@@ -553,17 +668,28 @@ export default function TrainerDashboardPage() {
                     </div>
                   </Td>
                   <Td>
-                    <Badge variant={learner.status === "COMPLETED" ? "green" : "blue"}>
-                      {learner.status === "COMPLETED"
-                        ? "Completed"
-                        : learner.status === "ACTIVE"
-                        ? "Active"
-                        : learner.status}
+                    <Badge variant={learner.progressPercent >= 100 ? 'green' : 'blue'}>
+                      {learner.progressPercent >= 100
+                        ? isAmharic
+                          ? 'የተጠናቀቀ'
+                          : 'Completed'
+                        : isAmharic
+                          ? 'በመካሄድ ላይ'
+                          : 'Active'}
                     </Badge>
                   </Td>
                 </tr>
               ))}
             </Table>
+            <Pagination
+              page={learnersPage.page}
+              totalPages={learnersPage.totalPages}
+              onPageChange={learnersPage.setPage}
+              totalItems={learners.length}
+              pageSize={learnersPage.pageSize}
+              onPageSizeChange={learnersPage.setPageSize}
+              pageSizeOptions={[8, 16, 32, 64]}
+            />
           </div>
         )}
       </PageSection>

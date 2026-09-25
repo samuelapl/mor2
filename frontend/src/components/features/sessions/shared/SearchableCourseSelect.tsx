@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, ChevronDown, Check, BookOpen, X } from "lucide-react";
-import type { Course } from "@/types";
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Search, ChevronDown, Check, BookOpen, X } from 'lucide-react';
+import type { Course } from '@/types';
 
 interface SearchableCourseSelectProps {
   courses: Course[];
@@ -18,14 +18,11 @@ export function SearchableCourseSelect({
   disabled = false,
 }: SearchableCourseSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const selectedCourse = useMemo(
-    () => courses.find((c) => c.id === value),
-    [courses, value]
-  );
+  const selectedCourse = useMemo(() => courses.find((c) => c.id === value), [courses, value]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -35,27 +32,27 @@ export function SearchableCourseSelect({
       }
     }
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
       // Auto-focus search input
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false);
       }
     }
     if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -64,11 +61,11 @@ export function SearchableCourseSelect({
     if (!searchQuery.trim()) return courses;
     const query = searchQuery.toLowerCase().trim();
     return courses.filter((c) => {
-      const matchCode = (c.code || "").toLowerCase().includes(query);
-      const matchTitle = (c.title || "").toLowerCase().includes(query);
-      const matchTitleEn = ((c as any).titleEn || "").toLowerCase().includes(query);
-      const matchTitleAm = ((c as any).titleAm || "").toLowerCase().includes(query);
-      const matchCat = (c.category || "").toLowerCase().includes(query);
+      const matchCode = (c.code || '').toLowerCase().includes(query);
+      const matchTitle = (c.title || '').toLowerCase().includes(query);
+      const matchTitleEn = ((c as any).titleEn || '').toLowerCase().includes(query);
+      const matchTitleAm = ((c as any).titleAm || '').toLowerCase().includes(query);
+      const matchCat = (c.category || '').toLowerCase().includes(query);
       return matchCode || matchTitle || matchTitleEn || matchTitleAm || matchCat;
     });
   }, [courses, searchQuery]);
@@ -82,9 +79,9 @@ export function SearchableCourseSelect({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`w-full text-left rounded-xl border bg-white px-3.5 py-2.5 shadow-sm transition outline-none flex items-center justify-between gap-2.5 ${
           isOpen
-            ? "border-indigo-500 ring-4 ring-indigo-500/10"
-            : "border-slate-200/90 hover:border-slate-300"
-        } ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+            ? 'border-indigo-500 ring-4 ring-indigo-500/10'
+            : 'border-slate-200/90 hover:border-slate-300'
+        } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
@@ -113,7 +110,7 @@ export function SearchableCourseSelect({
 
         <div className="flex items-center gap-1 text-slate-400 shrink-0">
           <ChevronDown
-            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180 text-indigo-600" : ""}`}
+            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-600' : ''}`}
           />
         </div>
       </button>
@@ -135,7 +132,7 @@ export function SearchableCourseSelect({
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => setSearchQuery('')}
                 className="absolute right-3.5 top-2 text-slate-400 hover:text-slate-600 p-0.5"
               >
                 <X className="h-3.5 w-3.5" />
@@ -146,11 +143,9 @@ export function SearchableCourseSelect({
           {/* Results Summary */}
           <div className="flex items-center justify-between px-2 pb-1 text-[11px] text-slate-400 font-medium">
             <span>
-              {filteredCourses.length} course{filteredCourses.length === 1 ? "" : "s"} found
+              {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
             </span>
-            {searchQuery && (
-              <span className="text-indigo-600 font-medium">Filtered</span>
-            )}
+            {searchQuery && <span className="text-indigo-600 font-medium">Filtered</span>}
           </div>
 
           {/* Scrollable List */}
@@ -169,12 +164,12 @@ export function SearchableCourseSelect({
                     onClick={() => {
                       onChange(c.id);
                       setIsOpen(false);
-                      setSearchQuery("");
+                      setSearchQuery('');
                     }}
                     className={`w-full text-left rounded-xl px-3 py-2 text-xs transition flex items-center justify-between gap-3 ${
                       isSelected
-                        ? "bg-indigo-50 text-indigo-900 font-semibold"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        ? 'bg-indigo-50 text-indigo-900 font-semibold'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -182,8 +177,8 @@ export function SearchableCourseSelect({
                         <span
                           className={`rounded px-1.5 py-0.5 text-[11px] font-mono font-bold ${
                             isSelected
-                              ? "bg-indigo-200/80 text-indigo-900"
-                              : "bg-slate-100 text-slate-700"
+                              ? 'bg-indigo-200/80 text-indigo-900'
+                              : 'bg-slate-100 text-slate-700'
                           }`}
                         >
                           {c.code}
@@ -202,9 +197,7 @@ export function SearchableCourseSelect({
                       )}
                     </div>
 
-                    {isSelected && (
-                      <Check className="h-4 w-4 text-indigo-600 shrink-0" />
-                    )}
+                    {isSelected && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
                   </button>
                 );
               })

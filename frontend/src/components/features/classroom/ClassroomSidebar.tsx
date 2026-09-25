@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import {
   Award,
   BookOpen,
@@ -15,12 +15,14 @@ import {
   Headphones,
   Lock,
   PlayCircle,
-  Sparkles,
-} from "lucide-react";
-import type { Course, Lesson, Module } from "@/types";
-import type { ApiCourseProgress } from "@/lib/api/types";
-import { cn } from "@/lib/utils";
-import type { ClassroomActiveContent, ClassroomFlatItem } from "./types";
+  GraduationCap,
+  Layers,
+} from 'lucide-react';
+import type { Course, Lesson, Module } from '@/types';
+import type { ApiCourseProgress } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
+import type { ClassroomActiveContent, ClassroomFlatItem } from './types';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface ClassroomSidebarProps {
   course: Course;
@@ -33,27 +35,28 @@ interface ClassroomSidebarProps {
   isOpen: boolean;
 }
 
-function renderContentIcon(type?: string, className = "h-3.5 w-3.5") {
-  const norm = (type || "").toUpperCase();
-  if (norm === "VIDEO") return <PlayCircle className={cn("text-rose-500", className)} />;
-  if (norm === "AUDIO") return <Headphones className={cn("text-amber-500", className)} />;
-  if (norm === "ASSIGNMENT") return <FileSpreadsheet className={cn("text-emerald-500", className)} />;
-  return <FileText className={cn("text-indigo-500", className)} />;
+function renderContentIcon(type?: string, className = 'h-3.5 w-3.5') {
+  const norm = (type || '').toUpperCase();
+  if (norm === 'VIDEO') return <PlayCircle className={cn('text-rose-500', className)} />;
+  if (norm === 'AUDIO') return <Headphones className={cn('text-amber-500', className)} />;
+  if (norm === 'ASSIGNMENT')
+    return <FileSpreadsheet className={cn('text-emerald-500', className)} />;
+  return <FileText className={cn('text-indigo-500', className)} />;
 }
 
 function cleanModuleTitle(title: string): string {
-  if (!title) return "";
-  return title.replace(/^(Module\s*)?\d+\s*[:\-–]?\s*/i, "").trim() || title;
+  if (!title) return '';
+  return title.replace(/^(Module\s*)?\d+\s*[:\-–]?\s*/i, '').trim() || title;
 }
 
 function cleanLessonTitle(title: string): string {
-  if (!title) return "";
-  return title.replace(/^(Lesson\s*)?(\d+\.)*\d*\s*[:\-–]?\s*/i, "").trim() || title;
+  if (!title) return '';
+  return title.replace(/^(Lesson\s*)?(\d+\.)*\d*\s*[:\-–]?\s*/i, '').trim() || title;
 }
 
 function cleanSubTitle(title: string): string {
-  if (!title) return "";
-  return title.replace(/^(\d+\.)+\d*\s*[:\-–]?\s*/, "").trim() || title;
+  if (!title) return '';
+  return title.replace(/^(\d+\.)+\d*\s*[:\-–]?\s*/, '').trim() || title;
 }
 
 export function ClassroomSidebar({
@@ -66,6 +69,8 @@ export function ClassroomSidebar({
   onSelectItem,
   isOpen,
 }: ClassroomSidebarProps) {
+  const { tBilingual } = useTranslation();
+
   // Map flat items by key for instant lookup
   const itemsByKey = useMemo(() => {
     const map = new Map<string, ClassroomFlatItem>();
@@ -80,7 +85,7 @@ export function ClassroomSidebar({
   }, [progress]);
 
   const activeKey = activeContent?.item.key;
-  const courseOverviewItem = flatItems.find((i) => i.type === "COURSE_OVERVIEW");
+  const courseOverviewItem = flatItems.find((i) => i.type === 'COURSE_OVERVIEW');
   const isCourseOverviewActive = activeKey === courseOverviewItem?.key;
 
   if (!isOpen) return null;
@@ -91,10 +96,10 @@ export function ClassroomSidebar({
       <div className="p-4 border-b border-slate-100 bg-slate-50/60 shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Course Curriculum
+            {tBilingual('Course Curriculum', 'የኮርስ ስርዓተ-ትምህርት')}
           </p>
           <span className="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-            {course.modules.length} Modules
+            {tBilingual(`${course.modules.length} Modules`, `${course.modules.length} ሞጁሎች`)}
           </span>
         </div>
       </div>
@@ -106,26 +111,30 @@ export function ClassroomSidebar({
             type="button"
             onClick={() => onSelectItem(courseOverviewItem)}
             className={cn(
-              "w-full flex items-center justify-between p-3 rounded-xl border text-left transition group",
+              'w-full flex items-center justify-between p-3 rounded-xl border text-left transition group',
               isCourseOverviewActive
-                ? "border-indigo-300 bg-indigo-50/80 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs",
+                ? 'border-indigo-300 bg-indigo-50/80 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs',
             )}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs",
+                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs',
                   isCourseOverviewActive
-                    ? "bg-indigo-600 border-indigo-600 text-white"
-                    : "bg-indigo-50 border-indigo-200 text-indigo-700 group-hover:bg-indigo-100",
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-indigo-50 border-indigo-200 text-indigo-700 group-hover:bg-indigo-100',
                 )}
               >
                 <BookOpen className="h-3.5 w-3.5" />
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-bold truncate">Course Overview & Objectives</p>
-                <p className="text-[11px] text-slate-400">Orientation & Syllabus</p>
+                <p className="text-xs font-bold truncate">
+                  {tBilingual('Course Overview & Objectives', 'የኮርስ አጠቃላይ እይታና ግቦች')}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {tBilingual('Orientation & Syllabus', 'መግቢያና ሲላበስ')}
+                </p>
               </div>
             </div>
             {isCourseOverviewActive ? (
@@ -139,24 +148,24 @@ export function ClassroomSidebar({
         {course.modules.map((mod, mIdx) => {
           const modProg = moduleProgressMap.get(mod.id);
           const isExpanded = expandedModules[mod.id] ?? false;
-          const isUnlocked = modProg?.unlocked ?? (mIdx === 0);
+          const isUnlocked = modProg?.unlocked ?? mIdx === 0;
           const completedLessons = modProg?.completedLessons ?? 0;
           const totalLessons = modProg?.totalLessons ?? mod.lessons.length;
           const isModuleComplete = totalLessons > 0 && completedLessons === totalLessons;
 
           // Find module quiz flat item if exists
           const moduleQuizItem = flatItems.find(
-            (i) => i.moduleId === mod.id && i.quizKind === "MODULE_ASSESSMENT",
+            (i) => i.moduleId === mod.id && i.quizKind === 'MODULE_ASSESSMENT',
           );
 
           return (
             <div
               key={mod.id}
               className={cn(
-                "rounded-xl border transition-all overflow-hidden",
+                'rounded-xl border transition-all overflow-hidden',
                 isUnlocked
-                  ? "border-slate-200 bg-white shadow-2xs"
-                  : "border-slate-200/60 bg-slate-50/50 opacity-70",
+                  ? 'border-slate-200 bg-white shadow-2xs'
+                  : 'border-slate-200/60 bg-slate-50/50 opacity-70',
               )}
             >
               {/* Module Header Bar */}
@@ -165,27 +174,30 @@ export function ClassroomSidebar({
                 onClick={() => isUnlocked && onToggleModule(mod.id)}
                 disabled={!isUnlocked}
                 className={cn(
-                  "w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/80",
-                  !isUnlocked && "cursor-not-allowed",
+                  'w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/80',
+                  !isUnlocked && 'cursor-not-allowed',
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span
                     className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold font-mono border",
+                      'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold font-mono border',
                       isUnlocked
-                        ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                        : "bg-slate-100 border-slate-200 text-slate-400",
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        : 'bg-slate-100 border-slate-200 text-slate-400',
                     )}
                   >
                     {mIdx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-900 truncate">
-                      Module {mIdx + 1}: {cleanModuleTitle(mod.title)}
+                      {tBilingual('Module', 'ሞጁል')} {mIdx + 1}: {cleanModuleTitle(mod.title)}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {completedLessons}/{totalLessons} lessons completed
+                      {tBilingual(
+                        `${completedLessons}/${totalLessons} lessons completed`,
+                        `${completedLessons}/${totalLessons} ትምህርቶች ተጠናቀዋል`,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -209,7 +221,7 @@ export function ClassroomSidebar({
                   {/* Module Overview Item (only if module has description, objectives, or attachments) */}
                   {(() => {
                     const moduleOverviewItem = flatItems.find(
-                      (i) => i.moduleId === mod.id && i.type === "MODULE_OVERVIEW",
+                      (i) => i.moduleId === mod.id && i.type === 'MODULE_OVERVIEW',
                     );
                     if (!moduleOverviewItem) return null;
                     const isModOverviewActive = activeKey === moduleOverviewItem.key;
@@ -218,20 +230,22 @@ export function ClassroomSidebar({
                         type="button"
                         onClick={() => onSelectItem(moduleOverviewItem)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium",
+                          'w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium',
                           isModOverviewActive
-                            ? "bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs"
-                            : "text-slate-700 hover:bg-white hover:shadow-2xs",
+                            ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
+                            : 'text-slate-700 hover:bg-white hover:shadow-2xs',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Sparkles
+                          <Layers
                             className={cn(
-                              "h-3.5 w-3.5 shrink-0",
-                              isModOverviewActive ? "text-indigo-600" : "text-indigo-500",
+                              'h-3.5 w-3.5 shrink-0',
+                              isModOverviewActive ? 'text-indigo-600' : 'text-indigo-500',
                             )}
                           />
-                          <span className="truncate">Module Overview & Objectives</span>
+                          <span className="truncate">
+                            {tBilingual('Module Overview & Objectives', 'የሞጁሉ አጠቃላይ እይታና ግቦች')}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isModOverviewActive ? (
@@ -256,7 +270,7 @@ export function ClassroomSidebar({
 
                     // Lesson Checkpoint Quiz flat item
                     const lessonQuizItem = flatItems.find(
-                      (i) => i.lessonId === lesson.id && i.quizKind === "LESSON_ASSESSMENT",
+                      (i) => i.lessonId === lesson.id && i.quizKind === 'LESSON_ASSESSMENT',
                     );
 
                     return (
@@ -267,18 +281,19 @@ export function ClassroomSidebar({
                           onClick={() => lessonItem && isLessonUnlocked && onSelectItem(lessonItem)}
                           disabled={!isLessonUnlocked}
                           className={cn(
-                            "w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium",
+                            'w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium',
                             isLessonActive
-                              ? "bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs"
+                              ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
                               : isLessonUnlocked
-                              ? "text-slate-700 hover:bg-white hover:shadow-2xs"
-                              : "text-slate-400 cursor-not-allowed",
+                                ? 'text-slate-700 hover:bg-white hover:shadow-2xs'
+                                : 'text-slate-400 cursor-not-allowed',
                           )}
                         >
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {renderContentIcon(lesson.contentType)}
                             <span className="truncate">
-                              Lesson {mIdx + 1}.{lIdx + 1}: {cleanLessonTitle(lesson.title)}
+                              {tBilingual('Lesson', 'ትምህርት')} {mIdx + 1}.{lIdx + 1}:{' '}
+                              {cleanLessonTitle(lesson.title)}
                             </span>
                           </div>
 
@@ -317,19 +332,17 @@ export function ClassroomSidebar({
                                   onClick={() => subItem && isSubUnlocked && onSelectItem(subItem)}
                                   disabled={!isSubUnlocked}
                                   className={cn(
-                                    "w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left transition text-[11px]",
+                                    'w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left transition text-[11px]',
                                     isSubActive
-                                      ? "bg-indigo-50 text-indigo-900 font-semibold ring-1 ring-indigo-400/20"
+                                      ? 'bg-indigo-50 text-indigo-900 font-semibold ring-1 ring-indigo-400/20'
                                       : isSubUnlocked
-                                      ? "text-slate-600 hover:bg-white"
-                                      : "text-slate-400 cursor-not-allowed",
+                                        ? 'text-slate-600 hover:bg-white'
+                                        : 'text-slate-400 cursor-not-allowed',
                                   )}
                                 >
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                     <div className="h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
-                                    <span className="truncate">
-                                      {cleanSubTitle(sub.title)}
-                                    </span>
+                                    <span className="truncate">{cleanSubTitle(sub.title)}</span>
                                   </div>
 
                                   <div className="flex items-center gap-1 shrink-0">
@@ -352,22 +365,26 @@ export function ClassroomSidebar({
                           <div className="pl-4 ml-3 border-l border-indigo-100 pt-0.5">
                             <button
                               type="button"
-                              onClick={() => lessonQuizItem.unlocked && onSelectItem(lessonQuizItem)}
+                              onClick={() =>
+                                lessonQuizItem.unlocked && onSelectItem(lessonQuizItem)
+                              }
                               disabled={!lessonQuizItem.unlocked}
                               className={cn(
-                                "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left transition text-[11px] font-medium border",
+                                'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left transition text-[11px] font-medium border',
                                 activeKey === lessonQuizItem.key
-                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs font-semibold"
+                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs font-semibold'
                                   : lessonQuizItem.unlocked
-                                  ? lessonQuizItem.completed
-                                    ? "bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70"
-                                    : "bg-white border-indigo-200 text-indigo-950 hover:bg-indigo-50/60"
-                                  : "bg-slate-50 border-slate-200/80 text-slate-400 cursor-not-allowed",
+                                    ? lessonQuizItem.completed
+                                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70'
+                                      : 'bg-white border-indigo-200 text-indigo-950 hover:bg-indigo-50/60'
+                                    : 'bg-slate-50 border-slate-200/80 text-slate-400 cursor-not-allowed',
                               )}
                             >
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                 <BookOpenCheck className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">Lesson Assessment</span>
+                                <span className="truncate">
+                                  {tBilingual('Lesson Assessment', 'የትምህርት ምዘና')}
+                                </span>
                               </div>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -376,7 +393,9 @@ export function ClassroomSidebar({
                                 ) : lessonQuizItem.completed ? (
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                                 ) : (
-                                  <span className="text-[10px] font-bold">Quiz</span>
+                                  <span className="text-[10px] font-bold">
+                                    {tBilingual('Quiz', 'ፈተና')}
+                                  </span>
                                 )}
                               </div>
                             </button>
@@ -394,21 +413,22 @@ export function ClassroomSidebar({
                         onClick={() => moduleQuizItem.unlocked && onSelectItem(moduleQuizItem)}
                         disabled={!moduleQuizItem.unlocked}
                         className={cn(
-                          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left transition text-xs font-semibold border",
+                          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left transition text-xs font-semibold border',
                           activeKey === moduleQuizItem.key
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
                             : moduleQuizItem.unlocked
-                            ? moduleQuizItem.completed
-                              ? "bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100"
-                              : "bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-950 hover:from-indigo-100"
-                            : "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed",
+                              ? moduleQuizItem.completed
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100'
+                                : 'bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-950 hover:from-indigo-100'
+                              : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Award className="h-4 w-4 shrink-0" />
-                          <span className="truncate">Module Assessment</span>
+                          <span className="truncate">
+                            {tBilingual('Module Assessment', 'የሞጁል ምዘና')}
+                          </span>
                         </div>
-
 
                         <div className="flex items-center gap-1 shrink-0">
                           {!moduleQuizItem.unlocked ? (
@@ -417,7 +437,7 @@ export function ClassroomSidebar({
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider">
-                              Take Exam
+                              {tBilingual('Take Exam', 'ፈተና ውሰድ')}
                             </span>
                           )}
                         </div>
@@ -431,76 +451,90 @@ export function ClassroomSidebar({
         })}
 
         {/* Final Course Certification Assessment Item */}
-        {flatItems.find((i) => i.quizKind === "FINAL_ASSESSMENT") ? (
-          (() => {
-            const finalItem = flatItems.find((i) => i.quizKind === "FINAL_ASSESSMENT")!;
-            const isActive = activeKey === finalItem.key;
-            const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
+        {flatItems.find((i) => i.quizKind === 'FINAL_ASSESSMENT')
+          ? (() => {
+              const finalItem = flatItems.find((i) => i.quizKind === 'FINAL_ASSESSMENT')!;
+              const isActive = activeKey === finalItem.key;
+              const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
 
-            return (
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => isClickable && onSelectItem(finalItem)}
-                  disabled={!isClickable}
-                  className={cn(
-                    "w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs",
-                    isActive
-                      ? finalItem.isInPersonLocked
-                        ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                        : "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                      : finalItem.isInPersonLocked
-                      ? "bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80 cursor-pointer"
-                      : finalItem.unlocked
-                      ? finalItem.completed
-                        ? "bg-emerald-50 border-emerald-300 text-emerald-950"
-                        : "bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent"
-                      : "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed opacity-75",
-                  )}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {finalItem.isInPersonLocked ? (
-                      <Building2 className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-amber-600")} />
-                    ) : (
-                      <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
+              return (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => isClickable && onSelectItem(finalItem)}
+                    disabled={!isClickable}
+                    className={cn(
+                      'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs',
+                      isActive
+                        ? finalItem.isInPersonLocked
+                          ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                          : 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : finalItem.isInPersonLocked
+                          ? 'bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80 cursor-pointer'
+                          : finalItem.unlocked
+                            ? finalItem.completed
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                              : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
+                            : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed opacity-75',
                     )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold truncate">Final Course Assessment</p>
-                      <p className={cn("text-[10px] mt-0.5", isActive ? "text-amber-100" : "opacity-80")}>
-                        {finalItem.isInPersonLocked ? "In-Person Classroom Evaluation" : "Required for Certification"}
-                      </p>
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {finalItem.isInPersonLocked ? (
+                        <Building2
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            isActive ? 'text-white' : 'text-amber-600',
+                          )}
+                        />
+                      ) : (
+                        <GraduationCap className="h-4 w-4 shrink-0 text-amber-300" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold truncate">
+                          {tBilingual('Final Course Assessment', 'የኮርስ ማጠቃለያ ፈተና')}
+                        </p>
+                        <p
+                          className={cn(
+                            'text-[10px] mt-0.5',
+                            isActive ? 'text-amber-100' : 'opacity-80',
+                          )}
+                        >
+                          {finalItem.isInPersonLocked
+                            ? tBilingual('In-Person Classroom Evaluation', 'በአካል የሚሰጥ የክፍል ግምገማ')
+                            : tBilingual('Required for Certification', 'ለሰርተፊኬት የሚያስፈልግ')}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {finalItem.isInPersonLocked ? (
-                      <span
-                        className={cn(
-                          "text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1",
-                          isActive ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800",
-                        )}
-                      >
-                        In-Person
-                      </span>
-                    ) : !finalItem.unlocked ? (
-                      <Lock className="h-3.5 w-3.5" />
-                    ) : finalItem.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    ) : (
-                      <span className="text-[10px] font-bold uppercase bg-white/20 px-2 py-0.5 rounded">
-                        Final
-                      </span>
-                    )}
-                  </div>
-                </button>
-              </div>
-            );
-          })()
-        ) : null}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {finalItem.isInPersonLocked ? (
+                        <span
+                          className={cn(
+                            'text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1',
+                            isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800',
+                          )}
+                        >
+                          In-Person
+                        </span>
+                      ) : !finalItem.unlocked ? (
+                        <Lock className="h-3.5 w-3.5" />
+                      ) : finalItem.completed ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase bg-white/20 px-2 py-0.5 rounded">
+                          {tBilingual('Final', 'ማጠቃለያ')}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </div>
+              );
+            })()
+          : null}
 
         {/* Certificate of Completion Item (Directly below Final Assessment) */}
         {(() => {
-          const certItem = flatItems.find((i) => i.type === "CERTIFICATE");
+          const certItem = flatItems.find((i) => i.type === 'CERTIFICATE');
           if (!certItem) return null;
           const isActive = activeKey === certItem.key;
           const isUnlocked = certItem.unlocked;
@@ -511,35 +545,37 @@ export function ClassroomSidebar({
                 type="button"
                 onClick={() => onSelectItem(certItem)}
                 className={cn(
-                  "w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs group cursor-pointer",
+                  'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs group cursor-pointer',
                   isActive
-                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                     : isUnlocked
-                    ? "bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border-amber-300/80 text-amber-950 hover:border-amber-400 hover:shadow-xs"
-                    : "bg-slate-50/80 border-slate-200 text-slate-500 hover:bg-slate-100/70",
+                      ? 'bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border-amber-300/80 text-amber-950 hover:border-amber-400 hover:shadow-xs'
+                      : 'bg-slate-50/80 border-slate-200 text-slate-500 hover:bg-slate-100/70',
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <div
                     className={cn(
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition",
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition',
                       isActive
-                        ? "bg-amber-400 text-slate-950 border-amber-300 font-bold"
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
                         : isUnlocked
-                        ? "bg-amber-100 border-amber-300 text-amber-700"
-                        : "bg-slate-100 border-slate-200 text-slate-400",
+                          ? 'bg-amber-100 border-amber-300 text-amber-700'
+                          : 'bg-slate-100 border-slate-200 text-slate-400',
                     )}
                   >
                     <Award className="h-4 w-4 shrink-0" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold truncate">Certificate of Completion</p>
+                    <p className="text-xs font-bold truncate">
+                      {tBilingual('Certificate of Completion', 'የማጠናቀቂያ ሰርተፊኬት')}
+                    </p>
                     <p className="text-[10px] opacity-75 mt-0.5 truncate">
                       {isUnlocked
-                        ? "Verified & Ready to View"
+                        ? tBilingual('Verified & Ready to View', 'የተረጋገጠና ለመመልከት ዝግጁ')
                         : certItem.isInPersonLocked
-                        ? "Issued upon classroom completion"
-                        : "Complete course to unlock"}
+                          ? tBilingual('Issued upon classroom completion', 'የክፍል ስልጠና ሲጠናቀቅ ይሰጣል')
+                          : tBilingual('Complete course to unlock', 'ለመክፈት ኮርሱን ያጠናቁ')}
                     </p>
                   </div>
                 </div>
@@ -563,4 +599,3 @@ export function ClassroomSidebar({
     </aside>
   );
 }
-

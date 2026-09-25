@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Award, Download, Eye, Printer } from "lucide-react";
-import type { ApiCertificate, ApiCertificateTemplate } from "@/lib/api/types";
-import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { CertificateRenderer } from "@/components/features/certificates/CertificateRenderer";
-import { fetchActiveCertificateTemplate } from "@/lib/api/certificates";
+import { useEffect, useState } from 'react';
+import { Award, Download, Eye, Printer } from 'lucide-react';
+import type { ApiCertificate, ApiCertificateTemplate } from '@/lib/api/types';
+import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { CertificateRenderer } from '@/components/features/certificates/CertificateRenderer';
+import { fetchActiveCertificateTemplate } from '@/lib/api/certificates';
 
 interface CertificateCardProps {
   certificate: ApiCertificate;
@@ -16,10 +16,10 @@ interface CertificateCardProps {
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  return new Date(value).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 }
 
@@ -30,7 +30,9 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
 
   useEffect(() => {
     if (!certificate.template) {
-      void fetchActiveCertificateTemplate().then(setActiveTemplate).catch(() => {});
+      void fetchActiveCertificateTemplate()
+        .then(setActiveTemplate)
+        .catch(() => {});
     }
   }, [certificate.template]);
 
@@ -55,7 +57,9 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
           </div>
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-          <Badge variant="green" dot>{certificate.certificateNumber}</Badge>
+          <Badge variant="green" dot>
+            {certificate.certificateNumber}
+          </Badge>
           <div className="flex gap-2">
             {certificate.downloadUrl ? (
               <a href={certificate.downloadUrl} target="_blank" rel="noreferrer">

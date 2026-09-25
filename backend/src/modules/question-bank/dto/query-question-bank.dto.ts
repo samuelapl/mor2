@@ -24,13 +24,18 @@ export class QueryQuestionBankDto {
   @IsString()
   subLessonId?: string;
 
-  @ApiPropertyOptional({ description: 'Include global / reusable questions when courseId is provided', default: true })
+  @ApiPropertyOptional({
+    description: 'Include global / reusable questions when courseId is provided',
+    default: true,
+  })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   includeGlobal?: boolean;
 
-  @ApiPropertyOptional({ description: 'Filter only global / reusable questions (courseId is null)' })
+  @ApiPropertyOptional({
+    description: 'Filter only global / reusable questions (courseId is null)',
+  })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()

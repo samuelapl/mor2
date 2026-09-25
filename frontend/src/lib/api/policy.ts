@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from './client';
 
 export interface ApiCoursePolicy {
   id: string;
@@ -9,12 +9,12 @@ export interface ApiCoursePolicy {
 }
 
 export async function fetchCoursePolicy(): Promise<ApiCoursePolicy> {
-  return api<ApiCoursePolicy>("policy");
+  return api<ApiCoursePolicy>('policy');
 }
 
 export async function updateCoursePolicy(body: {
   timeSpentPercent?: number;
   retakeCooldownMinutes?: number;
 }): Promise<ApiCoursePolicy> {
-  return api<ApiCoursePolicy>("policy", { method: "PATCH", body });
+  return api<ApiCoursePolicy>('policy', { method: 'PATCH', body });
 }

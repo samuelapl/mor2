@@ -16,7 +16,12 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { LiveSessionsService } from './live-sessions.service';
-import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto, CreateBatchSessionDto } from './dto';
+import {
+  CreateSessionDto,
+  UpdateSessionDto,
+  SubmitLiveQuizDto,
+  CreateBatchSessionDto,
+} from './dto';
 import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -40,7 +45,8 @@ export class LiveSessionsController {
   @Get('live-sessions')
   @ApiOperation({ summary: 'List live sessions visible to the current user' })
   async findAll(
-    @Query() query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
+    @Query()
+    query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.liveSessionsService.findAll(query, user);
@@ -75,9 +81,15 @@ export class LiveSessionsController {
   ) {
     const rawBody =
       req.rawBody ||
-      (Buffer.isBuffer(req.body) ? req.body : typeof req.body === 'string' ? Buffer.from(req.body) : undefined);
+      (Buffer.isBuffer(req.body)
+        ? req.body
+        : typeof req.body === 'string'
+          ? Buffer.from(req.body)
+          : undefined);
     if (!rawBody) {
-      this.logger.warn('LiveKit webhook received without raw body — ensure rawBody: true in main.ts');
+      this.logger.warn(
+        'LiveKit webhook received without raw body — ensure rawBody: true in main.ts',
+      );
       return { ok: false };
     }
 
@@ -92,7 +104,9 @@ export class LiveSessionsController {
     const roomName: string = event.room?.name;
     const participantIdentity: string = event.participant?.identity;
 
-    this.logger.log(`LiveKit event: ${event.event}, room=${roomName}, participant=${participantIdentity}`);
+    this.logger.log(
+      `LiveKit event: ${event.event}, room=${roomName}, participant=${participantIdentity}`,
+    );
 
     try {
       if (event.event === 'participant_joined' && roomName && participantIdentity) {
@@ -107,7 +121,11 @@ export class LiveSessionsController {
           const nowSec = event.createdAt ? Number(event.createdAt) : Math.floor(Date.now() / 1000);
           durationSeconds = Math.max(0, nowSec - joinedAtSec);
         }
-        await this.attendanceService.handleParticipantLeft(roomName, participantIdentity, durationSeconds);
+        await this.attendanceService.handleParticipantLeft(
+          roomName,
+          participantIdentity,
+          durationSeconds,
+        );
       } else if (event.event === 'room_finished' && roomName) {
         await this.attendanceService.handleRoomFinished(roomName);
       }

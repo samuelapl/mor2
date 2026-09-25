@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   ArrowDown,
   ArrowUp,
@@ -30,22 +30,21 @@ import {
   RefreshCw,
   Search,
   Settings,
-  Sparkles,
   Trash2,
   X,
-} from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { usePagination } from "@/lib/usePagination";
-import PageShell from "@/components/shared/PageShell";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
-import { RichTextArea } from "@/components/ui/RichTextArea";
-import { CardSkeleton } from "@/components/ui/Skeleton";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { toast } from "@/lib/toast";
+} from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { usePagination } from '@/lib/usePagination';
+import PageShell from '@/components/shared/PageShell';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
+import { RichTextArea } from '@/components/ui/RichTextArea';
+import { CardSkeleton } from '@/components/ui/Skeleton';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { toast } from '@/lib/toast';
 import {
   bulkCreateQuestionBankItems,
   createCourseAssessment,
@@ -58,14 +57,14 @@ import {
   updateQuestionBankItem,
   type AssessmentQuestionInput,
   type SaveAssessmentBody,
-} from "@/lib/api/quiz";
-import { fetchCourseModules } from "@/lib/api/courses";
-import type { ApiModule, ApiLesson } from "@/lib/api/types";
-import type { Course, QuestionType, Role } from "@/types";
+} from '@/lib/api/quiz';
+import { fetchCourseModules } from '@/lib/api/courses';
+import type { ApiModule, ApiLesson } from '@/lib/api/types';
+import type { Course, QuestionType, Role } from '@/types';
 
 export interface BankQuestion {
   id: string;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
   question: string;
   options: string[];
   correctAnswer?: number | string | null;
@@ -81,7 +80,8 @@ export interface BankQuestion {
   subLesson?: { id: string; titleEn: string; titleAm: string; order: number } | null;
 }
 
-export type CurriculumNodeType = "ALL" | "GLOBAL" | "COURSE_GENERAL" | "MODULE" | "LESSON" | "SUB_LESSON";
+export type CurriculumNodeType =
+  'ALL' | 'GLOBAL' | 'COURSE_GENERAL' | 'MODULE' | 'LESSON' | 'SUB_LESSON';
 
 export interface ActiveCurriculumNode {
   type: CurriculumNodeType;
@@ -93,33 +93,37 @@ export interface ActiveCurriculumNode {
 }
 
 function getCleanModuleTitle(title?: string | null): string {
-  if (!title) return "";
-  return title.replace(/^(module\s*\d+|m\d+)[\s:.-]*/i, "").trim() || title;
+  if (!title) return '';
+  return title.replace(/^(module\s*\d+|m\d+)[\s:.-]*/i, '').trim() || title;
 }
 
 function getCleanLessonTitle(title?: string | null): string {
-  if (!title) return "";
-  return title
-    .replace(/^lesson\s*\d+(\.\d+)?[\s:.-]*/i, "")
-    .replace(/^\d+\.\d+[\s:.-]*/, "")
-    .trim() || title;
+  if (!title) return '';
+  return (
+    title
+      .replace(/^lesson\s*\d+(\.\d+)?[\s:.-]*/i, '')
+      .replace(/^\d+\.\d+[\s:.-]*/, '')
+      .trim() || title
+  );
 }
 
 function getCleanSubLessonTitle(title?: string | null): string {
-  if (!title) return "";
-  return title
-    .replace(/^sub-?lesson\s*(\d+\.?)*[\s:.-]*/i, "")
-    .replace(/^\d+\.\d+\.\d+[\s:.-]*/, "")
-    .trim() || title;
+  if (!title) return '';
+  return (
+    title
+      .replace(/^sub-?lesson\s*(\d+\.?)*[\s:.-]*/i, '')
+      .replace(/^\d+\.\d+\.\d+[\s:.-]*/, '')
+      .trim() || title
+  );
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
-const labelClass = "mb-1.5 block text-xs font-semibold text-slate-700";
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700';
 
 interface StagedQuestion {
   id: string;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
   question: string;
   options: string[];
   correctAnswer: string | null;
@@ -128,27 +132,30 @@ interface StagedQuestion {
 }
 
 function stripHtml(html?: string | null): string {
-  if (!html) return "";
-  return html.replace(/<[^>]*>?/gm, "").trim() || html;
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, '').trim() || html;
 }
 
 interface QuestionBankWorkspaceProps {
-  role: "trainer" | "course_owner";
+  role: 'trainer' | 'course_owner';
 }
 
 export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const { courses, currentUser } = useLms();
 
   // All actors with question bank access can access all institutional courses by default
-  const [courseFilterMode, setCourseFilterMode] = useState<"ALL" | "MY">("ALL");
+  const [courseFilterMode, setCourseFilterMode] = useState<'ALL' | 'MY'>('ALL');
 
   const myCourses = useMemo(() => {
-    if (role === "course_owner") {
+    if (role === 'course_owner') {
       return courses.filter(
         (c) =>
           c.ownerId === currentUser?.id ||
           ((c as any).ownerIds && (c as any).ownerIds.includes(currentUser?.id)) ||
-          ((c as any).owners && (c as any).owners.some((o: any) => o.userId === currentUser?.id || o.user?.id === currentUser?.id)),
+          ((c as any).owners &&
+            (c as any).owners.some(
+              (o: any) => o.userId === currentUser?.id || o.user?.id === currentUser?.id,
+            )),
       );
     }
     // Trainer role: assigned courses
@@ -156,34 +163,37 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       (c) =>
         c.trainerId === currentUser?.id ||
         ((c as any).trainerIds && (c as any).trainerIds.includes(currentUser?.id)) ||
-        ((c as any).trainers && (c as any).trainers.some((t: any) => t.userId === currentUser?.id || t.user?.id === currentUser?.id)),
+        ((c as any).trainers &&
+          (c as any).trainers.some(
+            (t: any) => t.userId === currentUser?.id || t.user?.id === currentUser?.id,
+          )),
     );
   }, [courses, currentUser, role]);
 
   const relevantCourses = useMemo(() => {
-    if (courseFilterMode === "MY" && myCourses.length > 0) {
+    if (courseFilterMode === 'MY' && myCourses.length > 0) {
       return myCourses;
     }
     // "ALL" mode: returns all courses without restriction
     return courses;
   }, [courses, myCourses, courseFilterMode]);
 
-  const [courseSearch, setCourseSearch] = useState("");
+  const [courseSearch, setCourseSearch] = useState('');
 
   const filteredRelevantCourses = useMemo(() => {
     if (!courseSearch.trim()) return relevantCourses;
     const term = courseSearch.toLowerCase();
     return relevantCourses.filter(
       (c) =>
-        (c.code || "").toLowerCase().includes(term) ||
-        (c.title || "").toLowerCase().includes(term) ||
-        (c.titleEn || "").toLowerCase().includes(term) ||
-        (c.titleAm || "").toLowerCase().includes(term),
+        (c.code || '').toLowerCase().includes(term) ||
+        (c.title || '').toLowerCase().includes(term) ||
+        (c.titleEn || '').toLowerCase().includes(term) ||
+        (c.titleAm || '').toLowerCase().includes(term),
     );
   }, [relevantCourses, courseSearch]);
 
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"questions" | "quizzes">("questions");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'questions' | 'quizzes'>('questions');
 
   useEffect(() => {
     if (filteredRelevantCourses.length > 0) {
@@ -199,30 +209,32 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   );
 
   const [questions, setQuestions] = useState<BankQuestion[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("ALL");
-  const [filterScope, setFilterScope] = useState<"ALL" | "GLOBAL" | "COURSE">("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<string>('ALL');
+  const [filterScope, setFilterScope] = useState<'ALL' | 'GLOBAL' | 'COURSE'>('ALL');
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<BankQuestion | null>(null);
   const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>([]);
 
-  const [qType, setQType] = useState<"MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER">("MULTIPLE_CHOICE");
-  const [qText, setQText] = useState("");
-  const [qOptions, setQOptions] = useState<string[]>(["", "", "", ""]);
+  const [qType, setQType] = useState<'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER'>(
+    'MULTIPLE_CHOICE',
+  );
+  const [qText, setQText] = useState('');
+  const [qOptions, setQOptions] = useState<string[]>(['', '', '', '']);
   const [qCorrectIndex, setQCorrectIndex] = useState(0);
-  const [qAnswerText, setQAnswerText] = useState("");
+  const [qAnswerText, setQAnswerText] = useState('');
   const [qPoints, setQPoints] = useState(10);
-  const [qCategory, setQCategory] = useState("General");
+  const [qCategory, setQCategory] = useState('General');
   const [qIsReusable, setQIsReusable] = useState(false);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   const [quizBuilderOpen, setQuizBuilderOpen] = useState(false);
-  const [quizTitle, setQuizTitle] = useState("Course Quiz");
-  const [quizDescription, setQuizDescription] = useState("");
+  const [quizTitle, setQuizTitle] = useState('Course Quiz');
+  const [quizDescription, setQuizDescription] = useState('');
   const [passingScore, setPassingScore] = useState(70);
   const [maxAttempts, setMaxAttempts] = useState(3);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(45);
@@ -255,7 +267,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       });
       const bank: BankQuestion[] = items.map((q) => {
         let parsedAnswer: number | string | null = q.correctAnswer;
-        if (q.type !== "SHORT_ANSWER" && q.correctAnswer !== null && q.correctAnswer !== undefined) {
+        if (
+          q.type !== 'SHORT_ANSWER' &&
+          q.correctAnswer !== null &&
+          q.correctAnswer !== undefined
+        ) {
           const num = parseInt(q.correctAnswer, 10);
           if (!isNaN(num)) parsedAnswer = num;
         }
@@ -270,7 +286,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           moduleId: q.moduleId,
           lessonId: q.lessonId,
           subLessonId: q.subLessonId,
-          category: q.category || "General",
+          category: q.category || 'General',
           isReusable: !q.courseId,
           module: q.module,
           lesson: q.lesson,
@@ -279,7 +295,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       });
       setQuestions(bank);
     } catch (err) {
-      console.error("Failed to load question bank:", err);
+      console.error('Failed to load question bank:', err);
     } finally {
       setLoadingQuestions(false);
     }
@@ -288,18 +304,20 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const [courseModules, setCourseModules] = useState<ApiModule[]>([]);
   const [loadingModules, setLoadingModules] = useState(false);
   const [activeCurriculumNode, setActiveCurriculumNode] = useState<ActiveCurriculumNode>({
-    type: "ALL",
+    type: 'ALL',
     id: null,
-    title: "All Course Questions",
+    title: 'All Course Questions',
   });
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
 
   // Form states for target curriculum level
-  const [targetLevel, setTargetLevel] = useState<"COURSE_GENERAL" | "MODULE" | "LESSON" | "SUB_LESSON" | "GLOBAL">("COURSE_GENERAL");
-  const [targetModuleId, setTargetModuleId] = useState<string>("");
-  const [targetLessonId, setTargetLessonId] = useState<string>("");
-  const [targetSubLessonId, setTargetSubLessonId] = useState<string>("");
+  const [targetLevel, setTargetLevel] = useState<
+    'COURSE_GENERAL' | 'MODULE' | 'LESSON' | 'SUB_LESSON' | 'GLOBAL'
+  >('COURSE_GENERAL');
+  const [targetModuleId, setTargetModuleId] = useState<string>('');
+  const [targetLessonId, setTargetLessonId] = useState<string>('');
+  const [targetSubLessonId, setTargetSubLessonId] = useState<string>('');
 
   const loadModules = async (cId: string) => {
     if (!cId) return;
@@ -311,7 +329,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         setExpandedModules(new Set(mods.map((m) => m.id)));
       }
     } catch (err) {
-      console.error("Failed to load course modules:", err);
+      console.error('Failed to load course modules:', err);
       setCourseModules([]);
     } finally {
       setLoadingModules(false);
@@ -324,9 +342,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       loadAssessments(selectedCourseId);
       loadModules(selectedCourseId);
       setActiveCurriculumNode({
-        type: "ALL",
+        type: 'ALL',
         id: null,
-        title: "All Course Questions",
+        title: 'All Course Questions',
       });
     }
   }, [selectedCourseId]);
@@ -398,15 +416,15 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const filteredQuestions = useMemo(() => {
     return courseQuestions.filter((q) => {
       // 1. Curriculum Node Filter
-      if (activeCurriculumNode.type === "GLOBAL") {
+      if (activeCurriculumNode.type === 'GLOBAL') {
         if (q.courseId) return false;
-      } else if (activeCurriculumNode.type === "COURSE_GENERAL") {
+      } else if (activeCurriculumNode.type === 'COURSE_GENERAL') {
         if (q.moduleId || !q.courseId) return false;
-      } else if (activeCurriculumNode.type === "MODULE") {
+      } else if (activeCurriculumNode.type === 'MODULE') {
         if (q.moduleId !== activeCurriculumNode.id) return false;
-      } else if (activeCurriculumNode.type === "LESSON") {
+      } else if (activeCurriculumNode.type === 'LESSON') {
         if (q.lessonId !== activeCurriculumNode.id) return false;
-      } else if (activeCurriculumNode.type === "SUB_LESSON") {
+      } else if (activeCurriculumNode.type === 'SUB_LESSON') {
         if (q.subLessonId !== activeCurriculumNode.id) return false;
       }
 
@@ -415,12 +433,12 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         !searchQuery ||
         q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
         q.options.some((o) => o.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (q.category || "").toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = filterType === "ALL" || q.type === filterType;
+        (q.category || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = filterType === 'ALL' || q.type === filterType;
       const matchesScope =
-        filterScope === "ALL" ||
-        (filterScope === "GLOBAL" && !q.courseId) ||
-        (filterScope === "COURSE" && !!q.courseId);
+        filterScope === 'ALL' ||
+        (filterScope === 'GLOBAL' && !q.courseId) ||
+        (filterScope === 'COURSE' && !!q.courseId);
 
       return matchesSearch && matchesType && matchesScope;
     });
@@ -433,45 +451,45 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     const target = node || activeCurriculumNode;
     setEditingQuestion(null);
     setStagedQuestions([]);
-    setQType("MULTIPLE_CHOICE");
-    setQText("");
-    setQOptions(["", "", "", ""]);
+    setQType('MULTIPLE_CHOICE');
+    setQText('');
+    setQOptions(['', '', '', '']);
     setQCorrectIndex(0);
-    setQAnswerText("");
+    setQAnswerText('');
     setQPoints(10);
-    setQCategory("General");
+    setQCategory('General');
     setSaveError(null);
 
-    if (target.type === "GLOBAL") {
-      setTargetLevel("GLOBAL");
+    if (target.type === 'GLOBAL') {
+      setTargetLevel('GLOBAL');
       setQIsReusable(true);
-      setTargetModuleId("");
-      setTargetLessonId("");
-      setTargetSubLessonId("");
-    } else if (target.type === "MODULE") {
-      setTargetLevel("MODULE");
+      setTargetModuleId('');
+      setTargetLessonId('');
+      setTargetSubLessonId('');
+    } else if (target.type === 'MODULE') {
+      setTargetLevel('MODULE');
       setQIsReusable(false);
-      setTargetModuleId(target.moduleId || target.id || "");
-      setTargetLessonId("");
-      setTargetSubLessonId("");
-    } else if (target.type === "LESSON") {
-      setTargetLevel("LESSON");
+      setTargetModuleId(target.moduleId || target.id || '');
+      setTargetLessonId('');
+      setTargetSubLessonId('');
+    } else if (target.type === 'LESSON') {
+      setTargetLevel('LESSON');
       setQIsReusable(false);
-      setTargetModuleId(target.moduleId || "");
-      setTargetLessonId(target.lessonId || target.id || "");
-      setTargetSubLessonId("");
-    } else if (target.type === "SUB_LESSON") {
-      setTargetLevel("SUB_LESSON");
+      setTargetModuleId(target.moduleId || '');
+      setTargetLessonId(target.lessonId || target.id || '');
+      setTargetSubLessonId('');
+    } else if (target.type === 'SUB_LESSON') {
+      setTargetLevel('SUB_LESSON');
       setQIsReusable(false);
-      setTargetModuleId(target.moduleId || "");
-      setTargetLessonId(target.lessonId || "");
-      setTargetSubLessonId(target.subLessonId || target.id || "");
+      setTargetModuleId(target.moduleId || '');
+      setTargetLessonId(target.lessonId || '');
+      setTargetSubLessonId(target.subLessonId || target.id || '');
     } else {
-      setTargetLevel("COURSE_GENERAL");
+      setTargetLevel('COURSE_GENERAL');
       setQIsReusable(false);
-      setTargetModuleId("");
-      setTargetLessonId("");
-      setTargetSubLessonId("");
+      setTargetModuleId('');
+      setTargetLessonId('');
+      setTargetSubLessonId('');
     }
 
     setEditorOpen(true);
@@ -482,39 +500,39 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
     setStagedQuestions([]);
     setQType(q.type);
     setQText(q.question);
-    setQOptions(q.options.length > 0 ? q.options : ["", "", "", ""]);
-    setQCorrectIndex(typeof q.correctAnswer === "number" ? q.correctAnswer : 0);
-    setQAnswerText(typeof q.correctAnswer === "string" ? q.correctAnswer : "");
+    setQOptions(q.options.length > 0 ? q.options : ['', '', '', '']);
+    setQCorrectIndex(typeof q.correctAnswer === 'number' ? q.correctAnswer : 0);
+    setQAnswerText(typeof q.correctAnswer === 'string' ? q.correctAnswer : '');
     setQPoints(q.points || 10);
-    setQCategory(q.category || "General");
+    setQCategory(q.category || 'General');
     setQIsReusable(!q.courseId);
     setSaveError(null);
 
     if (!q.courseId) {
-      setTargetLevel("GLOBAL");
-      setTargetModuleId("");
-      setTargetLessonId("");
-      setTargetSubLessonId("");
+      setTargetLevel('GLOBAL');
+      setTargetModuleId('');
+      setTargetLessonId('');
+      setTargetSubLessonId('');
     } else if (q.subLessonId) {
-      setTargetLevel("SUB_LESSON");
-      setTargetModuleId(q.moduleId || "");
-      setTargetLessonId(q.lessonId || "");
+      setTargetLevel('SUB_LESSON');
+      setTargetModuleId(q.moduleId || '');
+      setTargetLessonId(q.lessonId || '');
       setTargetSubLessonId(q.subLessonId);
     } else if (q.lessonId) {
-      setTargetLevel("LESSON");
-      setTargetModuleId(q.moduleId || "");
+      setTargetLevel('LESSON');
+      setTargetModuleId(q.moduleId || '');
       setTargetLessonId(q.lessonId);
-      setTargetSubLessonId("");
+      setTargetSubLessonId('');
     } else if (q.moduleId) {
-      setTargetLevel("MODULE");
+      setTargetLevel('MODULE');
       setTargetModuleId(q.moduleId);
-      setTargetLessonId("");
-      setTargetSubLessonId("");
+      setTargetLessonId('');
+      setTargetSubLessonId('');
     } else {
-      setTargetLevel("COURSE_GENERAL");
-      setTargetModuleId("");
-      setTargetLessonId("");
-      setTargetSubLessonId("");
+      setTargetLevel('COURSE_GENERAL');
+      setTargetModuleId('');
+      setTargetLessonId('');
+      setTargetSubLessonId('');
     }
 
     setEditorOpen(true);
@@ -523,24 +541,24 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const handleAddQuestionToBatch = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (!qText.trim()) {
-      setSaveError("Please enter question prompt before adding.");
+      setSaveError('Please enter question prompt before adding.');
       return;
     }
 
     const options =
-      qType === "TRUE_FALSE"
-        ? ["True", "False"]
-        : qType === "SHORT_ANSWER"
+      qType === 'TRUE_FALSE'
+        ? ['True', 'False']
+        : qType === 'SHORT_ANSWER'
           ? []
-          : qOptions.filter((o) => o.trim() !== "");
+          : qOptions.filter((o) => o.trim() !== '');
 
-    if (qType === "MULTIPLE_CHOICE" && options.length < 2) {
-      setSaveError("Please provide at least 2 non-empty answer choices.");
+    if (qType === 'MULTIPLE_CHOICE' && options.length < 2) {
+      setSaveError('Please provide at least 2 non-empty answer choices.');
       return;
     }
 
     let correctAnswerStr: string | null = null;
-    if (qType === "SHORT_ANSWER") {
+    if (qType === 'SHORT_ANSWER') {
       correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
     } else {
       correctAnswerStr = String(qCorrectIndex);
@@ -553,15 +571,15 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       options,
       correctAnswer: correctAnswerStr,
       points: qPoints,
-      category: qCategory.trim() || "General",
+      category: qCategory.trim() || 'General',
     };
 
     setStagedQuestions((prev) => [...prev, newStaged]);
     // Reset inputs for next question, preserving curriculum target level & parameters
-    setQText("");
-    setQOptions(["", "", "", ""]);
+    setQText('');
+    setQOptions(['', '', '', '']);
     setQCorrectIndex(0);
-    setQAnswerText("");
+    setQAnswerText('');
     setSaveError(null);
     toast.success(`Question added to queue! (${stagedQuestions.length + 1} ready to save)`);
   };
@@ -575,19 +593,19 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       sq.options.length > 0
         ? sq.options.length >= 4
           ? sq.options
-          : [...sq.options, ...Array(4 - sq.options.length).fill("")]
-        : ["", "", "", ""]
+          : [...sq.options, ...Array(4 - sq.options.length).fill('')]
+        : ['', '', '', ''],
     );
-    if (sq.type === "SHORT_ANSWER") {
-      setQAnswerText(sq.correctAnswer || "");
+    if (sq.type === 'SHORT_ANSWER') {
+      setQAnswerText(sq.correctAnswer || '');
     } else {
-      const parsed = parseInt(sq.correctAnswer || "0", 10);
+      const parsed = parseInt(sq.correctAnswer || '0', 10);
       setQCorrectIndex(!isNaN(parsed) ? parsed : 0);
     }
     setQPoints(sq.points || 10);
-    setQCategory(sq.category || "General");
+    setQCategory(sq.category || 'General');
     setStagedQuestions((prev) => prev.filter((_, i) => i !== idx));
-    toast.info("Question loaded back into form for editing.");
+    toast.info('Question loaded back into form for editing.');
   };
 
   const handleSaveQuestion = async (e: React.FormEvent) => {
@@ -595,36 +613,37 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
     const hasCurrentText = !!qText.trim();
     if (!hasCurrentText && stagedQuestions.length === 0) {
-      setSaveError("Please enter a question prompt or add at least one question before saving.");
+      setSaveError('Please enter a question prompt or add at least one question before saving.');
       return;
     }
 
     setSavingQuestion(true);
     setSaveError(null);
 
-    const isGlobal = targetLevel === "GLOBAL" || qIsReusable;
+    const isGlobal = targetLevel === 'GLOBAL' || qIsReusable;
     const finalModuleId =
-      !isGlobal && (targetLevel === "MODULE" || targetLevel === "LESSON" || targetLevel === "SUB_LESSON")
+      !isGlobal &&
+      (targetLevel === 'MODULE' || targetLevel === 'LESSON' || targetLevel === 'SUB_LESSON')
         ? targetModuleId || null
         : null;
     const finalLessonId =
-      !isGlobal && (targetLevel === "LESSON" || targetLevel === "SUB_LESSON")
+      !isGlobal && (targetLevel === 'LESSON' || targetLevel === 'SUB_LESSON')
         ? targetLessonId || null
         : null;
     const finalSubLessonId =
-      !isGlobal && targetLevel === "SUB_LESSON" ? targetSubLessonId || null : null;
+      !isGlobal && targetLevel === 'SUB_LESSON' ? targetSubLessonId || null : null;
 
     try {
       if (editingQuestion) {
         const options =
-          qType === "TRUE_FALSE"
-            ? ["True", "False"]
-            : qType === "SHORT_ANSWER"
+          qType === 'TRUE_FALSE'
+            ? ['True', 'False']
+            : qType === 'SHORT_ANSWER'
               ? []
-              : qOptions.filter((o) => o.trim() !== "");
+              : qOptions.filter((o) => o.trim() !== '');
 
         let correctAnswerStr: string | null = null;
-        if (qType === "SHORT_ANSWER") {
+        if (qType === 'SHORT_ANSWER') {
           correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
         } else {
           correctAnswerStr = String(qCorrectIndex);
@@ -640,12 +659,12 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           options,
           correctAnswer: correctAnswerStr,
           points: qPoints,
-          category: qCategory.trim() || "General",
+          category: qCategory.trim() || 'General',
         };
 
         const updated = await updateQuestionBankItem(editingQuestion.id, payload);
         let parsedAnswer: number | string | null = updated.correctAnswer;
-        if (updated.type !== "SHORT_ANSWER" && updated.correctAnswer !== null) {
+        if (updated.type !== 'SHORT_ANSWER' && updated.correctAnswer !== null) {
           const num = parseInt(updated.correctAnswer, 10);
           if (!isNaN(num)) parsedAnswer = num;
         }
@@ -666,27 +685,29 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           lesson: updated.lesson,
           subLesson: updated.subLesson,
         };
-        setQuestions((prev) => prev.map((item) => (item.id === editingQuestion.id ? mapped : item)));
-        toast.success("Question updated successfully!");
+        setQuestions((prev) =>
+          prev.map((item) => (item.id === editingQuestion.id ? mapped : item)),
+        );
+        toast.success('Question updated successfully!');
       } else {
         const batchItems: StagedQuestion[] = [...stagedQuestions];
 
         if (hasCurrentText) {
           const options =
-            qType === "TRUE_FALSE"
-              ? ["True", "False"]
-              : qType === "SHORT_ANSWER"
+            qType === 'TRUE_FALSE'
+              ? ['True', 'False']
+              : qType === 'SHORT_ANSWER'
                 ? []
-                : qOptions.filter((o) => o.trim() !== "");
+                : qOptions.filter((o) => o.trim() !== '');
 
-          if (qType === "MULTIPLE_CHOICE" && options.length < 2) {
-            setSaveError("Current question needs at least 2 answer choices.");
+          if (qType === 'MULTIPLE_CHOICE' && options.length < 2) {
+            setSaveError('Current question needs at least 2 answer choices.');
             setSavingQuestion(false);
             return;
           }
 
           let correctAnswerStr: string | null = null;
-          if (qType === "SHORT_ANSWER") {
+          if (qType === 'SHORT_ANSWER') {
             correctAnswerStr = qAnswerText.trim() ? qAnswerText.trim() : null;
           } else {
             correctAnswerStr = String(qCorrectIndex);
@@ -699,7 +720,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             options,
             correctAnswer: correctAnswerStr,
             points: qPoints,
-            category: qCategory.trim() || "General",
+            category: qCategory.trim() || 'General',
           });
         }
 
@@ -729,7 +750,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
         const mappedList: BankQuestion[] = createdList.map((created) => {
           let parsedAnswer: number | string | null = created.correctAnswer;
-          if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
+          if (created.type !== 'SHORT_ANSWER' && created.correctAnswer !== null) {
             const num = parseInt(created.correctAnswer, 10);
             if (!isNaN(num)) parsedAnswer = num;
           }
@@ -757,13 +778,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         toast.success(
           mappedList.length > 1
             ? `Successfully saved ${mappedList.length} questions to question bank!`
-            : "Question added to question bank!"
+            : 'Question added to question bank!',
         );
       }
       setEditorOpen(false);
     } catch (err: any) {
-      setSaveError(err?.message || "Failed to save question to bank");
-      toast.error(err?.message || "Failed to save question to bank");
+      setSaveError(err?.message || 'Failed to save question to bank');
+      toast.error(err?.message || 'Failed to save question to bank');
     } finally {
       setSavingQuestion(false);
     }
@@ -783,10 +804,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         next.delete(deletingQuestion.id);
         return next;
       });
-      toast.success("Question deleted from bank successfully.");
+      toast.success('Question deleted from bank successfully.');
       setDeletingQuestion(null);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete question.");
+      toast.error(err?.message || 'Failed to delete question.');
     } finally {
       setIsDeletingQuestion(false);
     }
@@ -802,12 +823,15 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         type: q.type,
         question: `${q.question} (Copy)`,
         options: q.options,
-        correctAnswer: q.correctAnswer !== undefined && q.correctAnswer !== null ? String(q.correctAnswer) : null,
+        correctAnswer:
+          q.correctAnswer !== undefined && q.correctAnswer !== null
+            ? String(q.correctAnswer)
+            : null,
         points: q.points,
         category: q.category,
       });
       let parsedAnswer: number | string | null = created.correctAnswer;
-      if (created.type !== "SHORT_ANSWER" && created.correctAnswer !== null) {
+      if (created.type !== 'SHORT_ANSWER' && created.correctAnswer !== null) {
         const num = parseInt(created.correctAnswer, 10);
         if (!isNaN(num)) parsedAnswer = num;
       }
@@ -829,9 +853,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         subLesson: created.subLesson,
       };
       setQuestions((prev) => [mapped, ...prev]);
-      toast.success("Question duplicated successfully.");
+      toast.success('Question duplicated successfully.');
     } catch (err: any) {
-      toast.error(err?.message || "Failed to duplicate question.");
+      toast.error(err?.message || 'Failed to duplicate question.');
     }
   };
 
@@ -858,8 +882,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   const openQuizBuilderWithSelected = () => {
     const selected = courseQuestions.filter((q) => selectedQuestionIds.has(q.id));
     setQuizQuestions(selected.length > 0 ? selected : courseQuestions.slice(0, 5));
-    setQuizTitle(`${currentCourse?.title || "Course"} Quiz`);
-    setQuizDescription("Answer all questions to demonstrate your mastery of this training material.");
+    setQuizTitle(`${currentCourse?.title || 'Course'} Quiz`);
+    setQuizDescription(
+      'Answer all questions to demonstrate your mastery of this training material.',
+    );
     setPassingScore(70);
     setMaxAttempts(3);
     setTimeLimitMinutes(30);
@@ -894,13 +920,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       };
 
       await createCourseAssessment(selectedCourseId, body);
-      toast.success("Quiz successfully saved and published for learners!");
+      toast.success('Quiz successfully saved and published for learners!');
       await loadAssessments(selectedCourseId);
 
       setQuizBuilderOpen(false);
-      setActiveTab("quizzes");
+      setActiveTab('quizzes');
     } catch (err: any) {
-      toast.error(`Error saving quiz: ${err?.message || "Please verify quiz settings."}`);
+      toast.error(`Error saving quiz: ${err?.message || 'Please verify quiz settings.'}`);
     } finally {
       setSavingQuiz(false);
     }
@@ -925,8 +951,14 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
   return (
     <PageShell
       role={role}
-      title="Question Bank & Quiz Builder"
-      description="Create reusable question repositories, organize questions by topic, and assemble quizzes in a dedicated full-screen workspace."
+      title={{
+        en: 'Question Bank & Quiz Builder',
+        am: 'የጥያቄ ባንክ እና የፈተና ማዘጋጃ',
+      }}
+      description={{
+        en: 'Create reusable question repositories, organize questions by topic, and assemble quizzes in a dedicated full-screen workspace.',
+        am: 'እንደገና ጥቅም ላይ የሚውሉ የጥያቄዎች ማከማቻ ያዘጋጁ፣ ጥያቄዎችን በይዘት ያደራጁ እና የተሟላ ፈተናዎችን በቀላሉ ያዘጋጁ።',
+      }}
       actions={
         <div className="flex items-center gap-2">
           <Button
@@ -935,7 +967,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             onClick={() => loadAssessments(selectedCourseId)}
             disabled={loadingAssessments}
           >
-            <RefreshCw className={`h-4 w-4 ${loadingAssessments ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${loadingAssessments ? 'animate-spin' : ''}`} />
             Sync Bank
           </Button>
           <Button
@@ -945,7 +977,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
           >
             <FileQuestion className="h-4 w-4" />
-            Assemble Quiz ({selectedQuestionIds.size > 0 ? selectedQuestionIds.size : "All"})
+            Assemble Quiz ({selectedQuestionIds.size > 0 ? selectedQuestionIds.size : 'All'})
           </Button>
         </div>
       }
@@ -971,7 +1003,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
             {courseSearch && (
               <button
                 type="button"
-                onClick={() => setCourseSearch("")}
+                onClick={() => setCourseSearch('')}
                 className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
               >
                 <X className="h-3.5 w-3.5" />
@@ -1002,25 +1034,27 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           <div className="flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80 text-[11px] font-semibold">
             <button
               type="button"
-              onClick={() => setCourseFilterMode("ALL")}
-              className={`px-2.5 py-1 rounded-lg transition ${courseFilterMode === "ALL"
-                  ? "bg-white text-indigo-700 shadow-2xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-                }`}
+              onClick={() => setCourseFilterMode('ALL')}
+              className={`px-2.5 py-1 rounded-lg transition ${
+                courseFilterMode === 'ALL'
+                  ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
               title="Browse Question Banks across all institutional courses"
             >
               All Courses ({courses.length})
             </button>
             <button
               type="button"
-              onClick={() => setCourseFilterMode("MY")}
-              className={`px-2.5 py-1 rounded-lg transition ${courseFilterMode === "MY"
-                  ? "bg-white text-indigo-700 shadow-2xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-                }`}
-              title={`Show only courses where you are assigned as ${role === "course_owner" ? "Owner" : "Trainer"}`}
+              onClick={() => setCourseFilterMode('MY')}
+              className={`px-2.5 py-1 rounded-lg transition ${
+                courseFilterMode === 'MY'
+                  ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title={`Show only courses where you are assigned as ${role === 'course_owner' ? 'Owner' : 'Trainer'}`}
             >
-              {role === "course_owner" ? "My Created" : "My Assigned"} ({myCourses.length})
+              {role === 'course_owner' ? 'My Created' : 'My Assigned'} ({myCourses.length})
             </button>
           </div>
         </div>
@@ -1029,22 +1063,24 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
           <button
             type="button"
-            onClick={() => setActiveTab("questions")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${activeTab === "questions"
-                ? "bg-white text-indigo-700 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-              }`}
+            onClick={() => setActiveTab('questions')}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === 'questions'
+                ? 'bg-white text-indigo-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
             Questions ({courseQuestions.length})
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("quizzes")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${activeTab === "quizzes"
-                ? "bg-white text-indigo-700 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-              }`}
+            onClick={() => setActiveTab('quizzes')}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === 'quizzes'
+                ? 'bg-white text-indigo-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
             <Award className="h-3.5 w-3.5" />
             Published Quizzes ({courseAssessments.length})
@@ -1052,7 +1088,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         </div>
       </div>
 
-      {activeTab === "questions" ? (
+      {activeTab === 'questions' ? (
         <div className="flex flex-col lg:flex-row items-start gap-6">
           {/* Left Column: Course Curriculum Hierarchy Navigator */}
           <div className="w-full lg:w-96 xl:w-[410px] shrink-0 space-y-3">
@@ -1073,54 +1109,90 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               <div className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => setActiveCurriculumNode({ type: "ALL", id: null, title: "All Course Questions" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "ALL"
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                  onClick={() =>
+                    setActiveCurriculumNode({
+                      type: 'ALL',
+                      id: null,
+                      title: 'All Course Questions',
+                    })
+                  }
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                    activeCurriculumNode.type === 'ALL'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <ListChecks className="h-3.5 w-3.5 shrink-0" />
                     All Questions
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "ALL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                    }`}>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      activeCurriculumNode.type === 'ALL'
+                        ? 'bg-indigo-700 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
                     {questionCounts.all || 0}
                   </span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setActiveCurriculumNode({ type: "COURSE_GENERAL", id: null, title: "Course-Level (General)" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "COURSE_GENERAL"
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                  onClick={() =>
+                    setActiveCurriculumNode({
+                      type: 'COURSE_GENERAL',
+                      id: null,
+                      title: 'Course-Level (General)',
+                    })
+                  }
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                    activeCurriculumNode.type === 'COURSE_GENERAL'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <BookOpen className="h-3.5 w-3.5 shrink-0" />
                     Course Level (General)
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "COURSE_GENERAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                    }`}>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      activeCurriculumNode.type === 'COURSE_GENERAL'
+                        ? 'bg-indigo-700 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
                     {questionCounts.courseGeneral || 0}
                   </span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setActiveCurriculumNode({ type: "GLOBAL", id: null, title: "Reusable Global Questions" })}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${activeCurriculumNode.type === "GLOBAL"
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                  onClick={() =>
+                    setActiveCurriculumNode({
+                      type: 'GLOBAL',
+                      id: null,
+                      title: 'Reusable Global Questions',
+                    })
+                  }
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                    activeCurriculumNode.type === 'GLOBAL'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <Globe className="h-3.5 w-3.5 shrink-0" />
                     Reusable Global
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeCurriculumNode.type === "GLOBAL" ? "bg-indigo-700 text-white" : "bg-slate-100 text-slate-600"
-                    }`}>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      activeCurriculumNode.type === 'GLOBAL'
+                        ? 'bg-indigo-700 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
                     {questionCounts.global || 0}
                   </span>
                 </button>
@@ -1142,35 +1214,44 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 ) : (
                   <div className="max-h-[540px] overflow-y-auto space-y-1.5 pr-1">
                     {courseModules.map((mod, modIdx) => {
-                      const isModActive = activeCurriculumNode.type === "MODULE" && activeCurriculumNode.id === mod.id;
+                      const isModActive =
+                        activeCurriculumNode.type === 'MODULE' &&
+                        activeCurriculumNode.id === mod.id;
                       const isExpanded = expandedModules.has(mod.id);
                       const modCount = questionCounts[`module_${mod.id}`] || 0;
                       const cleanModuleTitle = getCleanModuleTitle(mod.titleEn);
 
                       return (
-                        <div key={mod.id} className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
+                        <div
+                          key={mod.id}
+                          className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs"
+                        >
                           {/* Module Header */}
                           <div
-                            className={`group flex items-center justify-between p-2 text-xs transition-colors cursor-pointer ${isModActive
-                                ? "bg-indigo-50/90 text-indigo-950 font-bold ring-1 ring-indigo-200"
-                                : "hover:bg-slate-50 text-slate-800"
-                              }`}
+                            className={`group flex items-center justify-between p-2 text-xs transition-colors cursor-pointer ${
+                              isModActive
+                                ? 'bg-indigo-50/90 text-indigo-950 font-bold ring-1 ring-indigo-200'
+                                : 'hover:bg-slate-50 text-slate-800'
+                            }`}
                           >
                             <div
                               className="flex items-center gap-2 flex-1 min-w-0"
-                              onClick={() => setActiveCurriculumNode({
-                                type: "MODULE",
-                                id: mod.id,
-                                title: `Module ${modIdx + 1}: ${cleanModuleTitle}`,
-                                moduleId: mod.id,
-                              })}
+                              onClick={() =>
+                                setActiveCurriculumNode({
+                                  type: 'MODULE',
+                                  id: mod.id,
+                                  title: `Module ${modIdx + 1}: ${cleanModuleTitle}`,
+                                  moduleId: mod.id,
+                                })
+                              }
                               title={`Module ${modIdx + 1}: ${cleanModuleTitle}`}
                             >
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight shrink-0 ${isModActive
-                                    ? "bg-indigo-600 text-white"
-                                    : "bg-indigo-100/80 text-indigo-800 border border-indigo-200/60"
-                                  }`}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight shrink-0 ${
+                                  isModActive
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-indigo-100/80 text-indigo-800 border border-indigo-200/60'
+                                }`}
                               >
                                 M{modIdx + 1}
                               </span>
@@ -1181,10 +1262,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
                             <div className="flex items-center gap-1.5 shrink-0 ml-2">
                               <span
-                                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${isModActive
-                                    ? "bg-indigo-200/70 text-indigo-900 border-indigo-300"
-                                    : "bg-slate-100 text-slate-600 border-slate-200"
-                                  }`}
+                                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
+                                  isModActive
+                                    ? 'bg-indigo-200/70 text-indigo-900 border-indigo-300'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                                }`}
                                 title={`${modCount} questions attached to this module`}
                               >
                                 {modCount}
@@ -1194,7 +1276,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openCreateQuestion({
-                                    type: "MODULE",
+                                    type: 'MODULE',
                                     id: mod.id,
                                     title: `Module ${modIdx + 1}: ${cleanModuleTitle}`,
                                     moduleId: mod.id,
@@ -1213,7 +1295,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                     toggleModuleAccordion(mod.id);
                                   }}
                                   className="p-1 rounded-md text-slate-400 hover:text-slate-700 transition"
-                                  title={isExpanded ? "Collapse lessons" : "Expand lessons"}
+                                  title={isExpanded ? 'Collapse lessons' : 'Expand lessons'}
                                 >
                                   {isExpanded ? (
                                     <ChevronDown className="h-3.5 w-3.5" />
@@ -1229,7 +1311,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                           {isExpanded && mod.lessons && mod.lessons.length > 0 && (
                             <div className="pl-3 pr-1 py-1.5 space-y-1 bg-slate-50/50 border-t border-slate-100">
                               {mod.lessons.map((les, lesIdx) => {
-                                const isLesActive = activeCurriculumNode.type === "LESSON" && activeCurriculumNode.id === les.id;
+                                const isLesActive =
+                                  activeCurriculumNode.type === 'LESSON' &&
+                                  activeCurriculumNode.id === les.id;
                                 const isLesExpanded = expandedLessons.has(les.id);
                                 const lesCount = questionCounts[`lesson_${les.id}`] || 0;
                                 const cleanLessonTitle = getCleanLessonTitle(les.titleEn);
@@ -1237,31 +1321,38 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                 return (
                                   <div
                                     key={les.id}
-                                    className={`rounded-lg border transition-all ${isLesActive
-                                        ? "bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-2xs"
-                                        : "bg-white/90 border-slate-200/70 hover:border-slate-300"
-                                      }`}
+                                    className={`rounded-lg border transition-all ${
+                                      isLesActive
+                                        ? 'bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-2xs'
+                                        : 'bg-white/90 border-slate-200/70 hover:border-slate-300'
+                                    }`}
                                   >
                                     <div
-                                      className={`flex items-center justify-between p-2 text-xs transition cursor-pointer ${isLesActive ? "text-indigo-950 font-bold" : "hover:bg-slate-50/70"
-                                        }`}
+                                      className={`flex items-center justify-between p-2 text-xs transition cursor-pointer ${
+                                        isLesActive
+                                          ? 'text-indigo-950 font-bold'
+                                          : 'hover:bg-slate-50/70'
+                                      }`}
                                     >
                                       <div
                                         className="flex items-center gap-2 flex-1 min-w-0"
-                                        onClick={() => setActiveCurriculumNode({
-                                          type: "LESSON",
-                                          id: les.id,
-                                          title: `Lesson ${modIdx + 1}.${lesIdx + 1}: ${cleanLessonTitle}`,
-                                          moduleId: mod.id,
-                                          lessonId: les.id,
-                                        })}
+                                        onClick={() =>
+                                          setActiveCurriculumNode({
+                                            type: 'LESSON',
+                                            id: les.id,
+                                            title: `Lesson ${modIdx + 1}.${lesIdx + 1}: ${cleanLessonTitle}`,
+                                            moduleId: mod.id,
+                                            lessonId: les.id,
+                                          })
+                                        }
                                         title={`Lesson ${modIdx + 1}.${lesIdx + 1}: ${cleanLessonTitle}`}
                                       >
                                         <span
-                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 ${isLesActive
-                                              ? "bg-indigo-100 text-indigo-800"
-                                              : "bg-slate-100 text-slate-600 border border-slate-200/60"
-                                            }`}
+                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 ${
+                                            isLesActive
+                                              ? 'bg-indigo-100 text-indigo-800'
+                                              : 'bg-slate-100 text-slate-600 border border-slate-200/60'
+                                          }`}
                                         >
                                           {modIdx + 1}.{lesIdx + 1}
                                         </span>
@@ -1279,7 +1370,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             openCreateQuestion({
-                                              type: "LESSON",
+                                              type: 'LESSON',
                                               id: les.id,
                                               title: `Lesson ${modIdx + 1}.${lesIdx + 1}: ${cleanLessonTitle}`,
                                               moduleId: mod.id,
@@ -1299,7 +1390,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                               toggleLessonAccordion(les.id);
                                             }}
                                             className="p-1 rounded text-slate-400 hover:text-slate-700 transition"
-                                            title={isLesExpanded ? "Collapse sub-lessons" : "Expand sub-lessons"}
+                                            title={
+                                              isLesExpanded
+                                                ? 'Collapse sub-lessons'
+                                                : 'Expand sub-lessons'
+                                            }
                                           >
                                             {isLesExpanded ? (
                                               <ChevronDown className="h-3 w-3" />
@@ -1312,67 +1407,79 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                                     </div>
 
                                     {/* Sub-lessons */}
-                                    {isLesExpanded && les.subLessons && les.subLessons.length > 0 && (
-                                      <div className="pl-4 pr-1.5 py-1 space-y-1 bg-slate-50/80 border-t border-slate-100">
-                                        {les.subLessons.map((sub, subIdx) => {
-                                          const isSubActive = activeCurriculumNode.type === "SUB_LESSON" && activeCurriculumNode.id === sub.id;
-                                          const subCount = questionCounts[`sublesson_${sub.id}`] || 0;
-                                          const cleanSubTitle = getCleanSubLessonTitle(sub.titleEn);
+                                    {isLesExpanded &&
+                                      les.subLessons &&
+                                      les.subLessons.length > 0 && (
+                                        <div className="pl-4 pr-1.5 py-1 space-y-1 bg-slate-50/80 border-t border-slate-100">
+                                          {les.subLessons.map((sub, subIdx) => {
+                                            const isSubActive =
+                                              activeCurriculumNode.type === 'SUB_LESSON' &&
+                                              activeCurriculumNode.id === sub.id;
+                                            const subCount =
+                                              questionCounts[`sublesson_${sub.id}`] || 0;
+                                            const cleanSubTitle = getCleanSubLessonTitle(
+                                              sub.titleEn,
+                                            );
 
-                                          return (
-                                            <div
-                                              key={sub.id}
-                                              className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${isSubActive
-                                                  ? "bg-indigo-100 text-indigo-950 font-bold border border-indigo-200 shadow-2xs"
-                                                  : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200/60"
+                                            return (
+                                              <div
+                                                key={sub.id}
+                                                className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${
+                                                  isSubActive
+                                                    ? 'bg-indigo-100 text-indigo-950 font-bold border border-indigo-200 shadow-2xs'
+                                                    : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-200/60'
                                                 }`}
-                                              onClick={() => setActiveCurriculumNode({
-                                                type: "SUB_LESSON",
-                                                id: sub.id,
-                                                title: `Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`,
-                                                moduleId: mod.id,
-                                                lessonId: les.id,
-                                                subLessonId: sub.id,
-                                              })}
-                                              title={`Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`}
-                                            >
-                                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                                <span className="text-slate-400 font-mono text-[10px] shrink-0">↳</span>
-                                                <span className="px-1 py-0.2 rounded text-[9px] font-mono font-medium bg-white text-slate-500 border border-slate-200 shrink-0">
-                                                  {modIdx + 1}.{lesIdx + 1}.{subIdx + 1}
-                                                </span>
-                                                <span className="truncate text-[11px] font-normal leading-tight text-slate-700 flex-1 min-w-0">
-                                                  {cleanSubTitle}
-                                                </span>
+                                                onClick={() =>
+                                                  setActiveCurriculumNode({
+                                                    type: 'SUB_LESSON',
+                                                    id: sub.id,
+                                                    title: `Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`,
+                                                    moduleId: mod.id,
+                                                    lessonId: les.id,
+                                                    subLessonId: sub.id,
+                                                  })
+                                                }
+                                                title={`Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`}
+                                              >
+                                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                  <span className="text-slate-400 font-mono text-[10px] shrink-0">
+                                                    ↳
+                                                  </span>
+                                                  <span className="px-1 py-0.2 rounded text-[9px] font-mono font-medium bg-white text-slate-500 border border-slate-200 shrink-0">
+                                                    {modIdx + 1}.{lesIdx + 1}.{subIdx + 1}
+                                                  </span>
+                                                  <span className="truncate text-[11px] font-normal leading-tight text-slate-700 flex-1 min-w-0">
+                                                    {cleanSubTitle}
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center gap-1 shrink-0 ml-1">
+                                                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-500">
+                                                    {subCount}
+                                                  </span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openCreateQuestion({
+                                                        type: 'SUB_LESSON',
+                                                        id: sub.id,
+                                                        title: `Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`,
+                                                        moduleId: mod.id,
+                                                        lessonId: les.id,
+                                                        subLessonId: sub.id,
+                                                      });
+                                                    }}
+                                                    title="Add question for this sub-lesson"
+                                                    className="p-0.5 rounded text-slate-400 hover:text-indigo-600 transition"
+                                                  >
+                                                    <Plus className="h-2.5 w-2.5" />
+                                                  </button>
+                                                </div>
                                               </div>
-                                              <div className="flex items-center gap-1 shrink-0 ml-1">
-                                                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-500">
-                                                  {subCount}
-                                                </span>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openCreateQuestion({
-                                                      type: "SUB_LESSON",
-                                                      id: sub.id,
-                                                      title: `Sub-lesson ${modIdx + 1}.${lesIdx + 1}.${subIdx + 1}: ${cleanSubTitle}`,
-                                                      moduleId: mod.id,
-                                                      lessonId: les.id,
-                                                      subLessonId: sub.id,
-                                                    });
-                                                  }}
-                                                  title="Add question for this sub-lesson"
-                                                  className="p-0.5 rounded text-slate-400 hover:text-indigo-600 transition"
-                                                >
-                                                  <Plus className="h-2.5 w-2.5" />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
+                                            );
+                                          })}
+                                        </div>
+                                      )}
                                   </div>
                                 );
                               })}
@@ -1396,9 +1503,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   <Bookmark className="h-3.5 w-3.5" />
                   <span>Filtered Curriculum Content:</span>
                 </div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  {activeCurriculumNode.title}
-                </h3>
+                <h3 className="text-sm font-bold text-slate-900">{activeCurriculumNode.title}</h3>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1455,19 +1560,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   disabled={loadingQuestions}
                   title="Refresh Question Bank"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${loadingQuestions ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 text-slate-500 ${loadingQuestions ? 'animate-spin' : ''}`}
+                  />
                 </Button>
               </div>
 
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={toggleSelectAll}
-                  className="text-xs"
-                >
-                  {selectedQuestionIds.size === filteredQuestions.length && filteredQuestions.length > 0
-                    ? "Deselect All"
+                <Button size="sm" variant="outline" onClick={toggleSelectAll} className="text-xs">
+                  {selectedQuestionIds.size === filteredQuestions.length &&
+                  filteredQuestions.length > 0
+                    ? 'Deselect All'
                     : `Select All (${filteredQuestions.length})`}
                 </Button>
               </div>
@@ -1485,9 +1588,15 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   No questions prepared yet for this content item
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
-                  Click &quot;Add Question&quot; to prepare targeted questions for this specific module, lesson, or course so trainers can import or randomly generate them during live classes.
+                  Click &quot;Add Question&quot; to prepare targeted questions for this specific
+                  module, lesson, or course so trainers can import or randomly generate them during
+                  live classes.
                 </p>
-                <Button size="sm" onClick={() => openCreateQuestion(activeCurriculumNode)} className="mt-4">
+                <Button
+                  size="sm"
+                  onClick={() => openCreateQuestion(activeCurriculumNode)}
+                  className="mt-4"
+                >
                   <Plus className="h-4 w-4" /> Add Question to {activeCurriculumNode.title}
                 </Button>
               </div>
@@ -1498,10 +1607,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   return (
                     <div
                       key={q.id}
-                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-150 p-5 ${isSelected
-                          ? "border-indigo-400 bg-indigo-50/20 shadow-sm ring-2 ring-indigo-500/10"
-                          : "border-slate-200/90 bg-white hover:border-slate-300 shadow-xs"
-                        }`}
+                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-150 p-5 ${
+                        isSelected
+                          ? 'border-indigo-400 bg-indigo-50/20 shadow-sm ring-2 ring-indigo-500/10'
+                          : 'border-slate-200/90 bg-white hover:border-slate-300 shadow-xs'
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -1517,8 +1627,16 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                               <span className="font-mono text-xs font-bold text-slate-400">
                                 #{(questionsPage.page - 1) * 10 + idx + 1}
                               </span>
-                              <Badge variant={q.type === "MULTIPLE_CHOICE" ? "blue" : q.type === "TRUE_FALSE" ? "green" : "amber"}>
-                                {q.type.replace("_", " ")}
+                              <Badge
+                                variant={
+                                  q.type === 'MULTIPLE_CHOICE'
+                                    ? 'blue'
+                                    : q.type === 'TRUE_FALSE'
+                                      ? 'green'
+                                      : 'amber'
+                                }
+                              >
+                                {q.type.replace('_', ' ')}
                               </Badge>
                               {!q.courseId ? (
                                 <Badge variant="indigo">Reusable Global</Badge>
@@ -1553,21 +1671,25 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                             </h4>
 
                             {/* Options breakdown */}
-                            {q.type === "MULTIPLE_CHOICE" && q.options.length > 0 && (
+                            {q.type === 'MULTIPLE_CHOICE' && q.options.length > 0 && (
                               <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
                                 {q.options.map((opt, optIdx) => {
                                   const isCorrect = q.correctAnswer === optIdx;
                                   return (
                                     <div
                                       key={optIdx}
-                                      className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium ${isCorrect
-                                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold"
-                                          : "bg-slate-50 text-slate-600 border border-slate-100"
-                                        }`}
+                                      className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium ${
+                                        isCorrect
+                                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold'
+                                          : 'bg-slate-50 text-slate-600 border border-slate-100'
+                                      }`}
                                     >
                                       <span
-                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${isCorrect ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
-                                          }`}
+                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                                          isCorrect
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-slate-200 text-slate-600'
+                                        }`}
                                       >
                                         {String.fromCharCode(65 + optIdx)}
                                       </span>
@@ -1581,24 +1703,30 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                               </div>
                             )}
 
-                            {q.type === "TRUE_FALSE" && (
+                            {q.type === 'TRUE_FALSE' && (
                               <div className="mt-2 flex items-center gap-3 text-xs">
                                 <span
-                                  className={`px-2.5 py-1 rounded-lg font-semibold ${q.correctAnswer === 0 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                                    }`}
+                                  className={`px-2.5 py-1 rounded-lg font-semibold ${
+                                    q.correctAnswer === 0
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-slate-100 text-slate-600'
+                                  }`}
                                 >
-                                  True {q.correctAnswer === 0 ? "✓ (Correct)" : ""}
+                                  True {q.correctAnswer === 0 ? '✓ (Correct)' : ''}
                                 </span>
                                 <span
-                                  className={`px-2.5 py-1 rounded-lg font-semibold ${q.correctAnswer === 1 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                                    }`}
+                                  className={`px-2.5 py-1 rounded-lg font-semibold ${
+                                    q.correctAnswer === 1
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-slate-100 text-slate-600'
+                                  }`}
                                 >
-                                  False {q.correctAnswer === 1 ? "✓ (Correct)" : ""}
+                                  False {q.correctAnswer === 1 ? '✓ (Correct)' : ''}
                                 </span>
                               </div>
                             )}
 
-                            {q.type === "SHORT_ANSWER" && (
+                            {q.type === 'SHORT_ANSWER' && (
                               <div className="mt-2 text-xs">
                                 {q.correctAnswer ? (
                                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
@@ -1653,6 +1781,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               page={questionsPage.page}
               totalPages={questionsPage.totalPages}
               onPageChange={questionsPage.setPage}
+              totalItems={questionsPage.totalItems}
+              pageSize={questionsPage.pageSize}
+              onPageSizeChange={questionsPage.setPageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
           </div>
         </div>
@@ -1662,9 +1794,12 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           {courseAssessments.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
               <Award className="mx-auto h-12 w-12 text-slate-300" />
-              <h3 className="mt-3 text-sm font-semibold text-slate-800">No quizzes assembled yet</h3>
+              <h3 className="mt-3 text-sm font-semibold text-slate-800">
+                No quizzes assembled yet
+              </h3>
               <p className="mt-1 text-xs text-slate-500">
-                Select questions from the Question Bank and click &quot;Assemble Quiz&quot; to publish an assessment.
+                Select questions from the Question Bank and click &quot;Assemble Quiz&quot; to
+                publish an assessment.
               </p>
               <Button size="sm" onClick={openQuizBuilderWithSelected} className="mt-4">
                 <FileQuestion className="h-4 w-4" /> Assemble Quiz
@@ -1681,7 +1816,8 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                     <div className="flex items-center justify-between">
                       <Badge variant="blue">Passing: {asm.passingScore}%</Badge>
                       <span className="text-xs text-slate-400">
-                        {asm.questionsCount || (asm.questions ? asm.questions.length : "Multi")} questions
+                        {asm.questionsCount || (asm.questions ? asm.questions.length : 'Multi')}{' '}
+                        questions
                       </span>
                     </div>
 
@@ -1689,13 +1825,13 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                       {asm.titleEn}
                     </h4>
                     <p className="text-xs text-slate-500 line-clamp-2">
-                      {asm.descriptionEn || "No description provided."}
+                      {asm.descriptionEn || 'No description provided.'}
                     </p>
 
                     <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />
-                        {asm.timeLimitMinutes ? `${asm.timeLimitMinutes} min` : "No limit"}
+                        {asm.timeLimitMinutes ? `${asm.timeLimitMinutes} min` : 'No limit'}
                       </span>
                       <span>Max {asm.maxAttempts} attempts</span>
                     </div>
@@ -1706,6 +1842,10 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 page={assessmentsPage.page}
                 totalPages={assessmentsPage.totalPages}
                 onPageChange={assessmentsPage.setPage}
+                totalItems={assessmentsPage.totalItems}
+                pageSize={assessmentsPage.pageSize}
+                onPageSizeChange={assessmentsPage.setPageSize}
+                pageSizeOptions={[6, 12, 24, 48]}
               />
             </>
           )}
@@ -1717,15 +1857,18 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
         <WorkspaceDetailOverlay
           open={editorOpen}
           onClose={() => setEditorOpen(false)}
-          title={editingQuestion ? "Edit Question" : "Add Question to Bank"}
+          title={editingQuestion ? 'Edit Question' : 'Add Question to Bank'}
           subtitle={
             qIsReusable
-              ? "Global Question Bank (Reusable across all courses)"
-              : `Assign to ${currentCourse?.title || "Course"} Question Bank`
+              ? 'Global Question Bank (Reusable across all courses)'
+              : `Assign to ${currentCourse?.title || 'Course'} Question Bank`
           }
         >
           <div className="w-full py-4">
-            <form onSubmit={handleSaveQuestion} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+            <form
+              onSubmit={handleSaveQuestion}
+              className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs"
+            >
               {/* Reusable Toggle */}
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 space-y-1.5">
                 <label className="flex items-center gap-2.5 cursor-pointer">
@@ -1741,8 +1884,8 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 </label>
                 <p className="text-[11px] text-slate-500 pl-6.5">
                   {qIsReusable
-                    ? "✓ This question will be available to all courses and can be imported or used in any quiz."
-                    : `This question is linked specifically to: ${currentCourse?.title || "Active Course"}.`}
+                    ? '✓ This question will be available to all courses and can be imported or used in any quiz.'
+                    : `This question is linked specifically to: ${currentCourse?.title || 'Active Course'}.`}
                 </p>
               </div>
 
@@ -1761,27 +1904,29 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-600">Level</label>
+                      <label className="mb-1 block text-[11px] font-semibold text-slate-600">
+                        Level
+                      </label>
                       <select
                         value={targetLevel}
                         onChange={(e) => {
                           const lvl = e.target.value as any;
                           setTargetLevel(lvl);
-                          if (lvl === "COURSE_GENERAL") {
-                            setTargetModuleId("");
-                            setTargetLessonId("");
-                            setTargetSubLessonId("");
-                          } else if (lvl === "MODULE") {
+                          if (lvl === 'COURSE_GENERAL') {
+                            setTargetModuleId('');
+                            setTargetLessonId('');
+                            setTargetSubLessonId('');
+                          } else if (lvl === 'MODULE') {
                             if (!targetModuleId && courseModules.length > 0) {
                               setTargetModuleId(courseModules[0].id);
                             }
-                            setTargetLessonId("");
-                            setTargetSubLessonId("");
-                          } else if (lvl === "LESSON") {
+                            setTargetLessonId('');
+                            setTargetSubLessonId('');
+                          } else if (lvl === 'LESSON') {
                             if (!targetModuleId && courseModules.length > 0) {
                               setTargetModuleId(courseModules[0].id);
                             }
-                            setTargetSubLessonId("");
+                            setTargetSubLessonId('');
                           }
                         }}
                         className={inputClass}
@@ -1793,15 +1938,17 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                       </select>
                     </div>
 
-                    {targetLevel !== "COURSE_GENERAL" && (
+                    {targetLevel !== 'COURSE_GENERAL' && (
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">Module</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">
+                          Module
+                        </label>
                         <select
                           value={targetModuleId}
                           onChange={(e) => {
                             setTargetModuleId(e.target.value);
-                            setTargetLessonId("");
-                            setTargetSubLessonId("");
+                            setTargetLessonId('');
+                            setTargetSubLessonId('');
                           }}
                           className={inputClass}
                         >
@@ -1815,14 +1962,16 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                       </div>
                     )}
 
-                    {(targetLevel === "LESSON" || targetLevel === "SUB_LESSON") && (
+                    {(targetLevel === 'LESSON' || targetLevel === 'SUB_LESSON') && (
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">Lesson</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">
+                          Lesson
+                        </label>
                         <select
                           value={targetLessonId}
                           onChange={(e) => {
                             setTargetLessonId(e.target.value);
-                            setTargetSubLessonId("");
+                            setTargetSubLessonId('');
                           }}
                           className={inputClass}
                         >
@@ -1836,9 +1985,11 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                       </div>
                     )}
 
-                    {targetLevel === "SUB_LESSON" && (
+                    {targetLevel === 'SUB_LESSON' && (
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">Sub-lesson</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-600">
+                          Sub-lesson
+                        </label>
                         <select
                           value={targetSubLessonId}
                           onChange={(e) => setTargetSubLessonId(e.target.value)}
@@ -1897,7 +2048,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
               </div>
 
               {/* Options based on type */}
-              {qType === "MULTIPLE_CHOICE" && (
+              {qType === 'MULTIPLE_CHOICE' && (
                 <div className="space-y-3">
                   <label className={labelClass}>
                     Answer Choices (Select the radio button for the correct option)
@@ -1931,7 +2082,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 </div>
               )}
 
-              {qType === "TRUE_FALSE" && (
+              {qType === 'TRUE_FALSE' && (
                 <div className="space-y-2">
                   <label className={labelClass}>Correct Answer</label>
                   <div className="flex items-center gap-4">
@@ -1959,7 +2110,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                 </div>
               )}
 
-              {qType === "SHORT_ANSWER" && (
+              {qType === 'SHORT_ANSWER' && (
                 <div>
                   <label className={labelClass}>Accepted Answer Text (Optional)</label>
                   <input
@@ -1970,7 +2121,8 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                     className={inputClass}
                   />
                   <p className="mt-1 text-[11px] text-slate-400">
-                    If provided, student answers will be automatically checked against this value. If left blank, questions are treated as open-ended.
+                    If provided, student answers will be automatically checked against this value.
+                    If left blank, questions are treated as open-ended.
                   </p>
                 </div>
               )}
@@ -2012,7 +2164,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                             </p>
                             <p className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                               <span className="font-medium text-indigo-600 capitalize">
-                                {sq.type.toLowerCase().replace(/_/g, " ")}
+                                {sq.type.toLowerCase().replace(/_/g, ' ')}
                               </span>
                               <span>•</span>
                               <span>{sq.points} pts</span>
@@ -2036,7 +2188,9 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setStagedQuestions((prev) => prev.filter((_, i) => i !== sIdx))}
+                            onClick={() =>
+                              setStagedQuestions((prev) => prev.filter((_, i) => i !== sIdx))
+                            }
                             className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                             title="Remove question"
                           >
@@ -2069,21 +2223,30 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
                   </Button>
                 )}
                 <div className="flex items-center gap-2 ml-auto">
-                  <Button variant="outline" type="button" onClick={() => setEditorOpen(false)} disabled={savingQuestion}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setEditorOpen(false)}
+                    disabled={savingQuestion}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={savingQuestion} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+                  <Button
+                    type="submit"
+                    disabled={savingQuestion}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+                  >
                     {savingQuestion ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Saving...
                       </>
                     ) : editingQuestion ? (
-                      "Update Question"
+                      'Update Question'
                     ) : stagedQuestions.length > 0 ? (
                       `Save to Bank (${stagedQuestions.length + (qText.trim() ? 1 : 0)})`
                     ) : (
-                      "Save to Bank"
+                      'Save to Bank'
                     )}
                   </Button>
                 </div>
@@ -2099,7 +2262,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           open={quizBuilderOpen}
           onClose={() => setQuizBuilderOpen(false)}
           title={`Quiz Builder: ${quizTitle}`}
-          subtitle={`Configuring assessment for ${currentCourse?.title || "Course"} (${quizQuestions.length} Questions)`}
+          subtitle={`Configuring assessment for ${currentCourse?.title || 'Course'} (${quizQuestions.length} Questions)`}
           actions={
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setQuizBuilderOpen(false)}>
@@ -2119,7 +2282,6 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
           }
         >
           <div className="w-full py-4 space-y-6 pb-12">
-
             {/* Quiz Configuration Card */}
             <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -2277,7 +2439,7 @@ export function QuestionBankWorkspace({ role }: QuestionBankWorkspaceProps) {
       <ConfirmModal
         open={Boolean(deletingQuestion)}
         title="Delete Question from Bank"
-        description={`Are you sure you want to delete this question? "${(deletingQuestion?.question ?? "").slice(0, 80)}..." This action cannot be undone.`}
+        description={`Are you sure you want to delete this question? "${(deletingQuestion?.question ?? '').slice(0, 80)}..." This action cannot be undone.`}
         confirmText="Delete Question"
         variant="danger"
         isLoading={isDeletingQuestion}

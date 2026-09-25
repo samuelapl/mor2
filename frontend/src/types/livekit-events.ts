@@ -13,7 +13,7 @@ export interface LiveQuizPayload {
   id: string;
   titleEn: string;
   titleAm?: string;
-  type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  type: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   options: LiveQuizOption[];
   timeLimitSeconds: number; // e.g. 15, 30, 45, 60
   startedAt: number; // epoch ms
@@ -47,11 +47,11 @@ export interface LiveQuizRevealPayload {
 
 export type LiveKitDataEvent =
   | {
-      type: "QUIZ_START";
+      type: 'QUIZ_START';
       payload: LiveQuizPayload;
     }
   | {
-      type: "QUIZ_ANSWER";
+      type: 'QUIZ_ANSWER';
       payload: {
         questionId: string;
         userId: string;
@@ -62,17 +62,17 @@ export type LiveKitDataEvent =
       };
     }
   | {
-      type: "QUIZ_REVEAL";
+      type: 'QUIZ_REVEAL';
       payload: LiveQuizRevealPayload;
     }
   | {
-      type: "QUIZ_CLOSE";
+      type: 'QUIZ_CLOSE';
       payload: {
         questionId: string;
       };
     }
   | {
-      type: "HAND_RAISE";
+      type: 'HAND_RAISE';
       payload: {
         userId: string;
         userName: string;
@@ -86,4 +86,3 @@ export interface RaisedHandEntry {
   userName: string;
   timestamp: number;
 }
-

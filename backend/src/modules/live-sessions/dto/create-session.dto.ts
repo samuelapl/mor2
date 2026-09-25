@@ -76,12 +76,18 @@ export class CreateSessionDto {
   @IsString()
   trainerId?: string;
 
-  @ApiPropertyOptional({ example: false, description: 'Whether participants can view the attendance list' })
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether participants can view the attendance list',
+  })
   @IsOptional()
   @IsBoolean()
   allowViewAttendance?: boolean;
 
-  @ApiPropertyOptional({ example: 60, description: 'Minimum active stay threshold (%) for Present status' })
+  @ApiPropertyOptional({
+    example: 60,
+    description: 'Minimum active stay threshold (%) for Present status',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

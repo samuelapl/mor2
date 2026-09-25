@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
@@ -13,24 +13,26 @@ import {
   Timer,
   Users,
   Video,
-} from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import PageShell from "@/components/shared/PageShell";
-import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { fetchCoursePolicy, updateCoursePolicy } from "@/lib/api/policy";
-import { fetchSystemSettings, updateSystemSettings } from "@/lib/api/monitoring";
-import { ApiError } from "@/lib/api/client";
-import { cn } from "@/lib/utils";
-import { toast } from "@/lib/toast";
-import { CardSkeleton } from "@/components/ui/Skeleton";
+} from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import PageShell from '@/components/shared/PageShell';
+import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { fetchCoursePolicy, updateCoursePolicy } from '@/lib/api/policy';
+import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
+import { ApiError } from '@/lib/api/client';
+import { cn } from '@/lib/utils';
+import { toast } from '@/lib/toast';
+import { CardSkeleton } from '@/components/ui/Skeleton';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
-type PolicyTab = "course" | "live_sessions";
+type PolicyTab = 'course' | 'live_sessions';
 
 export default function PoliciesPage() {
   const { currentUser } = useLms();
-  const [activeTab, setActiveTab] = useState<PolicyTab>("course");
+  const { tBilingual } = useTranslation();
+  const [activeTab, setActiveTab] = useState<PolicyTab>('course');
 
   // Course policy states
   const [loadingCoursePolicy, setLoadingCoursePolicy] = useState(true);
@@ -43,7 +45,7 @@ export default function PoliciesPage() {
   const [loadingLivePolicy, setLoadingLivePolicy] = useState(true);
   const [savingLivePolicy, setSavingLivePolicy] = useState(false);
   const [allowAllViewAttendance, setAllowAllViewAttendance] = useState(false);
-  const [attendanceThreshold, setAttendanceThreshold] = useState("60");
+  const [attendanceThreshold, setAttendanceThreshold] = useState('60');
   const [livePolicyUpdatedAt, setLivePolicyUpdatedAt] = useState<string | null>(null);
 
   // Load course policies
@@ -55,9 +57,7 @@ export default function PoliciesPage() {
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setCoursePolicyUpdatedAt(policy.updatedAt);
     } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Unable to load course policy settings.",
-      );
+      toast.error(err instanceof ApiError ? err.message : 'Unable to load course policy settings.');
     } finally {
       setLoadingCoursePolicy(false);
     }
@@ -70,7 +70,7 @@ export default function PoliciesPage() {
       const settings = await fetchSystemSettings();
       if (settings) {
         if (settings.allow_all_view_attendance !== undefined) {
-          setAllowAllViewAttendance(settings.allow_all_view_attendance === "true");
+          setAllowAllViewAttendance(settings.allow_all_view_attendance === 'true');
         }
         if (settings.default_attendance_threshold) {
           setAttendanceThreshold(settings.default_attendance_threshold);
@@ -81,7 +81,7 @@ export default function PoliciesPage() {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Unable to load live session policy settings.",
+        err instanceof Error ? err.message : 'Unable to load live session policy settings.',
       );
     } finally {
       setLoadingLivePolicy(false);
@@ -100,11 +100,9 @@ export default function PoliciesPage() {
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setCoursePolicyUpdatedAt(policy.updatedAt);
-      toast.success("Course completion policies saved successfully.");
+      toast.success('Course completion policies saved successfully.');
     } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Unable to save course policy settings.",
-      );
+      toast.error(err instanceof ApiError ? err.message : 'Unable to save course policy settings.');
     } finally {
       setSavingCoursePolicy(false);
     }
@@ -118,10 +116,10 @@ export default function PoliciesPage() {
         default_attendance_threshold: String(attendanceThreshold),
       });
       setLivePolicyUpdatedAt(new Date().toISOString());
-      toast.success("Live session attendance policy saved successfully.");
+      toast.success('Live session attendance policy saved successfully.');
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to persist live session policy settings.",
+        err instanceof Error ? err.message : 'Failed to persist live session policy settings.',
       );
     } finally {
       setSavingLivePolicy(false);
@@ -130,73 +128,83 @@ export default function PoliciesPage() {
 
   const toggleClass = (active: boolean) =>
     cn(
-      "relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
+      'relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
       active
-        ? "bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30"
-        : "bg-slate-300",
+        ? 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30'
+        : 'bg-slate-300',
     );
 
   const numericThreshold = Math.min(100, Math.max(10, parseInt(attendanceThreshold, 10) || 60));
 
   return (
     <PageShell
-      role={currentUser?.role ?? "system_admin"}
-      title="Policies"
-      description="Manage institutional policies including course completion requirements, retake rules, and live session attendance governance."
+      role={currentUser?.role ?? 'system_admin'}
+      title={tBilingual('Policies', 'መመሪያዎችና ፖሊሲዎች')}
+      description={tBilingual(
+        'Manage institutional policies including course completion requirements, retake rules, and live session attendance governance.',
+        'የኮርስ ማጠናቀቂያ መስፈርቶችን፣ የድጋሚ ፈተና ደንቦችን እና የቀጥታ ክፍለ-ጊዜ ክትትል አስተዳደርን ጨምሮ ተቋማዊ ፖሊሲዎችን ያስተዳድሩ።',
+      )}
     >
       {/* Navigation Tabs */}
       <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
         <button
           type="button"
-          onClick={() => setActiveTab("course")}
+          onClick={() => setActiveTab('course')}
           className={cn(
-            "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs",
-            activeTab === "course"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
-              : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80",
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs',
+            activeTab === 'course'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+              : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
           )}
         >
           <Clock className="h-4 w-4" />
-          <span>Course Completion Policies</span>
+          <span>{tBilingual('Course Completion Policies', 'የኮርስ ማጠናቀቂያ ፖሊሲዎች')}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab("live_sessions")}
+          onClick={() => setActiveTab('live_sessions')}
           className={cn(
-            "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs",
-            activeTab === "live_sessions"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
-              : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80",
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs',
+            activeTab === 'live_sessions'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+              : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
           )}
         >
           <Video className="h-4 w-4" />
-          <span>Live Sessions &amp; Attendance Policy</span>
+          <span>
+            {tBilingual('Live Sessions & Attendance Policy', 'የቀጥታ ክፍለ-ጊዜዎች እና የክትትል ፖሊሲ')}
+          </span>
           <Badge variant="indigo" className="ml-1 text-[10px] py-0 px-1.5">
-            Relocated
+            {tBilingual('Relocated', 'የተዛወረ')}
           </Badge>
         </button>
       </div>
 
       {/* TAB 1: Course Completion Policies */}
-      {activeTab === "course" && (
+      {activeTab === 'course' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Course Completion &amp; Retake Rules</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                {tBilingual('Course Completion & Retake Rules', 'የኮርስ ማጠናቀቂያ እና የድጋሚ ፈተና ደንቦች')}
+              </h2>
               <p className="text-xs text-slate-500">
-                Applied globally to module progress calculations and assessment lockout policies.
+                {tBilingual(
+                  'Applied globally to module progress calculations and assessment lockout policies.',
+                  'በሞጁል እድገት ስሌቶች እና የምዘና መቆለፊያ ፖሊሲዎች ላይ በአጠቃላይ ተፈጻሚ ይሆናል።',
+                )}
               </p>
             </div>
             <Button
               onClick={() => void saveCoursePolicy()}
               isLoading={savingCoursePolicy}
-              loadingText="Saving Policies…"
+              loadingText={tBilingual('Saving Policies…', 'ፖሊሲዎችን በማስቀመጥ ላይ…')}
               disabled={loadingCoursePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Save className="h-4 w-4" />
-              Save Course Policies
+              {tBilingual('Save Course Policies', 'የኮርስ ፖሊሲዎችን አስቀምጥ')}
             </Button>
           </div>
 
@@ -212,17 +220,19 @@ export default function PoliciesPage() {
                     <Clock className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <CardTitle>Time-Spent Requirement</CardTitle>
+                    <CardTitle>{tBilingual('Time-Spent Requirement', 'የቆይታ ጊዜ መስፈርት')}</CardTitle>
                     <CardDescription>
-                      Learners must spend at least this percentage of a lesson or module&apos;s configured
-                      duration before it can be marked complete.
+                      {tBilingual(
+                        "Learners must spend at least this percentage of a lesson or module's configured duration before it can be marked complete.",
+                        'ተማሪዎች አንድ ትምህርት ወይም ሞጁል እንደተጠናቀቀ ከመመዝገቡ በፊት ከተመደበው የቆይታ ጊዜ ቢያንስ ይህንን መቶኛ ማሳለፍ አለባቸው።',
+                      )}
                     </CardDescription>
                   </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                    <span>Required time spent</span>
+                    <span>{tBilingual('Required time spent', 'አስፈላጊ የቆይታ ጊዜ')}</span>
                     <span className="text-indigo-600 font-bold">{timeSpentPercent}%</span>
                   </div>
                   <input
@@ -247,14 +257,19 @@ export default function PoliciesPage() {
                       className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                     />
                     <span className="text-xs text-slate-400">
-                      e.g. a 20-minute lesson requires{" "}
-                      {Math.ceil(20 * 60 * (timeSpentPercent / 100))} second(s) spent before completion.
+                      {tBilingual(
+                        `e.g. a 20-minute lesson requires ${Math.ceil(20 * 60 * (timeSpentPercent / 100))} second(s) spent before completion.`,
+                        `ለምሳሌ ባለ 20 ደቂቃ ትምህርት ከመጠናቀቁ በፊት ${Math.ceil(20 * 60 * (timeSpentPercent / 100))} ሰከንዶች ቆይታ ያስፈልገዋል።`,
+                      )}
                     </span>
                   </div>
                   {timeSpentPercent === 0 ? (
                     <p className="flex items-center gap-1.5 text-xs text-amber-600">
                       <ShieldAlert className="h-3.5 w-3.5" />
-                      0% disables the time requirement entirely — lessons can be completed instantly.
+                      {tBilingual(
+                        '0% disables the time requirement entirely — lessons can be completed instantly.',
+                        '0% የጊዜ መስፈርቱን ሙሉ በሙሉ ያሰናክላል — ትምህርቶች ወዲያውኑ ሊጠናቀቁ ይችላሉ።',
+                      )}
                     </p>
                   ) : null}
                 </div>
@@ -266,10 +281,14 @@ export default function PoliciesPage() {
                     <RotateCcw className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <CardTitle>Assessment Retake Cooldown</CardTitle>
+                    <CardTitle>
+                      {tBilingual('Assessment Retake Cooldown', 'የምዘና ድጋሚ ሙከራ ማረፊያ ጊዜ')}
+                    </CardTitle>
                     <CardDescription>
-                      Once a learner exhausts every attempt on an assessment, they may retake it again
-                      after this many minutes. Set to 0 to keep attempts permanently locked out.
+                      {tBilingual(
+                        'Once a learner exhausts every attempt on an assessment, they may retake it again after this many minutes. Set to 0 to keep attempts permanently locked out.',
+                        'ተማሪ በምዘና ላይ የተሰጡትን ሙከራዎች ከጨረሰ በኋላ ከዚህ ደቂቃዎች በኋላ እንደገና ሊሞክር ይችላል። ሙከራዎች በቋሚነት እንዲቆለፉ 0 ያድርጉት።',
+                      )}
                     </CardDescription>
                   </div>
                 </div>
@@ -286,12 +305,20 @@ export default function PoliciesPage() {
                       }
                       className="w-28 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                     />
-                    <span className="text-sm text-slate-600 font-medium">minutes</span>
+                    <span className="text-sm text-slate-600 font-medium">
+                      {tBilingual('minutes', 'ደቂቃዎች')}
+                    </span>
                   </div>
                   <p className="text-xs text-slate-500">
                     {retakeCooldownMinutes === 0
-                      ? "Retakes are disabled — max attempts reached is a permanent lockout."
-                      : `A learner who exhausts their attempts can retake the assessment ${retakeCooldownMinutes} minute(s) after their last submission.`}
+                      ? tBilingual(
+                          'Retakes are disabled — max attempts reached is a permanent lockout.',
+                          'ድጋሚ ሙከራዎች ተሰናክለዋል — ከፍተኛው ሙከራ ሲደረስ በቋሚነት ይቆለፋል።',
+                        )
+                      : tBilingual(
+                          `A learner who exhausts their attempts can retake the assessment ${retakeCooldownMinutes} minute(s) after their last submission.`,
+                          `ሙከራዎቹን ያጠናቀቀ ተማሪ ከመጨረሻው ምዝገባው ከ ${retakeCooldownMinutes} ደቂቃ(ዎች) በኋላ እንደገና መሞከር ይችላል።`,
+                        )}
                   </p>
                 </div>
               </Card>
@@ -309,26 +336,29 @@ export default function PoliciesPage() {
       )}
 
       {/* TAB 2: Live Sessions & Attendance Policy */}
-      {activeTab === "live_sessions" && (
+      {activeTab === 'live_sessions' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                Live Sessions &amp; Attendance Policy
+                {tBilingual('Live Sessions & Attendance Policy', 'የቀጥታ ክፍለ-ጊዜዎች እና የክትትል ፖሊሲ')}
               </h2>
               <p className="text-xs text-slate-500">
-                Define platform-wide attendance visibility for participants and stay qualification thresholds.
+                {tBilingual(
+                  'Define platform-wide attendance visibility for participants and stay qualification thresholds.',
+                  'ለመላው መድረክ የተሳታፊዎችን የክትትል ታይነት እና የቆይታ ብቁነት ገደቦችን ይወስኑ።',
+                )}
               </p>
             </div>
             <Button
               onClick={() => void saveLivePolicy()}
               isLoading={savingLivePolicy}
-              loadingText="Saving Policy…"
+              loadingText={tBilingual('Saving Policy…', 'ፖሊሲን በማስቀመጥ ላይ…')}
               disabled={loadingLivePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Save className="h-4 w-4" />
-              Save Live Session Policy
+              {tBilingual('Save Live Session Policy', 'የቀጥታ ክፍለ-ጊዜ ፖሊሲን አስቀምጥ')}
             </Button>
           </div>
 
@@ -347,14 +377,22 @@ export default function PoliciesPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-slate-900">
-                        Permit All Actors to View Session Attendance
+                        {tBilingual(
+                          'Permit All Actors to View Session Attendance',
+                          'ሁሉም ተጠቃሚዎች የክፍለ-ጊዜውን ክትትል እንዲያዩ ፍቀድ',
+                        )}
                       </h3>
-                      <Badge variant={allowAllViewAttendance ? "green" : "slate"}>
-                        {allowAllViewAttendance ? "Permitted to All" : "Restricted to Staff"}
+                      <Badge variant={allowAllViewAttendance ? 'green' : 'slate'}>
+                        {allowAllViewAttendance
+                          ? tBilingual('Permitted to All', 'ለሁሉም ተፈቅዷል')
+                          : tBilingual('Restricted to Staff', 'ለሠራተኞች ብቻ የተገደበ')}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Determine whether learners and non-staff participants can inspect attendance logs.
+                      {tBilingual(
+                        'Determine whether learners and non-staff participants can inspect attendance logs.',
+                        'ተማሪዎች እና ሰራተኛ ያልሆኑ ተሳታፊዎች የክትትል መዝገቦችን መመልከት መቻላቸውን ይወስኑ።',
+                      )}
                     </p>
                   </div>
                 </div>
@@ -364,13 +402,22 @@ export default function PoliciesPage() {
                     <div className="pr-4">
                       <p className="text-sm font-semibold text-slate-800">
                         {allowAllViewAttendance
-                          ? "Public Dynamic Attendance Log"
-                          : "Restricted Staff Attendance Log"}
+                          ? tBilingual('Public Dynamic Attendance Log', 'የህዝብ ተለዋዋጭ የክትትል መዝገብ')
+                          : tBilingual(
+                              'Restricted Staff Attendance Log',
+                              'የተገደበ የሰራተኞች የክትትል መዝገብ',
+                            )}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                         {allowAllViewAttendance
-                          ? "All participants, including enrolled learners, can open the attendance modal and observe real-time join times, stay durations, and verification statuses."
-                          : "Only trainers, course owners, training administrators, and system administrators can view session attendee rosters."}
+                          ? tBilingual(
+                              'All participants, including enrolled learners, can open the attendance modal and observe real-time join times, stay durations, and verification statuses.',
+                              'የተመዘገቡ ተማሪዎችን ጨምሮ ሁሉም ተሳታፊዎች የክትትል መስኮቱን በመክፈት የተቀላቀሉበትን ሰዓት፣ የቆይታ ጊዜ እና የማረጋገጫ ሁኔታዎችን በቅጽበት መከታተል ይችላሉ።',
+                            )
+                          : tBilingual(
+                              'Only trainers, course owners, training administrators, and system administrators can view session attendee rosters.',
+                              'አሰልጣኞች፣ የኮርስ ባለቤቶች፣ የስልጠና አስተዳዳሪዎች እና የስርዓት አስተዳዳሪዎች ብቻ የተሳታፊዎችን ዝርዝር ማየት ይችላሉ።',
+                            )}
                       </p>
                     </div>
 
@@ -383,8 +430,8 @@ export default function PoliciesPage() {
                     >
                       <span
                         className={cn(
-                          "inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-xs",
-                          allowAllViewAttendance ? "translate-x-5" : "translate-x-0.5",
+                          'inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-xs',
+                          allowAllViewAttendance ? 'translate-x-5' : 'translate-x-0.5',
                         )}
                       />
                     </button>
@@ -393,8 +440,10 @@ export default function PoliciesPage() {
                   <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 text-xs text-indigo-800 flex items-start gap-2.5">
                     <Info className="h-4 w-4 shrink-0 text-indigo-600 mt-0.5" />
                     <span>
-                      Individual session creators can still toggle visibility specifically per session,
-                      but this master switch defines the platform standard for all live sessions.
+                      {tBilingual(
+                        'Individual session creators can still toggle visibility specifically per session, but this master switch defines the platform standard for all live sessions.',
+                        'የግል ክፍለ-ጊዜ ፈጣሪዎች ለእያንዳንዱ ክፍለ-ጊዜ ታይነቱን መወሰን ይችላሉ፤ ነገር ግን ይህ ዋና መቀየሪያ ለመላው መድረክ የቀጥታ ክፍለ-ጊዜዎች ነባሪውን ይወስናል።',
+                      )}
                     </span>
                   </div>
                 </div>
@@ -408,10 +457,16 @@ export default function PoliciesPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-bold text-slate-900">
-                      Minimum Active Stay Threshold for &quot;Present&quot; Status
+                      {tBilingual(
+                        'Minimum Active Stay Threshold for "Present" Status',
+                        'እንደ "ተገኝቷል" ለመቆጠር ዝቅተኛው የቆይታ መቶኛ',
+                      )}
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      Required percentage of total session duration a participant must stay connected.
+                      {tBilingual(
+                        'Required percentage of total session duration a participant must stay connected.',
+                        'ተሳታፊው መቆየት ያለበት አጠቃላይ የክፍለ-ጊዜው የቆይታ ጊዜ መቶኛ።',
+                      )}
                     </p>
                   </div>
                 </div>
@@ -419,7 +474,7 @@ export default function PoliciesPage() {
                 <div className="mt-5 space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>Threshold percentage</span>
+                      <span>{tBilingual('Threshold percentage', 'የብቁነት መቶኛ')}</span>
                       <span className="text-emerald-700 font-bold text-base">
                         {numericThreshold}%
                       </span>
@@ -450,25 +505,36 @@ export default function PoliciesPage() {
                         </span>
                       </div>
                       <span className="text-xs text-slate-500">
-                        Minimum 10%, Maximum 100%. Recommended: 60%.
+                        {tBilingual(
+                          'Minimum 10%, Maximum 100%. Recommended: 60%.',
+                          'ዝቅተኛ 10%፣ ከፍተኛ 100%። የሚመከረው፡ 60%።',
+                        )}
                       </span>
                     </div>
                   </div>
 
                   {/* Dynamic calculation preview */}
                   <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-2">
-                    <p className="text-xs font-semibold text-slate-700">Qualification Preview:</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {tBilingual('Qualification Preview:', 'የብቁነት ቅድመ-ዕይታ፡')}
+                    </p>
                     <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
                       <li>
-                        For a <strong>60-minute</strong> session: Learner must stay connected for at least{" "}
+                        {tBilingual(
+                          'For a 60-minute session: Learner must stay connected for at least',
+                          'ለ 60-ደቂቃ ክፍለ-ጊዜ፡ ተማሪው ቢያንስ መቆየት አለበት፡',
+                        )}{' '}
                         <span className="font-semibold text-emerald-700">
-                          {Math.round(60 * (numericThreshold / 100))} minutes
-                        </span>{" "}
-                        to be marked <strong>PRESENT</strong>.
+                          {Math.round(60 * (numericThreshold / 100))}{' '}
+                          {tBilingual('minutes', 'ደቂቃዎች')}
+                        </span>{' '}
+                        {tBilingual('to be marked PRESENT.', 'እንደ ተገኝቷል ለመመዝገብ።')}
                       </li>
                       <li>
-                        Learners with less than {numericThreshold}% active stay will automatically be marked{" "}
-                        <span className="font-semibold text-rose-600">ABSENT</span> in audit exports.
+                        {tBilingual(
+                          `Learners with less than ${numericThreshold}% active stay will automatically be marked ABSENT in audit exports.`,
+                          `ከ ${numericThreshold}% በታች የቆዩ ተማሪዎች በክትትል ሰነዶች ላይ በቀጥታ አልተገኘም (ቀሪ) ተብለው ይመዘገባሉ።`,
+                        )}
                       </li>
                     </ul>
                   </div>

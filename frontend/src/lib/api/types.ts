@@ -1,33 +1,17 @@
 export type BackendRoleName =
-  | "SYSTEM_ADMIN"
-  | "TRAINING_ADMIN"
-  | "COURSE_OWNER"
-  | "TRAINER"
-  | "CONTENT_APPROVER"
-  | "LEARNER";
+  'SYSTEM_ADMIN' | 'TRAINING_ADMIN' | 'COURSE_OWNER' | 'TRAINER' | 'CONTENT_APPROVER' | 'LEARNER';
 
 export type BackendCourseStatus =
-  | "DRAFT"
-  | "PENDING_APPROVAL"
-  | "APPROVED"
-  | "REJECTED"
-  | "PUBLISHED"
-  | "ARCHIVED";
+  'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
 
-export type BackendApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "NEEDS_REVISION";
+export type BackendApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION';
 
-export type BackendCourseLevel = "BASIC" | "INTERMEDIATE" | "ADVANCED";
+export type BackendCourseLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
-export type BackendEnrollmentStatus = "ACTIVE" | "DROPPED" | "COMPLETED";
+export type BackendEnrollmentStatus = 'ACTIVE' | 'DROPPED' | 'COMPLETED';
 
 export type BackendLessonContentType =
-  | "VIDEO"
-  | "DOCUMENT"
-  | "PRESENTATION"
-  | "INTERACTIVE"
-  | "SCORM"
-  | "EXTERNAL_LINK"
-  | "AUDIO";
+  'VIDEO' | 'DOCUMENT' | 'PRESENTATION' | 'INTERACTIVE' | 'SCORM' | 'EXTERNAL_LINK' | 'AUDIO';
 
 /* -------------------------------------------------------------------------- */
 /*  Paginated response                                                        */
@@ -262,7 +246,13 @@ export interface ApiEnrollment {
   createdAt: string;
   updatedAt: string;
   user?: { id: string; firstName: string; lastName: string; email: string };
-  course?: { id: string; titleEn: string; titleAm: string; code: string; deliveryMode?: CourseDeliveryMode };
+  course?: {
+    id: string;
+    titleEn: string;
+    titleAm: string;
+    code: string;
+    deliveryMode?: CourseDeliveryMode;
+  };
 }
 
 export interface SelfEnrollInput {
@@ -278,7 +268,7 @@ export interface SelfEnrollInput {
 
 export interface ApiAssessmentQuestion {
   id: string;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
   question: string;
   options: string[];
   imageUrl?: string | null;
@@ -452,7 +442,7 @@ export interface ApiCertificate {
   course: { id: string; titleEn: string; titleAm: string; code: string };
 }
 
-export type BackendCertificateFieldAlign = "left" | "center" | "right";
+export type BackendCertificateFieldAlign = 'left' | 'center' | 'right';
 
 export interface ApiCertificateField {
   key: string;
@@ -498,12 +488,12 @@ export type UpdateCertificateTemplateBody = Partial<CreateCertificateTemplateBod
 /* -------------------------------------------------------------------------- */
 
 export type BackendNotificationType =
-  | "ENROLLMENT_APPROVED"
-  | "ENROLLMENT_REJECTED"
-  | "ENROLLMENT"
-  | "ASSESSMENT_GRADED"
-  | "CERTIFICATE_ISSUED"
-  | "SYSTEM";
+  | 'ENROLLMENT_APPROVED'
+  | 'ENROLLMENT_REJECTED'
+  | 'ENROLLMENT'
+  | 'ASSESSMENT_GRADED'
+  | 'CERTIFICATE_ISSUED'
+  | 'SYSTEM';
 
 export interface ApiNotification {
   id: string;
@@ -557,8 +547,8 @@ export interface ApiDashboardStats {
 /*  Venues & Delivery Modes                                                   */
 /* -------------------------------------------------------------------------- */
 
-export type CourseDeliveryMode = "ONLINE_ONLY" | "IN_PERSON_ONLY" | "BOTH";
-export type SessionType = "VIRTUAL" | "IN_PERSON";
+export type CourseDeliveryMode = 'ONLINE_ONLY' | 'IN_PERSON_ONLY' | 'BOTH';
+export type SessionType = 'VIRTUAL' | 'IN_PERSON';
 
 export interface ApiVenue {
   id: string;
@@ -609,10 +599,11 @@ export interface CreateBatchSessionInput {
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */
 
-export type BackendSessionPlatform = "LIVEKIT" | "ZOOM" | "GOOGLE_MEET" | "MS_TEAMS" | "CUSTOM" | "IN_PERSON";
-export type BackendSessionStatus = "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
-export type BackendAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
-export type BackendCheckInMethod = "VIRTUAL" | "QR" | "GPS" | "BIOMETRIC";
+export type BackendSessionPlatform =
+  'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM' | 'IN_PERSON';
+export type BackendSessionStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
+export type BackendAttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+export type BackendCheckInMethod = 'VIRTUAL' | 'QR' | 'GPS' | 'BIOMETRIC';
 
 export interface ApiLiveSession {
   id: string;
@@ -660,7 +651,7 @@ export interface ApiAttendanceLog {
   id: string;
   sessionId: string;
   userId: string;
-  eventType: "JOIN" | "LEAVE" | "REJOIN" | "HEARTBEAT";
+  eventType: 'JOIN' | 'LEAVE' | 'REJOIN' | 'HEARTBEAT';
   durationSeconds?: number | null;
   timestamp: string;
 }
@@ -727,7 +718,6 @@ export interface ApiAttendanceVisibility {
   reason?: string;
 }
 
-
 /* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -757,13 +747,13 @@ export interface ApiAuditStats {
 /* -------------------------------------------------------------------------- */
 
 export interface ApiHealth {
-  status: "healthy" | "degraded" | "unhealthy";
+  status: 'healthy' | 'degraded' | 'unhealthy';
   uptime: number;
   timestamp: string;
   checks: {
-    database: { status: "up" | "down"; latencyMs?: number; detail?: string };
-    minio: { status: "up" | "down"; latencyMs?: number; detail?: string };
-    redis: { status: "up" | "down"; latencyMs?: number; detail?: string };
+    database: { status: 'up' | 'down'; latencyMs?: number; detail?: string };
+    minio: { status: 'up' | 'down'; latencyMs?: number; detail?: string };
+    redis: { status: 'up' | 'down'; latencyMs?: number; detail?: string };
   };
 }
 
@@ -872,7 +862,7 @@ export interface UpdateMyProfileBody {
   lastName?: string;
   phone?: string;
   tin?: string;
-  locale?: "en" | "am";
+  locale?: 'en' | 'am';
   avatarUrl?: string;
 }
 
@@ -922,7 +912,7 @@ export interface CreateActorBody {
   password: string;
   role: BackendRoleName;
   phone?: string;
-  locale?: "en" | "am";
+  locale?: 'en' | 'am';
   primaryVenueId?: string;
 }
 
@@ -946,7 +936,7 @@ export interface ApiPermission {
   code: string;
   resource: string;
   action: string;
-  scope: "ALL" | "OWN";
+  scope: 'ALL' | 'OWN';
   description: string | null;
   isSystem: boolean;
 }

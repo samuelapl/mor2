@@ -1,31 +1,33 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { BookPlus } from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { useCourseProgress } from "@/lib/api/useCourseProgress";
-import { usePagination } from "@/lib/usePagination";
-import PageShell from "@/components/shared/PageShell";
-import LanguageToggle from "@/components/shared/LanguageToggle";
-import { Button } from "@/components/ui/Button";
-import { CourseCard } from "@/components/features/courses/CourseCard";
-import { CatalogCourseModal } from "@/components/features/courses/CatalogCourseModal";
-import { EnrolledCourseActions } from "@/components/features/courses/EnrolledCourseActions";
-import { isInPersonEnrollment } from "@/lib/session-mode";
-import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { FilterBar } from "@/components/ui/FilterBar";
-import { Pagination } from "@/components/ui/Pagination";
-import { COURSE_CATEGORIES } from "@/constants/course-categories";
-import type { ApiVenue } from "@/lib/api/types";
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { BookPlus } from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { useCourseProgress } from '@/lib/api/useCourseProgress';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { Button } from '@/components/ui/Button';
+import { CourseCard } from '@/components/features/courses/CourseCard';
+import { CatalogCourseModal } from '@/components/features/courses/CatalogCourseModal';
+import { EnrolledCourseActions } from '@/components/features/courses/EnrolledCourseActions';
+import { isInPersonEnrollment } from '@/lib/session-mode';
+import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { Pagination } from '@/components/ui/Pagination';
+import { COURSE_CATEGORIES } from '@/constants/course-categories';
+import type { ApiVenue } from '@/lib/api/types';
 
 export default function LearnerCatalogPage() {
   const router = useRouter();
   const { courses, currentUser, getEnrollmentForCourse } = useLms();
+  const { t, tBilingual } = useTranslation();
   const me = currentUser?.id;
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('all');
   const [openCourseId, setOpenCourseId] = useState<string | null>(null);
   const [inspectVenue, setInspectVenue] = useState<{
     venue: ApiVenue;
@@ -34,17 +36,15 @@ export default function LearnerCatalogPage() {
   } | null>(null);
 
   const enrolledCourseIds = useMemo(() => {
-    return courses
-      .filter((c) => (me ? c.enrolledLearnerIds.includes(me) : false))
-      .map((c) => c.id);
+    return courses.filter((c) => (me ? c.enrolledLearnerIds.includes(me) : false)).map((c) => c.id);
   }, [courses, me]);
   const { progress } = useCourseProgress(enrolledCourseIds);
 
   const available = useMemo(() => {
     const q = search.trim().toLowerCase();
     return courses.filter((course) => {
-      if (!course.published && course.status !== "published") return false;
-      if (category !== "all" && course.category !== category) return false;
+      if (!course.published && course.status !== 'published') return false;
+      if (category !== 'all' && course.category !== category) return false;
       if (!q) return true;
       return (
         course.title.toLowerCase().includes(q) ||
@@ -54,13 +54,16 @@ export default function LearnerCatalogPage() {
     });
   }, [courses, search, category]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(available, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    available,
+    6,
+  );
 
   return (
     <PageShell
       role="learner"
-      title="Available Courses"
-      description="Published courses you can enroll in."
+      title={tBilingual('Available Courses', 'የሚገኙ ኮርሶች')}
+      description={tBilingual('Published courses you can enroll in.', 'ሊመዘገቡባቸው የሚችሉ የታተሙ ኮርሶች።')}
     >
       <div className="mb-4 flex justify-end">
         <LanguageToggle />
@@ -68,30 +71,33 @@ export default function LearnerCatalogPage() {
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search available courses…"
+        searchPlaceholder={tBilingual('Search available courses…', 'የሚገኙ ኮርሶችን ይፈልጉ…')}
         selects={[
           {
-            id: "category",
-            label: "Category",
+            id: 'category',
+            label: tBilingual('Category', 'ምድብ'),
             value: category,
             onChange: setCategory,
             options: [
-              { value: "all", label: "All" },
+              { value: 'all', label: tBilingual('All Categories', 'ሁሉም ምድቦች') },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
         ]}
         onClear={() => {
-          setSearch("");
-          setCategory("all");
+          setSearch('');
+          setCategory('all');
         }}
-        hasActiveFilters={search !== "" || category !== "all"}
+        hasActiveFilters={search !== '' || category !== 'all'}
       />
 
       {available.length === 0 ? (
         <EmptyState
-          title="No published courses"
-          description="Approved courses appear here after an administrator publishes them."
+          title={tBilingual('No published courses', 'ምንም የታተሙ ኮርሶች የሉም')}
+          description={tBilingual(
+            'Approved courses appear here after an administrator publishes them.',
+            'የጸደቁ ኮርሶች በአስተዳዳሪ ከታተሙ በኋላ እዚህ ይታያሉ።',
+          )}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -108,7 +114,7 @@ export default function LearnerCatalogPage() {
                 course={course}
                 showStatus={false}
                 progress={enrolled ? percent : undefined}
-                deliveryMode={enrolled ? (isPerson ? "IN_PERSON_ONLY" : "ONLINE_ONLY") : undefined}
+                deliveryMode={enrolled ? (isPerson ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY') : undefined}
                 deliveryDetail={enrolled ? enrollment?.venue?.branch : undefined}
                 onClick={() => {
                   if (enrolled) {
@@ -144,7 +150,7 @@ export default function LearnerCatalogPage() {
                     }}
                   >
                     <BookPlus className="h-3.5 w-3.5" />
-                    Enroll
+                    {tBilingual('Enroll', 'ተመዝገብ')}
                   </Button>
                 )}
               </CourseCard>
@@ -152,14 +158,18 @@ export default function LearnerCatalogPage() {
           })}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {openCourseId ? (
-        <CatalogCourseModal
-          open
-          onClose={() => setOpenCourseId(null)}
-          courseId={openCourseId}
-        />
+        <CatalogCourseModal open onClose={() => setOpenCourseId(null)} courseId={openCourseId} />
       ) : null}
 
       {inspectVenue ? (

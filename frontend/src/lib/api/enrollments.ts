@@ -1,5 +1,5 @@
-import { api } from "./client";
-import type { ApiEnrollment, ApiPaginated, SelfEnrollInput } from "./types";
+import { api } from './client';
+import type { ApiEnrollment, ApiPaginated, SelfEnrollInput } from './types';
 
 export interface BulkEnrollResult {
   courseId: string;
@@ -9,15 +9,15 @@ export interface BulkEnrollResult {
 }
 
 export async function selfEnroll(input: string | SelfEnrollInput): Promise<ApiEnrollment> {
-  const body = typeof input === "string" ? { courseId: input } : input;
-  return api<ApiEnrollment>("enrollments/self", {
-    method: "POST",
+  const body = typeof input === 'string' ? { courseId: input } : input;
+  return api<ApiEnrollment>('enrollments/self', {
+    method: 'POST',
     body,
   });
 }
 
 export async function fetchMyEnrollments(): Promise<ApiPaginated<ApiEnrollment>> {
-  return api<ApiPaginated<ApiEnrollment>>("enrollments/me", {
+  return api<ApiPaginated<ApiEnrollment>>('enrollments/me', {
     query: { limit: 100 },
   });
 }
@@ -30,12 +30,9 @@ export async function fetchCourseEnrollments(
   });
 }
 
-export async function bulkEnroll(
-  courseId: string,
-  userIds: string[],
-): Promise<BulkEnrollResult> {
+export async function bulkEnroll(courseId: string, userIds: string[]): Promise<BulkEnrollResult> {
   return api<BulkEnrollResult>(`courses/${courseId}/enrollments`, {
-    method: "POST",
+    method: 'POST',
     body: { userIds },
   });
 }
@@ -45,7 +42,7 @@ export async function dropEnrollment(
   reason?: string,
 ): Promise<ApiEnrollment> {
   return api<ApiEnrollment>(`enrollments/${enrollmentId}/drop`, {
-    method: "PATCH",
+    method: 'PATCH',
     body: reason ? { reason } : {},
   });
 }

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   Archive,
   Award,
@@ -30,34 +30,34 @@ import {
   Presentation,
   Send,
   ShieldCheck,
-  Sparkles,
   Trash2,
   UserPlus,
   UserRound,
-} from "lucide-react";
-import { WorkspaceDetailOverlay } from "@/components/ui/WorkspaceDetailOverlay";
+} from 'lucide-react';
+import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import {
   Badge,
   CourseStatusBadge,
   courseLevelLabel,
   courseLevelVariant,
-} from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { RichContent, stripHtmlTags } from "@/components/ui/RichContent";
-import { RichTextArea } from "@/components/ui/RichTextArea";
-import { CourseCreationWizard } from "@/components/features/courses/CourseCreationWizard";
-import { toast } from "@/lib/toast";
-import { useLms } from "@/lib/lms-store";
-import { usePermissions } from "@/lib/usePermissions";
-import { fetchAssessment, fetchCourseAssessments } from "@/lib/api/quiz";
-import { fetchTrainers } from "@/lib/api/users";
-import { userFromApi } from "@/lib/api/transform";
-import type { ApiAssessment, ApiAssessmentQuestion } from "@/lib/api/types";
-import type { UploadedResource, User } from "@/types";
-import { cn } from "@/lib/utils";
-import { formatFileSize } from "./wizard-components";
+} from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
+import { RichTextArea } from '@/components/ui/RichTextArea';
+import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
+import { toast } from '@/lib/toast';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLms } from '@/lib/lms-store';
+import { usePermissions } from '@/lib/usePermissions';
+import { fetchAssessment, fetchCourseAssessments } from '@/lib/api/quiz';
+import { fetchTrainers } from '@/lib/api/users';
+import { userFromApi } from '@/lib/api/transform';
+import type { ApiAssessment, ApiAssessmentQuestion } from '@/lib/api/types';
+import type { UploadedResource, User } from '@/types';
+import { cn } from '@/lib/utils';
+import { formatFileSize } from './wizard-components';
 
 interface CourseDetailModalProps {
   open: boolean;
@@ -92,7 +92,7 @@ function getItemAttachments(item: {
 
   if (item.resourceUrl && !map.has(item.resourceUrl)) {
     map.set(item.resourceUrl, {
-      name: item.fileName || item.resourceUrl.split("/").pop() || "Attached File",
+      name: item.fileName || item.resourceUrl.split('/').pop() || 'Attached File',
       url: item.resourceUrl,
       size: item.fileSize || undefined,
     });
@@ -105,73 +105,73 @@ function getItemAttachments(item: {
  * Determines appropriate icon and color based on file extension or URL.
  */
 function getFileBadge(file: UploadedResource) {
-  const url = (file.url || "").toLowerCase();
-  const name = (file.name || "").toLowerCase();
-  const ext = name.split(".").pop() || url.split(".").pop() || "";
+  const url = (file.url || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  const ext = name.split('.').pop() || url.split('.').pop() || '';
 
-  if (["pdf"].includes(ext)) {
+  if (['pdf'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-rose-50 text-rose-700 border-rose-200",
-      badgeLabel: "PDF",
+      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      badgeLabel: 'PDF',
     };
   }
-  if (["doc", "docx"].includes(ext)) {
+  if (['doc', 'docx'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: "bg-blue-50 text-blue-700 border-blue-200",
-      badgeLabel: "Word",
+      bgColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      badgeLabel: 'Word',
     };
   }
-  if (["xls", "xlsx", "csv"].includes(ext)) {
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return {
       icon: FileSpreadsheet,
-      bgColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      badgeLabel: "Spreadsheet",
+      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      badgeLabel: 'Spreadsheet',
     };
   }
-  if (["ppt", "pptx"].includes(ext)) {
+  if (['ppt', 'pptx'].includes(ext)) {
     return {
       icon: Presentation,
-      bgColor: "bg-orange-50 text-orange-700 border-orange-200",
-      badgeLabel: "Presentation",
+      bgColor: 'bg-orange-50 text-orange-700 border-orange-200',
+      badgeLabel: 'Presentation',
     };
   }
-  if (["mp4", "webm", "mov", "mkv"].includes(ext)) {
+  if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
     return {
       icon: Film,
-      bgColor: "bg-purple-50 text-purple-700 border-purple-200",
-      badgeLabel: "Video",
+      bgColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      badgeLabel: 'Video',
     };
   }
-  if (["mp3", "wav", "m4a", "aac"].includes(ext)) {
+  if (['mp3', 'wav', 'm4a', 'aac'].includes(ext)) {
     return {
       icon: Headphones,
-      bgColor: "bg-amber-50 text-amber-700 border-amber-200",
-      badgeLabel: "Audio",
+      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      badgeLabel: 'Audio',
     };
   }
   return {
     icon: Paperclip,
-    bgColor: "bg-slate-100 text-slate-700 border-slate-200",
-    badgeLabel: ext.toUpperCase() || "File",
+    bgColor: 'bg-slate-100 text-slate-700 border-slate-200',
+    badgeLabel: ext.toUpperCase() || 'File',
   };
 }
 
 /**
  * Renders an attachment card with file details and open/download action buttons.
  */
-function AttachmentCard({ file }: { file: UploadedResource }) {
+function AttachmentCard({ file, isAmharic }: { file: UploadedResource; isAmharic?: boolean }) {
   const badge = getFileBadge(file);
   const Icon = badge.icon;
-  const fileName = file.name || file.url.split("/").pop() || "Attachment";
+  const fileName = file.name || file.url.split('/').pop() || 'Attachment';
 
   return (
     <div className="group flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
             badge.bgColor,
           )}
         >
@@ -202,10 +202,10 @@ function AttachmentCard({ file }: { file: UploadedResource }) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition shadow-2xs"
-          title="Open file in new tab"
+          title={isAmharic ? 'ፋይል በአዲስ ገጽ ክፈት' : 'Open file in new tab'}
         >
           <ExternalLink className="h-3.5 w-3.5" />
-          <span>Open</span>
+          <span>{isAmharic ? 'ክፈት' : 'Open'}</span>
         </a>
         <a
           href={file.url}
@@ -213,10 +213,10 @@ function AttachmentCard({ file }: { file: UploadedResource }) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/80 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition shadow-2xs"
-          title="Download file"
+          title={isAmharic ? 'ፋይል አውርድ' : 'Download file'}
         >
           <Download className="h-3.5 w-3.5" />
-          <span>Download</span>
+          <span>{isAmharic ? 'አውርድ' : 'Download'}</span>
         </a>
       </div>
     </div>
@@ -226,32 +226,57 @@ function AttachmentCard({ file }: { file: UploadedResource }) {
 /**
  * Helper to get content type icon and styling
  */
-function getContentTypeBadge(type?: string) {
-  const norm = (type || "").toUpperCase();
+function getContentTypeBadge(type?: string, isAmharic?: boolean) {
+  const norm = (type || '').toUpperCase();
   switch (norm) {
-    case "VIDEO":
-      return { label: "Video Lesson", icon: Film, color: "text-purple-700 bg-purple-50 border-purple-200" };
-    case "AUDIO":
-      return { label: "Audio Lesson", icon: Headphones, color: "text-amber-700 bg-amber-50 border-amber-200" };
-    case "DOCUMENT":
-      return { label: "Document / Reading", icon: FileText, color: "text-blue-700 bg-blue-50 border-blue-200" };
-    case "PRESENTATION":
-      return { label: "Slide Presentation", icon: Presentation, color: "text-orange-700 bg-orange-50 border-orange-200" };
-    case "QUIZ":
-    case "ASSESSMENT":
-      return { label: "Quiz Assessment", icon: FileQuestion, color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
-    case "ASSIGNMENT":
-      return { label: "Graded Assignment", icon: Award, color: "text-rose-700 bg-rose-50 border-rose-200" };
+    case 'VIDEO':
+      return {
+        label: isAmharic ? 'የቪዲዮ ትምህርት' : 'Video Lesson',
+        icon: Film,
+        color: 'text-purple-700 bg-purple-50 border-purple-200',
+      };
+    case 'AUDIO':
+      return {
+        label: isAmharic ? 'የድምጽ ትምህርት' : 'Audio Lesson',
+        icon: Headphones,
+        color: 'text-amber-700 bg-amber-50 border-amber-200',
+      };
+    case 'DOCUMENT':
+      return {
+        label: isAmharic ? 'ሰነድ / ንባብ' : 'Document / Reading',
+        icon: FileText,
+        color: 'text-blue-700 bg-blue-50 border-blue-200',
+      };
+    case 'PRESENTATION':
+      return {
+        label: isAmharic ? 'የስላይድ ማቅረቢያ' : 'Slide Presentation',
+        icon: Presentation,
+        color: 'text-orange-700 bg-orange-50 border-orange-200',
+      };
+    case 'QUIZ':
+    case 'ASSESSMENT':
+      return {
+        label: isAmharic ? 'የፈተና ምዘና' : 'Quiz Assessment',
+        icon: FileQuestion,
+        color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      };
+    case 'ASSIGNMENT':
+      return {
+        label: isAmharic ? 'የተግባር ስራ' : 'Graded Assignment',
+        icon: Award,
+        color: 'text-rose-700 bg-rose-50 border-rose-200',
+      };
     default:
-      return { label: norm || "Lesson", icon: BookOpen, color: "text-slate-700 bg-slate-100 border-slate-200" };
+      return {
+        label: isAmharic ? 'ትምህርት' : norm || 'Lesson',
+        icon: BookOpen,
+        color: 'text-slate-700 bg-slate-100 border-slate-200',
+      };
   }
 }
 
-export function CourseDetailModal({
-  open,
-  onClose,
-  courseId,
-}: CourseDetailModalProps) {
+export function CourseDetailModal({ open, onClose, courseId }: CourseDetailModalProps) {
+  const { tBilingual, isAmharic } = useTranslation();
   const {
     courseById,
     userName,
@@ -271,23 +296,26 @@ export function CourseDetailModal({
   const [flash, setFlash] = useState<string | null>(null);
   const [flashError, setFlashError] = useState(false);
   const [trainerOptions, setTrainerOptions] = useState<User[]>([]);
-  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [busy, setBusy] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [needsTrainerForPublish, setNeedsTrainerForPublish] = useState(false);
-  const [publishTrainerId, setPublishTrainerId] = useState("");
+  const [publishTrainerId, setPublishTrainerId] = useState('');
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const { can, hasRole } = usePermissions();
-  const canAssignTrainer = can("course.assign_trainer");
-  const canUnpublish = can("course.unpublish");
-  const canPublish = can("course.publish") && course?.status === "approved" && !course.published;
+  const canAssignTrainer = can('course.assign_trainer');
+  const canUnpublish = can('course.unpublish');
+  const canPublish = can('course.publish') && course?.status === 'approved' && !course.published;
 
   // Initialize all module and lesson IDs for default-expanded review view
-  const allModuleIds = useMemo(() => new Set((course?.modules || []).map((m) => m.id)), [course?.modules]);
+  const allModuleIds = useMemo(
+    () => new Set((course?.modules || []).map((m) => m.id)),
+    [course?.modules],
+  );
   const allLessonIds = useMemo(() => {
     const ids = new Set<string>();
     for (const m of course?.modules || []) {
@@ -362,8 +390,7 @@ export function CourseDetailModal({
   const totalSubLessons = useMemo(
     () =>
       (course?.modules || []).reduce(
-        (sum, m) =>
-          sum + (m.lessons || []).reduce((s, l) => s + (l.subLessons?.length || 0), 0),
+        (sum, m) => sum + (m.lessons || []).reduce((s, l) => s + (l.subLessons?.length || 0), 0),
         0,
       ),
     [course?.modules],
@@ -423,12 +450,12 @@ export function CourseDetailModal({
     setAssessments([]);
     setFlash(null);
     setFlashError(false);
-    setMode("view");
+    setMode('view');
     setRejectOpen(false);
-    setReason("");
+    setReason('');
     setReasonError(null);
     setNeedsTrainerForPublish(false);
-    setPublishTrainerId("");
+    setPublishTrainerId('');
     setAssessmentLoading(true);
     (async () => {
       try {
@@ -457,9 +484,7 @@ export function CourseDetailModal({
       try {
         const res = await fetchTrainers();
         if (!cancelled) {
-          setTrainerOptions(
-            res.data.map(userFromApi).filter((u) => u.status === "active"),
-          );
+          setTrainerOptions(res.data.map(userFromApi).filter((u) => u.status === 'active'));
         }
       } catch {
         // trainer picker is best-effort
@@ -485,28 +510,28 @@ export function CourseDetailModal({
   const addTrainer = async (trainerId: string) => {
     if (!trainerId) return;
     const result = await assignTrainerToCourse(course.id, trainerId);
-    notify(result.ok, result.ok ? "Trainer assigned." : result.message);
+    notify(result.ok, result.ok ? 'Trainer assigned.' : result.message);
   };
 
   const removeTrainer = async (trainerId: string) => {
     const result = await unassignTrainerFromCourse(course.id, trainerId);
-    notify(result.ok, result.ok ? "Trainer removed." : result.message);
+    notify(result.ok, result.ok ? 'Trainer removed.' : result.message);
   };
 
   const doPublish = async () => {
     if (!course.trainerId) {
       if (canAssignTrainer) {
-        setPublishTrainerId("");
+        setPublishTrainerId('');
         setNeedsTrainerForPublish(true);
       } else {
-        notify(false, "Assign a trainer before publishing the course.");
+        notify(false, 'Assign a trainer before publishing the course.');
       }
       return;
     }
     setBusy(true);
     const result = await publishCourse(course.id);
     setBusy(false);
-    notify(result.ok, result.ok ? "Course published. Learners can now enroll." : result.message);
+    notify(result.ok, result.ok ? 'Course published. Learners can now enroll.' : result.message);
   };
 
   const doAssignAndPublish = async () => {
@@ -521,10 +546,7 @@ export function CourseDetailModal({
     const result = await publishCourse(course.id);
     setBusy(false);
     setNeedsTrainerForPublish(false);
-    notify(
-      result.ok,
-      result.ok ? "Trainer assigned and course published." : result.message,
-    );
+    notify(result.ok, result.ok ? 'Trainer assigned and course published.' : result.message);
   };
 
   const doUnpublish = async () => {
@@ -534,7 +556,7 @@ export function CourseDetailModal({
     notify(
       result.ok,
       result.ok
-        ? "Course unpublished. It no longer appears in the learner catalog."
+        ? 'Course unpublished. It no longer appears in the learner catalog.'
         : result.message,
     );
   };
@@ -543,18 +565,18 @@ export function CourseDetailModal({
     setBusy(true);
     const result = await submitForApproval(course.id);
     setBusy(false);
-    notify(result.ok, result.ok ? "Course submitted for approval." : result.message);
+    notify(result.ok, result.ok ? 'Course submitted for approval.' : result.message);
   };
 
   const doApprove = async () => {
     setBusy(true);
     const result = await approveCourse(course.id);
     setBusy(false);
-    notify(result.ok, result.ok ? "Course approved." : result.message);
+    notify(result.ok, result.ok ? 'Course approved.' : result.message);
   };
 
   const openReject = () => {
-    setReason("");
+    setReason('');
     setReasonError(null);
     setRejectOpen(true);
   };
@@ -562,7 +584,7 @@ export function CourseDetailModal({
   const confirmReject = async () => {
     const trimmed = reason.trim();
     if (!trimmed) {
-      setReasonError("A reason is required.");
+      setReasonError('A reason is required.');
       return;
     }
     setBusy(true);
@@ -573,7 +595,7 @@ export function CourseDetailModal({
       return;
     }
     setRejectOpen(false);
-    notify(true, "Course rejected and moved back to draft. The owner has been notified.");
+    notify(true, 'Course rejected and moved back to draft. The owner has been notified.');
   };
 
   const doArchive = async () => {
@@ -581,7 +603,7 @@ export function CourseDetailModal({
     const result = await archiveCourse(course.id);
     setBusy(false);
     setConfirmArchiveOpen(false);
-    notify(result.ok, result.ok ? "Course archived." : result.message);
+    notify(result.ok, result.ok ? 'Course archived.' : result.message);
   };
 
   const doDelete = async () => {
@@ -590,53 +612,71 @@ export function CourseDetailModal({
     setBusy(false);
     setConfirmDeleteOpen(false);
     if (result.ok) {
-      toast.success("Course deleted successfully.");
+      toast.success('Course deleted successfully.');
       onClose();
       return;
     }
     notify(false, result.message);
   };
 
-  const isPrivilegedAdmin = hasRole("training_admin") || hasRole("system_admin");
+  const isPrivilegedAdmin = hasRole('training_admin') || hasRole('system_admin');
   const canEdit =
-    (can("course.update.own") || can("course.update.all")) &&
-    (course.status === "draft" || course.status === "rejected");
+    (can('course.update.own') || can('course.update.all')) &&
+    (course.status === 'draft' || course.status === 'rejected');
   const canSubmit =
-    can("course.submit_approval") && (course.status === "draft" || course.status === "rejected");
-  const canRejectAction = can("course.approve_reject") && course.status === "under_review";
-  const canApproveAction = can("course.approve_reject") && course.status === "under_review";
+    can('course.submit_approval') && (course.status === 'draft' || course.status === 'rejected');
+  const canRejectAction = can('course.approve_reject') && course.status === 'under_review';
+  const canApproveAction = can('course.approve_reject') && course.status === 'under_review';
   const canArchiveAction =
-    can("course.archive") &&
-    course.status !== "archived" &&
-    course.status !== "under_review" &&
-    (isPrivilegedAdmin || course.status === "draft");
+    can('course.archive') &&
+    course.status !== 'archived' &&
+    course.status !== 'under_review' &&
+    (isPrivilegedAdmin || course.status === 'draft');
   const canDeleteAction =
-    can("course.delete") &&
-    course.status !== "published" &&
-    (isPrivilegedAdmin || course.status === "draft");
+    can('course.delete') &&
+    course.status !== 'published' &&
+    (isPrivilegedAdmin || course.status === 'draft');
 
   const headerActions = (
     <div className="flex flex-wrap items-center justify-end gap-2">
       {canEdit ? (
-        <Button size="sm" variant="outline" onClick={() => setMode("edit")} className="gap-1.5 shadow-2xs">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setMode('edit')}
+          className="gap-1.5 shadow-2xs"
+        >
           <Pencil className="h-3.5 w-3.5" />
-          Edit course
+          {tBilingual('Edit course', 'ኮርስ አርትዕ')}
         </Button>
       ) : null}
       {canSubmit ? (
-        <Button size="sm" disabled={busy} onClick={() => void doSubmit()} className="gap-1.5 shadow-2xs">
+        <Button
+          size="sm"
+          disabled={busy}
+          onClick={() => void doSubmit()}
+          className="gap-1.5 shadow-2xs"
+        >
           <Send className="h-3.5 w-3.5" />
-          {course.status === "rejected" ? "Resubmit for approval" : "Submit for approval"}
+          {course.status === 'rejected'
+            ? tBilingual('Resubmit for approval', 'ለማጽደቅ በድጋሚ ላክ')
+            : tBilingual('Submit for approval', 'ለማጽደቅ ላክ')}
         </Button>
       ) : null}
       {canRejectAction ? (
         <Button size="sm" variant="danger" onClick={openReject} className="gap-1.5 shadow-2xs">
-          Reject
+          {tBilingual('Reject', 'ውድቅ አድርግ')}
         </Button>
       ) : null}
       {canApproveAction ? (
-        <Button size="sm" variant="success" disabled={busy} onClick={() => void doApprove()} className="gap-1.5 shadow-2xs bg-emerald-600 hover:bg-emerald-700 text-white">
-          Approve
+        <Button
+          size="sm"
+          variant="success"
+          disabled={busy}
+          onClick={() => void doApprove()}
+          className="gap-1.5 shadow-2xs bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          {tBilingual('Approve', 'አጽድቅ')}
         </Button>
       ) : null}
       {canPublish ? (
@@ -647,12 +687,12 @@ export function CourseDetailModal({
           className="gap-1.5 shadow-2xs bg-indigo-600 hover:bg-indigo-700 text-white"
           title={
             course.trainerId
-              ? "Publish this course to all learners"
-              : "Assign a trainer before publishing"
+              ? tBilingual('Publish this course to all learners', 'ይህንን ኮርስ ለሁሉም ሰልጣኞች አትም')
+              : tBilingual('Assign a trainer before publishing', 'ከማተምዎ በፊት አሰልጣኝ ይመድቡ')
           }
         >
           <Globe2 className="h-3.5 w-3.5" />
-          Publish course
+          {tBilingual('Publish course', 'ኮርስ አትም')}
         </Button>
       ) : null}
       {canUnpublish && course.published ? (
@@ -662,22 +702,34 @@ export function CourseDetailModal({
           disabled={busy}
           onClick={() => void doUnpublish()}
           className="gap-1.5 shadow-2xs"
-          title="Hide this course from the learner catalog"
+          title={tBilingual('Hide this course from the learner catalog', 'ይህን ኮርስ ከሰልጣኞች ካታሎግ ደብቅ')}
         >
           <Globe2 className="h-3.5 w-3.5" />
-          Unpublish course
+          {tBilingual('Unpublish course', 'ከህትመት አንሳ')}
         </Button>
       ) : null}
       {canArchiveAction ? (
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirmArchiveOpen(true)} className="gap-1.5 shadow-2xs">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setConfirmArchiveOpen(true)}
+          className="gap-1.5 shadow-2xs"
+        >
           <Archive className="h-3.5 w-3.5" />
-          Archive course
+          {tBilingual('Archive course', 'ኮርስ አስቀምጥ')}
         </Button>
       ) : null}
       {canDeleteAction ? (
-        <Button size="sm" variant="danger" disabled={busy} onClick={() => setConfirmDeleteOpen(true)} className="gap-1.5 shadow-2xs">
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={busy}
+          onClick={() => setConfirmDeleteOpen(true)}
+          className="gap-1.5 shadow-2xs"
+        >
           <Trash2 className="h-3.5 w-3.5" />
-          Delete course
+          {tBilingual('Delete course', 'ኮርስ ሰርዝ')}
         </Button>
       ) : null}
     </div>
@@ -688,22 +740,32 @@ export function CourseDetailModal({
       <WorkspaceDetailOverlay
         open={open}
         onClose={onClose}
-        title={mode === "edit" ? `Edit Course: ${course.title}` : course.title}
+        title={
+          mode === 'edit'
+            ? `${tBilingual('Edit Course:', 'ኮርስ አርትዕ፡')} ${isAmharic ? (course as any).titleAm || course.title : course.title}`
+            : isAmharic
+              ? (course as any).titleAm || course.title
+              : course.title
+        }
         subtitle={
-          mode === "edit"
-            ? `${course.code} · Update curriculum, objectives, materials, and assessment`
+          mode === 'edit'
+            ? `${course.code} · ${tBilingual('Update curriculum, objectives, materials, and assessment', 'ስርዓተ-ትምህርት፣ ዓላማዎችን፣ ሰነዶችን እና ምዘናዎችን ያሻሽሉ')}`
             : `${course.code} · ${course.category}`
         }
-        badge={mode === "edit" ? undefined : <CourseStatusBadge status={course.published ? "published" : course.status} />}
-        actions={mode === "view" ? headerActions : undefined}
+        badge={
+          mode === 'edit' ? undefined : (
+            <CourseStatusBadge status={course.published ? 'published' : course.status} />
+          )
+        }
+        actions={mode === 'view' ? headerActions : undefined}
       >
-        {mode === "edit" ? (
+        {mode === 'edit' ? (
           <div className="w-full">
             <CourseCreationWizard
               key={course.id}
               editingCourse={course}
-              onDone={() => setMode("view")}
-              onCancel={() => setMode("view")}
+              onDone={() => setMode('view')}
+              onCancel={() => setMode('view')}
             />
           </div>
         ) : (
@@ -716,11 +778,14 @@ export function CourseDetailModal({
                     {course.code}
                   </span>
                   <h3 className="font-display text-lg font-bold text-slate-900">
-                    Comprehensive Course Review
+                    {tBilingual('Comprehensive Course Review', 'አጠቃላይ የኮርስ ግምገማ')}
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Full overview of course curriculum, learning objectives, attached documents, and evaluation questions.
+                  {tBilingual(
+                    'Full overview of course curriculum, learning objectives, attached documents, and evaluation questions.',
+                    'የኮርስ ስርዓተ-ትምህርት፣ የመማሪያ ዓላማዎች፣ የተያያዙ ሰነዶች እና የምዘና ጥያቄዎች ሙሉ እይታ።',
+                  )}
                 </p>
               </div>
 
@@ -733,7 +798,7 @@ export function CourseDetailModal({
                   className="gap-1.5 text-xs text-slate-700 hover:text-indigo-700 border-slate-200 bg-white shadow-2xs"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
-                  Expand All
+                  {tBilingual('Expand All', 'ሁሉንም ዘርጋ')}
                 </Button>
                 <Button
                   type="button"
@@ -743,7 +808,7 @@ export function CourseDetailModal({
                   className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200 bg-white shadow-2xs"
                 >
                   <Minimize2 className="h-3.5 w-3.5" />
-                  Collapse All
+                  {tBilingual('Collapse All', 'ሁሉንም ሰብስብ')}
                 </Button>
               </div>
             </div>
@@ -751,31 +816,43 @@ export function CourseDetailModal({
             {/* ── Summary Stat Pills Bar ── */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Modules</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Modules', 'ምዕራፎች / ሞጁሎች')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">{course.modules.length}</p>
               </div>
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Lessons</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Lessons', 'ትምህርቶች')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">{totalLessons}</p>
               </div>
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Sub-Lessons</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Sub-Lessons', 'ንዑስ ትምህርቶች')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">{totalSubLessons}</p>
               </div>
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Attachments</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Attachments', 'አባሪ ፋይሎች')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-indigo-600">{totalAttachments}</p>
               </div>
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Questions</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Questions', 'ጥያቄዎች')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-emerald-600">{totalQuestions}</p>
               </div>
               <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Est. Time</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {tBilingual('Est. Time', 'የሚፈጀው ጊዜ')}
+                </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">
                   {totalEstimatedDurationMin >= 60
-                    ? `${Math.floor(totalEstimatedDurationMin / 60)}h ${totalEstimatedDurationMin % 60}m`
-                    : `${totalEstimatedDurationMin}m`}
+                    ? `${Math.floor(totalEstimatedDurationMin / 60)}${isAmharic ? 'ሰዓ ' : 'h '}${totalEstimatedDurationMin % 60}${isAmharic ? 'ደ' : 'm'}`
+                    : `${totalEstimatedDurationMin} ${isAmharic ? 'ደቂቃ' : 'm'}`}
                 </p>
               </div>
             </div>
@@ -784,10 +861,10 @@ export function CourseDetailModal({
             {flash ? (
               <div
                 className={cn(
-                  "rounded-xl border px-4 py-3 text-sm shadow-2xs",
+                  'rounded-xl border px-4 py-3 text-sm shadow-2xs',
                   flashError
-                    ? "border-red-200/70 bg-red-50/80 text-red-700"
-                    : "border-emerald-200/70 bg-emerald-50/80 text-emerald-700",
+                    ? 'border-red-200/70 bg-red-50/80 text-red-700'
+                    : 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700',
                 )}
               >
                 {flash}
@@ -798,7 +875,10 @@ export function CourseDetailModal({
             {needsTrainerForPublish ? (
               <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-2xs space-y-3">
                 <p className="text-sm font-semibold text-amber-900">
-                  ⚠ This course needs a trainer assigned before it can be published to learners.
+                  {tBilingual(
+                    '⚠ This course needs a trainer assigned before it can be published to learners.',
+                    '⚠ ይህ ኮርስ ለሰልጣኞች ከመታተሙ በፊት አሰልጣኝ መመደብ አለበት።',
+                  )}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <select
@@ -807,7 +887,9 @@ export function CourseDetailModal({
                     className="rounded-xl border border-amber-300 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-xs outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-500/10"
                   >
                     <option value="">
-                      {trainerOptions.length ? "Select a trainer…" : "No trainers available"}
+                      {trainerOptions.length
+                        ? tBilingual('Select a trainer…', 'አሰልጣኝ ይምረጡ…')
+                        : tBilingual('No trainers available', 'ምንም አሰልጣኞች የሉም')}
                     </option>
                     {trainerOptions.map((trainer) => (
                       <option key={trainer.id} value={trainer.id}>
@@ -822,7 +904,7 @@ export function CourseDetailModal({
                     onClick={() => void doAssignAndPublish()}
                     className="shadow-xs"
                   >
-                    Assign & Publish
+                    {tBilingual('Assign & Publish', 'መድብ እና አትም')}
                   </Button>
                   <Button
                     size="sm"
@@ -830,7 +912,7 @@ export function CourseDetailModal({
                     onClick={() => setNeedsTrainerForPublish(false)}
                     className="shadow-xs bg-white"
                   >
-                    Cancel
+                    {tBilingual('Cancel', 'ሰርዝ')}
                   </Button>
                 </div>
               </div>
@@ -842,7 +924,7 @@ export function CourseDetailModal({
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-indigo-600" />
                   <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-                    1. Course Overview & Attributes
+                    {tBilingual('1. Course Overview & Attributes', '1. የኮርስ አጠቃላይ እይታ እና መረጃ')}
                   </h4>
                 </div>
                 {canEdit ? (
@@ -850,11 +932,11 @@ export function CourseDetailModal({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setMode("edit")}
+                    onClick={() => setMode('edit')}
                     className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
                   >
                     <Pencil className="h-3.5 w-3.5" />
-                    Edit Details
+                    {tBilingual('Edit Details', 'መረጃዎችን አርትዕ')}
                   </Button>
                 ) : null}
               </div>
@@ -874,7 +956,9 @@ export function CourseDetailModal({
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center aspect-video md:aspect-[4/3]">
                       <BookOpen className="h-8 w-8 text-slate-300 mb-1" />
-                      <p className="text-xs text-slate-400 font-medium">No cover image</p>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {tBilingual('No cover image', 'የሽፋን ምስል የለም')}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -886,9 +970,13 @@ export function CourseDetailModal({
                       <RichContent inline html={course.code} placeholder="NO-CODE" />
                     </span>
                     <h2 className="text-xl font-bold text-slate-900 leading-snug">
-                      <RichContent inline html={course.title} placeholder="Untitled Course" />
+                      <RichContent
+                        inline
+                        html={isAmharic ? (course as any).titleAm || course.title : course.title}
+                        placeholder={tBilingual('Untitled Course', 'ያልተሰየመ ኮርስ')}
+                      />
                     </h2>
-                    {(course as any).titleAm ? (
+                    {(course as any).titleAm && !isAmharic ? (
                       <p className="text-sm text-slate-600 font-medium">
                         የስልጠና ርዕስ (አማርኛ): <RichContent inline html={(course as any).titleAm} />
                       </p>
@@ -896,29 +984,36 @@ export function CourseDetailModal({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <Badge variant="outline" className="border-slate-300 text-slate-700 bg-slate-50 font-medium">
+                    <Badge
+                      variant="outline"
+                      className="border-slate-300 text-slate-700 bg-slate-50 font-medium"
+                    >
                       {course.category}
                     </Badge>
-                    <Badge variant={courseLevelVariant(course.level)} className="font-bold tracking-wider">
-                      {courseLevelLabel(course.level)}
+                    <Badge
+                      variant={courseLevelVariant(course.level)}
+                      className="font-bold tracking-wider"
+                    >
+                      {courseLevelLabel(course.level, isAmharic)}
                     </Badge>
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200">
                       <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                      Owner: {userName(course.ownerId)}
+                      {tBilingual('Owner:', 'ባለቤት:')} {userName(course.ownerId)}
                     </span>
                     {(course.trainerIds?.length ?? 0) > 0 ? (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200">
                         <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                        Trainers: {(course.trainerIds ?? []).map(userName).join(", ")}
+                        {tBilingual('Trainers:', 'አሰልጣኞች:')}{' '}
+                        {(course.trainerIds ?? []).map(userName).join(', ')}
                       </span>
                     ) : course.trainerId ? (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200">
                         <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                        Trainer: {userName(course.trainerId)}
+                        {tBilingual('Trainer:', 'አሰልጣኝ:')} {userName(course.trainerId)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 border border-amber-200">
-                        No trainer assigned
+                        {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
                       </span>
                     )}
                   </div>
@@ -926,21 +1021,39 @@ export function CourseDetailModal({
                   {/* Department / Audience / Prerequisites */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 text-xs">
                     <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                      <span className="font-semibold text-slate-500 block mb-0.5">Department:</span>
+                      <span className="font-semibold text-slate-500 block mb-0.5">
+                        {tBilingual('Department:', 'ክፍል / መምሪያ:')}
+                      </span>
                       <span className="text-slate-800 font-medium">
-                        <RichContent inline html={course.department} placeholder="Not specified" />
+                        <RichContent
+                          inline
+                          html={course.department}
+                          placeholder={tBilingual('Not specified', 'አልተገለጸም')}
+                        />
                       </span>
                     </div>
                     <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                      <span className="font-semibold text-slate-500 block mb-0.5">Target Audience:</span>
+                      <span className="font-semibold text-slate-500 block mb-0.5">
+                        {tBilingual('Target Audience:', 'የታለመው ተደራሽ:')}
+                      </span>
                       <span className="text-slate-800 font-medium">
-                        <RichContent inline html={course.targetAudience} placeholder="All Staff" />
+                        <RichContent
+                          inline
+                          html={course.targetAudience}
+                          placeholder={tBilingual('All Staff', 'ሁሉም ሰራተኞች')}
+                        />
                       </span>
                     </div>
                     <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                      <span className="font-semibold text-slate-500 block mb-0.5">Prerequisites:</span>
+                      <span className="font-semibold text-slate-500 block mb-0.5">
+                        {tBilingual('Prerequisites:', 'ቅድመ-ሁኔታዎች:')}
+                      </span>
                       <span className="text-slate-800 font-medium">
-                        <RichContent inline html={course.prerequisites} placeholder="None" />
+                        <RichContent
+                          inline
+                          html={course.prerequisites}
+                          placeholder={tBilingual('None', 'ምንም የለም')}
+                        />
                       </span>
                     </div>
                   </div>
@@ -950,7 +1063,7 @@ export function CourseDetailModal({
               {/* Course Description */}
               <div className="space-y-1.5 pt-2 border-t border-slate-100">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Course Description
+                  {tBilingual('Course Description', 'የኮርስ ማብራሪያ')}
                 </p>
                 {course.description && stripHtmlTags(course.description) ? (
                   <div
@@ -959,7 +1072,7 @@ export function CourseDetailModal({
                   />
                 ) : (
                   <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-800 italic">
-                    ⚠ No course description provided.
+                    {tBilingual('⚠ No course description provided.', '⚠ የኮርስ ማብራሪያ አልተሰጠም።')}
                   </div>
                 )}
               </div>
@@ -967,7 +1080,7 @@ export function CourseDetailModal({
               {/* Course Learning Objectives */}
               <div className="space-y-1.5">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Learning Objectives & Outcomes
+                  {tBilingual('Learning Objectives & Outcomes', 'የመማሪያ ዓላማዎች እና ውጤቶች')}
                 </p>
                 {course.objectives && stripHtmlTags(course.objectives) ? (
                   <div className="rounded-xl bg-blue-50/60 p-4 border border-blue-100/90 space-y-1">
@@ -978,7 +1091,7 @@ export function CourseDetailModal({
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-800 italic">
-                    ⚠ No learning objectives specified.
+                    {tBilingual('⚠ No learning objectives specified.', '⚠ የመማሪያ ዓላማዎች አልተገለጹም።')}
                   </div>
                 )}
               </div>
@@ -987,7 +1100,7 @@ export function CourseDetailModal({
               {canAssignTrainer ? (
                 <div className="pt-2 border-t border-slate-100 space-y-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Trainer Assignment Management
+                    {tBilingual('Trainer Assignment Management', 'የአሰልጣኝ ምደባ አስተዳደር')}
                   </p>
                   <div className="rounded-xl border border-slate-200/90 bg-slate-50/50 p-4 space-y-3">
                     <div className="space-y-2">
@@ -1013,7 +1126,10 @@ export function CourseDetailModal({
                         ))
                       ) : (
                         <p className="text-xs text-slate-500 italic">
-                          No trainer assigned yet. Course publication requires at least one trainer.
+                          {tBilingual(
+                            'No trainer assigned yet. Course publication requires at least one trainer.',
+                            'እስካሁን ምንም አሰልጣኝ አልተመደበም። ኮርሱን ለማተም ቢያንስ አንድ አሰልጣኝ ያስፈልጋል።',
+                          )}
                         </p>
                       )}
                     </div>
@@ -1024,16 +1140,25 @@ export function CourseDetailModal({
                         onChange={(event) => void addTrainer(event.target.value)}
                         className="w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-700 shadow-xs outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                       >
-                        <option value="">{trainerOptions.length ? "Assign a trainer…" : "No trainers available"}</option>
+                        <option value="">
+                          {trainerOptions.length
+                            ? tBilingual('Assign a trainer…', 'አሰልጣኝ ይምረጡ…')
+                            : tBilingual('No trainers available', 'ምንም አሰልጣኞች የሉም')}
+                        </option>
                         {trainerOptions.map((trainer) => (
                           <option key={trainer.id} value={trainer.id}>
                             {trainer.name} ({trainer.email})
                           </option>
                         ))}
                       </select>
-                      <Button size="sm" variant="outline" disabled={trainerOptions.length === 0} className="text-xs gap-1 shadow-2xs">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={trainerOptions.length === 0}
+                        className="text-xs gap-1 shadow-2xs"
+                      >
                         <UserPlus className="h-3.5 w-3.5" />
-                        Assign
+                        {tBilingual('Assign', 'መድብ')}
                       </Button>
                     </div>
                   </div>
@@ -1048,11 +1173,17 @@ export function CourseDetailModal({
                   <div className="flex items-center gap-2">
                     <Layers className="h-4 w-4 text-indigo-600" />
                     <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-                      2. Curriculum Structure & Uploaded Materials
+                      {tBilingual(
+                        '2. Curriculum Structure & Uploaded Materials',
+                        '2. የስርዓተ-ትምህርት አወቃቀር እና የተጫኑ ሰነዶች',
+                      )}
                     </h4>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Review all modules, lessons, reading notes, and attached documents.
+                    {tBilingual(
+                      'Review all modules, lessons, reading notes, and attached documents.',
+                      'ሁሉንም ሞጁሎች፣ ትምህርቶች፣ የማንበቢያ ማስታወሻዎች እና የተያያዙ ሰነዶችን ይገምግሙ።',
+                    )}
                   </p>
                 </div>
                 {canEdit ? (
@@ -1060,18 +1191,21 @@ export function CourseDetailModal({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setMode("edit")}
+                    onClick={() => setMode('edit')}
                     className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
                   >
                     <Pencil className="h-3.5 w-3.5" />
-                    Edit Curriculum
+                    {tBilingual('Edit Curriculum', 'ስርዓተ-ትምህርት አርትዕ')}
                   </Button>
                 ) : null}
               </div>
 
               {course.modules.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-5 text-center text-xs text-amber-800">
-                  ⚠ No modules added to this course yet.
+                  {tBilingual(
+                    '⚠ No modules added to this course yet.',
+                    '⚠ እስካሁን ለዚህ ኮርስ የተጨመረ ሞጁል የለም።',
+                  )}
                 </div>
               ) : (
                 <div className="space-y-5">
@@ -1092,14 +1226,16 @@ export function CourseDetailModal({
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className="flex h-7 px-2.5 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-2xs">
-                              Module {mIdx + 1}
+                              {tBilingual(`Module ${mIdx + 1}`, `ሞጁል ${mIdx + 1}`)}
                             </span>
                             <div className="min-w-0 flex-1">
                               <h5 className="font-display text-base font-bold text-slate-900 truncate">
-                                {lockedModule ? <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" /> : null}
+                                {lockedModule ? (
+                                  <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" />
+                                ) : null}
                                 {module.title.trim() || (
                                   <span className="text-amber-600 italic font-normal">
-                                    Untitled Module
+                                    {tBilingual('Untitled Module', 'ያልተሰየመ ሞጁል')}
                                   </span>
                                 )}
                               </h5>
@@ -1109,23 +1245,42 @@ export function CourseDetailModal({
                           <div className="flex items-center gap-3 shrink-0">
                             <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                               <Clock className="h-3.5 w-3.5 text-slate-400" />
-                              {module.durationMinutes ? `${module.durationMinutes} min` : "60 min"}
+                              {module.durationMinutes
+                                ? `${module.durationMinutes} ${isAmharic ? 'ደቂቃ' : 'min'}`
+                                : isAmharic
+                                  ? '60 ደቂቃ'
+                                  : '60 min'}
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                               <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                              {module.lessons.length} Lesson{module.lessons.length !== 1 ? "s" : ""}
+                              {module.lessons.length}{' '}
+                              {tBilingual(
+                                module.lessons.length !== 1 ? 'Lessons' : 'Lesson',
+                                'ትምህርቶች',
+                              )}
                             </span>
                             {moduleAttachments.length > 0 ? (
                               <span className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
                                 <Paperclip className="h-3.5 w-3.5" />
-                                {moduleAttachments.length} Attachment
-                                {moduleAttachments.length !== 1 ? "s" : ""}
+                                {moduleAttachments.length}{' '}
+                                {tBilingual(
+                                  moduleAttachments.length !== 1 ? 'Attachments' : 'Attachment',
+                                  'አባሪዎች',
+                                )}
                               </span>
                             ) : null}
                             <button
                               type="button"
                               className="rounded-lg p-1 text-slate-400 hover:text-slate-600"
-                              title={isModExpanded ? "Collapse Module" : "Expand Module"}
+                              title={
+                                isModExpanded
+                                  ? isAmharic
+                                    ? 'ሞጁል ሰብስብ'
+                                    : 'Collapse Module'
+                                  : isAmharic
+                                    ? 'ሞጁል ዘርጋ'
+                                    : 'Expand Module'
+                              }
                             >
                               {isModExpanded ? (
                                 <ChevronUp className="h-5 w-5" />
@@ -1143,7 +1298,10 @@ export function CourseDetailModal({
                             {module.description && stripHtmlTags(module.description) ? (
                               <div className="rounded-xl bg-white p-4 border border-slate-200/70 space-y-1">
                                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                  Module Overview & Description
+                                  {tBilingual(
+                                    'Module Overview & Description',
+                                    'የሞጁል አጠቃላይ እይታ እና ማብራሪያ',
+                                  )}
                                 </p>
                                 <div
                                   className="text-xs text-slate-700 leading-relaxed prose prose-xs max-w-none"
@@ -1156,7 +1314,7 @@ export function CourseDetailModal({
                             {module.objectives && stripHtmlTags(module.objectives) ? (
                               <div className="rounded-xl bg-indigo-50/50 p-3.5 border border-indigo-100 space-y-1">
                                 <p className="text-xs font-bold uppercase tracking-wider text-indigo-900">
-                                  Module Learning Objectives
+                                  {tBilingual('Module Learning Objectives', 'የሞጁል የመማሪያ ዓላማዎች')}
                                 </p>
                                 <div
                                   className="text-xs text-indigo-950 leading-relaxed prose prose-xs max-w-none"
@@ -1170,11 +1328,20 @@ export function CourseDetailModal({
                               <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-2.5">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 uppercase tracking-wider">
                                   <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-                                  <span>Module Attachments & Reference Materials ({moduleAttachments.length})</span>
+                                  <span>
+                                    {tBilingual(
+                                      `Module Attachments & Reference Materials (${moduleAttachments.length})`,
+                                      `የሞጁል አባሪዎች እና የማመሳከሪያ ሰነዶች (${moduleAttachments.length})`,
+                                    )}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                   {moduleAttachments.map((file, fIdx) => (
-                                    <AttachmentCard key={file.id || file.url || fIdx} file={file} />
+                                    <AttachmentCard
+                                      key={file.id || file.url || fIdx}
+                                      file={file}
+                                      isAmharic={isAmharic}
+                                    />
                                   ))}
                                 </div>
                               </div>
@@ -1183,12 +1350,18 @@ export function CourseDetailModal({
                             {/* Module Lessons List */}
                             <div className="space-y-3">
                               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                Lessons in Module {mIdx + 1} ({module.lessons.length})
+                                {tBilingual(
+                                  `Lessons in Module ${mIdx + 1} (${module.lessons.length})`,
+                                  `በሞጁል ${mIdx + 1} ውስጥ ያሉ ትምህርቶች (${module.lessons.length})`,
+                                )}
                               </p>
 
                               {module.lessons.length === 0 ? (
                                 <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3.5 text-xs text-amber-800 italic">
-                                  ⚠ No lessons created for this module.
+                                  {tBilingual(
+                                    '⚠ No lessons created for this module.',
+                                    '⚠ ለዚህ ሞጁል የተፈጠረ ትምህርት የለም።',
+                                  )}
                                 </div>
                               ) : (
                                 <div className="space-y-3">
@@ -1215,10 +1388,12 @@ export function CourseDetailModal({
                                               {mIdx + 1}.{lIdx + 1}
                                             </span>
                                             <span className="font-semibold text-slate-900 text-sm truncate">
-                                              {lockedLesson ? <Lock className="mr-1 inline h-3 w-3 text-slate-400" /> : null}
+                                              {lockedLesson ? (
+                                                <Lock className="mr-1 inline h-3 w-3 text-slate-400" />
+                                              ) : null}
                                               {lesson.title.trim() || (
                                                 <span className="text-amber-600 italic font-normal">
-                                                  Untitled Lesson
+                                                  {tBilingual('Untitled Lesson', 'ርዕስ የሌለው ትምህርት')}
                                                 </span>
                                               )}
                                             </span>
@@ -1227,7 +1402,7 @@ export function CourseDetailModal({
                                           <div className="flex flex-wrap items-center gap-2 shrink-0">
                                             <span
                                               className={cn(
-                                                "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold",
+                                                'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold',
                                                 lessonBadge.color,
                                               )}
                                             >
@@ -1235,15 +1410,21 @@ export function CourseDetailModal({
                                               {lessonBadge.label}
                                             </span>
                                             <span className="text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
-                                              {lesson.durationMin || 15} min
+                                              {lesson.durationMin || 15} {tBilingual('min', 'ደቂቃ')}
                                             </span>
                                             {(lesson as any).required === false ? (
-                                              <Badge variant="outline" className="text-slate-500 border-slate-300">
-                                                Optional
+                                              <Badge
+                                                variant="outline"
+                                                className="text-slate-500 border-slate-300"
+                                              >
+                                                {tBilingual('Optional', 'አማራጭ')}
                                               </Badge>
                                             ) : (
-                                              <Badge variant="slate" className="bg-slate-100 text-slate-700">
-                                                Required
+                                              <Badge
+                                                variant="slate"
+                                                className="bg-slate-100 text-slate-700"
+                                              >
+                                                {tBilingual('Required', 'ግዴታ')}
                                               </Badge>
                                             )}
                                             {lessonAttachments.length > 0 ? (
@@ -1255,7 +1436,15 @@ export function CourseDetailModal({
                                             <button
                                               type="button"
                                               className="rounded p-1 text-slate-400 hover:text-slate-600"
-                                              title={isLessExpanded ? "Collapse Lesson" : "Expand Lesson"}
+                                              title={
+                                                isLessExpanded
+                                                  ? isAmharic
+                                                    ? 'ትምህርት አሳንስ'
+                                                    : 'Collapse Lesson'
+                                                  : isAmharic
+                                                    ? 'ትምህርት ዘርጋ'
+                                                    : 'Expand Lesson'
+                                              }
                                             >
                                               {isLessExpanded ? (
                                                 <ChevronUp className="h-4 w-4" />
@@ -1272,16 +1461,24 @@ export function CourseDetailModal({
                                             {/* Lesson Reading Notes */}
                                             <div className="space-y-1.5">
                                               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                                Reading Notes & Detailed Content
+                                                {tBilingual(
+                                                  'Reading Notes & Detailed Content',
+                                                  'የማንበቢያ ማስታወሻዎች እና ዝርዝር ይዘት',
+                                                )}
                                               </p>
                                               {lesson.content && stripHtmlTags(lesson.content) ? (
                                                 <div
                                                   className="rounded-xl border border-slate-200/80 bg-white p-3.5 text-slate-700 leading-relaxed prose prose-sm max-w-none shadow-2xs"
-                                                  dangerouslySetInnerHTML={{ __html: lesson.content }}
+                                                  dangerouslySetInnerHTML={{
+                                                    __html: lesson.content,
+                                                  }}
                                                 />
                                               ) : (
                                                 <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-2.5 text-xs text-amber-700 italic">
-                                                  ⚠ No reading notes or instructions written for this lesson.
+                                                  {tBilingual(
+                                                    '⚠ No reading notes or instructions written for this lesson.',
+                                                    '⚠ ለዚህ ትምህርት የተጻፈ የማንበቢያ ማስታወሻ ወይም መመሪያ የለም።',
+                                                  )}
                                                 </div>
                                               )}
                                             </div>
@@ -1290,13 +1487,17 @@ export function CourseDetailModal({
                                             {lessonAttachments.length > 0 && (
                                               <div className="space-y-1.5">
                                                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                                  Lesson Attachments ({lessonAttachments.length})
+                                                  {tBilingual(
+                                                    `Lesson Attachments (${lessonAttachments.length})`,
+                                                    `የትምህርት አባሪዎች (${lessonAttachments.length})`,
+                                                  )}
                                                 </p>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                   {lessonAttachments.map((file, fIdx) => (
                                                     <AttachmentCard
                                                       key={file.id || file.url || fIdx}
                                                       file={file}
+                                                      isAmharic={isAmharic}
                                                     />
                                                   ))}
                                                 </div>
@@ -1309,13 +1510,18 @@ export function CourseDetailModal({
                                                 <div className="flex items-center gap-2">
                                                   <div className="h-2 w-2 rounded-full bg-indigo-500" />
                                                   <p className="text-xs font-bold text-slate-800">
-                                                    Sub-Lessons ({subLessons.length})
+                                                    {tBilingual(
+                                                      `Sub-Lessons (${subLessons.length})`,
+                                                      `ንዑስ ትምህርቶች (${subLessons.length})`,
+                                                    )}
                                                   </p>
                                                 </div>
 
                                                 <div className="space-y-2.5 pl-3 sm:pl-4 border-l-2 border-indigo-200">
                                                   {subLessons.map((sub, sIdx) => {
-                                                    const subBadge = getContentTypeBadge(sub.contentType);
+                                                    const subBadge = getContentTypeBadge(
+                                                      sub.contentType,
+                                                    );
                                                     const SubIcon = subBadge.icon;
                                                     const subAttachments = getItemAttachments(sub);
 
@@ -1332,7 +1538,10 @@ export function CourseDetailModal({
                                                             <span className="font-semibold text-slate-800 text-xs truncate">
                                                               {sub.title.trim() || (
                                                                 <span className="text-amber-600 italic font-normal">
-                                                                  Untitled Sub-lesson
+                                                                  {tBilingual(
+                                                                    'Untitled Sub-lesson',
+                                                                    'ርዕስ የሌለው ንዑስ-ትምህርት',
+                                                                  )}
                                                                 </span>
                                                               )}
                                                             </span>
@@ -1340,7 +1549,7 @@ export function CourseDetailModal({
                                                           <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                             <span
                                                               className={cn(
-                                                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold border",
+                                                                'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold border',
                                                                 subBadge.color,
                                                               )}
                                                             >
@@ -1348,16 +1557,20 @@ export function CourseDetailModal({
                                                               {subBadge.label}
                                                             </span>
                                                             <span className="text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-[11px]">
-                                                              {sub.durationMin || 10} min
+                                                              {sub.durationMin || 10}{' '}
+                                                              {tBilingual('min', 'ደቂቃ')}
                                                             </span>
                                                           </div>
                                                         </div>
 
                                                         {/* Sub-lesson content */}
-                                                        {sub.content && stripHtmlTags(sub.content) ? (
+                                                        {sub.content &&
+                                                        stripHtmlTags(sub.content) ? (
                                                           <div
                                                             className="rounded-lg bg-slate-50/70 p-2.5 text-slate-700 text-xs leading-relaxed prose prose-xs max-w-none border border-slate-100"
-                                                            dangerouslySetInnerHTML={{ __html: sub.content }}
+                                                            dangerouslySetInnerHTML={{
+                                                              __html: sub.content,
+                                                            }}
                                                           />
                                                         ) : null}
 
@@ -1365,13 +1578,17 @@ export function CourseDetailModal({
                                                         {subAttachments.length > 0 && (
                                                           <div className="space-y-1.5 pt-1">
                                                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                              Sub-Lesson Files ({subAttachments.length})
+                                                              {tBilingual(
+                                                                `Sub-Lesson Files (${subAttachments.length})`,
+                                                                `የንዑስ ትምህርት ፋይሎች (${subAttachments.length})`,
+                                                              )}
                                                             </p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                               {subAttachments.map((file, sfIdx) => (
                                                                 <AttachmentCard
                                                                   key={file.id || file.url || sfIdx}
                                                                   file={file}
+                                                                  isAmharic={isAmharic}
                                                                 />
                                                               ))}
                                                             </div>
@@ -1406,12 +1623,19 @@ export function CourseDetailModal({
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                   <Paperclip className="h-4 w-4 text-indigo-600" />
                   <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-                    Course-Level General Reference Materials ({courseLevelAttachments.length})
+                    {tBilingual(
+                      `Course-Level General Reference Materials (${courseLevelAttachments.length})`,
+                      `የኮርስ አጠቃላይ የማመሳከሪያ ሰነዶች (${courseLevelAttachments.length})`,
+                    )}
                   </h4>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {courseLevelAttachments.map((file, idx) => (
-                    <AttachmentCard key={file.id || file.url || idx} file={file} />
+                    <AttachmentCard
+                      key={file.id || file.url || idx}
+                      file={file}
+                      isAmharic={isAmharic}
+                    />
                   ))}
                 </div>
               </div>
@@ -1424,23 +1648,33 @@ export function CourseDetailModal({
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-indigo-600" />
                     <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-                      3. Final Assessment & Evaluation Rules
+                      {tBilingual(
+                        '3. Final Assessment & Evaluation Rules',
+                        '3. የማጠቃለያ ፈተና እና የምዘና ደንቦች',
+                      )}
                     </h4>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Review passing thresholds, time limits, and all exam questions.
+                    {tBilingual(
+                      'Review passing thresholds, time limits, and all exam questions.',
+                      'የማለፊያ ነጥቦችን፣ የጊዜ ገደቦችን እና ሁሉንም የፈተና ጥያቄዎች ይገምግሙ።',
+                    )}
                   </p>
                 </div>
                 {assessments.length > 0 ? (
                   <Badge variant="green" dot className="font-bold">
-                    {assessments.length} Assessment{assessments.length > 1 ? "s" : ""} Attached
+                    {assessments.length}{' '}
+                    {tBilingual(
+                      assessments.length > 1 ? 'Assessments Attached' : 'Assessment Attached',
+                      'የተያያዘ ምዘና',
+                    )}
                   </Badge>
                 ) : null}
               </div>
 
               {assessmentLoading ? (
                 <div className="flex items-center justify-center py-6 text-xs text-slate-400">
-                  Loading assessment and question bank…
+                  {tBilingual('Loading assessment and question bank…', 'ምዘና እና የጥያቄ ባንክ በመጫን ላይ…')}
                 </div>
               ) : assessments.length > 0 ? (
                 <div className="space-y-6">
@@ -1458,25 +1692,35 @@ export function CourseDetailModal({
                       {/* Metrics cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-                          <p className="text-slate-500 font-medium">Passing Score</p>
+                          <p className="text-slate-500 font-medium">
+                            {tBilingual('Passing Score', 'ማለፊያ ነጥብ')}
+                          </p>
                           <p className="text-lg font-bold text-emerald-600 mt-1">
                             {assessment.passingScore}%
                           </p>
                         </div>
                         <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-                          <p className="text-slate-500 font-medium">Time Limit</p>
+                          <p className="text-slate-500 font-medium">
+                            {tBilingual('Time Limit', 'የጊዜ ገደብ')}
+                          </p>
                           <p className="text-lg font-bold text-slate-900 mt-1">
-                            {assessment.timeLimitMinutes ? `${assessment.timeLimitMinutes} min` : "No limit"}
+                            {assessment.timeLimitMinutes
+                              ? `${assessment.timeLimitMinutes} ${tBilingual('min', 'ደቂቃ')}`
+                              : tBilingual('No limit', 'ገደብ የለውም')}
                           </p>
                         </div>
                         <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-                          <p className="text-slate-500 font-medium">Attempts Allowed</p>
+                          <p className="text-slate-500 font-medium">
+                            {tBilingual('Attempts Allowed', 'የተፈቀዱ ሙከራዎች')}
+                          </p>
                           <p className="text-lg font-bold text-slate-900 mt-1">
                             {assessment.maxAttempts}
                           </p>
                         </div>
                         <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-                          <p className="text-slate-500 font-medium">Total Questions</p>
+                          <p className="text-slate-500 font-medium">
+                            {tBilingual('Total Questions', 'አጠቃላይ ጥያቄዎች')}
+                          </p>
                           <p className="text-lg font-bold text-indigo-600 mt-1">
                             {assessment.questions.length}
                           </p>
@@ -1488,14 +1732,17 @@ export function CourseDetailModal({
                         <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-3.5 space-y-2">
                           <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
                             <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-                            Exam Reference Material
+                            {tBilingual('Exam Reference Material', 'የፈተና ማመሳከሪያ ሰነድ')}
                           </p>
                           <AttachmentCard
                             file={{
-                              name: assessment.fileName || "Exam Reference File",
+                              name:
+                                assessment.fileName ||
+                                (isAmharic ? 'የፈተና ማመሳከሪያ ፋይል' : 'Exam Reference File'),
                               url: assessment.resourceUrl,
                               size: assessment.fileSize || undefined,
                             }}
+                            isAmharic={isAmharic}
                           />
                         </div>
                       ) : null}
@@ -1503,20 +1750,25 @@ export function CourseDetailModal({
                       {/* All Questions Preview */}
                       <div className="space-y-3 pt-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                          Exam Questions Preview ({assessment.questions.length})
+                          {tBilingual(
+                            `Exam Questions Preview (${assessment.questions.length})`,
+                            `የፈተና ጥያቄዎች ቅድመ-ዕይታ (${assessment.questions.length})`,
+                          )}
                         </p>
 
                         {assessment.questions.length === 0 ? (
                           <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-amber-800 text-xs">
-                            ⚠ No questions added to this assessment yet.
+                            {tBilingual(
+                              '⚠ No questions added to this assessment yet.',
+                              '⚠ ለዚህ ምዘና እስካሁን ምንም ጥያቄ አልተጨመረም።',
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-3">
                             {assessment.questions.map((q, qIdx) => {
-                              const isMultipleChoice =
-                                q.type === "MULTIPLE_CHOICE" || !q.type;
-                              const isTrueFalse = q.type === "TRUE_FALSE";
-                              const isShortAnswer = q.type === "SHORT_ANSWER";
+                              const isMultipleChoice = q.type === 'MULTIPLE_CHOICE' || !q.type;
+                              const isTrueFalse = q.type === 'TRUE_FALSE';
+                              const isShortAnswer = q.type === 'SHORT_ANSWER';
 
                               return (
                                 <div
@@ -1528,16 +1780,19 @@ export function CourseDetailModal({
                                       <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white text-[11px] font-bold">
                                         {qIdx + 1}
                                       </span>
-                                      <Badge variant="slate" className="font-semibold text-slate-700 bg-white border-slate-200">
+                                      <Badge
+                                        variant="slate"
+                                        className="font-semibold text-slate-700 bg-white border-slate-200"
+                                      >
                                         {isMultipleChoice
-                                          ? "Multiple Choice"
+                                          ? tBilingual('Multiple Choice', 'ምርጫ')
                                           : isTrueFalse
-                                            ? "True / False"
-                                            : "Short Answer"}
+                                            ? tBilingual('True / False', 'እውነት / ሐሰት')
+                                            : tBilingual('Short Answer', 'አጭር መልስ')}
                                       </Badge>
                                     </div>
                                     <span className="font-bold text-indigo-700 text-xs">
-                                      10 Points
+                                      10 {tBilingual('Points', 'ነጥብ')}
                                     </span>
                                   </div>
 
@@ -1545,7 +1800,11 @@ export function CourseDetailModal({
                                   <div
                                     className="font-medium text-slate-800 text-sm prose prose-sm max-w-none"
                                     dangerouslySetInnerHTML={{
-                                      __html: q.question || "<em>No question prompt</em>",
+                                      __html:
+                                        q.question ||
+                                        (isAmharic
+                                          ? '<em>ምንም የጥያቄ ይዘት የለም</em>'
+                                          : '<em>No question prompt</em>'),
                                     }}
                                   />
 
@@ -1555,7 +1814,7 @@ export function CourseDetailModal({
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
                                         src={q.imageUrl}
-                                        alt="Question Context"
+                                        alt={isAmharic ? 'የጥያቄ ምስል' : 'Question Context'}
                                         className="max-h-48 rounded-lg border border-slate-200 object-cover"
                                       />
                                     </div>
@@ -1566,24 +1825,23 @@ export function CourseDetailModal({
                                     <div className="space-y-1.5 pt-1">
                                       {q.options.map((opt, optIdx) => {
                                         const isCorrect =
-                                          q.correctAnswer === optIdx ||
-                                          q.correctAnswer === opt;
+                                          q.correctAnswer === optIdx || q.correctAnswer === opt;
                                         return (
                                           <div
                                             key={optIdx}
                                             className={cn(
-                                              "flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition",
+                                              'flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition',
                                               isCorrect
-                                                ? "bg-emerald-50 border-emerald-300 font-semibold text-emerald-900 shadow-2xs"
-                                                : "bg-white border-slate-200 text-slate-600",
+                                                ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900 shadow-2xs'
+                                                : 'bg-white border-slate-200 text-slate-600',
                                             )}
                                           >
                                             <span
                                               className={cn(
-                                                "flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs font-bold",
+                                                'flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs font-bold',
                                                 isCorrect
-                                                  ? "bg-emerald-600 text-white"
-                                                  : "bg-slate-100 text-slate-500",
+                                                  ? 'bg-emerald-600 text-white'
+                                                  : 'bg-slate-100 text-slate-500',
                                               )}
                                             >
                                               {String.fromCharCode(65 + optIdx)}
@@ -1594,7 +1852,7 @@ export function CourseDetailModal({
                                                 variant="green"
                                                 className="ml-auto text-xs py-0.5 px-2 bg-emerald-100 text-emerald-800 font-bold border-emerald-200"
                                               >
-                                                Correct Answer ✓
+                                                {tBilingual('Correct Answer ✓', 'ትክክለኛ መልስ ✓')}
                                               </Badge>
                                             )}
                                           </div>
@@ -1606,23 +1864,25 @@ export function CourseDetailModal({
                                   {/* True / False Options */}
                                   {isTrueFalse && (
                                     <div className="flex items-center gap-3 pt-1">
-                                      {["True", "False"].map((opt, optIdx) => {
+                                      {['True', 'False'].map((opt, optIdx) => {
                                         const isCorrect =
                                           q.correctAnswer === optIdx ||
                                           q.correctAnswer === opt ||
-                                          (q.correctAnswer === 0 && opt === "True") ||
-                                          (q.correctAnswer === 1 && opt === "False");
+                                          (q.correctAnswer === 0 && opt === 'True') ||
+                                          (q.correctAnswer === 1 && opt === 'False');
                                         return (
                                           <span
                                             key={opt}
                                             className={cn(
-                                              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs",
+                                              'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs',
                                               isCorrect
-                                                ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold"
-                                                : "bg-white border-slate-200 text-slate-500",
+                                                ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
+                                                : 'bg-white border-slate-200 text-slate-500',
                                             )}
                                           >
-                                            {opt}
+                                            {opt === 'True'
+                                              ? tBilingual('True', 'እውነት')
+                                              : tBilingual('False', 'ሐሰት')}
                                             {isCorrect && (
                                               <Check className="h-3.5 w-3.5 text-emerald-600" />
                                             )}
@@ -1636,12 +1896,18 @@ export function CourseDetailModal({
                                   {isShortAnswer && (
                                     <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
                                       <span className="font-semibold text-slate-700 block mb-1">
-                                        Expected Keywords & Grading Rubric:
+                                        {tBilingual(
+                                          'Expected Keywords & Grading Rubric:',
+                                          'የሚጠበቁ ቁልፍ ቃላት እና የማረሚያ መስፈርት፡',
+                                        )}
                                       </span>
                                       <p className="text-slate-600">
-                                        {typeof q.correctAnswer === "string"
+                                        {typeof q.correctAnswer === 'string'
                                           ? q.correctAnswer
-                                          : "No grading criteria specified."}
+                                          : tBilingual(
+                                              'No grading criteria specified.',
+                                              'ምንም የማረሚያ መስፈርት አልተገለጸም።',
+                                            )}
                                       </p>
                                     </div>
                                   )}
@@ -1655,7 +1921,9 @@ export function CourseDetailModal({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">No assessment has been attached yet.</p>
+                <p className="text-xs text-slate-400">
+                  {tBilingual('No assessment has been attached yet.', 'እስካሁን ምንም ምዘና አልተያያዘም።')}
+                </p>
               )}
             </div>
           </div>
@@ -1666,26 +1934,28 @@ export function CourseDetailModal({
       <Modal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
-        title="Reject course"
+        title={tBilingual('Reject course', 'ኮርስ ውድቅ አድርግ')}
         subtitle={`${course.code} — ${course.title}`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setRejectOpen(false)}>
-              Cancel
+              {tBilingual('Cancel', 'ሰርዝ')}
             </Button>
             <Button
               variant="danger"
               disabled={!reason.trim() || busy}
               onClick={() => void confirmReject()}
             >
-              {busy ? "Rejecting…" : "Confirm Reject"}
+              {busy
+                ? tBilingual('Rejecting…', 'ውድቅ በማድረግ ላይ…')
+                : tBilingual('Confirm Reject', 'ውድቅ ማድረግ አረጋግጥ')}
             </Button>
           </>
         }
       >
         <RichTextArea
           id="courseRejectReason"
-          label="Reason for rejection"
+          label={tBilingual('Reason for rejection', 'ውድቅ የተደረገበት ምክንያት')}
           required
           rows={3}
           value={reason}
@@ -1693,16 +1963,23 @@ export function CourseDetailModal({
             setReason(val);
             setReasonError(null);
           }}
-          placeholder="Explain why this course is rejected. The course owner is notified with this reason and the course moves back to draft..."
+          placeholder={tBilingual(
+            'Explain why this course is rejected. The course owner is notified with this reason and the course moves back to draft...',
+            'ይህ ኮርስ ለምን ውድቅ እንደተደረገ ያብራሩ። ለኮርሱ ባለቤት ማሳወቂያ ይላካል እና ኮርሱ ወደ ረቂቅ ይመለሳል...',
+          )}
           error={reasonError}
         />
       </Modal>
 
       <ConfirmModal
         open={confirmArchiveOpen}
-        title="Archive Course"
-        description={`Archive "${course.title}"? It will move out of the active catalog.`}
-        confirmText="Archive Course"
+        title={tBilingual('Archive Course', 'ኮርስ አስቀምጥ')}
+        description={
+          isAmharic
+            ? `"${course.title}" ወደ ማህደር ይቀመጥ? ከንቁ ካታሎግ ይወጣል።`
+            : `Archive "${course.title}"? It will move out of the active catalog.`
+        }
+        confirmText={tBilingual('Archive Course', 'ኮርስ አስቀምጥ')}
         variant="warning"
         isLoading={busy}
         onConfirm={doArchive}
@@ -1711,9 +1988,13 @@ export function CourseDetailModal({
 
       <ConfirmModal
         open={confirmDeleteOpen}
-        title="Delete Course"
-        description={`Delete "${course.title}"? This action cannot be undone and will permanently remove all associated course content.`}
-        confirmText="Delete Course"
+        title={tBilingual('Delete Course', 'ኮርስ ሰርዝ')}
+        description={
+          isAmharic
+            ? `"${course.title}" ይሰረዝ? ይህ እርምጃ ሊቀለበስ አይችልም እና ሁሉንም ተያያዥ ይዘቶች በቋሚነት ያስወግዳል።`
+            : `Delete "${course.title}"? This action cannot be undone and will permanently remove all associated course content.`
+        }
+        confirmText={tBilingual('Delete Course', 'ኮርስ ሰርዝ')}
         variant="danger"
         isLoading={busy}
         onConfirm={doDelete}

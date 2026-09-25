@@ -1,8 +1,8 @@
-import { api } from "./client";
-import { storeTokens, clearTokens, getStoredRefreshToken } from "./tokens";
-import { userFromAuth } from "./transform";
-import type { ApiAuthRegisterResponse, ApiAuthResponse, ApiFirstLoginChallenge } from "./types";
-import type { User } from "@/types";
+import { api } from './client';
+import { storeTokens, clearTokens, getStoredRefreshToken } from './tokens';
+import { userFromAuth } from './transform';
+import type { ApiAuthRegisterResponse, ApiAuthResponse, ApiFirstLoginChallenge } from './types';
+import type { User } from '@/types';
 
 export interface AuthResult {
   user: User;
@@ -35,20 +35,20 @@ export async function login(
   email: string,
   password: string,
 ): Promise<AuthResult | FirstLoginChallenge> {
-  const res = await api<ApiAuthResponse | ApiFirstLoginChallenge>("auth/login", {
-    method: "POST",
+  const res = await api<ApiAuthResponse | ApiFirstLoginChallenge>('auth/login', {
+    method: 'POST',
     body: { email, password },
     skipAuthRetry: true,
   });
-  if ("passwordChangeRequired" in res) return res;
+  if ('passwordChangeRequired' in res) return res;
   return startSession(res);
 }
 
 export async function resendFirstLoginCode(
   challengeToken: string,
 ): Promise<{ message: string; email: string }> {
-  return api<{ message: string; email: string }>("auth/first-login/resend-code", {
-    method: "POST",
+  return api<{ message: string; email: string }>('auth/first-login/resend-code', {
+    method: 'POST',
     body: { challengeToken },
     skipAuthRetry: true,
   });
@@ -59,8 +59,8 @@ export async function verifyFirstLoginCode(
   challengeToken: string,
   code: string,
 ): Promise<{ message: string }> {
-  return api<{ message: string }>("auth/first-login/verify-code", {
-    method: "POST",
+  return api<{ message: string }>('auth/first-login/verify-code', {
+    method: 'POST',
     body: { challengeToken, code },
     skipAuthRetry: true,
   });
@@ -72,8 +72,8 @@ export async function completeFirstLogin(body: {
   newPassword: string;
   confirmPassword: string;
 }): Promise<AuthResult> {
-  const res = await api<ApiAuthResponse>("auth/first-login/complete", {
-    method: "POST",
+  const res = await api<ApiAuthResponse>('auth/first-login/complete', {
+    method: 'POST',
     body,
     skipAuthRetry: true,
   });
@@ -84,7 +84,7 @@ export async function completeFirstLogin(body: {
  * The first-login challenge lives in sessionStorage (never the URL) between the login page
  * and /first-login. It is short-lived server-side, so losing it just means signing in again.
  */
-const FIRST_LOGIN_KEY = "lms.firstLoginChallenge";
+const FIRST_LOGIN_KEY = 'lms.firstLoginChallenge';
 
 export function saveFirstLoginChallenge(challenge: { challengeToken: string; email: string }) {
   try {
@@ -112,8 +112,8 @@ export function clearFirstLoginChallenge() {
 }
 
 export async function forgotPassword(email: string): Promise<{ message: string }> {
-  return api<{ message: string }>("auth/forgot-password", {
-    method: "POST",
+  return api<{ message: string }>('auth/forgot-password', {
+    method: 'POST',
     body: { email },
     skipAuthRetry: true,
   });
@@ -121,8 +121,8 @@ export async function forgotPassword(email: string): Promise<{ message: string }
 
 /** Checks a reset code without using it up; rejects when it is wrong or expired. */
 export async function verifyResetCode(email: string, code: string): Promise<{ message: string }> {
-  return api<{ message: string }>("auth/verify-reset-code", {
-    method: "POST",
+  return api<{ message: string }>('auth/verify-reset-code', {
+    method: 'POST',
     body: { email, code },
     skipAuthRetry: true,
   });
@@ -133,8 +133,8 @@ export async function resetPassword(
   code: string,
   newPassword: string,
 ): Promise<{ message: string }> {
-  return api<{ message: string }>("auth/reset-password", {
-    method: "POST",
+  return api<{ message: string }>('auth/reset-password', {
+    method: 'POST',
     body: { email, code, newPassword },
     skipAuthRetry: true,
   });
@@ -148,8 +148,8 @@ export async function register(payload: {
   password: string;
   tin?: string;
 }): Promise<RegisterResult> {
-  const res = await api<ApiAuthRegisterResponse>("auth/register", {
-    method: "POST",
+  const res = await api<ApiAuthRegisterResponse>('auth/register', {
+    method: 'POST',
     body: payload,
     skipAuthRetry: true,
   });
@@ -158,9 +158,9 @@ export async function register(payload: {
 
 export async function refresh(): Promise<AuthResult> {
   const rt = getStoredRefreshToken();
-  if (!rt) throw new Error("No refresh token");
-  const res = await api<ApiAuthResponse>("auth/refresh", {
-    method: "POST",
+  if (!rt) throw new Error('No refresh token');
+  const res = await api<ApiAuthResponse>('auth/refresh', {
+    method: 'POST',
     body: { refreshToken: rt },
     skipAuthRetry: true,
   });
@@ -174,7 +174,7 @@ export async function refresh(): Promise<AuthResult> {
 
 export async function logout(): Promise<void> {
   try {
-    await api<unknown>("auth/logout", { method: "POST", skipAuthRetry: true });
+    await api<unknown>('auth/logout', { method: 'POST', skipAuthRetry: true });
   } catch {
     // best-effort; clear local tokens regardless
   }

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AssessmentType,
   CourseStatus,
@@ -149,7 +154,9 @@ export class AssessmentsService {
     const seen = new Set<string>();
     for (const q of questions) {
       if (seen.has(q.id)) {
-        throw new ForbiddenException(`Duplicate question id "${q.id}" — question ids must be unique`);
+        throw new ForbiddenException(
+          `Duplicate question id "${q.id}" — question ids must be unique`,
+        );
       }
       seen.add(q.id);
     }
@@ -351,10 +358,7 @@ export class AssessmentsService {
       }
     }
 
-    if (
-      assessment.type === AssessmentType.LESSON_ASSESSMENT &&
-      assessment.lessonId
-    ) {
+    if (assessment.type === AssessmentType.LESSON_ASSESSMENT && assessment.lessonId) {
       if (!(lessonUnlocked.get(assessment.lessonId) ?? false)) {
         throw new ForbiddenException(
           'This lesson is still locked. Complete the preceding lessons first.',

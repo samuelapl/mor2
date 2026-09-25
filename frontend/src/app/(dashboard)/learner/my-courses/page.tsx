@@ -1,32 +1,34 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Building2, Laptop } from "lucide-react";
-import { useLms } from "@/lib/lms-store";
-import { useCourseProgress } from "@/lib/api/useCourseProgress";
-import { tr } from "@/constants/labels";
-import { usePagination } from "@/lib/usePagination";
-import PageShell from "@/components/shared/PageShell";
-import LanguageToggle from "@/components/shared/LanguageToggle";
-import { Badge } from "@/components/ui/Badge";
-import { CardSkeleton } from "@/components/ui/Skeleton";
-import { CourseCard } from "@/components/features/courses/CourseCard";
-import { EnrolledCourseActions } from "@/components/features/courses/EnrolledCourseActions";
-import { isInPersonEnrollment } from "@/lib/session-mode";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
-import { VenueDetailModal } from "@/components/features/sessions/in-person/VenueDetailModal";
-import type { ApiVenue } from "@/lib/api/types";
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Building2, Laptop } from 'lucide-react';
+import { useLms } from '@/lib/lms-store';
+import { useCourseProgress } from '@/lib/api/useCourseProgress';
+import { tr } from '@/constants/labels';
+import { usePagination } from '@/lib/usePagination';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import PageShell from '@/components/shared/PageShell';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { Badge } from '@/components/ui/Badge';
+import { CardSkeleton } from '@/components/ui/Skeleton';
+import { CourseCard } from '@/components/features/courses/CourseCard';
+import { EnrolledCourseActions } from '@/components/features/courses/EnrolledCourseActions';
+import { isInPersonEnrollment } from '@/lib/session-mode';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
+import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
+import type { ApiVenue } from '@/lib/api/types';
 
 export default function LearnerCoursesPage() {
   const router = useRouter();
   const { courses, lang, currentUser, ready, getEnrollmentForCourse } = useLms();
-  const me = currentUser?.id ?? "";
+  const { t, tBilingual } = useTranslation();
+  const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
 
-  const [modeFilter, setModeFilter] = useState<"ALL" | "ONLINE" | "IN_PERSON">("ALL");
+  const [modeFilter, setModeFilter] = useState<'ALL' | 'ONLINE' | 'IN_PERSON'>('ALL');
   const [inspectVenue, setInspectVenue] = useState<{
     venue: ApiVenue;
     courseTitle: string;
@@ -54,8 +56,8 @@ export default function LearnerCoursesPage() {
       const enr = getEnrollmentForCourse(course.id);
       const isPerson = isInPersonEnrollment(course, enr);
 
-      if (modeFilter === "ONLINE" && isPerson) return false;
-      if (modeFilter === "IN_PERSON" && !isPerson) return false;
+      if (modeFilter === 'ONLINE' && isPerson) return false;
+      if (modeFilter === 'IN_PERSON' && !isPerson) return false;
       return true;
     });
 
@@ -74,51 +76,57 @@ export default function LearnerCoursesPage() {
       .sort((a, b) => a.percent - b.percent);
   }, [enrolled, progress, modeFilter, getEnrollmentForCourse]);
 
-  const { page, totalPages, setPage, pageItems } = usePagination(rows, 6);
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
+    rows,
+    6,
+  );
 
   return (
     <PageShell
       role="learner"
-      title={tr(lang, "myCourses")}
-      description="Courses you are enrolled in across pure online and in-person regional classroom formats."
+      title={tBilingual('My Courses', 'የእኔ ኮርሶች')}
+      description={tBilingual(
+        'Courses you are enrolled in across pure online and in-person regional classroom formats.',
+        'በመስመር ላይ እና በአካል በሚሰጡ የስልጠና ዓይነቶች የተመዘገቡባቸው ኮርሶች።',
+      )}
     >
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         {/* Delivery Mode Tabs */}
         <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100/70 p-1 text-xs">
           <button
             type="button"
-            onClick={() => setModeFilter("ALL")}
+            onClick={() => setModeFilter('ALL')}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-all ${
-              modeFilter === "ALL"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+              modeFilter === 'ALL'
+                ? 'bg-white text-slate-900 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            All Courses ({enrolled.length})
+            {tBilingual('All Courses', 'ሁሉም ኮርሶች')} ({enrolled.length})
           </button>
           <button
             type="button"
-            onClick={() => setModeFilter("ONLINE")}
+            onClick={() => setModeFilter('ONLINE')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
-              modeFilter === "ONLINE"
-                ? "bg-white text-sky-700 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+              modeFilter === 'ONLINE'
+                ? 'bg-white text-sky-700 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Laptop className="h-3.5 w-3.5" />
-            <span>Pure Online ({onlineCount})</span>
+            <span>{tBilingual('Pure Online', 'በመስመር ላይ ብቻ')} ({onlineCount})</span>
           </button>
           <button
             type="button"
-            onClick={() => setModeFilter("IN_PERSON")}
+            onClick={() => setModeFilter('IN_PERSON')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
-              modeFilter === "IN_PERSON"
-                ? "bg-white text-amber-800 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+              modeFilter === 'IN_PERSON'
+                ? 'bg-white text-amber-800 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
-            <span>In-Person Classroom ({inPersonCount})</span>
+            <span>{tBilingual('In-Person Classroom', 'በአካል የሚሰጥ ስልጠና')} ({inPersonCount})</span>
           </button>
         </div>
 
@@ -131,17 +139,23 @@ export default function LearnerCoursesPage() {
         </div>
       ) : enrolled.length === 0 ? (
         <EmptyState
-          title="No enrolled courses"
-          description="Browse the catalog to enroll in pure online or in-person Ministry training courses."
+          title={tBilingual('No enrolled courses', 'ምንም የተመዘገቡባቸው ኮርሶች የሉም')}
+          description={tBilingual(
+            'Browse the catalog to enroll in pure online or in-person Ministry training courses.',
+            'በመስመር ላይ ወይም በአካል በሚሰጡ ስልጠናዎች ለመመዝገብ ካታሎጉን ያስሱ።',
+          )}
         />
       ) : rows.length === 0 ? (
         <EmptyState
           title={
-            modeFilter === "IN_PERSON"
-              ? "No in-person classroom enrollments"
-              : "No online enrollments"
+            modeFilter === 'IN_PERSON'
+              ? tBilingual('No in-person classroom enrollments', 'በአካል የሚሰጥ ምዝገባ የለም')
+              : tBilingual('No online enrollments', 'የመስመር ላይ ምዝገባ የለም')
           }
-          description="You do not have any enrolled courses matching this delivery mode filter."
+          description={tBilingual(
+            'You do not have any enrolled courses matching this delivery mode filter.',
+            'ከዚህ የአሰጣጥ ዘዴ ማጣሪያ ጋር የሚዛመድ የተመዘገቡበት ኮርስ የለም።',
+          )}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -152,11 +166,11 @@ export default function LearnerCoursesPage() {
               showStatus={false}
               progress={loading ? 0 : percent}
               onClick={() => router.push(`/learner/courses/${course.id}/learn`)}
-              deliveryMode={isPerson ? "IN_PERSON_ONLY" : "ONLINE_ONLY"}
+              deliveryMode={isPerson ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY'}
               deliveryDetail={enrollment?.venue?.branch}
               extraBadge={
                 done ? (
-                  <Badge variant="green">{tr(lang, "completed")}</Badge>
+                  <Badge variant="green">{tBilingual('Completed', 'የተጠናቀቀ')}</Badge>
                 ) : (
                   <Badge variant="blue">{percent}%</Badge>
                 )
@@ -181,7 +195,15 @@ export default function LearnerCoursesPage() {
           ))}
         </div>
       )}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {/* Classroom Venue Details Inspection Modal */}
       {inspectVenue ? (

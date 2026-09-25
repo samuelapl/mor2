@@ -59,9 +59,7 @@ export class CoursesService {
 
   private hasQuestionBankAccess(roles: Set<string>): boolean {
     return (
-      this.isBroadStaff(roles) ||
-      roles.has(RoleName.TRAINER) ||
-      roles.has(RoleName.COURSE_OWNER)
+      this.isBroadStaff(roles) || roles.has(RoleName.TRAINER) || roles.has(RoleName.COURSE_OWNER)
     );
   }
 
@@ -161,7 +159,13 @@ export class CoursesService {
             attachments: true,
             assessments: {
               where: { type: 'MODULE_ASSESSMENT' },
-              select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
+              select: {
+                id: true,
+                titleEn: true,
+                titleAm: true,
+                passingScore: true,
+                timeLimitMinutes: true,
+              },
             },
             lessons: {
               where: { deletedAt: null, parentId: null },
@@ -170,7 +174,13 @@ export class CoursesService {
                 attachments: true,
                 assessments: {
                   where: { type: 'LESSON_ASSESSMENT' },
-                  select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
+                  select: {
+                    id: true,
+                    titleEn: true,
+                    titleAm: true,
+                    passingScore: true,
+                    timeLimitMinutes: true,
+                  },
                 },
                 subLessons: {
                   where: { deletedAt: null },
@@ -183,7 +193,13 @@ export class CoursesService {
         },
         assessments: {
           where: { type: 'FINAL_ASSESSMENT' },
-          select: { id: true, titleEn: true, titleAm: true, passingScore: true, timeLimitMinutes: true },
+          select: {
+            id: true,
+            titleEn: true,
+            titleAm: true,
+            passingScore: true,
+            timeLimitMinutes: true,
+          },
         },
         attachments: true,
       },
