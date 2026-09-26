@@ -224,3 +224,76 @@ describe('AuthService first-login password change', () => {
     expect(user.mustChangePassword).toBe(false);
   });
 });
+
+describe('AuthService refresh token rotation', () => {
+  let service: AuthService;
+  let tokens: any[];
+
+  beforeEach(() => {
+    const user = {
+      id: 'u2',
+      email: 'meron@example.com',
+      password: 'h:Password1',
+      firstName: 'Meron',
+      lastName: 'Kassa',
+      isActive: true,
+      registrationStatus: 'APPROVED',
+      mustChangePassword: false,
+      roles: [{ role: 'LEARNER' }],
+    };
+    tokens = [];
+    const prisma = {
+      ...buildPrisma(user),
+      refreshToken: {
+        create: jest.fn(async ({ data }: any) => {
+          const row = { id: `t${tokens.length}`, revokedAt: null, ...data };
+          tokens.push(row);
+          return row;
+        }),
+        // Exact-match lookup, like the unique index on tokenHash.
+        findUnique: jest.fn(
+          async ({ where }: any) => tokens.find((row) => row.tokenHash === where.tokenHash) ?? null,
+        ),
+        update: jest.fn(async ({ where, data }: any) =>
+          Object.assign(
+            tokens.find((row) => row.id === where.id),
+            data,
+          ),
+        ),
+        updateMany: jest.fn(async () => ({ count: 0 })),
+      },
+    };
+    const config = {
+      get: (key: string, fallback?: string) =>
+        ({ JWT_ACCESS_SECRET: 'access', JWT_REFRESH_SECRET: 'refresh' })[key] ?? fallback,
+    };
+    service = new AuthService(
+      prisma as any,
+      new JwtService({ secret: 'access' }),
+      config as any,
+      { sendFirstLoginCode: jest.fn(), sendPasswordResetCode: jest.fn() } as any,
+      { effectivePermissions: jest.fn(async () => ['course.browse']) } as any,
+    );
+  });
+
+  it('stores a hash that the refresh lookup can find, and never the raw token', async () => {
+    const session: any = await service.login({ email: 'meron@example.com', password: 'Password1' });
+
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0].tokenHash).not.toContain(session.refreshToken);
+
+    const refreshed: any = await service.refresh({ refreshToken: session.refreshToken });
+    expect(refreshed.accessToken).toEqual(expect.any(String));
+    expect(refreshed.refreshToken).not.toBe(session.refreshToken);
+    expect(refreshed.user.email).toBe('meron@example.com');
+  });
+
+  it('revokes the old refresh token on rotation', async () => {
+    const session: any = await service.login({ email: 'meron@example.com', password: 'Password1' });
+    await service.refresh({ refreshToken: session.refreshToken });
+
+    await expect(service.refresh({ refreshToken: session.refreshToken })).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+});
