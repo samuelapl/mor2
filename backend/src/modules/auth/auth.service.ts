@@ -174,7 +174,8 @@ export class AuthService {
   }
 
   async refresh(dto: RefreshTokenDto) {
-    const tokenHash = await bcrypt.hash(dto.refreshToken, 5);
+    // Deterministic hash so the stored row can be looked up (a salted bcrypt hash never matches).
+    const tokenHash = hashToken(dto.refreshToken);
 
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
@@ -537,7 +538,7 @@ export class AuthService {
   }
 
   private async storeRefreshToken(userId: string, refreshToken: string, sid: string) {
-    const tokenHash = await bcrypt.hash(refreshToken, 5);
+    const tokenHash = hashToken(refreshToken);
     const expiresDays = parseInt(
       this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d').replace(/\D/g, ''),
       10,

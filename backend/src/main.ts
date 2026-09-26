@@ -27,8 +27,12 @@ async function bootstrap() {
 
   // ── Security ──────────────────────────────────────
   app.use(helmet());
+  // FRONTEND_URL may list several origins, comma-separated (e.g. the web app and Expo web).
   app.enableCors({
-    origin: AppConfig.frontendUrl,
+    origin: AppConfig.frontendUrl
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
     credentials: true,
   });
 
