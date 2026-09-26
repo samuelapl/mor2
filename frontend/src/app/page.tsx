@@ -24,6 +24,7 @@ import type { ApiLandingStats as LandingStats } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function DashboardPreview({ stats }: { stats: LandingStats | null }) {
   const { tBilingual } = useTranslation();
@@ -321,10 +322,11 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <LanguageToggle />
             <Link
               href="/login"
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               {tBilingual('Sign in', 'ግባ')}
             </Link>

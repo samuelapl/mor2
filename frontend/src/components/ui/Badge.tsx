@@ -7,13 +7,20 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 type BadgeVariant = 'slate' | 'amber' | 'blue' | 'green' | 'red' | 'outline' | 'indigo';
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  slate: 'bg-slate-100/90 text-slate-700 ring-slate-600/15',
-  amber: 'bg-amber-50 text-amber-700 ring-amber-600/25',
-  blue: 'bg-blue-50/90 text-blue-700 ring-blue-600/25',
-  green: 'bg-emerald-50/90 text-emerald-700 ring-emerald-600/25',
-  red: 'bg-red-50/90 text-red-700 ring-red-600/25',
-  indigo: 'bg-indigo-50/90 text-indigo-700 ring-indigo-600/25',
-  outline: 'bg-white text-slate-600 ring-slate-400/30',
+  slate:
+    'bg-slate-100/90 text-slate-700 ring-slate-600/15 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
+  amber:
+    'bg-amber-50 text-amber-700 ring-amber-600/25 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-500/30',
+  blue:
+    'bg-blue-50/90 text-blue-700 ring-blue-600/25 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-500/30',
+  green:
+    'bg-emerald-50/90 text-emerald-700 ring-emerald-600/25 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30',
+  red:
+    'bg-red-50/90 text-red-700 ring-red-600/25 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-500/30',
+  indigo:
+    'bg-indigo-50/90 text-indigo-700 ring-indigo-600/25 dark:bg-indigo-950/40 dark:text-indigo-300 dark:ring-indigo-500/30',
+  outline:
+    'bg-white text-slate-600 ring-slate-400/30 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700',
 };
 
 export function statusBadgeVariant(status: string): BadgeVariant {

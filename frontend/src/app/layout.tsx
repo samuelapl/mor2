@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Poppins } from 'next/font/google';
 import AppProviders from '@/components/providers/AppProviders';
+import { themeInitScript } from '@/lib/theme';
 import './globals.css';
 
 const poppins = Poppins({
@@ -26,8 +27,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans">
+      <body className="font-sans antialiased text-slate-800 bg-white transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, CheckCheck, Search } from 'lucide-react';
-import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
+import { getRoleFromPath } from '@/constants/roles';
 import { useLms } from '@/lib/lms-store';
 import {
   fetchMyNotifications,
@@ -15,6 +15,7 @@ import type { ApiNotification } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 import AccountModal from '@/components/shared/account/AccountModal';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 function getInitials(label: string) {
@@ -98,23 +99,25 @@ export default function Header() {
 
   const title = (n: ApiNotificationListItem) =>
     isAmharic ? (n.titleAm ?? n.titleEn) : (n.titleEn ?? n.titleAm);
+
   const bodyText = (n: ApiNotificationListItem) =>
     isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/95">
       <div className="flex items-center gap-3">
         <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder={isAmharic ? 'ኮርሶችን፣ ተጠቃሚዎችን ፈልግ...' : 'Search courses, users...'}
-            className="h-9 w-64 rounded-xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none backdrop-blur transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            className="h-9 w-64 rounded-xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-sm text-slate-700 shadow-2xs outline-none backdrop-blur transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:bg-slate-800"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <ThemeToggle />
         <LanguageToggle />
 
         <div className="relative" ref={panelRef}>
@@ -125,26 +128,26 @@ export default function Header() {
               if (!open) void load();
               setOpen((prev) => !prev);
             }}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white/70 text-slate-500 shadow-sm backdrop-blur transition-all hover:border-indigo-200 hover:text-indigo-600 hover:shadow-md active:scale-95"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white/70 text-slate-500 shadow-2xs backdrop-blur transition-all hover:border-indigo-200 hover:text-indigo-600 hover:shadow-md active:scale-95 dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-indigo-400"
           >
             <Bell className="h-4 w-4" />
             {unread > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
                 {unread > 9 ? '9+' : unread}
               </span>
             ) : null}
           </button>
 
           {open ? (
-            <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
+            <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {isAmharic ? 'ማሳወቂያዎች' : 'Notifications'}
                 </p>
                 <button
                   type="button"
                   onClick={() => void readAll()}
-                  className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600"
+                  className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600 dark:text-indigo-400"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                   {isAmharic ? 'ሁሉንም አንብብ' : 'Mark all read'}
@@ -152,7 +155,7 @@ export default function Header() {
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-sm text-slate-400">
+                  <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                     {isAmharic ? 'ምንም ማሳወቂያዎች የሉም' : 'No notifications yet'}
                   </p>
                 ) : (
@@ -162,26 +165,26 @@ export default function Header() {
                       type="button"
                       onClick={() => void readOne(n.id)}
                       className={cn(
-                        'flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50/60',
-                        !n.readAt ? 'bg-indigo-50/40' : '',
+                        'flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50/60 dark:border-slate-800/60 dark:hover:bg-slate-800/60',
+                        !n.readAt ? 'bg-indigo-50/40 dark:bg-indigo-950/30' : '',
                       )}
                     >
                       <span
                         className={cn(
                           'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                          n.readAt ? 'bg-slate-200' : 'bg-indigo-500',
+                          n.readAt ? 'bg-slate-200 dark:bg-slate-700' : 'bg-indigo-500',
                         )}
                       />
                       <span className="min-w-0">
-                        <span className="block text-xs font-semibold text-slate-800">
+                        <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
                           {title(n)}
                         </span>
                         {bodyText(n) ? (
-                          <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">
+                          <span className="mt-0.5 block text-[11px] leading-snug text-slate-500 dark:text-slate-400">
                             {bodyText(n)}
                           </span>
                         ) : null}
-                        <span className="mt-1 block text-[10px] text-slate-400">
+                        <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
                           {new Date(n.createdAt).toLocaleString()}
                         </span>
                       </span>
@@ -196,14 +199,14 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setAccountOpen(true)}
-          className="flex items-center gap-2.5 rounded-xl border-l border-slate-200/80 pl-3 transition-colors hover:bg-slate-50"
+          className="flex items-center gap-2.5 rounded-xl border-l border-slate-200/80 pl-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
         >
           {demoUser?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={demoUser.avatarUrl}
               alt="Avatar"
-              className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-white/30"
+              className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-white/30 dark:ring-slate-700"
             />
           ) : (
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 ring-1 ring-white/30">
@@ -211,8 +214,10 @@ export default function Header() {
             </div>
           )}
           <div className="hidden text-left leading-tight lg:block">
-            <p className="text-sm font-medium text-slate-900">{demoUser?.name ?? 'Demo User'}</p>
-            <p className="text-[11px] text-slate-500">{demoUser?.email}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {demoUser?.name ?? 'Demo User'}
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{demoUser?.email}</p>
           </div>
         </button>
       </div>

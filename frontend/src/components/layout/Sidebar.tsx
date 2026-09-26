@@ -47,13 +47,13 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600 transition-[width] duration-200',
+        'relative flex shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white text-slate-600 transition-all duration-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300',
         collapsed ? 'w-[76px]' : 'w-64',
       )}
     >
       <div
         className={cn(
-          'relative flex h-16 items-center gap-2 border-b border-slate-200 px-5',
+          'relative flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800',
           collapsed && 'justify-center px-3',
         )}
       >
@@ -74,10 +74,10 @@ export default function Sidebar() {
           />
           {!collapsed ? (
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900">
+              <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 MoR LMS
               </p>
-              <p className="truncate text-[11px] text-slate-500">
+              <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                 {isAmharic ? 'የትምህርት አስተዳደር ሥርዓት' : 'Learning Management System'}
               </p>
             </div>
@@ -95,7 +95,7 @@ export default function Sidebar() {
                 ? 'አሳንስ'
                 : 'Collapse sidebar'
           }
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -106,7 +106,7 @@ export default function Sidebar() {
       </div>
 
       {!collapsed ? (
-        <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           {isAmharic ? 'አቅጣጫ መጠቆሚያ' : 'Navigation'}
         </p>
       ) : null}
@@ -134,11 +134,11 @@ export default function Sidebar() {
                     'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     collapsed && 'justify-center px-0',
                     groupActive
-                      ? 'text-indigo-600'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100',
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-indigo-500" />
+                  <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-indigo-500 dark:text-slate-400 dark:group-hover:text-indigo-400" />
                   {!collapsed ? <span className="flex-1 text-left">{translatedLabel}</span> : null}
                   {!collapsed ? (
                     <ChevronDown
@@ -150,7 +150,7 @@ export default function Sidebar() {
                   <div
                     className={cn(
                       'mt-1 space-y-1',
-                      collapsed ? '' : 'ml-4 border-l border-slate-200 pl-3',
+                      collapsed ? '' : 'ml-4 border-l border-slate-200 pl-3 dark:border-slate-800',
                     )}
                   >
                     {item.children.map((child) => {
@@ -167,13 +167,13 @@ export default function Sidebar() {
                             collapsed && 'justify-center px-0',
                             active
                               ? 'bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20'
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100',
                           )}
                         >
                           <ChildIcon
                             className={cn(
                               'h-4 w-4 shrink-0 transition-colors',
-                              active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500',
+                              active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500 dark:text-slate-400 dark:group-hover:text-indigo-400',
                             )}
                           />
                           {!collapsed ? childTranslated : null}
@@ -197,13 +197,13 @@ export default function Sidebar() {
                 collapsed && 'justify-center px-0',
                 active
                   ? 'bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100',
               )}
             >
               <Icon
                 className={cn(
                   'h-4 w-4 shrink-0 transition-colors',
-                  active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500',
+                  active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500 dark:text-slate-400 dark:group-hover:text-indigo-400',
                 )}
               />
               {!collapsed ? translatedLabel : null}
@@ -215,14 +215,14 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="relative border-t border-slate-200 p-3 space-y-1">
+      <div className="relative border-t border-slate-200 p-3 space-y-1 dark:border-slate-800">
         <AccountMenu collapsed={collapsed} />
         <Link
           href="/login"
           onClick={() => logout()}
           title={collapsed ? (isAmharic ? 'መለያ ቀይር / ውጣ' : 'Switch role / Sign out') : undefined}
           className={cn(
-            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900',
+            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100',
             collapsed && 'justify-center px-0',
           )}
         >

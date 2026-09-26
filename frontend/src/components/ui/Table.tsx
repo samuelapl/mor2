@@ -13,12 +13,12 @@ export function Table({ columns, children, className }: TableProps) {
   return (
     <div
       className={cn(
-        'overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-xs scrollbar-thin scrollbar-thumb-slate-200',
+        'overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-2xs scrollbar-thin scrollbar-thumb-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:scrollbar-thumb-slate-700',
         className,
       )}
     >
       <table className="w-full text-left text-sm min-w-full">
-        <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500">
+        <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
           <tr>
             {columns.map((column, idx) => {
               const name = typeof column === 'string' ? column : column.name;
@@ -42,7 +42,7 @@ export function Table({ columns, children, className }: TableProps) {
             })}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">{children}</tbody>
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">{children}</tbody>
       </table>
     </div>
   );
@@ -51,7 +51,10 @@ export function Table({ columns, children, className }: TableProps) {
 export function Td({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={cn('px-4 py-3 align-middle text-slate-700 transition-colors', className)}
+      className={cn(
+        'px-4 py-3 align-middle text-slate-700 dark:text-slate-300 transition-colors',
+        className,
+      )}
       {...props}
     />
   );
@@ -59,7 +62,10 @@ export function Td({ className, ...props }: TdHTMLAttributes<HTMLTableCellElemen
 
 export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn('transition-colors hover:bg-slate-50/60', className)} {...props}>
+    <tr
+      className={cn('transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40', className)}
+      {...props}
+    >
       {children}
     </tr>
   );

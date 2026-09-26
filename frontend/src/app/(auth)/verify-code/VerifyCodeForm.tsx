@@ -7,6 +7,7 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { forgotPassword, verifyResetCode } from '@/lib/api/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export default function VerifyCodeForm() {
   const router = useRouter();
@@ -101,26 +102,27 @@ export default function VerifyCodeForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
-      <div className="absolute top-4 right-4 z-20">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <ThemeToggle />
         <LanguageToggle />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-none sm:p-8">
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <ShieldCheck className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {tBilingual('Check your email', 'ኢሜይልዎን ይመልከቱ')}
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
               {tBilingual('We sent a 6-digit code to ', 'ባለ 6-አሃዝ ኮድ ልከናል ወደ ')}
               {email ? (
-                <span className="font-semibold text-indigo-500">{email}</span>
+                <span className="font-semibold text-indigo-500 dark:text-indigo-400">{email}</span>
               ) : (
                 tBilingual('your email', 'ኢሜይልዎ')
               )}
@@ -130,7 +132,7 @@ export default function VerifyCodeForm() {
 
           {/* OTP boxes */}
           <div className="mt-8">
-            <label className="mb-3 block text-xs font-semibold text-slate-600">
+            <label className="mb-3 block text-xs font-semibold text-slate-600 dark:text-slate-300">
               {tBilingual('Verification code', 'የማረጋገጫ ኮድ')}
             </label>
             <div className="flex gap-2 sm:gap-3" onPaste={handlePaste}>
@@ -147,7 +149,7 @@ export default function VerifyCodeForm() {
                   autoFocus={i === 0}
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="h-14 w-full rounded-xl border border-slate-200/90 bg-white text-center text-xl font-bold text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                  className="h-14 w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-center text-xl font-bold text-slate-800 dark:text-slate-100 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/20"
                 />
               ))}
             </div>
@@ -158,7 +160,7 @@ export default function VerifyCodeForm() {
                 type="button"
                 onClick={handleResend}
                 disabled={resending}
-                className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline disabled:opacity-50"
+                className="text-xs text-slate-500 dark:text-slate-400 underline-offset-2 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline disabled:opacity-50"
               >
                 {resending
                   ? tBilingual('Sending…', 'በመላክ ላይ…')
@@ -166,7 +168,7 @@ export default function VerifyCodeForm() {
               </button>
               <Link
                 href="/forgot-password"
-                className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline"
+                className="text-xs text-slate-500 dark:text-slate-400 underline-offset-2 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline"
               >
                 {tBilingual('Wrong email?', 'የተሳሳተ ኢሜይል?')}
               </Link>
@@ -174,7 +176,7 @@ export default function VerifyCodeForm() {
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+            <div className="mt-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
               {error}
             </div>
           )}
@@ -189,10 +191,10 @@ export default function VerifyCodeForm() {
             {verifying ? tBilingual('Verifying…', 'በማረጋገጥ ላይ…') : tBilingual('Continue', 'ቀጥል')}
           </button>
 
-          <p className="mt-5 text-center text-sm text-slate-500">
+          <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
             <Link
               href="/forgot-password"
-              className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
+              className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {tBilingual('Back', 'ተመለስ')}

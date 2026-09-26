@@ -12,16 +12,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   // When inside the classroom, cover everything (no dashboard sidebar, no dashboard header)
   if (isClassroom) {
-    return <div className="relative h-screen w-screen overflow-hidden bg-slate-50">{children}</div>;
+    return (
+      <div className="relative h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+        {children}
+      </div>
+    );
   }
 
   // Regular dashboard layout
   return (
-    <div className="relative flex h-screen overflow-hidden bg-slate-50/70">
+    <div className="relative flex h-screen overflow-hidden bg-slate-50/70 transition-colors duration-200 dark:bg-slate-950">
       <Sidebar />
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-white">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-white transition-colors duration-200 dark:bg-slate-900">
         <Header />
-        <main className="flex-1 overflow-y-auto bg-slate-50/50">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 transition-colors duration-200 dark:bg-slate-950/60">
+          {children}
+        </main>
       </div>
     </div>
   );

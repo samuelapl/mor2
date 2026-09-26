@@ -147,13 +147,13 @@ export function Pagination({
               <span>
                 {isAmharic ? (
                   <>
-                    ገጽ <strong className="font-semibold text-slate-800">{safePage}</strong> ከ{' '}
-                    <strong className="font-semibold text-slate-800">{totalPages}</strong>
+                    ገጽ <strong className="font-semibold text-slate-800 dark:text-slate-200">{safePage}</strong> ከ{' '}
+                    <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</strong>
                   </>
                 ) : (
                   <>
-                    Page <strong className="font-semibold text-slate-800">{safePage}</strong> of{' '}
-                    <strong className="font-semibold text-slate-800">{totalPages}</strong>
+                    Page <strong className="font-semibold text-slate-800 dark:text-slate-200">{safePage}</strong> of{' '}
+                    <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</strong>
                   </>
                 )}
               </span>
@@ -163,7 +163,7 @@ export function Pagination({
 
         {/* Page Size Selector */}
         {onPageSizeChange && pageSize && (
-          <div className="flex items-center gap-1.5 border-l border-slate-200/90 pl-3">
+          <div className="flex items-center gap-1.5 border-l border-slate-200/90 pl-3 dark:border-slate-800">
             <span className="text-[11px] text-slate-400">
               {isAmharic ? 'በአንድ ገጽ:' : 'Per page:'}
             </span>
@@ -171,7 +171,7 @@ export function Pagination({
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               aria-label={isAmharic ? 'በአንድ ገጽ የሚታዩ ንጥሎች' : 'Items per page'}
-              className="h-7 cursor-pointer rounded-lg border border-slate-200/90 bg-slate-50/70 px-2 py-0 text-xs font-semibold text-slate-700 outline-none transition hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
+              className="h-7 cursor-pointer rounded-lg border border-slate-200/90 bg-slate-50/70 px-2 py-0 text-xs font-semibold text-slate-700 outline-none transition hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               {resolvedPageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -194,7 +194,7 @@ export function Pagination({
             title={isAmharic ? 'ወደ መጀመሪያው ገጽ' : 'First page'}
             aria-label={isAmharic ? 'ወደ መጀመሪያው ገጽ' : 'First page'}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
               safePage <= 1 ? 'hidden sm:flex' : '',
             )}
           >
@@ -208,7 +208,7 @@ export function Pagination({
           disabled={safePage <= 1}
           onClick={() => onPageChange(safePage - 1)}
           aria-label={isAmharic ? 'ቀዳሚ ገጽ' : 'Previous page'}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           <span className="hidden xs:inline sm:inline">{isAmharic ? 'ቀዳሚ' : 'Previous'}</span>
@@ -226,7 +226,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.max(1, safePage - 3))}
                     title={isAmharic ? '3 ገጾች ወደ ኋላ ዝለል' : 'Jump back 3 pages'}
                     aria-label="Previous pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition"
                   >
                     •••
                   </button>
@@ -241,7 +241,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.min(totalPages, safePage + 3))}
                     title={isAmharic ? '3 ገጾች ወደ ፊት ዝለል' : 'Jump forward 3 pages'}
                     aria-label="Next pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition"
                   >
                     •••
                   </button>
@@ -260,8 +260,8 @@ export function Pagination({
                   className={cn(
                     'flex h-8 min-w-8 items-center justify-center rounded-xl px-2.5 text-xs font-semibold transition-all duration-150 active:scale-95',
                     isCurrent
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-500/25 ring-2 ring-indigo-500/20'
-                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100 hover:text-slate-900',
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-2xs shadow-indigo-500/25 ring-2 ring-indigo-500/20'
+                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200',
                   )}
                 >
                   {item}
@@ -272,7 +272,7 @@ export function Pagination({
         )}
 
         {/* Mobile-only page counter display */}
-        <div className="flex items-center px-2 text-xs font-semibold text-slate-700 sm:hidden">
+        <div className="flex items-center px-2 text-xs font-semibold text-slate-700 sm:hidden dark:text-slate-300">
           {safePage} / {totalPages}
         </div>
 
@@ -282,7 +282,7 @@ export function Pagination({
           disabled={safePage >= totalPages}
           onClick={() => onPageChange(safePage + 1)}
           aria-label={isAmharic ? 'ቀጣይ ገጽ' : 'Next page'}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           <span className="hidden xs:inline sm:inline">{isAmharic ? 'ቀጣይ' : 'Next'}</span>
           <ChevronRight className="h-3.5 w-3.5" />
@@ -297,7 +297,7 @@ export function Pagination({
             title={isAmharic ? 'ወደ መጨረሻው ገጽ' : 'Last page'}
             aria-label={isAmharic ? 'ወደ መጨረሻው ገጽ' : 'Last page'}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
               safePage >= totalPages ? 'hidden sm:flex' : '',
             )}
           >
