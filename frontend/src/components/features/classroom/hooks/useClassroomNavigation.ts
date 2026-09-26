@@ -191,6 +191,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       }
     });
 
+    const isInPerson = course?.deliveryMode === 'IN_PERSON_ONLY';
+
     // 5. Final Certification Assessment (if course has final assessment)
     const finalAssessment = progress?.courseCompletion.finalAssessment;
     if (finalAssessment) {
@@ -205,9 +207,10 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         moduleIndex: 9999,
         quizId: finalAssessment.id,
         quizKind: 'FINAL_ASSESSMENT',
-        unlocked: contentCompleted,
+        unlocked: !isInPerson && contentCompleted,
         completed: finalPassed,
         assessment: finalAssessment,
+        isInPersonLocked: isInPerson,
       });
     }
 
@@ -215,8 +218,9 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
     const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
     const contentCompleted = progress?.courseCompletion.contentCompleted ?? false;
     const isCompleted =
-      progress?.courseCompletion.certificateEligible ??
-      (contentCompleted && (!finalAssessment || finalPassed));
+      !isInPerson &&
+      (progress?.courseCompletion.certificateEligible ??
+        (contentCompleted && (!finalAssessment || finalPassed)));
 
     items.push({
       key: 'course-certificate',
@@ -226,6 +230,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       moduleIndex: 10000,
       unlocked: isCompleted,
       completed: isCompleted,
+      isInPersonLocked: isInPerson,
     });
 
     return items;

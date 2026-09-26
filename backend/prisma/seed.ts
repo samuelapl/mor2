@@ -2,6 +2,8 @@ import * as bcrypt from 'bcrypt';
 import {
   ApprovalStatus,
   AssessmentType,
+  AttendanceStatus,
+  CourseDeliveryMode,
   CourseLevel,
   CourseStatus,
   EnrollmentStatus,
@@ -10,6 +12,9 @@ import {
   PrismaClient,
   QuestionType,
   RoleName,
+  SessionPlatform,
+  SessionStatus,
+  SessionType,
 } from '@prisma/client';
 import { seedPermissions } from './seed-permissions';
 
@@ -100,6 +105,7 @@ interface CourseSeed {
   descriptionAm: string;
   level: CourseLevel;
   status: CourseStatus;
+  deliveryMode?: CourseDeliveryMode;
   estimatedHours: number;
   category: string;
   department: string;
@@ -151,6 +157,7 @@ const courseSeeds: CourseSeed[] = [
     descriptionAm: 'የፍለጋ ቀመሮችን፣ የመረጃ ማረጋገጫን፣ ፒቮት ሠንጠረዦችን እና ራስ-ሰር ዳሽቦርዶችን በመጠቀም ጥሬ የገቢ መረጃን ወደ ውሳኔ ዝግጁ ሪፖርት መቀየር።',
     level: CourseLevel.INTERMEDIATE,
     status: CourseStatus.DRAFT,
+    deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
     estimatedHours: 22,
     category: 'Digital Skills & Productivity',
     department: 'ICT & Digital Transformation Directorate',
@@ -527,7 +534,8 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
       'Plan, schedule, budget, and monitor public-sector projects using charters, WBS, Gantt scheduling, and earned value tracking.',
     descriptionAm: 'የመንግስት ፕሮጀክቶችን በቻርተር፣ በWBS፣ በGantt መርሃግብር እና በEarned Value ክትትል ማቀድ፣ መርሃግብር ማውጣት እና መከታተል።',
     level: CourseLevel.INTERMEDIATE,
-    status: CourseStatus.PENDING_APPROVAL,
+    status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.BOTH,
     estimatedHours: 28,
     category: 'Program & Project Management',
     department: 'Strategic Planning Directorate',
@@ -895,7 +903,8 @@ Analyze a 7-activity network for an IT deployment:
       'Front-office conduct, complaint de-escalation, multi-channel service etiquette, and service-level measurement for taxpayer-facing staff.',
     descriptionAm: 'የፊት ለፊት ጽ/ቤት ስነ-ስርዓት፣ ቅሬታ አፈታት፣ ባለብዙ ቻናል አገልግሎት እና የአገልግሎት ደረጃ መለኪያ ለግብር ከፋዮች አገልግሎት ሰጪ ሰራተኞች።',
     level: CourseLevel.BASIC,
-    status: CourseStatus.REJECTED,
+    status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.IN_PERSON_ONLY,
     estimatedHours: 14,
     category: 'Customer Service & Public Engagement',
     department: 'Taxpayer Services Directorate',
@@ -1255,7 +1264,8 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
       'Safeguard taxpayer records, prevent phishing and ransomware intrusions, configure multi-factor authentication, and execute incident reporting.',
     descriptionAm: 'የግብር ከፋዮች ሚስጥራዊ መረጃዎችን መጠበቅ፣ የማጭበርበሪያ (Phishing) ጥቃቶችን መከላከል እና የደህንነት ክስተቶችን ሪፖርት ማድረግ።',
     level: CourseLevel.INTERMEDIATE,
-    status: CourseStatus.APPROVED,
+    status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
     estimatedHours: 20,
     category: 'ICT & Information Security',
     department: 'ICT & Cyber Defense Directorate',
@@ -1591,6 +1601,7 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
     descriptionAm: 'የመንግስት ገቢዎች ስራዎችን ስጋት በመለየት፣ በመተንተን፣ በማስተዳደር እና አደጋዎችን አስቀድሞ በመከላከል ረገድ የተሟላ እውቀት እና ክህሎት የሚሰጥ ስልጠና።',
     level: CourseLevel.ADVANCED,
     status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.BOTH,
     estimatedHours: 35,
     category: 'Governance, Risk & Compliance',
     department: 'Risk Management & Strategic Compliance Directorate',
@@ -1932,6 +1943,160 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       ],
     },
   },
+
+  // ─────────────────────────────────────────────────────────
+  // 6. PUBLISHED: Customs Physical Inspection & Valuation Practicum (IN_PERSON_ONLY)
+  // ─────────────────────────────────────────────────────────
+  {
+    code: 'INSP101',
+    titleEn: 'Physical Customs Inspection & Valuation Field Practicum',
+    titleAm: 'የጉምሩክ አካላዊ ፍተሻ እና የዋጋ አሰጣጥ የመስክ የተግባር ልምምድ',
+    descriptionEn:
+      'Hands-on physical classroom and laboratory inspection course covering cargo scanning, physical contraband detection, HS code valuation disputes, and joint border enforcement.',
+    descriptionAm: 'የጉምሩክ እቃዎች አካላዊ ፍተሻ፣ ህገ-ወጥ ንግድ መከላከል እና የዋጋ አወሳሰን ተግባራዊ ስልጠና።',
+    level: CourseLevel.INTERMEDIATE,
+    status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.IN_PERSON_ONLY,
+    estimatedHours: 24,
+    category: 'Customs & Border Control',
+    department: 'Customs Valuation & Physical Inspection Directorate',
+    targetAudience: 'Border inspection agents, customs officers, and freight examination specialists',
+    deliveryMethod: 'Physical in-person workshop with equipment lab and scenario exercises',
+    objectivesEn: 'Master physical cargo verification, identify contraband concealment, and resolve valuation conflicts.',
+    objectivesAm: 'የእቃዎችን ትክክለኛነት ማረጋገጥ፣ ህገ-ወጥ እቃዎችን መለየት እና የጉምሩክ ህግጋትን በአግባቡ ማስከበር።',
+    prerequisites: 'Basic customs legislation orientation',
+    approvalComments: 'Approved for regional branch delivery at accredited Ministry training centers.',
+    modules: [
+      {
+        titleEn: 'Module 1: Physical Examination Protocols & Detection Techniques',
+        titleAm: 'ሞዱል 1፡ የአካላዊ ፍተሻ መመሪያዎች እና የመለያ ዘዴዎች',
+        descriptionEn: 'Standard operating procedures for cargo physical verification and risk-based screening.',
+        descriptionAm: 'የዕቃ ፍተሻ ደረጃቸውን የጠበቁ አሰራሮች እና የአደጋ ተጋላጭነት መለያ ዘዴዎች።',
+        objectivesEn: 'Demonstrate safe container unsealing, sampling, and non-intrusive scan interpretation.',
+        objectivesAm: 'የፍተሻ ስነ-ስርዓትን በአግባቡ መፈፀም እና የስካነር ምስሎችን መተርጎም።',
+        order: 0,
+        attachment: pdf('INSP101-Module1-Guide.pdf'),
+        assessment: {
+          titleEn: 'Module 1 Verification Check',
+          titleAm: 'ሞዱል 1 የማረጋገጫ ምዘና',
+          passingScore: 70,
+          timeLimitMinutes: 15,
+          questions: [
+            mcq('insp-m1-q1', 'What is the primary action before opening a sealed transit container?', ['Verify seal serial numbers against the customs manifest', 'Break seal immediately without documentation', 'Leave seal intact without inspection', 'Ask driver to cut seal'], 0, 'Inspection SOP'),
+            tf('insp-m1-q2', 'Physical examination reports must be signed by both customs inspector and taxpayer representative.', 0, 'SOP Compliance'),
+          ],
+        },
+        lessons: [
+          {
+            titleEn: 'Lesson 1.1: Cargo Seal Verification & Chain of Custody',
+            titleAm: 'ትምህርት 1.1፡ የዕቃ ማሸጊያ ማረጋገጫ እና የሰነድ ቁጥጥር',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 45,
+            order: 0,
+            contentEn: 'Comprehensive guide to container seal integrity and physical verification.',
+            contentAm: 'የኮንቴይነር ማሸጊያዎችን ደህንነት ማረጋገጫ እና አካላዊ ፍተሻ ዝርዝር መመሪያ።',
+            attachment: pdf('INSP101-L1-Seals.pdf'),
+            assessment: {
+              titleEn: 'Lesson 1.1 Check',
+              titleAm: 'ትምህርት 1.1 ምዘና',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                tf('insp-l1-q1', 'High-security mechanical bolt seals comply with ISO 17712 standards.', 0, 'Seal Standards'),
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    finalAssessment: {
+      titleEn: 'Final Practical Inspection Certification Exam',
+      titleAm: 'የመጨረሻ የተግባር ፍተሻ የብቃት ማረጋገጫ ፈተና',
+      passingScore: 75,
+      timeLimitMinutes: 30,
+      questions: [
+        mcq('insp-fn-q1', 'Which document establishes the legal basis for customs cargo re-examination?', ['Customs Proclamation & Physical Inspection Directive', 'Commercial Sales Invoice only', 'Transport Waybill', 'Warehouse Gate Pass'], 0, 'Legal Standards'),
+        tf('insp-fn-q2', 'Discrepancies found during physical examination must be referred immediately to valuation dispute units.', 0, 'Valuation Protocols'),
+      ],
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // 7. PUBLISHED: Ethiopian Tax Fundamentals (ONLINE_ONLY)
+  // ─────────────────────────────────────────────────────────
+  {
+    code: 'TAX101',
+    titleEn: 'Ethiopian Tax System Fundamentals & Digital Filing Standards',
+    titleAm: 'የኢትዮጵያ የታክስ ስርዓት መሰረታዊ መርሆዎች እና ዲጂታል አሰራር',
+    descriptionEn:
+      'Pure online self-paced e-learning curriculum covering Ethiopian tax proclamations, VAT withholding, income tax brackets, electronic declarations, and taxpayer rights.',
+    descriptionAm: 'የኢትዮጵያ የግብር ስርዓት፣ የተጨማሪ እሴት ታክስ፣ የገቢ ግብር እና የኤሌክትሮኒክስ አሰራር መሰረታዊ የኦንላይን ስልጠና።',
+    level: CourseLevel.BASIC,
+    status: CourseStatus.PUBLISHED,
+    deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
+    estimatedHours: 15,
+    category: 'Tax Administration & Law',
+    department: 'Tax Advisory & Compliance Education Directorate',
+    targetAudience: 'Revenue staff, new recruits, tax accountants, and enterprise tax declarants',
+    deliveryMethod: '100% online self-paced interactive modules and automated knowledge assessments',
+    objectivesEn: 'Understand tax structures, calculate obligations correctly, and operate Ministry e-tax services.',
+    objectivesAm: 'የታክስ ስሌቶችን በአግባቡ መረዳት እና የኤሌክትሮኒክስ ግብር መክፈያ ስርዓቶችን መጠቀም።',
+    prerequisites: 'None',
+    approvalComments: 'Accredited for nationwide digital onboarding across all 13 federal regional offices.',
+    modules: [
+      {
+        titleEn: 'Module 1: Principles of Ethiopian Taxation Architecture',
+        titleAm: 'ሞዱል 1፡ የኢትዮጵያ የግብር ህግጋት መሰረታዊ መዋቅር',
+        descriptionEn: 'Introduction to direct vs indirect taxes, federal tax schedule, and legal obligations.',
+        descriptionAm: 'የቀጥታ እና ቀጥተኛ ያልሆኑ ግብሮች፣ የፌደራል ግብር ሰንጠረዥ እና ህጋዊ ግዴታዎች።',
+        objectivesEn: 'Classify income schedules and recognize taxable events.',
+        objectivesAm: 'የገቢ አይነቶችን መለየት እና ግብር የሚከፈልባቸውን ሁነቶች ማወቅ።',
+        order: 0,
+        attachment: pdf('TAX101-Module1-Guide.pdf'),
+        assessment: {
+          titleEn: 'Module 1 Architecture Check',
+          titleAm: 'ሞዱል 1 የማጠቃለያ ምዘና',
+          passingScore: 70,
+          timeLimitMinutes: 15,
+          questions: [
+            mcq('tax-m1-q1', 'What is the standard Value Added Tax (VAT) rate in Ethiopia?', ['15%', '10%', '5%', '20%'], 0, 'Tax Rates'),
+            tf('tax-m1-q2', 'Employment income is categorized under Schedule A of the Federal Income Tax Proclamation.', 0, 'Schedules'),
+          ],
+        },
+        lessons: [
+          {
+            titleEn: 'Lesson 1.1: Legal Framework & Withholding Responsibilities',
+            titleAm: 'ትምህርት 1.1፡ ህጋዊ ማዕቀፍ እና የቅድመ ግብር ተቀናሽ ኃላፊነቶች',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 30,
+            order: 0,
+            contentEn: 'Overview of tax withholding mechanisms and payment deadlines.',
+            contentAm: 'የግብር ተቀናሽ አሰራር እና የመክፈያ የጊዜ ሰሌዳዎች አጠቃላይ መመሪያ።',
+            attachment: pdf('TAX101-L1-TaxLaw.pdf'),
+            assessment: {
+              titleEn: 'Lesson 1.1 Check',
+              titleAm: 'ትምህርት 1.1 ምዘና',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                tf('tax-l1-q1', 'Tax withholding agents must remit collected withholdings within 30 days of the subsequent month.', 0, 'Remittance Deadlines'),
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    finalAssessment: {
+      titleEn: 'Final Tax Fundamentals Online Certification Exam',
+      titleAm: 'የመጨረሻ የግብር መሰረታዊ እውቀት የኦንላይን ፈተና',
+      passingScore: 75,
+      timeLimitMinutes: 30,
+      questions: [
+        mcq('tax-fn-q1', 'Which proclamation governs the Federal Tax Administration in Ethiopia?', ['Proclamation No. 983/2016', 'Proclamation No. 286/2002', 'Commercial Code 1960', 'Customs Regulation 2010'], 0, 'Federal Legislation'),
+        tf('tax-fn-q2', 'E-filing via the Ministry portal is mandatory for Category A taxpayers.', 0, 'Digital Compliance'),
+      ],
+    },
+  },
 ];
 
 // ──────────────────────────────────────────────────────────
@@ -2025,13 +2190,97 @@ async function main() {
   const trainerId = userMap['trainer@gmail.com'];
   const learnerId = userMap['learner@gmail.com'];
 
-  // 3. Remove existing course seed data cleanly
-  console.log('🗑️  Removing existing courses and cascading curriculum data...');
+  // 3. Remove existing seed and learner progress data cleanly
+  console.log('🗑️  Wiping all existing progress, attempts, certificates, sessions, attendance, enrollments, venues, courses...');
+  await prisma.certificate.deleteMany({});
+  await prisma.assessmentAttempt.deleteMany({});
+  await prisma.lessonCompletion.deleteMany({});
+  await prisma.moduleCompletion.deleteMany({});
+  await prisma.attendanceLog.deleteMany({});
+  await prisma.attendance.deleteMany({});
+  await prisma.liveSession.deleteMany({});
+  await prisma.enrollment.deleteMany({});
+  await prisma.venue.deleteMany({});
+  await prisma.contentApproval.deleteMany({});
   await prisma.course.deleteMany({});
   await prisma.questionBankQuestion.deleteMany({});
 
-  // 4. Seed the 5 comprehensive courses
-  console.log('📚 Seeding 5 comprehensive courses across all lifecycle statuses...');
+  // 3b. Seed Ministry Branch Venues
+  console.log('🏢 Seeding Ministry Branch Venues...');
+  const venueSeeds = [
+    {
+      name: 'Addis Ababa HQ - Training Hall A',
+      branch: 'Addis Ababa Head Office',
+      building: 'Block B, 3rd Floor, Room 302',
+      capacity: 35,
+      facilities: ['Projector', 'Smart Board', 'Air Conditioning', 'WiFi', 'Sound System'],
+    },
+    {
+      name: 'Addis Ababa HQ - Executive Lab 2',
+      branch: 'Addis Ababa Head Office',
+      building: 'Block A, 1st Floor, Room 108',
+      capacity: 25,
+      facilities: ['Individual Laptops', 'Dual Screens', 'Interactive Display', 'Video Conferencing', 'Gigabit LAN'],
+    },
+    {
+      name: 'Hawassa Regional Training Hub',
+      branch: 'Hawassa Branch Office',
+      building: 'Southern Branch Complex, 2nd Floor',
+      capacity: 30,
+      facilities: ['Projector', 'Audio System', 'Backup Generator', 'High-speed Internet', 'Whiteboard'],
+    },
+    {
+      name: 'Bahir Dar Branch Room 101',
+      branch: 'Bahir Dar Branch Office',
+      building: 'Lake Tana Revenue Center, Ground Floor',
+      capacity: 28,
+      facilities: ['Projector', 'Whiteboard', 'WiFi', 'UPS Power Backup'],
+    },
+    {
+      name: 'Adama Branch Multi-Purpose Center',
+      branch: 'Adama Branch Office',
+      building: 'Main Administrative Hall, 1st Floor',
+      capacity: 40,
+      facilities: ['Ceiling Projector', 'PA Audio System', 'Fiber Internet', 'Air Conditioning'],
+    },
+    {
+      name: 'Dire Dawa Revenue Training Lab',
+      branch: 'Dire Dawa Branch Office',
+      building: 'Eastern Division Building, 3rd Floor',
+      capacity: 20,
+      facilities: ['Computer Workstations', 'Smart Projector', 'Dedicated LAN', 'Air Conditioning'],
+    },
+  ];
+
+  const venueMap: Record<string, any> = {};
+  for (const v of venueSeeds) {
+    const venue = await prisma.venue.create({
+      data: {
+        name: v.name,
+        branch: v.branch,
+        building: v.building,
+        capacity: v.capacity,
+        facilities: v.facilities,
+        isActive: true,
+      },
+    });
+    venueMap[v.name] = venue;
+    console.log(`  ✓ Venue: ${v.name} (${v.branch}) - Capacity: ${v.capacity}`);
+  }
+
+  // Affiliate Trainer to Primary Venue
+  if (trainerId && venueMap['Addis Ababa HQ - Training Hall A']) {
+    await prisma.user.update({
+      where: { id: trainerId },
+      data: {
+        primaryVenueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
+      },
+    });
+    console.log(`  ✓ Affiliated Trainer to: Addis Ababa HQ - Training Hall A`);
+  }
+
+  // 4. Seed the comprehensive courses
+  console.log('📚 Seeding comprehensive courses across all lifecycle statuses...');
 
   for (const c of courseSeeds) {
     console.log(`\n📌 Creating Course: [${c.code}] ${c.titleEn} (${c.status})...`);
@@ -2051,6 +2300,7 @@ async function main() {
         department: c.department,
         targetAudience: c.targetAudience,
         deliveryMethod: c.deliveryMethod,
+        deliveryMode: c.deliveryMode || CourseDeliveryMode.BOTH,
         objectivesEn: c.objectivesEn,
         objectivesAm: c.objectivesAm,
         prerequisites: c.prerequisites,
@@ -2304,20 +2554,206 @@ async function main() {
         },
       });
     }
-
-    // Enrollment for Published Course
-    if (c.status === CourseStatus.PUBLISHED) {
-      console.log(`   🎓 Enrolling demo learner (${learnerId}) in ${c.code}...`);
-      await prisma.enrollment.create({
-        data: {
-          userId: learnerId,
-          courseId: course.id,
-          status: EnrollmentStatus.ACTIVE,
-          enrolledAt: new Date(),
-        },
-      });
-    }
   }
+
+  // 5. Schedule Sessions & Dual-Mode Enrollments for testing
+  // 5. Schedule Sessions for Hybrid and In-Person testing
+  console.log('\n📅 Scheduling In-Person Classrooms & Virtual Sessions...');
+  const morCourse = await prisma.course.findFirst({ where: { code: 'MOR101' } });
+  const projCourse = await prisma.course.findFirst({ where: { code: 'PROJ201' } });
+  const inspCourse = await prisma.course.findFirst({ where: { code: 'INSP101' } });
+  const cservCourse = await prisma.course.findFirst({ where: { code: 'CSERV101' } });
+
+  const now = new Date();
+
+  // MOR101 (Hybrid) Sessions
+  await prisma.liveSession.create({
+    data: {
+      courseId: morCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Live In-Person Case Study & Mitigation Lab',
+      titleAm: 'የቀጥታ የክፍል ውስጥ የጉዳይ ትንተና እና የመፍትሄ ላብራቶሪ',
+      descriptionEn: 'Interactive in-person workshop on institutional risk assessment and mitigation design.',
+      descriptionAm: 'በተቋማዊ የስጋት ግምገማ እና የመፍትሄ እቅድ ላይ ያተኮረ የተግባር አውደ ጥናት።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
+      scheduledAt: new Date(now.getTime() - 15 * 60 * 1000), // Started 15 minutes ago
+      durationMinutes: 120,
+      status: SessionStatus.LIVE,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: morCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Risk Management Classroom Practicum - Group A',
+      titleAm: 'የስጋት አስተዳደር የክፍል ውስጥ የተግባር ልምምድ - ምድብ ሀ',
+      descriptionEn: 'In-person classroom risk register modeling and scenario evaluation.',
+      descriptionAm: 'የስጋት መዝገብ ዝግጅት እና የሁኔታዎች ግምገማ የክፍል ውስጥ ስልጠና።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days in future
+      durationMinutes: 180,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: morCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Regional Risk Governance Workshop - Hawassa Hub',
+      titleAm: 'የክልል የስጋት አስተዳደር አውደ ጥናት - ሀዋሳ ማዕከል',
+      descriptionEn: 'Regional branch training for South-East regional tax directors.',
+      descriptionAm: 'ለደቡብ-ምስራቅ ቀጣና ዳይሬክተሮች የተዘጋጀ የክልል ስልጠና።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Hawassa Regional Training Hub'].id,
+      scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days in future
+      durationMinutes: 120,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: morCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'National Virtual Risk Review & Q&A Webinar',
+      titleAm: 'ብሔራዊ የበይነ-መረብ የስጋት ግምገማ እና የጥያቄና መልስ ዌቢናር',
+      descriptionEn: 'Online interactive consultation session with national risk leadership.',
+      descriptionAm: 'ከብሔራዊ የስጋት አመራሮች ጋር የሚደረግ የቀጥታ የበይነ-መረብ ውይይት።',
+      platform: SessionPlatform.LIVEKIT,
+      sessionType: SessionType.VIRTUAL,
+      venueId: null,
+      scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days in future
+      durationMinutes: 60,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  // PROJ201 (Hybrid) Sessions
+  await prisma.liveSession.create({
+    data: {
+      courseId: projCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Government Project Planning & Gantt Scheduling Lab',
+      titleAm: 'የመንግስት ፕሮጀክት እቅድ እና የጋንት ቻርት ላብራቶሪ',
+      descriptionEn: 'Hands-on scheduling and earned value calculation in computer lab.',
+      descriptionAm: 'የፕሮጀክት የጊዜ ሰሌዳ እና የዋጋ ስሌት ተግባራዊ የላብራቶሪ ስልጠና።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Addis Ababa HQ - Executive Lab 2'].id,
+      scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      durationMinutes: 180,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: projCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Strategic Infrastructure Delivery Workshop - Adama',
+      titleAm: 'ስልታዊ የመሰረተ ልማት ፕሮጀክቶች አውደ ጥናት - አዳማ',
+      descriptionEn: 'Regional project managers workshop on public milestone delivery.',
+      descriptionAm: 'የክልል የፕሮጀክት ስራ አስኪያጆች የተግባር አውደ ጥናት።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Adama Branch Multi-Purpose Center'].id,
+      scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+      durationMinutes: 150,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  // INSP101 (In-Person) Sessions
+  await prisma.liveSession.create({
+    data: {
+      courseId: inspCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Customs Cargo Seal Verification & Security Simulation',
+      titleAm: 'የጉምሩክ ዕቃ ማሸጊያ ማረጋገጫ እና የደህንነት ማስመሰያ',
+      descriptionEn: 'Physical container inspection and high-security seal verification.',
+      descriptionAm: 'የኮንቴይነር ፍተሻ እና ከፍተኛ የደህንነት ማሸጊያ ማረጋገጫ ተግባራዊ ስልጠና።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Addis Ababa HQ - Executive Lab 2'].id,
+      scheduledAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      durationMinutes: 150,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: inspCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Border Freight Physical Examination Clinic - Dire Dawa',
+      titleAm: 'የድንበር ዕቃዎች አካላዊ ፍተሻ ክሊኒክ - ድሬዳዋ',
+      descriptionEn: 'Regional customs valuation and physical inspection practicum.',
+      descriptionAm: 'የክልል የጉምሩክ እቃዎች አካላዊ ፍተሻ ተግባራዊ ልምምድ።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Dire Dawa Revenue Training Lab'].id,
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      durationMinutes: 120,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  // CSERV101 (In-Person) Sessions
+  await prisma.liveSession.create({
+    data: {
+      courseId: cservCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Front-Office Taxpayer Conflict De-escalation Workshop',
+      titleAm: 'የፊት ለፊት ጽ/ቤት ግብር ከፋዮች ቅሬታ አፈታት የተግባር አውደ ጥናት',
+      descriptionEn: 'Interactive role-play on queue management and complaint resolution.',
+      descriptionAm: 'የተግባር ማስመሰያ ልምምድ በተገልጋዮች እርካታ እና ቅሬታ አፈታት ላይ።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
+      scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      durationMinutes: 180,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  await prisma.liveSession.create({
+    data: {
+      courseId: cservCourse!.id,
+      trainerId: trainerId,
+      titleEn: 'Customer Service Excellence Field Seminar - Bahir Dar',
+      titleAm: 'የተገልጋይ አገልግሎት ብቃት የመስክ ሴሚናር - ባሕር ዳር',
+      descriptionEn: 'Regional front-desk taxpayer care standards workshop.',
+      descriptionAm: 'የክልል የፊት ለፊት ጽ/ቤት ሰራተኞች አገልግሎት አሰጣጥ ደረጃዎች ስልጠና።',
+      platform: SessionPlatform.IN_PERSON,
+      sessionType: SessionType.IN_PERSON,
+      venueId: venueMap['Bahir Dar Branch Room 101'].id,
+      scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+      durationMinutes: 120,
+      status: SessionStatus.SCHEDULED,
+      allowViewAttendance: true,
+    },
+  });
+
+  console.log('\n🎓 All 6 courses left unenrolled with 0 progress for clean learner testing!');
+  console.log('  • 2 Pure Online courses ready in catalog: TAX101, CYBER301');
+  console.log('  • 2 Hybrid courses ready in catalog: MOR101, PROJ201');
+  console.log('  • 2 In-Person courses ready in catalog: INSP101, CSERV101');
 
   console.log('\n🎉 Comprehensive database seed finished successfully!');
   console.log('──────────────────────────────────────────────────────────');
@@ -2326,9 +2762,14 @@ async function main() {
     console.log(`  • ${d.email.padEnd(28)} → ${d.role}`);
   }
   console.log('──────────────────────────────────────────────────────────');
+  console.log('Ministry Venues:');
+  for (const v of venueSeeds) {
+    console.log(`  • ${v.name.padEnd(38)} (${v.branch}) - Capacity: ${v.capacity}`);
+  }
+  console.log('──────────────────────────────────────────────────────────');
   console.log('Courses seeded:');
   for (const c of courseSeeds) {
-    console.log(`  • [${c.status.padEnd(16)}] ${c.code.padEnd(10)} - ${c.titleEn}`);
+    console.log(`  • [${c.status.padEnd(16)}] [${(c.deliveryMode || 'BOTH').padEnd(14)}] ${c.code.padEnd(10)} - ${c.titleEn}`);
   }
   console.log('──────────────────────────────────────────────────────────');
 }

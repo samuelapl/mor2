@@ -1,16 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EnrollmentStatus, NotificationType, Prisma } from '@prisma/client';
+import { CourseDeliveryMode, EnrollmentStatus, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { PaginationQuery } from '@common/interfaces';
 import { CreateEnrollmentDto } from './dto';
 import { NotificationsService } from '@modules/notifications/notifications.service';
+import { InPersonSessionsService } from '@modules/live-sessions/in-person/in-person-sessions.service';
 
 @Injectable()
 export class EnrollmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly inPersonSessions: InPersonSessionsService,
   ) {}
 
   async selfEnroll(userId: string, dto: CreateEnrollmentDto) {
@@ -68,22 +70,72 @@ export class EnrollmentsService {
       }
     }
 
+    const deliveryMode =
+      dto.deliveryMode ||
+      (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY
+        ? CourseDeliveryMode.IN_PERSON_ONLY
+        : CourseDeliveryMode.ONLINE_ONLY);
+
+    if (deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+      if (course.deliveryMode === CourseDeliveryMode.ONLINE_ONLY) {
+        throw new BadRequestException('This course is only available in online mode');
+      }
+      if (!dto.sessionId && !dto.venueId && course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+        throw new BadRequestException('Please select an in-person training session to reserve your seat');
+      }
+    } else if (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+      throw new BadRequestException('This course requires in-person classroom attendance');
+    }
+
     try {
-      const enrollment = await this.prisma.enrollment.upsert({
-        where: { userId_courseId: { userId, courseId: dto.courseId } },
-        update: {
-          status: EnrollmentStatus.ACTIVE,
-          completedAt: null,
-          droppedAt: null,
-          droppedReason: null,
-          droppedBy: null,
-        },
-        create: {
-          userId,
-          courseId: dto.courseId,
-          status: EnrollmentStatus.ACTIVE,
-        },
-        include: { course: true },
+      // Seat check, enrollment and roster entry commit together, so a full session can't be overbooked.
+      const enrollment = await this.prisma.$transaction(async (tx) => {
+        let finalVenueId: string | null = null;
+        let finalSessionId: string | null = null;
+
+        if (deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
+          if (dto.sessionId) {
+            const seat = await this.inPersonSessions.reserveSeat(tx, dto.sessionId, dto.courseId);
+            finalSessionId = seat.sessionId;
+            finalVenueId = seat.venueId;
+          } else if (dto.venueId) {
+            finalVenueId = (await this.inPersonSessions.getVenueOrFail(dto.venueId, tx)).id;
+          }
+        }
+
+        const saved = await tx.enrollment.upsert({
+          where: { userId_courseId: { userId, courseId: dto.courseId } },
+          update: {
+            status: EnrollmentStatus.ACTIVE,
+            deliveryMode,
+            venueId: finalVenueId,
+            sessionId: finalSessionId,
+            completedAt: null,
+            droppedAt: null,
+            droppedReason: null,
+            droppedBy: null,
+          },
+          create: {
+            userId,
+            courseId: dto.courseId,
+            status: EnrollmentStatus.ACTIVE,
+            deliveryMode,
+            venueId: finalVenueId,
+            sessionId: finalSessionId,
+          },
+          include: { course: true, venue: true },
+        });
+
+        // A booked in-person seat also puts the learner on the trainer's session roster.
+        if (finalSessionId) {
+          await tx.attendance.upsert({
+            where: { sessionId_userId: { sessionId: finalSessionId, userId } },
+            update: {},
+            create: { sessionId: finalSessionId, userId, status: 'ABSENT' },
+          });
+        }
+
+        return saved;
       });
 
       await this.notifyEnrollment(
@@ -120,6 +172,7 @@ export class EnrollmentsService {
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
           course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          venue: true,
         },
       }),
       this.prisma.enrollment.count({ where }),
@@ -140,7 +193,7 @@ export class EnrollmentsService {
         skip,
         take: limit,
         orderBy,
-        include: { course: true },
+        include: { course: true, venue: true },
       }),
       this.prisma.enrollment.count({ where }),
     ]);
@@ -162,6 +215,7 @@ export class EnrollmentsService {
         orderBy,
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          venue: true,
         },
       }),
       this.prisma.enrollment.count({ where }),

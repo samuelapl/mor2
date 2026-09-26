@@ -1,8 +1,16 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Check, Loader2, Save, Send, BookmarkCheck } from 'lucide-react';
-import type { Course, CourseLevel, Question, QuestionType, Quiz, UploadedResource } from '@/types';
+import { ArrowLeft, ArrowRight, Check, Loader2, Save, Send, Sparkles, BookmarkCheck } from 'lucide-react';
+import type {
+  Course,
+  CourseDeliveryMode,
+  CourseLevel,
+  Question,
+  QuestionType,
+  Quiz,
+  UploadedResource,
+} from '@/types';
 import { Button } from '@/components/ui/Button';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
@@ -52,6 +60,9 @@ export function CourseCreationWizard({
   const [code, setCode] = useState(editingCourse?.code ?? '');
   const [category, setCategory] = useState(editingCourse?.category ?? COURSE_CATEGORIES[0]);
   const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? 'basic');
+  const [deliveryMode, setDeliveryMode] = useState<CourseDeliveryMode>(
+    editingCourse?.deliveryMode ?? 'BOTH',
+  );
   const [description, setDescription] = useState(editingCourse?.description ?? '');
   const [objectives, setObjectives] = useState(editingCourse?.objectives ?? '');
   const [department, setDepartment] = useState(editingCourse?.department ?? '');
@@ -325,6 +336,7 @@ export function CourseCreationWizard({
         if (draft.code) setCode(draft.code);
         if (draft.category) setCategory(draft.category);
         if (draft.level) setLevel(draft.level);
+        if (draft.deliveryMode) setDeliveryMode(draft.deliveryMode);
         if (draft.description) setDescription(draft.description);
         if (draft.objectives) setObjectives(draft.objectives);
         if (draft.department) setDepartment(draft.department);
@@ -360,6 +372,7 @@ export function CourseCreationWizard({
         code,
         category,
         level,
+        deliveryMode,
         description,
         objectives,
         department,
@@ -385,6 +398,7 @@ export function CourseCreationWizard({
     code,
     category,
     level,
+    deliveryMode,
     description,
     objectives,
     department,
@@ -498,6 +512,7 @@ export function CourseCreationWizard({
             title: title.trim() || 'Draft Course',
             category,
             level,
+            deliveryMode,
             description: description.trim(),
             objectives: objectives.trim(),
             department: department.trim(),
@@ -515,6 +530,7 @@ export function CourseCreationWizard({
             code: code.trim().toUpperCase() || 'DRAFT',
             category,
             level,
+            deliveryMode,
             description: description.trim(),
             objectives: objectives.trim(),
             department: department.trim(),
@@ -551,6 +567,7 @@ export function CourseCreationWizard({
     questions,
     quizTitle,
     passMark,
+    deliveryMode,
   ]);
 
   const handleCancelWithSave = async () => {
@@ -563,6 +580,7 @@ export function CourseCreationWizard({
             title: title.trim() || 'Draft Course',
             category,
             level,
+            deliveryMode,
             description: description.trim(),
             objectives: objectives.trim(),
             department: department.trim(),
@@ -580,6 +598,7 @@ export function CourseCreationWizard({
             code: code.trim().toUpperCase() || 'DRAFT',
             category,
             level,
+            deliveryMode,
             description: description.trim(),
             objectives: objectives.trim(),
             department: department.trim(),
@@ -613,6 +632,7 @@ export function CourseCreationWizard({
           title: title.trim(),
           category,
           level,
+          deliveryMode,
           description: description.trim(),
           objectives: objectives.trim(),
           department: department.trim(),
@@ -631,6 +651,7 @@ export function CourseCreationWizard({
           code: code.trim().toUpperCase(),
           category,
           level,
+          deliveryMode,
           description: description.trim(),
           objectives: objectives.trim(),
           department: department.trim(),
@@ -769,6 +790,8 @@ export function CourseCreationWizard({
           setCategory={setCategory}
           level={level}
           setLevel={setLevel}
+          deliveryMode={deliveryMode}
+          setDeliveryMode={setDeliveryMode}
           description={description}
           setDescription={setDescription}
           objectives={objectives}
@@ -840,6 +863,7 @@ export function CourseCreationWizard({
           code={code}
           category={category}
           level={level}
+          deliveryMode={deliveryMode}
           description={description}
           objectives={objectives}
           department={department}

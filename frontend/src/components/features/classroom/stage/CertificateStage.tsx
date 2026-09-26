@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Award,
+  Building2,
   CheckCircle2,
   Download,
   Lock,
@@ -49,14 +50,17 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
   const [error, setError] = useState<string | null>(null);
   const [feedbackDone, setFeedbackDone] = useState(false);
 
+  const isInPerson = course.deliveryMode === 'IN_PERSON_ONLY';
+
   const isCompleted =
-    unlocked ||
-    Boolean(progress?.courseCompletion.certificateEligible) ||
-    Boolean(
-      progress?.courseCompletion.contentCompleted &&
-      (!progress?.courseCompletion.finalAssessment ||
-        progress?.courseCompletion.finalAssessmentPassed),
-    );
+    !isInPerson &&
+    (unlocked ||
+      Boolean(progress?.courseCompletion.certificateEligible) ||
+      Boolean(
+        progress?.courseCompletion.contentCompleted &&
+        (!progress?.courseCompletion.finalAssessment ||
+          progress?.courseCompletion.finalAssessmentPassed),
+      ));
 
   useEffect(() => {
     let mounted = true;
@@ -191,7 +195,7 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
         {/* Locked Header Card */}
         <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/40 p-8 shadow-xs text-center space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100/80 text-amber-600 ring-8 ring-amber-50">
-            <Lock className="h-7 w-7" />
+            {isInPerson ? <Building2 className="h-7 w-7" /> : <Lock className="h-7 w-7" />}
           </div>
 
           <div className="space-y-1.5 max-w-xl mx-auto">
@@ -200,13 +204,23 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
               {tBilingual('Verified Certificate of Completion', 'የተረጋገጠ የማጠናቀቂያ ሰርተፊኬት')}
             </span>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {tBilingual('Certificate Currently Locked', 'ሰርተፊኬቱ በአሁኑ ጊዜ ተቆልፏል')}
+              {isInPerson
+                ? tBilingual(
+                    'Certificate Pending Classroom Completion',
+                    'ሰርተፊኬቱ የክፍል ስልጠና መጠናቀቅን እየጠበቀ ነው',
+                  )
+                : tBilingual('Certificate Currently Locked', 'ሰርተፊኬቱ በአሁኑ ጊዜ ተቆልፏል')}
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              {tBilingual(
-                'Complete all lessons, exercises, and required assessments to unlock your verified credential issued by the Ministry of Revenues.',
-                'በገቢዎች ሚኒስቴር የተሰጠውን ይፋዊ ማረጋገጫ ለመክፈት ሁሉንም ትምህርቶች፣ መልመጃዎች እና አስፈላጊ ፈተናዎችን ያጠናቅቁ።',
-              )}
+              {isInPerson
+                ? tBilingual(
+                    'For in-person practicum courses, certification is verified and issued upon physical classroom attendance, practicum evaluation, and trainer sign-off.',
+                    'በአካል ለሚሰጡ የተግባር ኮርሶች፣ ሰርተፊኬቱ የሚረጋገጠውና የሚሰጠው በክፍል ውስጥ በመገኘት፣ በተግባር ግምገማ እና በአሰልጣኙ ማረጋገጫ ነው።',
+                  )
+                : tBilingual(
+                    'Complete all lessons, exercises, and required assessments to unlock your verified credential issued by the Ministry of Revenues.',
+                    'በገቢዎች ሚኒስቴር የተሰጠውን ይፋዊ ማረጋገጫ ለመክፈት ሁሉንም ትምህርቶች፣ መልመጃዎች እና አስፈላጊ ፈተናዎችን ያጠናቅቁ።',
+                  )}
             </p>
           </div>
 
@@ -232,9 +246,15 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
             <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-700">
-                  {tBilingual('Final Certification Exam', 'የማጠቃለያ የምስክር ወረቀት ፈተና')}
+                  {isInPerson
+                    ? tBilingual('In-Person Classroom Evaluation', 'በአካል የሚሰጥ የክፍል ግምገማ')
+                    : tBilingual('Final Certification Exam', 'የማጠቃለያ የምስክር ወረቀት ፈተና')}
                 </span>
-                {finalPassed ? (
+                {isInPerson ? (
+                  <span className="inline-flex items-center gap-1 text-amber-700 font-bold text-[11px] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <Building2 className="h-3 w-3" /> {tBilingual('Trainer Administered', 'በአሰልጣኝ የሚሰጥ')}
+                  </span>
+                ) : finalPassed ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
                     <CheckCircle2 className="h-3.5 w-3.5" /> {tBilingual('Passed', 'አልፏል')}
                   </span>
@@ -245,15 +265,20 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
                 )}
               </div>
               <p className="text-[11px] text-slate-500">
-                {finalAssessment
+                {isInPerson
                   ? tBilingual(
-                      'Achieve passing score on the final assessment',
-                      'በማጠቃለያ ፈተናው የማለፊያ ውጤት ያግኙ',
+                      'Assessed physically at the training venue by your instructor',
+                      'በማሰልጠኛ ቦታው በአሰልጣኝዎ በአካል ይገመገማል',
                     )
-                  : tBilingual(
-                      'All curriculum topics must be reviewed',
-                      'ሁሉም የስርዓተ-ትምህርት ርዕሶች መከለስ አለባቸው',
-                    )}
+                  : finalAssessment
+                    ? tBilingual(
+                        'Achieve passing score on the final assessment',
+                        'በማጠቃለያ ፈተናው የማለፊያ ውጤት ያግኙ',
+                      )
+                    : tBilingual(
+                        'All curriculum topics must be reviewed',
+                        'ሁሉም የስርዓተ-ትምህርት ርዕሶች መከለስ አለባቸው',
+                      )}
               </p>
             </div>
           </div>

@@ -41,6 +41,8 @@ model User {
   // Set when an admin chose the password (bulk import, actor registration, admin reset);
   // the user must set their own via an emailed code before any session is issued.
   mustChangePassword Boolean @default(false) @map("must_change_password")
+  primaryVenueId String?  @map("primary_venue_id")
+  primaryVenue   Venue?   @relation("TrainerPrimaryVenue", fields: [primaryVenueId], references: [id], onDelete: SetNull)
 
   // Polymorphic role assignment — a user may hold multiple roles
   roles                   UserRole[]
@@ -206,6 +208,7 @@ model Course {
   department  String?  @map("department")
   targetAudience String? @map("target_audience")
   deliveryMethod String? @map("delivery_method")
+  deliveryMode   CourseDeliveryMode @default(BOTH) @map("delivery_mode")
   language    String?  @default("en") @map("language")
   objectivesAm String? @map("objectives_am")
   objectivesEn String? @map("objectives_en")
@@ -229,6 +232,12 @@ model Course {
 
   @@index([status])
   @@map("courses")
+}
+
+enum CourseDeliveryMode {
+  ONLINE_ONLY
+  IN_PERSON_ONLY
+  BOTH
 }
 
 enum CourseStatus {
@@ -447,7 +456,10 @@ model Enrollment {
   userId      String           @map("user_id")
   courseId     String           @map("course_id")
   status      EnrollmentStatus @default(ACTIVE)
-enrolledAt DateTime @default(now()) @map("enrolled_at")
+  deliveryMode CourseDeliveryMode @default(ONLINE_ONLY) @map("enrolled_delivery_mode")
+  venueId      String?            @map("enrolled_venue_id")
+  sessionId    String?            @map("enrolled_session_id")
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
   completedAt DateTime? @map("completed_at")
   droppedAt DateTime? @map("dropped_at")
   droppedReason String?        @map("dropped_reason")
@@ -455,12 +467,16 @@ enrolledAt DateTime @default(now()) @map("enrolled_at")
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  venue Venue? @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  session LiveSession? @relation("EnrollmentSession", fields: [sessionId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, courseId])
   @@index([courseId])
+  @@index([venueId])
+  @@index([sessionId])
   @@map("enrollments")
 }
 
@@ -593,6 +609,8 @@ model LiveSession {
   scheduledAt     DateTime          @map("scheduled_at")
   durationMinutes Int               @map("duration_minutes")
   status          SessionStatus     @default(SCHEDULED)
+  sessionType     SessionType       @default(VIRTUAL) @map("session_type")
+  venueId         String?           @map("venue_id")
   recordingUrl    String?           @map("recording_url")
   allowViewAttendance Boolean       @default(false) @map("allow_view_attendance")
   attendanceThreshold Int           @default(60) @map("attendance_threshold")
@@ -601,6 +619,7 @@ model LiveSession {
 
   attendees       Attendance[]
   attendanceLogs  AttendanceLog[]
+  enrollments     Enrollment[]      @relation("EnrollmentSession")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -608,11 +627,18 @@ model LiveSession {
 
   course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   trainer User?  @relation("LiveSessionTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
+  venue   Venue? @relation(fields: [venueId], references: [id], onDelete: SetNull)
 
   @@index([courseId])
   @@index([scheduledAt])
   @@index([trainerId])
+  @@index([venueId])
   @@map("live_sessions")
+}
+
+enum SessionType {
+  VIRTUAL
+  IN_PERSON
 }
 
 enum SessionPlatform {
@@ -621,6 +647,7 @@ enum SessionPlatform {
   GOOGLE_MEET
   MS_TEAMS
   CUSTOM
+  IN_PERSON
 }
 
 enum SessionStatus {
@@ -629,6 +656,31 @@ enum SessionStatus {
   COMPLETED
   CANCELLED
 }
+
+// ──────────────────────────────────────────────────────────
+// 10b. Venues & Facilities
+// ──────────────────────────────────────────────────────────
+
+model Venue {
+  id          String        @id @default(uuid())
+  name        String
+  building    String?
+  branch      String
+  capacity    Int           @default(30)
+  facilities  String[]      @default([])
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  trainers    User[]        @relation("TrainerPrimaryVenue")
+  sessions    LiveSession[]
+  enrollments Enrollment[]
+
+  @@index([branch])
+  @@index([isActive])
+  @@map("venues")
+}
+
 
 // ──────────────────────────────────────────────────────────
 // 11. Attendance

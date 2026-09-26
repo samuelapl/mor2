@@ -68,12 +68,14 @@ export class AttendanceService {
     });
 
     if (existing) {
-      if (existing.checkInMethod) {
+      if (existing.checkInMethod && existing.status === AttendanceStatus.PRESENT) {
         return existing;
       }
       return this.prisma.attendance.update({
         where: { sessionId_userId: { sessionId, userId } },
         data: {
+          status: AttendanceStatus.PRESENT,
+          joinedAt: existing.joinedAt || new Date(),
           checkInMethod: method,
           ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
           ...(method === CheckInMethod.BIOMETRIC ? { biometricVerified: true } : {}),
@@ -87,6 +89,8 @@ export class AttendanceService {
     return this.prisma.attendance.upsert({
       where: { sessionId_userId: { sessionId, userId } },
       update: {
+        status: AttendanceStatus.PRESENT,
+        joinedAt: new Date(),
         checkInMethod: method,
         ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),
         ...(method === CheckInMethod.BIOMETRIC ? { biometricVerified: true } : {}),
@@ -95,7 +99,7 @@ export class AttendanceService {
       create: {
         sessionId,
         userId,
-        status: AttendanceStatus.ABSENT,
+        status: AttendanceStatus.PRESENT,
         joinedAt: new Date(),
         checkInMethod: method,
         ...(method === CheckInMethod.GPS ? { latitude, longitude } : {}),

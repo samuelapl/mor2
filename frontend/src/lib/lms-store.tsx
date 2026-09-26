@@ -81,6 +81,7 @@ import {
   userFromApi,
 } from '@/lib/api/transform';
 import type {
+  ApiEnrollment,
   BulkCreateUserItem,
   BulkCreateUsersResult,
   CreateCurriculumAttachmentBody,
@@ -93,6 +94,7 @@ import type {
   Lang,
   LoginResult,
   Quiz,
+  CourseDeliveryMode,
   Role,
   UploadedResource,
   User,
@@ -206,6 +208,7 @@ interface LmsContextValue {
     department?: string;
     targetAudience?: string;
     deliveryMethod?: string;
+    deliveryMode?: CourseDeliveryMode;
     language?: string;
     prerequisites?: string;
     objectives?: string;
@@ -228,6 +231,7 @@ interface LmsContextValue {
       department?: string;
       targetAudience?: string;
       deliveryMethod?: string;
+      deliveryMode?: CourseDeliveryMode;
       language?: string;
       prerequisites?: string;
       objectives?: string;
@@ -251,7 +255,16 @@ interface LmsContextValue {
   archiveCourse: (courseId: string) => Promise<ActionResult>;
   deleteCourse: (courseId: string) => Promise<ActionResult>;
   enrollLearners: (courseId: string, learnerIds: string[]) => Promise<ActionResult>;
-  enrollSelf: (courseId: string) => Promise<ActionResult>;
+  enrollSelf: (
+    courseId: string,
+    options?: {
+      deliveryMode?: CourseDeliveryMode;
+      venueId?: string;
+      sessionId?: string;
+    },
+  ) => Promise<ActionResult>;
+  myEnrollments: ApiEnrollment[];
+  getEnrollmentForCourse: (courseId: string) => ApiEnrollment | undefined;
   changeUserRole: (userId: string, role: Role) => Promise<ActionResult>;
   approveRegistrationRequest: (userId: string) => Promise<ActionResult>;
   rejectRegistrationRequest: (userId: string, reason?: string) => Promise<ActionResult>;
@@ -273,6 +286,7 @@ interface LmsContextValue {
     password: string;
     role: Role;
     phone?: string;
+    primaryVenueId?: string;
   }) => Promise<ActionResult>;
   updateProfile: (input: {
     firstName?: string;
@@ -356,6 +370,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [myEnrollments, setMyEnrollments] = useState<ApiEnrollment[]>([]);
   const [lang, setLangState] = useState<Lang>('en');
   const setLang = useCallback((nextLang: Lang) => {
     setLangState(nextLang);
@@ -399,6 +414,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     usersRef.current = [];
     setCourses([]);
     coursesRef.current = [];
+    setMyEnrollments([]);
     setUserNames({});
   }, []);
 
@@ -423,6 +439,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (current?.role === 'learner') {
         try {
           const mine = await fetchMyEnrollments();
+          setMyEnrollments(mine.data);
           const enrolledCourseIds = new Set(
             mine.data
               .filter(
@@ -636,6 +653,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             department: input.department,
             targetAudience: input.targetAudience,
             deliveryMethod: input.deliveryMethod,
+            deliveryMode: input.deliveryMode,
             language: input.language,
             prerequisites: input.prerequisites,
             objectives: input.objectives,
@@ -856,6 +874,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           password: input.password,
           role: roleToApi(input.role),
           phone: input.phone || undefined,
+          primaryVenueId: input.primaryVenueId || undefined,
         });
         await reloadData(currentUserRef.current);
         return { ok: true };
@@ -992,6 +1011,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             department: input.department,
             targetAudience: input.targetAudience,
             deliveryMethod: input.deliveryMethod,
+            deliveryMode: input.deliveryMode,
             language: input.language,
             prerequisites: input.prerequisites,
             objectives: input.objectives,
@@ -1290,13 +1310,26 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   );
 
   const enrollSelf = useCallback(
-    async (courseId: string): Promise<ActionResult> => {
+    async (
+      courseId: string,
+      options?: {
+        deliveryMode?: CourseDeliveryMode;
+        venueId?: string;
+        sessionId?: string;
+      },
+    ): Promise<ActionResult> => {
       const learner = currentUserRef.current;
       if (!learner || !hasPermission(learner, 'enrollment.self')) {
         return { ok: false, message: 'Only learners can self-enroll.' };
       }
       try {
-        await selfEnroll(courseId);
+        const enr = await selfEnroll({
+          courseId,
+          deliveryMode: options?.deliveryMode,
+          venueId: options?.venueId,
+          sessionId: options?.sessionId,
+        });
+        setMyEnrollments((prev) => [...prev.filter((e) => e.courseId !== courseId), enr]);
       } catch (err) {
         const message = errorMessage(
           err,
@@ -1323,6 +1356,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
     [reloadData],
+  );
+
+  const getEnrollmentForCourse = useCallback(
+    (courseId: string) => myEnrollments.find((e) => e.courseId === courseId),
+    [myEnrollments],
   );
 
   const changeUserRole = useCallback(
@@ -1594,6 +1632,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       deleteCourse,
       enrollLearners,
       enrollSelf,
+      myEnrollments,
+      getEnrollmentForCourse,
       changeUserRole,
       approveRegistrationRequest,
       rejectRegistrationRequest,
@@ -1612,6 +1652,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       ready,
       courses,
       users,
+      myEnrollments,
+      getEnrollmentForCourse,
       lang,
       currentUser,
       login,

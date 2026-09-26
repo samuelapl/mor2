@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { UserCog } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Building2, UserCog } from 'lucide-react';
 import { useLms } from '@/lib/lms-store';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
@@ -10,6 +10,8 @@ import { ROLE_LABELS, ROLES } from '@/constants/roles';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Role } from '@/types';
 import { toast } from '@/lib/toast';
+import { fetchVenues } from '@/lib/api/venues';
+import type { ApiVenue } from '@/lib/api/types';
 
 const inputClass =
   'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
@@ -25,6 +27,7 @@ const EMPTY_FORM = {
   phone: '',
   password: '',
   role: 'learner' as Role,
+  primaryVenueId: '',
 };
 
 export default function RegisterActorPage() {
@@ -32,6 +35,13 @@ export default function RegisterActorPage() {
   const { tBilingual, tRole } = useTranslation();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [venues, setVenues] = useState<ApiVenue[]>([]);
+
+  useEffect(() => {
+    void fetchVenues()
+      .then(setVenues)
+      .catch(() => {});
+  }, []);
 
   const update = (patch: Partial<typeof form>) => {
     setForm((prev) => ({ ...prev, ...patch }));
@@ -62,6 +72,7 @@ export default function RegisterActorPage() {
         phone: form.phone.trim() || undefined,
         password: form.password,
         role: form.role,
+        primaryVenueId: form.primaryVenueId || undefined,
       });
 
       if (!result.ok) {
@@ -155,6 +166,31 @@ export default function RegisterActorPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              {tBilingual('Primary Venue / Branch Assignment', 'ዋና የስልጠና ማዕከል / ቅርንጫፍ ምደባ')}{' '}
+              {form.role === 'trainer' && `(${tBilingual('Recommended for Trainers', 'ለአሰልጣኞች የሚመከር')})`}
+            </label>
+            <select
+              className={inputClass}
+              value={form.primaryVenueId}
+              onChange={(e) => update({ primaryVenueId: e.target.value })}
+            >
+              <option value="">{tBilingual('No Primary Venue (Virtual / Multiple Branches)', 'ዋና ማዕከል የለም (ምናባዊ / በርካታ ቅርንጫፎች)')}</option>
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.branch} — {v.name} ({v.capacity} {tBilingual('seats', 'ወንበሮች')})
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-slate-500">
+              {tBilingual(
+                'Linking a trainer to their primary branch helps auto-populate venues when scheduling in-person sessions.',
+                'አሰልጣኝን ከዋና ቅርንጫፋቸው ጋር ማገናኘት በአካል የሚሰጡ ክፍለ-ጊዜዎችን ሲመድቡ ማዕከላትን በራስ-ሰር ለመሙላት ይረዳል።',
+              )}
+            </p>
           </div>
 
           <div>

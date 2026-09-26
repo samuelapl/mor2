@@ -140,6 +140,16 @@ export function userFromApi(user: ApiUser): User {
     updatedAt: user.updatedAt,
     lastLogin: user.lastLogin ?? null,
     mustChangePassword: user.mustChangePassword ?? false,
+    primaryVenueId: user.primaryVenueId ?? null,
+    primaryVenue: user.primaryVenue
+      ? {
+          id: user.primaryVenue.id,
+          name: user.primaryVenue.name,
+          branch: user.primaryVenue.branch,
+          building: user.primaryVenue.building ?? null,
+          capacity: user.primaryVenue.capacity,
+        }
+      : null,
   };
 }
 
@@ -189,6 +199,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     department: course.department ?? undefined,
     targetAudience: course.targetAudience ?? undefined,
     deliveryMethod: course.deliveryMethod ?? undefined,
+    deliveryMode: course.deliveryMode ?? 'BOTH',
     language: course.language ?? 'en',
     prerequisites: course.prerequisites ?? undefined,
     objectives: course.objectivesEn || course.objectivesAm || undefined,
@@ -341,6 +352,7 @@ export function courseToCreateBody(input: {
   department?: string;
   targetAudience?: string;
   deliveryMethod?: string;
+  deliveryMode?: Course['deliveryMode'];
   language?: string;
   prerequisites?: string;
   objectives?: string;
@@ -357,6 +369,7 @@ export function courseToCreateBody(input: {
     department: input.department,
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
+    deliveryMode: input.deliveryMode,
     language: input.language,
     prerequisites: input.prerequisites,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
@@ -372,6 +385,7 @@ export function courseToUpdateBody(input: {
   department?: string;
   targetAudience?: string;
   deliveryMethod?: string;
+  deliveryMode?: Course['deliveryMode'];
   language?: string;
   prerequisites?: string;
   level?: Course['level'];
@@ -384,6 +398,7 @@ export function courseToUpdateBody(input: {
     department: input.department,
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
+    deliveryMode: input.deliveryMode,
     language: input.language,
     prerequisites: input.prerequisites,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,

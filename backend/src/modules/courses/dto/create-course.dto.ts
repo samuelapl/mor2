@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CourseLevel } from '@prisma/client';
+import { CourseDeliveryMode, CourseLevel } from '@prisma/client';
 import {
   IsArray,
   IsEnum,
@@ -66,6 +66,11 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   deliveryMethod?: string;
+
+  @ApiPropertyOptional({ enum: CourseDeliveryMode, example: CourseDeliveryMode.BOTH })
+  @IsOptional()
+  @IsEnum(CourseDeliveryMode)
+  deliveryMode?: CourseDeliveryMode;
 
   @ApiPropertyOptional({ example: 'en' })
   @IsOptional()

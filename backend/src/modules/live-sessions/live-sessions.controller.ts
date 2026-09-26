@@ -16,12 +16,17 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { LiveSessionsService } from './live-sessions.service';
-import { CreateSessionDto, UpdateSessionDto, SubmitLiveQuizDto } from './dto';
+import {
+  CreateSessionDto,
+  UpdateSessionDto,
+  SubmitLiveQuizDto,
+  CreateBatchSessionDto,
+} from './dto';
 import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
-import { LiveKitProvider } from './providers/livekit.provider';
+import { LiveKitProvider } from './virtual/providers/livekit.provider';
 import { AttendanceService } from '@modules/attendance/attendance.service';
 
 @ApiTags('live-sessions')
@@ -39,22 +44,27 @@ export class LiveSessionsController {
 
   @Get('live-sessions')
   @Public()
-  @ApiOperation({ summary: 'List live sessions' })
+  @ApiOperation({ summary: 'List live sessions visible to the current user' })
   async findAll(
     @Query()
     query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
+    @CurrentUser() user?: AuthenticatedUser,
   ) {
-    return this.liveSessionsService.findAll(query);
+    return this.liveSessionsService.findAll(query, user);
   }
 
   @Get('live-sessions/upcoming/me')
   @Public()
-  @ApiOperation({ summary: 'Upcoming sessions for my enrolled courses' })
-  async upcoming(
-    @CurrentUser() user: AuthenticatedUser | undefined,
-    @Query() query: PaginationQuery,
-  ) {
-    return this.liveSessionsService.upcomingForUser(user?.id, query);
+  @ApiOperation({ summary: 'Upcoming sessions visible to me (enrolled, hosted, or all)' })
+  async upcoming(@CurrentUser() user: AuthenticatedUser | undefined, @Query() query: PaginationQuery) {
+    return this.liveSessionsService.upcomingForUser(user, query);
+  }
+
+  @Post('live-sessions/batch')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
+  @ApiOperation({ summary: 'Schedule batch in-person classroom sessions across multiple venues' })
+  async createBatch(@Body() dto: CreateBatchSessionDto) {
+    return this.liveSessionsService.createBatch(dto);
   }
 
   // ─── IMPORTANT: specific routes before :id wildcard ───────────────────────

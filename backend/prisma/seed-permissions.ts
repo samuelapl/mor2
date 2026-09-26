@@ -340,6 +340,14 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'View audit logs',
   },
+  // Venues & Facilities
+  {
+    code: 'venue.manage',
+    resource: 'venue',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage training venues & facilities (create, edit, delete)',
+  },
 
   // Course policy (time-spent %, retake cooldown)
   {
@@ -411,10 +419,12 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'result.view.all',
     'student.view',
     'live_session.manage_own',
+    'live_session.manage_all',
     'progress.view',
     'user.view',
     'dashboard.stats',
     'course_policy.manage',
+    'venue.manage',
     'feedback.manage',
     'feedback.view',
   ],
@@ -521,19 +531,6 @@ export async function seedPermissions(prisma: PrismaClient) {
   await prisma.permission.deleteMany({
     where: { code: { in: ['live_session.manage', 'live_session.view_own'] } },
   });
-
-  // TRAINING_ADMIN now defaults to 'live_session.manage_own' instead of 'live_session.manage_all'.
-  // Drop any old 'live_session.manage_all' grant from TRAINING_ADMIN so it only sees its assigned sessions by default.
-  const trainingAdminRoleId = roleIdByName.get(RoleName.TRAINING_ADMIN);
-  const liveSessionManageAllPerm = permissionIdByCode.get('live_session.manage_all');
-  if (trainingAdminRoleId && liveSessionManageAllPerm) {
-    await prisma.rolePermission.deleteMany({
-      where: {
-        roleId: trainingAdminRoleId,
-        permissionId: liveSessionManageAllPerm,
-      },
-    });
-  }
 
   // TRAINER and COURSE_OWNER now default to view-only attendance ('attendance.view').
   // Drop 'attendance.manage' from them so neither can change status unless explicitly granted by admin.

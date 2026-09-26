@@ -5,6 +5,7 @@ import {
   Award,
   BookOpen,
   BookOpenCheck,
+  Building2,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -454,38 +455,68 @@ export function ClassroomSidebar({
           ? (() => {
               const finalItem = flatItems.find((i) => i.quizKind === 'FINAL_ASSESSMENT')!;
               const isActive = activeKey === finalItem.key;
+              const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
 
               return (
                 <div className="pt-2">
                   <button
                     type="button"
-                    onClick={() => finalItem.unlocked && onSelectItem(finalItem)}
-                    disabled={!finalItem.unlocked}
+                    onClick={() => isClickable && onSelectItem(finalItem)}
+                    disabled={!isClickable}
                     className={cn(
                       'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs',
                       isActive
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : finalItem.unlocked
-                          ? finalItem.completed
-                            ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                            : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
-                          : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed opacity-75',
+                        ? finalItem.isInPersonLocked
+                          ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                          : 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : finalItem.isInPersonLocked
+                          ? 'bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80 cursor-pointer'
+                          : finalItem.unlocked
+                            ? finalItem.completed
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                              : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
+                            : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed opacity-75',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <GraduationCap className="h-4 w-4 shrink-0 text-amber-300" />
+                      {finalItem.isInPersonLocked ? (
+                        <Building2
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            isActive ? 'text-white' : 'text-amber-600',
+                          )}
+                        />
+                      ) : (
+                        <GraduationCap className="h-4 w-4 shrink-0 text-amber-300" />
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold truncate">
                           {tBilingual('Final Course Assessment', 'የኮርስ ማጠቃለያ ፈተና')}
                         </p>
-                        <p className="text-[10px] opacity-80 mt-0.5">
-                          {tBilingual('Required for Certification', 'ለሰርተፊኬት የሚያስፈልግ')}
+                        <p
+                          className={cn(
+                            'text-[10px] mt-0.5',
+                            isActive ? 'text-amber-100' : 'opacity-80',
+                          )}
+                        >
+                          {finalItem.isInPersonLocked
+                            ? tBilingual('In-Person Classroom Evaluation', 'በአካል የሚሰጥ የክፍል ግምገማ')
+                            : tBilingual('Required for Certification', 'ለሰርተፊኬት የሚያስፈልግ')}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      {!finalItem.unlocked ? (
+                      {finalItem.isInPersonLocked ? (
+                        <span
+                          className={cn(
+                            'text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1',
+                            isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800',
+                          )}
+                        >
+                          In-Person
+                        </span>
+                      ) : !finalItem.unlocked ? (
                         <Lock className="h-3.5 w-3.5" />
                       ) : finalItem.completed ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -542,13 +573,19 @@ export function ClassroomSidebar({
                     <p className="text-[10px] opacity-75 mt-0.5 truncate">
                       {isUnlocked
                         ? tBilingual('Verified & Ready to View', 'የተረጋገጠና ለመመልከት ዝግጁ')
-                        : tBilingual('Complete course to unlock', 'ለመክፈት ኮርሱን ያጠናቁ')}
+                        : certItem.isInPersonLocked
+                          ? tBilingual('Issued upon classroom completion', 'የክፍል ስልጠና ሲጠናቀቅ ይሰጣል')
+                          : tBilingual('Complete course to unlock', 'ለመክፈት ኮርሱን ያጠናቁ')}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  {!isUnlocked ? (
+                  {certItem.isInPersonLocked ? (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                      In-Person
+                    </span>
+                  ) : !isUnlocked ? (
                     <Lock className="h-3.5 w-3.5 text-slate-400" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />

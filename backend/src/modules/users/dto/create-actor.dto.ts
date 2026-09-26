@@ -35,4 +35,9 @@ export class CreateActorDto {
   @IsOptional()
   @IsEnum(['en', 'am'])
   locale?: string;
+
+  @ApiPropertyOptional({ example: 'venue_uuid' })
+  @IsOptional()
+  @IsString()
+  primaryVenueId?: string;
 }

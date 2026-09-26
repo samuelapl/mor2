@@ -83,6 +83,7 @@ export function ClassroomStage({
         quizKind={item.quizKind}
         courseTitle={courseTitle}
         unlocked={item.unlocked}
+        isInPersonLocked={item.isInPersonLocked}
         onStartQuiz={() => onTakeQuiz(assessment?.id || item.quizId || '')}
       />
     );

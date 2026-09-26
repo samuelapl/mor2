@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle, ExternalLink, MonitorPlay, RefreshCw, Search, Video, X } from 'lucide-react';
+import {
+  Building2,
+  CheckCircle,
+  ExternalLink,
+  MapPin,
+  MonitorPlay,
+  QrCode,
+  RefreshCw,
+  Search,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
 import { fetchUpcomingSessions, selfCheckIn } from '@/lib/api/monitoring';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { ApiError } from '@/lib/api/client';
@@ -13,16 +25,23 @@ import PageShell from '@/components/shared/PageShell';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { SessionTable, type SessionRow } from '@/components/features/sessions/SessionTable';
+import { SessionTable, type SessionRow } from '@/components/features/sessions/shared/SessionTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
-import { LiveSessionWorkspace } from '@/components/features/sessions/LiveSessionWorkspace';
-import { DynamicAttendanceModal } from '@/components/features/sessions/DynamicAttendanceModal';
-import { Users } from 'lucide-react';
+import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { DynamicAttendanceModal } from '@/components/features/sessions/shared/DynamicAttendanceModal';
+import { LearnerCheckInModal } from '@/components/features/sessions/in-person/LearnerCheckInModal';
+import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
+import { isInPersonSession } from '@/lib/session-mode';
 
 export default function LearnerLiveSessionsPage() {
-  const { lang, courses } = useLms();
+  const { lang, courses: allCourses, currentUser } = useLms();
   const { tBilingual } = useTranslation();
+  const me = currentUser?.id ?? '';
+  const courses = useMemo(
+    () => allCourses.filter((c) => c.enrolledLearnerIds.includes(me)),
+    [allCourses, me],
+  );
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [loadingJoinId, setLoadingJoinId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +51,8 @@ export default function LearnerLiveSessionsPage() {
   const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(
     null,
   );
+  const [checkInSession, setCheckInSession] = useState<ApiLiveSession | null>(null);
+  const [inspectVenueSession, setInspectVenueSession] = useState<ApiLiveSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourseFilter, setSelectedCourseFilter] = useState('ALL');
 
@@ -204,6 +225,7 @@ export default function LearnerLiveSessionsPage() {
             extra={(row) => {
               const isCheckedIn = joined.includes(row.session.id);
               const isLoading = loadingJoinId === row.session.id;
+              const isPerson = isInPersonSession(row.session);
 
               return (
                 <div className="flex items-center justify-end gap-1.5">
@@ -218,29 +240,55 @@ export default function LearnerLiveSessionsPage() {
                     {tBilingual('Attendees', 'ተሳታፊዎች')}
                   </Button>
 
+                  {isPerson && row.session.venue && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setInspectVenueSession(row.session)}
+                      className="gap-1.5 text-xs text-slate-700 border-slate-200 hover:bg-slate-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
+                      title="View classroom venue location & directions"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-amber-600" />
+                      {tBilingual('Venue', 'ቦታ')}
+                    </Button>
+                  )}
+
                   {isCheckedIn && (
                     <Badge variant="green" dot>
                       {tBilingual('Present', 'የተገኘ')}
                     </Badge>
                   )}
-                  <Button
-                    size="sm"
-                    disabled={isLoading}
-                    onClick={() => handleJoin(row.session)}
-                    className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${
-                      isCheckedIn
-                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
-                        : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs'
-                    }`}
-                  >
-                    <MonitorPlay className="h-3.5 w-3.5" />
-                    {isLoading
-                      ? tBilingual('Connecting…', 'በመገናኘት ላይ…')
-                      : isCheckedIn
-                        ? tBilingual('Enter Room', 'ወደ ክፍሉ ግባ')
-                        : tBilingual('Join', 'ተቀላቀል')}
-                    <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
-                  </Button>
+                  {isPerson ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setCheckInSession(row.session)}
+                      className="gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-semibold bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white shadow-xs"
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                      {isCheckedIn
+                        ? tBilingual('Checked In', 'ተገኝቷል')
+                        : tBilingual('Classroom Check-In', 'የመማሪያ ክፍል መገኘት ማረጋገጫ')}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={isLoading}
+                      onClick={() => handleJoin(row.session)}
+                      className={`gap-1.5 text-xs h-8 px-3 rounded-lg shrink-0 font-medium ${
+                        isCheckedIn
+                          ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+                          : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs'
+                      }`}
+                    >
+                      <MonitorPlay className="h-3.5 w-3.5" />
+                      {isLoading
+                        ? tBilingual('Connecting…', 'በመገናኘት ላይ…')
+                        : isCheckedIn
+                          ? tBilingual('Enter Room', 'ወደ ክፍሉ ግባ')
+                          : tBilingual('Join', 'ተቀላቀል')}
+                      <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
+                    </Button>
+                  )}
                 </div>
               );
             }}
@@ -279,6 +327,32 @@ export default function LearnerLiveSessionsPage() {
           onClose={() => setSelectedAttendanceSessionId(null)}
           sessionId={selectedAttendanceSessionId}
           userRole="learner"
+        />
+      ) : null}
+
+      {checkInSession ? (
+        <LearnerCheckInModal
+          open={Boolean(checkInSession)}
+          onClose={() => setCheckInSession(null)}
+          session={checkInSession}
+          onSuccess={() => {
+            if (checkInSession) {
+              setJoined((prev) =>
+                prev.includes(checkInSession.id) ? prev : [...prev, checkInSession.id],
+              );
+            }
+          }}
+        />
+      ) : null}
+
+      {inspectVenueSession && inspectVenueSession.venue ? (
+        <VenueDetailModal
+          open={Boolean(inspectVenueSession)}
+          onClose={() => setInspectVenueSession(null)}
+          venue={inspectVenueSession.venue}
+          session={inspectVenueSession}
+          courseTitle={inspectVenueSession.course?.titleEn}
+          courseCode={inspectVenueSession.course?.code}
         />
       ) : null}
 

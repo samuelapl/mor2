@@ -10,9 +10,19 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { SessionPlatform } from '@prisma/client';
+import { SessionPlatform, SessionType } from '@prisma/client';
 
 export class CreateSessionDto {
+  @ApiPropertyOptional({ enum: SessionType, default: SessionType.VIRTUAL })
+  @IsOptional()
+  @IsEnum(SessionType)
+  sessionType?: SessionType;
+
+  @ApiPropertyOptional({ example: 'venue-uuid-1' })
+  @IsOptional()
+  @IsString()
+  venueId?: string;
+
   @ApiProperty({ example: 'Live Q&A Session' })
   @IsString()
   @MinLength(2)

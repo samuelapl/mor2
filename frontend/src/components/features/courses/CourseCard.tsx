@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { BookOpen, Clock, FileText, Layers, ListChecks } from 'lucide-react';
-import type { Course } from '@/types';
+import { BookOpen, Clock, FileText } from 'lucide-react';
+import type { Course, CourseDeliveryMode } from '@/types';
 import { Card } from '@/components/ui/Card';
 import {
   Badge,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { RichContent } from '@/components/ui/RichContent';
+import { DeliveryModeBadge } from './DeliveryModeBadge';
 
 interface CourseCardProps {
   course: Course;
@@ -18,6 +19,10 @@ interface CourseCardProps {
   children?: ReactNode;
   onClick?: () => void;
   showStatus?: boolean;
+  /** Overrides the course's own delivery mode, e.g. with an enrolled learner's choice. */
+  deliveryMode?: CourseDeliveryMode;
+  /** Shown instead of "In-Person" for in-person delivery (e.g. the venue branch). */
+  deliveryDetail?: string | null;
 }
 
 export function CourseCard({
@@ -27,13 +32,14 @@ export function CourseCard({
   children,
   onClick,
   showStatus = true,
+  deliveryMode,
+  deliveryDetail,
 }: CourseCardProps) {
-  const lessonCount = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
+  const attachmentCount = course.attachments?.length ?? 0;
   const durationMin = course.modules.reduce(
     (sum, module) => sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
     0,
   );
-  const attachmentCount = course.attachments?.length ?? 0;
 
   return (
     <Card
@@ -78,14 +84,6 @@ export function CourseCard({
           {course.category}
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
-          <Layers className="h-3.5 w-3.5 text-indigo-500/70" />
-          {course.modules.length} modules
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
-          <ListChecks className="h-3.5 w-3.5 text-indigo-500/70" />
-          {lessonCount} lessons
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
           <Clock className="h-3.5 w-3.5 text-indigo-500/70" />
           {durationMin} min
         </span>
@@ -95,6 +93,10 @@ export function CourseCard({
             {attachmentCount} {attachmentCount === 1 ? 'file' : 'files'}
           </span>
         ) : null}
+        <DeliveryModeBadge
+          mode={deliveryMode ?? course.deliveryMode ?? 'BOTH'}
+          detail={deliveryDetail}
+        />
       </div>
       {typeof progress === 'number' ? (
         <div className="mt-3 space-y-1">
@@ -105,7 +107,7 @@ export function CourseCard({
           <ProgressBar value={progress} />
         </div>
       ) : null}
-      {children ? <div className="mt-4 flex flex-wrap gap-2">{children}</div> : null}
+      {children ? <div className="mt-auto flex flex-wrap gap-2 pt-4">{children}</div> : null}
     </Card>
   );
 }
