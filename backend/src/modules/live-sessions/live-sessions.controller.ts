@@ -43,20 +43,18 @@ export class LiveSessionsController {
   ) {}
 
   @Get('live-sessions')
-  @Public()
   @ApiOperation({ summary: 'List live sessions visible to the current user' })
   async findAll(
     @Query()
     query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
-    @CurrentUser() user?: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.liveSessionsService.findAll(query, user);
   }
 
   @Get('live-sessions/upcoming/me')
-  @Public()
   @ApiOperation({ summary: 'Upcoming sessions visible to me (enrolled, hosted, or all)' })
-  async upcoming(@CurrentUser() user: AuthenticatedUser | undefined, @Query() query: PaginationQuery) {
+  async upcoming(@CurrentUser() user: AuthenticatedUser, @Query() query: PaginationQuery) {
     return this.liveSessionsService.upcomingForUser(user, query);
   }
 

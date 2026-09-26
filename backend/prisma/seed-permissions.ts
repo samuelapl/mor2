@@ -340,6 +340,7 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'View audit logs',
   },
+
   // Venues & Facilities
   {
     code: 'venue.manage',
