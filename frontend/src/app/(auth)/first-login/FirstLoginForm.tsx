@@ -14,12 +14,11 @@ import { MIN_PASSWORD_LENGTH, passwordIssues } from '@/constants/auth';
 import { ROLE_PATHS } from '@/constants/roles';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500';
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 
 /** Matches the backend's resend cooldown. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -31,14 +30,13 @@ const submitClass =
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12 transition-colors duration-200 dark:bg-slate-950">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-20" />
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <ThemeToggle size="sm" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
+      <div className="absolute top-4 right-4 z-20">
         <LanguageToggle />
       </div>
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           {children}
         </div>
       </div>

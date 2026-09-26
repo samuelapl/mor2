@@ -8,12 +8,11 @@ import { resetPassword } from '@/lib/api/auth';
 import { passwordIssues } from '@/constants/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800/80 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-100 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/20';
+  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -33,19 +32,18 @@ export default function ResetPasswordForm() {
   // Guard: if someone navigates here directly without email/code, redirect back
   if (!email || !code) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
-        <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-          <ThemeToggle />
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+        <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
+        <div className="absolute top-4 right-4 z-20">
           <LanguageToggle />
         </div>
         <div className="relative w-full max-w-md text-center">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-xl shadow-slate-200/60 dark:shadow-none">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+            <p className="text-sm text-slate-500">
               {tBilingual('This link is incomplete. ', 'ይህ ማስፈንጠሪያ የተሟላ አይደለም። ')}
               <Link
                 href="/forgot-password"
-                className="font-semibold text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="font-semibold text-indigo-500 hover:text-indigo-700"
               >
                 {tBilingual('Request a new code', 'አዲስ ኮድ ይጠይቁ')}
               </Link>
@@ -87,25 +85,24 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <ThemeToggle />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
+      <div className="absolute top-4 right-4 z-20">
         <LanguageToggle />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-none sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           {done ? (
             /* ── Success state ── */
             <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20">
                 <CheckCircle className="h-7 w-7" />
               </div>
-              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
                 {tBilingual('Password updated!', 'የይለፍ ቃል ተቀይሯል!')}
               </h1>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm text-slate-500">
                 {tBilingual(
                   'Your password has been reset. Sign in with your new password.',
                   'የይለፍ ቃልዎ ተቀይሯል። በአዲሱ የይለፍ ቃልዎ ይግቡ።',
@@ -125,10 +122,10 @@ export default function ResetPasswordForm() {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
                   <KeyRound className="h-7 w-7" />
                 </div>
-                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
                   {tBilingual('Set a new password', 'አዲስ የይለፍ ቃል ያዘጋጁ')}
                 </h1>
-                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1.5 text-sm text-slate-500">
                   {tBilingual(
                     'At least 8 characters with a letter and a number.',
                     'ቢያንስ 8 ቁምፊዎች ከፊደልና ከቁጥር ጋር።',
@@ -184,10 +181,10 @@ export default function ResetPasswordForm() {
                 </div>
 
                 {error && (
-                  <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
                     {error}{' '}
                     {error.includes('expired') || error.includes('Invalid') ? (
-                      <Link href="/forgot-password" className="underline hover:text-red-800 dark:hover:text-red-300">
+                      <Link href="/forgot-password" className="underline hover:text-red-800">
                         {tBilingual('Request a new code.', 'አዲስ ኮድ ይጠይቁ።')}
                       </Link>
                     ) : null}
@@ -205,10 +202,10 @@ export default function ResetPasswordForm() {
                 </button>
               </form>
 
-              <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-5 text-center text-sm text-slate-500">
                 <Link
                   href={`/verify-code?email=${encodeURIComponent(email)}`}
-                  className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   {tBilingual('Back to code entry', 'ወደ ኮድ ማስገቢያ ተመለስ')}

@@ -23,13 +23,13 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { toast } from '@/lib/toast';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500';
+  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
-const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300';
+const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400';
 
 export default function RegisterPage() {
   const { register, ready } = useLms();
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -88,25 +88,25 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12 transition-colors duration-200 dark:bg-slate-950">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-20" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
 
       <div className="relative w-full max-w-lg animate-fade-in-up">
         <div className="mb-4 flex items-center justify-between">
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
           >
             <ArrowLeft className="h-4 w-4" />
             {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
           </Link>
           <div className="flex items-center gap-2">
-            <ThemeToggle size="sm" />
             <LanguageToggle />
+            <ThemeToggle isAmharic={lang === 'am'} />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none sm:p-8">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
           <div className="text-center">
             <Link
               href="/"
@@ -121,7 +121,7 @@ export default function RegisterPage() {
                 className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
               />
             </Link>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {tBilingual('Registration', 'የተማሪ ምዝገባ')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
@@ -130,7 +130,7 @@ export default function RegisterPage() {
                 'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ምዝገባዎ በአስተዳዳሪ መጽደቅ አለበት።',
               )}
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
               {tBilingual(
                 'Your account is currently awaiting approval — future public guardrails prohibit access until it is granted.',
                 'መለያዎ በአሁኑ ጊዜ ይሁንታን በመጠባበቅ ላይ ነው — ፍቃድ እስኪሰጥ ድረስ መግባት አይፈቀድም።',
@@ -139,14 +139,14 @@ export default function RegisterPage() {
           </div>
 
           {submitted ? (
-            <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <div className="mt-7 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-900/20 p-5 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <h2 className="mt-3 font-display text-lg font-bold text-slate-900">
+              <h2 className="mt-3 font-display text-lg font-bold text-slate-900 dark:text-emerald-50">
                 {tBilingual('Registration submitted', 'ምዝገባው ተልኳል')}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-emerald-100/70">
                 {tBilingual(
                   'Your request has been sent to the learning administration team. Once an administrator approves your account you will be able to sign in and start learning.',
                   'ጥያቄዎ ወደ ስልጠና አስተዳደር ቡድን ተልኳል። አስተዳዳሪ መለያዎን እንዳፀደቀ መግባትና መማር መጀመር ይችላሉ።',
@@ -347,7 +347,7 @@ export default function RegisterPage() {
                 </div>
 
                 {error ? (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+                  <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
                     {error}
                   </div>
                 ) : null}
@@ -371,9 +371,9 @@ export default function RegisterPage() {
                 </button>
               </form>
 
-              <p className="mt-4 text-center text-sm text-slate-500">
+              <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
                 {tBilingual('Already registered?', 'ቀደም ሲል ተመዝግበዋል?')}{' '}
-                <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-700">
+                <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">
                   {tBilingual('Sign in', 'ግባ')}
                 </Link>
               </p>

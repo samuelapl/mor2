@@ -130,8 +130,8 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
 
   if (loading && !course) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center gap-3 bg-slate-50 text-slate-500">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-600 dark:text-indigo-400" />
         <p className="text-xs font-semibold">Loading interactive classroom…</p>
       </div>
     );
@@ -140,8 +140,8 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
   if (!course) {
     return (
       <div className="flex h-full min-h-[500px] flex-col items-center justify-center gap-2 p-6 text-center">
-        <p className="text-base font-bold text-slate-800">Course not found</p>
-        <p className="text-xs text-slate-500">
+        <p className="text-base font-bold text-slate-800 dark:text-white">Course not found</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           The requested course could not be loaded or you are not enrolled.
         </p>
       </div>
@@ -149,7 +149,7 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* 1. Focus Header */}
       <ClassroomHeader
         course={course}
@@ -177,7 +177,7 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
         />
 
         {/* Stage Content Canvas */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8 min-w-0 bg-slate-50/60 relative">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 min-w-0 bg-slate-50/60 dark:bg-slate-950/60 relative">
           {activeQuizModalId ? (
             <QuizTakerModal
               open={Boolean(activeQuizModalId)}

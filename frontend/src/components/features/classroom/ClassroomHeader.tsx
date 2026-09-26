@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 interface ClassroomHeaderProps {
@@ -24,29 +24,29 @@ export function ClassroomHeader({
   sidebarOpen,
   onToggleSidebar,
 }: ClassroomHeaderProps) {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang } = useTranslation();
   const overallPercent = Math.round(progress?.stats.overallPercent ?? 0);
   const isCompleted = progress?.courseCompletion.certificateEligible ?? false;
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 sm:px-6 backdrop-blur-md shadow-2xs dark:border-slate-800 dark:bg-slate-900/95">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 px-4 sm:px-6 backdrop-blur shadow-2xs transition-colors duration-200">
       {/* Left: Back button & Course Identity */}
       <div className="flex items-center gap-3 min-w-0">
         <Link
           href="/learner/my-courses"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition shrink-0 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0"
           title="Return to My Courses"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{tBilingual('My Courses', 'የእኔ ኮርሶች')}</span>
         </Link>
 
-        <div className="h-4 w-px bg-slate-200 shrink-0 dark:bg-slate-800" />
+        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition shrink-0 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0"
           title={sidebarOpen ? 'Collapse curriculum sidebar' : 'Expand curriculum sidebar'}
           aria-label="Toggle sidebar"
         >
@@ -58,10 +58,10 @@ export function ClassroomHeader({
         </button>
 
         <div className="min-w-0 flex items-center gap-2">
-          <span className="hidden md:inline-flex font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shrink-0 dark:border-indigo-900/40 dark:bg-indigo-950/40 dark:text-indigo-300">
+          <span className="hidden md:inline-flex font-mono text-[11px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800 shrink-0">
             {course.code}
           </span>
-          <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" title={course.title}>
+          <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate" title={course.title}>
             {course.title}
           </h1>
           <Badge variant="outline" className="hidden lg:inline-flex text-[10px] py-0">
@@ -70,9 +70,9 @@ export function ClassroomHeader({
         </div>
       </div>
 
-      {/* Right: Progress bar & Completion Pill & ThemeToggle & LanguageToggle */}
-      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-        <div className="hidden sm:flex flex-col items-end gap-1 min-w-[140px]">
+      {/* Right: Progress bar & Completion Pill & LanguageToggle */}
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden sm:flex flex-col items-end gap-1 min-w-[140px] mr-1">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>{tBilingual('Progress:', 'እድገት:')}</span>
             <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{overallPercent}%</span>
@@ -83,17 +83,17 @@ export function ClassroomHeader({
         </div>
 
         {isCompleted ? (
-          <Badge variant="green" dot className="text-xs">
+          <Badge variant="green" dot className="text-xs mr-2">
             {tBilingual('Course Passed', 'ኮርሱ ተጠናቋል')}
           </Badge>
         ) : (
-          <Badge variant="blue" dot className="text-xs">
+          <Badge variant="blue" dot className="text-xs mr-2">
             {tBilingual('In Progress', 'በመካሄድ ላይ')}
           </Badge>
         )}
 
-        <ThemeToggle size="sm" />
         <LanguageToggle />
+        <ThemeToggle isAmharic={lang === 'am'} />
       </div>
     </header>
   );

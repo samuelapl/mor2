@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans antialiased text-slate-800 bg-white transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+      <body className="font-sans antialiased text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-950 transition-colors duration-200">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

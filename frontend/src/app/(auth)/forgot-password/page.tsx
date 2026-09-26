@@ -7,15 +7,15 @@ import { ArrowLeft, KeyRound, Loader2, Mail, Send } from 'lucide-react';
 import { forgotPassword } from '@/lib/api/auth';
 import { isValidEmail } from '@/constants/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500';
+  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -30,7 +30,6 @@ export default function ForgotPasswordPage() {
     setSending(true);
     try {
       await forgotPassword(email.trim().toLowerCase());
-      // Pass email via query param so the next page knows where the code was sent
       router.push(`/verify-code?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err) {
       setError(
@@ -44,34 +43,35 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12 transition-colors duration-200 dark:bg-slate-950">
-      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-20" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+      <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <ThemeToggle size="sm" />
         <LanguageToggle />
+        <ThemeToggle isAmharic={lang === 'am'} />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none sm:p-8">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <KeyRound className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {tBilingual('Forgot your password?', 'የይለፍ ቃልዎን ረሱት?')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
               {tBilingual(
-                "Enter your account's email and we'll send a 6-digit verification code.",
-                'የመለያዎን ኢሜይል ያስገቡ እና ባለ 6-አሃዝ የማረጋገጫ ኮድ እንልክልዎታለን።',
+                "Enter your email and we'll send you a 6-digit reset code.",
+                'ኢሜይልዎን ያስገቡ፤ ባለ 6-አሃዝ የይለፍ ቃል መቀየሪያ ኮድ እንልክልዎታለን።',
               )}
             </p>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400">
                 {tBilingual('Email address', 'የኢሜይል አድራሻ')}
               </label>
               <div className="relative">
@@ -81,19 +81,20 @@ export default function ForgotPasswordPage() {
                   type="email"
                   required
                   autoComplete="email"
+                  autoFocus
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setError(null);
                   }}
-                  placeholder="you@domain.gov.et"
+                  placeholder="you@example.com"
                   className={inputClass}
                 />
               </div>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400">
+              <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -101,31 +102,31 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={sending}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             >
               {sending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span>{tBilingual('Sending code…', 'ኮድ በመላክ ላይ…')}</span>
+                  <span>{tBilingual('Sending…', 'በመላክ ላይ…')}</span>
                 </>
               ) : (
                 <>
-                  <span>{tBilingual('Send reset code', 'የዳግም ማስጀመሪያ ኮድ ላክ')}</span>
-                  <Send className="h-4 w-4" />
+                  <span>{tBilingual('Send reset code', 'የመቀየሪያ ኮድ ላክ')}</span>
+                  <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+              className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </main>

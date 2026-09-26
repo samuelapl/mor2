@@ -91,14 +91,14 @@ export function ClassroomSidebar({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-80 sm:w-88 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full overflow-hidden select-none">
+    <aside className="w-80 sm:w-88 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden select-none">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/60 shrink-0">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             {tBilingual('Course Curriculum', 'የኮርስ ስርዓተ-ትምህርት')}
           </p>
-          <span className="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
+          <span className="text-[11px] font-semibold text-slate-500 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
             {tBilingual(`${course.modules.length} Modules`, `${course.modules.length} ሞጁሎች`)}
           </span>
         </div>
@@ -114,7 +114,7 @@ export function ClassroomSidebar({
               'w-full flex items-center justify-between p-3 rounded-xl border text-left transition group',
               isCourseOverviewActive
                 ? 'border-indigo-300 bg-indigo-50/80 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
-                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs',
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs',
             )}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -123,7 +123,7 @@ export function ClassroomSidebar({
                   'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs',
                   isCourseOverviewActive
                     ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-indigo-50 border-indigo-200 text-indigo-700 group-hover:bg-indigo-100',
+                    : 'bg-indigo-50 dark:bg-indigo-900/50 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900',
                 )}
               >
                 <BookOpen className="h-3.5 w-3.5" />
@@ -164,8 +164,8 @@ export function ClassroomSidebar({
               className={cn(
                 'rounded-xl border transition-all overflow-hidden',
                 isUnlocked
-                  ? 'border-slate-200 bg-white shadow-2xs'
-                  : 'border-slate-200/60 bg-slate-50/50 opacity-70',
+                  ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xs'
+                  : 'border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 opacity-70',
               )}
             >
               {/* Module Header Bar */}
@@ -174,7 +174,7 @@ export function ClassroomSidebar({
                 onClick={() => isUnlocked && onToggleModule(mod.id)}
                 disabled={!isUnlocked}
                 className={cn(
-                  'w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/80',
+                  'w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/80 dark:hover:bg-slate-800/80',
                   !isUnlocked && 'cursor-not-allowed',
                 )}
               >
@@ -184,13 +184,13 @@ export function ClassroomSidebar({
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold font-mono border',
                       isUnlocked
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                        : 'bg-slate-100 border-slate-200 text-slate-400',
+                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500',
                     )}
                   >
                     {mIdx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-slate-900 truncate">
+                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                       {tBilingual('Module', 'ሞጁል')} {mIdx + 1}: {cleanModuleTitle(mod.title)}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
@@ -217,7 +217,7 @@ export function ClassroomSidebar({
 
               {/* Module Expanded Content */}
               {isExpanded && isUnlocked ? (
-                <div className="p-2 pt-0 space-y-1.5 border-t border-slate-100 bg-slate-50/40">
+                <div className="p-2 pt-0 space-y-1.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40">
                   {/* Module Overview Item (only if module has description, objectives, or attachments) */}
                   {(() => {
                     const moduleOverviewItem = flatItems.find(
@@ -233,7 +233,7 @@ export function ClassroomSidebar({
                           'w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium',
                           isModOverviewActive
                             ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
-                            : 'text-slate-700 hover:bg-white hover:shadow-2xs',
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xs',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -285,7 +285,7 @@ export function ClassroomSidebar({
                             isLessonActive
                               ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
                               : isLessonUnlocked
-                                ? 'text-slate-700 hover:bg-white hover:shadow-2xs'
+                                ? 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xs'
                                 : 'text-slate-400 cursor-not-allowed',
                           )}
                         >
@@ -336,7 +336,7 @@ export function ClassroomSidebar({
                                     isSubActive
                                       ? 'bg-indigo-50 text-indigo-900 font-semibold ring-1 ring-indigo-400/20'
                                       : isSubUnlocked
-                                        ? 'text-slate-600 hover:bg-white'
+                                        ? 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'
                                         : 'text-slate-400 cursor-not-allowed',
                                   )}
                                 >
@@ -376,8 +376,8 @@ export function ClassroomSidebar({
                                   : lessonQuizItem.unlocked
                                     ? lessonQuizItem.completed
                                       ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70'
-                                      : 'bg-white border-indigo-200 text-indigo-950 hover:bg-indigo-50/60'
-                                    : 'bg-slate-50 border-slate-200/80 text-slate-400 cursor-not-allowed',
+                                      : 'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-900/30'
+                                    : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
                               )}
                             >
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -419,8 +419,8 @@ export function ClassroomSidebar({
                             : moduleQuizItem.unlocked
                               ? moduleQuizItem.completed
                                 ? 'bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100'
-                                : 'bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-950 hover:from-indigo-100'
-                              : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed',
+                                : 'bg-gradient-to-r from-indigo-50 dark:from-indigo-900/20 to-violet-50 dark:to-violet-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:from-indigo-100 dark:hover:from-indigo-900/40'
+                              : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -475,7 +475,7 @@ export function ClassroomSidebar({
                             ? finalItem.completed
                               ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                               : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
-                            : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed opacity-75',
+                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-75',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -550,7 +550,7 @@ export function ClassroomSidebar({
                     ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                     : isUnlocked
                       ? 'bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border-amber-300/80 text-amber-950 hover:border-amber-400 hover:shadow-xs'
-                      : 'bg-slate-50/80 border-slate-200 text-slate-500 hover:bg-slate-100/70',
+                      : 'bg-slate-50/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/80',
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -561,7 +561,7 @@ export function ClassroomSidebar({
                         ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
                         : isUnlocked
                           ? 'bg-amber-100 border-amber-300 text-amber-700'
-                          : 'bg-slate-100 border-slate-200 text-slate-400',
+                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500',
                     )}
                   >
                     <Award className="h-4 w-4 shrink-0" />

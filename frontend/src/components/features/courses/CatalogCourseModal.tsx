@@ -38,7 +38,6 @@ import { fetchLiveSessions } from '@/lib/api/monitoring';
 import type { ApiAssessment, ApiLiveSession } from '@/lib/api/types';
 import { getItemAttachments } from './wizard-components';
 import { isInPersonSession } from '@/lib/session-mode';
-import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CatalogCourseModalProps {
   open: boolean;

@@ -117,19 +117,19 @@ export function Pagination({
       role="navigation"
       aria-label="Pagination Navigation"
       className={cn(
-        'mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 shadow-2xs backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between',
+        'mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-2xs backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
     >
       {/* Information text & Page Size Selector */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
         {showTotal && (
           <div className="flex items-center gap-1 font-medium">
             {totalItems !== undefined && rangeEnd !== null ? (
               isAmharic ? (
                 <span>
-                  ከ <strong className="font-semibold text-slate-800">{totalItems}</strong> ውስጥ{' '}
-                  <strong className="font-semibold text-slate-800">
+                  ከ <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalItems}</strong> ውስጥ{' '}
+                  <strong className="font-semibold text-slate-800 dark:text-slate-200">
                     {rangeStart} - {rangeEnd}
                   </strong>{' '}
                   በማሳየት ላይ
@@ -137,10 +137,10 @@ export function Pagination({
               ) : (
                 <span>
                   Showing{' '}
-                  <strong className="font-semibold text-slate-800">
+                  <strong className="font-semibold text-slate-800 dark:text-slate-200">
                     {rangeStart} - {rangeEnd}
                   </strong>{' '}
-                  of <strong className="font-semibold text-slate-800">{totalItems}</strong> results
+                  of <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalItems}</strong> results
                 </span>
               )
             ) : (
@@ -163,15 +163,15 @@ export function Pagination({
 
         {/* Page Size Selector */}
         {onPageSizeChange && pageSize && (
-          <div className="flex items-center gap-1.5 border-l border-slate-200/90 pl-3 dark:border-slate-800">
-            <span className="text-[11px] text-slate-400">
+          <div className="flex items-center gap-1.5 border-l border-slate-200/90 dark:border-slate-800 pl-3">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
               {isAmharic ? 'በአንድ ገጽ:' : 'Per page:'}
             </span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               aria-label={isAmharic ? 'በአንድ ገጽ የሚታዩ ንጥሎች' : 'Items per page'}
-              className="h-7 cursor-pointer rounded-lg border border-slate-200/90 bg-slate-50/70 px-2 py-0 text-xs font-semibold text-slate-700 outline-none transition hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="h-7 cursor-pointer rounded-lg border border-slate-200/90 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 px-2 py-0 text-xs font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300 outline-none transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/10"
             >
               {resolvedPageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -194,7 +194,7 @@ export function Pagination({
             title={isAmharic ? 'ወደ መጀመሪያው ገጽ' : 'First page'}
             aria-label={isAmharic ? 'ወደ መጀመሪያው ገጽ' : 'First page'}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 dark:text-slate-200 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
               safePage <= 1 ? 'hidden sm:flex' : '',
             )}
           >
@@ -208,7 +208,7 @@ export function Pagination({
           disabled={safePage <= 1}
           onClick={() => onPageChange(safePage - 1)}
           aria-label={isAmharic ? 'ቀዳሚ ገጽ' : 'Previous page'}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-40"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           <span className="hidden xs:inline sm:inline">{isAmharic ? 'ቀዳሚ' : 'Previous'}</span>
@@ -226,7 +226,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.max(1, safePage - 3))}
                     title={isAmharic ? '3 ገጾች ወደ ኋላ ዝለል' : 'Jump back 3 pages'}
                     aria-label="Previous pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 dark:text-slate-300 transition"
                   >
                     •••
                   </button>
@@ -241,7 +241,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.min(totalPages, safePage + 3))}
                     title={isAmharic ? '3 ገጾች ወደ ፊት ዝለል' : 'Jump forward 3 pages'}
                     aria-label="Next pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 dark:text-slate-300 transition"
                   >
                     •••
                   </button>
@@ -260,8 +260,8 @@ export function Pagination({
                   className={cn(
                     'flex h-8 min-w-8 items-center justify-center rounded-xl px-2.5 text-xs font-semibold transition-all duration-150 active:scale-95',
                     isCurrent
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-2xs shadow-indigo-500/25 ring-2 ring-indigo-500/20'
-                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200',
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-500/25 ring-2 ring-indigo-500/20'
+                      : 'border border-transparent text-slate-600 dark:text-slate-300 hover:border-slate-200/80 hover:bg-slate-100 hover:text-slate-900',
                   )}
                 >
                   {item}
@@ -272,7 +272,7 @@ export function Pagination({
         )}
 
         {/* Mobile-only page counter display */}
-        <div className="flex items-center px-2 text-xs font-semibold text-slate-700 sm:hidden dark:text-slate-300">
+        <div className="flex items-center px-2 text-xs font-semibold text-slate-700 sm:hidden">
           {safePage} / {totalPages}
         </div>
 
@@ -282,7 +282,7 @@ export function Pagination({
           disabled={safePage >= totalPages}
           onClick={() => onPageChange(safePage + 1)}
           aria-label={isAmharic ? 'ቀጣይ ገጽ' : 'Next page'}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-slate-600 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-40"
         >
           <span className="hidden xs:inline sm:inline">{isAmharic ? 'ቀጣይ' : 'Next'}</span>
           <ChevronRight className="h-3.5 w-3.5" />
@@ -297,7 +297,7 @@ export function Pagination({
             title={isAmharic ? 'ወደ መጨረሻው ገጽ' : 'Last page'}
             aria-label={isAmharic ? 'ወደ መጨረሻው ገጽ' : 'Last page'}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 dark:text-slate-200 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
               safePage >= totalPages ? 'hidden sm:flex' : '',
             )}
           >

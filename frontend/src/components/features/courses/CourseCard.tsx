@@ -63,7 +63,7 @@ export function CourseCard({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500/80">
             <RichContent inline html={course.code} />
           </p>
-          <h3 className="mt-1 font-display text-base font-bold tracking-tight text-slate-900">
+          <h3 className="mt-1 font-display text-base font-bold tracking-tight text-slate-900 dark:text-white">
             <RichContent inline html={course.title} />
           </h3>
         </div>
@@ -75,20 +75,20 @@ export function CourseCard({
           {extraBadge}
         </div>
       </div>
-      <div className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
+      <div className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
         <RichContent inline html={course.description} />
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
           <BookOpen className="h-3.5 w-3.5 text-indigo-500/70" />
           {course.category}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
           <Clock className="h-3.5 w-3.5 text-indigo-500/70" />
           {durationMin} min
         </span>
         {attachmentCount > 0 ? (
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2 py-1 text-slate-600">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
             <FileText className="h-3.5 w-3.5 text-indigo-500/70" />
             {attachmentCount} {attachmentCount === 1 ? 'file' : 'files'}
           </span>
@@ -100,7 +100,7 @@ export function CourseCard({
       </div>
       {typeof progress === 'number' ? (
         <div className="mt-3 space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-slate-500">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
             <span>Progress</span>
             <span>{Math.round(progress)}%</span>
           </div>

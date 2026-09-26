@@ -23,11 +23,11 @@ import { fetchLandingStats } from '@/lib/api/dashboard';
 import type { ApiLandingStats as LandingStats } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function DashboardPreview({ stats }: { stats: LandingStats | null }) {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang } = useTranslation();
 
   return (
     <div className="relative mx-auto w-full max-w-3xl">
@@ -121,7 +121,7 @@ function DashboardPreview({ stats }: { stats: LandingStats | null }) {
 }
 
 export default function LandingPage() {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [stats, setStats] = useState<LandingStats | null>(null);
 
@@ -287,11 +287,11 @@ export default function LandingPage() {
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white text-slate-600">
-      <div className="pointer-events-none fixed inset-0 bg-hero-gradient opacity-70" />
+    <main className="relative min-h-screen overflow-hidden bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 transition-colors duration-200">
+      <div className="pointer-events-none fixed inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
 
       {/* ---- NAV ---- */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
@@ -302,10 +302,10 @@ export default function LandingPage() {
               className="h-9 w-9 rounded-full object-contain"
             />
             <div className="leading-tight">
-              <p className="font-display text-sm font-bold tracking-tight text-slate-900">
+              <p className="font-display text-sm font-bold tracking-tight text-slate-900 dark:text-white">
                 MoR LMS
               </p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
                 {tBilingual('Learning Management System', 'የስልጠና ማስተዳደሪያ ስርዓት')}
               </p>
             </div>
@@ -315,18 +315,18 @@ export default function LandingPage() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+                className="text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
               >
                 {link.label}
               </a>
             ))}
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle />
             <LanguageToggle />
+            <ThemeToggle isAmharic={lang === 'am'} />
             <Link
               href="/login"
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-700"
             >
               {tBilingual('Sign in', 'ግባ')}
             </Link>
@@ -343,17 +343,17 @@ export default function LandingPage() {
       {/* ---- HERO ---- */}
       <section className="relative px-6 pb-20 pt-16 sm:pt-24">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-medium text-indigo-600">
+          <div className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
             <Landmark className="h-3.5 w-3.5" />
             {tBilingual('Ministry of Revenues · Ethiopia', 'የገቢዎች ሚኒስቴር · ኢትዮጵያ')}
           </div>
-          <h1 className="mt-6 font-display text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-6xl">
+          <h1 className="mt-6 font-display text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-6xl">
             {tBilingual('Modern e-learning for the ', 'ዘመናዊ የኢ-ትምህርት ለ')}
             <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
               {tBilingual('Ministry of Revenues', 'ገቢዎች ሚኒስቴር')}
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-500 sm:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-500 dark:text-slate-400 sm:text-lg">
             {tBilingual(
               'The MoR Learning Management System brings course creation, content approval, live sessions, quizzes, progress tracking and certificates into one connected training platform — built around the way the Ministry of Revenues actually works.',
               'የገቢዎች ሚኒስቴር የስልጠና ማስተዳደሪያ ስርዓት የኮርስ ዝግጅትን፣ የይዘት ማጽደቅን፣ የቀጥታ ስብሰባዎችን፣ ፈተናዎችን፣ የተማሪዎችን ውጤት መከታተያ እና ሰርተፍኬት አሰጣጥን በአንድ ስርዓት የሚያገናኝ ዘመናዊ መድረክ ነው።',
@@ -369,12 +369,12 @@ export default function LandingPage() {
             </Link>
             <a
               href="#how-it-works"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               {tBilingual('See how it works', 'እንዴት እንደሚሰራ ተመልከት')}
             </a>
           </div>
-          <div className="mx-auto mt-10 flex max-w-lg flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
+          <div className="mx-auto mt-10 flex max-w-lg flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-500" />
               {stats
@@ -407,10 +407,10 @@ export default function LandingPage() {
       </section>
 
       {/* ---- ROLES BAND ---- */}
-      <section className="relative border-y border-slate-200 bg-slate-50 px-6 py-16">
+      <section className="relative border-y border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900/50 px-6 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               {tBilingual(
                 'One platform, six roles working together',
                 'አንድ መድረክ፣ ስድስት የጋራ የስራ ድርሻዎች',
@@ -429,7 +429,7 @@ export default function LandingPage() {
               return (
                 <div
                   key={role.title}
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+                  className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md"
                 >
                   <div
                     className={cn(
@@ -439,10 +439,10 @@ export default function LandingPage() {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">
+                  <h3 className="mt-4 font-display text-sm font-semibold text-slate-900 dark:text-slate-200">
                     {role.title}
                   </h3>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{role.description}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{role.description}</p>
                 </div>
               );
             })}
@@ -477,7 +477,7 @@ export default function LandingPage() {
               const Icon = step.icon;
               return (
                 <div key={step.step} className="relative">
-                  <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md">
+                  <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md">
                     <div className="flex items-center justify-between">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
                         <Icon className="h-6 w-6" />
@@ -503,7 +503,7 @@ export default function LandingPage() {
       {/* ---- FAQ ---- */}
       <section
         id="faq"
-        className="relative scroll-mt-20 border-y border-slate-200 bg-slate-50 px-6 py-20"
+        className="relative scroll-mt-20 border-y border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900/50 px-6 py-20"
       >
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
@@ -530,8 +530,8 @@ export default function LandingPage() {
                   className={cn(
                     'overflow-hidden rounded-2xl border transition-all duration-200',
                     open
-                      ? 'border-indigo-200 bg-indigo-50/50 shadow-md'
-                      : 'border-slate-200 bg-white hover:bg-slate-50',
+                      ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 shadow-md'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900',
                   )}
                 >
                   <button
@@ -569,7 +569,7 @@ export default function LandingPage() {
       {/* ---- CTA ---- */}
       <section id="cta" className="relative scroll-mt-20 px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 p-10 text-center sm:p-14">
+          <div className="relative overflow-hidden rounded-3xl border border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-br from-indigo-50 dark:from-indigo-950/40 via-violet-50 dark:via-violet-950/40 to-fuchsia-50 dark:to-fuchsia-950/40 p-10 text-center sm:p-14">
             <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-indigo-200/40 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-violet-200/40 blur-3xl" />
             <div className="relative">
@@ -588,14 +588,14 @@ export default function LandingPage() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/login"
-                  className="group inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 active:scale-[0.97]"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-6 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 dark:hover:bg-white active:scale-[0.97]"
                 >
                   {tBilingual('Get started now', 'አሁን ይጀምሩ')}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   {tBilingual('View demo accounts', 'የሙከራ አካውንቶችን ይመልከቱ')}
                 </Link>
@@ -612,7 +612,7 @@ export default function LandingPage() {
       </section>
 
       {/* ---- FOOTER ---- */}
-      <footer className="relative border-t border-slate-200 px-6 py-10">
+      <footer className="relative border-t border-slate-200 dark:border-slate-800 px-6 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2.5">
             <Image

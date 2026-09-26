@@ -9,9 +9,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     'bg-brand-gradient text-white shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 hover:brightness-110 focus-visible:ring-indigo-400',
   outline:
-    'border border-slate-300 bg-white/70 text-slate-700 shadow-2xs backdrop-blur-xs hover:border-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md focus-visible:ring-slate-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-white',
-  ghost:
-    'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 focus-visible:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200',
+    'border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur hover:border-slate-400 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-700',
+  ghost: 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200 focus-visible:ring-slate-200 dark:focus-visible:ring-slate-700',
   danger:
     'bg-gradient-to-b from-red-500 to-red-600 text-white shadow-md shadow-red-600/20 hover:from-red-500 hover:to-red-500 hover:brightness-110 focus-visible:ring-red-300',
   success:
@@ -49,7 +48,7 @@ export function Button({
       disabled={isDisabled}
       aria-busy={isLoading}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97]',
+        'inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97]',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,
