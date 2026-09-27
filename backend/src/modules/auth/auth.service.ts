@@ -142,7 +142,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Admin-chosen password: no session until the user sets their own via an emailed code.
     if (user.mustChangePassword) {
       return this.startFirstLogin(user);
     }
@@ -150,7 +149,7 @@ export class AuthService {
     return this.createSession(user);
   }
 
-  /** Issues access/refresh tokens for a fully authenticated user and records the login. */
+
   private async createSession(user: UserWithRoles) {
     await this.prisma.user.update({
       where: { id: user.id },
@@ -174,7 +173,7 @@ export class AuthService {
   }
 
   async refresh(dto: RefreshTokenDto) {
-    // Deterministic hash so the stored row can be looked up (a salted bcrypt hash never matches).
+    
     const tokenHash = hashToken(dto.refreshToken);
 
     const stored = await this.prisma.refreshToken.findUnique({
