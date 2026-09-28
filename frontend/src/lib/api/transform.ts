@@ -191,19 +191,21 @@ function bilingual(value?: string | null): string {
 }
 
 export function courseFromApi(course: ApiCourseListItem): Course {
+  const title = course.title || course.titleEn || '';
+  const description = course.description || course.descriptionEn || '';
   return {
     id: course.id,
     code: course.code,
-    title: course.titleEn ?? '',
-    category: course.category || deriveCategory(course.titleEn, course.descriptionEn),
+    title,
+    category: course.category || deriveCategory(title, description),
     department: course.department ?? undefined,
     targetAudience: course.targetAudience ?? undefined,
     deliveryMethod: course.deliveryMethod ?? undefined,
     deliveryMode: course.deliveryMode ?? 'BOTH',
     language: course.language ?? 'en',
     prerequisites: course.prerequisites ?? undefined,
-    objectives: course.objectivesEn || course.objectivesAm || undefined,
-    description: course.descriptionEn ?? '',
+    objectives: course.objectives || course.objectivesEn || course.objectivesAm || undefined,
+    description,
     version: course.version,
     ownerId: course.owners?.[0]?.userId ?? '',
     trainerId: null,
@@ -299,9 +301,9 @@ export function moduleFromApi(mod: ApiModule): Module {
 
   return {
     id: mod.id,
-    title: mod.titleEn ?? '',
-    description: mod.descriptionEn ?? undefined,
-    objectives: mod.objectivesEn || mod.objectivesAm || undefined,
+    title: mod.title || mod.titleEn || '',
+    description: mod.description || mod.descriptionEn || undefined,
+    objectives: mod.objectives || mod.objectivesEn || mod.objectivesAm || undefined,
     durationMinutes: mod.durationMinutes ?? undefined,
     resourceUrl: mod.resourceUrl || (attachments[0]?.url ?? undefined),
     fileName: mod.fileName || (attachments[0]?.name ?? undefined),
@@ -326,8 +328,8 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
 
   return {
     id: lesson.id,
-    title: lesson.titleEn ?? '',
-    content: lesson.contentEn ?? '',
+    title: lesson.title || lesson.titleEn || '',
+    content: lesson.content || lesson.contentEn || '',
     durationMin: lesson.durationMinutes ?? 15,
     unlocked: lesson.unlocked,
     contentType: lesson.contentType,
@@ -362,9 +364,9 @@ export function courseToCreateBody(input: {
 }): CreateCourseBody {
   return {
     code: input.code || 'TBD-000',
-    title: { en: input.title, am: input.title },
-    description: input.description ? { en: input.description, am: input.description } : undefined,
-    objectives: input.objectives ? { en: input.objectives, am: input.objectives } : undefined,
+    title: input.title,
+    description: input.description || undefined,
+    objectives: input.objectives || undefined,
     category: input.category,
     department: input.department,
     targetAudience: input.targetAudience,
@@ -391,9 +393,9 @@ export function courseToUpdateBody(input: {
   level?: Course['level'];
 }): UpdateCourseBody {
   return {
-    title: { en: input.title, am: input.title },
-    description: input.description ? { en: input.description, am: input.description } : undefined,
-    objectives: input.objectives ? { en: input.objectives, am: input.objectives } : undefined,
+    title: input.title,
+    description: input.description || undefined,
+    objectives: input.objectives || undefined,
     category: input.category,
     department: input.department,
     targetAudience: input.targetAudience,
@@ -406,25 +408,35 @@ export function courseToUpdateBody(input: {
 }
 
 export function moduleToCreateBody(input: {
-  titleEn: string;
+  title?: string;
+  titleEn?: string;
   titleAm?: string;
+  description?: string;
   descriptionEn?: string;
+  descriptionAm?: string;
+  objectives?: string;
   objectivesEn?: string;
   objectivesAm?: string;
   durationMinutes?: number;
   attachments?: CreateCurriculumAttachmentBody[];
   lessons?: {
-    titleEn: string;
+    title?: string;
+    titleEn?: string;
     titleAm?: string;
+    content?: string;
     contentEn?: string;
+    contentAm?: string;
     contentType?: BackendLessonContentType;
     durationMinutes?: number;
     resourceUrl?: string;
     attachments?: CreateCurriculumAttachmentBody[];
     subLessons?: {
-      titleEn: string;
+      title?: string;
+      titleEn?: string;
       titleAm?: string;
+      content?: string;
       contentEn?: string;
+      contentAm?: string;
       contentType?: BackendLessonContentType;
       durationMinutes?: number;
       resourceUrl?: string;
@@ -432,34 +444,53 @@ export function moduleToCreateBody(input: {
     }[];
   }[];
 }): CreateModuleBody {
-  const titleAm = input.titleAm ?? input.titleEn;
+  const title = input.title || input.titleEn || '';
+  const description = input.description || input.descriptionEn || undefined;
+  const objectives = input.objectives || input.objectivesEn || undefined;
   return {
-    titleEn: input.titleEn,
-    titleAm,
-    descriptionEn: input.descriptionEn,
-    descriptionAm: input.descriptionEn,
-    objectivesEn: input.objectivesEn,
-    objectivesAm: input.objectivesAm ?? input.objectivesEn,
+    title,
+    titleEn: title,
+    titleAm: input.titleAm || title,
+    description,
+    descriptionEn: description,
+    descriptionAm: input.descriptionAm || description,
+    objectives,
+    objectivesEn: objectives,
+    objectivesAm: input.objectivesAm || objectives,
     durationMinutes: input.durationMinutes,
     attachments: input.attachments,
-    lessons: (input.lessons ?? []).map((l) => ({
-      titleEn: l.titleEn,
-      titleAm: l.titleAm ?? l.titleEn,
-      contentEn: l.contentEn,
-      contentType: l.contentType ?? 'DOCUMENT',
-      durationMinutes: l.durationMinutes,
-      resourceUrl: l.resourceUrl,
-      attachments: l.attachments,
-      subLessons: (l.subLessons ?? []).map((sub) => ({
-        titleEn: sub.titleEn,
-        titleAm: sub.titleAm ?? sub.titleEn,
-        contentEn: sub.contentEn,
-        contentType: sub.contentType ?? 'DOCUMENT',
-        durationMinutes: sub.durationMinutes,
-        resourceUrl: sub.resourceUrl,
-        attachments: sub.attachments,
-      })),
-    })),
+    lessons: (input.lessons ?? []).map((l) => {
+      const lTitle = l.title || l.titleEn || '';
+      const lContent = l.content || l.contentEn || undefined;
+      return {
+        title: lTitle,
+        titleEn: lTitle,
+        titleAm: l.titleAm || lTitle,
+        content: lContent,
+        contentEn: lContent,
+        contentAm: l.contentAm || lContent,
+        contentType: l.contentType ?? 'DOCUMENT',
+        durationMinutes: l.durationMinutes,
+        resourceUrl: l.resourceUrl,
+        attachments: l.attachments,
+        subLessons: (l.subLessons ?? []).map((sub) => {
+          const subTitle = sub.title || sub.titleEn || '';
+          const subContent = sub.content || sub.contentEn || undefined;
+          return {
+            title: subTitle,
+            titleEn: subTitle,
+            titleAm: sub.titleAm || subTitle,
+            content: subContent,
+            contentEn: subContent,
+            contentAm: sub.contentAm || subContent,
+            contentType: sub.contentType ?? 'DOCUMENT',
+            durationMinutes: sub.durationMinutes,
+            resourceUrl: sub.resourceUrl,
+            attachments: sub.attachments,
+          };
+        }),
+      };
+    }),
   };
 }
 

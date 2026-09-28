@@ -11,8 +11,10 @@ import type { ApiUserSummary, ApiVenue } from '@/features/courses';
 export interface ApiLiveSession {
   id: string;
   courseId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
+  description?: string | null;
   descriptionEn: string | null;
   descriptionAm: string | null;
   sessionType: SessionType;
@@ -29,7 +31,7 @@ export interface ApiLiveSession {
   allowViewAttendance: boolean;
   actualStartedAt: string | null;
   actualEndedAt: string | null;
-  course: { id: string; titleEn: string; titleAm: string; code: string } | null;
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string } | null;
   trainer: ApiUserSummary | null;
   venue: ApiVenue | null;
 }
@@ -52,7 +54,7 @@ export interface ApiAttendance {
 
 export interface ApiAttendanceWithSession extends ApiAttendance {
   session: Omit<ApiLiveSession, 'trainer' | 'venue'> & {
-    course: { id: string; titleEn: string; titleAm: string; code: string };
+    course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
   };
 }
 

@@ -78,7 +78,7 @@ export default function LearnerLiveSessionsPage() {
         const course = courses.find((c) => c.id === s.courseId);
         const titleMatch = (s.titleEn || '').toLowerCase().includes(q);
         const codeMatch = (course?.code || s.course?.code || '').toLowerCase().includes(q);
-        const courseTitleMatch = (course?.title || s.course?.titleEn || '')
+        const courseTitleMatch = (course?.title || s.course?.title || s.course?.titleEn || '')
           .toLowerCase()
           .includes(q);
         if (!titleMatch && !codeMatch && !courseTitleMatch) return false;
@@ -90,7 +90,7 @@ export default function LearnerLiveSessionsPage() {
   const rows = useMemo(() => {
     return filteredSessions.map<SessionRow>((session) => ({
       session,
-      courseTitle: session.course?.titleEn || 'Course Session',
+      courseTitle: session.course?.title || session.course?.titleEn || 'Course Session',
       courseCode: session.course?.code || 'TRAINING',
       trainerName: 'Assigned Trainer',
     }));
@@ -310,7 +310,7 @@ export default function LearnerLiveSessionsPage() {
           open={Boolean(activeSession)}
           onClose={() => setActiveSession(null)}
           session={activeSession}
-          courseTitle={activeSession.course?.titleEn || 'Course Training'}
+          courseTitle={activeSession.course?.title || activeSession.course?.titleEn || 'Course Training'}
           courseCode={activeSession.course?.code || 'TRAINING'}
           trainerName={
             activeSession.trainer
@@ -351,7 +351,7 @@ export default function LearnerLiveSessionsPage() {
           onClose={() => setInspectVenueSession(null)}
           venue={inspectVenueSession.venue}
           session={inspectVenueSession}
-          courseTitle={inspectVenueSession.course?.titleEn}
+          courseTitle={inspectVenueSession.course?.title || inspectVenueSession.course?.titleEn}
           courseCode={inspectVenueSession.course?.code}
         />
       ) : null}

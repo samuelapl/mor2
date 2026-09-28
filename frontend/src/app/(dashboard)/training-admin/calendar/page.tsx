@@ -41,7 +41,7 @@ export default function CalendarPage() {
 
   const rows = sessions.map<SessionRow>((session) => ({
     session,
-    courseTitle: session.course.titleEn,
+    courseTitle: session.course.title || session.course.titleEn || session.course.code,
     courseCode: session.course.code,
     trainerName: '—',
   }));

@@ -212,7 +212,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         const course = courseMap.get(s.courseId);
         const titleMatch = (s.titleEn || "").toLowerCase().includes(q);
         const codeMatch = (course?.code || s.course?.code || "").toLowerCase().includes(q);
-        const courseTitleMatch = (course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
+        const courseTitleMatch = (course?.title || s.course?.title || s.course?.titleEn || "").toLowerCase().includes(q);
         const trainerMatch = (trainerNameFor(s) || "").toLowerCase().includes(q);
         if (!titleMatch && !codeMatch && !courseTitleMatch && !trainerMatch) return false;
       }
@@ -234,7 +234,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       const course = session.courseId ? courseMap.get(session.courseId) : undefined;
       return {
         session,
-        courseTitle: course?.title ?? session.course?.titleEn ?? "General Training",
+        courseTitle: course?.title ?? session.course?.title ?? session.course?.titleEn ?? "General Training",
         courseCode: course?.code ?? session.course?.code ?? "GENERAL",
         trainerName: trainerNameFor(session) ?? "Assigned Trainer",
       };
@@ -619,7 +619,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
           open={Boolean(activeJoinSession)}
           onClose={() => setActiveJoinSession(null)}
           session={activeJoinSession}
-          courseTitle={courseMap.get(activeJoinSession.courseId)?.title ?? activeJoinSession.course?.titleEn}
+          courseTitle={courseMap.get(activeJoinSession.courseId)?.title ?? activeJoinSession.course?.title ?? activeJoinSession.course?.titleEn}
           courseCode={courseMap.get(activeJoinSession.courseId)?.code ?? activeJoinSession.course?.code}
           trainerName={
             scope === "own"

@@ -253,7 +253,7 @@ export class AttendanceService {
         session: {
           include: {
             course: {
-              select: { id: true, titleEn: true, titleAm: true, code: true },
+              select: { id: true, title: true, code: true },
             },
           },
         },
@@ -456,7 +456,7 @@ export class AttendanceService {
     const session = await this.prisma.liveSession.findUnique({
       where: { id: sessionId },
       include: {
-        course: { select: { code: true, titleEn: true } },
+        course: { select: { code: true, title: true } },
       },
     });
     if (!session || session.deletedAt) {
@@ -473,7 +473,7 @@ export class AttendanceService {
         titleEn: session.titleEn,
         titleAm: session.titleAm,
         courseCode: session.course?.code || '',
-        courseTitle: session.course?.titleEn || '',
+        courseTitle: session.course?.title || '',
         scheduledAt: session.scheduledAt.toISOString(),
         durationMinutes: session.durationMinutes,
         actualStartedAt: session.actualStartedAt?.toISOString() || null,

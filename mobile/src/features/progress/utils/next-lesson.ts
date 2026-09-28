@@ -2,6 +2,7 @@ import type { CourseProgress } from '../types/progress.types';
 
 export interface NextLesson {
   lessonId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
 }
@@ -18,9 +19,20 @@ export function findNextLesson(progress: CourseProgress | undefined): NextLesson
         const sub = [...lesson.subLessons]
           .sort((a, b) => a.order - b.order)
           .find((s) => s.unlocked && !s.completed);
-        if (sub) return { lessonId: sub.lessonId, titleEn: sub.titleEn, titleAm: sub.titleAm };
+        if (sub)
+          return {
+            lessonId: sub.lessonId,
+            title: sub.title ?? sub.titleEn,
+            titleEn: sub.titleEn,
+            titleAm: sub.titleAm,
+          };
       } else if (lesson.unlocked && !lesson.completed) {
-        return { lessonId: lesson.lessonId, titleEn: lesson.titleEn, titleAm: lesson.titleAm };
+        return {
+          lessonId: lesson.lessonId,
+          title: lesson.title ?? lesson.titleEn,
+          titleEn: lesson.titleEn,
+          titleAm: lesson.titleAm,
+        };
       }
     }
   }

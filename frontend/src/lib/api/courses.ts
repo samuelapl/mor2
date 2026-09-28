@@ -67,13 +67,16 @@ export async function fetchCourseModules(courseId: string): Promise<ApiModule[]>
 export async function createModule(
   courseId: string,
   body: {
-    titleEn: string;
-    titleAm: string;
+    title?: string;
+    titleEn?: string;
+    titleAm?: string;
+    description?: string;
     descriptionEn?: string;
     descriptionAm?: string;
     lessons?: {
-      titleEn: string;
-      titleAm: string;
+      title?: string;
+      titleEn?: string;
+      titleAm?: string;
       contentType?: string;
       durationMinutes?: number;
     }[];
@@ -84,7 +87,7 @@ export async function createModule(
 
 export async function updateModule(
   moduleId: string,
-  body: { titleEn?: string; titleAm?: string; descriptionEn?: string },
+  body: { title?: string; titleEn?: string; titleAm?: string; description?: string; descriptionEn?: string },
 ): Promise<ApiModule> {
   return api<ApiModule>(`modules/${moduleId}`, { method: 'PATCH', body });
 }
@@ -106,8 +109,12 @@ export async function reorderLessons(moduleId: string, lessonIds: string[]): Pro
 export async function createLesson(
   moduleId: string,
   body: {
-    titleEn: string;
-    titleAm: string;
+    title?: string;
+    titleEn?: string;
+    titleAm?: string;
+    content?: string;
+    contentEn?: string;
+    contentAm?: string;
     contentType?: string;
     durationMinutes?: number;
   },

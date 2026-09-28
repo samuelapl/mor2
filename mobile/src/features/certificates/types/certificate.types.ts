@@ -11,5 +11,5 @@ export interface ApiCertificate {
   pdfFileUrl: string | null;
   /** Presigned (1 h) — fetch a fresh one via /download right before downloading. */
   downloadUrl: string | null;
-  course: { id: string; titleEn: string; titleAm: string; code: string };
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
 }

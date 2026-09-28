@@ -125,7 +125,7 @@ export class LiveSessionsService {
           attendanceThreshold: dto.attendanceThreshold ?? 60,
         },
         include: {
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          course: { select: { id: true, title: true, code: true } },
           trainer: {
             select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
           },
@@ -168,7 +168,7 @@ export class LiveSessionsService {
             type: 'SESSION_REMINDER' as any,
             titleEn: `Live Session Scheduled: ${session.titleEn}`,
             titleAm: `የቀጥታ ክፍለ ጊዜ ቅጥር: ${session.titleAm || session.titleEn}`,
-            bodyEn: `A live training session has been scheduled for "${session.course?.titleEn || session.titleEn}" on ${new Date(session.scheduledAt).toLocaleString()}.`,
+            bodyEn: `A live training session has been scheduled for "${session.course?.title || session.titleEn}" on ${new Date(session.scheduledAt).toLocaleString()}.`,
             bodyAm: `ለኮርስዎ የቀጥታ ክፍለ ጊዜ ተቀጥሯል።`,
             metadata: { sessionId: session.id, courseId } as any,
           })),
@@ -221,7 +221,7 @@ export class LiveSessionsService {
             durationMinutes: item.durationMinutes,
           },
           include: {
-            course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+            course: { select: { id: true, title: true, code: true } },
             trainer: {
               select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
             },
@@ -280,7 +280,7 @@ export class LiveSessionsService {
         take: limit,
         orderBy,
         include: {
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          course: { select: { id: true, title: true, code: true } },
           trainer: {
             select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
           },
@@ -307,7 +307,7 @@ export class LiveSessionsService {
     const session = await this.prisma.liveSession.findUnique({
       where: { id },
       include: {
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        course: { select: { id: true, title: true, code: true } },
         trainer: {
           select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
         },
@@ -375,7 +375,7 @@ export class LiveSessionsService {
             dto.attendanceThreshold !== undefined ? dto.attendanceThreshold : undefined,
         },
         include: {
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          course: { select: { id: true, title: true, code: true } },
           trainer: {
             select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
           },
@@ -434,7 +434,7 @@ export class LiveSessionsService {
         take: limit,
         orderBy: { scheduledAt: 'asc' },
         include: {
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          course: { select: { id: true, title: true, code: true } },
           trainer: {
             select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
           },

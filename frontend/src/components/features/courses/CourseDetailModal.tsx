@@ -976,7 +976,7 @@ export function CourseDetailModal({ open, onClose, courseId }: CourseDetailModal
                         placeholder={tBilingual('Untitled Course', 'ያልተሰየመ ኮርስ')}
                       />
                     </h2>
-                    {(course as any).titleAm && !isAmharic ? (
+                    {(course as any).titleAm && (course as any).titleAm !== course.title && !isAmharic ? (
                       <p className="text-sm text-slate-600 font-medium">
                         የስልጠና ርዕስ (አማርኛ): <RichContent inline html={(course as any).titleAm} />
                       </p>

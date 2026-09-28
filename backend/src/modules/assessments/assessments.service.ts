@@ -31,9 +31,9 @@ const STAFF_ROLES = [
 
 const assessmentInclude = {
   attempts: { orderBy: { createdAt: 'asc' } },
-  course: { select: { id: true, titleEn: true, titleAm: true } },
-  module: { select: { id: true, titleEn: true, titleAm: true } },
-  lesson: { select: { id: true, titleEn: true, titleAm: true } },
+  course: { select: { id: true, title: true } },
+  module: { select: { id: true, title: true } },
+  lesson: { select: { id: true, title: true } },
 } satisfies Prisma.AssessmentInclude;
 
 @Injectable()

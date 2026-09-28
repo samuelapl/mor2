@@ -1,6 +1,7 @@
 /** GET /progress/courses/:courseId (spec §6.1). */
 export interface ProgressAssessment {
   id: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   passingScore: number;
@@ -9,6 +10,7 @@ export interface ProgressAssessment {
 
 export interface SubLessonProgress {
   lessonId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   order: number;
@@ -29,6 +31,7 @@ export interface LessonProgress extends Omit<SubLessonProgress, 'assessment'> {
 
 export interface ModuleProgress {
   moduleId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   order: number;

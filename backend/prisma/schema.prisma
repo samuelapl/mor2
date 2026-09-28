@@ -193,10 +193,8 @@ model PasswordReset {
 
 model Course {
   id          String   @id @default(uuid())
-  titleAm     String   @map("title_am")
-  titleEn     String   @map("title_en")
-  descriptionAm String? @map("description_am")
-  descriptionEn String? @map("description_en")
+  title       String   @map("title")
+  description String?  @map("description")
   code        String   @unique // e.g. "CS101"
   version     Int      @default(1) // BR-09: versioning on approval
   thumbnailUrl String? @map("thumbnail_url")
@@ -209,9 +207,7 @@ model Course {
   targetAudience String? @map("target_audience")
   deliveryMethod String? @map("delivery_method")
   deliveryMode   CourseDeliveryMode @default(BOTH) @map("delivery_mode")
-  language    String?  @default("en") @map("language")
-  objectivesAm String? @map("objectives_am")
-  objectivesEn String? @map("objectives_en")
+  objectives  String?  @map("objectives")
   prerequisites String? @map("prerequisites")
 
   // Ownership & approval
@@ -319,12 +315,9 @@ model TrainerAssignment {
 model CurriculumModule {
   id          String   @id @default(uuid())
   courseId     String   @map("course_id")
-  titleAm     String   @map("title_am")
-  titleEn     String   @map("title_en")
-  descriptionAm String? @map("description_am")
-  descriptionEn String? @map("description_en")
-  objectivesAm String? @map("objectives_am")
-  objectivesEn String? @map("objectives_en")
+  title         String   @map("title")
+  description   String?  @map("description")
+  objectives    String?  @map("objectives")
   durationMinutes Int? @map("duration_minutes")
   order       Int
   passingScore Int?    @map("passing_score")
@@ -349,10 +342,8 @@ model Lesson {
   id          String   @id @default(uuid())
   moduleId    String   @map("module_id")
   parentId    String?  @map("parent_id")
-  titleAm     String   @map("title_am")
-  titleEn     String   @map("title_en")
-  contentAm   String?  @map("content_am")
-  contentEn   String?  @map("content_en")
+  title       String   @map("title")
+  content     String?  @map("content")
   contentType LessonContentType @map("content_type")
   durationMinutes Int? @map("duration_minutes")
   order       Int

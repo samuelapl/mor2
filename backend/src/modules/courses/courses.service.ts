@@ -90,6 +90,62 @@ export class CoursesService {
     return requestedStatus ? { AND: [scope, statusFilter] } : scope;
   }
 
+  public formatLessonCompat(les: any) {
+    if (!les) return les;
+    const title = les.title ?? les.titleEn ?? '';
+    const content = les.content ?? les.contentEn ?? null;
+    return {
+      ...les,
+      title,
+      titleEn: title,
+      titleAm: les.titleAm ?? title,
+      content,
+      contentEn: content,
+      contentAm: les.contentAm ?? content,
+      subLessons: (les.subLessons ?? []).map((sub: any) => this.formatLessonCompat(sub)),
+    };
+  }
+
+  public formatModuleCompat(mod: any) {
+    if (!mod) return mod;
+    const title = mod.title ?? mod.titleEn ?? '';
+    const description = mod.description ?? mod.descriptionEn ?? null;
+    const objectives = mod.objectives ?? mod.objectivesEn ?? null;
+    return {
+      ...mod,
+      title,
+      titleEn: title,
+      titleAm: mod.titleAm ?? title,
+      description,
+      descriptionEn: description,
+      descriptionAm: mod.descriptionAm ?? description,
+      objectives,
+      objectivesEn: objectives,
+      objectivesAm: mod.objectivesAm ?? objectives,
+      lessons: (mod.lessons ?? []).map((l: any) => this.formatLessonCompat(l)),
+    };
+  }
+
+  public formatCourseCompat(course: any) {
+    if (!course) return course;
+    const title = course.title ?? course.titleEn ?? '';
+    const description = course.description ?? course.descriptionEn ?? null;
+    const objectives = course.objectives ?? course.objectivesEn ?? null;
+    return {
+      ...course,
+      title,
+      titleEn: title,
+      titleAm: course.titleAm ?? title,
+      description,
+      descriptionEn: description,
+      descriptionAm: course.descriptionAm ?? description,
+      objectives,
+      objectivesEn: objectives,
+      objectivesAm: course.objectivesAm ?? objectives,
+      modules: course.modules ? course.modules.map((m: any) => this.formatModuleCompat(m)) : undefined,
+    };
+  }
+
   async assertCanRead(courseId: string, user: AuthenticatedUser): Promise<void> {
     const course = await this.findById(courseId);
     const roles = this.roleSet(user);
@@ -120,7 +176,7 @@ export class CoursesService {
 
   async findAll(query: PaginationQuery & { status?: CourseStatus }, user: AuthenticatedUser) {
     const { page, limit, skip } = buildPaginationArgs(query);
-    const searchFilter = buildSearchFilter(query.search, ['titleEn', 'titleAm', 'code']);
+    const searchFilter = buildSearchFilter(query.search, ['title', 'code']);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
     const where: Prisma.CourseWhereInput = {
@@ -142,7 +198,8 @@ export class CoursesService {
       this.prisma.course.count({ where }),
     ]);
 
-    return buildPaginatedResponse(courses, total, page, limit);
+    const formatted = courses.map((c) => this.formatCourseCompat(c));
+    return buildPaginatedResponse(formatted, total, page, limit);
   }
 
   async findById(id: string) {
@@ -209,7 +266,7 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    return course;
+    return this.formatCourseCompat(course);
   }
 
   /**
@@ -266,21 +323,20 @@ export class CoursesService {
           lessons: (m.lessons ?? []).map((l: any) => ({
             ...l,
             unlocked: false,
-            contentEn: null,
-            contentAm: null,
+            content: null,
             resourceUrl: null,
             attachments: [],
             subLessons: (l.subLessons ?? []).map((sub: any) => ({
               ...sub,
               unlocked: false,
-              contentEn: null,
-              contentAm: null,
+              content: null,
               resourceUrl: null,
               attachments: [],
             })),
           })),
         }));
-        return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
+        const formattedModules = modules.map((m: any) => this.formatModuleCompat(m));
+        return { modules: formattedModules, lessons: formattedModules.flatMap((m: any) => m.lessons) };
       }
 
       if (course.modules && course.modules.length > 0) {
@@ -316,8 +372,7 @@ export class CoursesService {
               return {
                 ...l,
                 unlocked: lesUnlocked,
-                contentEn: l.contentEn,
-                contentAm: l.contentAm,
+                content: l.content,
                 resourceUrl: l.resourceUrl,
                 attachments: l.attachments,
                 subLessons: (l.subLessons ?? []).map((sub: any) => {
@@ -325,8 +380,7 @@ export class CoursesService {
                   return {
                     ...sub,
                     unlocked: subUnlocked,
-                    contentEn: sub.contentEn,
-                    contentAm: sub.contentAm,
+                    content: sub.content,
                     resourceUrl: sub.resourceUrl,
                     attachments: sub.attachments,
                   };
@@ -336,7 +390,8 @@ export class CoursesService {
           };
         });
 
-        return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
+        const formattedModules = modules.map((m: any) => this.formatModuleCompat(m));
+        return { modules: formattedModules, lessons: formattedModules.flatMap((m: any) => m.lessons) };
       }
     }
 
@@ -353,7 +408,8 @@ export class CoursesService {
         })),
       })),
     }));
-    return { modules, lessons: modules.flatMap((m: any) => m.lessons) };
+    const formattedModules = modules.map((m: any) => this.formatModuleCompat(m));
+    return { modules: formattedModules, lessons: formattedModules.flatMap((m: any) => m.lessons) };
   }
 
   async create(dto: CreateCourseDto, currentUserId: string) {
@@ -367,18 +423,14 @@ export class CoursesService {
     const course = await this.prisma.course.create({
       data: {
         code: dto.code,
-        titleAm: dto.title.am,
-        titleEn: dto.title.en,
-        descriptionAm: dto.description?.am,
-        descriptionEn: dto.description?.en,
-        objectivesAm: dto.objectives?.am,
-        objectivesEn: dto.objectives?.en,
+        title: dto.title,
+        description: dto.description,
+        objectives: dto.objectives,
         category: dto.category,
         department: dto.department,
         targetAudience: dto.targetAudience,
         deliveryMethod: dto.deliveryMethod,
         deliveryMode: dto.deliveryMode ?? CourseDeliveryMode.BOTH,
-        language: dto.language ?? 'en',
         prerequisites: dto.prerequisites,
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
@@ -395,7 +447,7 @@ export class CoursesService {
       include: { owners: { include: { user: true } } },
     });
 
-    return course;
+    return this.formatCourseCompat(course);
   }
 
   async update(id: string, dto: UpdateCourseDto, user: AuthenticatedUser) {
@@ -410,34 +462,26 @@ export class CoursesService {
 
     const data: Prisma.CourseUpdateInput = {};
     if (dto.code) data.code = dto.code;
-    if (dto.title) {
-      data.titleAm = dto.title.am;
-      data.titleEn = dto.title.en;
-    }
-    if (dto.description) {
-      data.descriptionAm = dto.description.am;
-      data.descriptionEn = dto.description.en;
-    }
-    if (dto.objectives) {
-      data.objectivesAm = dto.objectives.am;
-      data.objectivesEn = dto.objectives.en;
-    }
+    if (dto.title) data.title = dto.title;
+    if (dto.description) data.description = dto.description;
+    if (dto.objectives) data.objectives = dto.objectives;
     if (dto.category !== undefined) data.category = dto.category;
     if (dto.department !== undefined) data.department = dto.department;
     if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
     if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
     if (dto.deliveryMode !== undefined) data.deliveryMode = dto.deliveryMode;
-    if (dto.language !== undefined) data.language = dto.language;
     if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
     if (dto.level) data.level = dto.level;
 
-    return this.prisma.course.update({
+    const updated = await this.prisma.course.update({
       where: { id },
       data,
       include: { owners: { include: { user: true } } },
     });
+
+    return this.formatCourseCompat(updated);
   }
 
   async requestApproval(id: string, user: AuthenticatedUser) {
@@ -488,7 +532,7 @@ export class CoursesService {
     });
 
     const ownerIds = course.owners.map((o) => o.userId).filter((uid) => uid !== approverId);
-    const title = course.titleEn || course.titleAm;
+    const title = course.title;
     if (isApprove) {
       await this.notificationsService.sendToMany(
         ownerIds,
@@ -538,7 +582,7 @@ export class CoursesService {
     });
 
     const ownerIds = course.owners.map((o) => o.userId);
-    const title = course.titleEn || course.titleAm;
+    const title = course.title;
     await this.notificationsService.sendToMany(
       ownerIds,
       NotificationType.COURSE_PUBLISHED,

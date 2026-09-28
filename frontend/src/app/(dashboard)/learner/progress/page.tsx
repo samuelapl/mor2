@@ -142,7 +142,7 @@ export default function ProgressPage() {
                             {mod.unlocked === false ? (
                               <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" />
                             ) : null}
-                            {mod.titleEn}
+                            {mod.title || mod.titleEn}
                             <span className="ml-2 text-xs font-normal text-slate-400">
                               {mod.completedLessons}/{mod.totalLessons} lessons
                             </span>
@@ -161,7 +161,7 @@ export default function ProgressPage() {
                                     lesson.unlocked === false ? 'text-slate-400' : 'text-slate-700',
                                   )}
                                 >
-                                  {lesson.titleEn}
+                                  {lesson.title || lesson.titleEn}
                                 </span>
                               </Td>
                               <Td>

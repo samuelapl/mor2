@@ -16,8 +16,10 @@ export interface ApiAssessment {
   moduleId: string | null;
   lessonId: string | null;
   type: AssessmentType;
+  title?: string;
   titleEn: string;
   titleAm: string;
+  description?: string | null;
   descriptionEn: string | null;
   descriptionAm: string | null;
   passingScore: number;
@@ -25,9 +27,9 @@ export interface ApiAssessment {
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
   questions: ApiQuestion[];
-  course: { id: string; titleEn: string; titleAm: string } | null;
-  module: { id: string; titleEn: string; titleAm: string } | null;
-  lesson: { id: string; titleEn: string; titleAm: string } | null;
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string } | null;
+  module: { id: string; title?: string; titleEn?: string; titleAm?: string } | null;
+  lesson: { id: string; title?: string; titleEn?: string; titleAm?: string } | null;
   // ⚠️ The payload also embeds every user's `attempts` — never read it; use GET …/attempts.
 }
 

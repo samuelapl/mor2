@@ -21,12 +21,15 @@ export interface ApiUserSummary {
 export interface ApiCourse {
   id: string;
   code: string;
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string | null;
-  descriptionAm: string | null;
-  objectivesEn: string | null;
-  objectivesAm: string | null;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  description?: string | null;
+  descriptionEn?: string | null;
+  descriptionAm?: string | null;
+  objectives?: string | null;
+  objectivesEn?: string | null;
+  objectivesAm?: string | null;
   thumbnailUrl: string | null;
   status: CourseStatus;
   level: CourseLevel;
@@ -54,8 +57,9 @@ export interface ApiAttachment {
 
 export interface ApiAssessmentSummary {
   id: string;
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
   passingScore: number;
   timeLimitMinutes: number | null;
 }
@@ -66,12 +70,14 @@ export interface ApiCourseLesson {
   moduleId: string;
   parentId: string | null;
   order: number;
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
   contentType: LessonContentType;
   durationMinutes: number | null;
-  contentEn: string | null;
-  contentAm: string | null;
+  content?: string | null;
+  contentEn?: string | null;
+  contentAm?: string | null;
   resourceUrl: string | null;
   unlocked: boolean;
   attachments: ApiAttachment[];
@@ -82,10 +88,15 @@ export interface ApiCourseLesson {
 export interface ApiCourseModule {
   id: string;
   order: number;
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string | null;
-  descriptionAm: string | null;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  description?: string | null;
+  descriptionEn?: string | null;
+  descriptionAm?: string | null;
+  objectives?: string | null;
+  objectivesEn?: string | null;
+  objectivesAm?: string | null;
   durationMinutes: number | null;
   passingScore: number | null;
   unlocked: boolean;
@@ -151,8 +162,9 @@ export interface SelfEnrollBody {
 export interface ApiCourseSession {
   id: string;
   courseId: string;
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
   sessionType: SessionType;
   platform: SessionPlatform;
   status: SessionStatus;

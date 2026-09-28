@@ -68,7 +68,7 @@ export class VenuesService {
             course: {
               select: {
                 id: true,
-                titleEn: true,
+                title: true,
                 code: true,
               },
             },

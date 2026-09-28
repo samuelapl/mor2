@@ -45,8 +45,8 @@ interface QuestionSeed {
 }
 
 interface AssessmentSeed {
-  titleEn: string;
-  titleAm: string;
+  title: string;
+  description?: string;
   descriptionEn?: string;
   descriptionAm?: string;
   passingScore: number;
@@ -60,37 +60,30 @@ interface AttachmentSeed {
 }
 
 interface SubLessonSeed {
-  titleEn: string;
-  titleAm: string;
+  title: string;
   contentType: LessonContentType;
   durationMinutes: number;
   order: number;
-  contentEn: string;
-  contentAm: string;
+  content: string;
   attachment: AttachmentSeed;
   assessment?: AssessmentSeed;
 }
 
 interface LessonSeed {
-  titleEn: string;
-  titleAm: string;
+  title: string;
   contentType: LessonContentType;
   durationMinutes: number;
   order: number;
-  contentEn: string;
-  contentAm: string;
+  content: string;
   attachment: AttachmentSeed;
   assessment: AssessmentSeed;
   subLessons?: SubLessonSeed[];
 }
 
 interface ModuleSeed {
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string;
-  descriptionAm: string;
-  objectivesEn: string;
-  objectivesAm: string;
+  title: string;
+  description: string;
+  objectives: string;
   order: number;
   attachment: AttachmentSeed;
   assessment: AssessmentSeed;
@@ -99,10 +92,8 @@ interface ModuleSeed {
 
 interface CourseSeed {
   code: string;
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string;
-  descriptionAm: string;
+  title: string;
+  description: string;
   level: CourseLevel;
   status: CourseStatus;
   deliveryMode?: CourseDeliveryMode;
@@ -111,8 +102,7 @@ interface CourseSeed {
   department: string;
   targetAudience: string;
   deliveryMethod: string;
-  objectivesEn: string;
-  objectivesAm: string;
+  objectives: string;
   prerequisites: string;
   approvalComments?: string;
   modules: ModuleSeed[];
@@ -150,11 +140,9 @@ const courseSeeds: CourseSeed[] = [
   // ─────────────────────────────────────────────────────────
   {
     code: 'EXCEL201',
-    titleEn: 'Advanced Excel & Data Analytics for Revenue Reporting',
-    titleAm: 'የላቀ Excel እና የመረጃ ትንተና ለገቢዎች ሪፖርት',
-    descriptionEn:
+    title: 'Advanced Excel & Data Analytics for Revenue Reporting',
+    description:
       'Master lookup formulas, data validation, PivotTables, and automated dashboards to transform raw revenue transaction data into decision-ready reports.',
-    descriptionAm: 'የፍለጋ ቀመሮችን፣ የመረጃ ማረጋገጫን፣ ፒቮት ሠንጠረዦችን እና ራስ-ሰር ዳሽቦርዶችን በመጠቀም ጥሬ የገቢ መረጃን ወደ ውሳኔ ዝግጁ ሪፖርት መቀየር።',
     level: CourseLevel.INTERMEDIATE,
     status: CourseStatus.DRAFT,
     deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
@@ -163,26 +151,21 @@ const courseSeeds: CourseSeed[] = [
     department: 'ICT & Digital Transformation Directorate',
     targetAudience: 'Revenue officers, branch accountants, and reporting analysts who use Excel daily',
     deliveryMethod: 'Self-paced e-learning with downloadable practice workbooks',
-    objectivesEn:
+    objectives:
       'Build accurate lookup formulas, enforce clean data entry with validation rules, summarize large datasets with PivotTables, and publish automated dashboards.',
-    objectivesAm: 'ትክክለኛ የፍለጋ ቀመሮችን መገንባት፣ በማረጋገጫ ደንቦች ንጹህ ውሂብ ማስገባትን ማረጋገጥ እና በፒቮት ሠንጠረዦች ትልቅ ውሂብን ማጠቃለል።',
     prerequisites: 'CS101 Computer Basics or equivalent familiarity with spreadsheet navigation',
     approvalComments: '',
     modules: [
       {
-        titleEn: 'Module 1: Formulas, Lookup Functions & Data Validation',
-        titleAm: 'ሞዱል 1፡ ቀመሮች፣ የፍለጋ ተግባራት እና የመረጃ ማረጋገጫ',
-        descriptionEn:
+        title: 'Module 1: Formulas, Lookup Functions & Data Validation',
+        description:
           'Build precise, auditable formulas for cross-referencing taxpayer records and protect worksheets from invalid entries before they reach a report.',
-        descriptionAm: 'ለግብር ከፋዮች መዝገቦች ትክክለኛ ቀመሮችን መገንባት እና ልክ ያልሆኑ ግቤቶች ወደ ሪፖርት ከመድረሳቸው በፊት መከላከል።',
-        objectivesEn: 'Apply VLOOKUP, INDEX-MATCH, and nested IF logic; configure data validation and error-proofing rules.',
-        objectivesAm: 'VLOOKUP፣ INDEX-MATCH እና የተጠላለፉ IF ቀመሮችን መጠቀም፤ የመረጃ ማረጋገጫ ደንቦችን ማዋቀር።',
+        objectives: 'Apply VLOOKUP, INDEX-MATCH, and nested IF logic; configure data validation and error-proofing rules.',
         order: 0,
         attachment: pdf('Module 1 - Formulas & Validation Reference Guide.pdf'),
         assessment: {
-          titleEn: 'Module 1 Knowledge Check: Formulas & Validation',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ቀመሮች እና ማረጋገጫ',
-          descriptionEn: 'Checks understanding of lookup formulas and data validation before moving to PivotTables.',
+          title: 'Module 1 Knowledge Check: Formulas & Validation',
+          description: 'Checks understanding of lookup formulas and data validation before moving to PivotTables.',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -195,12 +178,11 @@ const courseSeeds: CourseSeed[] = [
         },
         lessons: [
           {
-            titleEn: '1.1 Mastering VLOOKUP, INDEX-MATCH & Nested Formulas',
-            titleAm: '1.1 VLOOKUP፣ INDEX-MATCH እና የተጠላለፉ ቀመሮችን ማወቅ',
+            title: '1.1 Mastering VLOOKUP, INDEX-MATCH & Nested Formulas',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 0,
-            contentEn: `## Why Lookup Formulas Matter in Revenue Reporting
+            content: `## Why Lookup Formulas Matter in Revenue Reporting
 Revenue offices maintain taxpayer registers, payment logs, and branch summaries in separate worksheets. Lookup formulas let you pull the right value from the right row automatically instead of manually cross-checking thousands of rows.
 
 ## Key Formulas
@@ -210,12 +192,9 @@ Revenue offices maintain taxpayer registers, payment logs, and branch summaries 
 
 ## Practical Tip
 Always lock the table array with absolute references (\`$A$2:$D$500\`) before copying a lookup formula down a column, otherwise the range shifts and produces wrong results.`,
-            contentAm: `### ማጠቃለያ
-የፍለጋ ቀመሮች (VLOOKUP, INDEX-MATCH) ከተለያዩ ሉሆች ትክክለኛ ውሂብን በራስ-ሰር ለማምጣት ያገለግላሉ። INDEX-MATCH ከVLOOKUP የላቀ ተለዋዋጭነት አለው። የፍርድ ክልልን በ$ ምልክት ማጠናከር ስህተቶችን ይከላከላል።`,
             attachment: pdf('Lesson 1.1 - VLOOKUP & INDEX-MATCH Worksheet.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check: Lookup Formulas',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ የፍለጋ ቀመሮች',
+              title: 'Lesson 1.1 Check: Lookup Formulas',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -228,12 +207,11 @@ Always lock the table array with absolute references (\`$A$2:$D$500\`) before co
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Cross-Referencing Taxpayer Ledgers with INDEX-MATCH',
-                titleAm: 'ተግባራዊ ላብ፡ በINDEX-MATCH የግብር ከፋዮች መዝገቦችን ማገናዘብ',
+                title: 'Practical Lab: Cross-Referencing Taxpayer Ledgers with INDEX-MATCH',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 You have two worksheets: "Payments" (TIN, Amount, Date) and "Registry" (TIN, Taxpayer Name, Branch). Your task is to build a consolidated report showing each payment alongside the taxpayer name and branch.
 
 ## Steps
@@ -243,12 +221,9 @@ You have two worksheets: "Payments" (TIN, Amount, Date) and "Registry" (TIN, Tax
 
 ## Deliverable
 A reconciled payments report with zero unresolved TIN mismatches, ready for the attached reference PDF's sign-off checklist.`,
-                contentAm: `### የላብ ሁኔታ
-ሁለት ሉሆችን (ክፍያዎች እና መዝገብ) በTIN በማገናኘት የተጠቃለለ ሪፖርት መገንባት። INDEX-MATCH ቀመርን በIFERROR በመጠቅለል ያልተገናኙ TIN ቁጥሮችን ምልክት ማድረግ እና ከሪፖርቱ በፊት ማረም ያስፈልጋል።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Cross-Reference Lab Data Pack.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.1.1 Check: Cross-Referencing Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የማገናዘብ ላብ',
+                  title: 'Sub-Lesson 1.1.1 Check: Cross-Referencing Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -263,12 +238,11 @@ A reconciled payments report with zero unresolved TIN mismatches, ready for the 
             ],
           },
           {
-            titleEn: '1.2 Data Validation Rules & Error-Proofing Revenue Worksheets',
-            titleAm: '1.2 የመረጃ ማረጋገጫ ደንቦች እና ስህተት መከላከል',
+            title: '1.2 Data Validation Rules & Error-Proofing Revenue Worksheets',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 1,
-            contentEn: `## Preventing Bad Data at the Source
+            content: `## Preventing Bad Data at the Source
 Revenue worksheets are only as reliable as the data typed into them. Data Validation stops invalid entries before they contaminate downstream formulas and reports.
 
 ## Common Validation Rules
@@ -279,12 +253,9 @@ Revenue worksheets are only as reliable as the data typed into them. Data Valida
 
 ## Auditing Existing Data
 Use *Data > Data Validation > Circle Invalid Data* to visually flag rows that already violate a rule you just applied to a legacy worksheet, before you rely on it for reporting.`,
-            contentAm: `### ስህተት መከላከል
-የመረጃ ማረጋገጫ ልክ ያልሆኑ ግቤቶችን ከመነሻቸው ይከለክላል። የዝርዝር ማረጋገጫ የቅርንጫፍ ኮዶችን የፊደል ስህተት ይከላከላል፤ Custom Formula የTIN ርዝመትን ያረጋግጣል።`,
             attachment: pdf('Lesson 1.2 - Data Validation Rules Cheat Sheet.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.2 Check: Data Validation',
-              titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ የመረጃ ማረጋገጫ',
+              title: 'Lesson 1.2 Check: Data Validation',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -297,12 +268,11 @@ Use *Data > Data Validation > Circle Invalid Data* to visually flag rows that al
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Building Branch Dropdown Menus & Tax ID Length Restraints',
-                titleAm: 'ተግባራዊ ላብ፡ የቅርንጫፍ ተቆልቋይ ዝርዝር እና የTIN ርዝመት ገደቦችን መገንባት',
+                title: 'Practical Lab: Building Branch Dropdown Menus & Tax ID Length Restraints',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Objective
+                content: `## Lab Objective
 Configure a template spreadsheet that forces entry clerks to pick from 10 approved Ministry regional branches and type only exactly 10-digit TIN numbers.
 
 ## Procedure
@@ -310,12 +280,9 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
 2. Select Column A (TIN) and apply Custom Validation with the formula \`=AND(ISNUMBER(--A2), LEN(A2)=10)\`.
 3. Configure the Error Alert style to "Stop", with title "Invalid TIN Format" and message "TIN must consist of exactly 10 numeric digits."
 4. Test by entering 9 digits, letters, and 10 digits to verify that invalid entries are rejected.`,
-                contentAm: `### የላብ ዓላማ
-የቅርንጫፍ ተቆልቋይ ዝርዝር እና የ10 አሃዝ TIN ማረጋገጫ ማዋቀር። ስህተት ሲገባ ስርዓቱ Stop alert እንዲያሳይ ማድረግ።`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Data Validation Practice Workbook.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.2.1 Check: Validation Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.2.1 ማረጋገጫ፡ የማረጋገጫ ላብ',
+                  title: 'Sub-Lesson 1.2.1 Check: Validation Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -332,17 +299,13 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
         ],
       },
       {
-        titleEn: 'Module 2: PivotTables, Dashboards & Automated Reporting',
-        titleAm: 'ሞዱል 2፡ ፒቮት ሠንጠረዦች፣ ዳሽቦርዶች እና ራስ-ሰር ሪፖርት',
-        descriptionEn: 'Turn thousands of transaction rows into a one-page monthly revenue summary that updates itself.',
-        descriptionAm: 'ሺዎች የግብይት ረድፎችን ራሱ ወደሚያዘምን የወርሃዊ ገቢ ማጠቃለያ ገጽ መቀየር።',
-        objectivesEn: 'Build PivotTables with slicers and timelines; design dashboards using conditional formatting and charts.',
-        objectivesAm: 'ከመቁረጫዎች እና የጊዜ መስመሮች ጋር ፒቮት ሠንጠረዦችን መገንባት፤ በሁኔታዊ ቅርጸት እና ገበታዎች ዳሽቦርዶችን መንደፍ።',
+        title: 'Module 2: PivotTables, Dashboards & Automated Reporting',
+        description: 'Turn thousands of transaction rows into a one-page monthly revenue summary that updates itself.',
+        objectives: 'Build PivotTables with slicers and timelines; design dashboards using conditional formatting and charts.',
         order: 1,
         attachment: pdf('Module 2 - PivotTable & Dashboard Reference Guide.pdf'),
         assessment: {
-          titleEn: 'Module 2 Knowledge Check: PivotTables & Dashboards',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ ፒቮት ሠንጠረዦች እና ዳሽቦርዶች',
+          title: 'Module 2 Knowledge Check: PivotTables & Dashboards',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -357,12 +320,11 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
         },
         lessons: [
           {
-            titleEn: '2.1 Building Dynamic PivotTables with Slicers & Timelines',
-            titleAm: '2.1 ተለዋዋጭ ፒቮት ሠንጠረዦችን ከመቁረጫዎች እና የጊዜ መስመር ጋር መገንባት',
+            title: '2.1 Building Dynamic PivotTables with Slicers & Timelines',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 0,
-            contentEn: `## The Power of PivotTables
+            content: `## The Power of PivotTables
 A revenue report that requires manual formulas across 50,000 transactions takes hours to build and breaks easily. PivotTables generate total revenue by tax type, branch, and payment channel in seconds.
 
 ## Building the Table
@@ -382,12 +344,9 @@ When source data changes, right-click the PivotTable and choose "Refresh" — th
 ## Interactive Controls
 - **Slicers**: enable managers to filter the summary by Branch or Tax Type with a single click.
 - **Timelines**: let analysts slide across fiscal quarters or months without typing date filters.`,
-            contentAm: `### ማጠቃለያ
-ፒቮት ሠንጠረዦች በሺዎች የሚቆጠሩ ግብይቶችን በደቂቃዎች ውስጥ ያጠቃልላሉ። ምንጭ ውሂቡን በሰንጠረዥ (Ctrl+T) ማዘጋጀት አዳዲስ ረድፎች በራስ-ሰር እንዲካተቱ ይረዳል። መቁረጫዎች (Slicers) ፈጣን ማጣሪያ ይሰጣሉ።`,
             attachment: pdf('Lesson 2.1 - PivotTable Architecture Guide.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: PivotTable Architecture',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ የፒቮት ሠንጠረዥ ግንባታ',
+              title: 'Lesson 2.1 Check: PivotTable Architecture',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -400,12 +359,11 @@ When source data changes, right-click the PivotTable and choose "Refresh" — th
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Slicers, Timelines & Drill-Down Dashboards',
-                titleAm: 'ተግባራዊ ላብ፡ መቁረጫዎች፣ የጊዜ መስመሮች እና ዳሽቦርድ ማጥለቅ',
+                title: 'Practical Lab: Slicers, Timelines & Drill-Down Dashboards',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Starting from the PivotTable built in the previous lesson, add interactivity so a branch manager can explore the data without touching a formula.
 
 ## Steps
@@ -416,12 +374,9 @@ Starting from the PivotTable built in the previous lesson, add interactivity so 
 
 ## Deliverable
 An interactive one-page dashboard where clicking "Addis Ababa Branch" and dragging the timeline instantly recalculates every linked PivotTable.`,
-                contentAm: `### የላብ ሁኔታ
-መቁረጫዎችን (Slicers) እና የጊዜ መስመርን (Timeline) በመጨመር የቅርንጫፍ ሀላፊ ያለ ቀመር ውሂብን እንዲመረምር ማስቻል። Grand Total ላይ ድርብ-ጠቅ ማድረግ ለኦዲት የሚረዳ ዝርዝር ረድፎችን ያሳያል።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Slicer & Timeline Lab Pack.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Slicers & Timelines',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ መቁረጫዎች እና የጊዜ መስመሮች',
+                  title: 'Sub-Lesson 2.1.1 Check: Slicers & Timelines',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -436,12 +391,11 @@ An interactive one-page dashboard where clicking "Addis Ababa Branch" and draggi
             ],
           },
           {
-            titleEn: '2.2 Designing Automated Dashboards with Conditional Formatting & Charts',
-            titleAm: '2.2 ራስ-ሰር ዳሽቦርዶችን በሁኔታዊ ቅርጸት እና ገበታዎች መንደፍ',
+            title: '2.2 Designing Automated Dashboards with Conditional Formatting & Charts',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 1,
-            contentEn: `## Turning Numbers into a Visual Story
+            content: `## Turning Numbers into a Visual Story
 A well-designed dashboard lets a director understand collection performance in seconds, not minutes. An executive dashboard consolidates critical metrics onto a single screen that requires no horizontal or vertical scrolling.
 
 ## Conditional Formatting for Alerts
@@ -455,12 +409,9 @@ A well-designed dashboard lets a director understand collection performance in s
 - **Combo Chart**: showing actual revenue as columns against a target line for immediate gap visibility.
 
 Keep dashboards to a single printable page — link charts directly to the PivotTable so the entire dashboard refreshes with one click.`,
-            contentAm: `### ማጠቃለያ
-ሁኔታዊ ቅርጸት (Conditional Formatting) ከፍተኛ እና ዝቅተኛ የመሰብሰብ መጠኖችን በቀለም ያሳያል። Combo Chart ትክክለኛ ገቢን ከግብ ጋር በማነጻጸር ክፍተትን ወዲያውኑ ያሳያል። ዳሽቦርድ በአንድ ገጽ ላይ ተጠቃሎ ሊታይ ይገባል።`,
             attachment: pdf('Lesson 2.2 - Dashboard Design Reference.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.2 Check: Dashboard Design',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የዳሽቦርድ ንድፍ',
+              title: 'Lesson 2.2 Check: Dashboard Design',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -473,24 +424,20 @@ Keep dashboards to a single printable page — link charts directly to the Pivot
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Assembling the Directorate One-Page Dashboard',
-                titleAm: 'ተግባራዊ ላብ፡ የዳይሬክቶሬት አንድ ገጽ ዳሽቦርድ ማገጣጠም',
+                title: 'Practical Lab: Assembling the Directorate One-Page Dashboard',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Create the official MoR Revenue Directorate Monthly One-Pager:
 1. Hide gridlines on the dashboard worksheet (*View > Show > Gridlines unchecked*).
 2. Insert 3 summary KPI cards at the top: Total Revenue, MoM Growth %, and Average Daily Collection.
 3. Embed a clustered column chart for monthly trends and a bar chart for branch rankings.
 4. Add synchronized Slicers for Directorate, Branch, and Quarter at the left margin.
 5. Protect the sheet to lock layout while allowing Slicer interactions.`,
-                contentAm: `### የላብ ሁኔታ
-የወርሃዊ ገቢ ዳሽቦርድ ማገጣጠም፡ የመመሪያ መስመሮችን ማጥፋት፣ 3 KPI ካርዶች ማስቀመጥ፣ ገበታዎችን ማገናኘት እና የSlicer አጠቃቀምን መፍቀድ።`,
                 attachment: pdf('Sub-Lesson 2.2.1 - One-Page Dashboard Template.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.2.1 Check: Directorate Dashboard Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.2.1 ማረጋገጫ፡ የዳሽቦርድ ማገጣጠም ላብ',
+                  title: 'Sub-Lesson 2.2.1 Check: Directorate Dashboard Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -508,8 +455,7 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Comprehensive Assessment: Advanced Excel Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የላቀ Excel ሰርተፊኬት ምዘና',
+      title: 'Final Comprehensive Assessment: Advanced Excel Certification',
       passingScore: 75,
       timeLimitMinutes: 30,
       questions: [
@@ -528,11 +474,9 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
   // ─────────────────────────────────────────────────────────
   {
     code: 'PROJ201',
-    titleEn: 'Project Management Essentials for Government Programs',
-    titleAm: 'የመንግስት ፕሮግራሞች የፕሮጀክት አስተዳደር መሰረታዊ',
-    descriptionEn:
+    title: 'Project Management Essentials for Government Programs',
+    description:
       'Plan, schedule, budget, and monitor public-sector projects using charters, WBS, Gantt scheduling, and earned value tracking.',
-    descriptionAm: 'የመንግስት ፕሮጀክቶችን በቻርተር፣ በWBS፣ በGantt መርሃግብር እና በEarned Value ክትትል ማቀድ፣ መርሃግብር ማውጣት እና መከታተል።',
     level: CourseLevel.INTERMEDIATE,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.BOTH,
@@ -541,24 +485,19 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
     department: 'Strategic Planning Directorate',
     targetAudience: 'Project coordinators, branch managers, and directorate focal persons who lead improvement initiatives',
     deliveryMethod: 'Blended: self-paced modules plus a live capstone review session',
-    objectivesEn:
+    objectives:
       'Draft a project charter, map stakeholders with a RACI matrix, build a work breakdown structure and schedule, and track budget variance using earned value.',
-    objectivesAm: 'የፕሮጀክት ቻርተር ማርቀቅ፣ በRACI ባለድርሻ አካላትን መለየት፣ WBS እና መርሃግብር መገንባት እና በEarned Value በጀት ልዩነትን መከታተል።',
     prerequisites: 'None — designed for first-time project leads',
     approvalComments: 'Submitted for final review by the Strategic Planning Committee. All curriculum materials prepared.',
     modules: [
       {
-        titleEn: 'Module 1: Project Initiation, Charters & Stakeholder Mapping',
-        titleAm: 'ሞዱል 1፡ የፕሮጀክት ጅምር፣ ቻርተሮች እና ባለድርሻ አካላት መለየት',
-        descriptionEn: 'Turn a vague mandate into a documented charter with clear scope, objectives, and accountable stakeholders.',
-        descriptionAm: 'ግልጽ ያልሆነ ሀላፊነትን ወደ ግልጽ ወሰን፣ ግቦች እና ተጠያቂ ባለድርሻ አካላት ወዳለው ሰነድ መቀየር።',
-        objectivesEn: 'Draft a project charter and apply the RACI matrix to clarify stakeholder responsibilities.',
-        objectivesAm: 'የፕሮጀክት ቻርተር ማርቀቅ እና በRACI ማትሪክስ ሀላፊነቶችን ግልጽ ማድረግ።',
+        title: 'Module 1: Project Initiation, Charters & Stakeholder Mapping',
+        description: 'Turn a vague mandate into a documented charter with clear scope, objectives, and accountable stakeholders.',
+        objectives: 'Draft a project charter and apply the RACI matrix to clarify stakeholder responsibilities.',
         order: 0,
         attachment: pdf('Module 1 - Charter & Stakeholder Toolkit.pdf'),
         assessment: {
-          titleEn: 'Module 1 Knowledge Check: Initiation & Stakeholders',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ጅምር እና ባለድርሻ አካላት',
+          title: 'Module 1 Knowledge Check: Initiation & Stakeholders',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -571,12 +510,11 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
         },
         lessons: [
           {
-            titleEn: '1.1 Defining Scope, Objectives & the Project Charter',
-            titleAm: '1.1 ወሰን፣ ግቦች እና የፕሮጀክት ቻርተርን መግለጽ',
+            title: '1.1 Defining Scope, Objectives & the Project Charter',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
             order: 0,
-            contentEn: `## Why Projects Fail Before They Start
+            content: `## Why Projects Fail Before They Start
 Most public-sector project failures trace back to an undocumented or ambiguous scope. A Project Charter fixes this by putting the mandate in writing before any work begins.
 
 ## Core Charter Elements
@@ -588,12 +526,9 @@ Most public-sector project failures trace back to an undocumented or ambiguous s
 
 ## Government Context
 A charter for a district tax-office renovation should explicitly state whether IT infrastructure upgrades are in scope — ambiguity here is the single most common cause of budget overruns in facility projects.`,
-            contentAm: `### ማጠቃለያ
-የፕሮጀክት ቻርተር ዓላማን፣ SMART ግቦችን፣ የወሰን ክልልን እና ስፖንሰሩን በጽሁፍ ያስቀምጣል። ግልጽ ያልሆነ ወሰን የበጀት ብልጫ ዋነኛ መንስኤ ነው።`,
             attachment: pdf('Lesson 1.1 - Charter Template & Example.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check: Charter Fundamentals',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ የቻርተር መሰረታዊ',
+              title: 'Lesson 1.1 Check: Charter Fundamentals',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -606,12 +541,11 @@ A charter for a district tax-office renovation should explicitly state whether I
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Drafting a Charter for a District Tax-Office Renovation Project',
-                titleAm: 'ተግባራዊ ላብ፡ ለወረዳ ግብር ጽ/ቤት እድሳት ፕሮጀክት ቻርተር ማርቀቅ',
+                title: 'Practical Lab: Drafting a Charter for a District Tax-Office Renovation Project',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Your district tax office needs renovation: a new public service counter, accessible ramps, and an upgraded network cabinet. Draft a one-page charter.
 
 ## Steps
@@ -622,12 +556,9 @@ Your district tax office needs renovation: a new public service counter, accessi
 
 ## Deliverable
 A completed one-page charter using the attached template, ready for sponsor sign-off.`,
-                contentAm: `### የላብ ሁኔታ
-ለወረዳ ግብር ጽ/ቤት እድሳት የአንድ ገጽ ቻርተር ማርቀቅ፡ ዓላማ፣ SMART ግቦች፣ የወሰን ውስጥ እና ውጭ ዝርዝሮች እና ስፖንሰር በመግለጽ።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Renovation Charter Lab Template.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.1.1 Check: Charter Drafting Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የቻርተር ማርቀቅ ላብ',
+                  title: 'Sub-Lesson 1.1.1 Check: Charter Drafting Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -642,12 +573,11 @@ A completed one-page charter using the attached template, ready for sponsor sign
             ],
           },
           {
-            titleEn: '1.2 Stakeholder Analysis & the RACI Responsibility Matrix',
-            titleAm: '1.2 ባለድርሻ አካላት ትንተና እና የRACI ተጠያቂነት ማትሪክስ',
+            title: '1.2 Stakeholder Analysis & the RACI Responsibility Matrix',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
-            contentEn: `## Identifying Who Matters
+            content: `## Identifying Who Matters
 A stakeholder is anyone who affects, or is affected by, the project — from the Regional Director to the citizens waiting in the renovated service hall.
 
 ## Power-Interest Grid
@@ -659,12 +589,9 @@ Map each stakeholder on two axes:
 
 ## The RACI Matrix
 For every major task, assign exactly one **Accountable** owner, one or more **Responsible** doers, and note who is **Consulted** (two-way input) versus merely **Informed** (one-way update). Ambiguity between Responsible and Accountable is the most common cause of dropped tasks in multi-directorate projects.`,
-            contentAm: `### ማጠቃለያ
-ባለድርሻ አካላትን በሀይል-ፍላጎት ፍርግርግ መለየት እና በRACI ማትሪክስ ለእያንዳንዱ ተግባር አንድ ተጠያቂ (Accountable) እና ተከናዋኞችን (Responsible) መመደብ ያስፈልጋል።`,
             attachment: pdf('Lesson 1.2 - Stakeholder & RACI Worksheet.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.2 Check: Stakeholders & RACI',
-              titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ ባለድርሻ አካላት እና RACI',
+              title: 'Lesson 1.2 Check: Stakeholders & RACI',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -677,24 +604,20 @@ For every major task, assign exactly one **Accountable** owner, one or more **Re
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Mapping Regional Tax Directorate Stakeholders',
-                titleAm: 'ተግባራዊ ላብ፡ የክልል ግብር ዳይሬክቶሬት ባለድርሻ አካላትን ማትሪክስ ማዘጋጀት',
+                title: 'Practical Lab: Mapping Regional Tax Directorate Stakeholders',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Support, Regional Director, Tax Audit Lead, Local Traders Association, Ministry PR Officer, Finance Clerk, and Call Center Supervisor.
 
 ## Steps
 1. Place each of the 8 stakeholders into the 4 quadrants of the Power-Interest Grid.
 2. Build a RACI table with 5 rows: System Configuration, User Training, Citizen Awareness Campaign, Acceptance Testing, and Post-Launch Support.
 3. Verify that each row has exactly one "A".`,
-                contentAm: `### የላብ ሁኔታ
-ስምንት ባለድርሻ አካላትን በስልጣን እና ፍላጎት ማትሪክስ መመደብ እና ለአምስት ዋና ተግባራት የRACI ሠንጠረዥ ማዘጋጀት።`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Stakeholder Mapping Exercise.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.2.1 Check: Stakeholder Mapping Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.2.1 ማረጋገጫ፡ የባለድርሻ አካላት ላብ',
+                  title: 'Sub-Lesson 1.2.1 Check: Stakeholder Mapping Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -711,17 +634,13 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
         ],
       },
       {
-        titleEn: 'Module 2: Scheduling, Budgeting & Risk Monitoring',
-        titleAm: 'ሞዱል 2፡ መርሃግብር፣ በጀት እና የስጋት ክትትል',
-        descriptionEn: 'Break the project into a schedule, track spend against baseline, and keep risks visible before they become issues.',
-        descriptionAm: 'ፕሮጀክቱን ወደ መርሃግብር መከፋፈል፣ ወጪን ከመነሻ ጋር ማወዳደር እና ስጋቶችን ከመከሰታቸው በፊት መከታተል።',
-        objectivesEn: 'Build a Work Breakdown Structure and Gantt schedule; establish a budget baseline and track earned value.',
-        objectivesAm: 'WBS እና Gantt መርሃግብር መገንባት፤ የበጀት መነሻ ማቋቋም እና Earned Value መከታተል።',
+        title: 'Module 2: Scheduling, Budgeting & Risk Monitoring',
+        description: 'Break the project into a schedule, track spend against baseline, and keep risks visible before they become issues.',
+        objectives: 'Build a Work Breakdown Structure and Gantt schedule; establish a budget baseline and track earned value.',
         order: 1,
         attachment: pdf('Module 2 - Scheduling & Budgeting Toolkit.pdf'),
         assessment: {
-          titleEn: 'Module 2 Knowledge Check: Scheduling & Budgeting',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ መርሃግብር እና በጀት',
+          title: 'Module 2 Knowledge Check: Scheduling & Budgeting',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -734,12 +653,11 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
         },
         lessons: [
           {
-            titleEn: '2.1 Work Breakdown Structures & Critical Path Scheduling',
-            titleAm: '2.1 WBS እና የክሪቲካል ፓዝ መርሃግብር',
+            title: '2.1 Work Breakdown Structures & Critical Path Scheduling',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
             order: 0,
-            contentEn: `## Decomposing the Work
+            content: `## Decomposing the Work
 A Work Breakdown Structure (WBS) breaks the total project scope into progressively smaller, assignable work packages — following the "100% Rule": the sum of child items must equal 100% of the parent's scope, no more, no less.
 
 ## From WBS to Schedule
@@ -749,12 +667,9 @@ A Work Breakdown Structure (WBS) breaks the total project scope into progressive
 
 ## Government Example
 In a multi-phase office rollout, "Network cabling" must finish before "IT equipment installation" can start — this dependency likely sits on the critical path, so it deserves the closest monitoring.`,
-            contentAm: `### ማጠቃለያ
-WBS ፕሮጀክቱን ወደ ትናንሽ ስራዎች ይከፋፍላል። Critical Path በጣም ረጅሙ የተግባር ሰንሰለት ሲሆን መዘግየቱ መላውን ፕሮጀክት ያዘገየዋል። ሌሎች ተግባራት float (ትርፍ ጊዜ) ሊኖራቸው ይችላል።`,
             attachment: pdf('Lesson 2.1 - WBS & Critical Path Guide.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: WBS & Critical Path',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ WBS እና ክሪቲካል ፓዝ',
+              title: 'Lesson 2.1 Check: WBS & Critical Path',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -767,12 +682,11 @@ WBS ፕሮጀክቱን ወደ ትናንሽ ስራዎች ይከፋፍላል። Cr
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Building a Gantt Chart for a Multi-Phase Rollout',
-                titleAm: 'ተግባራዊ ላብ፡ ለባለብዙ ደረጃ ማስፋፊያ Gantt ገበታ መገንባት',
+                title: 'Practical Lab: Building a Gantt Chart for a Multi-Phase Rollout',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Your project has three phases: (1) Procurement of equipment — 20 days, (2) Network cabling — 15 days (starts after Procurement), (3) IT installation — 10 days (starts after cabling).
 
 ## Steps
@@ -783,12 +697,9 @@ Your project has three phases: (1) Procurement of equipment — 20 days, (2) Net
 
 ## Deliverable
 A Gantt chart clearly showing the 45-day critical path and any parallel, non-critical activities.`,
-                contentAm: `### የላብ ሁኔታ
-ሶስት ደረጃዎች ያሉት ፕሮጀክት፡ ግዥ (20 ቀናት)፣ የኔትወርክ ገመድ (15 ቀናት)፣ IT ጭነት (10 ቀናት)። Gantt ገበታ በመገንባት ጠቅላላ 45 የስራ ቀናት የክሪቲካል ፓዝ መሆኑን ማሳየት።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Gantt Chart Lab Data.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Gantt Chart Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የGantt ገበታ ላብ',
+                  title: 'Sub-Lesson 2.1.1 Check: Gantt Chart Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -803,12 +714,11 @@ A Gantt chart clearly showing the 45-day critical path and any parallel, non-cri
             ],
           },
           {
-            titleEn: '2.2 Budget Baselines, Earned Value & Variance Tracking',
-            titleAm: '2.2 የበጀት መነሻዎች፣ Earned Value እና የልዩነት ክትትል',
+            title: '2.2 Budget Baselines, Earned Value & Variance Tracking',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
-            contentEn: `## Setting the Baseline
+            content: `## Setting the Baseline
 Before spending begins, lock a **Budget Baseline** — the approved, time-phased spending plan. Every future comparison measures performance against this fixed reference.
 
 ## Earned Value Management (EVM) Basics
@@ -820,12 +730,9 @@ Before spending begins, lock a **Budget Baseline** — the approved, time-phased
 
 ## Reading the Signals
 If EV is far below both PV and AC, the project is simultaneously late and over budget — the clearest signal for an escalation to the sponsor before the gap widens further.`,
-            contentAm: `### ማጠቃለያ
-የበጀት መነሻ ከወጪ በፊት ይቆለፋል። Earned Value (EV) ከAC ሲቀነስ አሉታዊ ውጤት ከበጀት በላይ መሆኑን ያሳያል፤ ከPV ሲቀነስ አሉታዊ ውጤት ከመርሃግብር መዘግየትን ያሳያል።`,
             attachment: pdf('Lesson 2.2 - EVM Formula Reference.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.2 Check: Earned Value & Variance',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ Earned Value እና ልዩነት',
+              title: 'Lesson 2.2 Check: Earned Value & Variance',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -838,12 +745,11 @@ If EV is far below both PV and AC, the project is simultaneously late and over b
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Calculating Float and Identifying Critical Milestones',
-                titleAm: 'ተግባራዊ ላብ፡ Float ማስላት እና ወሳኝ ዋና ዋና ደረጃዎችን መለየት',
+                title: 'Practical Lab: Calculating Float and Identifying Critical Milestones',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Exercise
+                content: `## Lab Exercise
 Analyze a 7-activity network for an IT deployment:
 - Activity A (Charter Signoff, 2 days)
 - Activity B (Server Procurement, 10 days, depends on A)
@@ -855,12 +761,9 @@ Analyze a 7-activity network for an IT deployment:
 ## Task
 1. Calculate the project duration through path A-B-D-E-F vs. path A-C-E-F.
 2. Determine the Critical Path and the Float of Activity C.`,
-                contentAm: `### የላብ ሁኔታ
-በሰባት ተግባራት መረብ ውስጥ የቆይታ ጊዜን ማስላት፣ ወሳኝ መስመርን መለየት እና የተግባር Cን Float ማስላት።`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Critical Path Network Lab.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.2.1 Check: Network Calculation Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.2.1 ማረጋገጫ፡ የመረብ ስሌት ላብ',
+                  title: 'Sub-Lesson 2.2.1 Check: Network Calculation Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -878,8 +781,7 @@ Analyze a 7-activity network for an IT deployment:
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Comprehensive Assessment: Project Management Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የፕሮጀክት አስተዳደር ሰርተፊኬት ምዘና',
+      title: 'Final Comprehensive Assessment: Project Management Certification',
       passingScore: 75,
       timeLimitMinutes: 35,
       questions: [
@@ -897,11 +799,9 @@ Analyze a 7-activity network for an IT deployment:
   // ─────────────────────────────────────────────────────────
   {
     code: 'CSERV101',
-    titleEn: 'Citizen Service Excellence & Front-Office Standards',
-    titleAm: 'የዜጎች አገልግሎት ብቃት እና የፊት ለፊት ጽ/ቤት ደረጃዎች',
-    descriptionEn:
+    title: 'Citizen Service Excellence & Front-Office Standards',
+    description:
       'Front-office conduct, complaint de-escalation, multi-channel service etiquette, and service-level measurement for taxpayer-facing staff.',
-    descriptionAm: 'የፊት ለፊት ጽ/ቤት ስነ-ስርዓት፣ ቅሬታ አፈታት፣ ባለብዙ ቻናል አገልግሎት እና የአገልግሎት ደረጃ መለኪያ ለግብር ከፋዮች አገልግሎት ሰጪ ሰራተኞች።',
     level: CourseLevel.BASIC,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.IN_PERSON_ONLY,
@@ -910,25 +810,20 @@ Analyze a 7-activity network for an IT deployment:
     department: 'Taxpayer Services Directorate',
     targetAudience: 'Front-desk officers, call center agents, and taxpayer service window staff',
     deliveryMethod: 'Self-paced e-learning with role-play scenario labs',
-    objectivesEn:
+    objectives:
       'Apply consistent greeting and queue-management standards, de-escalate frustrated taxpayers, maintain service etiquette across channels, and track SLA performance.',
-    objectivesAm: 'ወጥ የሆነ የመቀበያ እና የተራ አስተዳደር ደረጃዎችን መተግበር፣ የተበሳጩ ግብር ከፋዮችን ማረጋጋት እና በSLA አፈጻጸምን መከታተል።',
     prerequisites: 'None',
     approvalComments:
       'Returned for revision: Module 2 lacks accessibility considerations for persons with disabilities, and the SLA benchmarks are not aligned with the 2026 Taxpayer Charter revision. Please update the response-time targets and resubmit for approval.',
     modules: [
       {
-        titleEn: 'Module 1: Front-Office Conduct & Service Standards',
-        titleAm: 'ሞዱል 1፡ የፊት ለፊት ጽ/ቤት ስነ-ስርዓት እና የአገልግሎት ደረጃዎች',
-        descriptionEn: 'Set the tone for every taxpayer interaction from the first greeting through resolving a complaint.',
-        descriptionAm: 'ከመጀመሪያው ሰላምታ እስከ ቅሬታ አፈታት ድረስ ያለውን የግብር ከፋይ ግንኙነት ድምጽ ማስቀመጥ።',
-        objectivesEn: 'Apply standardized greeting and queue-management protocols; de-escalate frustrated taxpayers professionally.',
-        objectivesAm: 'ወጥ የሆነ የመቀበያ እና የተራ አስተዳደር ደንቦችን መተግበር፤ የተበሳጩ ግብር ከፋዮችን በሙያዊ መንገድ ማረጋጋት።',
+        title: 'Module 1: Front-Office Conduct & Service Standards',
+        description: 'Set the tone for every taxpayer interaction from the first greeting through resolving a complaint.',
+        objectives: 'Apply standardized greeting and queue-management protocols; de-escalate frustrated taxpayers professionally.',
         order: 0,
         attachment: pdf('Module 1 - Front-Office Standards Handbook.pdf'),
         assessment: {
-          titleEn: 'Module 1 Knowledge Check: Front-Office Conduct',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ የፊት ለፊት ስነ-ስርዓት',
+          title: 'Module 1 Knowledge Check: Front-Office Conduct',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -941,12 +836,11 @@ Analyze a 7-activity network for an IT deployment:
         },
         lessons: [
           {
-            titleEn: '1.1 Greeting Protocols, Queue Management & First Impressions',
-            titleAm: '1.1 የመቀበያ ደንቦች፣ የተራ አስተዳደር እና የመጀመሪያ ስሜት',
+            title: '1.1 Greeting Protocols, Queue Management & First Impressions',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 0,
-            contentEn: `## The First Seven Seconds
+            content: `## The First Seven Seconds
 Taxpayers form an impression of the entire institution within the first seconds of an interaction. A consistent greeting protocol makes that impression positive regardless of who is on duty.
 
 ## Standard Greeting Sequence
@@ -958,12 +852,9 @@ Taxpayers form an impression of the entire institution within the first seconds 
 - Use a visible, numbered ticketing system so taxpayers can see their position without asking.
 - Display estimated wait times where possible — uncertainty, not the wait itself, is what drives frustration.
 - Rotate staff breaks so the number of open windows never drops during peak hours (typically 9:00–11:00 AM).`,
-            contentAm: `### ማጠቃለያ
-ወጥ የሆነ የመቀበያ ደንብ በማን ላይ ቢሆን አዎንታዊ ስሜት ይፈጥራል። የሚታይ የተራ ቁጥር ስርዓት እና የሚጠበቅ የጥበቃ ጊዜ ማሳየት ብስጭትን ይቀንሳል።`,
             attachment: pdf('Lesson 1.1 - Greeting & Queue Protocol Guide.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check: Greeting & Queue Management',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ መቀበያ እና የተራ አስተዳደር',
+              title: 'Lesson 1.1 Check: Greeting & Queue Management',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -976,12 +867,11 @@ Taxpayers form an impression of the entire institution within the first seconds 
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Role-Playing Difficult Front-Desk Scenarios',
-                titleAm: 'ተግባራዊ ላብ፡ ከባድ የፊት ለፊት ትዕይንቶችን መተወን',
+                title: 'Practical Lab: Role-Playing Difficult Front-Desk Scenarios',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Practice three role-play scenarios with a colleague: (1) a taxpayer who has been waiting 40 minutes and is visibly angry, (2) a taxpayer who does not speak the local language fluently, (3) a taxpayer disputing a penalty they believe is incorrect.
 
 ## Steps
@@ -991,12 +881,9 @@ Practice three role-play scenarios with a colleague: (1) a taxpayer who has been
 
 ## Deliverable
 A short written reflection noting one phrase to keep using and one to avoid, based on the debrief.`,
-                contentAm: `### የላብ ሁኔታ
-ሶስት ከባድ ትዕይንቶችን ከባልደረባ ጋር መተወን፡ የተበሳጨ ግብር ከፋይ፣ ቋንቋ የማይችል ግብር ከፋይ እና ቅጣት የሚከራከር ግብር ከፋይ። የLEAP ዘዴን (ማዳመጥ፣ መረዳት፣ ይቅርታ መጠየቅ፣ መፍትሄ መስጠት) መተግበር።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Role-Play Scenario Cards.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.1.1 Check: Role-Play Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የመተወን ላብ',
+                  title: 'Sub-Lesson 1.1.1 Check: Role-Play Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1011,12 +898,11 @@ A short written reflection noting one phrase to keep using and one to avoid, bas
             ],
           },
           {
-            titleEn: '1.2 Handling Complaints & De-escalating Frustrated Taxpayers',
-            titleAm: '1.2 ቅሬታዎችን ማስተናገድ እና የተበሳጩ ግብር ከፋዮችን ማረጋጋት',
+            title: '1.2 Handling Complaints & De-escalating Frustrated Taxpayers',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 1,
-            contentEn: `## Complaints Are Information, Not Interruptions
+            content: `## Complaints Are Information, Not Interruptions
 A complaint is an opportunity to correct a process failure before it affects more taxpayers. Treating it as an interruption guarantees a worse outcome.
 
 ## The Complaint-Handling Sequence
@@ -1027,12 +913,9 @@ A complaint is an opportunity to correct a process failure before it affects mor
 
 ## When to Escalate
 Escalate immediately if the taxpayer requests a supervisor, if the issue involves a policy exception, or if de-escalation attempts have failed twice — do not let an interaction continue indefinitely without bringing in a supervisor.`,
-            contentAm: `### ማጠቃለያ
-ቅሬታ የሂደት ችግርን ለማረም እድል ነው። ማወቅ፣ ማብራራት፣ እርምጃ መውሰድ እና መመዝገብ የቅሬታ አያያዝ ደረጃዎች ናቸው። ሁለት ጊዜ ማረጋጋት ካልተሳካ ወደ ሀላፊ ማስተላለፍ ያስፈልጋል።`,
             attachment: pdf('Lesson 1.2 - Complaint Handling Procedure.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.2 Check: Complaint Handling',
-              titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ ቅሬታ አያያዝ',
+              title: 'Lesson 1.2 Check: Complaint Handling',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1045,22 +928,18 @@ Escalate immediately if the taxpayer requests a supervisor, if the issue involve
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Conflict Resolution Under the LEAP Framework',
-                titleAm: 'ተግባራዊ ላብ፡ በLEAP ማዕቀፍ ውስጥ ግጭቶችን መፍታት',
+                title: 'Practical Lab: Conflict Resolution Under the LEAP Framework',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 A business taxpayer demands to see the branch manager immediately after being assessed a late penalty due to a server outage on filing day.
 1. Draft the exact response using the LEAP framework.
 2. Check penalty records in the simulated portal.
 3. Submit a formal penalty waiver review request under system outage protocol.`,
-                contentAm: `### የላብ ሁኔታ
-የስርዓት መቆራረጥ በነበረበት ቀን የዘገየ ቅጣት የተጣለበትን የንግድ ግብር ከፋይ በLEAP ዘዴ ማስተናገድ እና የይቅርታ ጥያቄ ማቅረብ።`,
                 attachment: pdf('Sub-Lesson 1.2.1 - LEAP De-escalation Lab.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.2.1 Check: Conflict Resolution Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.2.1 ማረጋገጫ፡ የግጭት አፈታት ላብ',
+                  title: 'Sub-Lesson 1.2.1 Check: Conflict Resolution Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1077,17 +956,13 @@ A business taxpayer demands to see the branch manager immediately after being as
         ],
       },
       {
-        titleEn: 'Module 2: Multi-Channel Service & Service-Level Commitments',
-        titleAm: 'ሞዱል 2፡ ባለብዙ ቻናል አገልግሎት እና የአገልግሎት ደረጃ ግዴታዎች',
-        descriptionEn: 'Keep service quality consistent whether a taxpayer walks in, calls, emails, or uses a self-service kiosk.',
-        descriptionAm: 'ግብር ከፋይ በአካል፣ በስልክ፣ በኢሜይል ወይም በኪዮስክ ቢጠቀም የአገልግሎት ጥራት ወጥ ሆኖ እንዲቆይ ማድረግ።',
-        objectivesEn: 'Apply channel-appropriate service etiquette; measure and report against defined service-level targets.',
-        objectivesAm: 'ለቻናሉ ተስማሚ የአገልግሎት ስነ-ስርዓት መተግበር፤ በተቀመጡ የአገልግሎት ደረጃ ግቦች መለካት እና ሪፖርት ማድረግ።',
+        title: 'Module 2: Multi-Channel Service & Service-Level Commitments',
+        description: 'Keep service quality consistent whether a taxpayer walks in, calls, emails, or uses a self-service kiosk.',
+        objectives: 'Apply channel-appropriate service etiquette; measure and report against defined service-level targets.',
         order: 1,
         attachment: pdf('Module 2 - Multi-Channel Service Playbook.pdf'),
         assessment: {
-          titleEn: 'Module 2 Knowledge Check: Multi-Channel Service & SLAs',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ ባለብዙ ቻናል እና SLA',
+          title: 'Module 2 Knowledge Check: Multi-Channel Service & SLAs',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1100,12 +975,11 @@ A business taxpayer demands to see the branch manager immediately after being as
         },
         lessons: [
           {
-            titleEn: '2.1 Phone, Email & Digital Kiosk Service Etiquette',
-            titleAm: '2.1 ስልክ፣ ኢሜይል እና ዲጂታል ኪዮስክ አገልግሎት ስነ-ስርዓት',
+            title: '2.1 Phone, Email & Digital Kiosk Service Etiquette',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 30,
             order: 0,
-            contentEn: `## One Standard, Many Channels
+            content: `## One Standard, Many Channels
 Taxpayers expect the same professionalism whether they walk in, call, email, or use a self-service kiosk. Each channel has specific etiquette rules that support that consistency.
 
 ## Phone
@@ -1120,12 +994,9 @@ Taxpayers expect the same professionalism whether they walk in, call, email, or 
 ## Digital Kiosk
 - Post clear, step-by-step signage near kiosks.
 - Assign a roaming officer during peak hours to assist taxpayers unfamiliar with the touchscreen interface.`,
-            contentAm: `### ማጠቃለያ
-ግብር ከፋዮች በማንኛውም ቻናል ተመሳሳይ ሙያዊነት ይጠብቃሉ። ስልክ በ3 ጊዜ ጥሪ ውስጥ መመለስ፣ ኢሜይል በ24 ሰዓት ውስጥ ማረጋገጥ እና በኪዮስክ አካባቢ ግልጽ መመሪያ ማስቀመጥ ያስፈልጋል።`,
             attachment: pdf('Lesson 2.1 - Multi-Channel Etiquette Guide.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: Multi-Channel Etiquette',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ ባለብዙ ቻናል ስነ-ስርዓት',
+              title: 'Lesson 2.1 Check: Multi-Channel Etiquette',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1138,12 +1009,11 @@ Taxpayers expect the same professionalism whether they walk in, call, email, or 
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Drafting Standardized Email Response Templates',
-                titleAm: 'ተግባራዊ ላብ፡ ወጥ የኢሜይል ምላሽ አብነቶችን ማርቀቅ',
+                title: 'Practical Lab: Drafting Standardized Email Response Templates',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Draft three standardized email templates: (1) acknowledging receipt of a general inquiry, (2) requesting missing documents, (3) confirming resolution of an issue.
 
 ## Steps
@@ -1153,12 +1023,9 @@ Draft three standardized email templates: (1) acknowledging receipt of a general
 
 ## Deliverable
 Three finalized templates saved to the shared response-template folder for team-wide reuse.`,
-                contentAm: `### የላብ ሁኔታ
-ሶስት ወጥ የኢሜይል አብነቶችን ማዘጋጀት፡ ደረሰኝ ማረጋገጫ፣ የጎደሉ ሰነዶች ጥያቄ እና የጉዳይ መፍትሄ ማረጋገጫ። እያንዳንዱ አብነት ግልጽ ቀጣይ እርምጃ እና ቀነ-ገደብ ሊኖረው ይገባል።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Email Template Lab Pack.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Email Template Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የኢሜይል አብነት ላብ',
+                  title: 'Sub-Lesson 2.1.1 Check: Email Template Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1173,12 +1040,11 @@ Three finalized templates saved to the shared response-template folder for team-
             ],
           },
           {
-            titleEn: '2.2 Measuring Service Quality: SLAs, CSAT & Turnaround Targets',
-            titleAm: '2.2 የአገልግሎት ጥራት መለኪያ፡ SLA፣ CSAT እና የመመለሻ ጊዜ ግቦች',
+            title: '2.2 Measuring Service Quality: SLAs, CSAT & Turnaround Targets',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 30,
             order: 1,
-            contentEn: `## Why Measurement Matters
+            content: `## Why Measurement Matters
 Service quality that is not measured cannot be improved. Three metrics keep front-office performance accountable and visible.
 
 ## Core Metrics
@@ -1188,12 +1054,9 @@ Service quality that is not measured cannot be improved. Three metrics keep fron
 
 ## Using the Data
 Review SLA and CSAT trends monthly with the team — a single missed target is noise, but a declining trend over three consecutive months signals a process problem that needs a root-cause review, not just individual coaching.`,
-            contentAm: `### ማጠቃለያ
-SLA የተቀመጠ ግዴታ ነው (ለምሳሌ 90% ግብይቶች በ10 ደቂቃ ውስጥ)። CSAT የግብር ከፋይ እርካታን ይለካል። ወርሃዊ አዝማሚያ መገምገም የሂደት ችግርን አስቀድሞ ለመለየት ይረዳል።`,
             attachment: pdf('Lesson 2.2 - Service Metrics Handbook.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.2 Check: Service Metrics',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የአገልግሎት መለኪያዎች',
+              title: 'Lesson 2.2 Check: Service Metrics',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1206,22 +1069,18 @@ SLA የተቀመጠ ግዴታ ነው (ለምሳሌ 90% ግብይቶች በ10 ደ
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Calculating Turnaround Rates and Action Triggers',
-                titleAm: 'ተግባራዊ ላብ፡ የመመለሻ ጊዜዎችን ማስላት እና የአሰራር እርምጃዎችን መለየት',
+                title: 'Practical Lab: Calculating Turnaround Rates and Action Triggers',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 You are provided with 500 service logs from the Bole sub-city tax branch across three service types: TIN Registration, Tax Clearance Certificate, and Assessment Inquiries.
 1. Calculate the percentage of requests meeting their respective 24-hour, 48-hour, and 72-hour SLAs.
 2. Identify which service type fell below the 85% compliance threshold.
 3. Formulate an operational action plan to remedy bottlenecks.`,
-                contentAm: `### የላብ ሁኔታ
-የ500 አገልግሎት መዝገቦችን SLA ተገዢነት ማስላት፣ ከ85% በታች የወረደውን አገልግሎት መለየት እና የመፍትሄ እቅድ ማዘጋጀት።`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Service Metrics Calculation Sheet.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.2.1 Check: Metrics Calculation Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.2.1 ማረጋገጫ፡ የመለኪያ ስሌት ላብ',
+                  title: 'Sub-Lesson 2.2.1 Check: Metrics Calculation Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1239,8 +1098,7 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Comprehensive Assessment: Citizen Service Excellence Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የዜጎች አገልግሎት ብቃት ሰርተፊኬት ምዘና',
+      title: 'Final Comprehensive Assessment: Citizen Service Excellence Certification',
       passingScore: 75,
       timeLimitMinutes: 25,
       questions: [
@@ -1258,11 +1116,9 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
   // ─────────────────────────────────────────────────────────
   {
     code: 'CYBER301',
-    titleEn: 'Cybersecurity Awareness & Information Protection in Ministry Systems',
-    titleAm: 'በሚኒስቴሩ ስርዓቶች የሳይበር ደህንነት ግንዛቤ እና የመረጃ ጥበቃ',
-    descriptionEn:
+    title: 'Cybersecurity Awareness & Information Protection in Ministry Systems',
+    description:
       'Safeguard taxpayer records, prevent phishing and ransomware intrusions, configure multi-factor authentication, and execute incident reporting.',
-    descriptionAm: 'የግብር ከፋዮች ሚስጥራዊ መረጃዎችን መጠበቅ፣ የማጭበርበሪያ (Phishing) ጥቃቶችን መከላከል እና የደህንነት ክስተቶችን ሪፖርት ማድረግ።',
     level: CourseLevel.INTERMEDIATE,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
@@ -1271,25 +1127,20 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
     department: 'ICT & Cyber Defense Directorate',
     targetAudience: 'All Ministry personnel accessing email, SigTas, and enterprise revenue databases',
     deliveryMethod: 'Self-paced interactive security awareness training with hands-on phishing simulations',
-    objectivesEn:
+    objectives:
       'Identify phishing indicators, enforce strong credential practices, classify sensitive taxpayer data, and trigger rapid incident containment.',
-    objectivesAm: 'የማጭበርበሪያ ኢሜይሎችን መለየት፣ ጠንካራ የይለፍ ቃል ማዘጋጀት፣ ሚስጥራዊ መረጃዎችን መመደብ እና የደህንነት አደጋ ሲከሰት ፈጣን ሪፖርት ማድረግ።',
     prerequisites: 'Basic computer literacy and active Ministry Active Directory user account',
     approvalComments:
       'Course approved following validation against Information Network Security Administration (INSA) federal standards.',
     modules: [
       {
-        titleEn: 'Module 1: Threat Landscape, Social Engineering & Phishing Defense',
-        titleAm: 'ሞዱል 1፡ የሳይበር አደጋዎች፣ ማህበራዊ ምህንድስና እና የማጭበርበር ጥቃት መከላከያ',
-        descriptionEn: 'Understand how attackers target Ministry staff through spear-phishing, spoofed domains, and social engineering.',
-        descriptionAm: 'አጥቂዎች የሚኒስቴሩን ሰራተኞች በማጭበርበሪያ ኢሜይሎች እና በተመሳሰሉ ድረ-ገጾች እንዴት እንደሚያጠቁ መረዳት።',
-        objectivesEn: 'Analyze malicious email indicators, verify sender domains, and inspect embedded hyperlinks safely.',
-        objectivesAm: 'አደገኛ የኢሜይል ምልክቶችን መመርመር፣ የላኪዎችን አድራሻ ማረጋገጥ እና አጠራጣሪ አገናኞችን መመርመር።',
+        title: 'Module 1: Threat Landscape, Social Engineering & Phishing Defense',
+        description: 'Understand how attackers target Ministry staff through spear-phishing, spoofed domains, and social engineering.',
+        objectives: 'Analyze malicious email indicators, verify sender domains, and inspect embedded hyperlinks safely.',
         order: 0,
         attachment: pdf('Module 1 - Cyber Threat Intelligence & Phishing Manual.pdf'),
         assessment: {
-          titleEn: 'Module 1 Knowledge Check: Phishing & Threat Landscape',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ ፊሺንግ እና የሳይበር አደጋዎች',
+          title: 'Module 1 Knowledge Check: Phishing & Threat Landscape',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1302,12 +1153,11 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
         },
         lessons: [
           {
-            titleEn: '1.1 Recognizing Phishing Vectors & Malicious Attachments',
-            titleAm: '1.1 የማጭበርበሪያ ዘዴዎችን እና አደገኛ አባሪዎችን መለየት',
+            title: '1.1 Recognizing Phishing Vectors & Malicious Attachments',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 0,
-            contentEn: `## The Primary Attack Vector: Human Psychology
+            content: `## The Primary Attack Vector: Human Psychology
 Over 85% of public-sector data breaches begin with a phishing email. Attackers exploit curiosity, fear, urgency, or authority to manipulate recipients into clicking malicious links or downloading malware.
 
 ## Red Flag Checklist
@@ -1315,12 +1165,9 @@ Over 85% of public-sector data breaches begin with a phishing email. Attackers e
 2. **Mismatched Sender Domains**: Display name says "Ministry IT", but actual address is \`support@mor-gov-portal.com\` instead of \`@mor.gov.et\`.
 3. **Suspicious Attachments**: Macro-enabled Excel files (\`.xlsm\`), compressed archives (\`.zip\`, \`.iso\`), or direct executables.
 4. **Generic Greetings**: "Dear Customer" or "Dear Employee" when claiming to be an internal communication.`,
-            contentAm: `### ማጠቃለያ
-ከ85% በላይ የሚሆኑ የደህንነት ጥሰቶች የሚጀምሩት በማጭበርበሪያ ኢሜይል ነው። አጣዳፊ ማስፈራሪያዎች፣ ያልተዛመዱ የላኪ አድራሻዎች እና ያልተለመዱ አባሪዎች ዋነኛ የማስጠንቀቂያ ምልክቶች ናቸው።`,
             attachment: pdf('Lesson 1.1 - Phishing Detection Guidelines.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check: Phishing Detection',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ የማጭበርበር መለያ',
+              title: 'Lesson 1.1 Check: Phishing Detection',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1333,22 +1180,18 @@ Over 85% of public-sector data breaches begin with a phishing email. Attackers e
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Dissecting Spear-Phishing Email Headers & Links',
-                titleAm: 'ተግባራዊ ላብ፡ የማጭበርበሪያ ኢሜይል ራስጌዎችን እና አገናኞችን መመርመር',
+                title: 'Practical Lab: Dissecting Spear-Phishing Email Headers & Links',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Examine 3 simulated email headers captured in our mail security gateway:
 1. Identify the genuine originating IP address and return-path header.
 2. Compare the display text of the hyperlinks against their actual destination targets using URL inspection.
 3. Classify each message as either Authentic, Phishing, or Spam.`,
-                contentAm: `### የላብ ሁኔታ
-ሶስት የኢሜይል ራስጌዎችን በመመርመር ትክክለኛውን የላኪ IP፣ የመልስ አድራሻ እና የአገናኝ መዳረሻን መለየት።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Header Analysis Lab Pack.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.1.1 Check: Email Header Analysis Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የኢሜይል ራስጌ ትንተና ላብ',
+                  title: 'Sub-Lesson 1.1.1 Check: Email Header Analysis Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1363,24 +1206,20 @@ Examine 3 simulated email headers captured in our mail security gateway:
             ],
           },
           {
-            titleEn: '1.2 Password Hygiene, Multi-Factor Authentication & Credential Security',
-            titleAm: '1.2 የይለፍ ቃል ንጽህና፣ ባለብዙ ደረጃ ማረጋገጫ (MFA) እና የደህንነት ቁልፎች',
+            title: '1.2 Password Hygiene, Multi-Factor Authentication & Credential Security',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 1,
-            contentEn: `## Passwords Alone Are Not Enough
+            content: `## Passwords Alone Are Not Enough
 Compromised passwords are the root cause of credential stuffing and unauthorized system entry. Modern security requires both strong passphrases and Multi-Factor Authentication (MFA).
 
 ## Guidelines for Ministry Accounts
 - **Passphrase Length**: minimum 14 characters combining uppercase, lowercase, numbers, and symbols.
 - **No Password Reuse**: never use your ministry Active Directory password on external sites (e.g. personal email, social media).
 - **MFA Enforcement**: always approve MFA prompts only when initiated by yourself; beware of "MFA Fatigue" spam attacks.`,
-            contentAm: `### ማጠቃለያ
-የይለፍ ቃላት ብቻቸውን በቂ አይደሉም። ቢያንስ 14 ቁምፊዎችን የያዘ ጠንካራ የይለፍ ቃል መጠቀም እና የባለብዙ ደረጃ ማረጋገጫ (MFA) ጥያቄዎችን እራስዎ ካልጀመሩት በስተቀር አለመፍቀድ ያስፈልጋል።`,
             attachment: pdf('Lesson 1.2 - Password & MFA Security Policy.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.2 Check: Passwords & MFA',
-              titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ የይለፍ ቃላት እና MFA',
+              title: 'Lesson 1.2 Check: Passwords & MFA',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1393,22 +1232,18 @@ Compromised passwords are the root cause of credential stuffing and unauthorized
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Configuring Hardware Tokens and Authenticator Apps',
-                titleAm: 'ተግባራዊ ላብ፡ የሃርድዌር ቶከን እና የማረጋገጫ መተግበሪያዎችን ማዋቀር',
+                title: 'Practical Lab: Configuring Hardware Tokens and Authenticator Apps',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Objective
+                content: `## Lab Objective
 Enroll your Ministry Active Directory account into Microsoft Authenticator and register a backup hardware FIDO2 key.
 1. Download Microsoft Authenticator on a secure device.
 2. Scan the one-time registration QR code from the Ministry Self-Service portal.
 3. Test number matching verification to block automated push fatigue attacks.`,
-                contentAm: `### የላብ ዓላማ
-የማረጋገጫ መተግበሪያን በQR ኮድ ማገናኘት እና የቁጥር ማዛመጃ (Number Matching) ሙከራ ማድረግ።`,
                 attachment: pdf('Sub-Lesson 1.2.1 - MFA Configuration Guide.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.2.1 Check: MFA Configuration Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.2.1 ማረጋገጫ፡ የMFA ማዋቀር ላብ',
+                  title: 'Sub-Lesson 1.2.1 Check: MFA Configuration Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1425,17 +1260,13 @@ Enroll your Ministry Active Directory account into Microsoft Authenticator and r
         ],
       },
       {
-        titleEn: 'Module 2: Data Classification, Clean Desk Policy & Incident Reporting',
-        titleAm: 'ሞዱል 2፡ የመረጃ ምደባ፣ የንጹህ ጠረጴዛ ፖሊሲ እና የክስተት ሪፖርት አቀራረብ',
-        descriptionEn: 'Classify taxpayer records, secure physical workstations, and trigger coordinated incident reporting.',
-        descriptionAm: 'የግብር መረጃዎችን ሚስጥራዊነት መመደብ፣ አካላዊ የስራ ጠረጴዛዎችን መጠበቅ እና አደጋ ሲከሰት ሪፖርት ማድረግ።',
-        objectivesEn: 'Differentiate data tiers, enforce screen locking and clean desk protocols, and escalate breaches.',
-        objectivesAm: 'የመረጃ ደረጃዎችን መለየት፣ ስክሪን መቆለፍን ማክበር እና የደህንነት ጥሰቶችን በወቅቱ ማሳወቅ።',
+        title: 'Module 2: Data Classification, Clean Desk Policy & Incident Reporting',
+        description: 'Classify taxpayer records, secure physical workstations, and trigger coordinated incident reporting.',
+        objectives: 'Differentiate data tiers, enforce screen locking and clean desk protocols, and escalate breaches.',
         order: 1,
         attachment: pdf('Module 2 - Information Security Governance Guide.pdf'),
         assessment: {
-          titleEn: 'Module 2 Knowledge Check: Data Classification & Incident Response',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ የመረጃ ምደባ እና ምላሽ',
+          title: 'Module 2 Knowledge Check: Data Classification & Incident Response',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1448,12 +1279,11 @@ Enroll your Ministry Active Directory account into Microsoft Authenticator and r
         },
         lessons: [
           {
-            titleEn: '2.1 Handling Taxpayer Confidential Data & Privacy Controls',
-            titleAm: '2.1 የግብር ከፋይ ሚስጥራዊ መረጃ አያያዝ እና የግላዊነት ጥበቃ',
+            title: '2.1 Handling Taxpayer Confidential Data & Privacy Controls',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 35,
             order: 0,
-            contentEn: `## The Legal Mandate for Taxpayer Privacy
+            content: `## The Legal Mandate for Taxpayer Privacy
 Under Ethiopian tax law, unauthorized disclosure of taxpayer financial records carries severe disciplinary and criminal penalties.
 
 ## MoR Data Classification Tiers
@@ -1464,12 +1294,9 @@ Under Ethiopian tax law, unauthorized disclosure of taxpayer financial records c
 
 ## Data Sharing Safeguards
 Never email spreadsheets containing unencrypted Confidential PII to external email addresses (e.g. Gmail, Yahoo). Always use encrypted ministry channels.`,
-            contentAm: `### ማጠቃለያ
-የግብር ከፋይ መረጃን ያለፈቃድ ማውጣት በህግ ያስቀጣል። መረጃዎች በህዝባዊ፣ ውስጣዊ፣ ሚስጥራዊ እና ከፍተኛ ሚስጥራዊ ተብለው ይመደባሉ። ሚስጥራዊ መረጃዎችን ወደ ግል ኢሜይል መላክ በጥብቅ የተከለከለ ነው።`,
             attachment: pdf('Lesson 2.1 - Confidential Data Classification Matrix.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: Confidential Data Handling',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ ሚስጥራዊ መረጃ አያያዝ',
+              title: 'Lesson 2.1 Check: Confidential Data Handling',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1482,22 +1309,18 @@ Never email spreadsheets containing unencrypted Confidential PII to external ema
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Classifying and Redacting Sensitive PII Records',
-                titleAm: 'ተግባራዊ ላብ፡ ሚስጥራዊ የግል መረጃዎችን መመደብ እና መደበቅ (Redaction)',
+                title: 'Practical Lab: Classifying and Redacting Sensitive PII Records',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 You are asked to prepare a public statistical case summary based on an actual tax audit case.
 1. Identify all PII fields (Taxpayer Name, TIN, Bank Account Number, Physical Address, Specific Asset Values).
 2. Apply true redaction using Adobe Acrobat Redaction tools (not just black highlighter).
 3. Sanitize metadata before publishing.`,
-                contentAm: `### የላብ ሁኔታ
-ከእውነተኛ የኦዲት መዝገብ ላይ የግል መረጃዎችን (ስም፣ TIN፣ የባንክ ቁጥር) በAdobe Acrobat Redaction መሳሪያ በመጠቀም ሙሉ በሙሉ ማጥፋት እና ማረጋገጥ።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Data Redaction Practice Files.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Data Redaction Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የመረጃ ማጥፋት ላብ',
+                  title: 'Sub-Lesson 2.1.1 Check: Data Redaction Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1512,24 +1335,20 @@ You are asked to prepare a public statistical case summary based on an actual ta
             ],
           },
           {
-            titleEn: '2.2 Security Incident Escalation & Response Protocols',
-            titleAm: '2.2 የደህንነት አደጋ ሲከሰት የማሳወቅ እና ምላሽ አሰጣጥ ስነ-ስርዓት',
+            title: '2.2 Security Incident Escalation & Response Protocols',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 30,
             order: 1,
-            contentEn: `## When an Attack Happens: Speed Matters
+            content: `## When an Attack Happens: Speed Matters
 The first 60 minutes of a ransomware or credential breach dictate whether an infection is contained to one workstation or spreads across the entire Ministry network.
 
 ## Immediate First-Response Actions
 1. **Disconnect from the Network**: physically unplug the ethernet cable and toggle Wi-Fi off immediately. Do NOT power off the computer (powering off destroys volatile RAM evidence needed by forensic investigators).
 2. **Alert ICT Cyber Defense**: dial the emergency incident hotline \`+251-11-xxx-xxxx\` or use a clean secondary machine to notify \`soc@mor.gov.et\`.
 3. **Preserve the Scene**: take a photo of any ransomware ransom note on screen. Do not attempt to pay ransom or download unofficial decryption tools.`,
-            contentAm: `### ማጠቃለያ
-አደጋ ሲከሰት የመጀመሪያው 60 ደቂቃ ወሳኝ ነው። የኔትወርክ ኬብል መንቀል እና ዋይፋይ ማጥፋት የመጀመሪያ እርምጃ ነው። ኮምፒውተሩን ሙሉ በሙሉ አለማጥፋት (RAM መረጃ እንዳይጠፋ) እና ወዲያውኑ ለICT Cyber Defense ማሳወቅ ያስፈልጋል።`,
             attachment: pdf('Lesson 2.2 - Incident Escalation SOP.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.2 Check: Incident Response',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የአደጋ ምላሽ',
+              title: 'Lesson 2.2 Check: Incident Response',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1542,22 +1361,18 @@ The first 60 minutes of a ransomware or credential breach dictate whether an inf
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Executing First-Response Actions in a Breach Incident',
-                titleAm: 'ተግባራዊ ላብ፡ በአደጋ ጊዜ የመጀመሪያ ምላሽ እርምጃዎችን መተግበር',
+                title: 'Practical Lab: Executing First-Response Actions in a Breach Incident',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 A simulated workstation begins displaying unexpected encrypted file extensions (.locked) and an unknown command prompt window pops up.
 1. Perform immediate network isolation using the virtual interface disconnect switch.
 2. Complete the standardized MoR Incident Notification Form (Date, Time, IP, Symptoms observed, Affected files).
 3. Submit the ticket to the simulated SOC incident portal.`,
-                contentAm: `### የላብ ሁኔታ
-በኮምፒውተር ላይ ፋይሎች ሲቆለፉ የኔትወርክ ግንኙነትን ወዲያውኑ ማቋረጥ፣ የአደጋ ሪፖርት ቅጽ መሙላት እና ለደህንነት ቡድን ማሳወቅ።`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Incident Simulation Playbook.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.2.1 Check: Incident Simulation Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.2.1 ማረጋገጫ፡ የአደጋ ምላሽ ላብ',
+                  title: 'Sub-Lesson 2.2.1 Check: Incident Simulation Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1575,8 +1390,7 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Comprehensive Assessment: Cybersecurity Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የሳይበር ደህንነት ብቃት ሰርተፊኬት ምዘና',
+      title: 'Final Comprehensive Assessment: Cybersecurity Certification',
       passingScore: 75,
       timeLimitMinutes: 30,
       questions: [
@@ -1594,11 +1408,9 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
   // ─────────────────────────────────────────────────────────
   {
     code: 'MOR101',
-    titleEn: 'Management of Risk (M_o_R®) Foundation in Revenue Operations',
-    titleAm: 'በገቢዎች ስራዎች የአደጋ እና ስጋት አስተዳደር (M_o_R®) መሰረታዊ መርሆዎች',
-    descriptionEn:
+    title: 'Management of Risk (M_o_R®) Foundation in Revenue Operations',
+    description:
       'A comprehensive foundation in public sector risk governance, probabilistic risk modeling, mitigation registers, and systematic risk response planning for revenue administrators.',
-    descriptionAm: 'የመንግስት ገቢዎች ስራዎችን ስጋት በመለየት፣ በመተንተን፣ በማስተዳደር እና አደጋዎችን አስቀድሞ በመከላከል ረገድ የተሟላ እውቀት እና ክህሎት የሚሰጥ ስልጠና።',
     level: CourseLevel.ADVANCED,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.BOTH,
@@ -1607,24 +1419,19 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
     department: 'Risk Management & Strategic Compliance Directorate',
     targetAudience: 'Risk officers, senior revenue analysts, branch controllers, and operations leaders',
     deliveryMethod: 'Interactive blended learning: rich self-paced modules, scenario laboratories, and final certification exam',
-    objectivesEn:
+    objectives:
       'Master the M_o_R framework, conduct rigorous qualitative and quantitative risk assessments, build and maintain institutional risk registers, and design resilient treatment plans.',
-    objectivesAm: 'የM_o_R ማዕቀፍን ጠንቅቆ ማወቅ፣ የአደጋ ግምገማዎችን ማከናወን፣ ተቋማዊ የስጋት መዝገብ መገንባት እና ውጤታማ የመከላከያ እቅዶችን ማዘጋጀት።',
     prerequisites: 'Basic knowledge of tax administration procedures and organizational governance',
     approvalComments: 'Approved by Curriculum Accreditation Committee. Fully compliant with international M_o_R® standards.',
     modules: [
       {
-        titleEn: 'Module 1: Principles, Approaches & Governance Architecture of Risk',
-        titleAm: 'ሞዱል 1፡ የስጋት አስተዳደር መሰረታዊ መርሆዎች፣ አቀራረቦች እና የአስተዳደር መዋቅር',
-        descriptionEn: 'Establish the core governance foundations, statutory risk mandates, and three-lines-of-defense model for revenue administration.',
-        descriptionAm: 'የስጋት አስተዳደር መርሆዎችን፣ ህጋዊ ማዕቀፎችን እና የሶስቱን የመከላከያ መስመሮች ሞዴል በሚኒስቴሩ ስራዎች ውስጥ መተግበር።',
-        objectivesEn: 'Define M_o_R core principles, establish organizational risk appetite, and articulate governance responsibilities.',
-        objectivesAm: 'የM_o_R መርሆዎችን መረዳት፣ የተቋሙን የስጋት ተቀባይነት ወሰን መወሰን እና የአስተዳደር ሀላፊነቶችን መለየት።',
+        title: 'Module 1: Principles, Approaches & Governance Architecture of Risk',
+        description: 'Establish the core governance foundations, statutory risk mandates, and three-lines-of-defense model for revenue administration.',
+        objectives: 'Define M_o_R core principles, establish organizational risk appetite, and articulate governance responsibilities.',
         order: 0,
         attachment: pdf('Module 1 - M_o_R Governance Architecture.pdf'),
         assessment: {
-          titleEn: 'Module 1 Knowledge Check: Governance & Architecture',
-          titleAm: 'ሞዱል 1 የእውቀት ማረጋገጫ፡ አስተዳደር እና መዋቅር',
+          title: 'Module 1 Knowledge Check: Governance & Architecture',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1637,12 +1444,11 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
         },
         lessons: [
           {
-            titleEn: '1.1 Core Principles of Organizational Risk Management',
-            titleAm: '1.1 የተቋማዊ ስጋት አስተዳደር ቁልፍ መርሆዎች',
+            title: '1.1 Core Principles of Organizational Risk Management',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
             order: 0,
-            contentEn: `## Why Systematic Risk Governance is Non-Negotiable
+            content: `## Why Systematic Risk Governance is Non-Negotiable
 Revenue authorities operate in high-uncertainty environments: changing economic dynamics, legislative shifts, digital transformation challenges, and tax evasion threats.
 
 ## The Four Core Perspectives
@@ -1655,12 +1461,9 @@ Revenue authorities operate in high-uncertainty environments: changing economic 
 - **Aligns with Objectives**: Risk management is not an academic exercise; it exists solely to protect and enable the achievement of Ministry goals.
 - **Informs Decision Making**: No major policy or technology expenditure is approved without documented risk evaluation.
 - **Continual Improvement**: Lessons learned from past non-compliance and audit failures directly shape future controls.`,
-            contentAm: `### ማጠቃለያ
-ስጋት አስተዳደር ተቋማዊ ግቦችን ለማሳካት ወሳኝ ነው። ስልታዊ፣ የፕሮግራም፣ የፕሮጀክት እና የስራ ሂደት ስጋቶች ተብሎ በ4 አቅጣጫ ይመደባል። ቀጣይነት ያለው መሻሻል እና ውሳኔ ሰጪነትን መደገፍ ዋና መርሆዎቹ ናቸው።`,
             attachment: pdf('Lesson 1.1 - Risk Principles & Frameworks.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check: Risk Principles',
-              titleAm: 'ትምህርት 1.1 ማረጋገጫ፡ የስጋት መርሆዎች',
+              title: 'Lesson 1.1 Check: Risk Principles',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1673,12 +1476,11 @@ Revenue authorities operate in high-uncertainty environments: changing economic 
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Constructing a Ministry Risk Appetite Statement',
-                titleAm: 'ተግባራዊ ላብ፡ የተቋማዊ ስጋት ተቀባይነት ወሰን (Risk Appetite) መግለጫ ማዘጋጀት',
+                title: 'Practical Lab: Constructing a Ministry Risk Appetite Statement',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 You are assisting the Risk Directorate in defining the Risk Appetite Statement across three categories:
 1. **Tax Law Compliance**: Zero tolerance for deliberate corruption or statutory non-compliance.
 2. **Digital Innovation**: Moderate tolerance for piloting new automated filing apps and taxpayer-facing kiosks.
@@ -1686,12 +1488,9 @@ You are assisting the Risk Directorate in defining the Risk Appetite Statement a
 
 ## Deliverable
 Formulate a 1-page Risk Appetite Framework establishing specific threshold triggers and escalation criteria for each category.`,
-                contentAm: `### የላብ ሁኔታ
-በሶስት ዋና ዋና ዘርፎች (የግብር ህግ ተገዢነት፣ የዲጂታል ፈጠራ እና የበጀት ወጪ) የተቋሙን የስጋት ተቀባይነት ወሰን ማዘጋጀት እና የማሳወቂያ ደረጃዎችን መወሰን።`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Risk Appetite Workshop Template.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.1.1 Check: Risk Appetite Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.1.1 ማረጋገጫ፡ የስጋት ተቀባይነት ላብ',
+                  title: 'Sub-Lesson 1.1.1 Check: Risk Appetite Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1706,24 +1505,20 @@ Formulate a 1-page Risk Appetite Framework establishing specific threshold trigg
             ],
           },
           {
-            titleEn: '1.2 Roles, Responsibilities & the Three Lines of Defense',
-            titleAm: '1.2 ሚናዎች፣ ሀላፊነቶች እና የሶስቱ የመከላከያ መስመሮች ሞዴል',
+            title: '1.2 Roles, Responsibilities & the Three Lines of Defense',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
-            contentEn: `## Structure Prevents Conflict of Interest
+            content: `## Structure Prevents Conflict of Interest
 Risk management cannot succeed if the same team executing transactions is also the sole team inspecting them.
 
 ## The Three Lines Model in Action
 - **Line 1 - Frontline Operational Managers**: Branch controllers, tax auditors, counter supervisors. They own and manage risks directly in daily operations.
 - **Line 2 - Enterprise Risk & Compliance**: The central Risk Directorate. They provide the framework, challenge assessments, monitor registers, and train Line 1.
 - **Line 3 - Internal Audit**: Fully independent assurance reporting directly to the Audit Committee. They verify whether Line 1 and Line 2 controls are operating effectively.`,
-            contentAm: `### ማጠቃለያ
-የሶስቱ የመከላከያ መስመሮች ሞዴል የስራ ግጭትን ያስወግዳል። የመጀመሪያው መስመር ስጋትን ይቆጣጠራል፤ ሁለተኛው መስመር ማዕቀፍ እና ክትትል ያደርጋል፤ ሶስተኛው መስመር (ውስጣዊ ኦዲት) ገለልተኛ ማረጋገጫ ይሰጣል።`,
             attachment: pdf('Lesson 1.2 - Three Lines of Defense in Tax Administration.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.2 Check: Three Lines of Defense',
-              titleAm: 'ትምህርት 1.2 ማረጋገጫ፡ የሶስቱ መስመሮች ሞዴል',
+              title: 'Lesson 1.2 Check: Three Lines of Defense',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1736,12 +1531,11 @@ Risk management cannot succeed if the same team executing transactions is also t
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Assigning Risk Ownership in a Branch Office',
-                titleAm: 'ተግባራዊ ላብ፡ በቅርንጫፍ ቢሮ የስጋት ባለቤትነትን እና ሀላፊነትን መመደብ',
+                title: 'Practical Lab: Assigning Risk Ownership in a Branch Office',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Given 6 identified operational risks in a regional customs and tax branch:
 1. Document fraud in import declarations.
 2. IT cash register network outages.
@@ -1752,12 +1546,9 @@ Given 6 identified operational risks in a regional customs and tax branch:
 
 ## Task
 Assign a designated **Risk Owner** and **Action Owner** for each risk in accordance with the Three Lines model, and define mandatory reporting frequencies.`,
-                contentAm: `### የላብ ሁኔታ
-በስድስት ተለይተው በታወቁ የቅርንጫፍ ስጋቶች ላይ የስጋት ባለቤት እና የተግባር ፈጻሚ በመመደብ የሪፖርት ማቅረቢያ ጊዜያትን ማዘጋጀት።`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Branch Risk Delegation Matrix.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 1.2.1 Check: Risk Ownership Lab',
-                  titleAm: 'ንዑስ ትምህርት 1.2.1 ማረጋገጫ፡ የስጋት ባለቤትነት ላብ',
+                  title: 'Sub-Lesson 1.2.1 Check: Risk Ownership Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1774,17 +1565,13 @@ Assign a designated **Risk Owner** and **Action Owner** for each risk in accorda
         ],
       },
       {
-        titleEn: 'Module 2: Risk Identification, Assessment & Register Maintenance',
-        titleAm: 'ሞዱል 2፡ ስጋትን መለየት፣ መገምገም እና የስጋት መዝገብ (Risk Register) አስተዳደር',
-        descriptionEn: 'Techniques for uncovering emerging risks, qualitative vs quantitative scoring, probability-impact matrices, and treatment formulation.',
-        descriptionAm: 'አዳዲስ ስጋቶችን መለየት፣ የመከሰት እድል እና ተጽዕኖ ማትሪክስ ስሌት እና የመፍትሄ እቅድ ማዘጋጀት።',
-        objectivesEn: 'Conduct risk discovery workshops, calculate inherent and residual risk scores, and populate complete institutional risk registers.',
-        objectivesAm: 'የስጋት ወርክሾፖችን ማካሄድ፣ የቀሪ ስጋት ስሌት ማከናወን እና የተቋሙን የስጋት መዝገብ ማደራጀት።',
+        title: 'Module 2: Risk Identification, Assessment & Register Maintenance',
+        description: 'Techniques for uncovering emerging risks, qualitative vs quantitative scoring, probability-impact matrices, and treatment formulation.',
+        objectives: 'Conduct risk discovery workshops, calculate inherent and residual risk scores, and populate complete institutional risk registers.',
         order: 1,
         attachment: pdf('Module 2 - Risk Register & Assessment Standards.pdf'),
         assessment: {
-          titleEn: 'Module 2 Knowledge Check: Assessment & Registers',
-          titleAm: 'ሞዱል 2 የእውቀት ማረጋገጫ፡ ምዘና እና መዝገቦች',
+          title: 'Module 2 Knowledge Check: Assessment & Registers',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1797,12 +1584,11 @@ Assign a designated **Risk Owner** and **Action Owner** for each risk in accorda
         },
         lessons: [
           {
-            titleEn: '2.1 Qualitative & Quantitative Risk Scoring',
-            titleAm: '2.1 የጥራት እና የመጠን የስጋት ምዘና ስሌት',
+            title: '2.1 Qualitative & Quantitative Risk Scoring',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
             order: 0,
-            contentEn: `## Moving from Intuition to Structured Scoring
+            content: `## Moving from Intuition to Structured Scoring
 Vague statements like "this might be a big problem" cannot be prioritized. Structured risk assessment rates both **Probability (Likelihood)** and **Impact (Severity)**.
 
 ## The 5x5 Scoring Scale
@@ -1810,12 +1596,9 @@ Vague statements like "this might be a big problem" cannot be prioritized. Struc
 - **Impact**: 1 (Negligible), 2 (Minor), 3 (Moderate), 4 (Major), 5 (Catastrophic: statutory disruption or revenue loss > 50M ETB).
 - **Risk Score**: \`Probability x Impact\` (Ranges from 1 to 25).
 - **Risk Tiers**: Low (1-6, Green), Medium (8-12, Amber), High (15-25, Red).`,
-            contentAm: `### ማጠቃለያ
-ስጋት በይሆናልነት (1-5) እና በተጽዕኖ (1-5) ተባዝቶ ይሰላል። ከ1 እስከ 6 አነስተኛ (አረንጓዴ)፣ ከ8 እስከ 12 መካከለኛ (ቢጫ) እና ከ15 እስከ 25 ከፍተኛ (ቀይ) ደረጃዎች ናቸው።`,
             attachment: pdf('Lesson 2.1 - Qualitative Scoring & Impact Criteria.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.1 Check: Risk Scoring',
-              titleAm: 'ትምህርት 2.1 ማረጋገጫ፡ የስጋት ስሌት',
+              title: 'Lesson 2.1 Check: Risk Scoring',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1828,12 +1611,11 @@ Vague statements like "this might be a big problem" cannot be prioritized. Struc
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Building a 5x5 Probability-Impact Heat Map',
-                titleAm: 'ተግባራዊ ላብ፡ 5x5 የመከሰት እድል እና ተጽዕኖ የሙቀት ካርታ (Heat Map) መገንባት',
+                title: 'Practical Lab: Building a 5x5 Probability-Impact Heat Map',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 30,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 Plot 5 identified tax compliance risks onto a 5x5 matrix:
 1. Risk A (P:4, I:5, Major corporate VAT evasion).
 2. Risk B (P:2, I:2, Delays in office supply delivery).
@@ -1843,12 +1625,9 @@ Plot 5 identified tax compliance risks onto a 5x5 matrix:
 
 ## Deliverable
 Construct the colored heat map and identify which 2 risks require immediate Board-level escalation.`,
-                contentAm: `### የላብ ሁኔታ
-አምስት የስጋት ሁኔታዎችን በ5x5 ማትሪክስ ላይ መመደብ፣ የሙቀት ካርታ መገንባት እና አፋጣኝ የአመራር ውሳኔ የሚያስፈልጋቸውን ሁለት ስጋቶች መለየት።`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Heat Map Template & Exercise.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.1.1 Check: Heat Map Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.1.1 ማረጋገጫ፡ የሙቀት ካርታ ላብ',
+                  title: 'Sub-Lesson 2.1.1 Check: Heat Map Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1863,12 +1642,11 @@ Construct the colored heat map and identify which 2 risks require immediate Boar
             ],
           },
           {
-            titleEn: '2.2 Designing Treatment Plans & Contingency Responses',
-            titleAm: '2.2 የመፍትሄ እቅዶች እና የአደጋ ጊዜ ምላሾችን ማዘጋጀት',
+            title: '2.2 Designing Treatment Plans & Contingency Responses',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 40,
             order: 1,
-            contentEn: `## Selecting the Right Response Strategy
+            content: `## Selecting the Right Response Strategy
 Identifying a risk without an actionable treatment plan is useless. M_o_R defines clear response categories.
 
 ## Response Options
@@ -1878,12 +1656,9 @@ Identifying a risk without an actionable treatment plan is useless. M_o_R define
 - **Transfer**: Shift financial impact to a third party (e.g. insurance policy, outsourced security warranty).
 - **Share**: Partner with other agencies or private vendors to share risk and rewards.
 - **Accept**: Consciously retain the risk if the cost of mitigation exceeds potential loss.`,
-            contentAm: `### ማጠቃለያ
-ስጋትን ለማስተናገድ ማስወገድ (Avoid)፣ መቀነስ (Reduce)፣ የአደጋ ጊዜ እቅድ (Fallback)፣ ማስተላለፍ (Transfer)፣ መጋራት (Share) እና መቀበል (Accept) የተባሉ ስልቶች ጥቅም ላይ ይውላሉ።`,
             attachment: pdf('Lesson 2.2 - Risk Treatment & Contingency Manual.pdf'),
             assessment: {
-              titleEn: 'Lesson 2.2 Check: Risk Treatments',
-              titleAm: 'ትምህርት 2.2 ማረጋገጫ፡ የስጋት መፍትሄዎች',
+              title: 'Lesson 2.2 Check: Risk Treatments',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -1896,23 +1671,19 @@ Identifying a risk without an actionable treatment plan is useless. M_o_R define
             },
             subLessons: [
               {
-                titleEn: 'Practical Lab: Formulating Mitigation Controls for Tax Evasion Risks',
-                titleAm: 'ተግባራዊ ላብ፡ የታክስ ማጭበርበር ስጋቶችን የመከላከያ ቁጥጥር እቅድ ማዘጋጀት',
+                title: 'Practical Lab: Formulating Mitigation Controls for Tax Evasion Risks',
                 contentType: LessonContentType.DOCUMENT,
                 durationMinutes: 25,
                 order: 0,
-                contentEn: `## Lab Scenario
+                content: `## Lab Scenario
 You are assigned to draft a comprehensive Risk Treatment Action Plan for the risk: "Under-declaration of commercial import duties through fraudulent invoice documentation."
 1. Identify 3 preventive controls (e.g. mandatory digital pre-clearance, cross-border price database matching).
 2. Identify 2 detective controls (e.g. post-clearance random audits, automated customs anomaly algorithms).
 3. Identify 1 corrective control (e.g. immediate asset freezing and penalty assessment).
 4. Calculate the anticipated reduction from Inherent Risk Score (20) to Residual Risk Score (6).`,
-                contentAm: `### የላብ ሁኔታ
-በአስመጪዎች የክፍያ ሰነድ ማጭበርበር ስጋት ላይ መከላከያ፣ መርማሪ እና አራሚ ቁጥጥሮችን ማዘጋጀት እና የቀሪ ስጋት ውጤት ከ20 ወደ 6 ዝቅ እንዲል ማድረግ።`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Tax Compliance Mitigation Plan.pdf'),
                 assessment: {
-                  titleEn: 'Sub-Lesson 2.2.1 Check: Treatment Formulation Lab',
-                  titleAm: 'ንዑስ ትምህርት 2.2.1 ማረጋገጫ፡ የመፍትሄ ዝግጅት ላብ',
+                  title: 'Sub-Lesson 2.2.1 Check: Treatment Formulation Lab',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1930,8 +1701,7 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Comprehensive Assessment: M_o_R Foundation Certification',
-      titleAm: 'የኮርስ ማጠቃለያ ፈተና፡ የM_o_R የአደጋ እና ስጋት አስተዳደር ማረጋገጫ ምዘና',
+      title: 'Final Comprehensive Assessment: M_o_R Foundation Certification',
       passingScore: 75,
       timeLimitMinutes: 35,
       questions: [
@@ -1949,11 +1719,9 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
   // ─────────────────────────────────────────────────────────
   {
     code: 'INSP101',
-    titleEn: 'Physical Customs Inspection & Valuation Field Practicum',
-    titleAm: 'የጉምሩክ አካላዊ ፍተሻ እና የዋጋ አሰጣጥ የመስክ የተግባር ልምምድ',
-    descriptionEn:
+    title: 'Physical Customs Inspection & Valuation Field Practicum',
+    description:
       'Hands-on physical classroom and laboratory inspection course covering cargo scanning, physical contraband detection, HS code valuation disputes, and joint border enforcement.',
-    descriptionAm: 'የጉምሩክ እቃዎች አካላዊ ፍተሻ፣ ህገ-ወጥ ንግድ መከላከል እና የዋጋ አወሳሰን ተግባራዊ ስልጠና።',
     level: CourseLevel.INTERMEDIATE,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.IN_PERSON_ONLY,
@@ -1962,23 +1730,18 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
     department: 'Customs Valuation & Physical Inspection Directorate',
     targetAudience: 'Border inspection agents, customs officers, and freight examination specialists',
     deliveryMethod: 'Physical in-person workshop with equipment lab and scenario exercises',
-    objectivesEn: 'Master physical cargo verification, identify contraband concealment, and resolve valuation conflicts.',
-    objectivesAm: 'የእቃዎችን ትክክለኛነት ማረጋገጥ፣ ህገ-ወጥ እቃዎችን መለየት እና የጉምሩክ ህግጋትን በአግባቡ ማስከበር።',
+    objectives: 'Master physical cargo verification, identify contraband concealment, and resolve valuation conflicts.',
     prerequisites: 'Basic customs legislation orientation',
     approvalComments: 'Approved for regional branch delivery at accredited Ministry training centers.',
     modules: [
       {
-        titleEn: 'Module 1: Physical Examination Protocols & Detection Techniques',
-        titleAm: 'ሞዱል 1፡ የአካላዊ ፍተሻ መመሪያዎች እና የመለያ ዘዴዎች',
-        descriptionEn: 'Standard operating procedures for cargo physical verification and risk-based screening.',
-        descriptionAm: 'የዕቃ ፍተሻ ደረጃቸውን የጠበቁ አሰራሮች እና የአደጋ ተጋላጭነት መለያ ዘዴዎች።',
-        objectivesEn: 'Demonstrate safe container unsealing, sampling, and non-intrusive scan interpretation.',
-        objectivesAm: 'የፍተሻ ስነ-ስርዓትን በአግባቡ መፈፀም እና የስካነር ምስሎችን መተርጎም።',
+        title: 'Module 1: Physical Examination Protocols & Detection Techniques',
+        description: 'Standard operating procedures for cargo physical verification and risk-based screening.',
+        objectives: 'Demonstrate safe container unsealing, sampling, and non-intrusive scan interpretation.',
         order: 0,
         attachment: pdf('INSP101-Module1-Guide.pdf'),
         assessment: {
-          titleEn: 'Module 1 Verification Check',
-          titleAm: 'ሞዱል 1 የማረጋገጫ ምዘና',
+          title: 'Module 1 Verification Check',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -1988,17 +1751,14 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         },
         lessons: [
           {
-            titleEn: 'Lesson 1.1: Cargo Seal Verification & Chain of Custody',
-            titleAm: 'ትምህርት 1.1፡ የዕቃ ማሸጊያ ማረጋገጫ እና የሰነድ ቁጥጥር',
+            title: 'Lesson 1.1: Cargo Seal Verification & Chain of Custody',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 45,
             order: 0,
-            contentEn: 'Comprehensive guide to container seal integrity and physical verification.',
-            contentAm: 'የኮንቴይነር ማሸጊያዎችን ደህንነት ማረጋገጫ እና አካላዊ ፍተሻ ዝርዝር መመሪያ።',
+            content: 'Comprehensive guide to container seal integrity and physical verification.',
             attachment: pdf('INSP101-L1-Seals.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check',
-              titleAm: 'ትምህርት 1.1 ምዘና',
+              title: 'Lesson 1.1 Check',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -2010,8 +1770,7 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Practical Inspection Certification Exam',
-      titleAm: 'የመጨረሻ የተግባር ፍተሻ የብቃት ማረጋገጫ ፈተና',
+      title: 'Final Practical Inspection Certification Exam',
       passingScore: 75,
       timeLimitMinutes: 30,
       questions: [
@@ -2026,11 +1785,9 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
   // ─────────────────────────────────────────────────────────
   {
     code: 'TAX101',
-    titleEn: 'Ethiopian Tax System Fundamentals & Digital Filing Standards',
-    titleAm: 'የኢትዮጵያ የታክስ ስርዓት መሰረታዊ መርሆዎች እና ዲጂታል አሰራር',
-    descriptionEn:
+    title: 'Ethiopian Tax System Fundamentals & Digital Filing Standards',
+    description:
       'Pure online self-paced e-learning curriculum covering Ethiopian tax proclamations, VAT withholding, income tax brackets, electronic declarations, and taxpayer rights.',
-    descriptionAm: 'የኢትዮጵያ የግብር ስርዓት፣ የተጨማሪ እሴት ታክስ፣ የገቢ ግብር እና የኤሌክትሮኒክስ አሰራር መሰረታዊ የኦንላይን ስልጠና።',
     level: CourseLevel.BASIC,
     status: CourseStatus.PUBLISHED,
     deliveryMode: CourseDeliveryMode.ONLINE_ONLY,
@@ -2039,23 +1796,18 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
     department: 'Tax Advisory & Compliance Education Directorate',
     targetAudience: 'Revenue staff, new recruits, tax accountants, and enterprise tax declarants',
     deliveryMethod: '100% online self-paced interactive modules and automated knowledge assessments',
-    objectivesEn: 'Understand tax structures, calculate obligations correctly, and operate Ministry e-tax services.',
-    objectivesAm: 'የታክስ ስሌቶችን በአግባቡ መረዳት እና የኤሌክትሮኒክስ ግብር መክፈያ ስርዓቶችን መጠቀም።',
+    objectives: 'Understand tax structures, calculate obligations correctly, and operate Ministry e-tax services.',
     prerequisites: 'None',
     approvalComments: 'Accredited for nationwide digital onboarding across all 13 federal regional offices.',
     modules: [
       {
-        titleEn: 'Module 1: Principles of Ethiopian Taxation Architecture',
-        titleAm: 'ሞዱል 1፡ የኢትዮጵያ የግብር ህግጋት መሰረታዊ መዋቅር',
-        descriptionEn: 'Introduction to direct vs indirect taxes, federal tax schedule, and legal obligations.',
-        descriptionAm: 'የቀጥታ እና ቀጥተኛ ያልሆኑ ግብሮች፣ የፌደራል ግብር ሰንጠረዥ እና ህጋዊ ግዴታዎች።',
-        objectivesEn: 'Classify income schedules and recognize taxable events.',
-        objectivesAm: 'የገቢ አይነቶችን መለየት እና ግብር የሚከፈልባቸውን ሁነቶች ማወቅ።',
+        title: 'Module 1: Principles of Ethiopian Taxation Architecture',
+        description: 'Introduction to direct vs indirect taxes, federal tax schedule, and legal obligations.',
+        objectives: 'Classify income schedules and recognize taxable events.',
         order: 0,
         attachment: pdf('TAX101-Module1-Guide.pdf'),
         assessment: {
-          titleEn: 'Module 1 Architecture Check',
-          titleAm: 'ሞዱል 1 የማጠቃለያ ምዘና',
+          title: 'Module 1 Architecture Check',
           passingScore: 70,
           timeLimitMinutes: 15,
           questions: [
@@ -2065,17 +1817,14 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         },
         lessons: [
           {
-            titleEn: 'Lesson 1.1: Legal Framework & Withholding Responsibilities',
-            titleAm: 'ትምህርት 1.1፡ ህጋዊ ማዕቀፍ እና የቅድመ ግብር ተቀናሽ ኃላፊነቶች',
+            title: 'Lesson 1.1: Legal Framework & Withholding Responsibilities',
             contentType: LessonContentType.DOCUMENT,
             durationMinutes: 30,
             order: 0,
-            contentEn: 'Overview of tax withholding mechanisms and payment deadlines.',
-            contentAm: 'የግብር ተቀናሽ አሰራር እና የመክፈያ የጊዜ ሰሌዳዎች አጠቃላይ መመሪያ።',
+            content: 'Overview of tax withholding mechanisms and payment deadlines.',
             attachment: pdf('TAX101-L1-TaxLaw.pdf'),
             assessment: {
-              titleEn: 'Lesson 1.1 Check',
-              titleAm: 'ትምህርት 1.1 ምዘና',
+              title: 'Lesson 1.1 Check',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
@@ -2087,8 +1836,7 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       },
     ],
     finalAssessment: {
-      titleEn: 'Final Tax Fundamentals Online Certification Exam',
-      titleAm: 'የመጨረሻ የግብር መሰረታዊ እውቀት የኦንላይን ፈተና',
+      title: 'Final Tax Fundamentals Online Certification Exam',
       passingScore: 75,
       timeLimitMinutes: 30,
       questions: [
@@ -2283,15 +2031,13 @@ async function main() {
   console.log('📚 Seeding comprehensive courses across all lifecycle statuses...');
 
   for (const c of courseSeeds) {
-    console.log(`\n📌 Creating Course: [${c.code}] ${c.titleEn} (${c.status})...`);
+    console.log(`\n📌 Creating Course: [${c.code}] ${c.title} (${c.status})...`);
 
     const course = await prisma.course.create({
       data: {
         code: c.code,
-        titleEn: c.titleEn,
-        titleAm: c.titleAm,
-        descriptionEn: c.descriptionEn,
-        descriptionAm: c.descriptionAm,
+        title: c.title,
+        description: c.description,
         level: c.level,
         status: c.status,
         thumbnailUrl: COVER,
@@ -2301,8 +2047,7 @@ async function main() {
         targetAudience: c.targetAudience,
         deliveryMethod: c.deliveryMethod,
         deliveryMode: c.deliveryMode || CourseDeliveryMode.BOTH,
-        objectivesEn: c.objectivesEn,
-        objectivesAm: c.objectivesAm,
+        objectives: c.objectives,
         prerequisites: c.prerequisites,
         publishedAt: c.status === CourseStatus.PUBLISHED ? new Date() : null,
         owners: {
@@ -2365,16 +2110,13 @@ async function main() {
 
     // Modules & Curriculum
     for (const mod of c.modules) {
-      console.log(`   📦 Module ${mod.order + 1}: ${mod.titleEn}`);
+      console.log(`   📦 Module ${mod.order + 1}: ${mod.title}`);
       const createdMod = await prisma.curriculumModule.create({
         data: {
           courseId: course.id,
-          titleEn: mod.titleEn,
-          titleAm: mod.titleAm,
-          descriptionEn: mod.descriptionEn,
-          descriptionAm: mod.descriptionAm,
-          objectivesEn: mod.objectivesEn,
-          objectivesAm: mod.objectivesAm,
+          title: mod.title,
+          description: mod.description,
+          objectives: mod.objectives,
           order: mod.order,
           passingScore: mod.assessment.passingScore,
         },
@@ -2400,10 +2142,10 @@ async function main() {
           courseId: course.id,
           moduleId: createdMod.id,
           type: AssessmentType.MODULE_ASSESSMENT,
-          titleEn: mod.assessment.titleEn,
-          titleAm: mod.assessment.titleAm,
-          descriptionEn: mod.assessment.descriptionEn || '',
-          descriptionAm: mod.assessment.descriptionAm || '',
+          titleEn: mod.assessment.title,
+          titleAm: mod.assessment.title,
+          descriptionEn: mod.assessment.description || '',
+          descriptionAm: mod.assessment.description || '',
           passingScore: mod.assessment.passingScore,
           timeLimitMinutes: mod.assessment.timeLimitMinutes,
           questions: mod.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
@@ -2428,15 +2170,13 @@ async function main() {
 
       // Lessons in Module
       for (const les of mod.lessons) {
-        console.log(`      📖 Lesson ${les.order + 1}: ${les.titleEn}`);
+        console.log(`      📖 Lesson ${les.order + 1}: ${les.title}`);
         const createdLesson = await prisma.lesson.create({
           data: {
             moduleId: createdMod.id,
             parentId: null,
-            titleEn: les.titleEn,
-            titleAm: les.titleAm,
-            contentEn: les.contentEn,
-            contentAm: les.contentAm,
+            title: les.title,
+            content: les.content,
             contentType: les.contentType,
             resourceUrl: les.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null,
             durationMinutes: 1,
@@ -2466,8 +2206,8 @@ async function main() {
             moduleId: createdMod.id,
             lessonId: createdLesson.id,
             type: AssessmentType.LESSON_ASSESSMENT,
-            titleEn: les.assessment.titleEn,
-            titleAm: les.assessment.titleAm,
+            titleEn: les.assessment.title,
+            titleAm: les.assessment.title,
             passingScore: les.assessment.passingScore,
             timeLimitMinutes: les.assessment.timeLimitMinutes,
             questions: les.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
@@ -2492,15 +2232,13 @@ async function main() {
         // Sub-lessons
         if (les.subLessons && les.subLessons.length > 0) {
           for (const sub of les.subLessons) {
-            console.log(`         🔬 Sub-lesson: ${sub.titleEn}`);
+            console.log(`         🔬 Sub-lesson: ${sub.title}`);
             const createdSub = await prisma.lesson.create({
               data: {
                 moduleId: createdMod.id,
                 parentId: createdLesson.id,
-                titleEn: sub.titleEn,
-                titleAm: sub.titleAm,
-                contentEn: sub.contentEn,
-                contentAm: sub.contentAm,
+                title: sub.title,
+                content: sub.content,
                 contentType: sub.contentType,
                 resourceUrl: sub.contentType === LessonContentType.VIDEO ? SAMPLE_VIDEO : null,
                 durationMinutes: 1,
@@ -2532,8 +2270,8 @@ async function main() {
       data: {
         courseId: course.id,
         type: AssessmentType.FINAL_ASSESSMENT,
-        titleEn: c.finalAssessment.titleEn,
-        titleAm: c.finalAssessment.titleAm,
+        titleEn: c.finalAssessment.title,
+        titleAm: c.finalAssessment.title,
         passingScore: c.finalAssessment.passingScore,
         timeLimitMinutes: c.finalAssessment.timeLimitMinutes,
         questions: c.finalAssessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
@@ -2572,9 +2310,9 @@ async function main() {
       courseId: morCourse!.id,
       trainerId: trainerId,
       titleEn: 'Live In-Person Case Study & Mitigation Lab',
-      titleAm: 'የቀጥታ የክፍል ውስጥ የጉዳይ ትንተና እና የመፍትሄ ላብራቶሪ',
+      titleAm: 'Live In-Person Case Study & Mitigation Lab',
       descriptionEn: 'Interactive in-person workshop on institutional risk assessment and mitigation design.',
-      descriptionAm: 'በተቋማዊ የስጋት ግምገማ እና የመፍትሄ እቅድ ላይ ያተኮረ የተግባር አውደ ጥናት።',
+      descriptionAm: 'Interactive in-person workshop on institutional risk assessment and mitigation design.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
@@ -2590,9 +2328,9 @@ async function main() {
       courseId: morCourse!.id,
       trainerId: trainerId,
       titleEn: 'Risk Management Classroom Practicum - Group A',
-      titleAm: 'የስጋት አስተዳደር የክፍል ውስጥ የተግባር ልምምድ - ምድብ ሀ',
+      titleAm: 'Risk Management Classroom Practicum - Group A',
       descriptionEn: 'In-person classroom risk register modeling and scenario evaluation.',
-      descriptionAm: 'የስጋት መዝገብ ዝግጅት እና የሁኔታዎች ግምገማ የክፍል ውስጥ ስልጠና።',
+      descriptionAm: 'In-person classroom risk register modeling and scenario evaluation.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
@@ -2608,9 +2346,9 @@ async function main() {
       courseId: morCourse!.id,
       trainerId: trainerId,
       titleEn: 'Regional Risk Governance Workshop - Hawassa Hub',
-      titleAm: 'የክልል የስጋት አስተዳደር አውደ ጥናት - ሀዋሳ ማዕከል',
+      titleAm: 'Regional Risk Governance Workshop - Hawassa Hub',
       descriptionEn: 'Regional branch training for South-East regional tax directors.',
-      descriptionAm: 'ለደቡብ-ምስራቅ ቀጣና ዳይሬክተሮች የተዘጋጀ የክልል ስልጠና።',
+      descriptionAm: 'Regional branch training for South-East regional tax directors.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Hawassa Regional Training Hub'].id,
@@ -2626,9 +2364,9 @@ async function main() {
       courseId: morCourse!.id,
       trainerId: trainerId,
       titleEn: 'National Virtual Risk Review & Q&A Webinar',
-      titleAm: 'ብሔራዊ የበይነ-መረብ የስጋት ግምገማ እና የጥያቄና መልስ ዌቢናር',
+      titleAm: 'National Virtual Risk Review & Q&A Webinar',
       descriptionEn: 'Online interactive consultation session with national risk leadership.',
-      descriptionAm: 'ከብሔራዊ የስጋት አመራሮች ጋር የሚደረግ የቀጥታ የበይነ-መረብ ውይይት።',
+      descriptionAm: 'Online interactive consultation session with national risk leadership.',
       platform: SessionPlatform.LIVEKIT,
       sessionType: SessionType.VIRTUAL,
       venueId: null,
@@ -2645,9 +2383,9 @@ async function main() {
       courseId: projCourse!.id,
       trainerId: trainerId,
       titleEn: 'Government Project Planning & Gantt Scheduling Lab',
-      titleAm: 'የመንግስት ፕሮጀክት እቅድ እና የጋንት ቻርት ላብራቶሪ',
+      titleAm: 'Government Project Planning & Gantt Scheduling Lab',
       descriptionEn: 'Hands-on scheduling and earned value calculation in computer lab.',
-      descriptionAm: 'የፕሮጀክት የጊዜ ሰሌዳ እና የዋጋ ስሌት ተግባራዊ የላብራቶሪ ስልጠና።',
+      descriptionAm: 'Hands-on scheduling and earned value calculation in computer lab.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Addis Ababa HQ - Executive Lab 2'].id,
@@ -2663,9 +2401,9 @@ async function main() {
       courseId: projCourse!.id,
       trainerId: trainerId,
       titleEn: 'Strategic Infrastructure Delivery Workshop - Adama',
-      titleAm: 'ስልታዊ የመሰረተ ልማት ፕሮጀክቶች አውደ ጥናት - አዳማ',
+      titleAm: 'Strategic Infrastructure Delivery Workshop - Adama',
       descriptionEn: 'Regional project managers workshop on public milestone delivery.',
-      descriptionAm: 'የክልል የፕሮጀክት ስራ አስኪያጆች የተግባር አውደ ጥናት።',
+      descriptionAm: 'Regional project managers workshop on public milestone delivery.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Adama Branch Multi-Purpose Center'].id,
@@ -2682,9 +2420,9 @@ async function main() {
       courseId: inspCourse!.id,
       trainerId: trainerId,
       titleEn: 'Customs Cargo Seal Verification & Security Simulation',
-      titleAm: 'የጉምሩክ ዕቃ ማሸጊያ ማረጋገጫ እና የደህንነት ማስመሰያ',
+      titleAm: 'Customs Cargo Seal Verification & Security Simulation',
       descriptionEn: 'Physical container inspection and high-security seal verification.',
-      descriptionAm: 'የኮንቴይነር ፍተሻ እና ከፍተኛ የደህንነት ማሸጊያ ማረጋገጫ ተግባራዊ ስልጠና።',
+      descriptionAm: 'Physical container inspection and high-security seal verification.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Addis Ababa HQ - Executive Lab 2'].id,
@@ -2700,9 +2438,9 @@ async function main() {
       courseId: inspCourse!.id,
       trainerId: trainerId,
       titleEn: 'Border Freight Physical Examination Clinic - Dire Dawa',
-      titleAm: 'የድንበር ዕቃዎች አካላዊ ፍተሻ ክሊኒክ - ድሬዳዋ',
+      titleAm: 'Border Freight Physical Examination Clinic - Dire Dawa',
       descriptionEn: 'Regional customs valuation and physical inspection practicum.',
-      descriptionAm: 'የክልል የጉምሩክ እቃዎች አካላዊ ፍተሻ ተግባራዊ ልምምድ።',
+      descriptionAm: 'Regional customs valuation and physical inspection practicum.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Dire Dawa Revenue Training Lab'].id,
@@ -2719,9 +2457,9 @@ async function main() {
       courseId: cservCourse!.id,
       trainerId: trainerId,
       titleEn: 'Front-Office Taxpayer Conflict De-escalation Workshop',
-      titleAm: 'የፊት ለፊት ጽ/ቤት ግብር ከፋዮች ቅሬታ አፈታት የተግባር አውደ ጥናት',
+      titleAm: 'Front-Office Taxpayer Conflict De-escalation Workshop',
       descriptionEn: 'Interactive role-play on queue management and complaint resolution.',
-      descriptionAm: 'የተግባር ማስመሰያ ልምምድ በተገልጋዮች እርካታ እና ቅሬታ አፈታት ላይ።',
+      descriptionAm: 'Interactive role-play on queue management and complaint resolution.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Addis Ababa HQ - Training Hall A'].id,
@@ -2737,9 +2475,9 @@ async function main() {
       courseId: cservCourse!.id,
       trainerId: trainerId,
       titleEn: 'Customer Service Excellence Field Seminar - Bahir Dar',
-      titleAm: 'የተገልጋይ አገልግሎት ብቃት የመስክ ሴሚናር - ባሕር ዳር',
+      titleAm: 'Customer Service Excellence Field Seminar - Bahir Dar',
       descriptionEn: 'Regional front-desk taxpayer care standards workshop.',
-      descriptionAm: 'የክልል የፊት ለፊት ጽ/ቤት ሰራተኞች አገልግሎት አሰጣጥ ደረጃዎች ስልጠና።',
+      descriptionAm: 'Regional front-desk taxpayer care standards workshop.',
       platform: SessionPlatform.IN_PERSON,
       sessionType: SessionType.IN_PERSON,
       venueId: venueMap['Bahir Dar Branch Room 101'].id,
@@ -2769,7 +2507,7 @@ async function main() {
   console.log('──────────────────────────────────────────────────────────');
   console.log('Courses seeded:');
   for (const c of courseSeeds) {
-    console.log(`  • [${c.status.padEnd(16)}] [${(c.deliveryMode || 'BOTH').padEnd(14)}] ${c.code.padEnd(10)} - ${c.titleEn}`);
+    console.log(`  • [${c.status.padEnd(16)}] [${(c.deliveryMode || 'BOTH').padEnd(14)}] ${c.code.padEnd(10)} - ${c.title}`);
   }
   console.log('──────────────────────────────────────────────────────────');
 }

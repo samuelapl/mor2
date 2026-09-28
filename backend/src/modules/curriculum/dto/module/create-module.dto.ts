@@ -35,23 +35,12 @@ export class LessonDto {
   @ApiProperty({ example: 'Introduction to Computers' })
   @IsString()
   @MinLength(2)
-  titleEn: string;
-
-  @ApiPropertyOptional({ example: 'የኮምፒውተር መግቢያ' })
-  @IsOptional()
-  @IsString()
-  @MinLength(2)
-  titleAm?: string;
+  title: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  contentEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  contentAm?: string;
+  content?: string;
 
   @ApiPropertyOptional({
     enum: ['VIDEO', 'DOCUMENT', 'PRESENTATION', 'INTERACTIVE', 'SCORM', 'EXTERNAL_LINK', 'AUDIO'],
@@ -95,32 +84,17 @@ export class CreateModuleDto {
   @ApiProperty({ example: 'Module 1: Fundamentals' })
   @IsString()
   @MinLength(2)
-  titleEn: string;
-
-  @ApiProperty({ example: 'ሞዱል 1፡ መሰረታዊ' })
-  @IsString()
-  @MinLength(2)
-  titleAm: string;
+  title: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  descriptionEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  descriptionAm?: string;
+  description?: string;
 
   @ApiPropertyOptional({ example: 'Understand the basic concepts of revenue assessment' })
   @IsOptional()
   @IsString()
-  objectivesEn?: string;
-
-  @ApiPropertyOptional({ example: 'የገቢ ግምገማ መሰረታዊ ፅንሰ ሀሳቦችን መረዳት' })
-  @IsOptional()
-  @IsString()
-  objectivesAm?: string;
+  objectives?: string;
 
   @ApiPropertyOptional({ example: 60 })
   @IsOptional()

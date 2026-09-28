@@ -41,16 +41,16 @@ export class QuestionBankService {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
         course: {
-          select: { id: true, titleEn: true, titleAm: true, code: true },
+          select: { id: true, title: true, code: true },
         },
         module: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         lesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         subLesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
       },
     });
@@ -119,16 +119,16 @@ export class QuestionBankService {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
         course: {
-          select: { id: true, titleEn: true, titleAm: true, code: true },
+          select: { id: true, title: true, code: true },
         },
         module: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         lesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         subLesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
       },
     });
@@ -142,16 +142,16 @@ export class QuestionBankService {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
         course: {
-          select: { id: true, titleEn: true, titleAm: true, code: true },
+          select: { id: true, title: true, code: true },
         },
         module: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         lesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         subLesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
       },
     });
@@ -196,16 +196,16 @@ export class QuestionBankService {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
         course: {
-          select: { id: true, titleEn: true, titleAm: true, code: true },
+          select: { id: true, title: true, code: true },
         },
         module: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         lesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
         subLesson: {
-          select: { id: true, titleEn: true, titleAm: true, order: true },
+          select: { id: true, title: true, order: true },
         },
       },
     });

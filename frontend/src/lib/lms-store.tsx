@@ -705,8 +705,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           await createModule(
             created.id,
             moduleToCreateBody({
+              title: mod.title,
               titleEn: mod.title,
+              description: mod.description || 'Course module',
               descriptionEn: mod.description || 'Course module',
+              objectives: mod.objectives,
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
               attachments: toAttachmentBodies(
@@ -717,7 +720,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 mod.fileSize,
               ),
               lessons: mod.lessons.map((lesson) => ({
+                title: lesson.title,
                 titleEn: lesson.title,
+                content: lesson.content,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
                 contentType: normalizeLessonContentType(lesson.contentType),
@@ -730,7 +735,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                   lesson.fileSize,
                 ),
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
+                  title: sub.title,
                   titleEn: sub.title,
+                  content: sub.content,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
                   contentType: normalizeLessonContentType(sub.contentType),
@@ -1060,8 +1067,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           courseId,
           modulesToReplace.map((mod) =>
             moduleToCreateBody({
+              title: mod.title,
               titleEn: mod.title,
+              description: mod.description || 'Course module',
               descriptionEn: mod.description || 'Course module',
+              objectives: mod.objectives,
               objectivesEn: mod.objectives,
               durationMinutes: mod.durationMinutes,
               attachments: toAttachmentBodies(
@@ -1072,7 +1082,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 mod.fileSize,
               ),
               lessons: mod.lessons.map((lesson) => ({
+                title: lesson.title,
                 titleEn: lesson.title,
+                content: lesson.content,
                 contentEn: lesson.content,
                 durationMinutes: lesson.durationMin,
                 contentType: normalizeLessonContentType(lesson.contentType),
@@ -1085,7 +1097,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                   lesson.fileSize,
                 ),
                 subLessons: (lesson.subLessons ?? []).map((sub) => ({
+                  title: sub.title,
                   titleEn: sub.title,
+                  content: sub.content,
                   contentEn: sub.content,
                   durationMinutes: sub.durationMin,
                   contentType: normalizeLessonContentType(sub.contentType),

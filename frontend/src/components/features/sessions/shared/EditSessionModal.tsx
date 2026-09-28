@@ -199,7 +199,7 @@ export function EditSessionModal({
               </p>
               <p className="text-sm font-bold text-slate-900">
                 {currentCourse?.code || session.course?.code} —{' '}
-                {currentCourse?.title || session.course?.titleEn}
+                {currentCourse?.title || session.course?.title || session.course?.titleEn}
               </p>
             </div>
             <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">

@@ -58,6 +58,42 @@ export class CurriculumService {
     private readonly progressService: ProgressService,
   ) {}
 
+  public formatLessonCompat(les: any) {
+    if (!les) return les;
+    const title = les.title ?? les.titleEn ?? '';
+    const content = les.content ?? les.contentEn ?? null;
+    return {
+      ...les,
+      title,
+      titleEn: title,
+      titleAm: les.titleAm ?? title,
+      content,
+      contentEn: content,
+      contentAm: les.contentAm ?? content,
+      subLessons: (les.subLessons ?? []).map((sub: any) => this.formatLessonCompat(sub)),
+    };
+  }
+
+  public formatModuleCompat(mod: any) {
+    if (!mod) return mod;
+    const title = mod.title ?? mod.titleEn ?? '';
+    const description = mod.description ?? mod.descriptionEn ?? null;
+    const objectives = mod.objectives ?? mod.objectivesEn ?? null;
+    return {
+      ...mod,
+      title,
+      titleEn: title,
+      titleAm: mod.titleAm ?? title,
+      description,
+      descriptionEn: description,
+      descriptionAm: mod.descriptionAm ?? description,
+      objectives,
+      objectivesEn: objectives,
+      objectivesAm: mod.objectivesAm ?? objectives,
+      lessons: (mod.lessons ?? []).map((l: any) => this.formatLessonCompat(l)),
+    };
+  }
+
   // ── Modules ────────────────────────────────────────
   /** Replaces the entire curriculum (modules + lessons + sub-lessons) atomically. Only DRAFT/REJECTED courses. */
   async replaceAll(courseId: string, dto: ReplaceModulesDto) {
@@ -70,12 +106,9 @@ export class CurriculumService {
         const createdModule = await tx.curriculumModule.create({
           data: {
             courseId,
-            titleAm: mod.titleAm,
-            titleEn: mod.titleEn,
-            descriptionAm: mod.descriptionAm,
-            descriptionEn: mod.descriptionEn,
-            objectivesAm: mod.objectivesAm,
-            objectivesEn: mod.objectivesEn,
+            title: mod.title,
+            description: mod.description,
+            objectives: mod.objectives,
             durationMinutes: mod.durationMinutes,
             order: index,
             passingScore: mod.passingScore,
@@ -105,10 +138,8 @@ export class CurriculumService {
               data: {
                 moduleId: createdModule.id,
                 parentId: null,
-                titleAm: lesson.titleAm ?? lesson.titleEn,
-                titleEn: lesson.titleEn,
-                contentAm: lesson.contentAm,
-                contentEn: lesson.contentEn,
+                title: lesson.title,
+                content: lesson.content,
                 contentType: sanitizeLessonContentType(lesson.contentType),
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
@@ -140,10 +171,8 @@ export class CurriculumService {
                   data: {
                     moduleId: createdModule.id,
                     parentId: createdLesson.id,
-                    titleAm: sub.titleAm ?? sub.titleEn,
-                    titleEn: sub.titleEn,
-                    contentAm: sub.contentAm,
-                    contentEn: sub.contentEn,
+                    title: sub.title,
+                    content: sub.content,
                     contentType: sanitizeLessonContentType(sub.contentType),
                     durationMinutes: sub.durationMinutes,
                     order: sIdx,
@@ -191,7 +220,7 @@ export class CurriculumService {
   }
 
   async getModules(courseId: string) {
-    return this.prisma.curriculumModule.findMany({
+    const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
       orderBy: { order: 'asc' },
       include: {
@@ -220,6 +249,8 @@ export class CurriculumService {
         },
       },
     });
+
+    return modules.map((m) => this.formatModuleCompat(m));
   }
 
   async getModule(moduleId: string) {
@@ -256,7 +287,7 @@ export class CurriculumService {
       throw new NotFoundException('Module not found');
     }
 
-    return module;
+    return this.formatModuleCompat(module);
   }
 
   async createModule(courseId: string, dto: CreateModuleDto) {
@@ -270,22 +301,17 @@ export class CurriculumService {
     const mod = await this.prisma.curriculumModule.create({
       data: {
         courseId,
-        titleAm: dto.titleAm,
-        titleEn: dto.titleEn,
-        descriptionAm: dto.descriptionAm,
-        descriptionEn: dto.descriptionEn,
-        objectivesAm: dto.objectivesAm,
-        objectivesEn: dto.objectivesEn,
+        title: dto.title,
+        description: dto.description,
+        objectives: dto.objectives,
         durationMinutes: dto.durationMinutes,
         order,
         passingScore: dto.passingScore,
         lessons: dto.lessons?.length
           ? {
               create: dto.lessons.map((lesson, idx) => ({
-                titleAm: lesson.titleAm ?? lesson.titleEn,
-                titleEn: lesson.titleEn,
-                contentAm: lesson.contentAm,
-                contentEn: lesson.contentEn,
+                title: lesson.title,
+                content: lesson.content,
                 contentType: (lesson.contentType as any) ?? 'DOCUMENT',
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
@@ -352,21 +378,19 @@ export class CurriculumService {
       throw new NotFoundException('Module not found');
     }
 
-    return this.prisma.curriculumModule.update({
+    const updated = await this.prisma.curriculumModule.update({
       where: { id: moduleId },
       data: {
-        titleAm: dto.titleAm,
-        titleEn: dto.titleEn,
-        descriptionAm: dto.descriptionAm,
-        descriptionEn: dto.descriptionEn,
-        objectivesAm: dto.objectivesAm,
-        objectivesEn: dto.objectivesEn,
+        title: dto.title,
+        description: dto.description,
+        objectives: dto.objectives,
         durationMinutes: dto.durationMinutes,
         order: dto.order,
         passingScore: dto.passingScore,
       },
       include: { lessons: { where: { deletedAt: null }, orderBy: { order: 'asc' } } },
     });
+    return this.formatModuleCompat(updated);
   }
 
   async reorderModules(courseId: string, moduleIds: string[]) {
@@ -533,7 +557,7 @@ export class CurriculumService {
       }
     }
 
-    return lesson;
+    return this.formatLessonCompat(lesson);
   }
 
   async createLesson(moduleId: string, dto: CreateLessonDto) {
@@ -551,20 +575,19 @@ export class CurriculumService {
       });
       const order = dto.order ?? (lastSub ? lastSub.order + 1 : 0);
 
-      return this.prisma.lesson.create({
+      const created = await this.prisma.lesson.create({
         data: {
           moduleId,
           parentId: dto.parentId,
-          titleAm: dto.titleAm ?? dto.titleEn,
-          titleEn: dto.titleEn,
-          contentAm: dto.contentAm,
-          contentEn: dto.contentEn,
+          title: dto.title,
+          content: dto.content,
           contentType: sanitizeLessonContentType(dto.contentType),
           durationMinutes: dto.durationMinutes,
           order,
           resourceUrl: dto.resourceUrl,
         },
       });
+      return this.formatLessonCompat(created);
     }
 
     const lastLesson = await this.prisma.lesson.findFirst({
@@ -574,20 +597,19 @@ export class CurriculumService {
 
     const order = dto.order ?? (lastLesson ? lastLesson.order + 1 : 0);
 
-    return this.prisma.lesson.create({
+    const created = await this.prisma.lesson.create({
       data: {
         moduleId,
         parentId: null,
-        titleAm: dto.titleAm ?? dto.titleEn,
-        titleEn: dto.titleEn,
-        contentAm: dto.contentAm,
-        contentEn: dto.contentEn,
+        title: dto.title,
+        content: dto.content,
         contentType: sanitizeLessonContentType(dto.contentType),
         durationMinutes: dto.durationMinutes,
         order,
         resourceUrl: dto.resourceUrl,
       },
     });
+    return this.formatLessonCompat(created);
   }
 
   async updateLesson(lessonId: string, dto: UpdateLessonDto) {
@@ -599,13 +621,11 @@ export class CurriculumService {
       throw new NotFoundException('Lesson not found');
     }
 
-    return this.prisma.lesson.update({
+    const updated = await this.prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        titleAm: dto.titleAm,
-        titleEn: dto.titleEn,
-        contentAm: dto.contentAm,
-        contentEn: dto.contentEn,
+        title: dto.title,
+        content: dto.content,
         contentType: dto.contentType,
         durationMinutes: dto.durationMinutes,
         order: dto.order,
@@ -613,6 +633,7 @@ export class CurriculumService {
         parentId: dto.parentId !== undefined ? dto.parentId : existing.parentId,
       },
     });
+    return this.formatLessonCompat(updated);
   }
 
   async reorderLessons(moduleId: string, lessonIds: string[]) {
@@ -625,10 +646,11 @@ export class CurriculumService {
       ),
     );
 
-    return this.prisma.lesson.findMany({
+    const lessons = await this.prisma.lesson.findMany({
       where: { moduleId, deletedAt: null },
       orderBy: { order: 'asc' },
     });
+    return lessons.map((l) => this.formatLessonCompat(l));
   }
 
   async deleteLesson(lessonId: string) {

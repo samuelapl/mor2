@@ -165,8 +165,9 @@ export class ProgressService {
 
       return {
         moduleId: module.id,
-        titleEn: module.titleEn,
-        titleAm: module.titleAm,
+        title: module.title,
+        titleEn: module.title,
+        titleAm: module.title,
         order: module.order,
         unlocked: moduleUnlocked.get(module.id) ?? false,
         totalLessons: lessonsInModule,
@@ -184,8 +185,9 @@ export class ProgressService {
           const timeSpentSeconds = lesson.completions[0]?.timeSpentSeconds ?? 0;
           return {
             lessonId: lesson.id,
-            titleEn: lesson.titleEn,
-            titleAm: lesson.titleAm,
+            title: lesson.title,
+            titleEn: lesson.title,
+            titleAm: lesson.title,
             order: lesson.order,
             unlocked: lessonUnlocked.get(lesson.id) ?? false,
             completed: lesson.completions[0]?.completed ?? false,
@@ -199,8 +201,9 @@ export class ProgressService {
               const subTimeSpentSeconds = sub.completions[0]?.timeSpentSeconds ?? 0;
               return {
                 lessonId: sub.id,
-                titleEn: sub.titleEn,
-                titleAm: sub.titleAm,
+                title: sub.title,
+                titleEn: sub.title,
+                titleAm: sub.title,
                 order: sub.order,
                 unlocked: lessonUnlocked.get(sub.id) ?? false,
                 completed: sub.completions[0]?.completed ?? false,

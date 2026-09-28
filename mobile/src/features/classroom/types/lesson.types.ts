@@ -7,12 +7,14 @@ export interface ApiLessonSubLesson {
   moduleId: string;
   parentId: string | null;
   order: number;
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
   contentType: LessonContentType;
   durationMinutes: number | null;
-  contentEn: string | null;
-  contentAm: string | null;
+  content?: string | null;
+  contentEn?: string | null;
+  contentAm?: string | null;
   resourceUrl: string | null;
   attachments: ApiAttachment[];
 }

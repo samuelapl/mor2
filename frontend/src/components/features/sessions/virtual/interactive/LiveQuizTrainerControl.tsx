@@ -1082,7 +1082,7 @@ export function LiveQuizTrainerControl({
       module: targetModule
         ? {
             id: targetModule.id,
-            titleEn: targetModule.titleEn,
+            titleEn: (targetModule as any).title || targetModule.titleEn || '',
             titleAm: targetModule.titleAm || '',
             order: targetModule.order ?? 0,
           }
@@ -1090,7 +1090,7 @@ export function LiveQuizTrainerControl({
       lesson: targetLesson
         ? {
             id: targetLesson.id,
-            titleEn: targetLesson.titleEn,
+            titleEn: (targetLesson as any).title || targetLesson.titleEn || '',
             titleAm: targetLesson.titleAm || '',
             order: targetLesson.order ?? 0,
           }
@@ -1098,7 +1098,7 @@ export function LiveQuizTrainerControl({
       subLesson: targetSubLesson
         ? {
             id: targetSubLesson.id,
-            titleEn: targetSubLesson.titleEn,
+            titleEn: (targetSubLesson as any).title || targetSubLesson.titleEn || '',
             titleAm: targetSubLesson.titleAm || '',
             order: targetSubLesson.order ?? 0,
           }
@@ -2390,7 +2390,7 @@ export function LiveQuizTrainerControl({
                             <option value="GLOBAL">Reusable Global</option>
                             {modules.map((m, idx) => (
                               <option key={m.id} value={m.id}>
-                                Module {idx + 1}: {m.titleEn}
+                                Module {idx + 1}: {(m as any).title || m.titleEn}
                               </option>
                             ))}
                           </select>
@@ -2424,7 +2424,7 @@ export function LiveQuizTrainerControl({
                             </option>
                             {activeModuleLessons.map((l, idx) => (
                               <option key={l.id} value={l.id}>
-                                Lesson {idx + 1}: {l.titleEn}
+                                Lesson {idx + 1}: {(l as any).title || l.titleEn}
                               </option>
                             ))}
                           </select>
@@ -2452,7 +2452,7 @@ export function LiveQuizTrainerControl({
                             </option>
                             {activeLessonSubLessons.map((s, idx) => (
                               <option key={s.id} value={s.id}>
-                                Sub-lesson {idx + 1}: {s.titleEn}
+                                Sub-lesson {idx + 1}: {(s as any).title || s.titleEn}
                               </option>
                             ))}
                           </select>
@@ -2726,12 +2726,12 @@ export function LiveQuizTrainerControl({
                                       Curriculum Assignment:
                                     </span>
                                     <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-700">
-                                      {q.module?.titleEn
-                                        ? `Module: ${q.module.titleEn}`
+                                      {(q.module as any)?.title || q.module?.titleEn
+                                        ? `Module: ${(q.module as any)?.title || q.module?.titleEn}`
                                         : 'Course General'}
-                                      {q.lesson?.titleEn ? ` > Lesson: ${q.lesson.titleEn}` : ''}
-                                      {q.subLesson?.titleEn
-                                        ? ` > Sub-lesson: ${q.subLesson.titleEn}`
+                                      {(q.lesson as any)?.title || q.lesson?.titleEn ? ` > Lesson: ${(q.lesson as any)?.title || q.lesson?.titleEn}` : ''}
+                                      {(q.subLesson as any)?.title || q.subLesson?.titleEn
+                                        ? ` > Sub-lesson: ${(q.subLesson as any)?.title || q.subLesson?.titleEn}`
                                         : ''}
                                     </span>
                                     <span className="rounded bg-indigo-50 px-2 py-0.5 text-indigo-700 font-semibold text-[10px]">
@@ -2951,7 +2951,7 @@ export function LiveQuizTrainerControl({
                                 <option value="NONE">Course General (No Module)</option>
                                 {modules.map((m, idx) => (
                                   <option key={m.id} value={m.id}>
-                                    Module {idx + 1}: {m.titleEn}
+                                    Module {idx + 1}: {(m as any).title || m.titleEn}
                                   </option>
                                 ))}
                               </select>
@@ -2977,7 +2977,7 @@ export function LiveQuizTrainerControl({
                                 <option value="NONE">General to Module</option>
                                 {customActiveLessons.map((l, idx) => (
                                   <option key={l.id} value={l.id}>
-                                    Lesson {idx + 1}: {l.titleEn}
+                                    Lesson {idx + 1}: {(l as any).title || l.titleEn}
                                   </option>
                                 ))}
                               </select>
@@ -3000,7 +3000,7 @@ export function LiveQuizTrainerControl({
                                 <option value="NONE">General to Lesson</option>
                                 {customActiveSubLessons.map((s, idx) => (
                                   <option key={s.id} value={s.id}>
-                                    Sub-lesson {idx + 1}: {s.titleEn}
+                                    Sub-lesson {idx + 1}: {(s as any).title || s.titleEn}
                                   </option>
                                 ))}
                               </select>
@@ -3655,7 +3655,7 @@ export function LiveQuizTrainerControl({
                         <option value="NONE">Course General</option>
                         {modules.map((m, mIdx) => (
                           <option key={m.id} value={m.id}>
-                            Module {mIdx + 1}: {m.titleEn}
+                            Module {mIdx + 1}: {(m as any).title || m.titleEn}
                           </option>
                         ))}
                       </select>
@@ -3683,7 +3683,7 @@ export function LiveQuizTrainerControl({
                         <option value="NONE">General to Module</option>
                         {editTargetLessons.map((l, lIdx) => (
                           <option key={l.id} value={l.id}>
-                            Lesson {lIdx + 1}: {l.titleEn}
+                            Lesson {lIdx + 1}: {(l as any).title || l.titleEn}
                           </option>
                         ))}
                       </select>
@@ -3710,7 +3710,7 @@ export function LiveQuizTrainerControl({
                         <option value="NONE">General to Lesson</option>
                         {editTargetSubLessons.map((s, sIdx) => (
                           <option key={s.id} value={s.id}>
-                            Sub-lesson {sIdx + 1}: {s.titleEn}
+                            Sub-lesson {sIdx + 1}: {(s as any).title || s.titleEn}
                           </option>
                         ))}
                       </select>

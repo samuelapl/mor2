@@ -50,7 +50,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
             <Award className="h-6 w-6" />
           </div>
           <div>
-            <CardTitle>{course.titleEn}</CardTitle>
+            <CardTitle>{course.title || course.titleEn}</CardTitle>
             <CardDescription>
               {course.code} · {formatDate(certificate.issuedAt)}
             </CardDescription>

@@ -59,7 +59,7 @@ export class CertificatesService {
     try {
       pdfKey = await this.generatePdf(
         `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Learner',
-        course.titleEn || course.titleAm,
+        course.title,
         course.code,
         certificateNumber,
         verificationCode,
@@ -84,7 +84,7 @@ export class CertificatesService {
       },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        course: { select: { id: true, title: true, code: true } },
         template: true,
       },
     });
@@ -98,8 +98,8 @@ export class CertificatesService {
           am: 'ማህመር ተሰጥቷል',
         },
         {
-          en: `Your certificate for ${course.titleEn || course.titleAm} has been issued (${certificateNumber}).`,
-          am: `ለ${course.titleAm || course.titleEn} ማህመርዎ ተሰጥቷል (${certificateNumber}).`,
+          en: `Your certificate for ${course.title} has been issued (${certificateNumber}).`,
+          am: `ለ${course.title} ማህመርዎ ተሰጥቷል (${certificateNumber}).`,
         },
         { certificateId: cert.id, courseId },
       );
@@ -115,7 +115,7 @@ export class CertificatesService {
       where: { id },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        course: { select: { id: true, title: true, code: true } },
         template: true,
       },
     });
@@ -129,7 +129,7 @@ export class CertificatesService {
     const certs = await this.prisma.certificate.findMany({
       where: { userId },
       include: {
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        course: { select: { id: true, title: true, code: true } },
         template: true,
       },
       orderBy: { issuedAt: 'desc' },
@@ -156,7 +156,7 @@ export class CertificatesService {
       where: { verificationCode },
       include: {
         user: { select: { firstName: true, lastName: true } },
-        course: { select: { titleEn: true, titleAm: true, code: true } },
+        course: { select: { title: true, code: true } },
       },
     });
 
@@ -170,7 +170,7 @@ export class CertificatesService {
       issuedAt: certificate.issuedAt,
       expiresAt: certificate.expiresAt,
       holder: `${certificate.user.firstName} ${certificate.user.lastName}`,
-      course: certificate.course.titleEn || certificate.course.titleAm,
+      course: certificate.course.title,
       downloadUrl: certificate.pdfFileUrl
         ? await this.filesService.getPresignedUrl(certificate.pdfFileUrl, 3600)
         : null,
@@ -205,7 +205,7 @@ export class CertificatesService {
       where: { userId_courseId: { userId, courseId } },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
-        course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+        course: { select: { id: true, title: true, code: true } },
         template: true,
       },
     });
@@ -216,7 +216,7 @@ export class CertificatesService {
           data: { templateId: activeTemplate.id },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true } },
-            course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+            course: { select: { id: true, title: true, code: true } },
             template: true,
           },
         });

@@ -129,10 +129,12 @@ export interface ApiApproval {
 
 export interface ApiCourseListItem {
   id: string;
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string | null;
-  descriptionAm: string | null;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  description?: string | null;
+  descriptionEn?: string | null;
+  descriptionAm?: string | null;
   code: string;
   version: number;
   thumbnailUrl: string | null;
@@ -144,6 +146,7 @@ export interface ApiCourseListItem {
   deliveryMethod?: string | null;
   deliveryMode?: CourseDeliveryMode;
   language?: string | null;
+  objectives?: string | null;
   objectivesAm?: string | null;
   objectivesEn?: string | null;
   prerequisites?: string | null;
@@ -182,10 +185,12 @@ export interface ApiCourseDetail extends ApiCourseListItem {
 
 export interface ApiLesson {
   id: string;
-  titleEn: string;
-  titleAm: string;
-  contentEn: string | null;
-  contentAm: string | null;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  content?: string | null;
+  contentEn?: string | null;
+  contentAm?: string | null;
   contentType: BackendLessonContentType;
   durationMinutes: number | null;
   order: number;
@@ -202,10 +207,13 @@ export interface ApiLesson {
 
 export interface ApiModule {
   id: string;
-  titleEn: string;
-  titleAm: string;
-  descriptionEn: string | null;
-  descriptionAm: string | null;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  description?: string | null;
+  descriptionEn?: string | null;
+  descriptionAm?: string | null;
+  objectives?: string | null;
   objectivesEn?: string | null;
   objectivesAm?: string | null;
   durationMinutes?: number | null;
@@ -345,6 +353,7 @@ export interface AssessmentReviewItem {
 
 export interface ApiProgressLesson {
   lessonId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   order: number;
@@ -361,6 +370,7 @@ export interface ApiProgressLesson {
 
 export interface ApiProgressSubLesson {
   lessonId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   order: number;
@@ -375,6 +385,7 @@ export interface ApiProgressSubLesson {
 
 export interface ApiProgressModule {
   moduleId: string;
+  title?: string;
   titleEn: string;
   titleAm: string;
   order: number | null;
@@ -439,7 +450,7 @@ export interface ApiCertificate {
   templateId: string | null;
   template?: ApiCertificateTemplate | null;
   user?: { id: string; firstName: string; lastName: string; email: string };
-  course: { id: string; titleEn: string; titleAm: string; code: string };
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
 }
 
 export type BackendCertificateFieldAlign = 'left' | 'center' | 'right';
@@ -642,7 +653,7 @@ export interface ApiLiveSession {
     email: string;
     avatarUrl?: string | null;
   } | null;
-  course: { id: string; titleEn: string; titleAm: string; code: string };
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
   attendees?: ApiAttendance[];
   /** Active enrollments holding a seat (in-person); present on list responses. */
   bookedSeats?: number;
@@ -773,9 +784,9 @@ export interface LocalizedText {
 
 export interface CreateCourseBody {
   code: string;
-  title: LocalizedText;
-  description?: LocalizedText;
-  objectives?: LocalizedText;
+  title: string | LocalizedText;
+  description?: string | LocalizedText;
+  objectives?: string | LocalizedText;
   category?: string;
   department?: string;
   targetAudience?: string;
@@ -791,9 +802,9 @@ export interface CreateCourseBody {
 
 export interface UpdateCourseBody {
   code?: string;
-  title?: LocalizedText;
-  description?: LocalizedText;
-  objectives?: LocalizedText;
+  title?: string | LocalizedText;
+  description?: string | LocalizedText;
+  objectives?: string | LocalizedText;
   category?: string;
   department?: string;
   targetAudience?: string;
@@ -823,10 +834,13 @@ export interface CreateCurriculumAttachmentBody {
 }
 
 export interface CreateModuleBody {
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  description?: string;
   descriptionEn?: string;
   descriptionAm?: string;
+  objectives?: string;
   objectivesEn?: string;
   objectivesAm?: string;
   durationMinutes?: number;
@@ -837,8 +851,10 @@ export interface CreateModuleBody {
 }
 
 export interface CreateInlineLessonBody {
-  titleEn: string;
-  titleAm: string;
+  title?: string;
+  titleEn?: string;
+  titleAm?: string;
+  content?: string;
   contentEn?: string;
   contentAm?: string;
   contentType?: BackendLessonContentType;

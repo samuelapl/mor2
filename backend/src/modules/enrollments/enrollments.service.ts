@@ -141,7 +141,7 @@ export class EnrollmentsService {
       await this.notifyEnrollment(
         userId,
         dto.courseId,
-        course.titleEn || course.titleAm,
+        course.title,
         !!existing,
       );
 
@@ -171,7 +171,7 @@ export class EnrollmentsService {
         orderBy,
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
-          course: { select: { id: true, titleEn: true, titleAm: true, code: true } },
+          course: { select: { id: true, title: true, code: true } },
           venue: true,
         },
       }),
@@ -288,8 +288,8 @@ export class EnrollmentsService {
             am: 'በኮርስ ተመዝግበዋል',
           },
           {
-            en: `You have been enrolled in "${course.titleEn || course.titleAm}".`,
-            am: `በ"${course.titleAm || course.titleEn}" ኮርስ ተመዝግበዋል.`,
+            en: `You have been enrolled in "${course.title}".`,
+            am: `በ"${course.title}" ኮርስ ተመዝግበዋል.`,
           },
           { courseId },
         );

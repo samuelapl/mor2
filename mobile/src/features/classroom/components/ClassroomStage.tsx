@@ -67,7 +67,7 @@ export function ClassroomStage({ lesson, onExternalTime, ...media }: ClassroomSt
           <AppText variant="label">{t('classroom.lessonFile')}</AppText>
           <FileRow
             url={lesson.resourceUrl!}
-            fileName={fileNameFromUrl(lesson.resourceUrl!, lesson.titleEn)}
+            fileName={fileNameFromUrl(lesson.resourceUrl!, lesson.title ?? lesson.titleEn ?? '')}
           />
         </View>
       );

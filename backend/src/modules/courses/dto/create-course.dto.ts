@@ -8,21 +8,7 @@ import {
   IsString,
   IsUrl,
   MinLength,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-
-export class LocalizedTextDto {
-  @ApiProperty({ example: 'የኮምፒውተር ኮርስ' })
-  @IsString()
-  @MinLength(2)
-  am: string;
-
-  @ApiProperty({ example: 'Computer Basics' })
-  @IsString()
-  @MinLength(2)
-  en: string;
-}
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'CS101' })
@@ -30,22 +16,20 @@ export class CreateCourseDto {
   @MinLength(3)
   code: string;
 
-  @ApiProperty({ type: LocalizedTextDto })
-  @ValidateNested()
-  @Type(() => LocalizedTextDto)
-  title: LocalizedTextDto;
+  @ApiProperty({ example: 'Computer Basics' })
+  @IsString()
+  @MinLength(2)
+  title: string;
 
-  @ApiPropertyOptional({ type: LocalizedTextDto })
+  @ApiPropertyOptional({ example: 'An introductory course on computer basics.' })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => LocalizedTextDto)
-  description?: LocalizedTextDto;
+  @IsString()
+  description?: string;
 
-  @ApiPropertyOptional({ type: LocalizedTextDto })
+  @ApiPropertyOptional({ example: 'Understand basic computer operations.' })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => LocalizedTextDto)
-  objectives?: LocalizedTextDto;
+  @IsString()
+  objectives?: string;
 
   @ApiPropertyOptional({ example: 'Tax' })
   @IsOptional()
@@ -71,11 +55,6 @@ export class CreateCourseDto {
   @IsOptional()
   @IsEnum(CourseDeliveryMode)
   deliveryMode?: CourseDeliveryMode;
-
-  @ApiPropertyOptional({ example: 'en' })
-  @IsOptional()
-  @IsString()
-  language?: string;
 
   @ApiPropertyOptional({ example: 'Basic knowledge of Ethiopian tax laws' })
   @IsOptional()

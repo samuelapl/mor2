@@ -44,7 +44,7 @@ export class InPersonSessionsService {
         scheduledAt: { lt: end },
         ...(excludeSessionId ? { id: { not: excludeSessionId } } : {}),
       },
-      include: { course: { select: { titleEn: true, code: true } } },
+      include: { course: { select: { title: true, code: true } } },
     });
 
     return (
