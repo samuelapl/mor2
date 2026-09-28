@@ -1,12 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
+import { FileText, Lock, Mail, Phone, User } from 'lucide-react-native';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { TextInput, View } from 'react-native';
 
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { AppText, Button, Input, Screen } from '@/components/ui';
 import { useLocaleStore } from '@/core/i18n';
+import { useThemeColors } from '@/core/theme/colors';
 import {
   authApi,
   AuthHeader,
@@ -21,7 +23,16 @@ type Field = 'firstName' | 'lastName' | 'email' | 'phone' | 'tin' | 'password' |
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const locale = useLocaleStore((s) => s.locale);
+
+  const lastNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const phoneRef = useRef<TextInput>(null);
+  const tinRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
+
   const [values, setValues] = useState<Record<Field, string>>({
     firstName: '',
     lastName: '',
@@ -68,95 +79,127 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Screen contentClassName="gap-5 p-6">
-      <AuthHeader title={t('auth.createAccount')} subtitle={t('auth.registerSubtitle')} />
+    <Screen contentClassName="flex-grow p-6">
+      <View className="w-full max-w-md self-center gap-6">
+        <AuthHeader title={t('auth.createAccount')} subtitle={t('auth.registerSubtitle')} />
 
-      <View className="gap-4">
-        <View className="flex-row gap-3">
+        <View className="gap-4">
+          <View className="flex-row gap-3">
+            <Input
+              containerClassName="flex-1"
+              label={t('auth.firstName')}
+              value={values.firstName}
+              onChangeText={set('firstName')}
+              error={shown('firstName')}
+              autoComplete="given-name"
+              returnKeyType="next"
+              leftIcon={<User size={18} color={colors.textMuted} />}
+              onSubmitEditing={() => lastNameRef.current?.focus()}
+            />
+            <Input
+              ref={lastNameRef}
+              containerClassName="flex-1"
+              label={t('auth.lastName')}
+              value={values.lastName}
+              onChangeText={set('lastName')}
+              error={shown('lastName')}
+              autoComplete="family-name"
+              returnKeyType="next"
+              leftIcon={<User size={18} color={colors.textMuted} />}
+              onSubmitEditing={() => emailRef.current?.focus()}
+            />
+          </View>
           <Input
-            containerClassName="flex-1"
-            label={t('auth.firstName')}
-            value={values.firstName}
-            onChangeText={set('firstName')}
-            error={shown('firstName')}
-            autoComplete="given-name"
+            ref={emailRef}
+            label={t('auth.email')}
+            value={values.email}
+            onChangeText={set('email')}
+            error={shown('email')}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            returnKeyType="next"
+            leftIcon={<Mail size={18} color={colors.textMuted} />}
+            onSubmitEditing={() => phoneRef.current?.focus()}
           />
           <Input
-            containerClassName="flex-1"
-            label={t('auth.lastName')}
-            value={values.lastName}
-            onChangeText={set('lastName')}
-            error={shown('lastName')}
-            autoComplete="family-name"
+            ref={phoneRef}
+            label={t('auth.phone')}
+            value={values.phone}
+            onChangeText={set('phone')}
+            error={shown('phone')}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            placeholder="+251 9…"
+            returnKeyType="next"
+            leftIcon={<Phone size={18} color={colors.textMuted} />}
+            onSubmitEditing={() => tinRef.current?.focus()}
           />
+          <Input
+            ref={tinRef}
+            label={`${t('auth.tin')} (${t('common.optional')})`}
+            value={values.tin}
+            onChangeText={set('tin')}
+            keyboardType="number-pad"
+            returnKeyType="next"
+            leftIcon={<FileText size={18} color={colors.textMuted} />}
+            onSubmitEditing={() => passwordRef.current?.focus()}
+          />
+          <Input
+            ref={passwordRef}
+            label={t('auth.password')}
+            value={values.password}
+            onChangeText={set('password')}
+            error={shown('password')}
+            hint={t('auth.passwordHint')}
+            password
+            autoComplete="new-password"
+            textContentType="newPassword"
+            returnKeyType="next"
+            leftIcon={<Lock size={18} color={colors.textMuted} />}
+            onSubmitEditing={() => confirmRef.current?.focus()}
+          />
+          <Input
+            ref={confirmRef}
+            label={t('auth.confirmPassword')}
+            value={values.confirm}
+            onChangeText={set('confirm')}
+            error={shown('confirm')}
+            password
+            autoComplete="new-password"
+            returnKeyType="go"
+            leftIcon={<Lock size={18} color={colors.textMuted} />}
+            onSubmitEditing={submit}
+          />
+          <View className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 dark:border-slate-700/80 dark:bg-slate-800">
+            <View className="mr-3 flex-1">
+              <AppText variant="label">{t('auth.preferredLanguage')}</AppText>
+            </View>
+            <LanguageToggle />
+          </View>
         </View>
-        <Input
-          label={t('auth.email')}
-          value={values.email}
-          onChangeText={set('email')}
-          error={shown('email')}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
+
+        <FormMessage message={formError} />
+
+        <Button
+          title={t('auth.createAccount')}
+          onPress={submit}
+          loading={register.isPending}
+          size="lg"
+          fullWidth
         />
-        <Input
-          label={t('auth.phone')}
-          value={values.phone}
-          onChangeText={set('phone')}
-          error={shown('phone')}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          placeholder="+251 9…"
-        />
-        <Input
-          label={`${t('auth.tin')} (${t('common.optional')})`}
-          value={values.tin}
-          onChangeText={set('tin')}
-          keyboardType="number-pad"
-        />
-        <Input
-          label={t('auth.password')}
-          value={values.password}
-          onChangeText={set('password')}
-          error={shown('password')}
-          hint={t('auth.passwordHint')}
-          password
-          autoComplete="new-password"
-          textContentType="newPassword"
-        />
-        <Input
-          label={t('auth.confirmPassword')}
-          value={values.confirm}
-          onChangeText={set('confirm')}
-          error={shown('confirm')}
-          password
-          autoComplete="new-password"
-        />
-        <View className="gap-2">
-          <AppText variant="label">{t('auth.preferredLanguage')}</AppText>
-          <LanguageToggle />
+
+        <View className="flex-row items-center justify-center gap-1.5 pb-6 pt-1">
+          <AppText variant="muted">{t('auth.haveAccount')}</AppText>
+          <Link href="/login" dismissTo asChild>
+            <AppText
+              accessibilityRole="link"
+              className="text-sm font-bold text-brand-600 dark:text-brand-400"
+            >
+              {t('auth.signIn')}
+            </AppText>
+          </Link>
         </View>
-      </View>
-
-      <FormMessage message={formError} />
-
-      <Button
-        title={t('auth.createAccount')}
-        onPress={submit}
-        loading={register.isPending}
-        fullWidth
-      />
-
-      <View className="flex-row justify-center gap-1">
-        <AppText variant="muted">{t('auth.haveAccount')}</AppText>
-        <Link href="/login" dismissTo asChild>
-          <AppText
-            accessibilityRole="link"
-            className="text-sm font-semibold text-brand-600 dark:text-brand-300"
-          >
-            {t('auth.signIn')}
-          </AppText>
-        </Link>
       </View>
     </Screen>
   );
