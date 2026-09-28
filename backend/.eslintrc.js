@@ -25,6 +25,5 @@ module.exports = {
       'warn',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' },
     ],
-    'prettier/prettier': ['error', { endOfLine: 'auto' }],
   },
 };

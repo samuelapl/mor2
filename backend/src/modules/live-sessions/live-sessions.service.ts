@@ -45,10 +45,9 @@ export class LiveSessionsService {
     private readonly permissions: PermissionsService,
   ) {}
 
-  private async sessionVisibility(user?: AuthenticatedUser): Promise<SessionVisibility> {
-    if (!user) return { kind: 'all' };
-    if (user.roles?.includes(RoleName.SYSTEM_ADMIN)) return { kind: 'all' };
-    const codes = await this.permissions.effectivePermissions(user.roles || []);
+  private async sessionVisibility(user: AuthenticatedUser): Promise<SessionVisibility> {
+    if (user.roles.includes(RoleName.SYSTEM_ADMIN)) return { kind: 'all' };
+    const codes = await this.permissions.effectivePermissions(user.roles);
     if (codes.includes('live_session.manage_all')) return { kind: 'all' };
     if (codes.includes('live_session.manage_own')) {
       return { kind: 'hosted', where: { trainerId: user.id } };
@@ -243,7 +242,7 @@ export class LiveSessionsService {
 
   async findAll(
     query: PaginationQuery & { status?: SessionStatus; courseId?: string; trainerId?: string },
-    user?: AuthenticatedUser,
+    user: AuthenticatedUser,
   ) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
@@ -415,7 +414,7 @@ export class LiveSessionsService {
   }
 
   async upcomingForUser(
-    user?: AuthenticatedUser,
+    user: AuthenticatedUser,
     query: PaginationQuery & { courseId?: string } = {},
   ) {
     const { page, limit, skip } = buildPaginationArgs(query);
