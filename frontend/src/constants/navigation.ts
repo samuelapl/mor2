@@ -26,6 +26,7 @@ import {
   UserPlus,
   UserCog,
   Video,
+  Tags,
 } from 'lucide-react';
 import type { Role } from '@/types';
 
@@ -128,6 +129,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/training-admin/feedback',
       icon: MessageSquareQuote,
       permission: ['feedback.manage', 'feedback.view'],
+    },
+    {
+      label: 'Categories',
+      href: '/system-admin/categories',
+      icon: Tags,
+      permission: 'category.manage',
     },
   ],
   trainer: [
@@ -288,6 +295,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: ScrollText,
       permission: 'audit.view',
     },
+    {
+      label: 'Categories',
+      href: '/system-admin/categories',
+      icon: Tags,
+      permission: 'category.manage',
+    },
   ],
 };
 
@@ -328,6 +341,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/system-admin/certificate-templates': ['certificate.manage'],
   '/system-admin/settings': ['user.manage', 'role.manage', 'permission.manage'],
   '/system-admin/audit-logs': ['audit.view'],
+  '/system-admin/categories': ['category.manage'],
   '/learner/catalog': ['course.browse'],
   '/learner/certificates': ['certificate.view', 'certificate.manage'],
   '/learner/progress': ['progress.view', 'progress.mark_own'],
@@ -442,6 +456,12 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     href: '/system-admin/policies',
     icon: SlidersHorizontal,
     permission: PERMISSION_GATED_PATHS['/system-admin/policies'],
+  },
+  {
+    label: 'Categories',
+    href: '/system-admin/categories',
+    icon: Tags,
+    permission: 'category.manage',
   },
 ];
 

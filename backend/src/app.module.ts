@@ -25,6 +25,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { PolicyModule } from './modules/policy/policy.module';
 import { VenuesModule } from './modules/venues/venues.module';
+import { LookupCategoriesModule } from './modules/lookup-categories/lookup-categories.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards';
 import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
@@ -58,6 +59,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     PermissionsModule,
     PolicyModule,
     VenuesModule,
+    LookupCategoriesModule,
   ],
   providers: [
     PrismaService,

@@ -4,6 +4,8 @@ import type React from 'react';
 import { Trash2, Upload } from 'lucide-react';
 import type { CourseDeliveryMode, CourseLevel } from '@/types';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLookupCategories } from '@/lib/api/useLookupCategories';
 import { cn } from '@/lib/utils';
 import { inputClass, labelClass } from './wizard-types';
 import { RichEditor } from './wizard-components';
@@ -69,6 +71,30 @@ export function StepCourseDetails({
   isEdit,
   objectivesText,
 }: StepCourseDetailsProps) {
+  const { isAmharic, tBilingual } = useTranslation();
+  const { items: dynamicCategories } = useLookupCategories('COURSE_CATEGORY');
+  const { items: dynamicLevels } = useLookupCategories('COURSE_LEVEL');
+
+  const categoryOptions =
+    dynamicCategories.length > 0
+      ? dynamicCategories.map((c) => ({
+          value: c.labelEn,
+          label: isAmharic && c.labelAm ? c.labelAm : c.labelEn,
+        }))
+      : COURSE_CATEGORIES.map((c) => ({ value: c, label: c }));
+
+  const levelOptions =
+    dynamicLevels.length > 0
+      ? dynamicLevels.map((lvl) => ({
+          value: lvl.value.toLowerCase() as CourseLevel,
+          label: isAmharic && lvl.labelAm ? lvl.labelAm : lvl.labelEn,
+        }))
+      : [
+          { value: 'basic' as CourseLevel, label: 'Basic' },
+          { value: 'intermediate' as CourseLevel, label: 'Intermediate' },
+          { value: 'advanced' as CourseLevel, label: 'Advanced' },
+        ];
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -121,30 +147,32 @@ export function StepCourseDetails({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className={labelClass}>Category</label>
+            <label className={labelClass}>{tBilingual('Category', 'ምድብ')}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className={inputClass}
             >
-              {COURSE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categoryOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className={labelClass}>Difficulty Level</label>
+            <label className={labelClass}>{tBilingual('Difficulty Level', 'የከበደበት ደረጃ')}</label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value as CourseLevel)}
               className={inputClass}
             >
-              <option value="basic">Basic</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
+              {levelOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>

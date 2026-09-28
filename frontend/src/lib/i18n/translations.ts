@@ -66,6 +66,7 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Policies: { en: 'Policies', am: 'መመሪያዎች እና ደንቦች' },
   'System Settings': { en: 'System Settings', am: 'የስርዓት ቅንብሮች' },
   'Audit Logs': { en: 'Audit Logs', am: 'የኦዲት መዝገብ' },
+  Categories: { en: 'Categories', am: 'ምድቦች' },
   'Course Feedback': { en: 'Course Feedback', am: 'የኮርስ ግብረ-መልስ' },
   Feedback: { en: 'Feedback', am: 'ግብረ-መልስ' },
   Navigation: { en: 'Navigation', am: 'አቅጣጫ መጠቆሚያ' },

@@ -57,6 +57,7 @@ const RESOURCE_NAMES_AM: Record<string, string> = {
   audit: 'የኦዲት መዝገብ',
   course_policy: 'የኮርስ ፖሊሲ',
   feedback: 'የኮርስ ግብረ-መልስ',
+  category: 'ምድቦች (Categories)',
 };
 
 const ROLE_NAMES_AM: Record<string, string> = {
@@ -144,6 +145,9 @@ const PERMISSION_DESCRIPTIONS_AM: Record<string, string> = {
   // Feedback
   'feedback.manage': 'የኮርስ ግብረ-መልስ አስተዳድር',
   'feedback.view': 'የኮርስ ግብረ-መልስ ተመልከት',
+
+  // Categories
+  'category.manage': 'ተለዋዋጭ ምድቦችን አስተዳድር (የኮርስ ምድቦች፣ ደረጃዎች፣ የጥያቄ አይነቶች)',
 };
 
 function humanizeResource(resource: string, isAmharic?: boolean): string {

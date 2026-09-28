@@ -374,6 +374,15 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'View course feedback evaluations',
   },
+
+  // Lookup Categories
+  {
+    code: 'category.manage',
+    resource: 'category',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage dynamic categories (course categories, levels, question types)',
+  },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).
@@ -428,6 +437,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'venue.manage',
     'feedback.manage',
     'feedback.view',
+    'category.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',

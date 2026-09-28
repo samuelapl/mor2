@@ -16,6 +16,8 @@ import {
 import type { Question, QuestionType, UploadedResource } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { uploadAttachment } from '@/lib/api/files';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLookupCategories } from '@/lib/api/useLookupCategories';
 import { toast } from '@/lib/toast';
 import { inputClass, labelClass, uid } from './wizard-types';
 import { CompactRichEditor, MultiFileUploader } from './wizard-components';
@@ -90,6 +92,21 @@ export function StepFinalAssessment({
   removeFinalAssessmentFile,
   editingCourseId,
 }: StepFinalAssessmentProps) {
+  const { isAmharic } = useTranslation();
+  const { items: dynamicQuestionTypes } = useLookupCategories('QUESTION_TYPE');
+
+  const questionTypeOptions =
+    dynamicQuestionTypes.length > 0
+      ? dynamicQuestionTypes.map((qt) => ({
+          value: qt.value.toLowerCase() as QuestionType,
+          label: isAmharic && qt.labelAm ? qt.labelAm : qt.labelEn,
+        }))
+      : [
+          { value: 'multiple_choice' as QuestionType, label: 'Multiple Choice' },
+          { value: 'true_false' as QuestionType, label: 'True / False' },
+          { value: 'short_answer' as QuestionType, label: 'Short Answer' },
+        ];
+
   const addQuestion = () => setQuestions((prev) => [...prev, blankQuestion()]);
 
   const removeQuestion = (index: number) => {
@@ -363,9 +380,11 @@ export function StepFinalAssessment({
                     onChange={(e) => setQuestionType(qIdx, e.target.value as QuestionType)}
                     className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
                   >
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="true_false">True / False</option>
-                    <option value="short_answer">Short Answer</option>
+                    {questionTypeOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
 
                   <div className="flex items-center gap-1 text-xs text-slate-500">
