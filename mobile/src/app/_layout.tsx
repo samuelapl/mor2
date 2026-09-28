@@ -7,7 +7,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -22,6 +21,8 @@ import {
 import { getCurrentLocale } from '@/core/i18n';
 import { useSyncOnReconnect } from '@/core/sync/useSyncOnReconnect';
 import { darkColors, lightColors } from '@/core/theme/colors';
+import { initTheme, useAppTheme } from '@/core/theme/theme-store';
+
 import { useWebColorSchemeSync } from '@/core/theme/useWebColorSchemeSync';
 import {
   selectIsAuthenticated,
@@ -35,6 +36,7 @@ import { registerProgressSync } from '@/features/progress';
 void SplashScreen.preventAutoHideAsync();
 
 // Offline handlers for lesson time and playhead must exist before the first queue flush.
+initTheme();
 registerProgressSync();
 
 configureApiClient({
@@ -52,11 +54,11 @@ configureApiClient({
   },
 });
 
-function useNavigationTheme(): Theme {
-  const scheme = useColorScheme();
-  return useMemo(() => {
-    const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
-    const colors = scheme === 'dark' ? darkColors : lightColors;
+function useNavigationTheme(): { theme: Theme; isDark: boolean } {
+  const { isDark } = useAppTheme();
+  const theme = useMemo(() => {
+    const base = isDark ? DarkTheme : DefaultTheme;
+    const colors = isDark ? darkColors : lightColors;
     return {
       ...base,
       colors: {
@@ -68,12 +70,13 @@ function useNavigationTheme(): Theme {
         border: colors.border,
       },
     };
-  }, [scheme]);
+  }, [isDark]);
+  return { theme, isDark };
 }
 
 export default function RootLayout() {
   const { t } = useTranslation();
-  const theme = useNavigationTheme();
+  const { theme, isDark } = useNavigationTheme();
   const isAuthenticated = useSessionStore(selectIsAuthenticated);
 
   useWebColorSchemeSync();
@@ -97,7 +100,7 @@ export default function RootLayout() {
           }}
         >
           <ThemeProvider value={theme}>
-            <StatusBar style="auto" />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
             <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
               <Stack.Protected guard={!isAuthenticated}>
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />

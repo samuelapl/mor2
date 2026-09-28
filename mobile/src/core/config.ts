@@ -1,13 +1,45 @@
-import { parseUrl } from './utils/url';
+import Constants from 'expo-constants';
+
+import { parseUrl, withHostname } from './utils/url';
 
 /**
  * Runtime configuration read from EXPO_PUBLIC_* env vars (see .env.example).
  */
 
-const FALLBACK_API_URL = 'http://10.0.2.2:3001/api/v1';
+function getDetectedDevHost(): string | null {
+  if (!__DEV__) return null;
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return host;
+    }
+  }
+  return null;
+}
+
+const detectedHost = getDetectedDevHost();
+const FALLBACK_API_URL = detectedHost
+  ? `http://${detectedHost}:3001/api/v1`
+  : 'http://10.0.2.2:3001/api/v1';
 
 function normalizeApiUrl(raw: string | undefined): string {
-  const url = (raw ?? FALLBACK_API_URL).trim().replace(/\/+$/, '');
+  let url = (raw ?? FALLBACK_API_URL).trim().replace(/\/+$/, '');
+
+  // In Expo Go dev, if the env URL points to a stale LAN IP but Expo is connected from a different host IP:
+  if (__DEV__ && detectedHost) {
+    const parsed = parseUrl(url);
+    if (
+      parsed &&
+      parsed.hostname !== detectedHost &&
+      (parsed.hostname.startsWith('192.168.') ||
+        parsed.hostname.startsWith('10.') ||
+        parsed.hostname.startsWith('172.'))
+    ) {
+      url = withHostname(url, detectedHost);
+    }
+  }
+
   if (__DEV__ && !url.endsWith('/api/v1')) {
     console.warn(
       `[config] EXPO_PUBLIC_API_URL should end with "/api/v1" (got "${url}"). See LEARNER_MOBILE_API_SPEC.md §1.1.`,

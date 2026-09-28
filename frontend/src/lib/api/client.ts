@@ -48,7 +48,7 @@ export function getAccessToken(): string | null {
 
 function getStoredAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem('eltms_access_token');
+  return window.sessionStorage.getItem('eltms_access_token') ?? window.localStorage.getItem('eltms_access_token');
 }
 
 export interface RequestOptions {

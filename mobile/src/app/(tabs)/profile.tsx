@@ -1,15 +1,17 @@
 import { router } from 'expo-router';
-import { Award, Bell, Camera, KeyRound, LogOut, Pencil } from 'lucide-react-native';
+import { Award, Bell, Camera, KeyRound, LogOut, Moon, Pencil, Sun } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
-import { Alert } from '@/core/utils/alert';
 import { DevPanel } from '@/components/dev/DevPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ListRow } from '@/components/ListRow';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppText, Avatar, Badge, Card, Screen } from '@/components/ui';
 import { useLocaleStore } from '@/core/i18n';
 import { palette, useThemeColors } from '@/core/theme/colors';
+import { useAppTheme } from '@/core/theme/theme-store';
+import { Alert } from '@/core/utils/alert';
 import { formatDate } from '@/core/utils/formatters';
 import { useLogout, useSessionStore } from '@/features/auth';
 import { useChangeLanguage, useMe, useUploadAvatar } from '@/features/profile';
@@ -17,6 +19,7 @@ import { useChangeLanguage, useMe, useUploadAvatar } from '@/features/profile';
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const { isDark } = useAppTheme();
   const locale = useLocaleStore((s) => s.locale);
   const user = useSessionStore((s) => s.user);
   const me = useMe();
@@ -75,9 +78,25 @@ export default function ProfileScreen() {
         </AppText>
       </Card>
 
-      <Card className="gap-3">
-        <AppText variant="label">{t('profile.language')}</AppText>
-        <LanguageToggle onChange={language.change} disabled={language.isPending} />
+      <Card className="gap-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            {isDark ? (
+              <Moon size={18} color={colors.primary} />
+            ) : (
+              <Sun size={18} color="#f59e0b" />
+            )}
+            <AppText variant="label">{t('profile.theme')}</AppText>
+          </View>
+          <ThemeToggle />
+        </View>
+
+        <View className="h-px bg-slate-200 dark:bg-slate-700/60" />
+
+        <View className="flex-row items-center justify-between">
+          <AppText variant="label">{t('profile.language')}</AppText>
+          <LanguageToggle onChange={language.change} disabled={language.isPending} />
+        </View>
       </Card>
 
       <View>

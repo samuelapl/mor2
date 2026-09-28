@@ -118,7 +118,10 @@
     "learner": "ተማሪ",
     "primaryVenue": "ዋና የስልጠና ቦታ",
     "photoPermission": "የመገለጫ ፎቶዎን ለመቀየር የፎቶ ፍቃድ ይስጡ።",
-    "uploadFailed": "ፎቶውን መጫን አልተቻለም።"
+    "uploadFailed": "ፎቶውን መጫን አልተቻለም።",
+    "theme": "ገጽታ",
+    "themeLight": "ብሩህ",
+    "themeDark": "ጨለማ"
   },
   "courses": {
     "searchPlaceholder": "በርዕስ ወይም በኮድ ይፈልጉ",

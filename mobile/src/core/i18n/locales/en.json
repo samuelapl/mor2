@@ -118,7 +118,10 @@
     "learner": "Learner",
     "primaryVenue": "Primary venue",
     "photoPermission": "Allow photo access to change your profile picture.",
-    "uploadFailed": "Could not upload the photo."
+    "uploadFailed": "Could not upload the photo.",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark"
   },
   "courses": {
     "searchPlaceholder": "Search by title or code",

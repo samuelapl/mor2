@@ -334,22 +334,39 @@ export class AttendanceService {
   async recordJoin(sessionId: string, userId: string) {
     const session = await this.getSessionOrFail(sessionId);
 
-    const attendance = await this.prisma.attendance.upsert({
-      where: { sessionId_userId: { sessionId, userId } },
-      update: {
-        rejoinCount: { increment: 1 },
-      },
-      create: {
-        sessionId,
-        userId,
-        status: AttendanceStatus.ABSENT,
-        joinedAt: new Date(),
-        rejoinCount: 0,
-      },
-      include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true } },
-      },
-    });
+    let attendance;
+    try {
+      attendance = await this.prisma.attendance.upsert({
+        where: { sessionId_userId: { sessionId, userId } },
+        update: {
+          rejoinCount: { increment: 1 },
+        },
+        create: {
+          sessionId,
+          userId,
+          status: AttendanceStatus.ABSENT,
+          joinedAt: new Date(),
+          rejoinCount: 0,
+        },
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        attendance = await this.prisma.attendance.update({
+          where: { sessionId_userId: { sessionId, userId } },
+          data: {
+            rejoinCount: { increment: 1 },
+          },
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
 
     await this.prisma.attendanceLog.create({
       data: {
@@ -391,25 +408,42 @@ export class AttendanceService {
         ? AttendanceStatus.PRESENT
         : (existing?.status ?? AttendanceStatus.ABSENT);
 
-    const updated = await this.prisma.attendance.upsert({
-      where: { sessionId_userId: { sessionId, userId } },
-      update: {
-        activeSeconds: newActiveSeconds,
-        durationMinutes: Math.floor(newActiveSeconds / 60),
-        percentage,
-        status: newStatus,
-      },
-      create: {
-        sessionId,
-        userId,
-        status: newStatus,
-        activeSeconds: newActiveSeconds,
-        durationMinutes: Math.floor(newActiveSeconds / 60),
-        percentage,
-        joinedAt: new Date(),
-        rejoinCount: 0,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.attendance.upsert({
+        where: { sessionId_userId: { sessionId, userId } },
+        update: {
+          activeSeconds: newActiveSeconds,
+          durationMinutes: Math.floor(newActiveSeconds / 60),
+          percentage,
+          status: newStatus,
+        },
+        create: {
+          sessionId,
+          userId,
+          status: newStatus,
+          activeSeconds: newActiveSeconds,
+          durationMinutes: Math.floor(newActiveSeconds / 60),
+          percentage,
+          joinedAt: new Date(),
+          rejoinCount: 0,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        updated = await this.prisma.attendance.update({
+          where: { sessionId_userId: { sessionId, userId } },
+          data: {
+            activeSeconds: newActiveSeconds,
+            durationMinutes: Math.floor(newActiveSeconds / 60),
+            percentage,
+            status: newStatus,
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
 
     return {
       activeSeconds: updated.activeSeconds,
@@ -513,19 +547,33 @@ export class AttendanceService {
    * Increments rejoinCount on re-join.
    */
   async handleParticipantJoined(sessionId: string, userId: string): Promise<void> {
-    const attendance = await this.prisma.attendance.upsert({
-      where: { sessionId_userId: { sessionId, userId } },
-      update: {
-        rejoinCount: { increment: 1 },
-      },
-      create: {
-        sessionId,
-        userId,
-        status: AttendanceStatus.ABSENT,
-        joinedAt: new Date(),
-        rejoinCount: 0,
-      },
-    });
+    let attendance;
+    try {
+      attendance = await this.prisma.attendance.upsert({
+        where: { sessionId_userId: { sessionId, userId } },
+        update: {
+          rejoinCount: { increment: 1 },
+        },
+        create: {
+          sessionId,
+          userId,
+          status: AttendanceStatus.ABSENT,
+          joinedAt: new Date(),
+          rejoinCount: 0,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        attendance = await this.prisma.attendance.update({
+          where: { sessionId_userId: { sessionId, userId } },
+          data: {
+            rejoinCount: { increment: 1 },
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
 
     // Create immutable JOIN log
     await this.prisma.attendanceLog.create({
@@ -570,25 +618,41 @@ export class AttendanceService {
         ? AttendanceStatus.PRESENT
         : (existing?.status ?? AttendanceStatus.ABSENT);
 
-    await this.prisma.attendance.upsert({
-      where: { sessionId_userId: { sessionId, userId } },
-      update: {
-        activeSeconds: newActiveSeconds,
-        percentage,
-        status: newStatus,
-        leftAt: new Date(),
-      },
-      create: {
-        sessionId,
-        userId,
-        status: newStatus,
-        activeSeconds: newActiveSeconds,
-        percentage,
-        joinedAt: new Date(),
-        leftAt: new Date(),
-        rejoinCount: 0,
-      },
-    });
+    try {
+      await this.prisma.attendance.upsert({
+        where: { sessionId_userId: { sessionId, userId } },
+        update: {
+          activeSeconds: newActiveSeconds,
+          percentage,
+          status: newStatus,
+          leftAt: new Date(),
+        },
+        create: {
+          sessionId,
+          userId,
+          status: newStatus,
+          activeSeconds: newActiveSeconds,
+          percentage,
+          joinedAt: new Date(),
+          leftAt: new Date(),
+          rejoinCount: 0,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        await this.prisma.attendance.update({
+          where: { sessionId_userId: { sessionId, userId } },
+          data: {
+            activeSeconds: newActiveSeconds,
+            percentage,
+            status: newStatus,
+            leftAt: new Date(),
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
 
     // Create LEAVE log with segment duration
     const attendance = await this.prisma.attendance.findUnique({

@@ -1,4 +1,5 @@
-import { useColorScheme } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { useColorScheme as useSystemColorScheme } from 'react-native';
 
 /**
  * Hex tokens for places that can't take Tailwind classes (icons, navigation theme, SVG).
@@ -69,5 +70,8 @@ export const darkColors: ThemeColors = {
 };
 
 export function useThemeColors(): ThemeColors {
-  return useColorScheme() === 'dark' ? darkColors : lightColors;
+  const { colorScheme } = useColorScheme();
+  const systemScheme = useSystemColorScheme();
+  const isDark = (colorScheme ?? systemScheme) === 'dark';
+  return isDark ? darkColors : lightColors;
 }

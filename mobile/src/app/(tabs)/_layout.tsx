@@ -3,6 +3,7 @@ import { Bell, BookOpen, Compass, Home, User, Video } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
+import { HeaderThemeToggle } from '@/components/ThemeToggle';
 import { AppText } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
 import { useUnreadCount } from '@/features/notifications';
@@ -18,17 +19,26 @@ function NotificationBell() {
       accessibilityLabel={t('screens.notifications')}
       hitSlop={10}
       onPress={() => router.push('/notifications')}
-      className="mr-4"
+      className="p-1"
     >
       <Bell size={22} color={colors.text} />
       {unread > 0 ? (
-        <View className="absolute -right-2 -top-1.5 min-w-[18px] items-center rounded-full bg-red-600 px-1">
+        <View className="absolute -right-1 -top-0.5 min-w-[18px] items-center rounded-full bg-red-600 px-1">
           <AppText className="text-[10px] font-bold text-white">
             {unread > 99 ? '99+' : unread}
           </AppText>
         </View>
       ) : null}
     </Pressable>
+  );
+}
+
+function HeaderRight() {
+  return (
+    <View className="mr-4 flex-row items-center gap-3">
+      <HeaderThemeToggle />
+      <NotificationBell />
+    </View>
   );
 }
 
@@ -44,7 +54,7 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        headerRight: () => <NotificationBell />,
+        headerRight: () => <HeaderRight />,
       }}
     >
       <Tabs.Screen
