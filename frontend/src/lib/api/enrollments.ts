@@ -17,7 +17,7 @@ export async function selfEnroll(input: string | SelfEnrollInput): Promise<ApiEn
 }
 
 export async function fetchMyEnrollments(): Promise<ApiPaginated<ApiEnrollment>> {
-  return api<ApiPaginated<ApiEnrollment>>('enrollments/my');
+  return api<ApiPaginated<ApiEnrollment>>('enrollments/me');
 }
 
 export async function fetchCourseEnrollments(
