@@ -32,17 +32,11 @@ export function AuthHeader({
           <GraduationCap size={36} color={palette.white} />
         </View>
       ) : null}
-      <AppText
-        variant="title"
-        className={cn('font-bold tracking-tight', center && 'text-center')}
-      >
+      <AppText variant="title" className={cn('font-bold tracking-tight', center && 'text-center')}>
         {title}
       </AppText>
       {subtitle ? (
-        <AppText
-          variant="muted"
-          className={cn('text-base', center && 'text-center max-w-[320px]')}
-        >
+        <AppText variant="muted" className={cn('text-base', center && 'max-w-[320px] text-center')}>
           {subtitle}
         </AppText>
       ) : null}

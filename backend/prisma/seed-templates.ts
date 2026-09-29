@@ -1,8 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-const TEMPLATES = [
+export const TEMPLATES = [
   {
     name: 'Modern Executive (Analyst Skill)',
     description:
@@ -426,8 +424,8 @@ const TEMPLATES = [
   },
 ];
 
-async function main() {
-  console.log('Seeding 3 certificate templates...');
+export async function seedTemplates(prisma: PrismaClient) {
+  console.log('📜 Seeding 3 certificate templates...');
 
   for (const t of TEMPLATES) {
     const existing = await prisma.certificateTemplate.findFirst({
@@ -435,7 +433,7 @@ async function main() {
     });
 
     if (existing) {
-      console.log(`Updating template: ${t.name}`);
+      console.log(`  Updating template: ${t.name}`);
       await prisma.certificateTemplate.update({
         where: { id: existing.id },
         data: {
@@ -446,7 +444,7 @@ async function main() {
         },
       });
     } else {
-      console.log(`Creating template: ${t.name}`);
+      console.log(`  Creating template: ${t.name}`);
       await prisma.certificateTemplate.create({
         data: {
           name: t.name,
@@ -459,15 +457,18 @@ async function main() {
     }
   }
 
-  console.log('Certificate templates seeded successfully!');
+  console.log('  ✓ Certificate templates seeded successfully!');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  seedTemplates(prisma)
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
 

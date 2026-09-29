@@ -81,11 +81,7 @@ export default function ProfileScreen() {
       <Card className="gap-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
-            {isDark ? (
-              <Moon size={18} color={colors.primary} />
-            ) : (
-              <Sun size={18} color="#f59e0b" />
-            )}
+            {isDark ? <Moon size={18} color={colors.primary} /> : <Sun size={18} color="#f59e0b" />}
             <AppText variant="label">{t('profile.theme')}</AppText>
           </View>
           <ThemeToggle />

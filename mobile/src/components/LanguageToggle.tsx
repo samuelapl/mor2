@@ -19,7 +19,11 @@ export interface LanguageToggleProps {
 }
 
 /** Segmented English / Amharic switch. */
-export function LanguageToggle({ onChange, disabled, className = 'self-start' }: LanguageToggleProps) {
+export function LanguageToggle({
+  onChange,
+  disabled,
+  className = 'self-start',
+}: LanguageToggleProps) {
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
 

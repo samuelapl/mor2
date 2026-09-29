@@ -51,11 +51,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           !editable && 'opacity-60',
         )}
       >
-        {leftIcon ? (
-          <View className="mr-2.5 items-center justify-center">
-            {leftIcon}
-          </View>
-        ) : null}
+        {leftIcon ? <View className="mr-2.5 items-center justify-center">{leftIcon}</View> : null}
         <TextInput
           ref={ref}
           editable={editable}

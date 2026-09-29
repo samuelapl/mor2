@@ -23,11 +23,7 @@ export function HeaderThemeToggle({ className }: { className?: string }) {
         className,
       )}
     >
-      {isDark ? (
-        <Sun size={19} color="#f59e0b" />
-      ) : (
-        <Moon size={19} color={colors.text} />
-      )}
+      {isDark ? <Sun size={19} color="#f59e0b" /> : <Moon size={19} color={colors.text} />}
     </Pressable>
   );
 }
@@ -53,9 +49,7 @@ export function ThemeToggle({ className = 'self-start' }: { className?: string }
         <AppText
           className={cn(
             'text-sm font-semibold',
-            !isDark
-              ? 'text-brand-700 dark:text-brand-300'
-              : 'text-slate-600 dark:text-slate-300',
+            !isDark ? 'text-brand-700 dark:text-brand-300' : 'text-slate-600 dark:text-slate-300',
           )}
         >
           {t('profile.themeLight')}
@@ -75,9 +69,7 @@ export function ThemeToggle({ className = 'self-start' }: { className?: string }
         <AppText
           className={cn(
             'text-sm font-semibold',
-            isDark
-              ? 'text-brand-700 dark:text-brand-300'
-              : 'text-slate-600 dark:text-slate-300',
+            isDark ? 'text-brand-700 dark:text-brand-300' : 'text-slate-600 dark:text-slate-300',
           )}
         >
           {t('profile.themeDark')}

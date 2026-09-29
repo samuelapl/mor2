@@ -33,9 +33,7 @@ export function FormMessage({
       <AppText
         className={cn(
           'flex-1 text-sm font-medium',
-          isError
-            ? 'text-red-700 dark:text-red-300'
-            : 'text-green-700 dark:text-green-300',
+          isError ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300',
         )}
       >
         {message}

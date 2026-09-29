@@ -80,7 +80,7 @@ export default function RegisterScreen() {
 
   return (
     <Screen contentClassName="flex-grow p-6">
-      <View className="w-full max-w-md self-center gap-6">
+      <View className="w-full max-w-md gap-6 self-center">
         <AuthHeader title={t('auth.createAccount')} subtitle={t('auth.registerSubtitle')} />
 
         <View className="gap-4">

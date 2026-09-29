@@ -28,7 +28,8 @@ export function useAppTheme() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const systemScheme = useSystemColorScheme();
 
-  const activeScheme: 'light' | 'dark' = (colorScheme ?? systemScheme ?? 'light') as 'light' | 'dark';
+  const activeScheme: 'light' | 'dark' = (colorScheme ?? systemScheme ?? 'light') as
+    'light' | 'dark';
   const isDark = activeScheme === 'dark';
 
   const toggleTheme = useCallback(() => {

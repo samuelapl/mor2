@@ -17,6 +17,7 @@ import {
   SessionType,
 } from '@prisma/client';
 import { seedPermissions } from './seed-permissions';
+import { seedTemplates } from './seed-templates';
 
 import { correctAnswerFirst } from './correct-answer-first';
 
@@ -28,6 +29,9 @@ const PDF_FILE_KEY = 'attachments/file-sample.pdf';
 const PDF_FILE_URL = '/file-sample.pdf';
 const PDF_SIZE_BYTES = 142786;
 const SAMPLE_VIDEO = '/sample.mp4';
+const VIDEO_FILE_KEY = 'attachments/sample.mp4';
+const VIDEO_FILE_URL = '/sample.mp4';
+const VIDEO_SIZE_BYTES = 1570024;
 
 // ──────────────────────────────────────────────────────────
 // Curriculum data model helpers
@@ -57,6 +61,9 @@ interface AssessmentSeed {
 interface AttachmentSeed {
   fileName: string;
   fileType: string;
+  fileUrl?: string;
+  fileKey?: string;
+  sizeBytes?: number;
 }
 
 interface SubLessonSeed {
@@ -119,7 +126,10 @@ function sa(id: string, question: string, correctAnswer: string, category: strin
   return { id, type: 'SHORT_ANSWER', question, options: [], correctAnswer, points, category };
 }
 function pdf(fileName: string): AttachmentSeed {
-  return { fileName, fileType: 'application/pdf' };
+  return { fileName, fileType: 'application/pdf', fileUrl: PDF_FILE_URL, fileKey: PDF_FILE_KEY, sizeBytes: PDF_SIZE_BYTES };
+}
+function video(fileName = 'sample.mp4'): AttachmentSeed {
+  return { fileName, fileType: 'video/mp4', fileUrl: VIDEO_FILE_URL, fileKey: VIDEO_FILE_KEY, sizeBytes: VIDEO_SIZE_BYTES };
 }
 
 // ──────────────────────────────────────────────────────────
@@ -1805,7 +1815,7 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         description: 'Introduction to direct vs indirect taxes, federal tax schedule, and legal obligations.',
         objectives: 'Classify income schedules and recognize taxable events.',
         order: 0,
-        attachment: pdf('TAX101-Module1-Guide.pdf'),
+        attachment: video('sample.mp4'),
         assessment: {
           title: 'Module 1 Architecture Check',
           passingScore: 70,
@@ -1818,11 +1828,11 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         lessons: [
           {
             title: 'Lesson 1.1: Legal Framework & Withholding Responsibilities',
-            contentType: LessonContentType.DOCUMENT,
+            contentType: LessonContentType.VIDEO,
             durationMinutes: 30,
             order: 0,
-            content: 'Overview of tax withholding mechanisms and payment deadlines.',
-            attachment: pdf('TAX101-L1-TaxLaw.pdf'),
+            content: 'Comprehensive video lecture on Ethiopian tax withholding mechanisms, legal schedules, and digital compliance standards.',
+            attachment: video('sample.mp4'),
             assessment: {
               title: 'Lesson 1.1 Check',
               passingScore: 70,
@@ -1939,8 +1949,9 @@ async function main() {
   const learnerId = userMap['learner@gmail.com'];
 
   // 3. Remove existing seed and learner progress data cleanly
-  console.log('🗑️  Wiping all existing progress, attempts, certificates, sessions, attendance, enrollments, venues, courses...');
+  console.log('🗑️  Wiping all existing progress, attempts, certificates, templates, sessions, attendance, enrollments, venues, courses...');
   await prisma.certificate.deleteMany({});
+  await prisma.certificateTemplate.deleteMany({});
   await prisma.assessmentAttempt.deleteMany({});
   await prisma.lessonCompletion.deleteMany({});
   await prisma.moduleCompletion.deleteMany({});
@@ -1952,6 +1963,9 @@ async function main() {
   await prisma.contentApproval.deleteMany({});
   await prisma.course.deleteMany({});
   await prisma.questionBankQuestion.deleteMany({});
+
+  // 3a. Seed Certificate Templates
+  await seedTemplates(prisma);
 
   // 3b. Seed Ministry Branch Venues
   console.log('🏢 Seeding Ministry Branch Venues...');
@@ -2128,10 +2142,10 @@ async function main() {
           courseId: course.id,
           moduleId: createdMod.id,
           fileName: mod.attachment.fileName,
-          fileKey: PDF_FILE_KEY,
-          fileUrl: PDF_FILE_URL,
+          fileKey: mod.attachment.fileKey ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+          fileUrl: mod.attachment.fileUrl ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
           fileType: mod.attachment.fileType,
-          sizeBytes: PDF_SIZE_BYTES,
+          sizeBytes: mod.attachment.sizeBytes ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
           uploadedById: ownerId,
         },
       });
@@ -2191,10 +2205,10 @@ async function main() {
             moduleId: createdMod.id,
             lessonId: createdLesson.id,
             fileName: les.attachment.fileName,
-            fileKey: PDF_FILE_KEY,
-            fileUrl: PDF_FILE_URL,
+            fileKey: les.attachment.fileKey ?? (les.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+            fileUrl: les.attachment.fileUrl ?? (les.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
             fileType: les.attachment.fileType,
-            sizeBytes: PDF_SIZE_BYTES,
+            sizeBytes: les.attachment.sizeBytes ?? (les.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
             uploadedById: ownerId,
           },
         });
@@ -2253,10 +2267,10 @@ async function main() {
                 moduleId: createdMod.id,
                 lessonId: createdSub.id,
                 fileName: sub.attachment.fileName,
-                fileKey: PDF_FILE_KEY,
-                fileUrl: PDF_FILE_URL,
+                fileKey: sub.attachment.fileKey ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+                fileUrl: sub.attachment.fileUrl ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
                 fileType: sub.attachment.fileType,
-                sizeBytes: PDF_SIZE_BYTES,
+                sizeBytes: sub.attachment.sizeBytes ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
                 uploadedById: ownerId,
               },
             });

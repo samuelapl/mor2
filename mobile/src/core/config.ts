@@ -58,12 +58,28 @@ export const API_HOSTNAME = parseUrl(API_URL)?.hostname ?? 'localhost';
  * frontend/public), so they must be resolved against the web app, not the API.
  * Defaults to the API host on port 3000.
  */
-export const WEB_URL = (
-  process.env.EXPO_PUBLIC_WEB_URL ??
-  (() => {
+function normalizeWebUrl(raw: string | undefined): string {
+  const defaultWeb = (() => {
     const url = parseUrl(API_URL);
     return url ? `${url.protocol}//${url.hostname}:3000` : 'http://localhost:3000';
-  })()
-).replace(/\/+$/, '');
+  })();
+  let url = (raw ?? defaultWeb).trim().replace(/\/+$/, '');
+
+  if (__DEV__ && detectedHost) {
+    const parsed = parseUrl(url);
+    if (
+      parsed &&
+      parsed.hostname !== detectedHost &&
+      (parsed.hostname.startsWith('192.168.') ||
+        parsed.hostname.startsWith('10.') ||
+        parsed.hostname.startsWith('172.'))
+    ) {
+      url = withHostname(url, detectedHost);
+    }
+  }
+  return url;
+}
+
+export const WEB_URL = normalizeWebUrl(process.env.EXPO_PUBLIC_WEB_URL);
 
 export const REQUEST_TIMEOUT_MS = 20_000;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -32,7 +32,39 @@ export default function Sidebar() {
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? 'learner';
   const navItems = filterNavItems(navItemsForRole(role), canAny);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const currentPath = pathname ? pathname.replace(/\/+$/, "") || "/" : "/";
+
+  // Flatten all navigable hrefs in current nav to pick the single best (most specific/longest) match
+  const allHrefs = useMemo(() => {
+    const list: string[] = [];
+    const collect = (items: NavItem[]) => {
+      for (const item of items) {
+        if (item.href) list.push(item.href.replace(/\/+$/, "") || "/");
+        if (item.children) collect(item.children);
+      }
+    };
+    collect(navItems);
+    return list;
+  }, [navItems]);
+
+  const activeHref = useMemo(() => {
+    // 1. Exact match has top priority
+    const exact = allHrefs.find((h: string) => currentPath === h);
+    if (exact) return exact;
+
+    // 2. Otherwise find the longest prefix match so parent root routes (e.g. /learner)
+    // do not steal highlight when the user navigates to a sub-route (e.g. /learner/catalog).
+    const prefixMatches = allHrefs
+      .filter((h: string) => currentPath.startsWith(`${h}/`))
+      .sort((a: string, b: string) => b.length - a.length);
+
+    return prefixMatches[0] ?? null;
+  }, [allHrefs, currentPath]);
+
+  const isActive = (href: string) => {
+    const normalized = href ? href.replace(/\/+$/, "") || "/" : "/";
+    return normalized === activeHref;
+  };
 
   const isGroupActive = (item: NavItem): boolean =>
     item.children?.some((child) => (child.href ? isActive(child.href) : false)) ?? false;

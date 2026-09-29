@@ -36,7 +36,7 @@ export default function LoginScreen() {
         <LanguageToggle />
       </View>
 
-      <View className="w-full max-w-sm self-center my-auto gap-6">
+      <View className="my-auto w-full max-w-sm gap-6 self-center">
         <AuthHeader center title={t('auth.welcome')} subtitle={t('auth.signInSubtitle')} showLogo />
 
         <View className="gap-4">
