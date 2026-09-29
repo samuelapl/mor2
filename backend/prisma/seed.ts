@@ -72,7 +72,8 @@ interface SubLessonSeed {
   durationMinutes: number;
   order: number;
   content: string;
-  attachment: AttachmentSeed;
+  attachment?: AttachmentSeed;
+  attachments?: AttachmentSeed[];
   assessment?: AssessmentSeed;
 }
 
@@ -82,7 +83,8 @@ interface LessonSeed {
   durationMinutes: number;
   order: number;
   content: string;
-  attachment: AttachmentSeed;
+  attachment?: AttachmentSeed;
+  attachments?: AttachmentSeed[];
   assessment: AssessmentSeed;
   subLessons?: SubLessonSeed[];
 }
@@ -92,7 +94,8 @@ interface ModuleSeed {
   description: string;
   objectives: string;
   order: number;
-  attachment: AttachmentSeed;
+  attachment?: AttachmentSeed;
+  attachments?: AttachmentSeed[];
   assessment: AssessmentSeed;
   lessons: LessonSeed[];
 }
@@ -1812,10 +1815,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
     modules: [
       {
         title: 'Module 1: Principles of Ethiopian Taxation Architecture',
-        description: 'Introduction to direct vs indirect taxes, federal tax schedule, and legal obligations.',
-        objectives: 'Classify income schedules and recognize taxable events.',
+        description: 'Comprehensive analysis of direct vs indirect tax regimes, the Ethiopian Federal Income Tax Proclamation No. 979/2016, withholding compliance, and Value Added Tax standards.',
+        objectives: 'Classify income schedules across Schedules A through E, correctly execute commercial and employment tax withholdings, understand 15% VAT mechanisms, and master digital e-filing submissions.',
         order: 0,
-        attachment: video('sample.mp4'),
+        attachment: pdf('TAX101-Module1-Guide.pdf'),
         assessment: {
           title: 'Module 1 Architecture Check',
           passingScore: 70,
@@ -1831,14 +1834,87 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
             contentType: LessonContentType.VIDEO,
             durationMinutes: 30,
             order: 0,
-            content: 'Comprehensive video lecture on Ethiopian tax withholding mechanisms, legal schedules, and digital compliance standards.',
-            attachment: video('sample.mp4'),
+            content: `## 1. Statutory Architecture of the Ethiopian Tax System
+The federal tax regime of the Federal Democratic Republic of Ethiopia is anchored by two fundamental proclamations enacted in 2016:
+- **Federal Tax Administration Proclamation No. 983/2016**: Defines systemic procedural rules, taxpayers' rights and obligations, administrative audit mechanisms, tax dispute tribunals, and civil/criminal penalties for non-compliance.
+- **Federal Income Tax Proclamation No. 979/2016**: Establishes taxable events, standard income classifications across Schedules A through E, corporate tax treatments, and withholding mechanics at source.
+
+## 2. Income Classification Schedules (A through E)
+Under Proclamation No. 979/2016, income is segregated into five distinct schedules:
+1. **Schedule A (Employment Income)**: Progressive monthly taxation ranging from 0% (up to 600 ETB) to a 35% marginal rate on monthly taxable income exceeding 10,900 ETB. Employers act as statutory withholding agents.
+2. **Schedule B (Rental Income)**: Net rental income derived from leasing immovable real estate (residential, commercial, and industrial property).
+3. **Schedule C (Business Income)**: Profits generated through commercial, industrial, or professional services operated by sole proprietorships or registered corporate bodies (standard corporate rate: 30%).
+4. **Schedule D (Other Income)**: Specialized receipts including dividends (10%), royalties (5%), interest on bank deposits (5%), and capital gains.
+5. **Schedule E (Exempt Income)**: Statutory exemptions, including accredited diplomatic compensation, contributions to recognized retirement pensions within statutory limits, and employment injury compensation.
+
+## 3. Domestic Withholding Requirements
+Withholding at source accelerates revenue flows and minimizes uncollected tax liabilities:
+- **2% Withholding on Local Transactions**: Government agencies, public enterprises, share companies, and Category A business entities are legally required to withhold 2% from the gross payment on any single transaction exceeding **10,000 ETB** for goods or **3,000 ETB** for services.
+- **Mandatory Remittance Timeline**: All withholding agents must remit withheld funds to the Ministry of Revenues within **30 days** following the end of the calendar month in which the withholding occurred.
+- **Issuance of Receipts**: Agents must issue official Ministry of Revenues withholding certificates (MoR-WR-01) to suppliers within 10 days of transaction completion.
+
+## 4. Compliance Penalties & Enforcement
+Strict statutory sanctions apply under Chapter 14 of Proclamation No. 983/2016:
+- **Late Remittance**: 20% penalty applied on unpaid withholdings plus daily interest compounded at the commercial bank lending rate + 2%.
+- **Failure to Withhold**: The withholding agent becomes personally and jointly liable for the unwithheld tax amount.`,
+            attachments: [
+              video('sample.mp4'),
+              pdf('TAX101-L1-LegalFramework-Manual.pdf'),
+            ],
             assessment: {
               title: 'Lesson 1.1 Check',
               passingScore: 70,
               timeLimitMinutes: 10,
               questions: [
                 tf('tax-l1-q1', 'Tax withholding agents must remit collected withholdings within 30 days of the subsequent month.', 0, 'Remittance Deadlines'),
+                mcq('tax-l1-q2', 'What is the standard withholding rate on local supplies of goods exceeding 10,000 ETB?', ['2%', '5%', '10%', '15%'], 0, 'Withholding Rates'),
+              ],
+            },
+          },
+          {
+            title: 'Lesson 1.2: Value Added Tax (VAT) Architecture & Digital E-Filing',
+            contentType: LessonContentType.VIDEO,
+            durationMinutes: 35,
+            order: 1,
+            content: `## 1. Fundamental Principles of Value Added Tax
+Value Added Tax in Ethiopia is governed by **VAT Proclamation No. 285/2002** (as amended):
+- **Tax Mechanics**: A multi-stage consumption tax levied on the value added at each stage of production and commercial distribution. The tax burden is ultimately borne by the final consumer.
+- **Standard Tax Rate**: **15%** charged on all taxable supplies of domestic goods and services, as well as taxable imports into the customs territory.
+- **Registration Threshold**: Mandatory registration is required for any commercial entity whose annual taxable turnover exceeds **1,000,000 ETB** over a 12-month period. Eligible businesses must submit their VAT registration application within 30 days of crossing this threshold.
+
+## 2. Supply Classifications: Taxable, Zero-Rated & Exempt
+Correct classification is imperative for valid tax invoicing and input VAT reclaims:
+1. **Taxable Supplies (15%)**: Standard commercial sales of products, professional consulting, construction works, hospitality, and imported manufactured goods.
+2. **Zero-Rated Supplies (0%)**:
+   - Export of goods and services produced in Ethiopia to external foreign markets.
+   - International air transport of passengers and cargo originating in Ethiopia.
+   - Supplies to accredited diplomatic missions and inter-governmental agencies.
+   - *Key Advantage*: Zero-rated suppliers can fully reclaim and obtain refunds for input VAT incurred on their operational business purchases.
+3. **Exempt Supplies (No VAT Charged, No Input Credit Allowed)**:
+   - Primary agricultural commodities and unprocessed staples (e.g., teff, wheat, barley, raw milk).
+   - Public passenger road transportation and mass transit services.
+   - Essential medical diagnostic services and prescription pharmaceuticals.
+   - Financial, banking, and insurance services.
+   - Educational services delivered by accredited institutions.
+
+## 3. Ministry SIGTAS Portal & Digital E-Filing Operations
+Under the Ministry's digital transformation mandate, Category A and B taxpayers must file through the Ministry of Revenues e-Services portal:
+- **Monthly Filing Schedule**: VAT declarations and accompanying input/output schedules must be submitted between the 1st and the final day of the month following the accounting period.
+- **Fiscal Cash Registers (FCR) & EIS**: All registered sellers must generate electronic fiscal receipts from registered machines or certified electronic invoicing systems connected to Ministry audit servers.
+- **Input Tax Deduction Rules**: Input VAT may only be credited against output liabilities if supported by a valid fiscal invoice displaying both buyer and seller Tax Identification Numbers (TIN), sequential receipt numbers, and distinct tax itemization.
+- **Statutory Audit Trail**: Digital journals, VAT return copies, and electronic payment confirmation receipts must be safely archived in electronic format for a statutory minimum of **10 years**.`,
+            attachments: [
+              video('sample.mp4'),
+              pdf('TAX101-L2-VAT-and-EFiling-Guide.pdf'),
+            ],
+            assessment: {
+              title: 'Lesson 1.2 Check',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                mcq('tax-l2-q1', 'What is the mandatory annual turnover threshold for VAT registration in Ethiopia?', ['1,000,000 ETB', '500,000 ETB', '2,000,000 ETB', '100,000 ETB'], 0, 'VAT Thresholds'),
+                tf('tax-l2-q2', 'Zero-rated suppliers are legally entitled to reclaim input VAT paid on their business purchases.', 0, 'Input VAT Reclaim'),
+                mcq('tax-l2-q3', 'What is the standard Value Added Tax (VAT) rate in Ethiopia?', ['15%', '10%', '12%', '18%'], 0, 'Tax Rates'),
               ],
             },
           },
@@ -2136,19 +2212,22 @@ async function main() {
         },
       });
 
-      // Module Attachment
-      await prisma.attachment.create({
-        data: {
-          courseId: course.id,
-          moduleId: createdMod.id,
-          fileName: mod.attachment.fileName,
-          fileKey: mod.attachment.fileKey ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
-          fileUrl: mod.attachment.fileUrl ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
-          fileType: mod.attachment.fileType,
-          sizeBytes: mod.attachment.sizeBytes ?? (mod.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
-          uploadedById: ownerId,
-        },
-      });
+      // Module Attachments
+      const modAttachments = mod.attachments ?? (mod.attachment ? [mod.attachment] : []);
+      for (const att of modAttachments) {
+        await prisma.attachment.create({
+          data: {
+            courseId: course.id,
+            moduleId: createdMod.id,
+            fileName: att.fileName,
+            fileKey: att.fileKey ?? (att.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+            fileUrl: att.fileUrl ?? (att.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
+            fileType: att.fileType,
+            sizeBytes: att.sizeBytes ?? (att.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
+            uploadedById: ownerId,
+          },
+        });
+      }
 
       // Module Assessment
       await prisma.assessment.create({
@@ -2198,20 +2277,23 @@ async function main() {
           },
         });
 
-        // Lesson Attachment
-        await prisma.attachment.create({
-          data: {
-            courseId: course.id,
-            moduleId: createdMod.id,
-            lessonId: createdLesson.id,
-            fileName: les.attachment.fileName,
-            fileKey: les.attachment.fileKey ?? (les.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
-            fileUrl: les.attachment.fileUrl ?? (les.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
-            fileType: les.attachment.fileType,
-            sizeBytes: les.attachment.sizeBytes ?? (les.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
-            uploadedById: ownerId,
-          },
-        });
+        // Lesson Attachments
+        const lesAttachments = les.attachments ?? (les.attachment ? [les.attachment] : []);
+        for (const att of lesAttachments) {
+          await prisma.attachment.create({
+            data: {
+              courseId: course.id,
+              moduleId: createdMod.id,
+              lessonId: createdLesson.id,
+              fileName: att.fileName,
+              fileKey: att.fileKey ?? (att.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+              fileUrl: att.fileUrl ?? (att.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
+              fileType: att.fileType,
+              sizeBytes: att.sizeBytes ?? (att.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
+              uploadedById: ownerId,
+            },
+          });
+        }
 
         // Lesson Assessment
         await prisma.assessment.create({
@@ -2260,20 +2342,23 @@ async function main() {
               },
             });
 
-            // Sub-lesson Attachment
-            await prisma.attachment.create({
-              data: {
-                courseId: course.id,
-                moduleId: createdMod.id,
-                lessonId: createdSub.id,
-                fileName: sub.attachment.fileName,
-                fileKey: sub.attachment.fileKey ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
-                fileUrl: sub.attachment.fileUrl ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
-                fileType: sub.attachment.fileType,
-                sizeBytes: sub.attachment.sizeBytes ?? (sub.attachment.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
-                uploadedById: ownerId,
-              },
-            });
+            // Sub-lesson Attachments
+            const subAttachments = sub.attachments ?? (sub.attachment ? [sub.attachment] : []);
+            for (const att of subAttachments) {
+              await prisma.attachment.create({
+                data: {
+                  courseId: course.id,
+                  moduleId: createdMod.id,
+                  lessonId: createdSub.id,
+                  fileName: att.fileName,
+                  fileKey: att.fileKey ?? (att.fileType.startsWith('video') ? VIDEO_FILE_KEY : PDF_FILE_KEY),
+                  fileUrl: att.fileUrl ?? (att.fileType.startsWith('video') ? VIDEO_FILE_URL : PDF_FILE_URL),
+                  fileType: att.fileType,
+                  sizeBytes: att.sizeBytes ?? (att.fileType.startsWith('video') ? VIDEO_SIZE_BYTES : PDF_SIZE_BYTES),
+                  uploadedById: ownerId,
+                },
+              });
+            }
           }
         }
       }
