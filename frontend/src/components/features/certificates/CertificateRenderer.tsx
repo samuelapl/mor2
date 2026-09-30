@@ -434,11 +434,10 @@ export function CertificateRenderer({
       `~ Ministry of Revenues ETIMS Academy · Verified Credential ${data.certificateNumber} · Verification: ${data.verificationCode} ~`);
 
   const courseHoursPrefix = isAm ? 'የስልጠና ሰዓት ፦' : (courseHoursField.text || 'Course Hours :');
-  const courseHoursText = data.courseHours
-    ? `${data.courseHours} ${isAm ? 'ሰዓት' : 'Hours'}`
-    : isAm
-      ? '30 ሰዓት'
-      : '30 Hours';
+  const rawHours = data.courseHours
+    ? String(data.courseHours).replace(/\s*(hours|hour|ሰዓት)\s*/gi, '').trim()
+    : '30';
+  const courseHoursText = `${rawHours || '30'} ${isAm ? 'ሰዓት' : 'Hours'}`;
   const datePrefix = isAm ? 'ቀን ፦' : (issuedAtField.text || 'Date :');
   const formattedDate = formatDate(data.issuedAt);
   const verifiedBadgeText = isAm ? 'የተረጋገጠ' : (verifiedBadgeField.text || 'VERIFIED');

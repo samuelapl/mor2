@@ -9,7 +9,11 @@ import { Badge } from '@/components/ui/Badge';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { CertificateRenderer } from '@/components/features/certificates/CertificateRenderer';
 import { CertificateLanguageDropdown } from '@/components/features/certificates/CertificateLanguageDropdown';
-import { fetchActiveCertificateTemplate, fetchCertificateDownloadUrl } from '@/lib/api/certificates';
+import {
+  fetchActiveCertificateTemplate,
+  fetchCertificateDownloadUrl,
+  downloadCertificateDirectly,
+} from '@/lib/api/certificates';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CertificateCardProps {
@@ -54,15 +58,20 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
   const handleDownload = async () => {
     try {
       setDownloading(true);
-      const res = await fetchCertificateDownloadUrl(certificate.id, selectedLang);
-      if (res?.downloadUrl) {
-        window.open(res.downloadUrl, '_blank');
-      } else if (certificate.downloadUrl) {
-        window.open(certificate.downloadUrl, '_blank');
-      }
-    } catch {
+      const filename = `${certificate.certificateNumber || 'certificate'}_${selectedLang}.pdf`;
+      await downloadCertificateDirectly(certificate.id, selectedLang, filename);
+    } catch (err) {
+      console.error('Failed to download certificate directly:', err);
       if (certificate.downloadUrl) {
-        window.open(certificate.downloadUrl, '_blank');
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = certificate.downloadUrl;
+        a.download = `${certificate.certificateNumber || 'certificate'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (a.parentNode) document.body.removeChild(a);
+        }, 1000);
       }
     } finally {
       setDownloading(false);

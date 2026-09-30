@@ -178,3 +178,52 @@ export async function duplicateCertificateTemplate(id: string): Promise<ApiCerti
 export async function deleteCertificateTemplate(id: string): Promise<void> {
   await api<unknown>(`certificate-templates/${id}`, { method: 'DELETE' });
 }
+
+/**
+ * Triggers direct in-page file download without opening a new browser tab or window.
+ */
+export async function downloadCertificateDirectly(
+  id: string,
+  lang: string = 'en',
+  defaultFilename?: string,
+): Promise<void> {
+  const res = await fetchCertificateDownloadUrl(id, lang);
+  if (!res?.downloadUrl) {
+    throw new Error('Download URL not available');
+  }
+
+  const filename = defaultFilename || `Certificate_${lang}.pdf`;
+
+  try {
+    const response = await fetch(res.downloadUrl);
+    if (response.ok) {
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
+      return;
+    }
+  } catch (fetchErr) {
+    console.warn('In-page blob download fallback triggered:', fetchErr);
+  }
+
+  // Fallback: anchor click (stays on page because MinIO serves Content-Disposition: attachment)
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = res.downloadUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    if (a.parentNode) document.body.removeChild(a);
+  }, 1000);
+}
+

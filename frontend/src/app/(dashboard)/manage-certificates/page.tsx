@@ -39,6 +39,7 @@ import {
   reissueCertificate,
   fetchCertificateAudit,
   fetchCertificateDownloadUrl,
+  downloadCertificateDirectly,
   type ApiCertificateAuditItem,
 } from '@/lib/api/certificates';
 import type { ApiCertificate } from '@/lib/api/types';
@@ -213,15 +214,22 @@ export default function ManageCertificatesPage() {
   const handleDownload = async (cert: ApiCertificate, lang: string) => {
     try {
       setDownloading(true);
-      const res = await fetchCertificateDownloadUrl(cert.id, lang);
-      if (res?.downloadUrl) {
-        window.open(res.downloadUrl, '_blank');
-      } else if (cert.downloadUrl) {
-        window.open(cert.downloadUrl, '_blank');
-      }
+      const filename = `${cert.certificateNumber || 'certificate'}_${lang}.pdf`;
+      await downloadCertificateDirectly(cert.id, lang, filename);
+      toast.success(tBilingual('Certificate download started', 'የሰርተፊኬት ማውረድ ተጀምሯል'));
     } catch (err: any) {
       toast.error(err?.message || 'Download error');
-      if (cert.downloadUrl) window.open(cert.downloadUrl, '_blank');
+      if (cert.downloadUrl) {
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = cert.downloadUrl;
+        a.download = `${cert.certificateNumber || 'certificate'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (a.parentNode) document.body.removeChild(a);
+        }, 1000);
+      }
     } finally {
       setDownloading(false);
     }

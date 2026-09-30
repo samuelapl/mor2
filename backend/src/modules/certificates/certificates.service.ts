@@ -440,7 +440,8 @@ export class CertificatesService {
     });
 
     if (!pdfKey) return { downloadUrl: null };
-    const downloadUrl = await this.filesService.getPresignedUrl(pdfKey, 3600);
+    const downloadFilename = `${cert.certificateNumber || 'certificate'}_${lang}.pdf`;
+    const downloadUrl = await this.filesService.getPresignedUrl(pdfKey, 3600, downloadFilename);
     return { downloadUrl };
   }
 

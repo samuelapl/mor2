@@ -530,13 +530,10 @@ export function CertificateTemplatesAdmin() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div>
             <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
               Certificate Templates
             </h2>
-            <span className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
-              {templates.length} templates seeded
-            </span>
           </div>
           <p className="mt-1 text-xs text-slate-500 max-w-2xl">
             Configure, brand, and manage official certificate designs. Drag-and-drop brand assets,

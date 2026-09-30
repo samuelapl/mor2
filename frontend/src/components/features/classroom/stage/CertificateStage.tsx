@@ -25,6 +25,7 @@ import {
   fetchMyCertificates,
   claimCertificate,
   fetchActiveCertificateTemplate,
+  downloadCertificateDirectly,
 } from '@/lib/api/certificates';
 import { fetchMyProfile } from '@/lib/api/users';
 import { CertificateRenderer } from '../../certificates/CertificateRenderer';
@@ -125,11 +126,28 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     window.print();
   };
 
-  const handleDownloadPdf = () => {
-    if (certificate?.downloadUrl) {
-      window.open(certificate.downloadUrl, '_blank');
-    } else {
+  const handleDownloadPdf = async () => {
+    if (!certificate) {
       window.print();
+      return;
+    }
+    try {
+      const filename = `${certificate.certificateNumber || 'certificate'}.pdf`;
+      await downloadCertificateDirectly(certificate.id, 'en', filename);
+    } catch {
+      if (certificate.downloadUrl) {
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = certificate.downloadUrl;
+        a.download = `${certificate.certificateNumber || 'certificate'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (a.parentNode) document.body.removeChild(a);
+        }, 1000);
+      } else {
+        window.print();
+      }
     }
   };
 
