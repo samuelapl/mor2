@@ -739,3 +739,5 @@ export function CertificateRenderer({
     </div>
   );
 }
+
+export default CertificateRenderer;

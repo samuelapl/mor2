@@ -260,3 +260,5 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
     </>
   );
 }
+
+export default CertificateCard;

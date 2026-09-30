@@ -126,3 +126,5 @@ export function CertificateLanguageDropdown({
     </div>
   );
 }
+
+export default CertificateLanguageDropdown;

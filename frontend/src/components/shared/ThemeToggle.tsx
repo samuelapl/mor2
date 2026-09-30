@@ -55,3 +55,5 @@ export function ThemeToggle({ isAmharic }: { isAmharic?: boolean }) {
     </div>
   );
 }
+
+export default ThemeToggle;
