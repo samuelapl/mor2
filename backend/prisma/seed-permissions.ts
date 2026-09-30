@@ -310,7 +310,7 @@ export const PERMISSIONS: PermissionDef[] = [
   },
   {
     code: 'CERTIFICATE_TEMPLATE_MANAGE',
-    resource: 'certificate_template',
+    resource: 'certificate',
     action: 'manage',
     scope: 'ALL',
     description: 'Create, edit, preview, activate, and archive certificate templates',
