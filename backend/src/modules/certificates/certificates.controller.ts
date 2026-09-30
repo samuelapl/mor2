@@ -38,7 +38,7 @@ export class CertificatesController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'List all issued certificates (Admin/Manager)' })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, type: String })
@@ -108,7 +108,7 @@ export class CertificatesController {
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'Get certificate metrics and analytics report for management dashboard' })
   async stats() {
     return this.certificatesService.getCertificateStats();
@@ -148,7 +148,7 @@ export class CertificatesController {
   @Post(':id/revoke')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'Revoke a certificate with reason' })
   @ApiParam({ name: 'id', type: String })
   async revoke(
@@ -162,7 +162,7 @@ export class CertificatesController {
   @Post(':id/reissue')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'Reissue/supersede a certificate' })
   @ApiParam({ name: 'id', type: String })
   async reissue(
@@ -176,7 +176,7 @@ export class CertificatesController {
   @Get(':id/audit')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'Get audit history for a certificate' })
   @ApiParam({ name: 'id', type: String })
   async getAuditHistory(@Param('id') id: string) {
@@ -186,7 +186,7 @@ export class CertificatesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @Permissions('CERTIFICATE_MANAGE')
   @ApiOperation({ summary: 'Revoke a certificate (Compatibility endpoint)' })
   @ApiParam({ name: 'id', type: String })
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {

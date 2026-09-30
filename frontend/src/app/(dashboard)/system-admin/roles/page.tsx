@@ -130,7 +130,6 @@ const PERMISSION_DESCRIPTIONS_AM: Record<string, string> = {
 
   // Certificate
   'certificate.view': 'የራስን ሰርተፊኬት ተመልከት',
-  'certificate.manage': 'የሰርተፊኬት ቅጾችን አስተዳድር እና አትም',
   'CERTIFICATE_MANAGE': 'የተሰጡ ሰርተፊኬቶችን አስተዳድር፣ ፈልግ፣ አረጋግጥ እና ሰርዝ',
   'CERTIFICATE_TEMPLATE_MANAGE': 'የሰርተፊኬት ቅጾችን (Templates) ፍጠር፣ አርትዕ፣ አግብር እና በማህደር አስቀምጥ',
 

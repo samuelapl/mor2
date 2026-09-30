@@ -11,7 +11,7 @@ import { PermissionsGuard } from '@modules/permissions/guards/permissions.guard'
 @ApiTags('certificate-templates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Permissions('CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage', 'certificate.manage')
+@Permissions('CERTIFICATE_TEMPLATE_MANAGE')
 @Controller('certificate-templates')
 export class CertificateTemplatesController {
   constructor(private readonly certificateTemplatesService: CertificateTemplatesService) {}

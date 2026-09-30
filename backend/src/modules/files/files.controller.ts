@@ -108,7 +108,7 @@ export class FilesController {
   }
 
   @Post('certificate-template')
-  @Permissions('certificate.manage')
+  @Permissions('CERTIFICATE_TEMPLATE_MANAGE')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a certificate template background image (PNG/JPG)' })
   @ApiConsumes('multipart/form-data')

@@ -295,13 +295,6 @@ export const PERMISSIONS: PermissionDef[] = [
     description: 'View own certificate',
   },
   {
-    code: 'certificate.manage',
-    resource: 'certificate',
-    action: 'manage',
-    scope: 'ALL',
-    description: 'Manage templates & issue',
-  },
-  {
     code: 'CERTIFICATE_MANAGE',
     resource: 'certificate',
     action: 'manage',
@@ -454,7 +447,6 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'category.manage',
     'CERTIFICATE_MANAGE',
     'CERTIFICATE_TEMPLATE_MANAGE',
-    'certificate.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',
@@ -558,6 +550,12 @@ export async function seedPermissions(prisma: PrismaClient) {
   // Delete the old rows — cascades to their role_permissions grants.
   await prisma.permission.deleteMany({
     where: { code: { in: ['live_session.manage', 'live_session.view_own'] } },
+  });
+
+  // 'certificate.manage' was replaced by CERTIFICATE_MANAGE and CERTIFICATE_TEMPLATE_MANAGE.
+  // Delete the legacy row — cascades to role_permissions grants.
+  await prisma.permission.deleteMany({
+    where: { code: 'certificate.manage' },
   });
 
   // TRAINER and COURSE_OWNER now default to view-only attendance ('attendance.view').
