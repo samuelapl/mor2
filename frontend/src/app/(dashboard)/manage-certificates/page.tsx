@@ -600,11 +600,24 @@ export default function ManageCertificatesPage() {
                               setPreviewCert(cert);
                               setPreviewLang('en');
                             }}
-                            title="Preview Certificate"
+                            title={tBilingual('Preview Certificate', 'ሰርተፊኬት እይ')}
                             className="h-8 px-2.5 gap-1 text-slate-700 dark:text-slate-300"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             <span className="hidden md:inline">{tBilingual('Preview', 'እይ')}</span>
+                          </Button>
+
+                          {/* Direct Download Action */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownload(cert, 'en')}
+                            disabled={downloading}
+                            title={tBilingual('Download Certificate PDF', 'ሰርተፊኬት ፒዲኤፍ አውርድ')}
+                            className="h-8 px-2.5 gap-1 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span className="hidden md:inline">{tBilingual('Download', 'አውርድ')}</span>
                           </Button>
 
                           {/* Quick Verify */}
@@ -694,14 +707,20 @@ export default function ManageCertificatesPage() {
           open={Boolean(previewCert)}
           onClose={() => setPreviewCert(null)}
           title={tBilingual('Certificate Preview', 'የሰርተፊኬት ቅድመ-እይታ')}
-          subtitle={`${previewCert.certificateNumber} · ${previewCert.user?.firstName} ${previewCert.user?.lastName} · ${previewCert.course?.title || previewCert.course?.titleEn || 'Course'}`}
+          subtitle={`${previewCert.certificateNumber} · ${previewCert.user?.firstName || ''} ${previewCert.user?.lastName || ''} · ${previewCert.course?.title || previewCert.course?.titleEn || 'Course'}`}
           fullViewport={true}
           actions={
-            <div className="flex items-center gap-2 shrink-0">
-              <LanguageToggle />
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Extensible Language Dropdown */}
+              <CertificateLanguageDropdown
+                value={previewLang}
+                onChange={setPreviewLang}
+              />
+
+              {/* Theme Toggle */}
               <ThemeToggle isAmharic={isAmharic} />
 
-              <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5 shadow-2xs">
+              <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5">
                 <Printer className="h-4 w-4" />
                 {tBilingual('Print', 'አትም')}
               </Button>
@@ -710,7 +729,7 @@ export default function ManageCertificatesPage() {
                 size="sm"
                 onClick={() => handleDownload(previewCert, previewLang)}
                 disabled={downloading}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs"
+                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <Download className="h-4 w-4" />
                 {downloading

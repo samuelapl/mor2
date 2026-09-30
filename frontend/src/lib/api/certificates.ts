@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, API_BASE_URL, getAccessToken } from './client';
 import type {
   ApiCertificate,
   ApiCertificateTemplate,
@@ -187,12 +187,41 @@ export async function downloadCertificateDirectly(
   lang: string = 'en',
   defaultFilename?: string,
 ): Promise<void> {
+  const filename = defaultFilename || `Certificate_${lang}.pdf`;
+  const token = getAccessToken();
+
+  // 1. First priority: direct streaming from backend API (CORS safe, authenticated, pure blob)
+  try {
+    const apiRes = await fetch(
+      `${API_BASE_URL}/certificates/${id}/pdf?lang=${encodeURIComponent(lang)}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    );
+    if (apiRes.ok) {
+      const blob = await apiRes.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
+      return;
+    }
+  } catch (apiErr) {
+    console.warn('Direct API stream failed, falling back to signed URL:', apiErr);
+  }
+
+  // 2. Secondary fallback: signed download URL (MinIO)
   const res = await fetchCertificateDownloadUrl(id, lang);
   if (!res?.downloadUrl) {
     throw new Error('Download URL not available');
   }
-
-  const filename = defaultFilename || `Certificate_${lang}.pdf`;
 
   try {
     const response = await fetch(res.downloadUrl);
@@ -212,10 +241,10 @@ export async function downloadCertificateDirectly(
       return;
     }
   } catch (fetchErr) {
-    console.warn('In-page blob download fallback triggered:', fetchErr);
+    console.warn('Signed URL blob fetch fallback triggered:', fetchErr);
   }
 
-  // Fallback: anchor click (stays on page because MinIO serves Content-Disposition: attachment)
+  // 3. Fallback: anchor click (stays on page because MinIO serves Content-Disposition: attachment)
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = res.downloadUrl;

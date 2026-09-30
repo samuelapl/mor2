@@ -8,8 +8,10 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { CertificatesService } from './certificates.service';
@@ -143,6 +145,29 @@ export class CertificatesController {
       throw new ForbiddenException('You can only access your own certificates');
     }
     return this.certificatesService.downloadPdf(id, lang, user.id);
+  }
+
+  @Get(':id/pdf')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Directly stream certificate PDF binary for in-page download' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiQuery({ name: 'lang', required: false, type: String })
+  async streamPdf(
+    @Param('id') id: string,
+    @Query('lang') lang: string = 'en',
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const cert = await this.certificatesService.findById(id);
+    if (!this.canManageCertificates(user) && cert.userId !== user.id) {
+      throw new ForbiddenException('You can only access your own certificates');
+    }
+    const { buffer, filename } = await this.certificatesService.getPdfBuffer(id, lang, user.id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.end(buffer);
   }
 
   @Post(':id/revoke')

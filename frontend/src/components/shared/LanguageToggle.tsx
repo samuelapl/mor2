@@ -108,7 +108,7 @@ export function LanguageToggle({
         <div
           role="listbox"
           aria-label="Languages"
-          className="absolute right-0 top-full mt-1.5 z-[70] w-48 origin-top-right rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-850/95 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-slate-950/40 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 focus:outline-hidden"
+          className="absolute right-0 top-full mt-1.5 z-[80] w-48 origin-top-right rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-850/95 p-1.5 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 focus:outline-hidden"
         >
           <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-700/50 mb-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">

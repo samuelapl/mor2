@@ -75,7 +75,7 @@ export function WorkspaceDetailOverlay({
       {/* Top Workspace Header Bar */}
       <div
         className={cn(
-          'sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3 backdrop-blur-md shadow-xs transition-colors',
+          'sticky top-0 z-30 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3 backdrop-blur-md shadow-xs transition-colors',
           isDark
             ? 'border-b border-slate-800 bg-slate-900/95 text-white'
             : 'border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white',

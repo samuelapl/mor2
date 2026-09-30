@@ -34,7 +34,7 @@ export function ThemeToggle({ isAmharic }: { isAmharic?: boolean }) {
         <Icon className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-[70] w-40 overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 animate-scale-in">
+        <div className="absolute right-0 top-11 z-[80] w-40 overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/60 animate-scale-in">
           {OPTIONS.map(({ value, icon: Ic, en, am }) => (
             <button
               key={value}

@@ -446,6 +446,20 @@ export class CertificatesService {
   }
 
   /**
+   * Get raw PDF buffer for direct authenticated binary streaming.
+   */
+  async getPdfBuffer(id: string, lang = 'en', userId?: string): Promise<{ buffer: Buffer; filename: string }> {
+    await this.downloadPdf(id, lang, userId);
+    const cert = await this.findById(id);
+    const filename = `${cert.certificateNumber || 'certificate'}_${lang}.pdf`;
+    if (!cert.pdfFileUrl) {
+      throw new NotFoundException('Certificate PDF could not be generated');
+    }
+    const buffer = await this.filesService.download(cert.pdfFileUrl);
+    return { buffer, filename };
+  }
+
+  /**
    * Core issuance logic (automated on course completion).
    */
   async issue(userId: string, courseId: string, lang = 'en') {
