@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AssessmentType, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { CERTIFICATE_CONFIG } from '@config/constants';
@@ -52,12 +52,20 @@ const CERTIFICATE_I18N = {
 
 @Injectable()
 export class CertificatesService {
+  private readonly logger = new Logger(CertificatesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
     private readonly auditService: AuditService,
   ) {}
+
+  private async getActiveTemplate() {
+    return this.prisma.certificateTemplate.findFirst({
+      where: { isActive: true },
+    });
+  }
 
   /**
    * List all issued certificates with search, status filtering, and pagination.
@@ -339,32 +347,88 @@ export class CertificatesService {
   }
 
   /**
+   * Executive stats & analytics for certificate dashboard.
+   */
+  async getCertificateStats() {
+    const now = new Date();
+    const [
+      totalIssued,
+      activeCount,
+      revokedCount,
+      expiredCount,
+      totalDownloads,
+      learnerGroup,
+      courseGroup,
+    ] = await Promise.all([
+      this.prisma.certificate.count(),
+      this.prisma.certificate.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.certificate.count({ where: { status: 'REVOKED' } }),
+      this.prisma.certificate.count({
+        where: {
+          status: { not: 'REVOKED' },
+          expiresAt: { lt: now },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          entity: { in: ['certificate', 'Certificate'] },
+          action: 'DOWNLOAD',
+        },
+      }),
+      this.prisma.certificate.groupBy({
+        by: ['userId'],
+        _count: { userId: true },
+      }),
+      this.prisma.certificate.groupBy({
+        by: ['courseId'],
+        _count: { courseId: true },
+      }),
+    ]);
+
+    return {
+      totalIssued,
+      activeCount,
+      revokedCount,
+      expiredCount,
+      totalDownloads,
+      uniqueLearners: learnerGroup.length,
+      certifiedCourses: courseGroup.length,
+    };
+  }
+
+  /**
    * Download certificate PDF with language choice (en vs am) and audit tracking.
+   * Always renders using the authoritative generation engine with exact template fidelity.
    */
   async downloadPdf(id: string, lang = 'en', userId?: string): Promise<{ downloadUrl: string | null }> {
     const cert = await this.findById(id);
 
-    let pdfKey = cert.pdfFileUrl;
+    let pdfKey: string | null = null;
+    try {
+      const template = cert.template ?? (await this.getActiveTemplate());
+      pdfKey = await this.generatePdf(
+        `${cert.user.firstName} ${cert.user.lastName}`.trim() || 'Learner',
+        cert.course.title,
+        cert.course.code,
+        cert.certificateNumber,
+        cert.verificationCode,
+        cert.issuedAt,
+        cert.expiresAt ??
+          new Date(Date.now() + CERTIFICATE_CONFIG.validityMonths * 30 * 24 * 60 * 60 * 1000),
+        template,
+        lang,
+        cert.course.estimatedHours ?? '30 Hours',
+      );
 
-    // If a specific language is requested or no PDF file exists yet, render and cache it
-    if (!pdfKey || lang !== 'en') {
-      try {
-        pdfKey = await this.generatePdf(
-          `${cert.user.firstName} ${cert.user.lastName}`.trim() || 'Learner',
-          cert.course.title,
-          cert.course.code,
-          cert.certificateNumber,
-          cert.verificationCode,
-          cert.issuedAt,
-          cert.expiresAt ??
-            new Date(Date.now() + CERTIFICATE_CONFIG.validityMonths * 30 * 24 * 60 * 60 * 1000),
-          cert.template,
-          lang,
-          cert.course.estimatedHours ?? '30 Hours',
-        );
-      } catch {
-        pdfKey = cert.pdfFileUrl;
+      if (pdfKey) {
+        await this.prisma.certificate.update({
+          where: { id },
+          data: { pdfFileUrl: pdfKey },
+        });
       }
+    } catch (err) {
+      this.logger.error(`Error generating authoritative PDF for certificate ${id}: ${err}`);
+      pdfKey = cert.pdfFileUrl;
     }
 
     await this.auditService.record({
@@ -788,8 +852,8 @@ export class CertificatesService {
     // 4. Assets & Positionable Elements (using exact top-left % coordinates mapped to PDF points)
     // (a) Company Logo / Header Brand
     const logoField = fieldsMap.get('companyLogo') || fieldsMap.get('logo') || {
-      x: 14,
-      y: 12,
+      x: 50,
+      y: 8,
       text: 'Ministry of Revenues',
       title: 'ETIMS Academy',
       visible: true,
@@ -798,16 +862,44 @@ export class CertificatesService {
       const logoX = (logoField.x / 100) * width;
       const logoY = height - (logoField.y / 100) * height;
 
+      let embeddedLogo: any = null;
       if (logoField.imageUrl) {
         try {
           const imgBuf = await this.filesService.downloadFromUrl(logoField.imageUrl);
-          const img = await this.embedImage(pdfDoc, imgBuf);
-          if (img) {
-            const w = logoField.width || 120;
-            const h = (img.height / img.width) * w;
-            page.drawImage(img, { x: logoX - w / 2, y: logoY - h / 2, width: w, height: h });
+          embeddedLogo = await this.embedImage(pdfDoc, imgBuf);
+        } catch {}
+      }
+      if (!embeddedLogo) {
+        try {
+          const localLogoPath = path.join(process.cwd(), 'assets', 'logo.jpg');
+          if (fs.existsSync(localLogoPath)) {
+            const buf = fs.readFileSync(localLogoPath);
+            embeddedLogo = await pdfDoc.embedJpg(buf);
           }
         } catch {}
+      }
+
+      if (embeddedLogo) {
+        const logoSize = 34;
+        const brandTitle = logoField.text || 'Ministry of Revenues';
+        const titleW = fontBold.widthOfTextAtSize(brandTitle, 13);
+        const totalW = logoSize + 10 + titleW;
+        const startX = logoX - totalW / 2;
+
+        page.drawImage(embeddedLogo, {
+          x: startX,
+          y: logoY - logoSize / 2,
+          width: logoSize,
+          height: logoSize,
+        });
+
+        page.drawText(brandTitle, {
+          x: startX + logoSize + 10,
+          y: logoY - 4,
+          size: 13,
+          font: fontBold,
+          color: navyColor,
+        });
       } else {
         // Fallback brand box & title
         page.drawRectangle({
@@ -844,7 +936,7 @@ export class CertificatesService {
     }
 
     // (b) Crisp Deterministic 17x17 Vector QR Code
-    const qrField = fieldsMap.get('qrCode') || { x: 10, y: 28, size: 58, visible: true };
+    const qrField = fieldsMap.get('qrCode') || { x: 88, y: 12, size: 65, visible: true };
     if (qrField.visible !== false) {
       const qrX = (qrField.x / 100) * width;
       const qrY = height - (qrField.y / 100) * height;
@@ -853,13 +945,13 @@ export class CertificatesService {
         ctx.verificationCode || ctx.certificateNumber,
         qrX,
         qrY,
-        qrField.size || 58,
+        qrField.size || 60,
       );
     }
 
     // (c) Verified Badge
     const badgeField = fieldsMap.get('verifiedBadge') || {
-      x: 88,
+      x: 12,
       y: 12,
       text: i18n.verified,
       visible: true,
@@ -876,7 +968,8 @@ export class CertificatesService {
     if (hoursField.visible !== false) {
       const hoursX = (hoursField.x / 100) * width;
       const hoursY = height - (hoursField.y / 100) * height;
-      const hoursLabel = `${hoursField.text || i18n.hoursPrefix} ${courseHoursText}`;
+      const cleanHours = ctx.courseHours ? String(ctx.courseHours).replace(/\s*hours?\s*/gi, '').trim() : '30';
+      const hoursLabel = `${hoursField.text || i18n.hoursPrefix} ${cleanHours} ${i18n.hoursSuffix}`;
       page.drawText(hoursLabel, {
         x: hoursX - fontBold.widthOfTextAtSize(hoursLabel, 11) / 2,
         y: hoursY,
@@ -902,7 +995,7 @@ export class CertificatesService {
     }
 
     // (f) Official Circular Stamp
-    const stampField = fieldsMap.get('stamp') || { x: 50, y: 82, size: 75, visible: true };
+    const stampField = fieldsMap.get('stamp') || { x: 50, y: 78, size: 85, visible: true };
     if (stampField.visible !== false) {
       const stampX = (stampField.x / 100) * width;
       const stampY = height - (stampField.y / 100) * height;
@@ -911,46 +1004,67 @@ export class CertificatesService {
           const imgBuf = await this.filesService.downloadFromUrl(stampField.imageUrl);
           const img = await this.embedImage(pdfDoc, imgBuf);
           if (img) {
-            const sz = stampField.size || 75;
+            const sz = stampField.size || 80;
             page.drawImage(img, { x: stampX - sz / 2, y: stampY - sz / 2, width: sz, height: sz });
           }
         } catch {}
       } else {
-        this.drawOfficialSeal(page, font, fontBold, stampX, stampY, 32);
+        this.drawOfficialSeal(page, font, fontBold, stampX, stampY, 34);
       }
     }
 
-    // (g) Signature
-    const sigField = fieldsMap.get('signature1') || fieldsMap.get('signature') || {
-      x: 50,
-      y: 82,
-      width: 140,
-      visible: true,
-    };
-    // Only draw fallback signature if positioned away from stamp, or if explicitly requested
-    if (sigField.visible !== false && sigField.key !== 'signature_hidden') {
-      const sigX = (sigField.x / 100) * width;
-      const sigY = height - (sigField.y / 100) * height;
-      if (sigField.imageUrl) {
+    // (g) Signatures: render all configured signatures (signature1, signature2, etc.)
+    const sigFields = fields.filter(
+      (f: any) => f.key === 'signature' || f.key?.startsWith('signature') || f.key?.startsWith('sig_'),
+    );
+    const resolvedSigs =
+      sigFields.length > 0
+        ? sigFields
+        : [
+            {
+              key: 'signature1',
+              x: 20,
+              y: 80,
+              text: 'Abebe Bikila',
+              title: 'Director of Training & Capacity Development',
+              width: 130,
+              visible: true,
+            },
+            {
+              key: 'signature2',
+              x: 80,
+              y: 80,
+              text: 'Mulugeta Tesfaye',
+              title: 'Registrar General, Ministry of Revenues',
+              width: 130,
+              visible: true,
+            },
+          ];
+
+    for (const sig of resolvedSigs) {
+      if (sig.visible === false || sig.key === 'signature_hidden') continue;
+      const sigX = (sig.x / 100) * width;
+      const sigY = height - (sig.y / 100) * height;
+      if (sig.imageUrl) {
         try {
-          const imgBuf = await this.filesService.downloadFromUrl(sigField.imageUrl);
+          const imgBuf = await this.filesService.downloadFromUrl(sig.imageUrl);
           const img = await this.embedImage(pdfDoc, imgBuf);
           if (img) {
-            const w = sigField.width || 120;
+            const w = sig.width || 120;
             const h = (img.height / img.width) * w;
             page.drawImage(img, { x: sigX - w / 2, y: sigY - h / 2, width: w, height: h });
           }
         } catch {}
-      } else if (stampField.x !== sigField.x || stampField.y !== sigField.y) {
+      } else {
         this.drawSignature(
           page,
           font,
           fontBold,
           sigX,
           sigY,
-          sigField.text,
-          sigField.title,
-          sigField.width || 120,
+          sig.text,
+          sig.title,
+          sig.width || 120,
         );
       }
     }

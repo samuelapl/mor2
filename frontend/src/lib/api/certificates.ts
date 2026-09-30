@@ -25,6 +25,20 @@ export interface ManageCertificatesResponse {
   totalPages: number;
 }
 
+export interface CertificateStats {
+  totalIssued: number;
+  activeCount: number;
+  revokedCount: number;
+  expiredCount: number;
+  totalDownloads: number;
+  uniqueLearners: number;
+  certifiedCourses: number;
+}
+
+export async function fetchCertificateStats(): Promise<CertificateStats> {
+  return api<CertificateStats>('certificates/stats');
+}
+
 export async function fetchManageCertificates(
   query?: ManageCertificatesQuery,
 ): Promise<ManageCertificatesResponse> {

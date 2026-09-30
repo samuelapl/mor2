@@ -18,6 +18,7 @@ import {
   Printer,
   RefreshCw,
   User,
+  Users,
   BookOpen,
   Calendar,
 } from 'lucide-react';
@@ -32,6 +33,8 @@ import { CertificateRenderer } from '@/components/features/certificates/Certific
 import { CertificateLanguageDropdown } from '@/components/features/certificates/CertificateLanguageDropdown';
 import {
   fetchManageCertificates,
+  fetchCertificateStats,
+  type CertificateStats,
   revokeCertificate,
   reissueCertificate,
   fetchCertificateAudit,
@@ -108,6 +111,9 @@ export default function ManageCertificatesPage() {
   const [auditLogs, setAuditLogs] = useState<ApiCertificateAuditItem[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  const [stats, setStats] = useState<CertificateStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -116,6 +122,18 @@ export default function ManageCertificatesPage() {
     }, 350);
     return () => clearTimeout(timer);
   }, [search]);
+
+  const loadStats = useCallback(async () => {
+    try {
+      setStatsLoading(true);
+      const res = await fetchCertificateStats();
+      setStats(res);
+    } catch {
+      // Best-effort stats loading
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -138,7 +156,8 @@ export default function ManageCertificatesPage() {
 
   useEffect(() => {
     void loadData();
-  }, [loadData]);
+    void loadStats();
+  }, [loadData, loadStats]);
 
   // Handle Revoke
   const handleConfirmRevoke = async () => {
@@ -150,6 +169,7 @@ export default function ManageCertificatesPage() {
       setRevokingCert(null);
       setRevokeReason('');
       void loadData();
+      void loadStats();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to revoke certificate');
     } finally {
@@ -167,6 +187,7 @@ export default function ManageCertificatesPage() {
       setReissuingCert(null);
       setReissueReason('');
       void loadData();
+      void loadStats();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to reissue certificate');
     } finally {
@@ -217,6 +238,161 @@ export default function ManageCertificatesPage() {
         'የተሰጡ የኮርስ ሰርተፊኬቶችን ማስተዳደር፦ መፈለግ፣ ማየት፣ ማረጋገጥ፣ ማውረድ፣ መሰረዝ፣ እንደገና መስጠት እና የኦዲት መዝገብ።',
       )}
     >
+      {/* Executive Metrics & Analytics Dashboard Report */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {/* Total Issued */}
+        <div
+          onClick={() => {
+            setStatusFilter('ALL');
+            setPage(1);
+          }}
+          className={cn(
+            'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
+            statusFilter === 'ALL'
+              ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/25 ring-1 ring-indigo-500/20'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+          )}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tBilingual('Total Issued', 'በአጠቃላይ የተሰጡ')}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+              <Award className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading ? '...' : (stats?.totalIssued ?? total)}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {tBilingual('certificates', 'ሰርተፊኬቶች')}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {tBilingual('Across all published courses', 'በሁሉም ኮርሶች የተሰጡ')}
+          </p>
+        </div>
+
+        {/* Active & Valid */}
+        <div
+          onClick={() => {
+            setStatusFilter('ACTIVE');
+            setPage(1);
+          }}
+          className={cn(
+            'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
+            statusFilter === 'ACTIVE'
+              ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/25 ring-1 ring-emerald-500/20'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+          )}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tBilingual('Active & Valid', 'ንቁ እና ህጋዊ')}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading ? '...' : (stats?.activeCount ?? 0)}
+            </span>
+            <Badge variant="green" className="text-[10px] py-0 px-1.5">
+              {stats?.totalIssued
+                ? `${Math.round(((stats.activeCount || 0) / stats.totalIssued) * 100)}%`
+                : '100%'}
+            </Badge>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {tBilingual('Fully verified & compliant', 'የተረጋገጡ እና ንቁ')}
+          </p>
+        </div>
+
+        {/* Certificate Downloads */}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tBilingual('Total Downloads', 'የሰርተፊኬት ማውረዶች')}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+              <Download className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading ? '...' : (stats?.totalDownloads ?? 0)}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {tBilingual('downloads', 'ማውረዶች')}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {tBilingual('PDF export audit events', 'ኦዲት የተደረጉ ማውረዶች')}
+          </p>
+        </div>
+
+        {/* Certified Learners */}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tBilingual('Certified Learners', 'የተመሰከረላቸው ሰልጣኞች')}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+              <Users className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading ? '...' : (stats?.uniqueLearners ?? 0)}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {tBilingual('graduates', 'ሰልጣኞች')}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {tBilingual('Distinct graduated users', 'ኮርስ ያጠናቀቁ ልዩ ሰልጣኞች')}
+          </p>
+        </div>
+
+        {/* Revoked / Expired */}
+        <div
+          onClick={() => {
+            setStatusFilter('REVOKED');
+            setPage(1);
+          }}
+          className={cn(
+            'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
+            statusFilter === 'REVOKED' || statusFilter === 'EXPIRED'
+              ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/25 ring-1 ring-rose-500/20'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+          )}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tBilingual('Revoked / Expired', 'የተሰረዙ / ያለፈባቸው')}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+              <ShieldAlert className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading
+                ? '...'
+                : (stats?.revokedCount ?? 0) + (stats?.expiredCount ?? 0)}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {stats?.revokedCount ?? 0} {tBilingual('revoked', 'የተሰረዙ')}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+            {stats?.expiredCount ?? 0} {tBilingual('expired certificates', 'ጊዜያቸው ያለፈባቸው')}
+          </p>
+        </div>
+      </div>
+
       {/* Top Bar: Search, Status Tabs & Controls */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
@@ -237,11 +413,14 @@ export default function ManageCertificatesPage() {
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               type="button"
-              onClick={loadData}
+              onClick={() => {
+                void loadData();
+                void loadStats();
+              }}
               className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               title="Refresh"
             >
-              <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+              <RefreshCw className={cn('h-3.5 w-3.5', (loading || statsLoading) && 'animate-spin')} />
               <span>{tBilingual('Refresh', 'አድስ')}</span>
             </button>
             <LanguageToggle />

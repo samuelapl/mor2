@@ -105,6 +105,15 @@ export class CertificatesController {
     return this.certificatesService.verifyByCode(code);
   }
 
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
+  @ApiOperation({ summary: 'Get certificate metrics and analytics report for management dashboard' })
+  async stats() {
+    return this.certificatesService.getCertificateStats();
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
