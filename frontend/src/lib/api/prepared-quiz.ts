@@ -1,7 +1,5 @@
 import { api } from './client';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface PreparedQuestionBankQuestion {
   id: string;
   type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
@@ -13,66 +11,93 @@ export interface PreparedQuestionBankQuestion {
   courseId: string | null;
 }
 
-export interface PreparedQuestion {
+export type PreparedQuestion = PreparedQuizQuestionItem;
+
+export interface PreparedQuizQuestionItem {
   id: string;
-  sessionId: string;
+  quizId: string;
   questionId: string;
   addedAt: string;
   order: number;
   question: PreparedQuestionBankQuestion;
 }
 
-// ─── API functions ─────────────────────────────────────────────────────────────
+export interface PreparedQuizGroup {
+  id: string;
+  sessionId: string;
+  title: string;
+  timeLimitMinutes: number;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+  questions: PreparedQuizQuestionItem[];
+}
 
 const BASE = (sessionId: string) => `live-sessions/${sessionId}/prepared-quiz`;
 
-/** Get all prepared quiz questions for a session (Redis-cached on the backend). */
-export async function fetchPreparedQuiz(sessionId: string): Promise<PreparedQuestion[]> {
-  return api<PreparedQuestion[]>(BASE(sessionId));
+/** Get all prepared quiz groups for a session */
+export async function fetchPreparedQuizzes(sessionId: string): Promise<PreparedQuizGroup[]> {
+  return api<PreparedQuizGroup[]>(BASE(sessionId));
 }
 
-/** Add a single question from the bank to the session's prepared quiz. */
-export async function addPreparedQuestion(
+/** Create a new prepared quiz group */
+export async function createPreparedQuiz(
   sessionId: string,
-  questionId: string,
-  order?: number,
-): Promise<PreparedQuestion> {
-  return api<PreparedQuestion>(BASE(sessionId), {
+  dto: { title?: string; timeLimitMinutes?: number },
+): Promise<PreparedQuizGroup> {
+  return api<PreparedQuizGroup>(BASE(sessionId), {
     method: 'POST',
-    body: { questionId, order },
+    body: dto,
   });
 }
 
-/** Bulk-import multiple questions from the bank into the prepared quiz. */
+/** Update quiz group (title, minutes, order) */
+export async function updatePreparedQuiz(
+  sessionId: string,
+  quizId: string,
+  dto: { title?: string; timeLimitMinutes?: number; order?: number },
+): Promise<PreparedQuizGroup> {
+  return api<PreparedQuizGroup>(`${BASE(sessionId)}/${quizId}`, {
+    method: 'PATCH',
+    body: dto,
+  });
+}
+
+/** Delete a quiz group and its questions */
+export async function deletePreparedQuiz(sessionId: string, quizId: string): Promise<void> {
+  await api<void>(`${BASE(sessionId)}/${quizId}`, { method: 'DELETE' });
+}
+
+/** Bulk add questions to a specific quiz group */
 export async function bulkAddPreparedQuestions(
   sessionId: string,
+  quizId: string,
   questionIds: string[],
-): Promise<PreparedQuestion[]> {
-  return api<PreparedQuestion[]>(`${BASE(sessionId)}/bulk`, {
+): Promise<PreparedQuizGroup> {
+  return api<PreparedQuizGroup>(`${BASE(sessionId)}/${quizId}/questions/bulk`, {
     method: 'POST',
     body: { questionIds },
   });
 }
 
-/** Remove a single question from the prepared quiz. */
+/** Remove a single question from a quiz group */
 export async function removePreparedQuestion(
   sessionId: string,
+  quizId: string,
   questionId: string,
 ): Promise<void> {
-  await api<void>(`${BASE(sessionId)}/${questionId}`, { method: 'DELETE' });
+  await api<void>(`${BASE(sessionId)}/${quizId}/questions/${questionId}`, {
+    method: 'DELETE',
+  });
 }
 
-/** Clear all prepared questions from a session. */
-export async function clearPreparedQuiz(sessionId: string): Promise<void> {
-  await api<void>(BASE(sessionId), { method: 'DELETE' });
-}
-
-/** Update the order of prepared questions by providing a full ordered list of question IDs. */
-export async function reorderPreparedQuiz(
+/** Reorder questions within a quiz group */
+export async function reorderPreparedQuestions(
   sessionId: string,
+  quizId: string,
   orderedIds: string[],
-): Promise<PreparedQuestion[]> {
-  return api<PreparedQuestion[]>(`${BASE(sessionId)}/reorder`, {
+): Promise<PreparedQuizGroup> {
+  return api<PreparedQuizGroup>(`${BASE(sessionId)}/${quizId}/questions/reorder`, {
     method: 'PATCH',
     body: { orderedIds },
   });

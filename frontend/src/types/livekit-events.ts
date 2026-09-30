@@ -24,6 +24,7 @@ export interface LiveQuizPayload {
   questionIndex?: number;
   totalQuestions?: number;
   allQuestions?: LiveQuizPayload[];
+  quizTitle?: string;
 }
 
 export interface LiveQuizRevealPayload {
@@ -59,6 +60,7 @@ export type LiveKitDataEvent =
         selectedOptionIds: string[];
         submittedAt: number;
         responseDurationSeconds: number;
+        allAnswers?: Record<string, string[]>;
       };
     }
   | {

@@ -36,6 +36,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // request[currentUserKey] — Passport only attaches it at req.user, so we
     // promote it here so role checks and current-user lookups work on every route.
     const request = context.switchToHttp().getRequest();
+    const existing = request[CURRENT_USER_KEY] as AuthenticatedUser | undefined;
+    if (existing?.permissions) {
+      (user as unknown as AuthenticatedUser).permissions = existing.permissions;
+    }
     request[CURRENT_USER_KEY] = user;
     return user;
   }

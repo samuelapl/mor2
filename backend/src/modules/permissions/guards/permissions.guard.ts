@@ -45,6 +45,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const effective = await this.permissionsService.effectivePermissions(user.roles);
+    user.permissions = effective;
     return requiredPermissions.some((code) => effective.includes(code));
   }
 }

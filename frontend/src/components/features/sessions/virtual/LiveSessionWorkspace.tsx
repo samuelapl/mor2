@@ -189,16 +189,25 @@ function LiveKitInteractiveLayer({
           setRevealData(null);
           break;
         case 'QUIZ_ANSWER':
-          setAnswers((prev) => ({
-            ...prev,
-            [event.payload.userId]: {
-              userId: event.payload.userId,
-              userName: event.payload.userName,
-              selectedOptionIds: event.payload.selectedOptionIds,
-              submittedAt: event.payload.submittedAt,
-              responseDurationSeconds: event.payload.responseDurationSeconds,
-            },
-          }));
+          setAnswers((prev) => {
+            const existing = prev[event.payload.userId] as any;
+            const mergedAnswers = {
+              ...(existing?.allAnswers || {}),
+              ...(event.payload.allAnswers || {}),
+              [event.payload.questionId]: event.payload.selectedOptionIds,
+            };
+            return {
+              ...prev,
+              [event.payload.userId]: {
+                userId: event.payload.userId,
+                userName: event.payload.userName || existing?.userName || 'Learner',
+                selectedOptionIds: event.payload.selectedOptionIds,
+                submittedAt: event.payload.submittedAt,
+                responseDurationSeconds: event.payload.responseDurationSeconds,
+                allAnswers: mergedAnswers,
+              },
+            };
+          });
           break;
         case 'QUIZ_REVEAL':
           setLearnerDismissed(false);

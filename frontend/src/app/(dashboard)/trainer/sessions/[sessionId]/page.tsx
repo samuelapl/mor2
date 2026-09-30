@@ -92,6 +92,7 @@ export default function SessionQuizPrepPage() {
   }
 
   const isVirtual = !isInPersonSession(session);
+  const isEnded = session.status === 'COMPLETED' || session.status === 'CANCELLED';
 
   return (
     <PageShell
@@ -109,7 +110,7 @@ export default function SessionQuizPrepPage() {
             Sessions
           </Button>
 
-          {isVirtual && (
+          {isVirtual && !isEnded && (
             <Button
               size="sm"
               onClick={() => setLiveWorkspaceOpen(true)}

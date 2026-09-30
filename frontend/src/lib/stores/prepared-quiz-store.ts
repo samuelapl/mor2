@@ -1,159 +1,177 @@
 import { create } from 'zustand';
 import {
-  fetchPreparedQuiz,
-  addPreparedQuestion,
+  fetchPreparedQuizzes,
+  createPreparedQuiz,
+  updatePreparedQuiz,
+  deletePreparedQuiz,
   bulkAddPreparedQuestions,
   removePreparedQuestion,
-  clearPreparedQuiz,
-  reorderPreparedQuiz,
-  type PreparedQuestion,
+  reorderPreparedQuestions,
+  type PreparedQuizGroup,
 } from '@/lib/api/prepared-quiz';
 
-// ─── State shape ──────────────────────────────────────────────────────────────
-
 interface PreparedQuizState {
-  /** The session whose prepared quiz is currently loaded. */
   sessionId: string | null;
-  /** The loaded prepared questions, sorted by order asc. */
-  questions: PreparedQuestion[];
-  /** True while the initial list is being fetched. */
+  quizzes: PreparedQuizGroup[];
+  activeQuizId: string | null;
   isLoading: boolean;
-  /** True while an add / remove / reorder operation is in flight. */
   isSaving: boolean;
-  /** Last error message, if any. Cleared on next successful operation. */
   error: string | null;
 }
 
-// ─── Actions shape ────────────────────────────────────────────────────────────
-
 interface PreparedQuizActions {
-  /** Load prepared questions for a session (no-op if already loaded for the same session). */
   loadForSession: (sessionId: string) => Promise<void>;
-  /** Force-reload even if the same session is already loaded (e.g. after a server push). */
   reload: (sessionId: string) => Promise<void>;
-  /** Add a single question. Returns the created row or throws. */
-  addQuestion: (sessionId: string, questionId: string, order?: number) => Promise<void>;
-  /** Bulk-add an array of question IDs. Silently skips duplicates. */
-  bulkAdd: (sessionId: string, questionIds: string[]) => Promise<void>;
-  /** Optimistically remove a question, rolls back on error. */
-  removeQuestion: (sessionId: string, questionId: string) => Promise<void>;
-  /** Clear all prepared questions for a session. */
-  clearAll: (sessionId: string) => Promise<void>;
-  /** Optimistically reorder by providing a new ordered list of question IDs. */
-  reorder: (sessionId: string, orderedIds: string[]) => Promise<void>;
-  /** Reset the store to its initial state (call on unmount / session change). */
+  setActiveQuizId: (quizId: string | null) => void;
+  createQuiz: (sessionId: string, title?: string, timeLimitMinutes?: number) => Promise<PreparedQuizGroup>;
+  updateQuiz: (sessionId: string, quizId: string, updates: { title?: string; timeLimitMinutes?: number }) => Promise<void>;
+  deleteQuiz: (sessionId: string, quizId: string) => Promise<void>;
+  bulkAddQuestions: (sessionId: string, quizId: string, questionIds: string[]) => Promise<void>;
+  removeQuestion: (sessionId: string, quizId: string, questionId: string) => Promise<void>;
+  reorderQuestions: (sessionId: string, quizId: string, orderedIds: string[]) => Promise<void>;
   reset: () => void;
 }
 
 type PreparedQuizStore = PreparedQuizState & PreparedQuizActions;
 
-// ─── Initial state ────────────────────────────────────────────────────────────
-
 const INITIAL: PreparedQuizState = {
   sessionId: null,
-  questions: [],
+  quizzes: [],
+  activeQuizId: null,
   isLoading: false,
   isSaving: false,
   error: null,
 };
 
-// ─── Store ────────────────────────────────────────────────────────────────────
-
 export const usePreparedQuizStore = create<PreparedQuizStore>((set, get) => ({
   ...INITIAL,
 
+  setActiveQuizId: (quizId) => set({ activeQuizId: quizId }),
+
   loadForSession: async (sessionId) => {
-    // No-op if already loaded for this session
-    if (get().sessionId === sessionId && get().questions.length > 0) return;
+    if (get().sessionId === sessionId && get().quizzes.length > 0) return;
     await get().reload(sessionId);
   },
 
   reload: async (sessionId) => {
     set({ isLoading: true, error: null, sessionId });
     try {
-      const questions = await fetchPreparedQuiz(sessionId);
-      set({ questions, isLoading: false });
-    } catch (err) {
-      set({ isLoading: false, error: (err as Error).message });
+      const quizzes = await fetchPreparedQuizzes(sessionId);
+      const currentActive = get().activeQuizId;
+      const validActive = quizzes.some((q) => q.id === currentActive)
+        ? currentActive
+        : quizzes.length > 0
+        ? quizzes[0].id
+        : null;
+
+      set({
+        quizzes,
+        activeQuizId: validActive,
+        isLoading: false,
+      });
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message || 'Failed to load prepared quizzes' });
     }
   },
 
-  addQuestion: async (sessionId, questionId, order) => {
+  createQuiz: async (sessionId, title, timeLimitMinutes = 3) => {
     set({ isSaving: true, error: null });
     try {
-      const added = await addPreparedQuestion(sessionId, questionId, order);
+      const created = await createPreparedQuiz(sessionId, { title, timeLimitMinutes });
       set((s) => ({
-        questions: [...s.questions, added].sort((a, b) => a.order - b.order),
+        quizzes: [...s.quizzes, created].sort((a, b) => a.order - b.order),
+        activeQuizId: created.id,
         isSaving: false,
       }));
-    } catch (err) {
-      set({ isSaving: false, error: (err as Error).message });
-      throw err; // re-throw so the UI can show a toast
+      return created;
+    } catch (err: any) {
+      set({ isSaving: false, error: err.message || 'Failed to create quiz' });
+      throw err;
     }
   },
 
-  bulkAdd: async (sessionId, questionIds) => {
+  updateQuiz: async (sessionId, quizId, updates) => {
     set({ isSaving: true, error: null });
     try {
-      const added = await bulkAddPreparedQuestions(sessionId, questionIds);
-      set((s) => {
-        const existingIds = new Set(s.questions.map((q) => q.questionId));
-        const newOnes = added.filter((a) => !existingIds.has(a.questionId));
+      const updated = await updatePreparedQuiz(sessionId, quizId, updates);
+      set((s) => ({
+        quizzes: s.quizzes.map((q) => (q.id === quizId ? updated : q)),
+        isSaving: false,
+      }));
+    } catch (err: any) {
+      set({ isSaving: false, error: err.message || 'Failed to update quiz' });
+      throw err;
+    }
+  },
+
+  deleteQuiz: async (sessionId, quizId) => {
+    const previous = get().quizzes;
+    set((s) => {
+      const nextQuizzes = s.quizzes.filter((q) => q.id !== quizId);
+      return {
+        quizzes: nextQuizzes,
+        activeQuizId: s.activeQuizId === quizId ? (nextQuizzes[0]?.id ?? null) : s.activeQuizId,
+        isSaving: true,
+      };
+    });
+
+    try {
+      await deletePreparedQuiz(sessionId, quizId);
+      set({ isSaving: false });
+    } catch (err: any) {
+      set({ quizzes: previous, isSaving: false, error: err.message || 'Failed to delete quiz' });
+      throw err;
+    }
+  },
+
+  bulkAddQuestions: async (sessionId, quizId, questionIds) => {
+    set({ isSaving: true, error: null });
+    try {
+      const updatedQuiz = await bulkAddPreparedQuestions(sessionId, quizId, questionIds);
+      set((s) => ({
+        quizzes: s.quizzes.map((q) => (q.id === quizId ? updatedQuiz : q)),
+        isSaving: false,
+      }));
+    } catch (err: any) {
+      set({ isSaving: false, error: err.message || 'Failed to add questions' });
+      throw err;
+    }
+  },
+
+  removeQuestion: async (sessionId, quizId, questionId) => {
+    // Optimistic remove
+    const previous = get().quizzes;
+    set((s) => ({
+      quizzes: s.quizzes.map((quiz) => {
+        if (quiz.id !== quizId) return quiz;
         return {
-          questions: [...s.questions, ...newOnes].sort((a, b) => a.order - b.order),
-          isSaving: false,
+          ...quiz,
+          questions: quiz.questions.filter((q) => q.questionId !== questionId),
         };
-      });
-    } catch (err) {
-      set({ isSaving: false, error: (err as Error).message });
-      throw err;
-    }
-  },
-
-  removeQuestion: async (sessionId, questionId) => {
-    // Optimistic update — remove immediately, restore on error
-    const previous = get().questions;
-    set((s) => ({
-      questions: s.questions.filter((q) => q.questionId !== questionId),
+      }),
       isSaving: true,
-      error: null,
     }));
+
     try {
-      await removePreparedQuestion(sessionId, questionId);
+      await removePreparedQuestion(sessionId, quizId, questionId);
       set({ isSaving: false });
-    } catch (err) {
-      set({ questions: previous, isSaving: false, error: (err as Error).message });
+    } catch (err: any) {
+      set({ quizzes: previous, isSaving: false, error: err.message || 'Failed to remove question' });
       throw err;
     }
   },
 
-  clearAll: async (sessionId) => {
-    const previous = get().questions;
-    set({ questions: [], isSaving: true, error: null });
+  reorderQuestions: async (sessionId, quizId, orderedIds) => {
+    const previous = get().quizzes;
+    set({ isSaving: true, error: null });
     try {
-      await clearPreparedQuiz(sessionId);
-      set({ isSaving: false });
-    } catch (err) {
-      set({ questions: previous, isSaving: false, error: (err as Error).message });
-      throw err;
-    }
-  },
-
-  reorder: async (sessionId, orderedIds) => {
-    // Optimistic reorder
-    const previous = get().questions;
-    set((s) => ({
-      questions: orderedIds
-        .map((id) => s.questions.find((q) => q.questionId === id))
-        .filter((q): q is PreparedQuestion => q !== undefined),
-      isSaving: true,
-      error: null,
-    }));
-    try {
-      const updated = await reorderPreparedQuiz(sessionId, orderedIds);
-      set({ questions: updated, isSaving: false });
-    } catch (err) {
-      set({ questions: previous, isSaving: false, error: (err as Error).message });
+      const updatedQuiz = await reorderPreparedQuestions(sessionId, quizId, orderedIds);
+      set((s) => ({
+        quizzes: s.quizzes.map((q) => (q.id === quizId ? updatedQuiz : q)),
+        isSaving: false,
+      }));
+    } catch (err: any) {
+      set({ quizzes: previous, isSaving: false, error: err.message || 'Failed to reorder questions' });
       throw err;
     }
   },

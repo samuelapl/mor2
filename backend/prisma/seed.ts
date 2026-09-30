@@ -482,6 +482,309 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
   },
 
   // ─────────────────────────────────────────────────────────
+  // 2. PENDING_APPROVAL — Tax Audit Procedures & Investigation Standards
+  // ─────────────────────────────────────────────────────────
+  {
+    code: 'AUDIT201',
+    title: 'Tax Audit Procedures & Investigation Standards',
+    description:
+      'Comprehensive field practicum on audit case selection, examination techniques, forensic reconciliation, and formal assessment reporting in accordance with Ethiopian tax law.',
+    level: CourseLevel.INTERMEDIATE,
+    status: CourseStatus.PENDING_APPROVAL,
+    deliveryMode: CourseDeliveryMode.BOTH,
+    estimatedHours: 24,
+    category: 'Tax Audit & Compliance',
+    department: 'Tax Audit & Investigation Directorate',
+    targetAudience: 'Tax audit officers, investigators, and compliance assessment teams',
+    deliveryMethod: 'Blended learning with practical case analysis and live review clinics',
+    objectives:
+      'Execute risk-based audit selection, conduct comprehensive books and records examination, identify indirect tax evasion indicators, and prepare legally defensible assessment notices.',
+    prerequisites: 'TAX101 Ethiopian Tax System Fundamentals & Digital Filing Standards',
+    approvalComments: 'Submitted for curriculum approval and awaiting committee review.',
+    modules: [
+      {
+        title: 'Module 1: Audit Planning, Risk Profiling & Case Selection',
+        description:
+          'Master the legal framework and analytical techniques to identify high-risk taxpayers, formulate audit scopes, and issue formal pre-audit notices.',
+        objectives:
+          'Apply risk-scoring criteria, analyze financial ratio anomalies, and prepare standard preliminary notification packages.',
+        order: 0,
+        attachment: pdf('Module 1 - Audit Planning & Risk Profiling Guide.pdf'),
+        assessment: {
+          title: 'Module 1 Knowledge Check: Audit Planning',
+          description: 'Evaluates knowledge of audit case selection criteria and statutory notification rules.',
+          passingScore: 70,
+          timeLimitMinutes: 15,
+          questions: [
+            mcq(
+              'audit-m1-q1',
+              'Which analytical metric is the primary indicator of potential undeclared sales when profiling a taxpayer?',
+              ['Significant divergence between gross profit margin and industry benchmarks', 'Increase in staff head count', 'Timely submission of annual declaration', 'Change of business registered address'],
+              0,
+              'Risk Profiling',
+            ),
+            mcq(
+              'audit-m1-q2',
+              'Under Ethiopian tax administration law, what is the mandatory notification period before a field audit may commence?',
+              ['At least 10 working days', '24 hours notice', '30 calendar days', 'No advance notice is required'],
+              0,
+              'Audit Notification',
+            ),
+            tf(
+              'audit-m1-q3',
+              'True or False: Tax auditors may request third-party information from commercial banks and customs authorities during pre-audit profiling.',
+              0,
+              'Information Gathering',
+            ),
+            mcq(
+              'audit-m1-q4',
+              'What is the primary purpose of the initial interview during an on-site audit?',
+              ['To understand internal controls and verify accounting systems used', 'To negotiate the final tax assessment amount', 'To seize electronic cash register memory cards immediately', 'To issue penalty receipts on day one'],
+              0,
+              'Audit Process',
+            ),
+            sa(
+              'audit-m1-q5',
+              'What is the formal document issued to a taxpayer to formally request missing books and records during an audit?',
+              'Information Notice',
+              'Legal Protocols',
+            ),
+          ],
+        },
+        lessons: [
+          {
+            title: '1.1 Risk-Based Audit Case Selection Frameworks',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 45,
+            order: 0,
+            content: `## Risk-Based Audit Selection Overview
+Tax administrations operate with finite resources and cannot audit every registered business. Modern tax authorities apply automated risk-scoring engines that combine internal tax declarations with external data sources to detect anomalies.
+
+## Key Risk Criteria
+- **Margin Discrepancies**: Marked deviations between reported gross margins and industry standard ratios.
+- **Third-Party Discrepancies**: Inconsistencies between customs import values (ASYCUDA) and domestic sales turnover declarations.
+- **Persistent Loss Reporting**: Entities reporting multi-year operating losses while continuing to expand operations or pay dividends.
+- **ESR Inactivity**: Category A and B taxpayers reporting zero or negligible transactions through Electronic Sales Registers despite high inventory turns.`,
+            attachment: pdf('Lesson 1.1 - Risk-Based Selection Models.pdf'),
+            assessment: {
+              title: 'Lesson 1.1 Check: Risk Case Selection',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                mcq(
+                  'audit-l11-q1',
+                  'When customs import data exceeds declared sales turnover, what is the primary audit risk indicator?',
+                  ['Under-reporting of domestic sales or suppressed inventory', 'Over-declaration of export rebates', 'Incorrect payroll calculation', 'Depreciation errors'],
+                  0,
+                  'Audit Risk',
+                ),
+                tf(
+                  'audit-l11-q2',
+                  'True or False: Risk-based audit selection has largely replaced random audit selection in modern tax administrations.',
+                  0,
+                  'Audit Modernization',
+                ),
+              ],
+            },
+          },
+          {
+            title: '1.2 Statutory Notification & Taxpayer Rights Under Proclamation',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 40,
+            order: 1,
+            content: `## The Statutory Notice Requirement
+Federal Tax Administration Proclamation No. 983/2016 establishes clear procedural guardrails:
+1. **Advance Notice**: Field audits require written notification at least 10 working days prior to on-site entry, specifying the tax periods, audit scope, and assigned officers.
+2. **Taxpayer Representation**: The taxpayer has the legal right to designate a licensed tax agent, accountant, or legal counsel.
+3. **Record Keeping Mandate**: Category A taxpayers must retain commercial books of accounts and source vouchers for a statutory period of 10 years.`,
+            attachment: pdf('Lesson 1.2 - Taxpayer Rights & Statutory Notices.pdf'),
+            assessment: {
+              title: 'Lesson 1.2 Check: Statutory Notices',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                mcq(
+                  'audit-l12-q1',
+                  'For how long are Category A taxpayers legally required to retain their books and supporting records under Ethiopian tax law?',
+                  ['10 Years', '3 Years', '5 Years', '1 Year'],
+                  0,
+                  'Record Retention',
+                ),
+                tf(
+                  'audit-l12-q2',
+                  'True or False: A taxpayer has the right to be accompanied by a certified tax advisor or legal counsel during audit interviews.',
+                  0,
+                  'Taxpayer Rights',
+                ),
+              ],
+            },
+          },
+        ],
+      },
+      {
+        title: 'Module 2: Books of Account Examination, Reconciliation & Assessment Reports',
+        description:
+          'Execute detailed examination of sales ledgers, bank transactions, and inventory reconciliations, concluding with legally defensible assessment notices.',
+        objectives:
+          'Reconcile bank accounts against declared VAT, detect unrecorded purchases, determine taxable adjustments, and structure formal assessment findings.',
+        order: 1,
+        attachment: pdf('Module 2 - Books Examination & Audit Reporting Manual.pdf'),
+        assessment: {
+          title: 'Module 2 Knowledge Check: Books Examination',
+          description: 'Tests ability to identify accounting discrepancies and structure tax assessment findings.',
+          passingScore: 70,
+          timeLimitMinutes: 15,
+          questions: [
+            mcq(
+              'audit-m2-q1',
+              'Which audit technique involves comparing total deposits across all business bank accounts with reported taxable revenue?',
+              ['Bank Deposit Reconciliation Analysis', 'Depreciation Test', 'Net Worth Comparison only', 'Payroll Ratio Test'],
+              0,
+              'Reconciliation',
+            ),
+            mcq(
+              'audit-m2-q2',
+              'When an auditor disallows an expense deduction due to lack of a valid legal VAT receipt or withholding voucher, under which principle is this done?',
+              ['Substantiation and documentation requirements', 'Auditor discretion', 'Voluntary disclosure', 'Market valuation estimate'],
+              0,
+              'Expense Deductions',
+            ),
+            tf(
+              'audit-m2-q3',
+              'True or False: If books of account are rejected for complete lack of integrity, the tax authority may compute tax using estimated assessment methods.',
+              0,
+              'Estimated Assessment',
+            ),
+            mcq(
+              'audit-m2-q4',
+              'What must be included in a formal Preliminary Audit Assessment Notice issued to the taxpayer?',
+              ['Detailed legal and factual grounds, calculation of additional tax, penalties, and interest', 'Only the final aggregate amount owed without breakdown', 'A court summons for immediate asset seizure', 'A request for bank account closure'],
+              0,
+              'Audit Reporting',
+            ),
+            sa(
+              'audit-m2-q5',
+              'How many days does a taxpayer typically have to submit written objections to a preliminary audit assessment notice?',
+              '30 Days',
+              'Statutory Objections',
+            ),
+          ],
+        },
+        lessons: [
+          {
+            title: '2.1 Forensic Reconciliation of Bank Accounts & Electronic Sales Registers',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 45,
+            order: 0,
+            content: `## Bank Deposit vs Declared Revenue Reconciliation
+A cornerstone of indirect verification is the Bank Deposit Reconciliation:
+- Total bank deposits across all commercial accounts are aggregated.
+- Non-revenue items (capital injections, inter-account transfers, loan disbursements) are deducted.
+- The resulting net business deposits figure is compared against total sales declared on monthly VAT returns.
+- Unexplained positive variances represent prima facie evidence of suppressed taxable revenue.`,
+            attachment: pdf('Lesson 2.1 - Bank Reconciliation Techniques.pdf'),
+            assessment: {
+              title: 'Lesson 2.1 Check: Forensic Reconciliation',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                mcq(
+                  'audit-l21-q1',
+                  'What does an un-reconciled credit deposit in a business owner personal bank account often indicate during an audit?',
+                  ['Potential diversion of business receipts to personal accounts', 'Standard tax-exempt personal gift', 'Routine inter-bank clearing error', 'Authorized expense refund'],
+                  0,
+                  'Forensic Audit',
+                ),
+                tf(
+                  'audit-l21-q2',
+                  'True or False: Cash sales discrepancies can be substantiated using electronic fiscal register daily Z-reports.',
+                  0,
+                  'Sales Registers',
+                ),
+              ],
+            },
+          },
+          {
+            title: '2.2 Structuring Defensible Assessment Findings & Notice Issuance',
+            contentType: LessonContentType.DOCUMENT,
+            durationMinutes: 40,
+            order: 1,
+            content: `## Constructing Assessment Notices
+Every audit adjustment must be legally anchored:
+- **Statutory Citing**: Explicitly state the article of Income Tax Proclamation 979/2016 or VAT Proclamation violated.
+- **Evidentiary Basis**: Document the exact sample, invoice numbers, or bank entries that prove the discrepancy.
+- **Penalty Computation**: Calculate administrative penalties for under-statement and late-payment interest in separate transparent schedules.
+- **Right of Objection**: Inform the taxpayer of their statutory right to file a written objection within 30 days to the Tax Appeal & Review Directorate.`,
+            attachment: pdf('Lesson 2.2 - Assessment Notice Templates.pdf'),
+            assessment: {
+              title: 'Lesson 2.2 Check: Assessment Findings',
+              passingScore: 70,
+              timeLimitMinutes: 10,
+              questions: [
+                mcq(
+                  'audit-l22-q1',
+                  'Under Ethiopian law, what is the penalty for tax under-statement where the tax shortfall exceeds statutory thresholds?',
+                  ['Administrative penalty scaled to percentage of tax shortfall plus interest', 'Instant business license revocation only', 'Fixed administrative fee of 500 ETB', 'No penalty if paid within one year'],
+                  0,
+                  'Penalties',
+                ),
+                tf(
+                  'audit-l22-q2',
+                  'True or False: Clear calculation sheets and legal statutory references must accompany every formal tax assessment notice.',
+                  0,
+                  'Assessment Standards',
+                ),
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    finalAssessment: {
+      title: 'Final Comprehensive Assessment: Tax Audit Certification',
+      description:
+        'Comprehensive evaluation covering audit planning, forensic reconciliation, legal evidence standards, and assessment notice drafting.',
+      passingScore: 75,
+      timeLimitMinutes: 30,
+      questions: [
+        mcq(
+          'audit-fn-q1',
+          'Which legal document provides the primary procedural authority for conducting tax audits and issuing assessment notices in Ethiopia?',
+          ['Federal Tax Administration Proclamation No. 983/2016', 'Commercial Code of 1960 only', 'Banking Regulation Directive No. 12', 'Civil Service Guidelines'],
+          0,
+          'Legal Framework',
+        ),
+        mcq(
+          'audit-fn-q2',
+          'During an audit, if a taxpayer claims significant cost of sales from unregistered suppliers without legal receipts, what is the required tax treatment?',
+          ['Disallow the unsubstantiated cost deduction and adjust taxable income accordingly', 'Accept the cost if oral explanation is provided', 'Reduce the tax rate by half', 'Refer directly to criminal court without tax adjustment'],
+          0,
+          'Allowable Deductions',
+        ),
+        tf(
+          'audit-fn-q3',
+          'True or False: An audit file must maintain a complete audit trail showing all workpapers, sampling methods, and evidence collected.',
+          0,
+          'Audit Standards',
+        ),
+        mcq(
+          'audit-fn-q4',
+          'What is the role of the Tax Appeal Commission in the audit lifecycle?',
+          ['An independent quasi-judicial body to hear taxpayer appeals against final tax objection decisions', 'The department that conducts initial field audits', 'The division responsible for printing tax invoices', 'The bank agency processing tax refunds'],
+          0,
+          'Appeals',
+        ),
+        sa(
+          'audit-fn-q5',
+          'What is the term for an audit conducted simultaneously across multiple related entities or cross-border transactions?',
+          'Comprehensive Audit',
+          'Audit Terminology',
+        ),
+      ],
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
   // 2. PENDING_APPROVAL — Project Management Essentials for Government Programs
   // 2. PENDING_APPROVAL: Project Management Essentials for Government Programs
   // ─────────────────────────────────────────────────────────
@@ -2033,6 +2336,8 @@ async function main() {
   await prisma.moduleCompletion.deleteMany({});
   await prisma.attendanceLog.deleteMany({});
   await prisma.attendance.deleteMany({});
+  await (prisma as any).sessionPreparedQuestion?.deleteMany?.({});
+  await (prisma as any).sessionPreparedQuiz?.deleteMany?.({});
   await prisma.liveSession.deleteMany({});
   await prisma.enrollment.deleteMany({});
   await prisma.venue.deleteMany({});

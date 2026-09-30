@@ -14,56 +14,88 @@ describe('CoursesService.visibilityWhere', () => {
     service = new CoursesService({} as any, new CourseStateMachine(), {} as any, {} as any);
   });
 
-  function visibilityWhere(user: AuthenticatedUser, status?: CourseStatus) {
+  async function visibilityWhere(user: AuthenticatedUser, status?: CourseStatus) {
     return (service as any).visibilityWhere(user, status);
   }
 
-  it('scopes Course Owner to their own courses', () => {
+  it('scopes Course Owner to their own courses', async () => {
     const user = buildUser([RoleName.COURSE_OWNER]);
-    expect(visibilityWhere(user)).toEqual({ owners: { some: { userId: user.id } } });
+    expect(await visibilityWhere(user)).toEqual({ owners: { some: { userId: user.id } } });
   });
 
-  it('scopes Trainer to their assigned courses, not all courses', () => {
+  it('scopes Trainer to their assigned courses, not all courses', async () => {
     const user = buildUser([RoleName.TRAINER]);
-    expect(visibilityWhere(user)).toEqual({ trainers: { some: { userId: user.id } } });
+    expect(await visibilityWhere(user)).toEqual({ trainers: { some: { userId: user.id } } });
   });
 
-  it('lets Content Approver see all courses', () => {
+  it('lets Content Approver see all courses', async () => {
     const user = buildUser([RoleName.CONTENT_APPROVER]);
-    expect(visibilityWhere(user)).toEqual({});
+    expect(await visibilityWhere(user)).toEqual({});
   });
 
-  it('lets Training Admin see all courses', () => {
+  it('lets Training Admin see all courses', async () => {
     const user = buildUser([RoleName.TRAINING_ADMIN]);
-    expect(visibilityWhere(user)).toEqual({});
+    expect(await visibilityWhere(user)).toEqual({});
   });
 
-  it('lets System Admin see all courses', () => {
+  it('lets System Admin see all courses', async () => {
     const user = buildUser([RoleName.SYSTEM_ADMIN]);
-    expect(visibilityWhere(user)).toEqual({});
+    expect(await visibilityWhere(user)).toEqual({});
   });
 
-  it('scopes Learner to published courses only', () => {
+  it('scopes Learner to published courses only', async () => {
     const user = buildUser([RoleName.LEARNER]);
-    expect(visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
+    expect(await visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
   });
 
-  it('falls back to published courses when the user has no recognized roles', () => {
+  it('falls back to published courses when the user has no recognized roles', async () => {
     const user = buildUser([]);
-    expect(visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
+    expect(await visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
   });
 
-  it('composes a requested status filter with the scope via AND', () => {
+  it('composes a requested status filter with the scope via AND', async () => {
     const user = buildUser([RoleName.COURSE_OWNER]);
-    expect(visibilityWhere(user, CourseStatus.DRAFT)).toEqual({
+    expect(await visibilityWhere(user, CourseStatus.DRAFT)).toEqual({
       AND: [{ owners: { some: { userId: user.id } } }, { status: CourseStatus.DRAFT }],
     });
   });
 
-  it('composes a requested status filter for broad staff roles', () => {
+  it('composes a requested status filter for broad staff roles', async () => {
     const user = buildUser([RoleName.TRAINING_ADMIN]);
-    expect(visibilityWhere(user, CourseStatus.PENDING_APPROVAL)).toEqual({
+    expect(await visibilityWhere(user, CourseStatus.PENDING_APPROVAL)).toEqual({
       status: CourseStatus.PENDING_APPROVAL,
+    });
+  });
+
+  describe('permission-based visibility', () => {
+    it('scopes user with course.view.assigned permission to assigned courses only', async () => {
+      const user = { ...buildUser([RoleName.TRAINER]), permissions: ['course.view.assigned'] };
+      expect(await visibilityWhere(user)).toEqual({ trainers: { some: { userId: user.id } } });
+    });
+
+    it('allows user with course.view.all permission to see all courses', async () => {
+      const user = { ...buildUser([RoleName.TRAINER]), permissions: ['course.view.all', 'course.view.assigned'] };
+      expect(await visibilityWhere(user)).toEqual({});
+    });
+
+    it('scopes user with course.view.own permission to owned courses only', async () => {
+      const user = { ...buildUser([]), permissions: ['course.view.own'] };
+      expect(await visibilityWhere(user)).toEqual({ owners: { some: { userId: user.id } } });
+    });
+
+    it('combines course.view.assigned and course.view.own with OR', async () => {
+      const user = { ...buildUser([]), permissions: ['course.view.assigned', 'course.view.own'] };
+      expect(await visibilityWhere(user)).toEqual({
+        OR: [
+          { owners: { some: { userId: user.id } } },
+          { trainers: { some: { userId: user.id } } },
+        ],
+      });
+    });
+
+    it('scopes user with course.browse permission to published courses', async () => {
+      const user = { ...buildUser([]), permissions: ['course.browse'] };
+      expect(await visibilityWhere(user)).toEqual({ status: CourseStatus.PUBLISHED });
     });
   });
 });

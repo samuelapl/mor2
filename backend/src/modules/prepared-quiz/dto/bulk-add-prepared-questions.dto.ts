@@ -4,7 +4,7 @@ import { ArrayMinSize, IsArray, IsString } from 'class-validator';
 export class BulkAddPreparedQuestionsDto {
   @ApiProperty({
     type: [String],
-    description: 'Array of question bank question IDs to add to the session',
+    description: 'Array of question bank question IDs to add to the prepared quiz',
   })
   @IsArray()
   @ArrayMinSize(1)

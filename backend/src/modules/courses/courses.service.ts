@@ -3,7 +3,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
+import { PermissionsService } from '@modules/permissions/permissions.service';
 import {
   ApprovalStatus,
   CourseDeliveryMode,
@@ -43,7 +45,20 @@ export class CoursesService {
     private readonly stateMachine: CourseStateMachine,
     private readonly notificationsService: NotificationsService,
     private readonly progressService: ProgressService,
+    @Optional() private readonly permissionsService?: PermissionsService,
   ) {}
+
+  private async resolvePermissions(user: AuthenticatedUser): Promise<Set<string>> {
+    if (user.permissions && user.permissions.length > 0) {
+      return new Set(user.permissions);
+    }
+    if (this.permissionsService && user.roles?.length) {
+      const perms = await this.permissionsService.effectivePermissions(user.roles);
+      user.permissions = perms;
+      return new Set(perms);
+    }
+    return new Set(user.permissions ?? []);
+  }
 
   private roleSet(user: AuthenticatedUser): Set<string> {
     return new Set(user.roles ?? []);
@@ -57,33 +72,43 @@ export class CoursesService {
     );
   }
 
-  private hasQuestionBankAccess(roles: Set<string>): boolean {
-    return (
-      this.isBroadStaff(roles) || roles.has(RoleName.TRAINER) || roles.has(RoleName.COURSE_OWNER)
-    );
-  }
-
-  private visibilityWhere(
+  private async visibilityWhere(
     user: AuthenticatedUser,
     requestedStatus?: CourseStatus,
-  ): Prisma.CourseWhereInput {
+  ): Promise<Prisma.CourseWhereInput> {
     const roles = this.roleSet(user);
     const statusFilter = requestedStatus ? { status: requestedStatus } : {};
+    const permissions = await this.resolvePermissions(user);
 
-    // All actors with question bank access (Trainers, Course Owners, Admins, Approvers) can access all institutional courses
-    if (this.hasQuestionBankAccess(roles)) {
+    if (roles.has(RoleName.SYSTEM_ADMIN) || permissions.has('course.view.all')) {
+      return statusFilter;
+    }
+
+    if (permissions.size === 0 && this.isBroadStaff(roles)) {
       return statusFilter;
     }
 
     const or: Prisma.CourseWhereInput[] = [];
-    if (roles.has(RoleName.COURSE_OWNER)) {
-      or.push({ owners: { some: { userId: user.id } } });
-    }
-    if (roles.has(RoleName.TRAINER)) {
-      or.push({ trainers: { some: { userId: user.id } } });
-    }
-    if (roles.has(RoleName.LEARNER) || or.length === 0) {
-      or.push({ status: CourseStatus.PUBLISHED });
+    if (permissions.size > 0) {
+      if (permissions.has('course.view.own')) {
+        or.push({ owners: { some: { userId: user.id } } });
+      }
+      if (permissions.has('course.view.assigned')) {
+        or.push({ trainers: { some: { userId: user.id } } });
+      }
+      if (permissions.has('course.browse') || or.length === 0) {
+        or.push({ status: CourseStatus.PUBLISHED });
+      }
+    } else {
+      if (roles.has(RoleName.COURSE_OWNER)) {
+        or.push({ owners: { some: { userId: user.id } } });
+      }
+      if (roles.has(RoleName.TRAINER)) {
+        or.push({ trainers: { some: { userId: user.id } } });
+      }
+      if (roles.has(RoleName.LEARNER) || or.length === 0) {
+        or.push({ status: CourseStatus.PUBLISHED });
+      }
     }
 
     const scope: Prisma.CourseWhereInput = or.length === 1 ? or[0]! : { OR: or };
@@ -147,19 +172,41 @@ export class CoursesService {
   }
 
   async assertCanRead(courseId: string, user: AuthenticatedUser): Promise<void> {
-    const course = await this.findById(courseId);
     const roles = this.roleSet(user);
+    if (roles.has(RoleName.SYSTEM_ADMIN)) return;
 
-    if (this.hasQuestionBankAccess(roles)) return;
-    if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) return;
-    if (roles.has(RoleName.TRAINER) && course.trainers.some((t) => t.userId === user.id)) return;
+    const permissions = await this.resolvePermissions(user);
+    if (permissions.has('course.view.all')) return;
+    if (permissions.size === 0 && this.isBroadStaff(roles)) return;
+
+    const course = await this.findById(courseId);
+
+    if (permissions.size > 0) {
+      if (permissions.has('course.view.own') && course.owners.some((o) => o.userId === user.id)) {
+        return;
+      }
+      if (
+        permissions.has('course.view.assigned') &&
+        course.trainers.some((t) => t.userId === user.id)
+      ) {
+        return;
+      }
+    } else {
+      if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) {
+        return;
+      }
+      if (roles.has(RoleName.TRAINER) && course.trainers.some((t) => t.userId === user.id)) {
+        return;
+      }
+    }
 
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: user.id, courseId } },
       select: { status: true },
     });
     if (enrollment && course.status === CourseStatus.PUBLISHED) return;
-    if (roles.has(RoleName.LEARNER) && course.status === CourseStatus.PUBLISHED) return;
+    const canBrowse = permissions.size > 0 ? permissions.has('course.browse') : roles.has(RoleName.LEARNER);
+    if (canBrowse && course.status === CourseStatus.PUBLISHED) return;
 
     throw new ForbiddenException('You do not have access to this course');
   }
@@ -168,8 +215,14 @@ export class CoursesService {
     const roles = this.roleSet(user);
     if (roles.has(RoleName.SYSTEM_ADMIN) || roles.has(RoleName.TRAINING_ADMIN)) return;
 
+    const permissions = await this.resolvePermissions(user);
+    if (permissions.has('course.update.all')) return;
+
     const course = await this.findById(courseId);
-    if (roles.has(RoleName.COURSE_OWNER) && course.owners.some((o) => o.userId === user.id)) return;
+    const canUpdateOwn = permissions.size > 0 ? permissions.has('course.update.own') : roles.has(RoleName.COURSE_OWNER);
+    if (canUpdateOwn && course.owners.some((o) => o.userId === user.id)) {
+      return;
+    }
 
     throw new ForbiddenException('You are not allowed to modify this course');
   }
@@ -179,10 +232,11 @@ export class CoursesService {
     const searchFilter = buildSearchFilter(query.search, ['title', 'code']);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
+    const visibility = await this.visibilityWhere(user, query.status);
     const where: Prisma.CourseWhereInput = {
       deletedAt: null,
       ...(searchFilter as any),
-      ...this.visibilityWhere(user, query.status),
+      ...visibility,
     };
 
     const [courses, total] = await Promise.all([
@@ -656,8 +710,15 @@ export class CoursesService {
   async assignTrainer(courseId: string, userId: string) {
     await this.findById(courseId);
 
-    return this.prisma.trainerAssignment.create({
-      data: {
+    return this.prisma.trainerAssignment.upsert({
+      where: {
+        courseId_userId: {
+          courseId,
+          userId,
+        },
+      },
+      update: {},
+      create: {
         courseId,
         userId,
       },

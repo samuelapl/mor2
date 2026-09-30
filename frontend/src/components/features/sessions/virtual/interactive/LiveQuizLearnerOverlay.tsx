@@ -91,31 +91,27 @@ export function LiveQuizLearnerOverlay({
   // Current question index being viewed by learner
   const [viewingIndex, setViewingIndex] = useState<number>(0);
 
-  // Automatically follow the active question when a new question arrives or on initial broadcast
+  // Initialize learner viewing index to 0 only when a brand-new quiz session starts
+  const sessionKey = quiz?.startedAt ? `${quiz.id}_${quiz.startedAt}` : quiz?.id;
+  const lastSessionKeyRef = useRef<string | undefined>(sessionKey);
+
   useEffect(() => {
-    if (!quiz?.id) return;
-    if (
-      quiz.questionIndex !== undefined &&
-      quiz.questionIndex >= 0 &&
-      quiz.questionIndex < allQuestions.length
-    ) {
-      setViewingIndex(quiz.questionIndex);
-    } else {
-      const idx = allQuestions.findIndex((q) => q.id === quiz.id);
-      if (idx !== -1) {
-        setViewingIndex(idx);
-      }
+    if (sessionKey && sessionKey !== lastSessionKeyRef.current) {
+      setViewingIndex(0);
+      setIsQuizSubmitted(false);
+      setAnswersMap({});
+      lastSessionKeyRef.current = sessionKey;
     }
-  }, [quiz?.id, quiz?.questionIndex, allQuestions]);
+  }, [sessionKey]);
 
   const safeIndex = Math.min(Math.max(0, viewingIndex), Math.max(0, allQuestions.length - 1));
   const currentQuestion = allQuestions[safeIndex] || quiz;
   // True while the question on screen is the one the trainer is currently running.
   const isCurrentActive = Boolean(quiz && currentQuestion && currentQuestion.id === quiz.id);
 
-  // Track learner selections and submitted state per question
+  // Track learner selections across all questions and whole-quiz submitted state
   const [answersMap, setAnswersMap] = useState<Record<string, string[]>>({});
-  const [submittedMap, setSubmittedMap] = useState<Record<string, boolean>>({});
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -133,21 +129,7 @@ export function LiveQuizLearnerOverlay({
     }
   }, [revealData, revealsByQuestionId]);
 
-  // Reset answer states when a brand-new quiz sequence starts
-  const sessionKey = quiz?.startedAt ? `${quiz.id}_${quiz.startedAt}` : quiz?.id;
-  const lastSessionKeyRef = useRef<string | undefined>(sessionKey);
-  useEffect(() => {
-    if (sessionKey && sessionKey !== lastSessionKeyRef.current) {
-      const isPartOfExisting = allQuestions.some(
-        (q) => q.id === lastSessionKeyRef.current?.split('_')[0],
-      );
-      if (!isPartOfExisting) {
-        setAnswersMap({});
-        setSubmittedMap({});
-      }
-      lastSessionKeyRef.current = sessionKey;
-    }
-  }, [sessionKey, allQuestions]);
+
 
   // Countdown timer for active quiz session (remains smooth and active as learner navigates questions)
   const calcRemaining = useCallback(() => {
@@ -175,10 +157,13 @@ export function LiveQuizLearnerOverlay({
     return () => clearInterval(interval);
   }, [quiz, calcRemaining]);
 
-  // Current question answers and submission status
+  // Current question answers and whole-quiz submission status
   const currentQId = currentQuestion?.id || '';
   const selectedOptionIds = answersMap[currentQId] || [];
-  const submitted = Boolean(submittedMap[currentQId]);
+  const submitted = isQuizSubmitted;
+  const answeredCount = useMemo(() => {
+    return allQuestions.filter((q) => (answersMap[q.id] || []).length > 0).length;
+  }, [allQuestions, answersMap]);
 
   // Determine reveal data for current question (strictly scoped to this question)
   const questionReveal = useMemo(() => {
@@ -208,74 +193,72 @@ export function LiveQuizLearnerOverlay({
 
   const isRevealed = Boolean(questionReveal);
   const isTimeUp = secondsRemaining <= 0;
-  const isLocked = submitted || isRevealed || isTimeUp;
+  const isLocked = isQuizSubmitted || isRevealed || isTimeUp;
 
-  // Auto-submit when time expires only if learner had selected options for the question
-  useEffect(() => {
-    if (!quiz || !currentQuestion) return;
-    if (secondsRemaining <= 0 && !submitted && !submitting && !isRevealed) {
-      if (selectedOptionIds.length > 0) {
-        void handleSubmit();
-      }
-    }
-  }, [
-    secondsRemaining,
-    quiz,
-    currentQuestion,
-    submitted,
-    selectedOptionIds,
-    submitting,
-    isRevealed,
-  ]);
-
-  // Option selection handler
+  // Option selection handler - allows selecting and changing choices freely
   const handleSelectOption = (optId: string) => {
     if (!currentQuestion || isLocked) return;
 
     if (currentQuestion.type === 'MULTIPLE_CHOICE') {
-      const next = selectedOptionIds.includes(optId)
-        ? selectedOptionIds.filter((id) => id !== optId)
-        : [...selectedOptionIds, optId];
+      const cur = answersMap[currentQuestion.id] || [];
+      const next = cur.includes(optId)
+        ? cur.filter((id) => id !== optId)
+        : [...cur, optId];
       setAnswersMap((prev) => ({ ...prev, [currentQuestion.id]: next }));
     } else {
       setAnswersMap((prev) => ({ ...prev, [currentQuestion.id]: [optId] }));
     }
   };
 
-  // Submit response for current question
-  const handleSubmit = async () => {
-    if (!currentQuestion || selectedOptionIds.length === 0 || submitted || submitting) return;
+  // Submit all answers as a whole for the entire quiz pack
+  const handleSubmitQuiz = async () => {
+    if (isQuizSubmitted || submitting) return;
     setSubmitting(true);
 
-    const elapsed = Math.max(1, (currentQuestion.timeLimitSeconds || 30) - secondsRemaining);
+    const totalLimit = quiz?.timeLimitSeconds || 30;
+    const elapsed = Math.max(1, totalLimit - secondsRemaining);
 
-    // 1. Instant Data Channel broadcast (< 50ms)
-    onBroadcast({
-      type: 'QUIZ_ANSWER',
-      payload: {
-        questionId: currentQuestion.id,
-        userId,
-        userName,
-        selectedOptionIds,
-        submittedAt: Date.now(),
-        responseDurationSeconds: elapsed,
-      },
-    });
+    // Broadcast answers for all questions that have selections
+    for (const q of allQuestions) {
+      const selectedOpts = answersMap[q.id];
+      if (selectedOpts && selectedOpts.length > 0) {
+        onBroadcast({
+          type: 'QUIZ_ANSWER',
+          payload: {
+            questionId: q.id,
+            userId,
+            userName,
+            selectedOptionIds: selectedOpts,
+            submittedAt: Date.now(),
+            responseDurationSeconds: elapsed,
+            allAnswers: answersMap,
+          },
+        });
 
-    setSubmittedMap((prev) => ({ ...prev, [currentQuestion.id]: true }));
-    setSubmitting(false);
-
-    // 2. Asynchronously sync to backend for audit records
-    try {
-      await submitLiveSessionQuizResponse(sessionId, {
-        questionId: currentQuestion.id,
-        selectedOptionIds,
-        responseDurationSeconds: elapsed,
-      });
-    } catch (err) {
-      console.warn('Could not log live quiz response to backend:', err);
+        submitLiveSessionQuizResponse(sessionId, {
+          questionId: q.id,
+          selectedOptionIds: selectedOpts,
+          responseDurationSeconds: elapsed,
+        }).catch((err) => console.warn('Could not log live quiz answer:', err));
+      }
     }
+
+    setIsQuizSubmitted(true);
+    setSubmitting(false);
   };
+
+  // Auto-submit when time expires
+  useEffect(() => {
+    if (!quiz) return;
+    if (secondsRemaining <= 0 && !isQuizSubmitted && !submitting && !isRevealed) {
+      const hasAnyAnswer = Object.values(answersMap).some((opts) => opts && opts.length > 0);
+      if (hasAnyAnswer) {
+        void handleSubmitQuiz();
+      } else {
+        setIsQuizSubmitted(true);
+      }
+    }
+  }, [secondsRemaining, quiz, isQuizSubmitted, submitting, isRevealed, answersMap]);
 
   // Resolve correct options and explanations
   const resolvedCorrectOptionIds = useMemo(() => {
@@ -371,23 +354,7 @@ export function LiveQuizLearnerOverlay({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs pointer-events-auto animate-in fade-in duration-200">
       <div className="relative flex flex-col w-full max-w-xl max-h-[90vh] sm:max-h-[86vh] rounded-3xl border border-slate-200/90 bg-white text-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        {/* Countdown Header Bar */}
-        <div className="h-1.5 w-full bg-slate-100 shrink-0">
-          <div
-            className={`h-full transition-all duration-500 ${
-              isLocked
-                ? 'bg-slate-300'
-                : secondsRemaining <= 5
-                  ? 'bg-red-500 animate-pulse'
-                  : secondsRemaining <= 10
-                    ? 'bg-amber-500'
-                    : 'bg-indigo-600'
-            }`}
-            style={{
-              width: !isCurrentActive || isLocked ? '100%' : `${timerPercent}%`,
-            }}
-          />
-        </div>
+
 
         {/* Modal Header */}
         <div className="border-b border-slate-100 px-5 pt-3.5 pb-3 shrink-0 bg-white">
@@ -406,8 +373,8 @@ export function LiveQuizLearnerOverlay({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* Countdown / Status Badge */}
-              {isCurrentActive && !isLocked && (
+              {/* Countdown / Status Badge (visible in all questions) */}
+              {!isLocked && (
                 <span
                   className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                     secondsRemaining <= 5
@@ -463,7 +430,7 @@ export function LiveQuizLearnerOverlay({
                 Questions:
               </span>
               {allQuestions.map((q, qIdx) => {
-                const isAnswered = Boolean(submittedMap[q.id]);
+                const isAnswered = Boolean(answersMap[q.id] && answersMap[q.id].length > 0);
                 const isSelectedTab = safeIndex === qIdx;
                 const isRevealedTab = Boolean(
                   revealsByQuestionId[q.id] ||
@@ -785,49 +752,49 @@ export function LiveQuizLearnerOverlay({
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             {!isLocked ? (
-              <div className="flex items-center gap-1.5">
-                {allQuestions.length > 1 && safeIndex < allQuestions.length - 1 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
-                    }
-                    className="gap-1 border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold h-8 px-3"
-                  >
-                    Next Question
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+              <div className="flex items-center gap-2 flex-wrap">
+
+
                 <Button
                   size="sm"
-                  disabled={selectedOptionIds.length === 0 || secondsRemaining <= 0 || submitting}
-                  onClick={handleSubmit}
-                  className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs h-8 px-4"
+                  disabled={answeredCount === 0 || secondsRemaining <= 0 || submitting}
+                  onClick={handleSubmitQuiz}
+                  className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs h-8 px-4 text-xs"
                 >
                   <Send className="h-3.5 w-3.5" />
-                  {submitting ? 'Submitting…' : 'Submit Answer'}
+                  {submitting
+                    ? 'Submitting Quiz…'
+                    : `Submit Quiz (${answeredCount}/${allQuestions.length})`}
                 </Button>
               </div>
             ) : !isRevealed ? (
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-lg">
-                  <Check className="h-3 w-3 text-indigo-600" />
-                  {submitted ? 'Submitted' : 'Time Expired'}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-xl">
+                  <Check className="h-3.5 w-3.5 text-indigo-600" />
+                  Quiz Submitted ({answeredCount} of {allQuestions.length} answered) · Waiting for Trainer Reveal
                 </span>
 
-                {allQuestions.length > 1 && safeIndex < allQuestions.length - 1 && (
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
-                    }
-                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-8 px-3.5 shadow-xs"
-                    title="Advance to next question even though time is not up"
-                  >
-                    Next Question
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
+                {allQuestions.length > 1 && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={safeIndex === 0}
+                      onClick={() => setViewingIndex((prev) => Math.max(0, prev - 1))}
+                      className="h-8 px-2.5 text-xs border-slate-200 bg-white"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={safeIndex >= allQuestions.length - 1}
+                      onClick={() => setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))}
+                      className="h-8 px-2.5 text-xs border-slate-200 bg-white"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ) : (

@@ -93,10 +93,21 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     });
 
     if (res.ok) {
-      const body = (await res.json()) as ApiEnvelope<unknown>;
-      // rawUrl → callers type T as ApiEnvelope<U> and get the full envelope back.
-      // Normal → callers type T as the business payload and get body.data.
-      return (options.rawUrl ? body : body.data) as unknown as T;
+      if (res.status === 204) {
+        return undefined as unknown as T;
+      }
+      const text = await res.text();
+      if (!text || !text.trim()) {
+        return undefined as unknown as T;
+      }
+      try {
+        const body = JSON.parse(text) as ApiEnvelope<unknown>;
+        // rawUrl → callers type T as ApiEnvelope<U> and get the full envelope back.
+        // Normal → callers type T as the business payload and get body.data.
+        return (options.rawUrl ? body : body.data) as unknown as T;
+      } catch {
+        return undefined as unknown as T;
+      }
     }
 
     let message = `Request failed (${res.status})`;

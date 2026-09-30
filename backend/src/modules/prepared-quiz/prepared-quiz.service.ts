@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -9,16 +10,16 @@ import Redis from 'ioredis';
 import { PrismaService } from '@config/prisma.service';
 import { RedisConfig } from '@config/app.config';
 import {
-  AddPreparedQuestionDto,
+  CreatePreparedQuizDto,
+  UpdatePreparedQuizDto,
   BulkAddPreparedQuestionsDto,
   ReorderPreparedQuestionsDto,
 } from './dto';
 
-/** Redis TTL in seconds — 5 minutes. Prepared quizzes are written pre-session and read on join. */
 const CACHE_TTL_SECONDS = 300;
 
 function cacheKey(sessionId: string): string {
-  return `prepared_quiz:session:${sessionId}`;
+  return `prepared_quiz_groups:session:${sessionId}`;
 }
 
 @Injectable()
@@ -27,8 +28,6 @@ export class PreparedQuizService implements OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor(private readonly prisma: PrismaService) {
-    // Best-effort cache: every read falls back to DB on any Redis error,
-    // so correctness never depends on Redis being up.
     this.redis = new Redis({
       host: RedisConfig.host,
       port: RedisConfig.port,
@@ -37,7 +36,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       retryStrategy: () => null,
       enableOfflineQueue: false,
     });
-    this.redis.on('error', () => undefined); // swallow — fallback handles it
+    this.redis.on('error', () => undefined);
   }
 
   async onModuleDestroy() {
@@ -57,7 +56,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       await this.ensureConnected();
       await this.redis.del(cacheKey(sessionId));
     } catch {
-      // Ignore — cache invalidation is best-effort
+      // Ignore
     }
   }
 
@@ -67,33 +66,37 @@ export class PreparedQuizService implements OnModuleDestroy {
       select: { id: true },
     });
     if (!session) {
-      throw new NotFoundException(`Live session with ID "${sessionId}" not found`);
+      throw new NotFoundException(`Live session "${sessionId}" not found`);
     }
   }
 
-  private async assertQuestionExists(questionId: string): Promise<void> {
-    const question = await this.prisma.questionBankQuestion.findUnique({
-      where: { id: questionId },
-      select: { id: true },
+  private async assertQuizExists(sessionId: string, quizId: string) {
+    const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
+      where: { id: quizId },
     });
-    if (!question) {
-      throw new NotFoundException(`Question bank question with ID "${questionId}" not found`);
+    if (!quiz || quiz.sessionId !== sessionId) {
+      throw new NotFoundException(`Prepared quiz group "${quizId}" not found for this session`);
     }
+    return quiz;
   }
 
-  /** Full question include shape reused across all DB reads */
-  private get questionInclude() {
+  private get quizInclude() {
     return {
-      question: {
-        select: {
-          id: true,
-          type: true,
-          question: true,
-          options: true,
-          correctAnswer: true,
-          points: true,
-          category: true,
-          courseId: true,
+      questions: {
+        orderBy: { order: 'asc' as const },
+        include: {
+          question: {
+            select: {
+              id: true,
+              type: true,
+              question: true,
+              options: true,
+              correctAnswer: true,
+              points: true,
+              category: true,
+              courseId: true,
+            },
+          },
         },
       },
     };
@@ -102,8 +105,8 @@ export class PreparedQuizService implements OnModuleDestroy {
   // ─── Public API ────────────────────────────────────────────────────────────
 
   /**
-   * Return all prepared questions for a session.
-   * Reads from Redis first; falls back to DB and re-populates cache on miss.
+   * Return all prepared quiz groups for a session.
+   * Reads from Redis first; falls back to DB and repopulates cache on miss.
    */
   async findAll(sessionId: string) {
     await this.assertSessionExists(sessionId);
@@ -112,81 +115,103 @@ export class PreparedQuizService implements OnModuleDestroy {
       await this.ensureConnected();
       const cached = await this.redis.get(cacheKey(sessionId));
       if (cached) {
-        this.logger.debug(`Cache hit for session ${sessionId}`);
         return JSON.parse(cached);
       }
     } catch {
       this.logger.warn(`Redis read failed for session ${sessionId} — falling back to DB`);
     }
 
-    const rows = await this.prisma.sessionPreparedQuestion.findMany({
+    const rows = await this.prisma.sessionPreparedQuiz.findMany({
       where: { sessionId },
       orderBy: { order: 'asc' },
-      include: this.questionInclude,
+      include: this.quizInclude,
     });
 
     try {
       await this.redis.set(cacheKey(sessionId), JSON.stringify(rows), 'EX', CACHE_TTL_SECONDS);
     } catch {
-      // Ignore — DB result is still returned
+      // Ignore
     }
 
     return rows;
   }
 
-  /** Add a single question from the bank to the session's prepared quiz. */
-  async addQuestion(sessionId: string, dto: AddPreparedQuestionDto) {
+  /** Create a new named quiz group for a session */
+  async createQuiz(sessionId: string, dto: CreatePreparedQuizDto) {
     await this.assertSessionExists(sessionId);
-    await this.assertQuestionExists(dto.questionId);
 
-    // Check for duplicate
-    const existing = await this.prisma.sessionPreparedQuestion.findUnique({
-      where: { sessionId_questionId: { sessionId, questionId: dto.questionId } },
+    const last = await this.prisma.sessionPreparedQuiz.findFirst({
+      where: { sessionId },
+      orderBy: { order: 'desc' },
+      select: { order: true },
     });
-    if (existing) {
-      throw new ConflictException(
-        `Question "${dto.questionId}" is already in the prepared quiz for this session`,
-      );
-    }
+    const order = last ? last.order + 1 : 0;
+    const title = dto.title?.trim() || `Quiz ${order + 1}`;
+    const timeLimitMinutes = dto.timeLimitMinutes || 3;
 
-    // Determine order: append at end if not specified
-    let order = dto.order;
-    if (order === undefined) {
-      const last = await this.prisma.sessionPreparedQuestion.findFirst({
-        where: { sessionId },
-        orderBy: { order: 'desc' },
-        select: { order: true },
-      });
-      order = last ? last.order + 1 : 0;
-    }
-
-    const created = await this.prisma.sessionPreparedQuestion.create({
-      data: { sessionId, questionId: dto.questionId, order },
-      include: this.questionInclude,
+    const created = await this.prisma.sessionPreparedQuiz.create({
+      data: {
+        sessionId,
+        title,
+        timeLimitMinutes,
+        order,
+      },
+      include: this.quizInclude,
     });
 
     await this.invalidateCache(sessionId);
     return created;
   }
 
-  /**
-   * Bulk-add multiple questions from the bank.
-   * Skips duplicates silently (returns only newly added rows).
-   */
-  async bulkAdd(sessionId: string, dto: BulkAddPreparedQuestionsDto) {
-    await this.assertSessionExists(sessionId);
+  /** Update an existing quiz group (e.g. change title, minutes, order) */
+  async updateQuiz(sessionId: string, quizId: string, dto: UpdatePreparedQuizDto) {
+    await this.assertQuizExists(sessionId, quizId);
 
-    // Get the current highest order value
+    const updated = await this.prisma.sessionPreparedQuiz.update({
+      where: { id: quizId },
+      data: {
+        ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
+        ...(dto.timeLimitMinutes !== undefined ? { timeLimitMinutes: dto.timeLimitMinutes } : {}),
+        ...(dto.order !== undefined ? { order: dto.order } : {}),
+      },
+      include: this.quizInclude,
+    });
+
+    await this.invalidateCache(sessionId);
+    return updated;
+  }
+
+  /** Delete a quiz group and its questions */
+  async deleteQuiz(sessionId: string, quizId: string) {
+    await this.assertQuizExists(sessionId, quizId);
+
+    await this.prisma.sessionPreparedQuiz.delete({
+      where: { id: quizId },
+    });
+
+    await this.invalidateCache(sessionId);
+  }
+
+  /**
+   * Bulk-add questions to a specific quiz group.
+   * Silently skips already added questions.
+   */
+  async bulkAddQuestions(
+    sessionId: string,
+    quizId: string,
+    dto: BulkAddPreparedQuestionsDto,
+  ) {
+    await this.assertQuizExists(sessionId, quizId);
+
     const last = await this.prisma.sessionPreparedQuestion.findFirst({
-      where: { sessionId },
+      where: { quizId },
       orderBy: { order: 'desc' },
       select: { order: true },
     });
     let nextOrder = last ? last.order + 1 : 0;
 
-    // Filter out IDs that are already prepared or don't exist in the bank
     const existing = await this.prisma.sessionPreparedQuestion.findMany({
-      where: { sessionId, questionId: { in: dto.questionIds } },
+      where: { quizId, questionId: { in: dto.questionIds } },
       select: { questionId: true },
     });
     const existingIds = new Set(existing.map((e) => e.questionId));
@@ -197,63 +222,51 @@ export class PreparedQuizService implements OnModuleDestroy {
     });
     const validIds = new Set(validQuestions.map((q) => q.id));
 
-    const toCreate = dto.questionIds.filter((id) => !existingIds.has(id) && validIds.has(id));
-
-    if (toCreate.length === 0) {
-      return [];
-    }
-
-    const created = await this.prisma.$transaction(
-      toCreate.map((questionId) =>
-        this.prisma.sessionPreparedQuestion.create({
-          data: { sessionId, questionId, order: nextOrder++ },
-          include: this.questionInclude,
-        }),
-      ),
+    const toCreate = dto.questionIds.filter(
+      (id) => !existingIds.has(id) && validIds.has(id),
     );
 
-    await this.invalidateCache(sessionId);
-    return created;
-  }
-
-  /** Remove a single question from the prepared quiz. */
-  async removeQuestion(sessionId: string, questionId: string) {
-    await this.assertSessionExists(sessionId);
-
-    const existing = await this.prisma.sessionPreparedQuestion.findUnique({
-      where: { sessionId_questionId: { sessionId, questionId } },
-    });
-    if (!existing) {
-      throw new NotFoundException(
-        `Question "${questionId}" is not in the prepared quiz for this session`,
+    if (toCreate.length > 0) {
+      await this.prisma.$transaction(
+        toCreate.map((questionId) =>
+          this.prisma.sessionPreparedQuestion.create({
+            data: { quizId, questionId, order: nextOrder++ },
+          }),
+        ),
       );
     }
 
-    await this.prisma.sessionPreparedQuestion.delete({
-      where: { sessionId_questionId: { sessionId, questionId } },
+    await this.invalidateCache(sessionId);
+
+    return this.prisma.sessionPreparedQuiz.findUnique({
+      where: { id: quizId },
+      include: this.quizInclude,
+    });
+  }
+
+  /** Remove a question from a quiz group */
+  async removeQuestion(sessionId: string, quizId: string, questionId: string) {
+    await this.assertQuizExists(sessionId, quizId);
+
+    await this.prisma.sessionPreparedQuestion.deleteMany({
+      where: { quizId, questionId },
     });
 
     await this.invalidateCache(sessionId);
   }
 
-  /** Remove all prepared questions from a session. */
-  async clearAll(sessionId: string) {
-    await this.assertSessionExists(sessionId);
-    await this.prisma.sessionPreparedQuestion.deleteMany({ where: { sessionId } });
-    await this.invalidateCache(sessionId);
-  }
-
-  /**
-   * Reorder the prepared questions by supplying a full ordered list of question IDs.
-   * IDs not in the current prepared list are ignored.
-   */
-  async reorder(sessionId: string, dto: ReorderPreparedQuestionsDto) {
-    await this.assertSessionExists(sessionId);
+  /** Reorder questions inside a quiz group */
+  async reorderQuestions(
+    sessionId: string,
+    quizId: string,
+    dto: ReorderPreparedQuestionsDto,
+  ) {
+    await this.assertQuizExists(sessionId, quizId);
 
     await this.prisma.$transaction(
       dto.orderedIds.map((questionId, index) =>
         this.prisma.sessionPreparedQuestion.updateMany({
-          where: { sessionId, questionId },
+          where: { quizId, questionId },
           data: { order: index },
         }),
       ),
@@ -261,10 +274,9 @@ export class PreparedQuizService implements OnModuleDestroy {
 
     await this.invalidateCache(sessionId);
 
-    return this.prisma.sessionPreparedQuestion.findMany({
-      where: { sessionId },
-      orderBy: { order: 'asc' },
-      include: this.questionInclude,
+    return this.prisma.sessionPreparedQuiz.findUnique({
+      where: { id: quizId },
+      include: this.quizInclude,
     });
   }
 }

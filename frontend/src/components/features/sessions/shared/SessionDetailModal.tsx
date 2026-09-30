@@ -112,7 +112,9 @@ export function SessionDetailModal({
       ? userName(session.trainerId)
       : 'Institutional Trainer';
 
-  return (
+      const isEnded = session.status === 'COMPLETED' || session.status === 'CANCELLED';
+
+    return (
     <>
       <WorkspaceDetailOverlay
         open={open && !liveWorkspaceOpen}
@@ -126,18 +128,21 @@ export function SessionDetailModal({
         }
         actions={
           <div className="flex items-center gap-2">
-            {(userRole === 'trainer' || can('live_session.manage_own') || can('live_session.manage_all')) && (
-              <Link href={`/trainer/sessions/${sessionId}`}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
-                >
-                  <FileCheck className="h-3.5 w-3.5 text-indigo-600" />
-                  Prepare Quiz
-                </Button>
-              </Link>
-            )}
+            {!isEnded &&
+              (userRole === 'trainer' ||
+                can('live_session.manage_own') ||
+                can('live_session.manage_all')) && (
+                <Link href={`/trainer/sessions/${sessionId}`}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                  >
+                    <FileCheck className="h-3.5 w-3.5 text-indigo-600" />
+                    Prepare Quiz
+                  </Button>
+                </Link>
+              )}
 
             {canViewAttendance && (
               <Button
@@ -158,30 +163,31 @@ export function SessionDetailModal({
               </Button>
             )}
 
-            {isInPersonSession(session) ? (
-              <Badge
-                variant="outline"
-                className="bg-amber-50 text-amber-800 border-amber-200 text-xs py-1 px-2.5"
-              >
-                📍 Physical Venue Session
-              </Badge>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (onJoin) {
-                    onJoin();
-                    onClose();
-                  } else {
-                    setLiveWorkspaceOpen(true);
-                  }
-                }}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
-              >
-                <MonitorPlay className="h-4 w-4" />
-                Join Session Room
-              </Button>
-            )}
+            {!isEnded &&
+              (isInPersonSession(session) ? (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-800 border-amber-200 text-xs py-1 px-2.5"
+                >
+                  📍 Physical Venue Session
+                </Badge>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (onJoin) {
+                      onJoin();
+                      onClose();
+                    } else {
+                      setLiveWorkspaceOpen(true);
+                    }
+                  }}
+                  className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs text-xs"
+                >
+                  <MonitorPlay className="h-4 w-4" />
+                  Join Session Room
+                </Button>
+              ))}
           </div>
         }
       >

@@ -32,6 +32,7 @@ export interface AuthenticatedUser {
   lastName: string;
   roles: string[];
   sid: string;
+  permissions?: string[];
 }
 
 export interface AuditContext {

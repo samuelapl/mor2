@@ -21,7 +21,8 @@ import { RolesGuard } from '@common/guards';
 import { Permissions } from '@common/decorators';
 import { PreparedQuizService } from './prepared-quiz.service';
 import {
-  AddPreparedQuestionDto,
+  CreatePreparedQuizDto,
+  UpdatePreparedQuizDto,
   BulkAddPreparedQuestionsDto,
   ReorderPreparedQuestionsDto,
 } from './dto';
@@ -35,7 +36,7 @@ export class PreparedQuizController {
 
   @Get()
   @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Get all prepared quiz questions for a session' })
+  @ApiOperation({ summary: 'Get all prepared quiz groups for a session' })
   @ApiParam({ name: 'sessionId', type: String })
   async findAll(@Param('sessionId') sessionId: string) {
     return this.preparedQuizService.findAll(sessionId);
@@ -43,57 +44,79 @@ export class PreparedQuizController {
 
   @Post()
   @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Add a single question from the bank to the prepared quiz' })
+  @ApiOperation({ summary: 'Create a new prepared quiz group (e.g. Lesson 1 Quiz)' })
   @ApiParam({ name: 'sessionId', type: String })
-  async addQuestion(
+  async createQuiz(
     @Param('sessionId') sessionId: string,
-    @Body() dto: AddPreparedQuestionDto,
+    @Body() dto: CreatePreparedQuizDto,
   ) {
-    return this.preparedQuizService.addQuestion(sessionId, dto);
+    return this.preparedQuizService.createQuiz(sessionId, dto);
   }
 
-  @Post('bulk')
+  @Patch(':quizId')
   @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Bulk-import multiple questions from the bank into the prepared quiz' })
+  @ApiOperation({ summary: 'Update quiz group (title, minutes, order)' })
   @ApiParam({ name: 'sessionId', type: String })
-  async bulkAdd(
+  @ApiParam({ name: 'quizId', type: String })
+  async updateQuiz(
     @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
+    @Body() dto: UpdatePreparedQuizDto,
+  ) {
+    return this.preparedQuizService.updateQuiz(sessionId, quizId, dto);
+  }
+
+  @Delete(':quizId')
+  @Permissions('live_session.manage_own', 'live_session.manage_all')
+  @ApiOperation({ summary: 'Delete a prepared quiz group and its questions' })
+  @ApiParam({ name: 'sessionId', type: String })
+  @ApiParam({ name: 'quizId', type: String })
+  async deleteQuiz(
+    @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
+  ) {
+    await this.preparedQuizService.deleteQuiz(sessionId, quizId);
+    return { success: true };
+  }
+
+  @Post(':quizId/questions/bulk')
+  @Permissions('live_session.manage_own', 'live_session.manage_all')
+  @ApiOperation({ summary: 'Bulk add questions to a specific quiz group' })
+  @ApiParam({ name: 'sessionId', type: String })
+  @ApiParam({ name: 'quizId', type: String })
+  async bulkAddQuestions(
+    @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
     @Body() dto: BulkAddPreparedQuestionsDto,
   ) {
-    return this.preparedQuizService.bulkAdd(sessionId, dto);
+    return this.preparedQuizService.bulkAddQuestions(sessionId, quizId, dto);
   }
 
-  @Patch('reorder')
+  @Patch(':quizId/questions/reorder')
   @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Reorder prepared quiz questions' })
+  @ApiOperation({ summary: 'Reorder questions within a quiz group' })
   @ApiParam({ name: 'sessionId', type: String })
-  async reorder(
+  @ApiParam({ name: 'quizId', type: String })
+  async reorderQuestions(
     @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
     @Body() dto: ReorderPreparedQuestionsDto,
   ) {
-    return this.preparedQuizService.reorder(sessionId, dto);
+    return this.preparedQuizService.reorderQuestions(sessionId, quizId, dto);
   }
 
-  // IMPORTANT: DELETE / must be defined BEFORE DELETE /:questionId
-  @Delete()
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':quizId/questions/:questionId')
   @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Clear all prepared quiz questions from a session' })
+  @ApiOperation({ summary: 'Remove a question from a quiz group' })
   @ApiParam({ name: 'sessionId', type: String })
-  async clearAll(@Param('sessionId') sessionId: string) {
-    await this.preparedQuizService.clearAll(sessionId);
-  }
-
-  @Delete(':questionId')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Permissions('live_session.manage_own', 'live_session.manage_all')
-  @ApiOperation({ summary: 'Remove a single question from the prepared quiz' })
-  @ApiParam({ name: 'sessionId', type: String })
+  @ApiParam({ name: 'quizId', type: String })
   @ApiParam({ name: 'questionId', type: String })
   async removeQuestion(
     @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
     @Param('questionId') questionId: string,
   ) {
-    await this.preparedQuizService.removeQuestion(sessionId, questionId);
+    await this.preparedQuizService.removeQuestion(sessionId, quizId, questionId);
+    return { success: true };
   }
 }
