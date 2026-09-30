@@ -19,6 +19,7 @@ export interface FirstLoginChallenge {
   passwordChangeRequired: true;
   challengeToken: string;
   email: string;
+  devCode?: string;
 }
 
 function startSession(res: ApiAuthResponse): AuthResult {
@@ -86,7 +87,11 @@ export async function completeFirstLogin(body: {
  */
 const FIRST_LOGIN_KEY = 'lms.firstLoginChallenge';
 
-export function saveFirstLoginChallenge(challenge: { challengeToken: string; email: string }) {
+export function saveFirstLoginChallenge(challenge: {
+  challengeToken: string;
+  email: string;
+  devCode?: string;
+}) {
   try {
     sessionStorage.setItem(FIRST_LOGIN_KEY, JSON.stringify(challenge));
   } catch {
@@ -94,7 +99,11 @@ export function saveFirstLoginChallenge(challenge: { challengeToken: string; ema
   }
 }
 
-export function readFirstLoginChallenge(): { challengeToken: string; email: string } | null {
+export function readFirstLoginChallenge(): {
+  challengeToken: string;
+  email: string;
+  devCode?: string;
+} | null {
   try {
     const raw = sessionStorage.getItem(FIRST_LOGIN_KEY);
     return raw ? JSON.parse(raw) : null;

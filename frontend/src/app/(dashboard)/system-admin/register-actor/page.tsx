@@ -39,6 +39,7 @@ const EMPTY_FORM = {
   password: '',
   role: 'learner' as Role,
   primaryVenueId: '',
+  mustChangePassword: false,
 };
 
 export default function RegisterActorPage() {
@@ -60,7 +61,7 @@ export default function RegisterActorPage() {
         if (cancelled || !roles || roles.length === 0) return;
         setRoleOptions(
           roles.map((r) => ({
-            name: r.name.toLowerCase(),
+            name: r.name,
             label: r.label || r.name,
           })),
         );
@@ -102,6 +103,7 @@ export default function RegisterActorPage() {
         password: form.password,
         role: form.role,
         primaryVenueId: form.primaryVenueId || undefined,
+        mustChangePassword: form.mustChangePassword,
       });
 
       if (!result.ok) {
@@ -186,15 +188,14 @@ export default function RegisterActorPage() {
             <label className={labelClass}>{tBilingual('Role', 'ሚና')}</label>
             <select
               className={inputClass}
-              value={form.role.toLowerCase()}
-              onChange={(e) => update({ role: e.target.value.toLowerCase() as Role })}
+              value={form.role}
+              onChange={(e) => update({ role: e.target.value as Role })}
             >
               {roleOptions.map((opt) => {
-                const optKey = opt.name.toLowerCase();
-                const isBuiltIn = ROLES.includes(optKey as Role);
-                const displayLabel = isBuiltIn ? tRole(optKey as Role) : opt.label;
+                const isBuiltIn = ROLES.includes(opt.name.toLowerCase() as Role);
+                const displayLabel = isBuiltIn ? tRole(opt.name.toLowerCase() as Role) : opt.label;
                 return (
-                  <option key={optKey} value={optKey}>
+                  <option key={opt.name} value={opt.name}>
                     {displayLabel}
                   </option>
                 );
@@ -239,6 +240,25 @@ export default function RegisterActorPage() {
                 'የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ',
               )}
             />
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              id="mustChangePassword"
+              type="checkbox"
+              checked={form.mustChangePassword}
+              onChange={(e) => update({ mustChangePassword: e.target.checked })}
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label
+              htmlFor="mustChangePassword"
+              className="text-xs text-slate-600 dark:text-slate-400 select-none cursor-pointer"
+            >
+              {tBilingual(
+                'Require password change on first sign-in (sends email code)',
+                'በመጀመሪያው መግቢያ ላይ የይለፍ ቃል መቀየር ይጠይቁ (የኢሜይል ኮድ ይልካል)',
+              )}
+            </label>
           </div>
 
           <Button

@@ -333,7 +333,7 @@ export class UsersService {
         locale: dto.locale || 'en',
         registrationStatus: ApprovalStatus.APPROVED,
         isActive: true,
-        mustChangePassword: true,
+        mustChangePassword: dto.mustChangePassword ?? false,
         primaryVenueId: dto.primaryVenueId || null,
         roles: {
           create: { role: roleName },

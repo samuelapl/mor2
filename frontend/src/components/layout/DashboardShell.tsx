@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getRoleFromPath, ROLE_PATHS } from '@/constants/roles';
+import { getRoleFromPath, ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { PERMISSION_GATED_PATHS } from '@/constants/navigation';
 import { useLms } from '@/lib/lms-store';
 import { usePermissions } from '@/lib/usePermissions';
@@ -40,7 +40,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       return;
     }
     if (blocked) {
-      router.replace(ROLE_PATHS[currentUser.role]);
+      router.replace(getRoleHomePath(currentUser.role, currentUser.permissions));
     }
   }, [ready, currentUser, blocked, router]);
 

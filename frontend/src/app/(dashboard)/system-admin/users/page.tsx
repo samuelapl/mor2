@@ -95,7 +95,7 @@ export default function UsersPage() {
         if (cancelled || !roles || roles.length === 0) return;
         setRoleOptions(
           roles.map((r) => ({
-            name: r.name.toLowerCase(),
+            name: r.name,
             label: r.label || r.name,
           })),
         );
@@ -526,8 +526,8 @@ export default function UsersPage() {
                   <Td>
                     {canManage ? (
                       <select
-                        value={user.role.toLowerCase()}
-                        onChange={(event) => void changeRole(user.id, event.target.value.toLowerCase() as Role)}
+                        value={user.role}
+                        onChange={(event) => void changeRole(user.id, event.target.value as Role)}
                         className="rounded-xl border border-slate-200/90 bg-white px-2.5 py-1.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                       >
                         {roleOptions.map((item) => {

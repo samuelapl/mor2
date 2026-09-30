@@ -95,8 +95,8 @@ export function UserDetailModal({
               value={
                 canManage ? (
                   <select
-                    value={user.role.toLowerCase()}
-                    onChange={(event) => onChangeRole(user.id, event.target.value.toLowerCase() as Role)}
+                    value={user.role}
+                    onChange={(event) => onChangeRole(user.id, event.target.value as Role)}
                     className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-400"
                   >
                     {options.map((r) => (

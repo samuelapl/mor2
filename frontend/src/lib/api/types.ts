@@ -63,6 +63,7 @@ export interface ApiFirstLoginChallenge {
   challengeToken: string;
   /** Masked, e.g. "ab•••@mor.gov.et". */
   email: string;
+  devCode?: string;
 }
 
 export interface ApiAuthRegisterResponse {
@@ -948,6 +949,7 @@ export interface CreateActorBody {
   phone?: string;
   locale?: 'en' | 'am';
   primaryVenueId?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface CreateActorResult {

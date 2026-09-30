@@ -72,3 +72,66 @@ export function getRoleFromPath(pathname: string): Role | null {
   const segment = pathname.split('/')[1] ?? '';
   return ROLE_BY_PATH[`/${segment}`] ?? null;
 }
+
+export function getRoleHomePath(role?: Role | string | null, permissions: string[] = []): string {
+  if (!role) return '/learner';
+  const key = role.toLowerCase().trim() as Role;
+  if (ROLE_PATHS[key]) {
+    return ROLE_PATHS[key];
+  }
+
+  // For custom/dynamic roles not in standard ROLE_PATHS, pick best home based on permissions
+  if (permissions && permissions.length > 0) {
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('user.') ||
+          p.startsWith('role.') ||
+          p.startsWith('permission.') ||
+          p.startsWith('system.') ||
+          p === 'category.manage' ||
+          p === 'audit.view',
+      )
+    ) {
+      return '/system-admin';
+    }
+    if (permissions.some((p) => p.includes('approve') || p === 'course.approve_reject')) {
+      return '/content-approver';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('course.') ||
+          p.startsWith('curriculum.') ||
+          p === 'question_bank.manage',
+      )
+    ) {
+      return '/course-owner';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('quiz.') ||
+          p.startsWith('live_session.') ||
+          p.startsWith('attendance.') ||
+          p === 'result.view.all',
+      )
+    ) {
+      return '/trainer';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('enrollment.') ||
+          p.startsWith('student.') ||
+          p === 'venue.manage' ||
+          p === 'feedback.manage',
+      )
+    ) {
+      return '/training-admin';
+    }
+  }
+
+  return '/learner';
+}
+

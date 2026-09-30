@@ -11,7 +11,7 @@ import {
   verifyFirstLoginCode,
 } from '@/lib/api/auth';
 import { MIN_PASSWORD_LENGTH, passwordIssues } from '@/constants/auth';
-import { ROLE_PATHS } from '@/constants/roles';
+import { ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
@@ -23,7 +23,7 @@ const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 /** Matches the backend's resend cooldown. */
 const RESEND_COOLDOWN_SECONDS = 60;
 
-type Challenge = { challengeToken: string; email: string };
+type Challenge = { challengeToken: string; email: string; devCode?: string };
 
 const submitClass =
   'flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50';
@@ -72,8 +72,18 @@ export default function FirstLoginForm() {
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
-    setChallenge(readFirstLoginChallenge());
-  }, []);
+    const ch = readFirstLoginChallenge();
+    setChallenge(ch);
+    if (ch?.devCode) {
+      setCode(ch.devCode);
+      setNotice(
+        tBilingual(
+          `Development notice: Verification code ${ch.devCode} has been automatically filled.`,
+          `የልማት ማስታወቂያ፡ የማረጋገጫ ኮድ ${ch.devCode} በራስ-ሰር ተሞልቷል።`,
+        ),
+      );
+    }
+  }, [tBilingual]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -163,7 +173,7 @@ export default function FirstLoginForm() {
     });
     setSaving(false);
     if (result.ok) {
-      router.push(ROLE_PATHS[result.role]);
+      router.push(getRoleHomePath(result.role, result.user?.permissions));
       return;
     }
     setError(result.message);
