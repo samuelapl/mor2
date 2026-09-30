@@ -301,6 +301,20 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'Manage templates & issue',
   },
+  {
+    code: 'CERTIFICATE_MANAGE',
+    resource: 'certificate',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage, search, preview, verify, and revoke issued certificates',
+  },
+  {
+    code: 'CERTIFICATE_TEMPLATE_MANAGE',
+    resource: 'certificate_template',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Create, edit, preview, activate, and archive certificate templates',
+  },
 
   // Users & System
   { code: 'user.view', resource: 'user', action: 'view', scope: 'ALL', description: 'View users' },
@@ -438,6 +452,9 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'feedback.manage',
     'feedback.view',
     'category.manage',
+    'CERTIFICATE_MANAGE',
+    'CERTIFICATE_TEMPLATE_MANAGE',
+    'certificate.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',

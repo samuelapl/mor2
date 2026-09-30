@@ -783,6 +783,10 @@ model Certificate {
   expiresAt     DateTime? @map("expires_at")
   pdfFileUrl    String?   @map("pdf_file_url")
   verificationCode String @unique @map("verification_code") // 8-digit alphanumeric
+  status        String    @default("ACTIVE") @map("status") // ACTIVE, REVOKED, EXPIRED
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")
+  revokedById   String?   @map("revoked_by_id")
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -793,6 +797,7 @@ model Certificate {
   @@unique([userId, courseId])
   @@index([verificationCode])
   @@index([templateId])
+  @@index([status])
   @@map("certificates")
 }
 
@@ -801,6 +806,7 @@ model CertificateTemplate {
   name          String
   description   String?
   isActive      Boolean   @default(false) @map("is_active")
+  isArchived    Boolean   @default(false) @map("is_archived")
   backgroundUrl String?   @map("background_url")
   fields        Json      @default("[]")
   version       Int       @default(1)
@@ -813,6 +819,7 @@ model CertificateTemplate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([isActive])
+  @@index([isArchived])
   @@map("certificate_templates")
 }
 

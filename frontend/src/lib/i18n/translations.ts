@@ -61,6 +61,7 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'Bulk Register': { en: 'Bulk Register', am: 'በጅምላ መመዝገቢያ' },
   'Pending Course Approvals': { en: 'Pending Course Approvals', am: 'ማጽደቅ የሚጠብቁ ኮርሶች' },
   'Certificate Templates': { en: 'Certificate Templates', am: 'የሰርተፊኬት ቅጾች' },
+  'Manage Certificates': { en: 'Manage Certificates', am: 'ሰርተፊኬቶችን ያስተዳድሩ' },
   'Users & Roles': { en: 'Users & Roles', am: 'ተጠቃሚዎች እና ሚናዎች' },
   'Roles & Permissions': { en: 'Roles & Permissions', am: 'ሚናዎች እና ፈቃዶች' },
   Policies: { en: 'Policies', am: 'መመሪያዎች እና ደንቦች' },

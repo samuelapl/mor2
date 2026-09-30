@@ -136,6 +136,24 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: Tags,
       permission: 'category.manage',
     },
+    {
+      label: 'Certificates',
+      icon: Award,
+      children: [
+        {
+          label: 'Certificate Templates',
+          href: '/certificate-templates',
+          icon: FilePlus2,
+          permission: ['CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage'],
+        },
+        {
+          label: 'Manage Certificates',
+          href: '/manage-certificates',
+          icon: Award,
+          permission: ['CERTIFICATE_MANAGE', 'certificate.manage'],
+        },
+      ],
+    },
   ],
   trainer: [
     { label: 'Dashboard', href: '/trainer', icon: LayoutDashboard },
@@ -242,10 +260,22 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: 'course.approve_reject',
     },
     {
-      label: 'Certificate Templates',
-      href: '/certificate-templates',
-      icon: FilePlus2,
-      permission: 'certificate.manage',
+      label: 'Certificates',
+      icon: Award,
+      children: [
+        {
+          label: 'Certificate Templates',
+          href: '/certificate-templates',
+          icon: FilePlus2,
+          permission: ['CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage'],
+        },
+        {
+          label: 'Manage Certificates',
+          href: '/manage-certificates',
+          icon: Award,
+          permission: ['CERTIFICATE_MANAGE', 'certificate.manage'],
+        },
+      ],
     },
     {
       label: 'Question Bank',
@@ -337,8 +367,17 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/system-admin/register-actor': ['user.manage'],
   '/system-admin/bulk-register': ['user.manage'],
   '/system-admin/pending-course-approvals': ['course.approve_reject'],
-  '/certificate-templates': ['certificate.manage'],
-  '/system-admin/certificate-templates': ['certificate.manage'],
+  '/certificate-templates': [
+    'CERTIFICATE_TEMPLATE_MANAGE',
+    'certificate_template.manage',
+    'certificate.manage',
+  ],
+  '/manage-certificates': ['CERTIFICATE_MANAGE', 'certificate.manage'],
+  '/system-admin/certificate-templates': [
+    'CERTIFICATE_TEMPLATE_MANAGE',
+    'certificate_template.manage',
+    'certificate.manage',
+  ],
   '/system-admin/settings': ['user.manage', 'role.manage', 'permission.manage'],
   '/system-admin/audit-logs': ['audit.view'],
   '/system-admin/categories': ['category.manage'],
@@ -398,10 +437,22 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     permission: 'course.approve_reject',
   },
   {
-    label: 'Certificate Templates',
-    href: '/certificate-templates',
-    icon: FilePlus2,
-    permission: 'certificate.manage',
+    label: 'Certificates',
+    icon: Award,
+    children: [
+      {
+        label: 'Certificate Templates',
+        href: '/certificate-templates',
+        icon: FilePlus2,
+        permission: ['CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage'],
+      },
+      {
+        label: 'Manage Certificates',
+        href: '/manage-certificates',
+        icon: Award,
+        permission: ['CERTIFICATE_MANAGE', 'certificate.manage'],
+      },
+    ],
   },
   {
     label: 'Registration',

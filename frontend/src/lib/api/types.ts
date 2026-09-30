@@ -440,8 +440,13 @@ export interface ApiLearnerProgress {
 
 export interface ApiCertificate {
   id: string;
+  userId?: string;
   certificateNumber: string;
   verificationCode: string;
+  status?: 'ACTIVE' | 'REVOKED' | 'EXPIRED' | string;
+  revokedAt?: string | null;
+  revokedReason?: string | null;
+  revokedById?: string | null;
   issuedAt: string;
   expiresAt: string;
   pdfFileUrl: string | null;
@@ -450,7 +455,7 @@ export interface ApiCertificate {
   templateId: string | null;
   template?: ApiCertificateTemplate | null;
   user?: { id: string; firstName: string; lastName: string; email: string };
-  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string; estimatedHours?: number | null };
 }
 
 export type BackendCertificateFieldAlign = 'left' | 'center' | 'right';
@@ -476,6 +481,8 @@ export interface ApiCertificateTemplate {
   name: string;
   description: string | null;
   isActive: boolean;
+  isArchived?: boolean;
+  inUseCount?: number;
   backgroundUrl: string | null;
   fields: ApiCertificateField[];
   version: number;

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
+  Archive,
+  ArchiveRestore,
   Award,
   Check,
   CheckCircle2,
@@ -32,6 +34,9 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { toast } from '@/lib/toast';
 import {
   activateCertificateTemplate,
+  deactivateCertificateTemplate,
+  archiveCertificateTemplate,
+  unarchiveCertificateTemplate,
   createCertificateTemplate,
   deleteCertificateTemplate,
   duplicateCertificateTemplate,
@@ -392,6 +397,37 @@ export function CertificateTemplatesAdmin() {
     }
   };
 
+  const deactivate = async (id: string) => {
+    setBusy(true);
+    try {
+      await deactivateCertificateTemplate(id);
+      notify(true, 'Template deactivated.');
+      await refresh();
+    } catch (err: any) {
+      notify(false, `Failed to deactivate: ${err.message || err}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleArchive = async (id: string, currentlyArchived?: boolean) => {
+    setBusy(true);
+    try {
+      if (currentlyArchived) {
+        await unarchiveCertificateTemplate(id);
+        notify(true, 'Template restored from archive.');
+      } else {
+        await archiveCertificateTemplate(id);
+        notify(true, 'Template moved to archive.');
+      }
+      await refresh();
+    } catch (err: any) {
+      notify(false, `Failed to update archive status: ${err.message || err}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const duplicate = async (id: string) => {
     setBusy(true);
     try {
@@ -414,7 +450,8 @@ export function CertificateTemplatesAdmin() {
       setDeletingTemplate(null);
       await refresh();
     } catch (err: any) {
-      notify(false, `Failed to delete template: ${err.message || err}`);
+      const msg = err?.message || err;
+      notify(false, `${msg}`);
     } finally {
       setBusy(false);
     }
@@ -587,15 +624,25 @@ export function CertificateTemplatesAdmin() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/30 pointer-events-none" />
 
                     <div className="absolute left-3 top-3 flex items-center gap-2">
-                      <Badge
-                        variant={template.isActive ? 'amber' : 'slate'}
-                        className={cn(
-                          'shadow-xs font-bold text-[11px]',
-                          template.isActive && 'bg-amber-500 text-slate-950 border-amber-600',
-                        )}
-                      >
-                        {template.isActive ? '★ Active Template' : 'Inactive'}
-                      </Badge>
+                      {template.isArchived ? (
+                        <Badge
+                          variant="slate"
+                          className="shadow-xs font-bold text-[11px] bg-slate-800 text-slate-200 border-slate-700"
+                        >
+                          Archived
+                        </Badge>
+                      ) : template.isActive ? (
+                        <Badge
+                          variant="amber"
+                          className="shadow-xs font-bold text-[11px] bg-amber-500 text-slate-950 border-amber-600"
+                        >
+                          ★ Active Template
+                        </Badge>
+                      ) : (
+                        <Badge variant="slate" className="shadow-xs font-bold text-[11px]">
+                          Inactive
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="absolute right-3 top-3">
@@ -653,7 +700,7 @@ export function CertificateTemplatesAdmin() {
                         <Button
                           size="sm"
                           variant="success"
-                          disabled={busy}
+                          disabled={busy || template.isArchived}
                           onClick={() => void activate(template.id)}
                           className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                         >
@@ -661,9 +708,20 @@ export function CertificateTemplatesAdmin() {
                           Set Active
                         </Button>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 px-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Live Default
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 px-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Live Default
+                          </span>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void deactivate(template.id)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 underline ml-0.5"
+                            title="Deactivate template"
+                          >
+                            Deactivate
+                          </button>
+                        </div>
                       )}
                       <Button
                         size="sm"
@@ -677,6 +735,20 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void toggleArchive(template.id, template.isArchived)}
+                        disabled={busy}
+                        title={template.isArchived ? 'Restore from archive' : 'Archive template'}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                      >
+                        {template.isArchived ? (
+                          <ArchiveRestore className="h-3.5 w-3.5" />
+                        ) : (
+                          <Archive className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => void duplicate(template.id)}

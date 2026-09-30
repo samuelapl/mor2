@@ -6,11 +6,12 @@ import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
+import { PermissionsGuard } from '@modules/permissions/guards/permissions.guard';
 
 @ApiTags('certificate-templates')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Permissions('certificate.manage')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Permissions('CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage', 'certificate.manage')
 @Controller('certificate-templates')
 export class CertificateTemplatesController {
   constructor(private readonly certificateTemplatesService: CertificateTemplatesService) {}
@@ -43,28 +44,50 @@ export class CertificateTemplatesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a certificate template' })
   @ApiParam({ name: 'id', type: String })
-  update(@Param('id') id: string, @Body() dto: UpdateCertificateTemplateDto) {
-    return this.certificateTemplatesService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateCertificateTemplateDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.update(id, dto, user.id);
   }
 
   @Post(':id/activate')
   @ApiOperation({ summary: 'Activate a template (becomes the single active template)' })
   @ApiParam({ name: 'id', type: String })
-  activate(@Param('id') id: string) {
-    return this.certificateTemplatesService.activate(id);
+  activate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.activate(id, user.id);
+  }
+
+  @Post(':id/deactivate')
+  @ApiOperation({ summary: 'Deactivate a template' })
+  @ApiParam({ name: 'id', type: String })
+  deactivate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.deactivate(id, user.id);
+  }
+
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive a template' })
+  @ApiParam({ name: 'id', type: String })
+  archive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.archive(id, user.id);
+  }
+
+  @Post(':id/unarchive')
+  @ApiOperation({ summary: 'Unarchive a template' })
+  @ApiParam({ name: 'id', type: String })
+  unarchive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.unarchive(id, user.id);
   }
 
   @Post(':id/duplicate')
   @ApiOperation({ summary: 'Duplicate a certificate template' })
   @ApiParam({ name: 'id', type: String })
-  duplicate(@Param('id') id: string) {
-    return this.certificateTemplatesService.duplicate(id);
+  duplicate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.duplicate(id, user.id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a certificate template' })
   @ApiParam({ name: 'id', type: String })
-  remove(@Param('id') id: string) {
-    return this.certificateTemplatesService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.certificateTemplatesService.remove(id, user.id);
   }
 }
+
