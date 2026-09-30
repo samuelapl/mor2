@@ -36,7 +36,14 @@ export function DocumentStage({
   assessment,
   onTakeQuiz,
 }: DocumentStageProps) {
-  const attachments: UploadedResource[] = lesson ? getItemAttachments(lesson) : [];
+  const allAttachments: UploadedResource[] = lesson ? getItemAttachments(lesson) : [];
+  const isVideoAttachment = (a: UploadedResource) =>
+    a.type?.startsWith('video/') ||
+    /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(a.url) ||
+    /\.(mp4|webm|ogg|mov)$/i.test(a.name);
+  const videoAttachment = allAttachments.find(isVideoAttachment);
+  const effectiveVideoUrl = lesson?.resourceUrl || videoAttachment?.url || null;
+  const attachments = allAttachments.filter((a) => !isVideoAttachment(a));
 
   // Check if assessment is ready to be taken
   const hasSubLessons = Boolean(lesson?.subLessons && lesson.subLessons.length > 0);

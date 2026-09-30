@@ -41,6 +41,7 @@ import {
   RefreshCw,
   ArrowLeft,
   MonitorPlay,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -52,6 +53,8 @@ import { fetchCourseDetail, fetchCourseModules } from '@/lib/api/courses';
 import { fetchLiveSessionQuizReport, type ApiLiveQuizReport } from '@/lib/api/monitoring';
 import type { ApiModule, ApiLesson } from '@/lib/api/types';
 import type { LiveKitDataEvent, LiveQuizOption } from '@/types/livekit-events';
+import { PreparedQuizPanel } from '@/components/features/prepared-quiz/PreparedQuizPanel';
+import { usePreparedQuizStore } from '@/lib/stores/prepared-quiz-store';
 
 function stripHtmlTags(str?: string): string {
   if (!str) return '';
@@ -153,7 +156,15 @@ export function LiveQuizTrainerControl({
   quizHistory = [],
   attendees = [],
 }: LiveQuizTrainerControlProps) {
-  const [tab, setTab] = useState<'bank' | 'custom' | 'report'>('bank');
+  const [tab, setTab] = useState<'prepared' | 'bank' | 'custom' | 'report'>('prepared');
+  const preparedQuestions = usePreparedQuizStore((state) => state.questions);
+  const loadPreparedQuiz = usePreparedQuizStore((state) => state.loadForSession);
+
+  useEffect(() => {
+    if (open && sessionId) {
+      loadPreparedQuiz(sessionId);
+    }
+  }, [open, sessionId, loadPreparedQuiz]);
   const [questions, setQuestions] = useState<ApiQuestionBankQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1935,6 +1946,29 @@ export function LiveQuizTrainerControl({
                   <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
                     <button
                       type="button"
+                      onClick={() => setTab('prepared')}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+                        tab === 'prepared'
+                          ? 'bg-white text-indigo-600 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                      Prepared Quiz
+                      {preparedQuestions.length > 0 && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                            tab === 'prepared'
+                              ? 'bg-indigo-100 text-indigo-700'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {preparedQuestions.length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setTab('bank')}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                         tab === 'bank'
@@ -2314,6 +2348,32 @@ export function LiveQuizTrainerControl({
                       </Button>
                     </div>
                   </div>
+                )}
+
+                {/* Tab 0: Prepared Quiz (Pre-Loaded Before Live Session) */}
+                {tab === 'prepared' && (
+                  <PreparedQuizPanel
+                    sessionId={sessionId}
+                    onLaunchQuestion={(q, queueIndex, queue) => {
+                      handleLaunchQuestion(q, queueIndex, queue);
+                    }}
+                    onStageQuestion={(q) => {
+                      handleToggleQuestionInQueue(q);
+                    }}
+                    onStageAllQuestions={(newQuestions) => {
+                      const existingIds = new Set(stagedQueue.map((item) => item.id));
+                      const toAdd = newQuestions.filter((item) => !existingIds.has(item.id));
+                      const combined = [...stagedQueue, ...toAdd];
+                      setStagedQueue(combined);
+                      setQuestionAmount(combined.length);
+                      if (combined.length > 0 && !selectedQuestion) {
+                        setSelectedQuestion(combined[0]);
+                      }
+                    }}
+                    stagedQueueIds={stagedQueue.map((q) => q.id)}
+                    activeQuizId={activeQuiz?.id}
+                    onSwitchToBank={() => setTab('bank')}
+                  />
                 )}
 
                 {/* Tab 1: Question Bank with Explicit Course Curriculum Levels */}

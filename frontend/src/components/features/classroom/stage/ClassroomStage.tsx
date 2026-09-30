@@ -1,6 +1,7 @@
 'use client';
 
-import type { Course } from '@/types';
+import type { Course, UploadedResource } from '@/types';
+import { getItemAttachments } from '@/components/features/courses/wizard-components';
 import type { ApiCourseProgress } from '@/lib/api/types';
 import type { ClassroomActiveContent } from '../types';
 import { DocumentStage } from './DocumentStage';
@@ -122,17 +123,32 @@ export function ClassroomStage({
     );
   }
 
-  // 3. If active item is a Video or Audio stream
-  if ((currentContentType === 'VIDEO' || currentContentType === 'AUDIO') && currentTarget) {
+  const allLessonAttachments = currentTarget ? getItemAttachments(currentTarget) : [];
+  const hasVideoAttachment = allLessonAttachments.some(
+    (a: UploadedResource) =>
+      a.type?.startsWith('video/') ||
+      /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(a.url) ||
+      /\.(mp4|webm|ogg|mov)$/i.test(a.name),
+  );
+
+  // 3. If active item is a Video or Audio stream (or has an attached video file)
+  if (
+    (currentContentType === 'VIDEO' || currentContentType === 'AUDIO' || hasVideoAttachment) &&
+    currentTarget
+  ) {
     return (
       <MediaStage
         title={currentTarget.title}
         badgeLabel={badgeLabel}
         durationMin={currentTarget.durationMin}
-        contentType={currentContentType}
+        contentType={currentContentType === 'AUDIO' ? 'AUDIO' : 'VIDEO'}
         resourceUrl={currentTarget.resourceUrl}
         content={currentTarget.content}
         lesson={currentTarget}
+        lessonProgress={lessonProgress}
+        subLessonProgress={subLessonProgress}
+        assessment={subLesson ? null : assessment}
+        onTakeQuiz={onTakeQuiz}
       />
     );
   }

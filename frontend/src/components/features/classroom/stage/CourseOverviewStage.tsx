@@ -11,13 +11,11 @@ import {
   CheckCircle2,
   FileText,
 } from 'lucide-react';
-import type { Course, UploadedResource } from '@/types';
+import type { Course } from '@/types';
 import type { ApiCourseProgress } from '@/lib/api/types';
 import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { getItemAttachments } from '@/components/features/courses/wizard-components';
-import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface CourseOverviewStageProps {
   course: Course;
@@ -35,7 +33,6 @@ export function CourseOverviewStage({ course, progress, onStartCourse }: CourseO
     course.targetAudience && stripHtmlTags(course.targetAudience).trim(),
   );
 
-  const courseAttachments: UploadedResource[] = getItemAttachments(course);
 
   const totalLessons = course.modules.reduce(
     (acc, m) =>
@@ -216,13 +213,6 @@ export function CourseOverviewStage({ course, progress, onStartCourse }: CourseO
               </div>
             </div>
           ) : null}
-        </div>
-      ) : null}
-
-      {/* Course Attached Documents & Lab Resources */}
-      {courseAttachments.length > 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3">
-          <ClassroomAttachments files={courseAttachments} label="Course Reference Material" />
         </div>
       ) : null}
 

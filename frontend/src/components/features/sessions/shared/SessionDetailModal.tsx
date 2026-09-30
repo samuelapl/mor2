@@ -126,6 +126,19 @@ export function SessionDetailModal({
         }
         actions={
           <div className="flex items-center gap-2">
+            {(userRole === 'trainer' || can('live_session.manage_own') || can('live_session.manage_all')) && (
+              <Link href={`/trainer/sessions/${sessionId}`}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                >
+                  <FileCheck className="h-3.5 w-3.5 text-indigo-600" />
+                  Prepare Quiz
+                </Button>
+              </Link>
+            )}
+
             {canViewAttendance && (
               <Button
                 size="sm"

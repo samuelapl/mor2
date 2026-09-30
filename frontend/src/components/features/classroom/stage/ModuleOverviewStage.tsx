@@ -1,13 +1,11 @@
 'use client';
 
 import { BookOpen, Target, ArrowRight, Layers, Clock, CheckCircle2, FileText } from 'lucide-react';
-import type { Module, UploadedResource } from '@/types';
+import type { Module } from '@/types';
 import type { ApiProgressModule } from '@/lib/api/types';
 import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { getItemAttachments } from '@/components/features/courses/wizard-components';
-import { ClassroomAttachments } from '../ClassroomAttachments';
 
 interface ModuleOverviewStageProps {
   module: Module;
@@ -28,7 +26,6 @@ export function ModuleOverviewStage({
 }: ModuleOverviewStageProps) {
   const hasDescription = Boolean(module.description && stripHtmlTags(module.description).trim());
   const hasObjectives = Boolean(module.objectives && stripHtmlTags(module.objectives).trim());
-  const moduleAttachments: UploadedResource[] = getItemAttachments(module);
 
   const totalLessons = module.lessons.length;
   const totalSubLessons = module.lessons.reduce((acc, l) => acc + (l.subLessons?.length ?? 0), 0);
@@ -158,13 +155,6 @@ export function ModuleOverviewStage({
           <div className="text-sm text-indigo-950 leading-relaxed bg-white/80 rounded-xl border border-indigo-100 p-4 shadow-2xs">
             <RichContent html={module.objectives!} />
           </div>
-        </div>
-      ) : null}
-
-      {/* Module Attached Reference Documents */}
-      {moduleAttachments.length > 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-3">
-          <ClassroomAttachments files={moduleAttachments} label="Module Reference Material" />
         </div>
       ) : null}
 

@@ -572,6 +572,7 @@ model QuestionBankQuestion {
   lesson        Lesson?            @relation("QuestionBankLesson", fields: [lessonId], references: [id], onDelete: SetNull)
   subLesson     Lesson?            @relation("QuestionBankSubLesson", fields: [subLessonId], references: [id], onDelete: SetNull)
   createdBy     User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  preparedIn    SessionPreparedQuestion[] @relation("PreparedQuizQuestions")
 
   @@index([courseId])
   @@index([moduleId])
@@ -608,9 +609,10 @@ model LiveSession {
   actualStartedAt DateTime?         @map("actual_started_at")
   actualEndedAt   DateTime?         @map("actual_ended_at")
 
-  attendees       Attendance[]
-  attendanceLogs  AttendanceLog[]
-  enrollments     Enrollment[]      @relation("EnrollmentSession")
+  attendees         Attendance[]
+  attendanceLogs    AttendanceLog[]
+  enrollments       Enrollment[]                  @relation("EnrollmentSession")
+  preparedQuestions SessionPreparedQuestion[]     @relation("SessionPreparedQuestions")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -625,6 +627,21 @@ model LiveSession {
   @@index([trainerId])
   @@index([venueId])
   @@map("live_sessions")
+}
+
+model SessionPreparedQuestion {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  questionId String   @map("question_id")
+  addedAt    DateTime @default(now()) @map("added_at")
+  order      Int      @default(0)
+
+  session  LiveSession          @relation("SessionPreparedQuestions", fields: [sessionId], references: [id], onDelete: Cascade)
+  question QuestionBankQuestion @relation("PreparedQuizQuestions", fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@map("session_prepared_questions")
 }
 
 enum SessionType {
@@ -889,4 +906,30 @@ model HrSyncLog {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("hr_sync_logs")
+}
+
+// ──────────────────────────────────────────────────────────
+// 16. Lookup Categories
+// ──────────────────────────────────────────────────────────
+
+enum LookupCategoryType {
+  COURSE_CATEGORY
+  COURSE_LEVEL
+  QUESTION_TYPE
+}
+
+model LookupCategory {
+  id          String             @id @default(uuid())
+  type        LookupCategoryType
+  value       String
+  labelEn     String             @map("label_en")
+  labelAm     String             @map("label_am")
+  description String?
+  isActive    Boolean            @default(true) @map("is_active")
+  sortOrder   Int                @default(0) @map("sort_order")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  @@unique([type, value])
+  @@map("lookup_categories")
 }

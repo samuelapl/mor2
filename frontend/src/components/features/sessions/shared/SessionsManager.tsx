@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Building2,
   CalendarPlus,
+  HelpCircle,
   ClipboardCheck,
   Edit3,
   Info,
@@ -461,6 +462,20 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                   extra={(row) => (
                     <div className="flex items-center justify-end gap-1.5">
                       {managementButtons(row.session)}
+
+                      {canConductSession && (
+                        <Link href={`/trainer/sessions/${row.session.id}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Prepare live quiz questions before joining"
+                            className="gap-1.5 text-xs text-indigo-700 hover:text-indigo-900 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5 text-indigo-600" />
+                            {tBilingual("Prepare Quiz", "ፈተና አዘጋጅ")}
+                          </Button>
+                        </Link>
+                      )}
 
                       {/* Dedicated Attendance Button */}
                       {canViewAttendance && (
