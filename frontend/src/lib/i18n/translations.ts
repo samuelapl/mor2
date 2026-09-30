@@ -57,7 +57,8 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Progress: { en: 'Progress', am: 'የመማር እድገት' },
   Registration: { en: 'Registration', am: 'ምዝገባ' },
   'Approve Registration': { en: 'Approve Registration', am: 'ምዝገባ ማጽደቅ' },
-  'Actor Registration': { en: 'Actor Registration', am: 'አዲስ ተጠቃሚ መመዝገቢያ' },
+  'User Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
+  'Actor Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   'Bulk Register': { en: 'Bulk Register', am: 'በጅምላ መመዝገቢያ' },
   'Pending Course Approvals': { en: 'Pending Course Approvals', am: 'ማጽደቅ የሚጠብቁ ኮርሶች' },
   'Certificate Templates': { en: 'Certificate Templates', am: 'የሰርተፊኬት ቅጾች' },
@@ -285,10 +286,10 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Public sign-ups require your approval before learners can sign in.',
     am: 'ተማሪዎች ከመግባታቸው በፊት የአስተዳዳሪ ማጽደቅ የሚያስፈልጋቸው ምዝገባዎች።',
   },
-  registerActorTitle: { en: 'Register Actor', am: 'አዲስ ተጠቃሚ መመዝገቢያ' },
+  registerActorTitle: { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   registerActorDesc: {
-    en: 'Provision administrative accounts and assign platform responsibilities.',
-    am: 'የአስተዳደር መለያዎችን ይፍጠሩ እና ኃላፊነቶችን ይመድቡ።',
+    en: 'Manually register a user account with any role. The account is created active and pre-approved.',
+    am: 'ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል።',
   },
   bulkRegisterTitle: { en: 'Bulk User Registration', am: 'በጅምላ ተጠቃሚዎችን መመዝገቢያ' },
   bulkRegisterDesc: {

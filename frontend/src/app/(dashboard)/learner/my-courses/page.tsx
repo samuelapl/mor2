@@ -16,6 +16,7 @@ import { CourseCard } from '@/components/features/courses/CourseCard';
 import { EnrolledCourseActions } from '@/components/features/courses/EnrolledCourseActions';
 import { isInPersonEnrollment } from '@/lib/session-mode';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBar } from '@/components/ui/FilterBar';
 import { Pagination } from '@/components/ui/Pagination';
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import type { ApiVenue } from '@/lib/api/types';
@@ -28,6 +29,8 @@ export default function LearnerCoursesPage() {
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
 
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
   const [modeFilter, setModeFilter] = useState<'ALL' | 'ONLINE' | 'IN_PERSON'>('ALL');
   const [inspectVenue, setInspectVenue] = useState<{
     venue: ApiVenue;
@@ -52,12 +55,30 @@ export default function LearnerCoursesPage() {
   }, [enrolled, getEnrollmentForCourse]);
 
   const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const list = enrolled.filter((course) => {
       const enr = getEnrollmentForCourse(course.id);
       const isPerson = isInPersonEnrollment(course, enr);
 
       if (modeFilter === 'ONLINE' && isPerson) return false;
       if (modeFilter === 'IN_PERSON' && !isPerson) return false;
+
+      const percent = progress[course.id]?.stats.overallPercent ?? 0;
+      if (statusFilter === 'NOT_STARTED' && percent > 0) return false;
+      if (statusFilter === 'IN_PROGRESS' && (percent === 0 || percent >= 100)) return false;
+      if (statusFilter === 'COMPLETED' && percent < 100) return false;
+
+      if (q) {
+        const titleMatch =
+          (course.title ?? '').toLowerCase().includes(q) ||
+          (course.titleAm ?? '').toLowerCase().includes(q) ||
+          (course.titleEn ?? '').toLowerCase().includes(q);
+        const codeMatch = (course.code ?? '').toLowerCase().includes(q);
+        const descMatch = (course.description ?? '').toLowerCase().includes(q);
+        const catMatch = (course.category ?? '').toLowerCase().includes(q);
+        if (!titleMatch && !codeMatch && !descMatch && !catMatch) return false;
+      }
+
       return true;
     });
 
@@ -74,7 +95,7 @@ export default function LearnerCoursesPage() {
         };
       })
       .sort((a, b) => a.percent - b.percent);
-  }, [enrolled, progress, modeFilter, getEnrollmentForCourse]);
+  }, [enrolled, progress, modeFilter, statusFilter, search, getEnrollmentForCourse]);
 
   const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
     rows,
@@ -90,16 +111,16 @@ export default function LearnerCoursesPage() {
         'በመስመር ላይ እና በአካል በሚሰጡ የስልጠና ዓይነቶች የተመዘገቡባቸው ኮርሶች።',
       )}
     >
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         {/* Delivery Mode Tabs */}
-        <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100/70 p-1 text-xs">
+        <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/70 p-1 text-xs">
           <button
             type="button"
             onClick={() => setModeFilter('ALL')}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'ALL'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             {tBilingual('All Courses', 'ሁሉም ኮርሶች')} ({enrolled.length})
@@ -109,8 +130,8 @@ export default function LearnerCoursesPage() {
             onClick={() => setModeFilter('ONLINE')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'ONLINE'
-                ? 'bg-white text-sky-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Laptop className="h-3.5 w-3.5" />
@@ -121,8 +142,8 @@ export default function LearnerCoursesPage() {
             onClick={() => setModeFilter('IN_PERSON')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'IN_PERSON'
-                ? 'bg-white text-amber-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-400 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
@@ -132,6 +153,32 @@ export default function LearnerCoursesPage() {
 
         <LanguageToggle />
       </div>
+
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={tBilingual('Search enrolled courses by title, code or topic…', 'የተመዘገቡባቸውን ኮርሶች በርዕስ፣ ኮድ ወይም ርዕሰ ጉዳይ ይፈልጉ…')}
+        selects={[
+          {
+            id: 'status',
+            label: tBilingual('Progress Status', 'የስልጠና ሁኔታ'),
+            value: statusFilter,
+            onChange: (val) => setStatusFilter(val as typeof statusFilter),
+            options: [
+              { value: 'ALL', label: tBilingual('All Statuses', 'ሁሉም ሁኔታዎች') },
+              { value: 'NOT_STARTED', label: tBilingual('Not Started (0%)', 'ያልተጀመረ (0%)') },
+              { value: 'IN_PROGRESS', label: tBilingual('In Progress (1-99%)', 'በሂደት ላይ (1-99%)') },
+              { value: 'COMPLETED', label: tBilingual('Completed (100%)', 'የተጠናቀቀ (100%)') },
+            ],
+          },
+        ]}
+        onClear={() => {
+          setSearch('');
+          setStatusFilter('ALL');
+          setModeFilter('ALL');
+        }}
+        hasActiveFilters={search !== '' || statusFilter !== 'ALL' || modeFilter !== 'ALL'}
+      />
 
       {!ready ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -147,14 +194,10 @@ export default function LearnerCoursesPage() {
         />
       ) : rows.length === 0 ? (
         <EmptyState
-          title={
-            modeFilter === 'IN_PERSON'
-              ? tBilingual('No in-person classroom enrollments', 'በአካል የሚሰጥ ምዝገባ የለም')
-              : tBilingual('No online enrollments', 'የመስመር ላይ ምዝገባ የለም')
-          }
+          title={tBilingual('No matching courses found', 'ምንም የሚዛመድ ኮርስ አልተገኘም')}
           description={tBilingual(
-            'You do not have any enrolled courses matching this delivery mode filter.',
-            'ከዚህ የአሰጣጥ ዘዴ ማጣሪያ ጋር የሚዛመድ የተመዘገቡበት ኮርስ የለም።',
+            'Try adjusting your search keywords or filter criteria.',
+            'የፍለጋ ቃላትን ወይም የማጣሪያ መስፈርቶችን ያስተካክሉ።',
           )}
         />
       ) : (

@@ -1,5 +1,11 @@
 export type Role =
-  'course_owner' | 'content_approver' | 'training_admin' | 'trainer' | 'learner' | 'system_admin';
+  | 'course_owner'
+  | 'content_approver'
+  | 'training_admin'
+  | 'trainer'
+  | 'learner'
+  | 'system_admin'
+  | (string & {});
 
 export type Lang = 'en' | 'am';
 

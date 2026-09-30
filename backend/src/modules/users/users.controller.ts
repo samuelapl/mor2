@@ -117,8 +117,8 @@ export class UsersController {
   @Permissions('role.manage')
   @ApiOperation({ summary: 'Remove a role from a user' })
   @ApiParam({ name: 'id', type: String })
-  @ApiParam({ name: 'role', enum: RoleName })
-  async removeRole(@Param('id') id: string, @Param('role') role: RoleName) {
+  @ApiParam({ name: 'role', type: String })
+  async removeRole(@Param('id') id: string, @Param('role') role: string) {
     return this.usersService.removeRole(id, role);
   }
 

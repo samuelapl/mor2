@@ -284,7 +284,16 @@ interface LmsContextValue {
     lastName: string;
     email: string;
     password: string;
-    role: Role;
+    role: Role | string;
+    phone?: string;
+    primaryVenueId?: string;
+  }) => Promise<ActionResult>;
+  registerUser: (input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: Role | string;
     phone?: string;
     primaryVenueId?: string;
   }) => Promise<ActionResult>;
@@ -888,7 +897,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, 'Failed to register actor.'),
+          message: errorMessage(err, 'Failed to register user.'),
         };
       }
     },
@@ -1657,6 +1666,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       bulkUserAction,
       bulkRegisterUsers,
       registerActor,
+      registerUser: registerActor,
       updateProfile,
       changePassword,
       updateLocale,

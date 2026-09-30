@@ -1,8 +1,9 @@
 'use client';
 
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Eye, ShieldCheck, ShieldOff, Trash2, XCircle } from 'lucide-react';
 import { ROLES, ROLE_LABELS } from '@/constants/roles';
+import { fetchRolesWithPermissions } from '@/lib/api/permissions';
 import { useLms } from '@/lib/lms-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
@@ -82,6 +83,28 @@ export default function UsersPage() {
     [users],
   );
   const [department, setDepartment] = useState('all');
+
+  const [roleOptions, setRoleOptions] = useState<{ name: string; label: string }[]>(
+    ROLES.map((r) => ({ name: r, label: ROLE_LABELS[r] ?? r })),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRolesWithPermissions()
+      .then((roles) => {
+        if (cancelled || !roles || roles.length === 0) return;
+        setRoleOptions(
+          roles.map((r) => ({
+            name: r.name,
+            label: r.label || r.name,
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // A filter change can hide selected rows, so start the selection over rather than act on
   // users the admin can no longer see.
@@ -201,10 +224,12 @@ export default function UsersPage() {
 
   const changeRole = (userId: string, nextRole: Role) => {
     const user = users.find((item) => item.id === userId);
+    const roleOpt = roleOptions.find((r) => r.name.toLowerCase() === (nextRole as string).toLowerCase());
+    const displayRole = roleOpt?.label ?? (ROLE_LABELS[nextRole] ?? nextRole);
     return runRowAction(
       userId,
       () => changeUserRole(userId, nextRole),
-      `${user?.name ?? 'User'} role updated to ${ROLE_LABELS[nextRole]}`,
+      `${user?.name ?? 'User'} role updated to ${displayRole}`,
       'Failed to update role',
     );
   };
@@ -358,7 +383,11 @@ export default function UsersPage() {
             onChange: withClearedSelection(setRole),
             options: [
               { value: 'all', label: tBilingual('All Roles', 'ሁሉም ሚናዎች') },
-              ...ROLES.map((item) => ({ value: item, label: tRole(item) })),
+              ...roleOptions.map((item) => {
+                const isBuiltIn = ROLES.includes(item.name.toLowerCase() as Role);
+                const displayLabel = isBuiltIn ? tRole(item.name.toLowerCase() as Role) : item.label;
+                return { value: item.name.toLowerCase(), label: displayLabel };
+              }),
             ],
           },
           {
@@ -501,11 +530,15 @@ export default function UsersPage() {
                         onChange={(event) => void changeRole(user.id, event.target.value as Role)}
                         className="rounded-xl border border-slate-200/90 bg-white px-2.5 py-1.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                       >
-                        {ROLES.map((item) => (
-                          <option key={item} value={item}>
-                            {tRole(item)}
-                          </option>
-                        ))}
+                        {roleOptions.map((item) => {
+                          const isBuiltIn = ROLES.includes(item.name.toLowerCase() as Role);
+                          const displayLabel = isBuiltIn ? tRole(item.name.toLowerCase() as Role) : item.label;
+                          return (
+                            <option key={item.name} value={item.name.toLowerCase()}>
+                              {displayLabel}
+                            </option>
+                          );
+                        })}
                       </select>
                     ) : (
                       <Badge variant={roleBadgeVariant(user.role)}>{tRole(user.role)}</Badge>
@@ -605,7 +638,9 @@ export default function UsersPage() {
                   {selectBox(user)}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  <Badge variant={roleBadgeVariant(user.role)}>{ROLE_LABELS[user.role]}</Badge>
+                  <Badge variant={roleBadgeVariant(user.role)}>
+                    {roleOptions.find((r) => r.name.toLowerCase() === user.role.toLowerCase())?.label ?? (ROLE_LABELS[user.role] ?? user.role)}
+                  </Badge>
                   <UserStatusBadge status={user.status} />
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
@@ -761,6 +796,7 @@ export default function UsersPage() {
         onSuspend={(userId) => void suspend(userId)}
         onReactivate={(userId) => void reactivate(userId)}
         isLoading={Boolean(busyUserId)}
+        roleOptions={roleOptions}
       />
     </PageShell>
   );

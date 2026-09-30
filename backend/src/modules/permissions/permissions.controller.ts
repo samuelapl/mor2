@@ -10,12 +10,12 @@ import { RolesGuard } from '@common/guards';
 @ApiTags('admin-permissions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(RoleName.SYSTEM_ADMIN)
 @Controller('admin')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Get('permissions')
+  @Roles(RoleName.SYSTEM_ADMIN)
   @Permissions('permission.manage')
   @ApiOperation({ summary: 'List the full permission registry, grouped by resource' })
   async listPermissions() {
@@ -23,13 +23,14 @@ export class PermissionsController {
   }
 
   @Get('roles')
-  @Permissions('role.view')
-  @ApiOperation({ summary: 'List the 6 roles with their granted permission codes' })
+  @Permissions('role.view', 'user.manage', 'user.view')
+  @ApiOperation({ summary: 'List roles with their granted permission codes' })
   async listRoles() {
     return this.permissionsService.listRolesWithPermissions();
   }
 
   @Post('roles')
+  @Roles(RoleName.SYSTEM_ADMIN)
   @Permissions('permission.manage')
   @ApiOperation({ summary: 'Create a new role (starts with zero permissions)' })
   async createRole(@Body() dto: CreateRoleDto) {
@@ -37,6 +38,7 @@ export class PermissionsController {
   }
 
   @Delete('roles/:id')
+  @Roles(RoleName.SYSTEM_ADMIN)
   @Permissions('permission.manage')
   @ApiOperation({ summary: 'Delete a non-built-in role (rejected if any user still holds it)' })
   @ApiParam({ name: 'id', type: String })
@@ -45,6 +47,7 @@ export class PermissionsController {
   }
 
   @Post('roles/:id/permissions')
+  @Roles(RoleName.SYSTEM_ADMIN)
   @Permissions('permission.manage')
   @ApiOperation({ summary: "Replace a role's full permission set" })
   @ApiParam({ name: 'id', type: String })
@@ -53,6 +56,7 @@ export class PermissionsController {
   }
 
   @Delete('roles/:id/permissions/:permissionId')
+  @Roles(RoleName.SYSTEM_ADMIN)
   @Permissions('permission.manage')
   @ApiOperation({ summary: 'Revoke a single permission from a role' })
   @ApiParam({ name: 'id', type: String })

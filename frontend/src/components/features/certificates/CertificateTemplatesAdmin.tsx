@@ -527,20 +527,8 @@ export function CertificateTemplatesAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div>
-            <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
-              Certificate Templates
-            </h2>
-          </div>
-          <p className="mt-1 text-xs text-slate-500 max-w-2xl">
-            Configure, brand, and manage official certificate designs. Drag-and-drop brand assets,
-            upload PNG seals and signatures, and activate the live platform template.
-          </p>
-        </div>
-
+      {/* Action Bar */}
+      <div className="flex justify-end">
         <Button onClick={openCreate} disabled={busy} className="shrink-0 gap-2">
           <FilePlus2 className="h-4 w-4" />
           Create New Template

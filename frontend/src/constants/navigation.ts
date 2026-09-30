@@ -74,8 +74,8 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: ['course.view.all', 'course.approve_reject'],
     },
     {
-      label: 'Pending Approvals',
-      href: '/content-approver/pending-approvals',
+      label: 'Pending Course Approvals',
+      href: '/system-admin/pending-course-approvals',
       icon: Hourglass,
       permission: 'course.approve_reject',
     },
@@ -240,7 +240,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
           permission: 'user.manage',
         },
         {
-          label: 'Actor Registration',
+          label: 'User Registration',
           href: '/system-admin/register-actor',
           icon: UserCog,
           permission: 'user.manage',
@@ -423,8 +423,8 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     permission: ['student.manage', 'student.view', 'enrollment.view_all'],
   },
   {
-    label: 'Pending Approvals',
-    href: '/content-approver/pending-approvals',
+    label: 'Pending Course Approvals',
+    href: '/system-admin/pending-course-approvals',
     icon: Hourglass,
     permission: 'course.approve_reject',
   },
@@ -457,7 +457,7 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
         permission: 'user.manage',
       },
       {
-        label: 'Actor Registration',
+        label: 'User Registration',
         href: '/system-admin/register-actor',
         icon: UserCog,
         permission: 'user.manage',

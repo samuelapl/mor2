@@ -11,12 +11,23 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Role } from '@/types';
 import { toast } from '@/lib/toast';
 import { fetchVenues } from '@/lib/api/venues';
+import { fetchRolesWithPermissions } from '@/lib/api/permissions';
 import type { ApiVenue } from '@/lib/api/types';
 
-const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+interface RoleOption {
+  name: string;
+  label: string;
+}
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
+const BUILT_IN_ROLE_OPTIONS: RoleOption[] = ROLES.map((role) => ({
+  name: role,
+  label: ROLE_LABELS[role] ?? role,
+}));
+
+const inputClass =
+  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400';
 
 const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,16 +42,34 @@ const EMPTY_FORM = {
 };
 
 export default function RegisterActorPage() {
-  const { registerActor } = useLms();
+  const { currentUser, registerActor } = useLms();
   const { tBilingual, tRole } = useTranslation();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [venues, setVenues] = useState<ApiVenue[]>([]);
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>(BUILT_IN_ROLE_OPTIONS);
 
   useEffect(() => {
     void fetchVenues()
       .then(setVenues)
       .catch(() => {});
+
+    let cancelled = false;
+    fetchRolesWithPermissions()
+      .then((roles) => {
+        if (cancelled || !roles || roles.length === 0) return;
+        setRoleOptions(
+          roles.map((r) => ({
+            name: r.name,
+            label: r.label || r.name,
+          })),
+        );
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const update = (patch: Partial<typeof form>) => {
@@ -76,7 +105,7 @@ export default function RegisterActorPage() {
       });
 
       if (!result.ok) {
-        toast.error(result.message ?? 'Failed to register actor.');
+        toast.error(result.message ?? 'Failed to register user.');
         return;
       }
 
@@ -85,7 +114,7 @@ export default function RegisterActorPage() {
       );
       setForm(EMPTY_FORM);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to register actor.');
+      toast.error(err?.message || 'Failed to register user.');
     } finally {
       setSubmitting(false);
     }
@@ -93,17 +122,17 @@ export default function RegisterActorPage() {
 
   return (
     <PageShell
-      role="system_admin"
-      title={tBilingual('Actor Registration', 'የተጠቃሚ ምዝገባ')}
+      role={currentUser?.role ?? 'system_admin'}
+      title={tBilingual('User Registration', 'የተጠቃሚ ምዝገባ')}
       description={tBilingual(
-        'Manually register a single actor with any role. The account is created already approved and active — no approval queue.',
+        'Manually register a user with any role. The account is created already approved and active — no approval queue.',
         'ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል — የይሁንታ ወረፋ አይጠብቅም።',
       )}
     >
       <PageSection
-        title={tBilingual('New actor', 'አዲስ ተጠቃሚ')}
+        title={tBilingual('New user', 'አዲስ ተጠቃሚ')}
         description={tBilingual(
-          "Fill in the actor's details and choose a role.",
+          "Fill in the user's details and choose a role.",
           'የተጠቃሚውን ዝርዝሮች ይሙሉ እና ሚና ይምረጡ።',
         )}
       >
@@ -160,11 +189,15 @@ export default function RegisterActorPage() {
               value={form.role}
               onChange={(e) => update({ role: e.target.value as Role })}
             >
-              {ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {tRole(role)}
-                </option>
-              ))}
+              {roleOptions.map((opt) => {
+                const isBuiltIn = ROLES.includes(opt.name.toLowerCase() as Role);
+                const displayLabel = isBuiltIn ? tRole(opt.name.toLowerCase() as Role) : opt.label;
+                return (
+                  <option key={opt.name} value={opt.name}>
+                    {displayLabel}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -201,7 +234,7 @@ export default function RegisterActorPage() {
               value={form.password}
               onChange={(e) => update({ password: e.target.value })}
               placeholder={tBilingual(
-                "Set the actor's initial password",
+                "Set the user's initial password",
                 'የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ',
               )}
             />
@@ -210,11 +243,11 @@ export default function RegisterActorPage() {
           <Button
             type="submit"
             isLoading={submitting}
-            loadingText={tBilingual('Registering actor…', 'ተጠቃሚውን በመመዝገብ ላይ…')}
+            loadingText={tBilingual('Registering user…', 'ተጠቃሚውን በመመዝገብ ላይ…')}
             className="w-full justify-center gap-2"
           >
             <UserCog className="h-4 w-4" />
-            {tBilingual('Register actor', 'ተጠቃሚውን መዝግብ')}
+            {tBilingual('Register user', 'ተጠቃሚውን መዝግብ')}
           </Button>
         </form>
       </PageSection>

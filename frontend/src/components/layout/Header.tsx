@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, CheckCheck, Search } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
 import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
 import { useLms } from '@/lib/lms-store';
 import {
@@ -104,16 +104,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6">
-      <div className="flex items-center gap-3">
-        <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-          <input
-            type="text"
-            placeholder={isAmharic ? 'ኮርሶችን፣ ተጠቃሚዎችን ፈልግ...' : 'Search courses, users...'}
-            className="h-9 w-64 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 pl-9 pr-3 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none backdrop-blur transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10"
-          />
-        </div>
-      </div>
+      <div />
 
       <div className="flex items-center gap-3">
         <LanguageToggle />

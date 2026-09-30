@@ -1,5 +1,11 @@
 export type BackendRoleName =
-  'SYSTEM_ADMIN' | 'TRAINING_ADMIN' | 'COURSE_OWNER' | 'TRAINER' | 'CONTENT_APPROVER' | 'LEARNER';
+  | 'SYSTEM_ADMIN'
+  | 'TRAINING_ADMIN'
+  | 'COURSE_OWNER'
+  | 'TRAINER'
+  | 'CONTENT_APPROVER'
+  | 'LEARNER'
+  | (string & {});
 
 export type BackendCourseStatus =
   'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
