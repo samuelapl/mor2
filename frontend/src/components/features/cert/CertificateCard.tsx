@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { CertificateRenderer } from '@/components/features/certificates/CertificateRenderer';
-import { CertificateLanguageDropdown } from '@/components/features/certificates/CertificateLanguageDropdown';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import {
   fetchActiveCertificateTemplate,
   fetchCertificateDownloadUrl,
@@ -34,12 +35,19 @@ function formatDate(value: string): string {
 }
 
 export function CertificateCard({ certificate, learnerName }: CertificateCardProps) {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, lang, isAmharic } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<ApiCertificateTemplate | null>(null);
-  const [selectedLang, setSelectedLang] = useState<string>('en');
+  const [selectedLang, setSelectedLang] = useState<string>(lang || 'en');
   const [downloading, setDownloading] = useState(false);
   const course = certificate.course;
+  const courseTitle = course?.title || course?.titleEn || course?.titleAm || 'Course';
+
+  useEffect(() => {
+    if (lang) {
+      setSelectedLang(lang);
+    }
+  }, [lang]);
 
   useEffect(() => {
     if (!certificate.template) {
@@ -131,6 +139,17 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
                 <span className="text-xs">{tBilingual('Verify', 'አረጋግጥ')}</span>
               </Button>
             </a>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="gap-1 text-slate-700 dark:text-slate-200"
+              title={tBilingual('Download Certificate PDF', 'ሰርተፊኬት ፒዲኤፍ አውርድ')}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{tBilingual('Download', 'አውርድ')}</span>
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="gap-1">
               <Eye className="h-3.5 w-3.5" />
               {tBilingual('Preview', 'እይ')}
@@ -143,16 +162,14 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
         open={open}
         onClose={() => setOpen(false)}
         title={tBilingual('Official Certificate of Completion', 'ኦፊሴላዊ የስልጠና ማጠናቀቂያ ሰርተፊኬት')}
-        subtitle={`${course.titleEn || course.title} (${course.code}) · ${tBilingual('Verified Credential', 'የተረጋገጠ ማረጋገጫ')}`}
+        subtitle={`${courseTitle} (${course.code}) · ${tBilingual('Verified Credential', 'የተረጋገጠ ማረጋገጫ')}`}
+        fullViewport={true}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Extensible Certificate Language Selector */}
-            <CertificateLanguageDropdown
-              value={selectedLang}
-              onChange={setSelectedLang}
-            />
+          <div className="flex items-center gap-2 shrink-0">
+            <LanguageToggle />
+            <ThemeToggle isAmharic={isAmharic} />
 
-            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
+            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5 shadow-2xs">
               <Printer className="h-4 w-4" />
               {tBilingual('Print', 'አትም')}
             </Button>
@@ -161,7 +178,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               size="sm"
               onClick={handleDownload}
               disabled={downloading}
-              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs"
             >
               <Download className="h-4 w-4" />
               {downloading ? tBilingual('Preparing...', 'በማዘጋጀት ላይ...') : tBilingual('Download PDF', 'PDF አውርድ')}
@@ -172,7 +189,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               target="_blank"
               rel="noreferrer"
             >
-              <Button size="sm" variant="outline" className="gap-1.5 text-slate-600">
+              <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
                 <ExternalLink className="h-4 w-4" />
                 {tBilingual('Verify', 'አረጋግጥ')}
               </Button>
@@ -217,12 +234,13 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               <CertificateRenderer
                 template={templateToUse}
                 studentName={learnerName}
-                courseTitle={course.titleEn || course.titleAm || course.title}
+                courseTitle={courseTitle}
                 courseCode={course.code}
                 certificateNumber={certificate.certificateNumber}
                 verificationCode={certificate.verificationCode}
                 completionDate={certificate.issuedAt}
                 lang={selectedLang}
+                courseHours={certificate.course?.estimatedHours ?? 30}
                 editable={false}
               />
             </div>

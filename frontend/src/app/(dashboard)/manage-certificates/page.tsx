@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import PageShell from '@/components/shared/PageShell';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -77,7 +78,7 @@ function formatDateTime(val: string | null | undefined): string {
 }
 
 export default function ManageCertificatesPage() {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, isAmharic } = useTranslation();
   const { currentUser } = useLms();
 
   const [certificates, setCertificates] = useState<ApiCertificate[]>([]);
@@ -693,16 +694,14 @@ export default function ManageCertificatesPage() {
           open={Boolean(previewCert)}
           onClose={() => setPreviewCert(null)}
           title={tBilingual('Certificate Preview', 'የሰርተፊኬት ቅድመ-እይታ')}
-          subtitle={`${previewCert.certificateNumber} · ${previewCert.user?.firstName} ${previewCert.user?.lastName} · ${previewCert.course?.title || previewCert.course?.titleEn}`}
+          subtitle={`${previewCert.certificateNumber} · ${previewCert.user?.firstName} ${previewCert.user?.lastName} · ${previewCert.course?.title || previewCert.course?.titleEn || 'Course'}`}
+          fullViewport={true}
           actions={
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Extensible Language Dropdown */}
-              <CertificateLanguageDropdown
-                value={previewLang}
-                onChange={setPreviewLang}
-              />
+            <div className="flex items-center gap-2 shrink-0">
+              <LanguageToggle />
+              <ThemeToggle isAmharic={isAmharic} />
 
-              <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5">
+              <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5 shadow-2xs">
                 <Printer className="h-4 w-4" />
                 {tBilingual('Print', 'አትም')}
               </Button>
@@ -711,7 +710,7 @@ export default function ManageCertificatesPage() {
                 size="sm"
                 onClick={() => handleDownload(previewCert, previewLang)}
                 disabled={downloading}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs"
               >
                 <Download className="h-4 w-4" />
                 {downloading
@@ -724,7 +723,7 @@ export default function ManageCertificatesPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Button size="sm" variant="outline" className="gap-1.5 text-slate-600">
+                <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
                   <ExternalLink className="h-4 w-4" />
                   {tBilingual('Verify Link', 'የማረጋገጫ ሊንክ')}
                 </Button>
@@ -755,12 +754,13 @@ export default function ManageCertificatesPage() {
                 <CertificateRenderer
                   template={previewCert.template}
                   studentName={`${previewCert.user?.firstName || ''} ${previewCert.user?.lastName || ''}`.trim() || 'Learner'}
-                  courseTitle={previewCert.course?.title || previewCert.course?.titleEn}
+                  courseTitle={previewCert.course?.title || previewCert.course?.titleEn || 'Course'}
                   courseCode={previewCert.course?.code}
                   certificateNumber={previewCert.certificateNumber}
                   verificationCode={previewCert.verificationCode}
                   completionDate={previewCert.issuedAt}
                   lang={previewLang}
+                  courseHours={previewCert.course?.estimatedHours ?? 30}
                   editable={false}
                 />
               </div>
