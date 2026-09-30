@@ -60,7 +60,7 @@ export default function RegisterActorPage() {
         if (cancelled || !roles || roles.length === 0) return;
         setRoleOptions(
           roles.map((r) => ({
-            name: r.name,
+            name: r.name.toLowerCase(),
             label: r.label || r.name,
           })),
         );
@@ -186,14 +186,15 @@ export default function RegisterActorPage() {
             <label className={labelClass}>{tBilingual('Role', 'ሚና')}</label>
             <select
               className={inputClass}
-              value={form.role}
-              onChange={(e) => update({ role: e.target.value as Role })}
+              value={form.role.toLowerCase()}
+              onChange={(e) => update({ role: e.target.value.toLowerCase() as Role })}
             >
               {roleOptions.map((opt) => {
-                const isBuiltIn = ROLES.includes(opt.name.toLowerCase() as Role);
-                const displayLabel = isBuiltIn ? tRole(opt.name.toLowerCase() as Role) : opt.label;
+                const optKey = opt.name.toLowerCase();
+                const isBuiltIn = ROLES.includes(optKey as Role);
+                const displayLabel = isBuiltIn ? tRole(optKey as Role) : opt.label;
                 return (
-                  <option key={opt.name} value={opt.name}>
+                  <option key={optKey} value={optKey}>
                     {displayLabel}
                   </option>
                 );
