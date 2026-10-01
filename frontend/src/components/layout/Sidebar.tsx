@@ -252,14 +252,14 @@ export default function Sidebar() {
         <Link
           href="/login"
           onClick={() => logout()}
-          title={collapsed ? (isAmharic ? 'መለያ ቀይር / ውጣ' : 'Switch role / Sign out') : undefined}
+          title={collapsed ? (isAmharic ? 'ውጣ' : 'Log out') : undefined}
           className={cn(
-            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
+            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300',
             collapsed && 'justify-center px-0',
           )}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed ? (isAmharic ? 'መለያ ቀይር / ውጣ' : 'Switch role / Sign out') : null}
+          <LogOut className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+          {!collapsed ? (isAmharic ? 'ውጣ' : 'Log out') : null}
         </Link>
       </div>
     </aside>

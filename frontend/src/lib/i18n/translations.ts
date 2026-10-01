@@ -74,7 +74,8 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Navigation: { en: 'Navigation', am: 'አቅጣጫ መጠቆሚያ' },
   Account: { en: 'Account', am: 'የተጠቃሚ መለያ' },
   'Help & Support': { en: 'Help & Support', am: 'እርዳታ እና ድጋፍ' },
-  'Switch role / Sign out': { en: 'Switch role / Sign out', am: 'መለያ ቀይር / ውጣ' },
+  'Log out': { en: 'Log out', am: 'ውጣ' },
+  'Switch role / Sign out': { en: 'Log out', am: 'ውጣ' },
   'Learning Management System': { en: 'Learning Management System', am: 'የትምህርት አስተዳደር ሥርዓት' },
 };
 

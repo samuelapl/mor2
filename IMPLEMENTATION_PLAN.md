@@ -79,24 +79,31 @@
 
 ---
 
-### Phase 3: Top-Right User Account Dropdown with Logout
+### Phase 3: Profile Modal, Sidebar Log Out Action & Navigation Refinements
 
-1. **`Header.tsx` Interactive Dropdown:**
-   - Add state `accountDropdownOpen: boolean` and click-outside `accountRef`.
-   - Header profile badge button toggles the dropdown and shows a rotated `ChevronDown` icon.
-   - Render dropdown menu containing:
-     - **Profile Card:** Avatar, Full Name, Email, and formatted Role Badge.
-     - **Divider.**
-     - **Account Settings button:** Opens `AccountModal` (Profile, Security, Details, Preferences).
-     - **Help & Support button:** Opens `HelpSupport` modal.
-     - **Divider.**
-     - **Logout Button:** Distinctive styled action with `LogOut` icon, red highlight on hover (`hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400`), bilingual labels (`Log out` / `ውጣ`), invoking `logout()` and redirecting to `/login`.
+1. **Header Profile Direct Click (`Header.tsx`):**
+   - Removed unnecessary dropdown menu on the top-right profile.
+   - Clicking the user account avatar/name directly opens the `AccountModal` (Profile, Security, Details, Preferences) so the user can immediately view and edit their settings.
+
+2. **Dedicated Red "Log out" Action in Sidebar & Account Modal:**
+   - **Sidebar Exit Action (`Sidebar.tsx`):**
+     - Completely removed the ambiguous `"Switch role / Sign out"` text.
+     - Changed the label to **`"Log out"`** (Amharic: **`"ውጣ"`**).
+     - Styled in bold red (`text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 font-semibold`) with red `LogOut` icon.
+   - **Account Settings Modal Footer (`AccountModal.tsx`):**
+     - Added a red-styled **`"Log out"`** (`ውጣ`) action in the modal footer so users can sign out while viewing their profile settings.
+
+3. **Clean Sidebar for Custom / Newly Created Roles (`navigation.ts`):**
+   - Removed the artificial `"Dashboard"` item injection for custom roles.
+   - Custom roles now only see the exact capability links their permissions grant (e.g. `Courses` for `course.view.all` / `course.view.assigned`), keeping the sidebar clean and focused.
 
 ---
 
 ## 3. Verification & Acceptance Criteria
 - [x] Custom role login does not throw `TypeError: Cannot read properties of undefined (reading 'startsWith')`.
-- [x] Users with custom roles and `course.view.assigned` / `course.view.all` are routed to `/courses` and see Courses in their sidebar.
+- [x] Users with custom roles and `course.view.assigned` / `course.view.all` are routed to `/courses` and see Courses in their sidebar without an unwanted Dashboard link.
 - [x] Headings use Poppins, body text uses Inter, and Ethiopic characters render with Noto Sans Ethiopic.
-- [x] Clicking the top-right account button displays a dropdown containing a working Logout button.
+- [x] Clicking the top-right profile directly opens the Account modal without an extra dropdown.
+- [x] Sidebar exit link is updated from "Switch role / Sign out" to a red "Log out" (`ውጣ`) action.
+- [x] Account settings modal footer provides an immediate red "Log out" action.
 - [x] Frontend builds with zero TypeScript compilation errors (`tsc --noEmit`).

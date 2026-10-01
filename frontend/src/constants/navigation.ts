@@ -602,9 +602,5 @@ export function navItemsForRole(role: Role): NavItem[] {
     return true;
   });
 
-  const result = [...base, ...extraItems];
-  if (base.length === 0 && !result.some((it) => it.label.toLowerCase() === 'dashboard')) {
-    result.unshift({ label: 'Dashboard', href: '/learner', icon: LayoutDashboard });
-  }
-  return result;
+  return [...base, ...extraItems];
 }
