@@ -7,8 +7,15 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-poppins)", '"Poppins"', '"Noto Sans Ethiopic"', '"Nyala"', ...defaultTheme.fontFamily.sans],
+        sans: ["var(--font-inter)", '"Inter"', '"Noto Sans Ethiopic"', '"Nyala"', ...defaultTheme.fontFamily.sans],
         display: [
+          "var(--font-poppins)",
+          '"Poppins"',
+          '"Noto Sans Ethiopic"',
+          '"Nyala"',
+          ...defaultTheme.fontFamily.sans,
+        ],
+        heading: [
           "var(--font-poppins)",
           '"Poppins"',
           '"Noto Sans Ethiopic"',

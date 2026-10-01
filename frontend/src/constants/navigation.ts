@@ -373,7 +373,16 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/system-admin/settings': ['user.manage', 'role.manage', 'permission.manage'],
   '/system-admin/audit-logs': ['audit.view'],
   '/system-admin/categories': ['category.manage'],
+  '/learner': [
+    'course.browse',
+    'progress.view',
+    'progress.mark_own',
+    'attendance.checkin',
+    'enrollment.self',
+  ],
   '/learner/catalog': ['course.browse'],
+  '/learner/my-courses': ['course.browse', 'enrollment.self', 'progress.mark_own'],
+  '/learner/courses': ['course.browse', 'enrollment.self', 'progress.mark_own'],
   '/learner/certificates': ['certificate.view'],
   '/learner/progress': ['progress.view', 'progress.mark_own'],
   '/training-admin/feedback': ['feedback.manage', 'feedback.view'],
@@ -386,6 +395,66 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
  * these nav items automatically appear in their sidebar navigation!
  */
 export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Courses',
+    href: '/courses',
+    icon: BookOpen,
+    permission: ['course.view.all', 'course.view.assigned', 'course.view.own', 'course.create'],
+  },
+  {
+    label: 'Create Course',
+    href: '/course-owner/create-course',
+    icon: FilePlus2,
+    permission: 'course.create',
+  },
+  {
+    label: 'Attendance',
+    href: '/trainer/attendance',
+    icon: ClipboardCheck,
+    permission: ['attendance.view', 'attendance.manage', 'attendance.override'],
+  },
+  {
+    label: 'Create Quiz',
+    href: '/trainer/create-quiz',
+    icon: FileQuestion,
+    permission: 'quiz.create',
+  },
+  {
+    label: 'Venues & Facilities',
+    href: '/training-admin/venues',
+    icon: Building2,
+    permission: 'venue.manage',
+  },
+  {
+    label: 'Available Courses',
+    href: '/learner/catalog',
+    icon: Store,
+    permission: 'course.browse',
+  },
+  {
+    label: 'My Courses',
+    href: '/learner/my-courses',
+    icon: BookOpen,
+    permission: ['course.browse', 'enrollment.self', 'progress.mark_own'],
+  },
+  {
+    label: 'Live Sessions',
+    href: '/learner/live-sessions',
+    icon: Video,
+    permission: ['attendance.checkin', 'course.browse'],
+  },
+  {
+    label: 'My Certificates',
+    href: '/learner/certificates',
+    icon: Award,
+    permission: 'certificate.view',
+  },
+  {
+    label: 'Progress',
+    href: '/learner/progress',
+    icon: BarChart3,
+    permission: ['progress.view', 'progress.mark_own'],
+  },
   {
     label: 'Course Feedback',
     href: '/training-admin/feedback',
@@ -533,5 +602,9 @@ export function navItemsForRole(role: Role): NavItem[] {
     return true;
   });
 
-  return [...base, ...extraItems];
+  const result = [...base, ...extraItems];
+  if (base.length === 0 && !result.some((it) => it.label.toLowerCase() === 'dashboard')) {
+    result.unshift({ label: 'Dashboard', href: '/learner', icon: LayoutDashboard });
+  }
+  return result;
 }
