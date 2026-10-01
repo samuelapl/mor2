@@ -644,10 +644,10 @@ export class CertificatesService {
     let boldFont: any;
 
     try {
-      const regularFontPath = path.join(process.cwd(), 'assets', 'fonts', 'ebrima.ttf');
-      const boldFontPath = path.join(process.cwd(), 'assets', 'fonts', 'ebrimabd.ttf');
+      const regularFontPath = this.resolveAssetPath('assets', 'fonts', 'ebrima.ttf');
+      const boldFontPath = this.resolveAssetPath('assets', 'fonts', 'ebrimabd.ttf');
 
-      if (fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
+      if (regularFontPath && boldFontPath && fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
         const regularBytes = fs.readFileSync(regularFontPath);
         const boldBytes = fs.readFileSync(boldFontPath);
         regularFont = await pdfDoc.embedFont(regularBytes);
@@ -886,8 +886,8 @@ export class CertificatesService {
       }
       if (!embeddedLogo) {
         try {
-          const localLogoPath = path.join(process.cwd(), 'assets', 'logo.jpg');
-          if (fs.existsSync(localLogoPath)) {
+          const localLogoPath = this.resolveAssetPath('assets', 'logo.jpg');
+          if (localLogoPath && fs.existsSync(localLogoPath)) {
             const buf = fs.readFileSync(localLogoPath);
             embeddedLogo = await pdfDoc.embedJpg(buf);
           }
@@ -1355,5 +1355,16 @@ export class CertificatesService {
     } catch {
       return { ...cert, downloadUrl: null };
     }
+  }
+
+  private resolveAssetPath(...relativeParts: string[]): string | null {
+    const candidates = [
+      path.join(process.cwd(), ...relativeParts),
+      path.join(process.cwd(), 'backend', ...relativeParts),
+      path.join(__dirname, '..', '..', '..', ...relativeParts),
+      path.join(__dirname, '..', '..', '..', '..', ...relativeParts),
+      path.join(__dirname, '..', '..', '..', '..', '..', ...relativeParts),
+    ];
+    return candidates.find((p) => fs.existsSync(p)) ?? null;
   }
 }

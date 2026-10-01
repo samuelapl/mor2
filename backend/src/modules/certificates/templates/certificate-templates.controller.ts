@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@n
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CertificateTemplatesService } from './certificate-templates.service';
 import { CreateCertificateTemplateDto, UpdateCertificateTemplateDto } from './dto';
-import { CurrentUser, Permissions } from '@common/decorators';
+import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
@@ -11,7 +11,7 @@ import { PermissionsGuard } from '@modules/permissions/guards/permissions.guard'
 @ApiTags('certificate-templates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Permissions('CERTIFICATE_TEMPLATE_MANAGE')
+@Permissions('CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage', 'certificate.manage')
 @Controller('certificate-templates')
 export class CertificateTemplatesController {
   constructor(private readonly certificateTemplatesService: CertificateTemplatesService) {}
@@ -23,12 +23,19 @@ export class CertificateTemplatesController {
   }
 
   @Get('active')
+  @Public()
   @ApiOperation({ summary: 'Get the currently active certificate template' })
   findActive() {
     return this.certificateTemplatesService.findActive();
   }
 
   @Get(':id')
+  @Permissions(
+    'CERTIFICATE_TEMPLATE_MANAGE',
+    'certificate_template.manage',
+    'certificate.manage',
+    'certificate.view',
+  )
   @ApiOperation({ summary: 'Get a certificate template by ID' })
   @ApiParam({ name: 'id', type: String })
   findOne(@Param('id') id: string) {

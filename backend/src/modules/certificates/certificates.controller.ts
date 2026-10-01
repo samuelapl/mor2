@@ -15,6 +15,7 @@ import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { CertificatesService } from './certificates.service';
+import { PermissionsService } from '@modules/permissions/permissions.service';
 import { CurrentUser, Permissions, Public, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -24,13 +25,23 @@ import { PermissionsGuard } from '@modules/permissions/guards/permissions.guard'
 @ApiTags('certificates')
 @Controller('certificates')
 export class CertificatesController {
-  constructor(private readonly certificatesService: CertificatesService) {}
+  constructor(
+    private readonly certificatesService: CertificatesService,
+    private readonly permissionsService: PermissionsService,
+  ) {}
 
-  private canManageCertificates(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes(RoleName.SYSTEM_ADMIN) ||
-      user.roles.includes(RoleName.TRAINING_ADMIN)
-    );
+  private async canManageCertificates(user: AuthenticatedUser): Promise<boolean> {
+    const roles = (user.roles || []).map((r) => String(r).toUpperCase());
+    if (
+      roles.includes(RoleName.SYSTEM_ADMIN) ||
+      roles.includes(RoleName.TRAINING_ADMIN) ||
+      roles.includes('SYSTEM_ADMIN') ||
+      roles.includes('TRAINING_ADMIN')
+    ) {
+      return true;
+    }
+    const perms = await this.permissionsService.effectivePermissions(user.roles);
+    return perms.includes('CERTIFICATE_MANAGE') || perms.includes('certificate.manage');
   }
 
   /**
@@ -40,7 +51,7 @@ export class CertificatesController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'List all issued certificates (Admin/Manager)' })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, type: String })
@@ -110,7 +121,7 @@ export class CertificatesController {
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'Get certificate metrics and analytics report for management dashboard' })
   async stats() {
     return this.certificatesService.getCertificateStats();
@@ -123,7 +134,8 @@ export class CertificatesController {
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const cert = await this.certificatesService.findById(id);
-    if (!this.canManageCertificates(user) && cert.userId !== user.id) {
+    const canManage = await this.canManageCertificates(user);
+    if (!canManage && cert.userId !== user.id) {
       throw new ForbiddenException('You can only access your own certificates');
     }
     return cert;
@@ -141,7 +153,8 @@ export class CertificatesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const cert = await this.certificatesService.findById(id);
-    if (!this.canManageCertificates(user) && cert.userId !== user.id) {
+    const canManage = await this.canManageCertificates(user);
+    if (!canManage && cert.userId !== user.id) {
       throw new ForbiddenException('You can only access your own certificates');
     }
     return this.certificatesService.downloadPdf(id, lang, user.id);
@@ -160,7 +173,8 @@ export class CertificatesController {
     @Res() res: Response,
   ) {
     const cert = await this.certificatesService.findById(id);
-    if (!this.canManageCertificates(user) && cert.userId !== user.id) {
+    const canManage = await this.canManageCertificates(user);
+    if (!canManage && cert.userId !== user.id) {
       throw new ForbiddenException('You can only access your own certificates');
     }
     const { buffer, filename } = await this.certificatesService.getPdfBuffer(id, lang, user.id);
@@ -173,7 +187,7 @@ export class CertificatesController {
   @Post(':id/revoke')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'Revoke a certificate with reason' })
   @ApiParam({ name: 'id', type: String })
   async revoke(
@@ -187,7 +201,7 @@ export class CertificatesController {
   @Post(':id/reissue')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'Reissue/supersede a certificate' })
   @ApiParam({ name: 'id', type: String })
   async reissue(
@@ -201,7 +215,7 @@ export class CertificatesController {
   @Get(':id/audit')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'Get audit history for a certificate' })
   @ApiParam({ name: 'id', type: String })
   async getAuditHistory(@Param('id') id: string) {
@@ -211,7 +225,7 @@ export class CertificatesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
-  @Permissions('CERTIFICATE_MANAGE')
+  @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
   @ApiOperation({ summary: 'Revoke a certificate (Compatibility endpoint)' })
   @ApiParam({ name: 'id', type: String })
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
