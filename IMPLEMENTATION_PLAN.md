@@ -82,9 +82,11 @@
 ### Phase 3: Profile Action Menu, Clean Account Settings & Sidebar Log Out
 
 1. **Header Profile Action Menu (`Header.tsx`):**
-   - Clicking the user account avatar/name in the top-right header displays a dedicated menu presenting two distinct, separate actions:
-     - **`Account Settings`** (Amharic: **`የመለያ ቅንብሮች`**) with `User` icon $\rightarrow$ opens the Account Settings modal.
-     - **`Log out`** (Amharic: **`ውጣ`**) with red `LogOut` icon $\rightarrow$ immediately signs out the user and redirects to `/login`.
+   - Clicking the user account avatar/name in the top-right header displays a dedicated menu (matching mockup) presenting:
+     - User header: Avatar initials ("TM"), full name ("Tewodros Melkamu"), and email address.
+     - Divider line.
+     - **`Account`** (Amharic: **`መለያ`**) with `UserCircle` icon $\rightarrow$ opens the Account Settings modal.
+     - **`Log out`** (Amharic: **`ውጣ`**) with `LogOut` icon $\rightarrow$ signs out the user and redirects to `/login`.
    - Outside click dismisses the menu automatically.
 
 2. **Clean Account Settings Modal (`AccountModal.tsx`):**
@@ -105,7 +107,8 @@
 - [x] Custom role login does not throw `TypeError: Cannot read properties of undefined (reading 'startsWith')`.
 - [x] Users with custom roles and `course.view.assigned` / `course.view.all` are routed to `/courses` and see Courses in their sidebar without an unwanted Dashboard link.
 - [x] Headings use Poppins, body text uses Inter, and Ethiopic characters render with Noto Sans Ethiopic.
-- [x] Clicking the top-right profile displays separate Account Settings and Log out buttons.
+- [x] Clicking the top-right profile displays separate Account and Log out buttons matching the screenshot design.
 - [x] Account Settings modal contains NO logout button inside.
 - [x] Sidebar exit link is updated from "Switch role / Sign out" to a bold red "Log out" (`ውጣ`) action.
 - [x] Frontend builds with zero TypeScript compilation errors (`tsc --noEmit`).
+
