@@ -202,18 +202,25 @@ export function LiveKitRoom({
 
   return (
     <View className="flex-1 bg-slate-950">
-      {/* Top Banner when Trainer is sharing screen */}
-      {screenShare.active ? (
-        <View className="flex-row items-center justify-between bg-sky-950/80 px-4 py-2 border-b border-sky-800/50">
-          <View className="flex-row items-center gap-2">
-            <Monitor size={16} color="#38bdf8" />
-            <AppText className="text-xs font-semibold text-sky-200">
-              {screenShare.presenter ? `${screenShare.presenter}'s Screen` : 'Screen Presentation'}
-            </AppText>
-          </View>
-          <Badge label="Live Stream" tone="brand" />
+      {/* Top Session Status & Participants Header */}
+      <View className="flex-row items-center justify-between bg-slate-900/90 px-4 py-2 border-b border-slate-800">
+        <View className="flex-row items-center gap-2">
+          {screenShare.active ? (
+            <>
+              <Monitor size={15} color="#38bdf8" />
+              <AppText className="text-xs font-semibold text-sky-300">
+                {screenShare.presenter ? `${screenShare.presenter}'s Screen` : 'Screen Presentation'}
+              </AppText>
+            </>
+          ) : (
+            <Badge label="Live Stream" tone="brand" />
+          )}
         </View>
-      ) : null}
+        <Badge
+          label={t('sessions.participants', { count: participants })}
+          tone="neutral"
+        />
+      </View>
 
       {/* LiveKit WebView */}
       <WebView
@@ -380,11 +387,7 @@ export function LiveKitRoom({
       ) : null}
 
       {/* Control Bar */}
-      <View className="flex-row items-center justify-around bg-slate-950 px-3 py-3 border-t border-slate-800">
-        <AppText className="text-xs text-slate-400">
-          {t('sessions.participants', { count: participants })}
-        </AppText>
-
+      <View className="flex-row items-center justify-around bg-slate-950 px-4 py-3.5 border-t border-slate-800">
         {/* Hand Raise */}
         <RoundButton
           label={handRaised ? 'Lower Hand' : 'Raise Hand'}
