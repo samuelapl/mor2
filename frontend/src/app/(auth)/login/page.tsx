@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ChevronDown, KeyRound, Loader2, Lock, Mail } from 'lucide-react';
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from '@/constants/auth';
-import { ROLE_LABELS, ROLE_PATHS } from '@/constants/roles';
+import { ROLE_LABELS, ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { ROLE_ICONS } from '@/constants/navigation';
 import { useLms } from '@/lib/lms-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -39,7 +39,7 @@ export default function LoginPage() {
       const result = await login(email, password);
       if (result.ok) {
         toast.success('Welcome back! Signing you in…');
-        router.push(ROLE_PATHS[result.role]);
+        router.push(getRoleHomePath(result.role, result.user?.permissions));
       } else if (result.passwordChangeRequired) {
         // Admin-created account: a code was emailed, finish on the first-login page.
         router.push('/first-login');

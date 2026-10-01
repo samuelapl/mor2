@@ -1,5 +1,11 @@
 export type Role =
-  'course_owner' | 'content_approver' | 'training_admin' | 'trainer' | 'learner' | 'system_admin';
+  | 'course_owner'
+  | 'content_approver'
+  | 'training_admin'
+  | 'trainer'
+  | 'learner'
+  | 'system_admin'
+  | (string & {});
 
 export type Lang = 'en' | 'am';
 
@@ -166,4 +172,6 @@ export interface Course {
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
 export type LoginResult =
-  { ok: true; role: Role } | { ok: false; message: string; passwordChangeRequired?: true };
+  | { ok: true; role: Role; user?: User }
+  | { ok: false; message: string; passwordChangeRequired?: true; devCode?: string };
+

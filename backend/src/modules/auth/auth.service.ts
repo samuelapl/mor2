@@ -306,7 +306,7 @@ export class AuthService {
    * the caller knew the temporary password; the code proves they own the email.
    */
   private async startFirstLogin(user: UserWithRoles) {
-    await this.sendFirstLoginCode(user.id, user.email);
+    const code = await this.sendFirstLoginCode(user.id, user.email);
 
     const payload: FirstLoginChallengePayload = { sub: user.id, purpose: FIRST_LOGIN_PURPOSE };
     const challengeToken = await this.jwtService.signAsync(payload, {
@@ -314,10 +314,15 @@ export class AuthService {
       expiresIn: FIRST_LOGIN_CHALLENGE_TTL,
     });
 
+    const isDev =
+      this.configService.get<string>('NODE_ENV') === 'development' ||
+      this.configService.get<string>('APP_ENV') === 'development';
+
     return {
       passwordChangeRequired: true as const,
       challengeToken,
       email: maskEmail(user.email),
+      devCode: isDev && !this.mailService.isConfigured ? code : undefined,
     };
   }
 
@@ -337,8 +342,16 @@ export class AuthService {
       );
     }
 
-    await this.sendFirstLoginCode(user.id, user.email);
-    return { message: 'A new code has been sent.', email: maskEmail(user.email) };
+    const code = await this.sendFirstLoginCode(user.id, user.email);
+    const isDev =
+      this.configService.get<string>('NODE_ENV') === 'development' ||
+      this.configService.get<string>('APP_ENV') === 'development';
+
+    return {
+      message: 'A new code has been sent.',
+      email: maskEmail(user.email),
+      devCode: isDev && !this.mailService.isConfigured ? code : undefined,
+    };
   }
 
   /** Step one of the first-login change: checks the code without using it up. */
@@ -425,13 +438,14 @@ export class AuthService {
     return user;
   }
 
-  private async sendFirstLoginCode(userId: string, email: string) {
+  private async sendFirstLoginCode(userId: string, email: string): Promise<string> {
     const code = await this.issueCode(userId, PasswordResetPurpose.FIRST_LOGIN);
     try {
       await this.mailService.sendFirstLoginCode(email, code);
     } catch (err) {
       this.logger.error(`Failed to send first-login code to ${email}: ${err}`);
     }
+    return code;
   }
 
   /**

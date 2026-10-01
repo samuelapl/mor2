@@ -288,11 +288,22 @@ export class UsersService {
     };
   }
 
-  private async assertRoleExists(role: string) {
-    const found = await this.prisma.role.findUnique({ where: { name: role } });
+  private async assertRoleExists(role: string): Promise<string> {
+    const raw = role.trim();
+    const normalized = raw.toUpperCase().replace(/\s+/g, '_');
+    const found = await this.prisma.role.findFirst({
+      where: {
+        OR: [
+          { name: normalized },
+          { name: raw },
+          { name: { equals: raw, mode: 'insensitive' } },
+        ],
+      },
+    });
     if (!found) {
       throw new BadRequestException(`Role "${role}" does not exist`);
     }
+    return found.name;
   }
 
   async createActor(dto: CreateActorDto) {
@@ -303,7 +314,7 @@ export class UsersService {
       throw new ConflictException('Email already registered');
     }
 
-    await this.assertRoleExists(dto.role);
+    const roleName = await this.assertRoleExists(dto.role);
 
     const policyError = passwordIssues(dto.password);
     if (policyError) {
@@ -322,33 +333,38 @@ export class UsersService {
         locale: dto.locale || 'en',
         registrationStatus: ApprovalStatus.APPROVED,
         isActive: true,
-        mustChangePassword: true,
+        mustChangePassword: dto.mustChangePassword ?? false,
         primaryVenueId: dto.primaryVenueId || null,
         roles: {
-          create: { role: dto.role },
+          create: { role: roleName },
         },
       },
       include: { roles: true, primaryVenue: true },
     });
 
-    return { message: 'Actor registered', user: this.sanitizeUser(user) };
+    return { message: 'User registered', user: this.sanitizeUser(user) };
   }
 
   async assignRole(dto: AssignRoleDto) {
     await this.findById(dto.userId);
-    await this.assertRoleExists(dto.role);
+    const roleName = await this.assertRoleExists(dto.role);
 
     return this.prisma.userRole.create({
       data: {
         userId: dto.userId,
-        role: dto.role,
+        role: roleName,
       },
     });
   }
 
-  async removeRole(userId: string, role: RoleName) {
+  async removeRole(userId: string, role: string) {
+    const raw = role.trim();
+    const normalized = raw.toUpperCase().replace(/\s+/g, '_');
     await this.prisma.userRole.deleteMany({
-      where: { userId, role },
+      where: {
+        userId,
+        role: { in: [raw, normalized] },
+      },
     });
 
     return { message: `Role ${role} removed from user` };

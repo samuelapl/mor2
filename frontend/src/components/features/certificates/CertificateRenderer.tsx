@@ -30,6 +30,7 @@ export interface CertificateRendererProps {
   completionDate?: string | Date;
   template?: ApiCertificateTemplate | null;
   className?: string;
+  lang?: string;
   onPrint?: () => void;
   // Interactive Live Canvas Editing Props
   editable?: boolean;
@@ -282,6 +283,7 @@ export function CertificateRenderer({
   completionDate,
   template,
   className,
+  lang = 'en',
   editable = false,
   selectedFieldKey = null,
   onSelectField,
@@ -412,19 +414,33 @@ export function CertificateRenderer({
   const courseDescriptionField = fieldsMap.get('courseDescription');
   const footerNoteField = fieldsMap.get('footerNote');
 
-  const titleText = titleField?.text || 'Certificate of Training';
-  const preambleText = preambleField?.text || 'THIS IS TO CERTIFY THAT';
-  const completionText =
-    completionTextField?.text || 'has successfully completed the training course';
-  const descriptionText =
-    courseDescriptionField?.text ||
-    'by participating & completing all modules and passing all evaluation tests.';
-  const footerText =
-    footerNoteField?.text ||
-    `~ Ministry of Revenues ETIMS Academy · Verified Credential ${data.certificateNumber} · Verification: ${data.verificationCode} ~`;
+  const isAm = lang === 'am';
+  const titleText = isAm
+    ? 'የስልጠና ማረጋገጫ የምስክር ወረቀት'
+    : (titleField?.text || 'Certificate of Training');
+  const preambleText = isAm
+    ? 'ይህ ምስክር ወረቀት የተሰጠው ለ'
+    : (preambleField?.text || 'THIS IS TO CERTIFY THAT');
+  const completionText = isAm
+    ? 'የስልጠናውን ኮርስ በተሳካ ሁኔታ ላጠናቀቁ'
+    : (completionTextField?.text || 'has successfully completed the training course');
+  const descriptionText = isAm
+    ? 'ሁሉንም የስልጠና ክፍሎች በመከታተልና የማጠቃለያ ፈተናዎችን በማለፍ።'
+    : (courseDescriptionField?.text ||
+      'by participating & completing all modules and passing all evaluation tests.');
+  const footerText = isAm
+    ? `~ የገቢዎች ሚኒስቴር ኢቲኤምኤስ አካዳሚ · የተረጋገጠ ማረጋገጫ ${data.certificateNumber} · ማረጋገጫ ቁጥር: ${data.verificationCode} ~`
+    : (footerNoteField?.text ||
+      `~ Ministry of Revenues ETIMS Academy · Verified Credential ${data.certificateNumber} · Verification: ${data.verificationCode} ~`);
 
-  const courseHoursText = data.courseHours ? `${data.courseHours} Hours` : '30 Hours';
+  const courseHoursPrefix = isAm ? 'የስልጠና ሰዓት ፦' : (courseHoursField.text || 'Course Hours :');
+  const rawHours = data.courseHours
+    ? String(data.courseHours).replace(/\s*(hours|hour|ሰዓት)\s*/gi, '').trim()
+    : '30';
+  const courseHoursText = `${rawHours || '30'} ${isAm ? 'ሰዓት' : 'Hours'}`;
+  const datePrefix = isAm ? 'ቀን ፦' : (issuedAtField.text || 'Date :');
   const formattedDate = formatDate(data.issuedAt);
+  const verifiedBadgeText = isAm ? 'የተረጋገጠ' : (verifiedBadgeField.text || 'VERIFIED');
 
   return (
     <div
@@ -577,7 +593,7 @@ export function CertificateRenderer({
               <Check className="h-3 w-3 stroke-[3]" />
             </div>
             <span className="text-[11px] font-extrabold tracking-wider text-slate-800 uppercase whitespace-nowrap">
-              {verifiedBadgeField.text || 'VERIFIED'}
+              {verifiedBadgeText}
             </span>
           </div>
         </DraggableCanvasItem>
@@ -598,9 +614,7 @@ export function CertificateRenderer({
           className="p-1"
         >
           <div className="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap select-none pointer-events-none">
-            {courseHoursField.text
-              ? `${courseHoursField.text} ${courseHoursText}`
-              : `Course Hours : ${courseHoursText}`}
+            {`${courseHoursPrefix} ${courseHoursText}`}
           </div>
         </DraggableCanvasItem>
       )}
@@ -619,9 +633,7 @@ export function CertificateRenderer({
           className="p-1"
         >
           <div className="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap select-none pointer-events-none">
-            {issuedAtField.text
-              ? `${issuedAtField.text} ${formattedDate}`
-              : `Date : ${formattedDate}`}
+            {`${datePrefix} ${formattedDate}`}
           </div>
         </DraggableCanvasItem>
       )}
@@ -727,3 +739,5 @@ export function CertificateRenderer({
     </div>
   );
 }
+
+export default CertificateRenderer;

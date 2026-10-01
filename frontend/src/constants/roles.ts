@@ -68,7 +68,130 @@ const ROLE_BY_PATH: Record<string, Role> = ROLES.reduce(
   {} as Record<string, Role>,
 );
 
+export function isBuiltInRole(role?: string | null): role is Role {
+  if (!role) return false;
+  return ROLES.includes(role.toLowerCase().trim() as Role);
+}
+
 export function getRoleFromPath(pathname: string): Role | null {
   const segment = pathname.split('/')[1] ?? '';
   return ROLE_BY_PATH[`/${segment}`] ?? null;
 }
+
+export function getRoleHomePath(role?: Role | string | null, permissions: string[] = []): string {
+  if (!role) return '/learner';
+  const key = role.toLowerCase().trim() as Role;
+  if (ROLE_PATHS[key]) {
+    return ROLE_PATHS[key];
+  }
+
+  // For custom/dynamic roles not in standard ROLE_PATHS, pick best home based on permissions.
+  // CRITICAL: Must return permission-gated routes, NEVER role-locked roots (/system-admin, /course-owner, etc.)!
+  if (permissions && permissions.length > 0) {
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('user.') ||
+          p.startsWith('role.') ||
+          p.startsWith('permission.') ||
+          p.startsWith('system.') ||
+          p === 'category.manage' ||
+          p === 'audit.view',
+      )
+    ) {
+      return '/system-admin/users';
+    }
+    if (permissions.some((p) => p.includes('approve') || p === 'course.approve_reject')) {
+      return '/system-admin/pending-course-approvals';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('course.') ||
+          p.startsWith('curriculum.') ||
+          p === 'question_bank.manage',
+      )
+    ) {
+      return '/courses';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('attendance.'),
+      )
+    ) {
+      return '/trainer/attendance';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('quiz.'),
+      )
+    ) {
+      return '/trainer/create-quiz';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('live_session.') ||
+          p === 'result.view.all',
+      )
+    ) {
+      return '/trainer/sessions';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.toUpperCase() === 'CERTIFICATE_MANAGE' ||
+          p.startsWith('certificate.manage'),
+      )
+    ) {
+      return '/manage-certificates';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.toUpperCase() === 'CERTIFICATE_TEMPLATE_MANAGE' ||
+          p.startsWith('certificate.template.'),
+      )
+    ) {
+      return '/certificate-templates';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('enrollment.') ||
+          p.startsWith('student.'),
+      )
+    ) {
+      return '/training-admin/enrollments';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('venue.'),
+      )
+    ) {
+      return '/training-admin/venues';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p.startsWith('feedback.'),
+      )
+    ) {
+      return '/training-admin/feedback';
+    }
+    if (
+      permissions.some(
+        (p) =>
+          p === 'course.browse',
+      )
+    ) {
+      return '/learner/catalog';
+    }
+  }
+
+  return '/learner';
+}
+

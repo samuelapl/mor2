@@ -74,8 +74,8 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: ['course.view.all', 'course.approve_reject'],
     },
     {
-      label: 'Pending Approvals',
-      href: '/content-approver/pending-approvals',
+      label: 'Pending Course Approvals',
+      href: '/system-admin/pending-course-approvals',
       icon: Hourglass,
       permission: 'course.approve_reject',
     },
@@ -135,6 +135,24 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/system-admin/categories',
       icon: Tags,
       permission: 'category.manage',
+    },
+    {
+      label: 'Certificates',
+      icon: Award,
+      children: [
+        {
+          label: 'Certificate Templates',
+          href: '/certificate-templates',
+          icon: FilePlus2,
+          permission: 'CERTIFICATE_TEMPLATE_MANAGE',
+        },
+        {
+          label: 'Manage Certificates',
+          href: '/manage-certificates',
+          icon: Award,
+          permission: 'CERTIFICATE_MANAGE',
+        },
+      ],
     },
   ],
   trainer: [
@@ -222,7 +240,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
           permission: 'user.manage',
         },
         {
-          label: 'Actor Registration',
+          label: 'User Registration',
           href: '/system-admin/register-actor',
           icon: UserCog,
           permission: 'user.manage',
@@ -242,10 +260,22 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       permission: 'course.approve_reject',
     },
     {
-      label: 'Certificate Templates',
-      href: '/certificate-templates',
-      icon: FilePlus2,
-      permission: 'certificate.manage',
+      label: 'Certificates',
+      icon: Award,
+      children: [
+        {
+          label: 'Certificate Templates',
+          href: '/certificate-templates',
+          icon: FilePlus2,
+          permission: 'CERTIFICATE_TEMPLATE_MANAGE',
+        },
+        {
+          label: 'Manage Certificates',
+          href: '/manage-certificates',
+          icon: Award,
+          permission: 'CERTIFICATE_MANAGE',
+        },
+      ],
     },
     {
       label: 'Question Bank',
@@ -337,13 +367,23 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/system-admin/register-actor': ['user.manage'],
   '/system-admin/bulk-register': ['user.manage'],
   '/system-admin/pending-course-approvals': ['course.approve_reject'],
-  '/certificate-templates': ['certificate.manage'],
-  '/system-admin/certificate-templates': ['certificate.manage'],
+  '/certificate-templates': ['CERTIFICATE_TEMPLATE_MANAGE'],
+  '/manage-certificates': ['CERTIFICATE_MANAGE'],
+  '/system-admin/certificate-templates': ['CERTIFICATE_TEMPLATE_MANAGE'],
   '/system-admin/settings': ['user.manage', 'role.manage', 'permission.manage'],
   '/system-admin/audit-logs': ['audit.view'],
   '/system-admin/categories': ['category.manage'],
+  '/learner': [
+    'course.browse',
+    'progress.view',
+    'progress.mark_own',
+    'attendance.checkin',
+    'enrollment.self',
+  ],
   '/learner/catalog': ['course.browse'],
-  '/learner/certificates': ['certificate.view', 'certificate.manage'],
+  '/learner/my-courses': ['course.browse', 'enrollment.self', 'progress.mark_own'],
+  '/learner/courses': ['course.browse', 'enrollment.self', 'progress.mark_own'],
+  '/learner/certificates': ['certificate.view'],
   '/learner/progress': ['progress.view', 'progress.mark_own'],
   '/training-admin/feedback': ['feedback.manage', 'feedback.view'],
 };
@@ -355,6 +395,66 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
  * these nav items automatically appear in their sidebar navigation!
  */
 export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Courses',
+    href: '/courses',
+    icon: BookOpen,
+    permission: ['course.view.all', 'course.view.assigned', 'course.view.own', 'course.create'],
+  },
+  {
+    label: 'Create Course',
+    href: '/course-owner/create-course',
+    icon: FilePlus2,
+    permission: 'course.create',
+  },
+  {
+    label: 'Attendance',
+    href: '/trainer/attendance',
+    icon: ClipboardCheck,
+    permission: ['attendance.view', 'attendance.manage', 'attendance.override'],
+  },
+  {
+    label: 'Create Quiz',
+    href: '/trainer/create-quiz',
+    icon: FileQuestion,
+    permission: 'quiz.create',
+  },
+  {
+    label: 'Venues & Facilities',
+    href: '/training-admin/venues',
+    icon: Building2,
+    permission: 'venue.manage',
+  },
+  {
+    label: 'Available Courses',
+    href: '/learner/catalog',
+    icon: Store,
+    permission: 'course.browse',
+  },
+  {
+    label: 'My Courses',
+    href: '/learner/my-courses',
+    icon: BookOpen,
+    permission: ['course.browse', 'enrollment.self', 'progress.mark_own'],
+  },
+  {
+    label: 'Live Sessions',
+    href: '/learner/live-sessions',
+    icon: Video,
+    permission: ['attendance.checkin', 'course.browse'],
+  },
+  {
+    label: 'My Certificates',
+    href: '/learner/certificates',
+    icon: Award,
+    permission: 'certificate.view',
+  },
+  {
+    label: 'Progress',
+    href: '/learner/progress',
+    icon: BarChart3,
+    permission: ['progress.view', 'progress.mark_own'],
+  },
   {
     label: 'Course Feedback',
     href: '/training-admin/feedback',
@@ -392,16 +492,28 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     permission: ['student.manage', 'student.view', 'enrollment.view_all'],
   },
   {
-    label: 'Pending Approvals',
-    href: '/content-approver/pending-approvals',
+    label: 'Pending Course Approvals',
+    href: '/system-admin/pending-course-approvals',
     icon: Hourglass,
     permission: 'course.approve_reject',
   },
   {
-    label: 'Certificate Templates',
-    href: '/certificate-templates',
-    icon: FilePlus2,
-    permission: 'certificate.manage',
+    label: 'Certificates',
+    icon: Award,
+    children: [
+      {
+        label: 'Certificate Templates',
+        href: '/certificate-templates',
+        icon: FilePlus2,
+        permission: 'CERTIFICATE_TEMPLATE_MANAGE',
+      },
+      {
+        label: 'Manage Certificates',
+        href: '/manage-certificates',
+        icon: Award,
+        permission: 'CERTIFICATE_MANAGE',
+      },
+    ],
   },
   {
     label: 'Registration',
@@ -414,7 +526,7 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
         permission: 'user.manage',
       },
       {
-        label: 'Actor Registration',
+        label: 'User Registration',
         href: '/system-admin/register-actor',
         icon: UserCog,
         permission: 'user.manage',

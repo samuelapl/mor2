@@ -26,6 +26,10 @@
     text-rendering: optimizeLegibility;
   }
 
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), 'Poppins', 'Noto Sans Ethiopic', sans-serif;
+  }
+
   ::selection {
     background: rgb(99 102 241 / 0.2);
     color: rgb(30 27 75);

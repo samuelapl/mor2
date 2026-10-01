@@ -26,7 +26,7 @@ export default function AccountMenu({ collapsed = false }: AccountMenuProps) {
         onClick={() => setAccountOpen(true)}
         title={collapsed ? accountLabel : undefined}
         className={cn(
-          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900',
+          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
           collapsed && 'justify-center px-0',
         )}
       >
@@ -38,7 +38,7 @@ export default function AccountMenu({ collapsed = false }: AccountMenuProps) {
         onClick={() => setHelpOpen(true)}
         title={collapsed ? helpLabel : undefined}
         className={cn(
-          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900',
+          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
           collapsed && 'justify-center px-0',
         )}
       >

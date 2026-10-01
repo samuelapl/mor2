@@ -57,10 +57,12 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Progress: { en: 'Progress', am: 'የመማር እድገት' },
   Registration: { en: 'Registration', am: 'ምዝገባ' },
   'Approve Registration': { en: 'Approve Registration', am: 'ምዝገባ ማጽደቅ' },
-  'Actor Registration': { en: 'Actor Registration', am: 'አዲስ ተጠቃሚ መመዝገቢያ' },
+  'User Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
+  'Actor Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   'Bulk Register': { en: 'Bulk Register', am: 'በጅምላ መመዝገቢያ' },
   'Pending Course Approvals': { en: 'Pending Course Approvals', am: 'ማጽደቅ የሚጠብቁ ኮርሶች' },
   'Certificate Templates': { en: 'Certificate Templates', am: 'የሰርተፊኬት ቅጾች' },
+  'Manage Certificates': { en: 'Manage Certificates', am: 'ሰርተፊኬቶችን ያስተዳድሩ' },
   'Users & Roles': { en: 'Users & Roles', am: 'ተጠቃሚዎች እና ሚናዎች' },
   'Roles & Permissions': { en: 'Roles & Permissions', am: 'ሚናዎች እና ፈቃዶች' },
   Policies: { en: 'Policies', am: 'መመሪያዎች እና ደንቦች' },
@@ -72,7 +74,8 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Navigation: { en: 'Navigation', am: 'አቅጣጫ መጠቆሚያ' },
   Account: { en: 'Account', am: 'የተጠቃሚ መለያ' },
   'Help & Support': { en: 'Help & Support', am: 'እርዳታ እና ድጋፍ' },
-  'Switch role / Sign out': { en: 'Switch role / Sign out', am: 'መለያ ቀይር / ውጣ' },
+  'Log out': { en: 'Log out', am: 'ውጣ' },
+  'Switch role / Sign out': { en: 'Log out', am: 'ውጣ' },
   'Learning Management System': { en: 'Learning Management System', am: 'የትምህርት አስተዳደር ሥርዓት' },
 };
 
@@ -284,10 +287,10 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Public sign-ups require your approval before learners can sign in.',
     am: 'ተማሪዎች ከመግባታቸው በፊት የአስተዳዳሪ ማጽደቅ የሚያስፈልጋቸው ምዝገባዎች።',
   },
-  registerActorTitle: { en: 'Register Actor', am: 'አዲስ ተጠቃሚ መመዝገቢያ' },
+  registerActorTitle: { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   registerActorDesc: {
-    en: 'Provision administrative accounts and assign platform responsibilities.',
-    am: 'የአስተዳደር መለያዎችን ይፍጠሩ እና ኃላፊነቶችን ይመድቡ።',
+    en: 'Manually register a user account with any role. The account is created active and pre-approved.',
+    am: 'ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል።',
   },
   bulkRegisterTitle: { en: 'Bulk User Registration', am: 'በጅምላ ተጠቃሚዎችን መመዝገቢያ' },
   bulkRegisterDesc: {

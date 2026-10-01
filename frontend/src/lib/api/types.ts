@@ -1,5 +1,11 @@
 export type BackendRoleName =
-  'SYSTEM_ADMIN' | 'TRAINING_ADMIN' | 'COURSE_OWNER' | 'TRAINER' | 'CONTENT_APPROVER' | 'LEARNER';
+  | 'SYSTEM_ADMIN'
+  | 'TRAINING_ADMIN'
+  | 'COURSE_OWNER'
+  | 'TRAINER'
+  | 'CONTENT_APPROVER'
+  | 'LEARNER'
+  | (string & {});
 
 export type BackendCourseStatus =
   'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
@@ -57,6 +63,7 @@ export interface ApiFirstLoginChallenge {
   challengeToken: string;
   /** Masked, e.g. "ab•••@mor.gov.et". */
   email: string;
+  devCode?: string;
 }
 
 export interface ApiAuthRegisterResponse {
@@ -440,8 +447,13 @@ export interface ApiLearnerProgress {
 
 export interface ApiCertificate {
   id: string;
+  userId?: string;
   certificateNumber: string;
   verificationCode: string;
+  status?: 'ACTIVE' | 'REVOKED' | 'EXPIRED' | string;
+  revokedAt?: string | null;
+  revokedReason?: string | null;
+  revokedById?: string | null;
   issuedAt: string;
   expiresAt: string;
   pdfFileUrl: string | null;
@@ -450,7 +462,7 @@ export interface ApiCertificate {
   templateId: string | null;
   template?: ApiCertificateTemplate | null;
   user?: { id: string; firstName: string; lastName: string; email: string };
-  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string };
+  course: { id: string; title?: string; titleEn?: string; titleAm?: string; code: string; estimatedHours?: number | null };
 }
 
 export type BackendCertificateFieldAlign = 'left' | 'center' | 'right';
@@ -476,6 +488,8 @@ export interface ApiCertificateTemplate {
   name: string;
   description: string | null;
   isActive: boolean;
+  isArchived?: boolean;
+  inUseCount?: number;
   backgroundUrl: string | null;
   fields: ApiCertificateField[];
   version: number;
@@ -935,6 +949,7 @@ export interface CreateActorBody {
   phone?: string;
   locale?: 'en' | 'am';
   primaryVenueId?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface CreateActorResult {

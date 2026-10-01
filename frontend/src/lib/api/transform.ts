@@ -53,12 +53,18 @@ const ROLE_FE_TO_API: Record<Role, BackendRoleName> = {
   learner: 'LEARNER',
 };
 
-export function roleFromApi(code: BackendRoleName): Role {
-  return ROLE_API_TO_FE[code] ?? 'learner';
+export function roleFromApi(code: BackendRoleName | string): Role {
+  if (ROLE_API_TO_FE[code as BackendRoleName]) {
+    return ROLE_API_TO_FE[code as BackendRoleName];
+  }
+  return (code ? code.toLowerCase() : 'learner') as Role;
 }
 
-export function roleToApi(role: Role): BackendRoleName {
-  return ROLE_FE_TO_API[role] ?? 'LEARNER';
+export function roleToApi(role: Role | string): BackendRoleName {
+  if (ROLE_FE_TO_API[role as Role]) {
+    return ROLE_FE_TO_API[role as Role];
+  }
+  return (role ? role.trim().toUpperCase().replace(/\s+/g, '_') : 'LEARNER') as BackendRoleName;
 }
 
 /* -------------------------------------------------------------------------- */

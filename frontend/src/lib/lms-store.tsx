@@ -284,9 +284,20 @@ interface LmsContextValue {
     lastName: string;
     email: string;
     password: string;
-    role: Role;
+    role: Role | string;
     phone?: string;
     primaryVenueId?: string;
+    mustChangePassword?: boolean;
+  }) => Promise<ActionResult>;
+  registerUser: (input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: Role | string;
+    phone?: string;
+    primaryVenueId?: string;
+    mustChangePassword?: boolean;
   }) => Promise<ActionResult>;
   updateProfile: (input: {
     firstName?: string;
@@ -523,7 +534,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         persistLocale(res.user.locale);
       }
       await reloadData(res.user);
-      return { ok: true, role: res.user.role };
+      return { ok: true, role: res.user.role, user: res.user };
     },
     [reloadData],
   );
@@ -533,11 +544,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       try {
         const res = await apiLogin(email.trim(), password);
         if ('passwordChangeRequired' in res) {
-          saveFirstLoginChallenge({ challengeToken: res.challengeToken, email: res.email });
+          saveFirstLoginChallenge({
+            challengeToken: res.challengeToken,
+            email: res.email,
+            devCode: res.devCode,
+          });
           return {
             ok: false,
             passwordChangeRequired: true,
             message: 'You need to set a new password before continuing.',
+            devCode: res.devCode,
           };
         }
         return await enterSession(res);
@@ -882,13 +898,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           role: roleToApi(input.role),
           phone: input.phone || undefined,
           primaryVenueId: input.primaryVenueId || undefined,
+          mustChangePassword: input.mustChangePassword,
         });
         await reloadData(currentUserRef.current);
         return { ok: true };
       } catch (err) {
         return {
           ok: false,
-          message: errorMessage(err, 'Failed to register actor.'),
+          message: errorMessage(err, 'Failed to register user.'),
         };
       }
     },
@@ -1657,6 +1674,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       bulkUserAction,
       bulkRegisterUsers,
       registerActor,
+      registerUser: registerActor,
       updateProfile,
       changePassword,
       updateLocale,

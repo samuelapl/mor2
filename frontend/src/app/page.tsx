@@ -256,7 +256,7 @@ export default function LandingPage() {
     {
       question: tBilingual('How do role-based dashboards work?', 'የስራ ድርሻ ዳሽቦርዶች እንዴት ይሰራሉ?'),
       answer: tBilingual(
-        'Each account opens a dedicated dashboard tailored to that role — course owners manage courses, trainers run sessions, learners track progress, and system admins audit activity. Use “Switch role” in the sidebar to return to the sign-in page.',
+        'Each account opens a dedicated dashboard tailored to that role — course owners manage courses, trainers run sessions, learners track progress, and system admins audit activity. Use “Log out” in the sidebar to return to the sign-in page.',
         'እያንዳንዱ አካውንት ለተመደበው የስራ ድርሻ የተዘጋጀ ዳሽቦርድ ይከፍታል - የኮርስ ባለቤቶች ኮርሶችን ያስተዳድራሉ፣ አሰልጣኞች ስብሰባዎችን ይመራሉ፣ ተማሪዎች ትምህርታቸውን ይከታተላሉ፣ አስተዳዳሪዎች ደግሞ የስርዓቱን እንቅስቃሴ ይቆጣጠራሉ።',
       ),
     },

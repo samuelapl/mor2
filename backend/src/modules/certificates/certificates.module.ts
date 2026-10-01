@@ -6,9 +6,11 @@ import { CertificateTemplatesController } from './templates/certificate-template
 import { PrismaService } from '@config/prisma.service';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { FilesModule } from '@modules/files/files.module';
+import { AuditModule } from '@modules/audit/audit.module';
+import { PermissionsModule } from '@modules/permissions/permissions.module';
 
 @Module({
-  imports: [NotificationsModule, FilesModule],
+  imports: [NotificationsModule, FilesModule, AuditModule, PermissionsModule],
   controllers: [CertificatesController, CertificateTemplatesController],
   providers: [CertificatesService, CertificateTemplatesService, PrismaService],
   exports: [CertificatesService],

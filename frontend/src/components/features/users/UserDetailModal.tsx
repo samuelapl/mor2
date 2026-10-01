@@ -36,6 +36,7 @@ interface UserDetailModalProps {
   onSuspend: (userId: string) => void;
   onReactivate: (userId: string) => void;
   isLoading?: boolean;
+  roleOptions?: { name: string; label: string }[];
 }
 
 export function UserDetailModal({
@@ -47,9 +48,14 @@ export function UserDetailModal({
   onSuspend,
   onReactivate,
   isLoading = false,
+  roleOptions,
 }: UserDetailModalProps) {
   const { can } = usePermissions();
   const canManage = can('user.manage');
+
+  const options = roleOptions && roleOptions.length > 0
+    ? roleOptions
+    : ROLES.map((r) => ({ name: r, label: ROLE_LABELS[r] ?? r }));
 
   return (
     <Modal
@@ -93,14 +99,16 @@ export function UserDetailModal({
                     onChange={(event) => onChangeRole(user.id, event.target.value as Role)}
                     className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-400"
                   >
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>
-                        {ROLE_LABELS[r]}
+                    {options.map((r) => (
+                      <option key={r.name} value={r.name.toLowerCase()}>
+                        {r.label}
                       </option>
                     ))}
                   </select>
                 ) : (
-                  <Badge variant="indigo">{ROLE_LABELS[user.role]}</Badge>
+                  <Badge variant="indigo">
+                    {options.find((r) => r.name.toLowerCase() === user.role.toLowerCase())?.label ?? (ROLE_LABELS[user.role] ?? user.role)}
+                  </Badge>
                 )
               }
             />
