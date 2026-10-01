@@ -662,9 +662,7 @@ export class CoursesService {
     });
   }
 
-  // Course Owners may only archive/delete a course while it's still a DRAFT — Training
-  // Admin/System Admin are unrestricted. Enforced here, not by the permission-code model,
-  // since it depends on the course's current status, not just the actor's role.
+
   private assertOwnerCanActOnDraftOnly(actorRoles: string[], course: { status: CourseStatus }) {
     const isOwnerOnly =
       actorRoles.includes(RoleName.COURSE_OWNER) &&

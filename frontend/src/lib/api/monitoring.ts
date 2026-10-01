@@ -220,6 +220,9 @@ export function submitLiveSessionQuizResponse(
     questionId: string;
     selectedOptionIds: string[];
     responseDurationSeconds: number;
+    questionTitle?: string;
+    options?: string[];
+    correctAnswer?: string;
   },
 ): Promise<{ isCorrect: boolean; score: number; explanation?: string }> {
   return api<{ isCorrect: boolean; score: number; explanation?: string }>(

@@ -10,6 +10,7 @@ import {
   QrCode,
   RefreshCw,
   Search,
+  Info,
   Users,
   Video,
   X,
@@ -29,13 +30,14 @@ import { SessionTable, type SessionRow } from '@/components/features/sessions/sh
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 import { DynamicAttendanceModal } from '@/components/features/sessions/shared/DynamicAttendanceModal';
 import { LearnerCheckInModal } from '@/components/features/sessions/in-person/LearnerCheckInModal';
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import { isInPersonSession } from '@/lib/session-mode';
 
 export default function LearnerLiveSessionsPage() {
-  const { lang, courses: allCourses, currentUser } = useLms();
+  const { lang, courses: allCourses, currentUser, userName } = useLms();
   const { tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';
   const courses = useMemo(
@@ -51,6 +53,7 @@ export default function LearnerLiveSessionsPage() {
   const [selectedAttendanceSessionId, setSelectedAttendanceSessionId] = useState<string | null>(
     null,
   );
+  const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
   const [checkInSession, setCheckInSession] = useState<ApiLiveSession | null>(null);
   const [inspectVenueSession, setInspectVenueSession] = useState<ApiLiveSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,14 +90,33 @@ export default function LearnerLiveSessionsPage() {
     });
   }, [sessions, selectedCourseFilter, searchQuery, courses]);
 
+  const trainerNameFor = (s: ApiLiveSession) => {
+    if (s.trainer) return `${s.trainer.firstName || ''} ${s.trainer.lastName || ''}`.trim();
+    if (s.trainerId) {
+      const name = userName(s.trainerId);
+      if (name && name !== 'Unknown') return name;
+    }
+    const course = allCourses.find((c) => c.id === s.courseId);
+    if (course?.trainerIds && course.trainerIds.length > 0) {
+      for (const tId of course.trainerIds) {
+        const name = userName(tId);
+        if (name && name !== 'Unknown') return name;
+      }
+    } else if (course?.trainerId) {
+      const name = userName(course.trainerId);
+      if (name && name !== 'Unknown') return name;
+    }
+    return 'Assigned Trainer';
+  };
+
   const rows = useMemo(() => {
     return filteredSessions.map<SessionRow>((session) => ({
       session,
       courseTitle: session.course?.title || session.course?.titleEn || 'Course Session',
       courseCode: session.course?.code || 'TRAINING',
-      trainerName: 'Assigned Trainer',
+      trainerName: trainerNameFor(session),
     }));
-  }, [filteredSessions]);
+  }, [filteredSessions, allCourses, userName]);
 
   const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
     rows,
@@ -231,13 +253,13 @@ export default function LearnerLiveSessionsPage() {
                 <div className="flex items-center justify-end gap-1.5">
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedAttendanceSessionId(row.session.id)}
-                    className="gap-1.5 text-xs text-slate-700 border-slate-200 hover:bg-slate-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
-                    title="View session attendees and verification status"
+                    variant="ghost"
+                    onClick={() => setSelectedDetailId(row.session.id)}
+                    className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg shrink-0"
+                    title={tBilingual('View Session Details', 'የክፍለ-ጊዜውን ዝርዝር ተመልከት')}
                   >
-                    <Users className="h-3.5 w-3.5 text-indigo-600" />
-                    {tBilingual('Attendees', 'ተሳታፊዎች')}
+                    <Info className="h-4 w-4" />
+                    <span className="sr-only">Details</span>
                   </Button>
 
                   {isPerson && row.session.venue && (
@@ -355,6 +377,21 @@ export default function LearnerLiveSessionsPage() {
           courseCode={inspectVenueSession.course?.code}
         />
       ) : null}
+
+      {selectedDetailId && (
+        <SessionDetailModal
+          open={Boolean(selectedDetailId)}
+          sessionId={selectedDetailId}
+          onClose={() => setSelectedDetailId(null)}
+          userRole="learner"
+          onJoin={() => {
+            const target = sessions.find((s) => s.id === selectedDetailId);
+            if (target) {
+              handleJoin(target);
+            }
+          }}
+        />
+      )}
 
       <div className="mt-5 flex items-center gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-500 border border-slate-200/60">
         <Video className="h-4 w-4 text-indigo-600 flex-shrink-0" />

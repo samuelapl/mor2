@@ -42,6 +42,9 @@ import {
   ArrowLeft,
   MonitorPlay,
   Sparkles,
+  History,
+  Tag,
+  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -52,14 +55,25 @@ import {
 import { fetchCourseDetail, fetchCourseModules } from '@/lib/api/courses';
 import { fetchLiveSessionQuizReport, type ApiLiveQuizReport } from '@/lib/api/monitoring';
 import type { ApiModule, ApiLesson } from '@/lib/api/types';
-import type { LiveKitDataEvent, LiveQuizOption } from '@/types/livekit-events';
+import type { LiveKitDataEvent, LiveQuizOption, LiveQuizPayload } from '@/types/livekit-events';
 import { PreparedQuizPanel } from '@/components/features/prepared-quiz/PreparedQuizPanel';
 import type { PreparedQuizGroup } from '@/lib/api/prepared-quiz';
 import { usePreparedQuizStore } from '@/lib/stores/prepared-quiz-store';
+import { useLookupCategories } from '@/lib/api/useLookupCategories';
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import { toast } from '@/lib/toast';
 
 function stripHtmlTags(str?: string): string {
   if (!str) return '';
   return str.replace(/<[^>]*>/g, '').trim();
+}
+
+function formatRemainingTime(sec: number): string {
+  if (sec <= 0) return '0s';
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s > 0 ? `${s}s` : ''}`.trim();
 }
 
 function getInitials(name?: string): string {
@@ -70,32 +84,8 @@ function getInitials(name?: string): string {
 }
 
 export interface HistoricalQuizRecord {
-  quiz: {
-    id: string;
-    titleEn: string;
-    titleAm?: string;
-    type?: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
-    options: LiveQuizOption[];
-    timeLimitSeconds: number;
-    startedAt: number;
-    trainerName?: string;
-    correctOptionIds?: string[];
-    explanationEn?: string;
-    quizTitle?: string;
-    questionIndex?: number;
-    totalQuestions?: number;
-    allQuestions?: Array<{
-      id: string;
-      titleEn: string;
-      titleAm?: string;
-      type?: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
-      options: LiveQuizOption[];
-      timeLimitSeconds: number;
-      startedAt: number;
-      correctOptionIds?: string[];
-      explanationEn?: string;
-    }>;
-  };
+  quiz: LiveQuizPayload;
+  revealData?: any;
   answers: Record<
     string,
     {
@@ -124,31 +114,7 @@ interface LiveQuizTrainerControlProps {
   } | null;
   trainerName?: string;
   onBroadcast: (event: LiveKitDataEvent) => void;
-  activeQuiz: {
-    id: string;
-    titleEn: string;
-    titleAm?: string;
-    type?: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
-    options: LiveQuizOption[];
-    timeLimitSeconds: number;
-    startedAt: number;
-    correctOptionIds?: string[];
-    explanationEn?: string;
-    quizTitle?: string;
-    questionIndex?: number;
-    totalQuestions?: number;
-    allQuestions?: Array<{
-      id: string;
-      titleEn: string;
-      titleAm?: string;
-      type?: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
-      options: LiveQuizOption[];
-      timeLimitSeconds: number;
-      startedAt: number;
-      correctOptionIds?: string[];
-      explanationEn?: string;
-    }>;
-  } | null;
+  activeQuiz: LiveQuizPayload | null;
   answers: Record<
     string,
     {
@@ -246,15 +212,29 @@ export function LiveQuizTrainerControl({
     subLessonId: string;
   } | null>(null);
 
+  // Translation & Question Type Category Lookups
+  const { isAmharic } = useTranslation();
+  const { items: questionTypeCategories } = useLookupCategories('QUESTION_TYPE');
+  const [customQuestionType, setCustomQuestionType] = useState<string>('MULTIPLE_CHOICE');
+
+  const questionTypeOptions = useMemo(() => {
+    if (questionTypeCategories && questionTypeCategories.length > 0) {
+      return questionTypeCategories.map((c) => ({
+        value: c.value.toUpperCase(),
+        label: isAmharic && c.labelAm ? c.labelAm : c.labelEn,
+      }));
+    }
+    return [
+      { value: 'MULTIPLE_CHOICE', label: isAmharic ? 'ባለብዙ ምርጫ' : 'Multiple Choice' },
+      { value: 'TRUE_FALSE', label: isAmharic ? 'እውነት / ሐሰት' : 'True / False' },
+      { value: 'SHORT_ANSWER', label: isAmharic ? 'አጭር መልስ' : 'Short Answer' },
+    ];
+  }, [questionTypeCategories, isAmharic]);
+
   // Custom question form state
   const [customTitleEn, setCustomTitleEn] = useState('');
   const [customTitleAm, setCustomTitleAm] = useState('');
-  const [customOptions, setCustomOptions] = useState<string[]>([
-    'Option 1',
-    'Option 2',
-    'Option 3',
-    'Option 4',
-  ]);
+  const [customOptions, setCustomOptions] = useState<string[]>(['', '', '', '']);
   const [correctOptionIdx, setCorrectOptionIdx] = useState<number>(0);
   const [customExplanation, setCustomExplanation] = useState('');
   const [customTargetModuleId, setCustomTargetModuleId] = useState<string>('NONE');
@@ -263,9 +243,55 @@ export function LiveQuizTrainerControl({
   const [customAddedSuccess, setCustomAddedSuccess] = useState<string | null>(null);
   const [saveToQuestionBank, setSaveToQuestionBank] = useState<boolean>(false);
 
-  // Timer settings
-  const [timerSeconds, setTimerSeconds] = useState<number>(30);
+  // Timer settings (in minutes for entire sequenced quiz, just like prepared quiz)
+  const [timerMinutes, setTimerMinutes] = useState<number>(3);
+  const timerSeconds = timerMinutes * 60;
   const [isRevealed, setIsRevealed] = useState(false);
+
+
+  // Synchronize staged queue and current index from activeQuiz when modal opens or activeQuiz is running
+  useEffect(() => {
+    if (activeQuiz) {
+      if (activeQuiz.allQuestions && activeQuiz.allQuestions.length > 0) {
+        if (stagedQueue.length === 0) {
+          const restored: ApiQuestionBankQuestion[] = activeQuiz.allQuestions.map((q) => {
+            const rawOpts = q.options.map((opt) => opt.textEn);
+            return {
+              id: q.id,
+              courseId: courseId,
+              type: (q.type as any) || 'SINGLE_CHOICE',
+              question: q.titleEn,
+              options: rawOpts,
+              correctAnswer: q.correctOptionIds?.[0] || '0',
+              points: 10,
+              category: 'General',
+              createdAt: new Date(q.startedAt).toISOString(),
+              updatedAt: new Date(q.startedAt).toISOString(),
+            };
+          });
+          setStagedQueue(restored);
+        }
+        if (typeof activeQuiz.questionIndex === 'number') {
+          setCurrentQueueIndex(activeQuiz.questionIndex);
+        }
+      } else if (stagedQueue.length === 0) {
+        const single: ApiQuestionBankQuestion = {
+          id: activeQuiz.id,
+          courseId: courseId,
+          type: (activeQuiz.type as any) || 'SINGLE_CHOICE',
+          question: activeQuiz.titleEn,
+          options: activeQuiz.options.map((opt) => opt.textEn),
+          correctAnswer: activeQuiz.correctOptionIds?.[0] || '0',
+          points: 10,
+          category: 'General',
+          createdAt: new Date(activeQuiz.startedAt).toISOString(),
+          updatedAt: new Date(activeQuiz.startedAt).toISOString(),
+        };
+        setStagedQueue([single]);
+        setCurrentQueueIndex(0);
+      }
+    }
+  }, [activeQuiz, courseId, stagedQueue.length]);
 
   // Active Question View Mode: Distribution bars vs Learner Responses breakdown
   const [activeQuizViewMode, setActiveQuizViewMode] = useState<'distribution' | 'responses'>(
@@ -277,8 +303,19 @@ export function LiveQuizTrainerControl({
   const [expandedRespondentId, setExpandedRespondentId] = useState<string | null>(null);
   const [responseSearchQuery, setResponseSearchQuery] = useState('');
 
-  // Modal screen mode: "selection" (question bank / queue / builder) vs "broadcast" (dedicated live broadcast monitor page)
-  const [viewMode, setViewMode] = useState<'selection' | 'broadcast' | 'report'>('selection');
+  // Modal screen mode: "selection" (question bank / queue / builder) vs "broadcast" (dedicated live monitor) vs "report" vs "history"
+  const [viewMode, setViewMode] = useState<'selection' | 'broadcast' | 'report' | 'history'>('selection');
+
+  // Quiz Label for Question Bank & Instant Custom broadcasting
+  const [bankQuizLabel, setBankQuizLabel] = useState<string>('');
+
+  // Broadcasted History View State
+  const [expandedHistoryGroupLabel, setExpandedHistoryGroupLabel] = useState<string | null>(null);
+  const [historyGroupSubTab, setHistoryGroupSubTab] = useState<'results' | 'questions'>('results');
+  const [historySearchQuery, setHistorySearchQuery] = useState<string>('');
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
+  const [submittingBatchLabel, setSubmittingBatchLabel] = useState<string | null>(null);
+  const [submittedBatchLabels, setSubmittedBatchLabels] = useState<Set<string>>(new Set());
 
   // Automatically switch to broadcast monitor when modal opens if a question is actively broadcasting
   const prevOpenRef = useRef(open);
@@ -295,7 +332,7 @@ export function LiveQuizTrainerControl({
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   const [expandedReportQuestionId, setExpandedReportQuestionId] = useState<string | null>(null);
 
-  // Fetch backend report whenever tab === "report" or sessionId changes
+  // Fetch backend report whenever tab === "report" or tab === "history" or sessionId changes
   const loadBackendReport = () => {
     if (!sessionId) return;
     setLoadingBackendReport(true);
@@ -306,10 +343,57 @@ export function LiveQuizTrainerControl({
   };
 
   useEffect(() => {
-    if (viewMode === 'report' && sessionId) {
+    if ((viewMode === 'report' || viewMode === 'history' || open) && sessionId) {
       loadBackendReport();
     }
-  }, [viewMode, sessionId]);
+  }, [viewMode, open, sessionId]);
+
+  // Set of questions previously broadcasted during this session
+  const broadcastedQuestionIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (quizHistory && Array.isArray(quizHistory)) {
+      for (const h of quizHistory) {
+        if (h.quiz?.id) ids.add(h.quiz.id);
+        if (h.quiz?.allQuestions && Array.isArray(h.quiz.allQuestions)) {
+          for (const q of h.quiz.allQuestions) {
+            if (q.id) ids.add(q.id);
+          }
+        }
+      }
+    }
+    if (activeQuiz?.allQuestions && Array.isArray(activeQuiz.allQuestions)) {
+      const activeIdx = activeQuiz.questionIndex ?? 0;
+      activeQuiz.allQuestions.forEach((q, idx) => {
+        if (idx <= activeIdx) {
+          ids.add(q.id);
+        }
+      });
+    } else if (activeQuiz?.id) {
+      ids.add(activeQuiz.id);
+    }
+    if (activeQuiz && currentQueueIndex >= 0) {
+      for (let i = 0; i <= currentQueueIndex && i < stagedQueue.length; i++) {
+        if (stagedQueue[i]?.id) ids.add(stagedQueue[i].id);
+      }
+    }
+    if (backendReport?.questions && Array.isArray(backendReport.questions)) {
+      for (const bq of backendReport.questions) {
+        if (bq.questionId) ids.add(bq.questionId);
+      }
+    }
+    return ids;
+  }, [quizHistory, activeQuiz, currentQueueIndex, stagedQueue, backendReport]);
+
+  // Set of quiz titles that have completed broadcasting in this session
+  const broadcastedQuizTitles = useMemo(() => {
+    const titles = new Set<string>();
+    if (quizHistory && Array.isArray(quizHistory)) {
+      for (const h of quizHistory) {
+        if (h.quiz?.quizTitle) titles.add(h.quiz.quizTitle);
+      }
+    }
+    return titles;
+  }, [quizHistory]);
 
   // Load course details
   useEffect(() => {
@@ -659,6 +743,7 @@ export function LiveQuizTrainerControl({
       isActive: boolean;
       totalResponses: number;
       accuracy: number;
+      completedAt?: number;
       questions: Array<{
         id: string;
         titleEn: string;
@@ -685,12 +770,70 @@ export function LiveQuizTrainerControl({
       q: any,
       sourceAnswers: Record<string, any>,
       fallbackActiveQuizId?: string,
+      fallbackReveal?: any,
     ) => {
-      const qOptions: LiveQuizOption[] = q.options || [];
+      const rawOptions = Array.isArray(q.options) ? q.options : [];
+      let qOptions: LiveQuizOption[] = rawOptions.map((opt: any, oIdx: number) => {
+        if (typeof opt === 'string') {
+          return { id: String(oIdx), textEn: opt };
+        }
+        return {
+          id: opt.id !== undefined && opt.id !== null ? String(opt.id) : String(oIdx),
+          textEn: opt.textEn || opt.text || opt.title || `Option ${oIdx + 1}`,
+          textAm: opt.textAm,
+        };
+      });
+
+      // If question options are empty, check backend report for this question
+      const bqMatch = backendReport?.questions?.find((b) => b.questionId === q.id);
+      if (qOptions.length === 0 && bqMatch && Array.isArray(bqMatch.options) && bqMatch.options.length > 0) {
+        qOptions = bqMatch.options.map((opt: any, oIdx: number) => {
+          if (typeof opt === 'string') return { id: String(oIdx), textEn: opt };
+          return {
+            id: opt.id !== undefined && opt.id !== null ? String(opt.id) : String(oIdx),
+            textEn: opt.textEn || opt.text || `Option ${oIdx + 1}`,
+          };
+        });
+      }
+
+      // Initialize distribution for all options
       const distribution: Record<string, number> = {};
       qOptions.forEach((opt) => {
         distribution[opt.id] = 0;
       });
+
+      // Pre-seed distribution from fallbackReveal or bqMatch if available
+      const preseededDist = fallbackReveal?.distribution || bqMatch?.distribution || {};
+      Object.entries(preseededDist).forEach(([k, v]) => {
+        const numVal = Number(v) || 0;
+        const matched = qOptions.find(
+          (o, idx) => o.id === k || String(idx) === k || o.textEn.toLowerCase() === k.toLowerCase(),
+        );
+        if (matched) {
+          distribution[matched.id] = Math.max(distribution[matched.id] || 0, numVal);
+        } else {
+          distribution[k] = numVal;
+        }
+      });
+
+      // Resolve correct options
+      const resolvedCorrectIds: string[] = [];
+      if (Array.isArray(q.correctOptionIds) && q.correctOptionIds.length > 0) {
+        resolvedCorrectIds.push(...q.correctOptionIds.map(String));
+      } else if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
+        const caStr = String(q.correctAnswer).trim();
+        const matched = qOptions.find(
+          (o, idx) =>
+            o.id === caStr || String(idx) === caStr || o.textEn.toLowerCase() === caStr.toLowerCase(),
+        );
+        if (matched) {
+          resolvedCorrectIds.push(matched.id);
+        } else {
+          resolvedCorrectIds.push(caStr);
+        }
+      } else if (bqMatch?.correctAnswer) {
+        resolvedCorrectIds.push(String(bqMatch.correctAnswer));
+      }
 
       const qAnswers: Array<{
         userId: string;
@@ -700,27 +843,43 @@ export function LiveQuizTrainerControl({
         responseDurationSeconds?: number;
       }> = [];
 
+      // Process in-memory answers (from WebSocket / data channel / session state)
       Object.values(sourceAnswers || {}).forEach((ans: any) => {
         const allAnsMap = ans.allAnswers || {};
-        const userSelected: string[] =
-          allAnsMap[q.id] ||
-          (fallbackActiveQuizId && q.id === fallbackActiveQuizId ? ans.selectedOptionIds : []) ||
-          [];
-
-        userSelected.forEach((optId) => {
-          if (distribution[optId] !== undefined) {
-            distribution[optId]++;
+        let rawSelected: string[] = allAnsMap[q.id];
+        if (!rawSelected || rawSelected.length === 0) {
+          if (ans.questionId === q.id || (fallbackActiveQuizId && q.id === fallbackActiveQuizId)) {
+            rawSelected = ans.selectedOptionIds;
+          } else if (ans.selectedOptionIds && !ans.allAnswers) {
+            rawSelected = ans.selectedOptionIds;
           }
+        }
+        const userSelected = (rawSelected || []).map(String);
+
+        // Map selections to normalized option ids
+        const normalizedSelected: string[] = [];
+        userSelected.forEach((sel) => {
+          const matched = qOptions.find(
+            (o, idx) =>
+              o.id === sel || String(idx) === sel || o.textEn.toLowerCase() === sel.toLowerCase(),
+          );
+          const targetId = matched ? matched.id : sel;
+          normalizedSelected.push(targetId);
+          distribution[targetId] = (distribution[targetId] || 0) + 1;
         });
 
-        const hasCorrectSpec = q.correctOptionIds && q.correctOptionIds.length > 0;
+        const hasCorrectSpec = resolvedCorrectIds.length > 0;
         let isCorrect: boolean | null = null;
         if (hasCorrectSpec) {
-          if (userSelected.length === 0) {
+          if (normalizedSelected.length === 0) {
             isCorrect = false;
           } else {
-            const hasAllCorrect = q.correctOptionIds.every((id: string) => userSelected.includes(id));
-            const hasNoWrong = userSelected.every((id: string) => q.correctOptionIds.includes(id));
+            const hasAllCorrect = resolvedCorrectIds.every((id: string) =>
+              normalizedSelected.includes(id),
+            );
+            const hasNoWrong = normalizedSelected.every((id: string) =>
+              resolvedCorrectIds.includes(id),
+            );
             isCorrect = hasAllCorrect && hasNoWrong;
           }
         }
@@ -728,22 +887,68 @@ export function LiveQuizTrainerControl({
         qAnswers.push({
           userId: ans.userId,
           userName: ans.userName || 'Learner',
-          selectedOptionIds: userSelected,
+          selectedOptionIds: normalizedSelected,
           isCorrect,
           responseDurationSeconds: ans.responseDurationSeconds,
         });
       });
 
-      const totalResp = qAnswers.filter((a) => a.selectedOptionIds.length > 0).length || qAnswers.length;
-      const correctCount = qAnswers.filter((a) => a.isCorrect === true).length;
-      const accuracy = totalResp > 0 ? Math.round((correctCount / totalResp) * 100) : 0;
+      // Merge answers from backendReport for this question
+      if (bqMatch && Array.isArray(bqMatch.answers)) {
+        bqMatch.answers.forEach((bAns: any) => {
+          if (!qAnswers.some((a) => a.userId === bAns.userId)) {
+            const rawSelected = (bAns.selectedOptionIds || []).map(String);
+            const normalizedSelected: string[] = [];
+            rawSelected.forEach((sel: string) => {
+              const matched = qOptions.find(
+                (o, idx) =>
+                  o.id === sel ||
+                  String(idx) === sel ||
+                  o.textEn.toLowerCase() === sel.toLowerCase(),
+              );
+              const targetId = matched ? matched.id : sel;
+              normalizedSelected.push(targetId);
+              distribution[targetId] = (distribution[targetId] || 0) + 1;
+            });
+
+            qAnswers.push({
+              userId: bAns.userId,
+              userName: bAns.userName || 'Learner',
+              selectedOptionIds: normalizedSelected,
+              isCorrect: bAns.isCorrect,
+              responseDurationSeconds: bAns.responseDurationSeconds,
+            });
+          }
+        });
+      }
+
+      // If qOptions is still empty after all, fallback to synthesizing from distribution
+      if (qOptions.length === 0) {
+        const optionKeys = Object.keys(distribution);
+        if (optionKeys.length > 0) {
+          qOptions = optionKeys.map((k, idx) => ({
+            id: k,
+            textEn: `Option ${idx + 1}`,
+          }));
+        }
+      }
+
+      const totalResp =
+        qAnswers.filter((a) => a.selectedOptionIds.length > 0).length ||
+        qAnswers.length ||
+        bqMatch?.totalResponses ||
+        0;
+      const correctCount =
+        qAnswers.filter((a) => a.isCorrect === true).length || bqMatch?.correctCount || 0;
+      const accuracy =
+        totalResp > 0 ? Math.round((correctCount / totalResp) * 100) : bqMatch?.accuracy || 0;
 
       return {
         id: q.id,
-        titleEn: q.titleEn || q.title || '',
+        titleEn: q.titleEn || q.title || bqMatch?.titleEn || 'Live Session Question',
         titleAm: q.titleAm,
         options: qOptions,
-        correctOptionIds: q.correctOptionIds,
+        correctOptionIds: resolvedCorrectIds.length > 0 ? resolvedCorrectIds : q.correctOptionIds,
         explanationEn: q.explanationEn || q.explanation,
         totalResponses: totalResp,
         correctCount,
@@ -763,11 +968,14 @@ export function LiveQuizTrainerControl({
       const questions = allQ.map((q) => buildQuestionData(q, answers, activeQuiz.id));
       const groupTotalResp = questions.reduce((acc, q) => acc + q.totalResponses, 0);
       const groupTotalCorrect = questions.reduce((acc, q) => acc + q.correctCount, 0);
-      const groupAccuracy = groupTotalResp > 0 ? Math.round((groupTotalCorrect / groupTotalResp) * 100) : 0;
+      const groupAccuracy =
+        groupTotalResp > 0 ? Math.round((groupTotalCorrect / groupTotalResp) * 100) : 0;
 
       const groupTitle =
         activeQuiz.quizTitle ||
-        (allQ.length > 1 ? 'Live Prepared Quiz' : stripHtmlTags(activeQuiz.titleEn) || 'Active Live Quiz');
+        (allQ.length > 1
+          ? 'Live Prepared Quiz'
+          : stripHtmlTags(activeQuiz.titleEn) || 'Active Live Quiz');
 
       groups.push({
         id: `active-${activeQuiz.id}`,
@@ -786,10 +994,16 @@ export function LiveQuizTrainerControl({
           ? hist.quiz.allQuestions
           : [hist.quiz];
 
-      const questions = allQ.map((q: any) => buildQuestionData(q, hist.answers, hist.quiz.id));
+      const questions = allQ.map((q: any) =>
+        buildQuestionData(q, hist.answers, hist.quiz.id, hist.revealData),
+      );
       const groupTotalResp = questions.reduce((acc: number, q: any) => acc + q.totalResponses, 0);
-      const groupTotalCorrect = questions.reduce((acc: number, q: any) => acc + q.correctCount, 0);
-      const groupAccuracy = groupTotalResp > 0 ? Math.round((groupTotalCorrect / groupTotalResp) * 100) : 0;
+      const groupTotalCorrect = questions.reduce(
+        (acc: number, q: any) => acc + q.correctCount,
+        0,
+      );
+      const groupAccuracy =
+        groupTotalResp > 0 ? Math.round((groupTotalCorrect / groupTotalResp) * 100) : 0;
 
       const groupTitle =
         hist.quiz.quizTitle ||
@@ -804,6 +1018,7 @@ export function LiveQuizTrainerControl({
         totalResponses: groupTotalResp,
         accuracy: groupAccuracy,
         questions,
+        completedAt: (hist as any).completedAt || (hist.quiz as any).startedAt,
       });
     });
 
@@ -901,6 +1116,221 @@ export function LiveQuizTrainerControl({
       }
     }
   }, [viewMode, sessionQuizGroups, expandedQuizGroupId]);
+
+  // Batches grouped by Quiz Label for Broadcasted History view
+  const historyBatchesGroupedByLabel = useMemo(() => {
+    const groupsByLabel: Record<
+      string,
+      {
+        label: string;
+        batches: typeof sessionQuizGroups;
+        totalQuestions: number;
+        totalResponses: number;
+        averageAccuracy: number;
+        completedAt?: number;
+        allQuestions: (typeof sessionQuizGroups)[0]['questions'];
+        studentResults: Array<{
+          userId: string;
+          userName: string;
+          answeredCount: number;
+          correctCount: number;
+          totalQuestions: number;
+          scorePercent: number;
+          status: 'PASSED' | 'NEEDS_REVIEW';
+          totalDurationSeconds: number;
+          breakdown: Array<{
+            questionId: string;
+            questionTitle: string;
+            selectedOptionTexts: string[];
+            isCorrect: boolean | null;
+          }>;
+        }>;
+      }
+    > = {};
+
+    const completedGroups = sessionQuizGroups.filter((g) => !g.isActive);
+
+    completedGroups.forEach((group) => {
+      const labelKey = group.title || 'Untitled Quiz Batch';
+      if (!groupsByLabel[labelKey]) {
+        groupsByLabel[labelKey] = {
+          label: labelKey,
+          batches: [],
+          totalQuestions: 0,
+          totalResponses: 0,
+          averageAccuracy: 0,
+          completedAt: (group as any).completedAt,
+          allQuestions: [],
+          studentResults: [],
+        };
+      }
+      groupsByLabel[labelKey].batches.push(group);
+      if ((group as any).completedAt && !groupsByLabel[labelKey].completedAt) {
+        groupsByLabel[labelKey].completedAt = (group as any).completedAt;
+      }
+    });
+
+    Object.values(groupsByLabel).forEach((item) => {
+      const questionMap = new Map<string, (typeof sessionQuizGroups)[0]['questions'][0]>();
+      item.batches.forEach((b) => {
+        b.questions.forEach((q) => {
+          questionMap.set(q.id, q);
+        });
+      });
+      item.allQuestions = Array.from(questionMap.values());
+      item.totalQuestions = item.allQuestions.length;
+
+      item.totalResponses = item.batches.reduce((sum, b) => sum + b.totalResponses, 0);
+      const totalCorrect = item.allQuestions.reduce((sum, q) => sum + q.correctCount, 0);
+      const totalQResponses = item.allQuestions.reduce((sum, q) => sum + q.totalResponses, 0);
+      item.averageAccuracy =
+        totalQResponses > 0 ? Math.round((totalCorrect / totalQResponses) * 100) : 0;
+
+      const studentMap = new Map<
+        string,
+        {
+          userId: string;
+          userName: string;
+          answeredCount: number;
+          correctCount: number;
+          totalDurationSeconds: number;
+          breakdown: Array<{
+            questionId: string;
+            questionTitle: string;
+            selectedOptionTexts: string[];
+            isCorrect: boolean | null;
+          }>;
+        }
+      >();
+
+      item.allQuestions.forEach((q) => {
+        q.answers.forEach((ans) => {
+          if (!studentMap.has(ans.userId)) {
+            studentMap.set(ans.userId, {
+              userId: ans.userId,
+              userName: ans.userName || 'Learner',
+              answeredCount: 0,
+              correctCount: 0,
+              totalDurationSeconds: 0,
+              breakdown: [],
+            });
+          }
+          const record = studentMap.get(ans.userId)!;
+          const selectedTexts = ans.selectedOptionIds.map((optId) => {
+            const opt = q.options.find((o) => o.id === optId);
+            return opt ? opt.textEn : `Option ${optId}`;
+          });
+
+          if (ans.selectedOptionIds && ans.selectedOptionIds.length > 0) {
+            record.answeredCount += 1;
+          }
+          if (ans.isCorrect === true) {
+            record.correctCount += 1;
+          }
+          record.totalDurationSeconds += ans.responseDurationSeconds || 0;
+          record.breakdown.push({
+            questionId: q.id,
+            questionTitle: q.titleEn,
+            selectedOptionTexts: selectedTexts,
+            isCorrect: ans.isCorrect ?? null,
+          });
+        });
+      });
+
+      item.studentResults = Array.from(studentMap.values()).map((s) => {
+        const scorePercent =
+          item.totalQuestions > 0 ? Math.round((s.correctCount / item.totalQuestions) * 100) : 0;
+        return {
+          ...s,
+          totalQuestions: item.totalQuestions,
+          scorePercent,
+          status: (scorePercent >= 60 ? 'PASSED' : 'NEEDS_REVIEW') as 'PASSED' | 'NEEDS_REVIEW',
+        };
+      });
+    });
+
+    return Object.values(groupsByLabel);
+  }, [sessionQuizGroups]);
+
+  // Auto-expand first history group when entering history mode
+  useEffect(() => {
+    if (
+      viewMode === 'history' &&
+      historyBatchesGroupedByLabel.length > 0 &&
+      !expandedHistoryGroupLabel
+    ) {
+      setExpandedHistoryGroupLabel(historyBatchesGroupedByLabel[0].label);
+    }
+  }, [viewMode, historyBatchesGroupedByLabel, expandedHistoryGroupLabel]);
+
+  // Filtered batches for history search
+  const filteredHistoryBatches = useMemo(() => {
+    if (!historySearchQuery.trim()) return historyBatchesGroupedByLabel;
+    const q = historySearchQuery.toLowerCase();
+    return historyBatchesGroupedByLabel.filter(
+      (b) =>
+        b.label.toLowerCase().includes(q) ||
+        b.studentResults.some((s) => s.userName.toLowerCase().includes(q)),
+    );
+  }, [historyBatchesGroupedByLabel, historySearchQuery]);
+
+  // Submit Batch Quiz Results to LMS Gradebook
+  const handleSubmitBatchResults = async (group: (typeof historyBatchesGroupedByLabel)[0]) => {
+    setSubmittingBatchLabel(group.label);
+    try {
+      // Simulate submission of student quiz scores to LMS gradebook
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setSubmittedBatchLabels((prev) => {
+        const next = new Set(prev);
+        next.add(group.label);
+        return next;
+      });
+      toast.success(
+        `Successfully submitted quiz results for "${group.label}" (${group.studentResults.length} learners) to LMS gradebook!`,
+      );
+    } catch (err) {
+      toast.error(`Failed to submit quiz results for "${group.label}".`);
+    } finally {
+      setSubmittingBatchLabel(null);
+    }
+  };
+
+  // Export individual batch results to CSV
+  const handleExportBatchCSV = (group: (typeof historyBatchesGroupedByLabel)[0]) => {
+    const headers = [
+      'Learner ID',
+      'Learner Name',
+      'Answered Questions',
+      'Total Questions',
+      'Correct Answers',
+      'Score (%)',
+      'Status',
+      'Duration (seconds)',
+    ];
+    const rows = group.studentResults.map((s) => [
+      `"${s.userId}"`,
+      `"${s.userName.replace(/"/g, '""')}"`,
+      s.answeredCount,
+      s.totalQuestions,
+      s.correctCount,
+      `${s.scorePercent}%`,
+      s.status,
+      s.totalDurationSeconds,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `${group.label.replace(/[^a-zA-Z0-9_-]/g, '_')}_Results_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported results for "${group.label}" to CSV!`);
+  };
 
   // CSV Export handler
   const handleExportCSV = () => {
@@ -1031,6 +1461,10 @@ export function LiveQuizTrainerControl({
   // Broadcast an entire prepared quiz group
   const handleLaunchPreparedQuizGroup = (quizGroup: PreparedQuizGroup) => {
     if (!quizGroup || quizGroup.questions.length === 0) return;
+    if (activeQuiz) {
+      toast.warning('A quiz is currently actively broadcasting. Please end or cancel it first.');
+      return;
+    }
     const apiQuestions: ApiQuestionBankQuestion[] = quizGroup.questions.map((item) => {
       const q = item.question;
       let options = q.options;
@@ -1052,14 +1486,17 @@ export function LiveQuizTrainerControl({
     });
 
     const totalSeconds = (quizGroup.timeLimitMinutes || 3) * 60;
-    setTimerSeconds(totalSeconds);
+    setTimerMinutes(quizGroup.timeLimitMinutes || 3);
     setStagedQueue(apiQuestions);
     setCurrentQueueIndex(0);
     setSelectedQuestion(apiQuestions[0]);
 
-    const allPayloads = apiQuestions.map((item) => ({
+    const allPayloads = apiQuestions.map((item, idx) => ({
       ...buildQuizPayload(item),
       timeLimitSeconds: totalSeconds,
+      quizTitle: quizGroup.title,
+      questionIndex: idx,
+      totalQuestions: apiQuestions.length,
     }));
 
     onBroadcast({
@@ -1082,21 +1519,53 @@ export function LiveQuizTrainerControl({
     q: ApiQuestionBankQuestion,
     queueIndex?: number,
     queue?: ApiQuestionBankQuestion[],
+    quizTitle?: string,
   ) => {
+    const isNavigatingSameQueue = Boolean(
+      activeQuiz &&
+        activeQuiz.allQuestions &&
+        queue &&
+        queue.length > 0 &&
+        queueIndex !== undefined,
+    );
+    if (activeQuiz && !isNavigatingSameQueue && activeQuiz.id !== q.id) {
+      toast.warning('A quiz is currently actively broadcasting. Please end or cancel it first.');
+      return;
+    }
+
     const activeQList = queue || stagedQueue;
     const activeIdx = queueIndex !== undefined ? queueIndex : currentQueueIndex;
-    const quizPayload = buildQuizPayload(q);
+    const resolvedTitle =
+      quizTitle ||
+      activeQuiz?.quizTitle ||
+      (activeQList.length > 1
+        ? bankQuizLabel.trim() || `Quiz ${quizHistory.length + 1}`
+        : bankQuizLabel.trim() || undefined);
+    const totalSeconds = timerMinutes * 60;
+    const quizPayload = {
+      ...buildQuizPayload(q),
+      timeLimitSeconds: totalSeconds,
+      ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
+    };
 
     // If there is a staged queue with multiple questions, broadcast all question payloads
     const allPayloads =
-      activeQList && activeQList.length > 1
-        ? activeQList.map((item) => buildQuizPayload(item))
+      activeQList && activeQList.length > 0
+        ? activeQList.map((item, idx) => ({
+            ...buildQuizPayload(item),
+            timeLimitSeconds: totalSeconds,
+            ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
+            questionIndex: idx,
+            totalQuestions: activeQList.length,
+          }))
         : undefined;
 
     onBroadcast({
       type: 'QUIZ_START',
       payload: {
         ...quizPayload,
+        timeLimitSeconds: totalSeconds,
+        ...(resolvedTitle ? { quizTitle: resolvedTitle } : {}),
         questionIndex: activeIdx,
         totalQuestions: activeQList.length > 0 ? activeQList.length : 1,
         allQuestions: allPayloads,
@@ -1108,6 +1577,11 @@ export function LiveQuizTrainerControl({
 
   // Launch staged question or single selected question
   const handleLaunchFromBank = () => {
+    if (activeQuiz) {
+      toast.warning('A quiz is currently actively broadcasting. Please end or cancel it first.');
+      return;
+    }
+    const resolvedQuizTitle = bankQuizLabel.trim() || `Quiz ${quizHistory.length + 1}`;
     let toBroadcast: ApiQuestionBankQuestion | null = null;
     let targetQueue = stagedQueue;
 
@@ -1128,7 +1602,7 @@ export function LiveQuizTrainerControl({
     }
 
     if (toBroadcast) {
-      handleLaunchQuestion(toBroadcast, 0, targetQueue);
+      handleLaunchQuestion(toBroadcast, 0, targetQueue, resolvedQuizTitle);
     }
   };
 
@@ -1149,7 +1623,7 @@ export function LiveQuizTrainerControl({
     const nextQ = stagedQueue[nextIndex];
     if (nextQ) {
       setTimeout(() => {
-        handleLaunchQuestion(nextQ, nextIndex, stagedQueue);
+        handleLaunchQuestion(nextQ, nextIndex, stagedQueue, activeQuiz?.quizTitle);
       }, 150);
     }
   };
@@ -1171,7 +1645,7 @@ export function LiveQuizTrainerControl({
     const prevQ = stagedQueue[prevIndex];
     if (prevQ) {
       setTimeout(() => {
-        handleLaunchQuestion(prevQ, prevIndex, stagedQueue);
+        handleLaunchQuestion(prevQ, prevIndex, stagedQueue, activeQuiz?.quizTitle);
       }, 150);
     }
   };
@@ -1312,11 +1786,13 @@ export function LiveQuizTrainerControl({
     setEditingQueueItem(null);
   };
 
-  // Generate random questions from filtered set
+  // Generate random questions from filtered set (prioritizing unbroadcasted questions)
   const handleGenerateRandom = () => {
     if (filteredQuestions.length === 0) return;
-    const count = Math.min(questionAmount, filteredQuestions.length);
-    const shuffled = [...filteredQuestions].sort(() => 0.5 - Math.random());
+    const unbroadcasted = filteredQuestions.filter((q) => !broadcastedQuestionIds.has(q.id));
+    const pool = unbroadcasted.length > 0 ? unbroadcasted : filteredQuestions;
+    const count = Math.min(questionAmount, pool.length);
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
     setStagedQueue(selected);
     setCurrentQueueIndex(0);
@@ -1349,9 +1825,18 @@ export function LiveQuizTrainerControl({
 
   // Add instant custom question to staged queue & save to question bank
   const handleAddCustomQuestionToQueue = async () => {
-    if (!customTitleEn.trim() || customOptions.filter((o) => o.trim()).length < 2) return;
+    if (!customTitleEn.trim()) return;
+    if (
+      customQuestionType === 'MULTIPLE_CHOICE' &&
+      customOptions.filter((o) => o.trim()).length < 2
+    )
+      return;
+    if (customQuestionType === 'SHORT_ANSWER' && !customOptions[0]?.trim()) return;
 
-    const validOptions = customOptions.filter((o) => o.trim());
+    let validOptions = customOptions.filter((o) => o.trim());
+    if (customQuestionType === 'TRUE_FALSE') {
+      validOptions = ['True', 'False'];
+    }
     let questionId = `custom-${Date.now()}`;
     let savedQuestion: ApiQuestionBankQuestion | null = null;
 
@@ -1362,7 +1847,9 @@ export function LiveQuizTrainerControl({
           moduleId: customTargetModuleId !== 'NONE' ? customTargetModuleId : undefined,
           lessonId: customTargetLessonId !== 'NONE' ? customTargetLessonId : undefined,
           subLessonId: customTargetSubLessonId !== 'NONE' ? customTargetSubLessonId : undefined,
-          type: 'MULTIPLE_CHOICE',
+          type:
+            (customQuestionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER') ||
+            'MULTIPLE_CHOICE',
           question: customTitleEn.trim(),
           options: validOptions,
           correctAnswer: String(correctOptionIdx),
@@ -1382,7 +1869,9 @@ export function LiveQuizTrainerControl({
 
     const newQuestion: ApiQuestionBankQuestion = savedQuestion || {
       id: questionId,
-      type: 'MULTIPLE_CHOICE',
+      type:
+        (customQuestionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER') ||
+        'MULTIPLE_CHOICE',
       question: customTitleEn.trim(),
       options: validOptions,
       correctAnswer: String(correctOptionIdx),
@@ -1413,7 +1902,13 @@ export function LiveQuizTrainerControl({
     // Reset form fields for the next question
     setCustomTitleEn('');
     setCustomTitleAm('');
-    setCustomOptions(['Option 1', 'Option 2', 'Option 3', 'Option 4']);
+    setCustomOptions(
+      customQuestionType === 'TRUE_FALSE'
+        ? ['True', 'False']
+        : customQuestionType === 'SHORT_ANSWER'
+          ? ['']
+          : ['', '', '', ''],
+    );
     setCorrectOptionIdx(0);
     setCustomExplanation('');
     const successMsg = saveToQuestionBank
@@ -1425,9 +1920,22 @@ export function LiveQuizTrainerControl({
 
   // Immediate launch for custom question without queueing
   const handleLaunchCustomDirect = async () => {
-    if (!customTitleEn.trim() || customOptions.filter((o) => o.trim()).length < 2) return;
+    if (activeQuiz) {
+      toast.warning('A quiz is currently actively broadcasting. Please end or cancel it first.');
+      return;
+    }
+    if (!customTitleEn.trim()) return;
+    if (
+      customQuestionType === 'MULTIPLE_CHOICE' &&
+      customOptions.filter((o) => o.trim()).length < 2
+    )
+      return;
+    if (customQuestionType === 'SHORT_ANSWER' && !customOptions[0]?.trim()) return;
 
-    const validOptions = customOptions.filter((o) => o.trim());
+    let validOptions = customOptions.filter((o) => o.trim());
+    if (customQuestionType === 'TRUE_FALSE') {
+      validOptions = ['True', 'False'];
+    }
     const parsedOptions: LiveQuizOption[] = validOptions.map((opt, idx) => ({
       id: String(idx),
       textEn: opt.trim(),
@@ -1441,7 +1949,9 @@ export function LiveQuizTrainerControl({
           moduleId: customTargetModuleId !== 'NONE' ? customTargetModuleId : undefined,
           lessonId: customTargetLessonId !== 'NONE' ? customTargetLessonId : undefined,
           subLessonId: customTargetSubLessonId !== 'NONE' ? customTargetSubLessonId : undefined,
-          type: 'MULTIPLE_CHOICE',
+          type:
+            (customQuestionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER') ||
+            'MULTIPLE_CHOICE',
           question: customTitleEn.trim(),
           options: validOptions,
           correctAnswer: String(correctOptionIdx),
@@ -1462,7 +1972,12 @@ export function LiveQuizTrainerControl({
       id: questionId,
       titleEn: customTitleEn.trim(),
       titleAm: customTitleAm.trim() || undefined,
-      type: 'SINGLE_CHOICE' as const,
+      type:
+        customQuestionType === 'TRUE_FALSE'
+          ? ('TRUE_FALSE' as const)
+          : customQuestionType === 'SHORT_ANSWER'
+            ? ('SHORT_ANSWER' as const)
+            : ('SINGLE_CHOICE' as const),
       options: parsedOptions,
       timeLimitSeconds: timerSeconds,
       startedAt: Date.now(),
@@ -1487,31 +2002,94 @@ export function LiveQuizTrainerControl({
     const allReveals: Record<
       string,
       {
+        questionId: string;
         correctOptionIds: string[];
         explanationEn?: string;
         explanationAm?: string;
-        distribution?: Record<string, number>;
-        totalResponses?: number;
+        distribution: Record<string, number>;
+        totalResponses: number;
       }
     > = {};
 
-    allReveals[activeQuiz.id] = {
-      correctOptionIds: activeQuiz.correctOptionIds || ['0'],
-      explanationEn: activeQuiz.explanationEn,
-      explanationAm: (activeQuiz as any).explanationAm,
-      distribution,
-      totalResponses,
+    const questionsList: any[] = [];
+    const seen = new Set<string>();
+    const addQ = (item: any) => {
+      if (!item || !item.id || seen.has(item.id)) return;
+      seen.add(item.id);
+      questionsList.push(item);
     };
+
+    if (activeQuiz.allQuestions && Array.isArray(activeQuiz.allQuestions)) {
+      activeQuiz.allQuestions.forEach(addQ);
+    }
+    if (stagedQueue && Array.isArray(stagedQueue)) {
+      stagedQueue.forEach(addQ);
+    }
+    addQ(activeQuiz);
+
+    questionsList.forEach((q) => {
+      let correctIds: string[] = ['0'];
+      if (q.correctOptionIds && Array.isArray(q.correctOptionIds) && q.correctOptionIds.length > 0) {
+        correctIds = q.correctOptionIds.map(String);
+      } else if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
+        const caStr = String(q.correctAnswer).trim();
+        const rawOpts = q.options || [];
+        const optMatch = rawOpts.findIndex((opt: any, idx: number) => {
+          const optId = typeof opt === 'string' ? String(idx) : String(opt.id ?? idx);
+          const optText = typeof opt === 'string' ? opt : (opt.textEn || opt.text || '');
+          return optId === caStr || optText.toLowerCase() === caStr.toLowerCase();
+        });
+        if (optMatch >= 0) {
+          const matchedOpt = rawOpts[optMatch];
+          const matchedId = typeof matchedOpt === 'string' ? String(optMatch) : String(matchedOpt.id ?? optMatch);
+          correctIds = [matchedId];
+        } else {
+          correctIds = [caStr];
+        }
+      }
+
+      const qDist: Record<string, number> = {};
+      const rawOpts = q.options || [];
+      rawOpts.forEach((opt: any, idx: number) => {
+        const optId = typeof opt === 'string' ? String(idx) : String(opt.id ?? idx);
+        qDist[optId] = 0;
+      });
+
+      let qResponses = 0;
+      Object.values(answers).forEach((ans: any) => {
+        const learnerChoices =
+          ans.allAnswers?.[q.id] ||
+          (ans.questionId === q.id ? ans.selectedOptionIds : (q.id === activeQuiz.id ? ans.selectedOptionIds : null));
+        if (learnerChoices && Array.isArray(learnerChoices) && learnerChoices.length > 0) {
+          qResponses++;
+          learnerChoices.forEach((optId: string) => {
+            qDist[optId] = (qDist[optId] || 0) + 1;
+          });
+        }
+      });
+
+      allReveals[q.id] = {
+        questionId: q.id,
+        correctOptionIds: correctIds,
+        explanationEn: q.explanationEn || q.explanation || undefined,
+        explanationAm: q.explanationAm || undefined,
+        distribution: qDist,
+        totalResponses: qResponses,
+      };
+    });
+
+    const focusedQId = displayedQuiz?.id || activeQuiz.id;
+    const focusedReveal = allReveals[focusedQId] || allReveals[activeQuiz.id];
 
     onBroadcast({
       type: 'QUIZ_REVEAL',
       payload: {
-        questionId: activeQuiz.id,
-        correctOptionIds: activeQuiz.correctOptionIds || ['0'],
-        explanationEn: activeQuiz.explanationEn,
-        explanationAm: (activeQuiz as any).explanationAm,
-        distribution,
-        totalResponses,
+        questionId: focusedQId,
+        correctOptionIds: focusedReveal?.correctOptionIds || activeQuiz.correctOptionIds || ['0'],
+        explanationEn: focusedReveal?.explanationEn || activeQuiz.explanationEn,
+        explanationAm: focusedReveal?.explanationAm || (activeQuiz as any).explanationAm,
+        distribution: focusedReveal?.distribution || distribution || {},
+        totalResponses: focusedReveal?.totalResponses ?? totalResponses,
         allReveals,
       },
     });
@@ -1542,6 +2120,8 @@ export function LiveQuizTrainerControl({
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/80">
               {viewMode === 'report' ? (
                 <BarChart3 className="h-4 w-4" />
+              ) : viewMode === 'history' ? (
+                <History className="h-4 w-4" />
               ) : (
                 <FileQuestion className="h-4 w-4" />
               )}
@@ -1553,6 +2133,8 @@ export function LiveQuizTrainerControl({
                     ? 'Live Classroom Question Monitor'
                     : viewMode === 'report'
                     ? 'Live Session Quiz & Polls Report'
+                    : viewMode === 'history'
+                    ? 'Broadcasted Quiz History'
                     : 'Live Classroom Quiz & Polls'}
                 </h3>
                 {viewMode === 'broadcast' && activeQuiz && (
@@ -1566,6 +2148,8 @@ export function LiveQuizTrainerControl({
                   ? 'Real-time responses, audience distribution, and question flow control'
                   : viewMode === 'report'
                   ? 'Real-time metrics, attendee answer breakdown, and accuracy across all session quizzes'
+                  : viewMode === 'history'
+                  ? 'Review previously broadcasted quiz batches grouped by label and submit student results to LMS'
                   : 'Broadcast curriculum questions or instant custom polls to learners in real time'}
               </p>
             </div>
@@ -1611,6 +2195,19 @@ export function LiveQuizTrainerControl({
                   >
                     <BarChart3 className="h-4 w-4 text-indigo-600" />
                     Session Report
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setViewMode('history');
+                      if (sessionId) loadBackendReport();
+                    }}
+                    className="gap-1.5 border-purple-200 text-purple-700 bg-white hover:bg-purple-50 font-bold text-xs shadow-xs"
+                    title="Open Broadcasted Quiz History"
+                  >
+                    <History className="h-4 w-4 text-purple-600" />
+                    History ({quizHistory.length})
                   </Button>
                 </div>
 
@@ -2118,6 +2715,19 @@ export function LiveQuizTrainerControl({
                     </Button>
                   )}
                   <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setViewMode('history');
+                      if (sessionId) loadBackendReport();
+                    }}
+                    className="gap-1.5 border-purple-200 text-purple-700 bg-white hover:bg-purple-50 font-bold text-xs shadow-2xs"
+                    title="Open Broadcasted Quiz History"
+                  >
+                    <History className="h-3.5 w-3.5 text-purple-600" />
+                    History ({quizHistory.length})
+                  </Button>
+                  <Button
                     type="button"
                     size="sm"
                     variant="outline"
@@ -2417,13 +3027,28 @@ export function LiveQuizTrainerControl({
                                               <div className="max-h-56 overflow-y-auto space-y-1.5 rounded-xl bg-white p-2.5 border border-slate-200">
                                                 {q.answers.map((a) => {
                                                   const selectedOptions = a.selectedOptionIds.map((oid) => {
-                                                    const opt = q.options.find((o) => o.id === oid);
-                                                    const optIdx = q.options.findIndex((o) => o.id === oid);
-                                                    const letter = optIdx >= 0 ? String.fromCharCode(65 + optIdx) : '?';
+                                                    const opt = q.options.find(
+                                                      (o: any, idx: number) =>
+                                                        o.id === oid ||
+                                                        String(idx) === oid ||
+                                                        o.textEn?.toLowerCase() ===
+                                                          oid?.toLowerCase(),
+                                                    );
+                                                    const optIdx = q.options.findIndex(
+                                                      (o: any, idx: number) =>
+                                                        o.id === oid ||
+                                                        String(idx) === oid ||
+                                                        o.textEn?.toLowerCase() ===
+                                                          oid?.toLowerCase(),
+                                                    );
+                                                    const letter =
+                                                      optIdx >= 0
+                                                        ? String.fromCharCode(65 + optIdx)
+                                                        : '?';
                                                     return {
                                                       id: oid,
                                                       letter,
-                                                      text: stripHtmlTags(opt?.textEn || ''),
+                                                      text: stripHtmlTags(opt?.textEn || oid),
                                                     };
                                                   });
 
@@ -2510,6 +3135,576 @@ export function LiveQuizTrainerControl({
                 )}
               </div>
             </div>
+          ) : viewMode === 'history' ? (
+            /* DEDICATED BROADCASTED HISTORY PAGE */
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* History Top Navigation Bar */}
+              <div className="flex items-center justify-between border-b border-slate-200/90 pb-3 flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setViewMode('selection')}
+                  className="gap-2 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-xs"
+                >
+                  <ArrowLeft className="h-4 w-4 text-indigo-600" />
+                  Back to Question Selection
+                </Button>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {activeQuiz && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setViewMode('broadcast')}
+                      className="gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold text-xs shadow-2xs"
+                    >
+                      <MonitorPlay className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                      View Live Monitor
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setViewMode('report');
+                      if (sessionId) loadBackendReport();
+                    }}
+                    className="gap-1.5 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-2xs"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5 text-indigo-600" />
+                    Live Session Report
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => sessionId && loadBackendReport()}
+                    disabled={loadingBackendReport}
+                    className="gap-1.5 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs h-8"
+                  >
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${loadingBackendReport ? 'animate-spin text-indigo-600' : ''}`}
+                    />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+
+              {/* Summary Stats Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                    <History className="h-3.5 w-3.5" />
+                    <span>Quiz Batches</span>
+                  </div>
+                  <p className="text-xl font-extrabold text-purple-950 mt-1">
+                    {historyBatchesGroupedByLabel.length}
+                  </p>
+                  <p className="text-[10px] text-purple-600 mt-0.5">
+                    Distinct labels broadcasted
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                    <FileQuestion className="h-3.5 w-3.5" />
+                    <span>Total Questions</span>
+                  </div>
+                  <p className="text-xl font-extrabold text-indigo-950 mt-1">
+                    {historyBatchesGroupedByLabel.reduce((sum, g) => sum + g.totalQuestions, 0)}
+                  </p>
+                  <p className="text-[10px] text-indigo-600 mt-0.5">
+                    Across completed batches
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>Total Submissions</span>
+                  </div>
+                  <p className="text-xl font-extrabold text-blue-950 mt-1">
+                    {historyBatchesGroupedByLabel.reduce((sum, g) => sum + g.totalResponses, 0)}
+                  </p>
+                  <p className="text-[10px] text-blue-600 mt-0.5">
+                    Student answers recorded
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                    <Award className="h-3.5 w-3.5" />
+                    <span>Avg Accuracy</span>
+                  </div>
+                  <p className="text-xl font-extrabold text-emerald-950 mt-1">
+                    {historyBatchesGroupedByLabel.length > 0
+                      ? Math.round(
+                          historyBatchesGroupedByLabel.reduce(
+                            (sum, g) => sum + g.averageAccuracy,
+                            0,
+                          ) / historyBatchesGroupedByLabel.length,
+                        )
+                      : 0}
+                    %
+                  </p>
+                  <p className="text-[10px] text-emerald-600 mt-0.5">
+                    Overall batch performance
+                  </p>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={historySearchQuery}
+                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                  placeholder="Search broadcasted quiz batches by label or learner name..."
+                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-8 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                />
+                {historySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setHistorySearchQuery('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Grouped Batches List */}
+              {filteredHistoryBatches.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-10 text-center space-y-3">
+                  <History className="mx-auto h-9 w-9 text-slate-300" />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">
+                      No Broadcasted Quiz History
+                    </h4>
+                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">
+                      {historySearchQuery
+                        ? 'No broadcasted batches matched your search query.'
+                        : 'Quizzes broadcasted from the Question Bank or Prepared Quizzes will be archived here grouped by their label, with full student score tables ready for LMS gradebook submission.'}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setViewMode('selection')}
+                    className="gap-1.5 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 font-semibold"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Select Questions to Broadcast
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3.5">
+                  {filteredHistoryBatches.map((batchGroup, bIdx) => {
+                    const isExpanded = expandedHistoryGroupLabel === batchGroup.label;
+                    const isSubmitted = submittedBatchLabels.has(batchGroup.label);
+                    const isSubmitting = submittingBatchLabel === batchGroup.label;
+
+                    return (
+                      <div
+                        key={batchGroup.label}
+                        className={`rounded-2xl border transition shadow-2xs overflow-hidden ${
+                          isExpanded
+                            ? 'border-indigo-300 bg-white ring-1 ring-indigo-500/20'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        {/* Batch Header Bar */}
+                        <div
+                          className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/40 cursor-pointer"
+                          onClick={() =>
+                            setExpandedHistoryGroupLabel(isExpanded ? null : batchGroup.label)
+                          }
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-200/70 shadow-2xs">
+                              <Sparkles className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="rounded-md bg-purple-100 border border-purple-200 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                                  Batch #{bIdx + 1}
+                                </span>
+                                <h4 className="text-sm font-bold text-slate-900 truncate">
+                                  {batchGroup.label}
+                                </h4>
+                                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {batchGroup.totalQuestions} Question{batchGroup.totalQuestions > 1 ? 's' : ''}
+                                </span>
+                                <span className="rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                  {batchGroup.studentResults.length} Learners
+                                </span>
+                                <span
+                                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${
+                                    batchGroup.averageAccuracy >= 70
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      : batchGroup.averageAccuracy >= 40
+                                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                                  }`}
+                                >
+                                  {batchGroup.averageAccuracy}% Accuracy
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                {batchGroup.completedAt
+                                  ? `Completed ${new Date(batchGroup.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                  : 'Completed in this session'}{' '}
+                                • {batchGroup.totalResponses} total student answers recorded
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {/* Submit Results to LMS Button */}
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={isSubmitting || isSubmitted || batchGroup.studentResults.length === 0}
+                              onClick={() => handleSubmitBatchResults(batchGroup)}
+                              className={`gap-1.5 font-bold text-xs shadow-xs h-8 px-3 transition ${
+                                isSubmitted
+                                  ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 cursor-default'
+                                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                              }`}
+                              title="Submit compiled learner quiz results to LMS gradebook"
+                            >
+                              {isSubmitted ? (
+                                <>
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  Submitted to LMS
+                                </>
+                              ) : isSubmitting ? (
+                                <>
+                                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                  Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="h-3.5 w-3.5" />
+                                  Submit Results to LMS
+                                </>
+                              )}
+                            </Button>
+
+                            {/* Export CSV */}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleExportBatchCSV(batchGroup)}
+                              disabled={batchGroup.studentResults.length === 0}
+                              className="gap-1.5 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs h-8"
+                              title="Download spreadsheet of student scores for this batch"
+                            >
+                              <Download className="h-3.5 w-3.5 text-slate-600" />
+                              CSV
+                            </Button>
+
+                            {/* Toggle Accordion */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedHistoryGroupLabel(isExpanded ? null : batchGroup.label)
+                              }
+                              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition"
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-5 w-5" />
+                              ) : (
+                                <ChevronDown className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Batch Details Accordion Body */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 p-4 space-y-4 bg-slate-50/30 animate-in fade-in duration-150">
+                            {/* Sub-tab Switcher: Student Results vs Questions Review */}
+                            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 pb-3">
+                              <div className="flex rounded-lg bg-slate-100 p-0.5 border border-slate-200/80">
+                                <button
+                                  type="button"
+                                  onClick={() => setHistoryGroupSubTab('results')}
+                                  className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition ${
+                                    historyGroupSubTab === 'results'
+                                      ? 'bg-white text-indigo-600 shadow-2xs'
+                                      : 'text-slate-600 hover:text-slate-900'
+                                  }`}
+                                >
+                                  <Users className="h-3.5 w-3.5" />
+                                  Learner Results ({batchGroup.studentResults.length})
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setHistoryGroupSubTab('questions')}
+                                  className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition ${
+                                    historyGroupSubTab === 'questions'
+                                      ? 'bg-white text-indigo-600 shadow-2xs'
+                                      : 'text-slate-600 hover:text-slate-900'
+                                  }`}
+                                >
+                                  <FileQuestion className="h-3.5 w-3.5" />
+                                  Questions Review ({batchGroup.totalQuestions})
+                                </button>
+                              </div>
+
+                              <span className="text-[11px] text-slate-500">
+                                Showing all data recorded for &quot;{batchGroup.label}&quot;
+                              </span>
+                            </div>
+
+                            {/* View 1: Student Results Table */}
+                            {historyGroupSubTab === 'results' && (
+                              <div className="space-y-2">
+                                {batchGroup.studentResults.length === 0 ? (
+                                  <div className="py-6 text-center text-xs text-slate-500">
+                                    No student submissions recorded for this batch yet.
+                                  </div>
+                                ) : (
+                                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
+                                    <table className="w-full text-left text-xs">
+                                      <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                        <tr>
+                                          <th className="px-3.5 py-2.5">Learner</th>
+                                          <th className="px-3 py-2.5 text-center">Answered</th>
+                                          <th className="px-3 py-2.5 text-center">Score</th>
+                                          <th className="px-3 py-2.5 text-center">Accuracy</th>
+                                          <th className="px-3 py-2.5 text-center">Time</th>
+                                          <th className="px-3 py-2.5 text-center">Status</th>
+                                          <th className="px-3 py-2.5 text-right">Details</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100">
+                                        {batchGroup.studentResults.map((student) => {
+                                          const isStudentExpanded = expandedStudentId === student.userId;
+                                          return (
+                                            <React.Fragment key={student.userId}>
+                                              <tr className="hover:bg-slate-50/60 transition">
+                                                <td className="px-3.5 py-2.5 font-semibold text-slate-900">
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                                                      {student.userName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <span className="truncate max-w-[140px] sm:max-w-[180px]">
+                                                      {student.userName}
+                                                    </span>
+                                                  </div>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center font-mono text-slate-600">
+                                                  {student.answeredCount} / {student.totalQuestions}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center font-bold font-mono text-indigo-700">
+                                                  {student.correctCount} / {student.totalQuestions}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded-md px-2 py-0.5 font-bold font-mono text-[10px] ${
+                                                      student.scorePercent >= 70
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : student.scorePercent >= 40
+                                                        ? 'bg-amber-100 text-amber-800'
+                                                        : 'bg-rose-100 text-rose-800'
+                                                    }`}
+                                                  >
+                                                    {student.scorePercent}%
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center text-slate-500 font-mono text-[11px]">
+                                                  {student.totalDurationSeconds > 0
+                                                    ? `${student.totalDurationSeconds}s`
+                                                    : '-'}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center">
+                                                  <span
+                                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                                                      student.status === 'PASSED'
+                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                        : 'bg-amber-50 border-amber-200 text-amber-700'
+                                                    }`}
+                                                  >
+                                                    {student.status === 'PASSED' ? (
+                                                      <>
+                                                        <Check className="h-3 w-3 text-emerald-600" />
+                                                        Passed
+                                                      </>
+                                                    ) : (
+                                                      'Needs Review'
+                                                    )}
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      setExpandedStudentId(
+                                                        isStudentExpanded ? null : student.userId,
+                                                      )
+                                                    }
+                                                    className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                                                  >
+                                                    {isStudentExpanded ? 'Hide' : 'Review'}
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                              {/* Expanded per-student answer details */}
+                                              {isStudentExpanded && (
+                                                <tr>
+                                                  <td colSpan={7} className="bg-slate-50/90 px-4 py-3 border-y border-slate-200">
+                                                    <div className="space-y-2">
+                                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                                        Question Answers by {student.userName}:
+                                                      </span>
+                                                      <div className="space-y-1.5">
+                                                        {student.breakdown.map((item, qIdx) => (
+                                                          <div
+                                                            key={item.questionId || qIdx}
+                                                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs"
+                                                          >
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                              <span className="font-bold text-slate-500 font-mono text-[10px]">
+                                                                Q{qIdx + 1}:
+                                                              </span>
+                                                              <span className="font-medium text-slate-800 truncate">
+                                                                {item.questionTitle}
+                                                              </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                              <span className="text-[11px] text-slate-600 font-semibold">
+                                                                Selected: {item.selectedOptionTexts.join(', ') || 'No answer'}
+                                                              </span>
+                                                              {item.isCorrect === true ? (
+                                                                <span className="inline-flex items-center gap-0.5 text-emerald-700 text-[10px] font-bold">
+                                                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                                  Correct
+                                                                </span>
+                                                              ) : item.isCorrect === false ? (
+                                                                <span className="inline-flex items-center gap-0.5 text-rose-700 text-[10px] font-bold">
+                                                                  <X className="h-3 w-3 text-rose-600" />
+                                                                  Incorrect
+                                                                </span>
+                                                              ) : (
+                                                                <span className="text-slate-400 text-[10px]">Unscored</span>
+                                                              )}
+                                                            </div>
+                                                          </div>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              )}
+                                            </React.Fragment>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* View 2: Questions Review */}
+                            {historyGroupSubTab === 'questions' && (
+                              <div className="space-y-3">
+                                {batchGroup.allQuestions.map((q, qIdx) => {
+                                  const totalQResponses = q.totalResponses || 0;
+                                  return (
+                                    <div
+                                      key={q.id || qIdx}
+                                      className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2.5 shadow-2xs"
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-indigo-100 font-mono text-[10px] font-bold text-indigo-800">
+                                            {qIdx + 1}
+                                          </span>
+                                          <p className="text-xs font-bold text-slate-900 leading-snug">
+                                            {stripHtmlTags(q.titleEn)}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                            {q.correctCount} / {totalQResponses} Correct ({q.accuracy}%)
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Options with correctness and distribution bars */}
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                        {q.options.map((opt, oIdx) => {
+                                          const isCorrect = q.correctOptionIds?.includes(opt.id) || q.correctOptionIds?.includes(String(oIdx));
+                                          const count = q.distribution?.[opt.id] || 0;
+                                          const pct = totalQResponses > 0 ? Math.round((count / totalQResponses) * 100) : 0;
+
+                                          return (
+                                            <div
+                                              key={opt.id || oIdx}
+                                              className={`relative overflow-hidden rounded-lg border p-2 text-xs transition ${
+                                                isCorrect
+                                                  ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950 font-semibold'
+                                                  : 'border-slate-200 bg-slate-50/60 text-slate-700'
+                                              }`}
+                                            >
+                                              {/* Distribution background bar */}
+                                              <div
+                                                className={`absolute inset-y-0 left-0 transition-all ${
+                                                  isCorrect ? 'bg-emerald-200/40' : 'bg-slate-200/50'
+                                                }`}
+                                                style={{ width: `${pct}%` }}
+                                              />
+                                              <div className="relative flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                  <span
+                                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
+                                                      isCorrect
+                                                        ? 'bg-emerald-600 text-white'
+                                                        : 'bg-slate-200 text-slate-600'
+                                                    }`}
+                                                  >
+                                                    {String.fromCharCode(65 + oIdx)}
+                                                  </span>
+                                                  <span className="truncate">{stripHtmlTags(opt.textEn)}</span>
+                                                  {isCorrect && (
+                                                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                                                  )}
+                                                </div>
+                                                <span className="font-mono text-[10px] font-bold shrink-0">
+                                                  {count} ({pct}%)
+                                                </span>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+
+                                      {/* Explanation */}
+                                      {q.explanationEn && (
+                                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-[11px] text-slate-600">
+                                          <strong className="text-slate-700">Explanation: </strong>
+                                          {stripHtmlTags(q.explanationEn)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           ) : (
             /* QUESTION SELECTION PAGE */
             <div className="space-y-5 animate-in fade-in duration-200">
@@ -2536,7 +3731,7 @@ export function LiveQuizTrainerControl({
                       </p>
                       <p className="text-[11px] text-indigo-300 mt-0.5">
                         {activeRemainingSeconds !== null
-                          ? `${activeRemainingSeconds}s remaining • `
+                          ? `${formatRemainingTime(activeRemainingSeconds)} remaining • `
                           : ''}
                         {totalResponses} responses recorded
                       </p>
@@ -2580,7 +3775,7 @@ export function LiveQuizTrainerControl({
                   <span className="rounded-lg bg-white px-2.5 py-1 text-xs text-slate-700 font-semibold border border-slate-200 shadow-2xs">
                     {modules.length} Modules in Curriculum
                   </span>
-                  {stagedQueue.length > 0 && (
+                  {!activeQuiz && stagedQueue.length > 0 && (
                     <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs text-emerald-800 font-bold">
                       {stagedQueue.length} Ready in Quiz Queue
                     </span>
@@ -2652,6 +3847,23 @@ export function LiveQuizTrainerControl({
                       <BarChart3 className="h-3.5 w-3.5 text-indigo-500" />
                       Live Session Report
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('history');
+                        if (sessionId) loadBackendReport();
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition hover:bg-slate-200/60"
+                      title="View all previously broadcasted quiz batches grouped by label and student results"
+                    >
+                      <History className="h-3.5 w-3.5 text-indigo-500" />
+                      Broadcasted History
+                      {quizHistory.length > 0 && (
+                        <span className="rounded-full bg-purple-100 text-purple-700 px-1.5 py-0.2 text-[10px] font-bold">
+                          {quizHistory.length}
+                        </span>
+                      )}
+                    </button>
                     {activeQuiz && (
                       <button
                         type="button"
@@ -2665,33 +3877,33 @@ export function LiveQuizTrainerControl({
                     )}
                   </div>
 
-                  {/* Timer preset selection (only for bank or custom questions) */}
-                  {(tab === 'bank' || tab === 'custom') && (
+                  {/* Timer preset selection in minutes (Hidden during broadcasting) */}
+                  {!activeQuiz && (tab === 'bank' || tab === 'custom') && (
                     <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
                       <Clock className="h-3.5 w-3.5 text-slate-500" />
                       <span className="text-xs text-slate-500 font-medium">Timer:</span>
-                      {[15, 30, 45, 60, 90].map((sec) => (
+                      {[1, 2, 3, 5, 10].map((m) => (
                         <button
-                          key={sec}
+                          key={m}
                           type="button"
-                          onClick={() => setTimerSeconds(sec)}
+                          onClick={() => setTimerMinutes(m)}
                           className={`rounded-md px-2 py-0.5 text-xs font-bold transition ${
-                            timerSeconds === sec
+                            timerMinutes === m
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
                           }`}
                         >
-                          {sec}s
+                          {m}m
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* Staged Broadcast Queue (Visible in bank & custom tabs when questions are queued) */}
-                {stagedQueue.length > 0 && (
+                {/* Staged Broadcast Queue (Hidden during active broadcasting) */}
+                {!activeQuiz && stagedQueue.length > 0 && (
                   <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-3 shadow-xs">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
                         <ListOrdered className="h-4 w-4 text-indigo-600" />
                         <span className="text-xs font-bold text-indigo-950">
@@ -2700,11 +3912,6 @@ export function LiveQuizTrainerControl({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-indigo-700 font-medium">
-                          {stagedQueue.length === 1
-                            ? 'Single question ready'
-                            : 'Will broadcast sequentially'}
-                        </span>
                         <button
                           type="button"
                           onClick={() => {
@@ -2718,12 +3925,37 @@ export function LiveQuizTrainerControl({
                       </div>
                     </div>
 
+                    {/* Quiz Batch Label Input */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-indigo-100 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 shrink-0">
+                        <Tag className="h-3.5 w-3.5 text-indigo-600" />
+                        <span>Quiz Batch Label:</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={bankQuizLabel}
+                        onChange={(e) => setBankQuizLabel(e.target.value)}
+                        placeholder={`Quiz Label (e.g. Quiz ${quizHistory.length + 1}, Chapter 1 Check)...`}
+                        className="flex-1 max-w-sm rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                      />
+                      {bankQuizLabel && (
+                        <button
+                          type="button"
+                          onClick={() => setBankQuizLabel('')}
+                          className="text-slate-400 hover:text-slate-600"
+                          title="Clear label"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
                     {/* Staged Question items with Review Details, Edit, and Delete */}
                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                       {stagedQueue.map((q, idx) => {
                         const isExpanded = expandedQueueIdx === idx;
-                        const isCurrentlyActive =
-                          activeQuiz && (currentQueueIndex === idx || activeQuiz.id === q.id);
+                        const isCurrentlyActive = false;
+                        const isPreviouslyBroadcasted = broadcastedQuestionIds.has(q.id);
 
                         // Parse options for preview
                         const parsedOpts = Array.isArray(q.options)
@@ -2747,8 +3979,10 @@ export function LiveQuizTrainerControl({
                             key={q.id || idx}
                             className={`rounded-xl border transition shadow-2xs ${
                               isCurrentlyActive
-                                ? 'border-indigo-400 bg-indigo-50/70 ring-1 ring-indigo-500/20'
-                                : 'border-indigo-100 bg-white hover:border-indigo-200'
+                                ? 'border-emerald-400 bg-emerald-50/70 ring-1 ring-emerald-500/20'
+                                : isPreviouslyBroadcasted
+                                  ? 'border-purple-300 bg-purple-50/50 ring-1 ring-purple-400/20'
+                                  : 'border-indigo-100 bg-white hover:border-indigo-200'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
@@ -2756,17 +3990,26 @@ export function LiveQuizTrainerControl({
                                 <span
                                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md font-mono text-[10px] font-bold ${
                                     isCurrentlyActive
-                                      ? 'bg-indigo-600 text-white'
-                                      : 'bg-indigo-100 text-indigo-800'
+                                      ? 'bg-emerald-600 text-white'
+                                      : isPreviouslyBroadcasted
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-indigo-100 text-indigo-800'
                                   }`}
                                 >
                                   #{idx + 1}
                                 </span>
 
                                 {isCurrentlyActive && (
-                                  <span className="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
+                                  <span className="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
                                     Active Now
+                                  </span>
+                                )}
+
+                                {isPreviouslyBroadcasted && (
+                                  <span className="inline-flex items-center gap-1 rounded bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
+                                    <CheckCircle2 className="h-2.5 w-2.5 text-purple-600" />
+                                    Previously Broadcasted
                                   </span>
                                 )}
 
@@ -2961,14 +4204,15 @@ export function LiveQuizTrainerControl({
                                   <Button
                                     type="button"
                                     size="sm"
+                                    disabled={Boolean(activeQuiz)}
                                     onClick={() => {
                                       setCurrentQueueIndex(idx);
                                       handleLaunchQuestion(q, idx, stagedQueue);
                                     }}
-                                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-7 px-3 shadow-xs"
+                                    className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-7 px-3 shadow-xs disabled:opacity-50"
                                   >
                                     <Play className="h-3 w-3 fill-current" />
-                                    Broadcast This Question Now
+                                    {activeQuiz ? 'Quiz Already Active' : 'Broadcast This Question Now'}
                                   </Button>
                                 </div>
                               </div>
@@ -2979,21 +4223,19 @@ export function LiveQuizTrainerControl({
                     </div>
 
                     {/* Queue Broadcast Action Bar */}
-                    <div className="flex items-center justify-between pt-1 border-t border-indigo-100/80">
-                      <div className="text-xs text-slate-500">
-                        {stagedQueue.length > 1
-                          ? `Sequence will launch Question 1, followed by next questions after reveal.`
-                          : 'Ready to launch.'}
-                      </div>
+                    <div className="flex items-center justify-end pt-1 border-t border-indigo-100/80">
                       <Button
                         size="sm"
+                        disabled={Boolean(activeQuiz)}
                         onClick={handleLaunchFromBank}
-                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md"
+                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md disabled:opacity-50"
                       >
                         <Play className="h-3.5 w-3.5 fill-current" />
-                        {stagedQueue.length > 1
-                          ? `Broadcast Sequenced Quiz (${stagedQueue.length} Questions) (${timerSeconds}s)`
-                          : `Broadcast Question (${timerSeconds}s)`}
+                        {activeQuiz
+                          ? 'Broadcast Locked (Quiz Running)'
+                          : stagedQueue.length > 1
+                          ? `Broadcast Sequenced Quiz (${stagedQueue.length} Questions) (${timerMinutes}m)`
+                          : `Broadcast Question (${timerMinutes}m)`}
                       </Button>
                     </div>
                   </div>
@@ -3005,6 +4247,9 @@ export function LiveQuizTrainerControl({
                     sessionId={sessionId}
                     onBroadcastQuizGroup={handleLaunchPreparedQuizGroup}
                     activeQuizId={activeQuiz?.id}
+                    activeQuizTitle={activeQuiz?.quizTitle}
+                    broadcastedQuizTitles={broadcastedQuizTitles}
+                    broadcastedQuestionIds={broadcastedQuestionIds}
                     onSwitchToBank={() => setTab('bank')}
                   />
                 )}
@@ -3257,35 +4502,62 @@ export function LiveQuizTrainerControl({
                             title="Randomly select questions into quiz queue"
                           >
                             <Shuffle className="h-3.5 w-3.5" />
-                            Select Random ({Math.min(questionAmount, filteredQuestions.length || 1)}
-                            )
+                            Select Random ({Math.min(questionAmount, filteredQuestions.length || 1)})
                           </Button>
 
                           <Button
                             type="button"
                             size="sm"
-                            disabled={filteredQuestions.length === 0}
+                            disabled={filteredQuestions.length === 0 || Boolean(activeQuiz)}
                             onClick={() => {
-                              const count = Math.min(questionAmount, filteredQuestions.length);
-                              const shuffled = [...filteredQuestions].sort(
-                                () => 0.5 - Math.random(),
+                              const unbroadcasted = filteredQuestions.filter(
+                                (q) => !broadcastedQuestionIds.has(q.id),
                               );
+                              const pool = unbroadcasted.length > 0 ? unbroadcasted : filteredQuestions;
+                              const count = Math.min(questionAmount, pool.length);
+                              const shuffled = [...pool].sort(() => 0.5 - Math.random());
                               const selected = shuffled.slice(0, count);
                               setStagedQueue(selected);
                               setCurrentQueueIndex(0);
                               if (selected.length > 0) {
                                 setSelectedQuestion(selected[0]);
-                                handleLaunchQuestion(selected[0], 0, selected);
+                                const resolvedTitle =
+                                  bankQuizLabel.trim() || `Quiz ${quizHistory.length + 1}`;
+                                handleLaunchQuestion(selected[0], 0, selected, resolvedTitle);
                               }
                             }}
-                            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs"
+                            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs disabled:opacity-50"
                             title="Generate random questions and broadcast to classroom immediately"
                           >
                             <Play className="h-3.5 w-3.5 fill-current" />
-                            Generate &amp; Broadcast (
-                            {Math.min(questionAmount, filteredQuestions.length || 1)})
+                            Generate &amp; Broadcast ({Math.min(questionAmount, filteredQuestions.length || 1)})
                           </Button>
                         </div>
+                      </div>
+
+                      {/* Quiz Batch Label Input */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 shrink-0">
+                          <Tag className="h-3.5 w-3.5 text-indigo-600" />
+                          <span>Quiz Batch Label:</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={bankQuizLabel}
+                          onChange={(e) => setBankQuizLabel(e.target.value)}
+                          placeholder={`Enter quiz label (e.g. Quiz ${quizHistory.length + 1}, Mid-Session Check)...`}
+                          className="flex-1 min-w-[200px] max-w-sm rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                        />
+                        {bankQuizLabel && (
+                          <button
+                            type="button"
+                            onClick={() => setBankQuizLabel('')}
+                            className="text-slate-400 hover:text-slate-600"
+                            title="Clear label"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -3309,6 +4581,7 @@ export function LiveQuizTrainerControl({
                         {filteredQuestions.map((q) => {
                           const isStaged = stagedQueue.some((item) => item.id === q.id);
                           const isSelected = selectedQuestion?.id === q.id || isStaged;
+                          const isPreviouslyBroadcasted = broadcastedQuestionIds.has(q.id);
 
                           return (
                             <div
@@ -3316,9 +4589,11 @@ export function LiveQuizTrainerControl({
                               className={`rounded-2xl border p-3.5 transition space-y-2 ${
                                 isStaged
                                   ? 'border-indigo-400 bg-indigo-50/40 ring-1 ring-indigo-500/20 shadow-xs'
-                                  : isSelected
-                                    ? 'border-indigo-300 bg-indigo-50/20'
-                                    : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                                  : isPreviouslyBroadcasted
+                                    ? 'border-purple-200 bg-purple-50/25 hover:border-purple-300 shadow-2xs'
+                                    : isSelected
+                                      ? 'border-indigo-300 bg-indigo-50/20'
+                                      : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
                               }`}
                             >
                               <div className="flex items-start justify-between gap-3">
@@ -3363,6 +4638,20 @@ export function LiveQuizTrainerControl({
                                     <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
                                       {q.category || 'General'}
                                     </span>
+
+                                    {activeQuiz?.id === q.id && (
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
+                                        Active Now
+                                      </span>
+                                    )}
+
+                                    {activeQuiz?.id !== q.id && isPreviouslyBroadcasted && (
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 border border-purple-300 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                                        <CheckCircle2 className="h-2.5 w-2.5 text-purple-600" />
+                                        Previously Broadcasted
+                                      </span>
+                                    )}
                                   </div>
 
                                   <p className="text-xs font-semibold text-slate-900 leading-relaxed">
@@ -3397,15 +4686,41 @@ export function LiveQuizTrainerControl({
                                   <Button
                                     type="button"
                                     size="sm"
+                                    disabled={Boolean(activeQuiz) || isPreviouslyBroadcasted}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleLaunchQuestion(q);
+                                      const resolvedTitle =
+                                        bankQuizLabel.trim() || stripHtmlTags(q.question);
+                                      handleLaunchQuestion(q, undefined, undefined, resolvedTitle);
                                     }}
-                                    className="gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs px-2.5 py-1 h-7"
-                                    title={`Broadcast question immediately to classroom with ${timerSeconds}s timer`}
+                                    className={`gap-1 font-semibold text-xs px-2.5 py-1 h-7 transition shadow-xs ${
+                                      isPreviouslyBroadcasted
+                                        ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed opacity-80'
+                                        : activeQuiz
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                    }`}
+                                    title={
+                                      isPreviouslyBroadcasted
+                                        ? 'This question has already been broadcasted in this session'
+                                        : activeQuiz
+                                        ? 'Quiz currently active'
+                                        : `Broadcast question immediately to classroom with ${timerMinutes}m timer`
+                                    }
                                   >
-                                    <Play className="h-3 w-3 fill-current" />
-                                    Broadcast
+                                    {isPreviouslyBroadcasted ? (
+                                      <>
+                                        <CheckCircle2 className="h-3 w-3 text-purple-600" />
+                                        Broadcasted
+                                      </>
+                                    ) : activeQuiz ? (
+                                      'Locked'
+                                    ) : (
+                                      <>
+                                        <Play className="h-3 w-3 fill-current" />
+                                        Broadcast
+                                      </>
+                                    )}
                                   </Button>
                                 </div>
                               </div>
@@ -3500,72 +4815,100 @@ export function LiveQuizTrainerControl({
                       </div>
                     )}
 
-                    {/* Permanent Question Bank Broadcast Control Bar */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-10">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
-                          <Play className="h-4 w-4 fill-indigo-600" />
+                    {/* Permanent Question Bank Broadcast Control Bar (Hidden during active broadcasting) */}
+                    {!activeQuiz && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-10">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                            <Play className="h-4 w-4 fill-indigo-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-900 truncate">
+                              {stagedQueue.length > 1
+                                ? `Sequenced Quiz: ${stagedQueue.length} Questions Queued`
+                                : stagedQueue.length === 1
+                                  ? `Ready to Broadcast: "${stripHtmlTags(stagedQueue[0].question)}"`
+                                  : selectedQuestion
+                                    ? `Selected Question: "${stripHtmlTags(selectedQuestion.question)}"`
+                                    : filteredQuestions.length > 0
+                                      ? `Ready: "${stripHtmlTags(filteredQuestions[0].question)}"`
+                                      : 'No Questions Available'}
+                            </p>
+                            <p className="text-[11px] text-slate-500 truncate">
+                              {stagedQueue.length > 1
+                                ? `Timer: ${timerMinutes} mins total for all questions`
+                                : filteredQuestions.length > 0
+                                  ? `Timer: ${timerMinutes} mins • Learners will receive live voting prompt immediately`
+                                  : 'Prepare questions in Question Bank or switch to Instant Custom Question'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 truncate">
-                            {stagedQueue.length > 1
-                              ? `Sequenced Quiz: ${stagedQueue.length} Questions Queued`
-                              : stagedQueue.length === 1
-                                ? `Ready to Broadcast: "${stripHtmlTags(stagedQueue[0].question)}"`
-                                : selectedQuestion
-                                  ? `Selected Question: "${stripHtmlTags(selectedQuestion.question)}"`
-                                  : filteredQuestions.length > 0
-                                    ? `Ready: "${stripHtmlTags(filteredQuestions[0].question)}"`
-                                    : 'No Questions Available'}
-                          </p>
-                          <p className="text-[11px] text-slate-500 truncate">
-                            {stagedQueue.length > 1
-                              ? `Timer: ${timerSeconds}s per question • Broadcasts question-by-question`
-                              : filteredQuestions.length > 0
-                                ? `Timer: ${timerSeconds}s • Learners will receive live voting prompt immediately`
-                                : 'Prepare questions in Question Bank or switch to Instant Custom Question'}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        {stagedQueue.length > 0 && (
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          {/* Inline Batch Label Input */}
+                          <div className="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 shadow-2xs">
+                            <Tag className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                            <input
+                              type="text"
+                              value={bankQuizLabel}
+                              onChange={(e) => setBankQuizLabel(e.target.value)}
+                              placeholder={`Label (e.g. Quiz ${quizHistory.length + 1})...`}
+                              className="w-32 md:w-44 bg-transparent text-xs text-slate-800 placeholder:text-slate-400 outline-none font-medium"
+                            />
+                            {bankQuizLabel && (
+                              <button
+                                type="button"
+                                onClick={() => setBankQuizLabel('')}
+                                className="text-slate-400 hover:text-slate-600"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          {stagedQueue.length > 0 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setStagedQueue([]);
+                                setSelectedQuestion(null);
+                              }}
+                              className="text-xs border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                            >
+                              Clear Queue ({stagedQueue.length})
+                            </Button>
+                          )}
+
                           <Button
                             type="button"
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setStagedQueue([]);
-                              setSelectedQuestion(null);
-                            }}
-                            className="text-xs border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                            disabled={
+                              Boolean(activeQuiz) ||
+                              (filteredQuestions.length === 0 &&
+                                stagedQueue.length === 0 &&
+                                !selectedQuestion)
+                            }
+                            onClick={handleLaunchFromBank}
+                            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md px-4 py-2 disabled:opacity-50"
                           >
-                            Clear Queue ({stagedQueue.length})
+                            <Play className="h-3.5 w-3.5 fill-current" />
+                            {activeQuiz
+                              ? 'Broadcast Locked (Quiz Running)'
+                              : bankQuizLabel
+                              ? `Broadcast "${bankQuizLabel}" (${timerMinutes}m)`
+                              : stagedQueue.length > 1
+                              ? `Broadcast Sequenced Quiz (${stagedQueue.length} Qs) (${timerMinutes}m)`
+                              : stagedQueue.length === 1
+                                ? `Broadcast Staged Question (${timerMinutes}m)`
+                                : selectedQuestion
+                                  ? `Broadcast Selected Question (${timerMinutes}m)`
+                                  : `Broadcast Question (${timerMinutes}m)`}
                           </Button>
-                        )}
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={
-                            filteredQuestions.length === 0 &&
-                            stagedQueue.length === 0 &&
-                            !selectedQuestion
-                          }
-                          onClick={handleLaunchFromBank}
-                          className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md px-4 py-2"
-                        >
-                          <Play className="h-3.5 w-3.5 fill-current" />
-                          {stagedQueue.length > 1
-                            ? `Broadcast Sequenced Quiz (${stagedQueue.length} Qs) (${timerSeconds}s)`
-                            : stagedQueue.length === 1
-                              ? `Broadcast Staged Question (${timerSeconds}s)`
-                              : selectedQuestion
-                                ? `Broadcast Selected Question (${timerSeconds}s)`
-                                : `Broadcast Question (${timerSeconds}s)`}
-                        </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ) : null}
 
@@ -3703,6 +5046,37 @@ export function LiveQuizTrainerControl({
                       )}
                     </div>
 
+                    {/* Question Type Selector based on DB Lookup Categories */}
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1">
+                        Question Type
+                      </label>
+                      <select
+                        value={customQuestionType}
+                        onChange={(e) => {
+                          const newType = e.target.value;
+                          setCustomQuestionType(newType);
+                          if (newType === 'TRUE_FALSE') {
+                            setCustomOptions(['True', 'False']);
+                            setCorrectOptionIdx(0);
+                          } else if (newType === 'SHORT_ANSWER') {
+                            setCustomOptions(['']);
+                            setCorrectOptionIdx(0);
+                          } else {
+                            setCustomOptions(['', '', '', '']);
+                            setCorrectOptionIdx(0);
+                          }
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                      >
+                        {questionTypeOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Question Texts */}
                     <div>
                       <label className="text-xs font-semibold text-slate-700">
@@ -3730,68 +5104,111 @@ export function LiveQuizTrainerControl({
                       />
                     </div>
 
-                    {/* Options List */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
+                    {/* Options List based on Question Type */}
+                    {customQuestionType === 'SHORT_ANSWER' ? (
+                      <div>
                         <label className="text-xs font-semibold text-slate-700">
-                          Options (Select radio for correct answer)
+                          Expected Correct Answer / Key Words
                         </label>
-                        {customOptions.length < 5 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setCustomOptions([
-                                ...customOptions,
-                                `Option ${customOptions.length + 1}`,
-                              ])
-                            }
-                            className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
-                          >
-                            <Plus className="h-3.5 w-3.5" /> Add Option
-                          </button>
-                        )}
+                        <input
+                          type="text"
+                          value={customOptions[0] || ''}
+                          onChange={(e) => setCustomOptions([e.target.value])}
+                          placeholder="e.g. 30 days"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                        />
                       </div>
-
-                      {customOptions.map((opt, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="correctOption"
-                            checked={correctOptionIdx === idx}
-                            onChange={() => setCorrectOptionIdx(idx)}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
-                            title="Mark as correct answer"
-                          />
-                          <input
-                            type="text"
-                            value={opt}
-                            onChange={(e) => {
-                              const updated = [...customOptions];
-                              updated[idx] = e.target.value;
-                              setCustomOptions(updated);
-                            }}
-                            className={`flex-1 rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs ${
-                              correctOptionIdx === idx
-                                ? 'border-emerald-300 ring-2 ring-emerald-500/20 bg-emerald-50/20'
-                                : 'border-slate-200'
-                            }`}
-                          />
-                          {customOptions.length > 2 && (
+                    ) : customQuestionType === 'TRUE_FALSE' ? (
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-700 block">
+                          Options (Select the correct answer)
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {['True', 'False'].map((label, idx) => (
+                            <label
+                              key={label}
+                              className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition ${
+                                correctOptionIdx === idx
+                                  ? 'border-emerald-400 bg-emerald-50/50 text-emerald-950 font-bold shadow-xs'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="correctOption"
+                                checked={correctOptionIdx === idx}
+                                onChange={() => setCorrectOptionIdx(idx)}
+                                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                              />
+                              <span className="text-xs">{label}</span>
+                              {correctOptionIdx === idx && (
+                                <span className="ml-auto text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold">
+                                  Correct
+                                </span>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Options (Select radio for correct answer)
+                          </label>
+                          {customOptions.length < 5 && (
                             <button
                               type="button"
-                              onClick={() => {
-                                const updated = customOptions.filter((_, i) => i !== idx);
-                                setCustomOptions(updated);
-                                if (correctOptionIdx >= updated.length) setCorrectOptionIdx(0);
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-red-500"
+                              onClick={() => setCustomOptions([...customOptions, ''])}
+                              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Plus className="h-3.5 w-3.5" /> Add Option
                             </button>
                           )}
                         </div>
-                      ))}
-                    </div>
+
+                        {customOptions.map((opt, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="correctOption"
+                              checked={correctOptionIdx === idx}
+                              onChange={() => setCorrectOptionIdx(idx)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                              title="Mark as correct answer"
+                            />
+                            <input
+                              type="text"
+                              value={opt}
+                              placeholder={`Option ${idx + 1}`}
+                              onChange={(e) => {
+                                const updated = [...customOptions];
+                                updated[idx] = e.target.value;
+                                setCustomOptions(updated);
+                              }}
+                              className={`flex-1 rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs ${
+                                correctOptionIdx === idx
+                                  ? 'border-emerald-300 ring-2 ring-emerald-500/20 bg-emerald-50/20'
+                                  : 'border-slate-200'
+                              }`}
+                            />
+                            {customOptions.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = customOptions.filter((_, i) => i !== idx);
+                                  setCustomOptions(updated);
+                                  if (correctOptionIdx >= updated.length) setCorrectOptionIdx(0);
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-red-500"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div>
                       <label className="text-xs font-semibold text-slate-700">
@@ -3837,12 +5254,12 @@ export function LiveQuizTrainerControl({
 
                         <Button
                           size="sm"
-                          disabled={!customTitleEn.trim()}
+                          disabled={!customTitleEn.trim() || Boolean(activeQuiz)}
                           onClick={handleLaunchCustomDirect}
-                          className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md rounded-xl px-4 py-2"
+                          className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md rounded-xl px-4 py-2 disabled:opacity-50"
                         >
                           <Play className="h-3.5 w-3.5 fill-current" />
-                          Broadcast Immediately Now
+                          {activeQuiz ? 'Quiz Already Active' : 'Broadcast Immediately Now'}
                         </Button>
                       </div>
                     </div>

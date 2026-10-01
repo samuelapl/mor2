@@ -13,7 +13,7 @@ export interface LiveQuizPayload {
   id: string;
   titleEn: string;
   titleAm?: string;
-  type: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
+  type: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
   options: LiveQuizOption[];
   timeLimitSeconds: number; // e.g. 15, 30, 45, 60
   startedAt: number; // epoch ms
@@ -71,6 +71,32 @@ export type LiveKitDataEvent =
       type: 'QUIZ_CLOSE';
       payload: {
         questionId: string;
+      };
+    }
+  | {
+      type: 'QUIZ_SYNC_REQUEST';
+      payload?: {
+        userId?: string;
+        requesterId?: string;
+      };
+    }
+  | {
+      type: 'QUIZ_SYNC_RESPONSE';
+      payload: {
+        activeQuiz: LiveQuizPayload | null;
+        answers?: Record<
+          string,
+          {
+            userId: string;
+            userName: string;
+            selectedOptionIds: string[];
+            submittedAt?: number;
+            responseDurationSeconds?: number;
+          }
+        >;
+        revealData?: LiveQuizRevealPayload | null;
+        revealsByQuestionId?: Record<string, LiveQuizRevealPayload>;
+        quizHistory?: any[];
       };
     }
   | {

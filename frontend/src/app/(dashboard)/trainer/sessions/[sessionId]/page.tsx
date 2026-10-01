@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PreparedQuizManager } from '@/components/features/prepared-quiz/PreparedQuizManager';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
 import { isInPersonSession } from '@/lib/session-mode';
+import { RichContent } from '@/components/ui/RichContent';
 
 export default function SessionQuizPrepPage() {
   const params = useParams();
@@ -214,13 +215,13 @@ export default function SessionQuizPrepPage() {
         ) : (
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900">Session Description</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {session.descriptionEn || 'No description provided for this session.'}
-            </p>
+            <div className="text-xs text-slate-600 leading-relaxed">
+              <RichContent html={session.descriptionEn} placeholder="No description provided for this session." />
+            </div>
             {session.descriptionAm && (
-              <p className="text-xs text-slate-600 leading-relaxed font-amharic">
-                {session.descriptionAm}
-              </p>
+              <div className="text-xs text-slate-600 leading-relaxed font-amharic">
+                <RichContent html={session.descriptionAm} />
+              </div>
             )}
           </div>
         )}

@@ -49,6 +49,14 @@ function stripHtmlTags(str?: string | null): string {
   return str.replace(/<[^>]*>/g, '').trim();
 }
 
+function formatRemainingTime(sec: number): string {
+  if (sec <= 0) return '0s';
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
 export function LiveQuizLearnerOverlay({
   sessionId,
   userId,
@@ -75,45 +83,134 @@ export function LiveQuizLearnerOverlay({
       list.push(q);
     };
 
-    // 1. If active quiz specifies allQuestions (e.g. from queued broadcast), include them in order
-    if (quiz.allQuestions && Array.isArray(quiz.allQuestions)) {
+    // 1. If active quiz specifies allQuestions (e.g. from queued broadcast or prepared quiz), include ONLY them in order
+    if (quiz.allQuestions && Array.isArray(quiz.allQuestions) && quiz.allQuestions.length > 0) {
       for (const q of quiz.allQuestions) {
         addQuestion(q);
       }
+      return list;
     }
 
     // 2. Add active quiz if not already in list
     addQuestion(quiz);
 
+    // 3. For single-question sequential broadcasts without a pre-defined pack,
+    // only include prior questions from history that share the same quizTitle
+    if (quizHistory && Array.isArray(quizHistory)) {
+      for (const h of quizHistory) {
+        if (h.quiz && (!quiz.quizTitle || h.quiz.quizTitle === quiz.quizTitle)) {
+          addQuestion(h.quiz);
+        }
+      }
+    }
+
     return list;
-  }, [quiz]);
+  }, [quiz, quizHistory]);
 
   // Current question index being viewed by learner
   const [viewingIndex, setViewingIndex] = useState<number>(0);
 
-  // Initialize learner viewing index to 0 only when a brand-new quiz session starts
-  const sessionKey = quiz?.startedAt ? `${quiz.id}_${quiz.startedAt}` : quiz?.id;
-  const lastSessionKeyRef = useRef<string | undefined>(sessionKey);
+  // Scope storage to this specific quiz pack / broadcast session so different quizzes stay isolated
+  const quizBroadcastKey = quiz ? (quiz.quizTitle ? `${quiz.quizTitle}_${quiz.id}` : quiz.id) : '';
+  const learnerStorageKey =
+    sessionId && userId && quizBroadcastKey
+      ? `live_quiz_learner_answers_${sessionId}_${userId}_${quizBroadcastKey}`
+      : null;
+
+  // Track learner selections across all questions and whole-quiz submitted state
+  const [answersMap, setAnswersMap] = useState<Record<string, string[]>>(() => {
+    if (typeof window !== 'undefined' && learnerStorageKey) {
+      try {
+        const saved = sessionStorage.getItem(learnerStorageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.answersMap && typeof parsed.answersMap === 'object') {
+            return parsed.answersMap;
+          }
+        }
+      } catch {}
+    }
+    return {};
+  });
+
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && learnerStorageKey) {
+      try {
+        const saved = sessionStorage.getItem(learnerStorageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed.isQuizSubmitted === 'boolean') {
+            return parsed.isQuizSubmitted;
+          }
+        }
+      } catch {}
+    }
+    return false;
+  });
+
+  // Track quiz ID to guarantee completely fresh state when a new quiz is broadcasted
+  const lastQuizIdRef = useRef<string | null>(quiz?.id || null);
 
   useEffect(() => {
-    if (sessionKey && sessionKey !== lastSessionKeyRef.current) {
+    if (quiz?.id && quiz.id !== lastQuizIdRef.current) {
+      lastQuizIdRef.current = quiz.id;
       setViewingIndex(0);
-      setIsQuizSubmitted(false);
-      setAnswersMap({});
-      lastSessionKeyRef.current = sessionKey;
+      let restoredAnswers = {};
+      let restoredSubmitted = false;
+      if (typeof window !== 'undefined' && learnerStorageKey) {
+        try {
+          const saved = sessionStorage.getItem(learnerStorageKey);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            restoredAnswers = parsed.answersMap || {};
+            restoredSubmitted = Boolean(parsed.isQuizSubmitted);
+          }
+        } catch {}
+      }
+      setAnswersMap(restoredAnswers);
+      setIsQuizSubmitted(restoredSubmitted);
     }
-  }, [sessionKey]);
+  }, [quiz?.id, learnerStorageKey]);
 
   const safeIndex = Math.min(Math.max(0, viewingIndex), Math.max(0, allQuestions.length - 1));
   const currentQuestion = allQuestions[safeIndex] || quiz;
   // True while the question on screen is the one the trainer is currently running.
   const isCurrentActive = Boolean(quiz && currentQuestion && currentQuestion.id === quiz.id);
 
-  // Track learner selections across all questions and whole-quiz submitted state
-  const [answersMap, setAnswersMap] = useState<Record<string, string[]>>({});
-  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Sync learner answers and submission status to sessionStorage whenever changed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && learnerStorageKey) {
+      try {
+        sessionStorage.setItem(
+          learnerStorageKey,
+          JSON.stringify({ answersMap, isQuizSubmitted }),
+        );
+      } catch {}
+    }
+  }, [learnerStorageKey, answersMap, isQuizSubmitted]);
+
+  // Pre-load answers from quizHistory when returning / rejoining for current quiz questions only
+  useEffect(() => {
+    if (quizHistory && Array.isArray(quizHistory) && userId && allQuestions.length > 0) {
+      const activeQIds = new Set(allQuestions.map((q) => q.id));
+      setAnswersMap((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const h of quizHistory) {
+          if (!activeQIds.has(h.quiz.id)) continue;
+          const userAns = h.answers?.[userId]?.selectedOptionIds;
+          if (userAns && userAns.length > 0 && (!next[h.quiz.id] || next[h.quiz.id].length === 0)) {
+            next[h.quiz.id] = userAns;
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }
+  }, [quizHistory, userId, allQuestions]);
 
   // Automatically restore / expand when a new live quiz question begins
   useEffect(() => {
@@ -188,6 +285,29 @@ export function LiveQuizLearnerOverlay({
     const fromHistory = quizHistory?.find((h) => h.quiz.id === currentQuestion.id)?.revealData;
     if (fromHistory) return fromHistory;
 
+    // Fallback: When the trainer reveals answers for the quiz pack, ensure all questions show revealed
+    const isAnyRevealed = Boolean(
+      revealData ||
+      (revealsByQuestionId && Object.keys(revealsByQuestionId).length > 0)
+    );
+    if (isAnyRevealed) {
+      let resolvedCorrect: string[] = ['0'];
+      if (currentQuestion.correctOptionIds && currentQuestion.correctOptionIds.length > 0) {
+        resolvedCorrect = currentQuestion.correctOptionIds.map(String);
+      } else if ((currentQuestion as any).correctAnswer !== undefined && (currentQuestion as any).correctAnswer !== null) {
+        resolvedCorrect = [String((currentQuestion as any).correctAnswer)];
+      }
+
+      return {
+        questionId: currentQuestion.id,
+        correctOptionIds: resolvedCorrect,
+        explanationEn: currentQuestion.explanationEn,
+        explanationAm: currentQuestion.explanationAm,
+        distribution: {},
+        totalResponses: 0,
+      };
+    }
+
     return null;
   }, [revealsByQuestionId, revealData, quizHistory, currentQuestion]);
 
@@ -239,6 +359,11 @@ export function LiveQuizLearnerOverlay({
           questionId: q.id,
           selectedOptionIds: selectedOpts,
           responseDurationSeconds: elapsed,
+          questionTitle: q.titleEn,
+          options: (q.options || []).map((o: any) =>
+            typeof o === 'string' ? o : o.textEn || o.text || '',
+          ),
+          correctAnswer: q.correctOptionIds?.[0] || (q as any).correctAnswer,
         }).catch((err) => console.warn('Could not log live quiz answer:', err));
       }
     }
@@ -341,7 +466,7 @@ export function LiveQuizLearnerOverlay({
                 : submitted
                   ? 'Answer Submitted • Click to view'
                   : secondsRemaining > 0
-                    ? `${secondsRemaining}s remaining • Click to open`
+                    ? `${formatRemainingTime(secondsRemaining)} remaining • Click to open`
                     : 'Time Expired • Click to view'}
             </p>
           </div>
@@ -383,7 +508,7 @@ export function LiveQuizLearnerOverlay({
                   }`}
                 >
                   <Clock className="h-3 w-3" />
-                  {secondsRemaining}s
+                  {formatRemainingTime(secondsRemaining)}
                 </span>
               )}
 
@@ -435,7 +560,8 @@ export function LiveQuizLearnerOverlay({
                 const isRevealedTab = Boolean(
                   revealsByQuestionId[q.id] ||
                   (revealData?.allReveals && revealData.allReveals[q.id]) ||
-                  (revealData && (revealData.questionId === q.id || !revealData.questionId)),
+                  (revealData && (revealData.questionId === q.id || !revealData.questionId)) ||
+                  revealData,
                 );
 
                 return (

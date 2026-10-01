@@ -4,6 +4,7 @@ import { Table, TableRow, Td } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Calendar, Clock } from 'lucide-react';
 import { isInPersonSession } from '@/lib/session-mode';
+import { stripHtmlTags } from '@/components/ui/RichContent';
 
 export interface SessionRow {
   session: ApiLiveSession;
@@ -116,9 +117,9 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                   <div className="flex items-center gap-1.5">
                     <p
                       className="truncate text-xs font-semibold text-slate-900"
-                      title={row.session.titleEn}
+                      title={stripHtmlTags(row.session.titleEn)}
                     >
-                      {row.session.titleEn}
+                      {stripHtmlTags(row.session.titleEn)}
                     </p>
                     {isInPersonSession(row.session) ? (
                       <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 border border-amber-200">
@@ -140,9 +141,9 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                   ) : (
                     <p
                       className="mt-0.5 truncate text-[11px] text-slate-500"
-                      title={row.session.descriptionEn || 'Live Classroom Session'}
+                      title={stripHtmlTags(row.session.descriptionEn) || 'Live Classroom Session'}
                     >
-                      {row.session.descriptionEn || 'Live Classroom Session'}
+                      {stripHtmlTags(row.session.descriptionEn) || 'Live Classroom Session'}
                     </p>
                   )}
                 </div>
@@ -170,17 +171,28 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
 
               {/* Trainer */}
               <Td className="whitespace-nowrap w-[150px]">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700 border border-slate-200">
-                    {getInitials(row.trainerName)}
-                  </div>
-                  <span
-                    className="truncate text-xs font-medium text-slate-700 max-w-[110px]"
-                    title={row.trainerName}
-                  >
-                    {row.trainerName}
-                  </span>
-                </div>
+                {(() => {
+                  const resolvedTrainer =
+                    row.trainerName && row.trainerName !== 'Assigned Trainer'
+                      ? row.trainerName
+                      : row.session.trainer
+                        ? `${row.session.trainer.firstName || ''} ${row.session.trainer.lastName || ''}`.trim()
+                        : row.trainerName || 'Assigned Trainer';
+
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700 border border-slate-200">
+                        {getInitials(resolvedTrainer)}
+                      </div>
+                      <span
+                        className="truncate text-xs font-medium text-slate-700 max-w-[110px]"
+                        title={resolvedTrainer}
+                      >
+                        {resolvedTrainer}
+                      </span>
+                    </div>
+                  );
+                })()}
               </Td>
 
               {/* Status */}

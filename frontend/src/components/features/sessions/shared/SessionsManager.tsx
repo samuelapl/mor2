@@ -195,9 +195,21 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   // Course dropdown: a trainer sees their assigned courses (falling back to all if none).
   const filterCourses = scope === "own" && assignedCourses.length > 0 ? assignedCourses : courses;
 
-  const trainerNameFor = (s: ApiLiveSession) =>
-    (s.trainerId ? userMap.get(s.trainerId) : undefined) ??
-    (s.trainer ? `${s.trainer.firstName} ${s.trainer.lastName}` : undefined);
+  const trainerNameFor = (s: ApiLiveSession) => {
+    if (s.trainer) return `${s.trainer.firstName || ''} ${s.trainer.lastName || ''}`.trim();
+    if (s.trainerId && userMap.get(s.trainerId)) return userMap.get(s.trainerId);
+    const course = s.courseId ? courseMap.get(s.courseId) : undefined;
+    if (course?.trainerIds && course.trainerIds.length > 0) {
+      for (const tId of course.trainerIds) {
+        const name = userMap.get(tId);
+        if (name) return name;
+      }
+    } else if (course?.trainerId) {
+      const name = userMap.get(course.trainerId);
+      if (name) return name;
+    }
+    return undefined;
+  };
 
   // Apply filters
   const filteredSessions = useMemo(() => {

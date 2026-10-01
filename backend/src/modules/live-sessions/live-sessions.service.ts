@@ -502,6 +502,9 @@ export class LiveSessionsService {
         timestamp: new Date(),
         metadata: {
           questionId: dto.questionId,
+          questionTitle: dto.questionTitle,
+          options: dto.options,
+          correctAnswer: dto.correctAnswer,
           selectedOptionIds: dto.selectedOptionIds,
           isCorrect,
           score,
@@ -606,6 +609,33 @@ export class LiveSessionsService {
       const correctAnswers = qData.answers.filter((a) => a.isCorrect).length;
       const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
 
+      // Fallback from metadata if question not found in QuestionBankQuestion
+      let titleEn = qEntity?.question;
+      let options: any[] = Array.isArray(qEntity?.options) ? (qEntity.options as any[]) : [];
+      let correctAnswer = qEntity?.correctAnswer;
+
+      if (!titleEn || options.length === 0) {
+        for (const log of logs) {
+          const meta = (log.metadata as Record<string, any>) || {};
+          if (meta.questionId === qId) {
+            if (!titleEn && meta.questionTitle) titleEn = meta.questionTitle;
+            if (options.length === 0 && Array.isArray(meta.options) && meta.options.length > 0) {
+              options = meta.options;
+            }
+            if (!correctAnswer && meta.correctAnswer) correctAnswer = meta.correctAnswer;
+          }
+        }
+      }
+
+      // If options are still empty, build options from distinct selectedOptionIds
+      if (options.length === 0) {
+        const optionKeys = new Set<string>();
+        qData.answers.forEach((a) => a.selectedOptionIds.forEach((id) => optionKeys.add(id)));
+        if (optionKeys.size > 0) {
+          options = Array.from(optionKeys).map((key, idx) => `Option ${idx + 1}`);
+        }
+      }
+
       // Option distribution
       const distribution: Record<string, number> = {};
       for (const ans of qData.answers) {
@@ -616,10 +646,10 @@ export class LiveSessionsService {
 
       return {
         questionId: qId,
-        titleEn: qEntity?.question || 'Live Session Question',
+        titleEn: titleEn || 'Live Session Question',
         type: qEntity?.type || 'SINGLE_CHOICE',
-        options: qEntity?.options || [],
-        correctAnswer: qEntity?.correctAnswer,
+        options,
+        correctAnswer,
         points: qEntity?.points || 1,
         totalResponses: totalAnswers,
         correctCount: correctAnswers,

@@ -119,8 +119,18 @@ function LiveKitInteractiveLayer({
   const currentUserName =
     currentUser?.name || currentUser?.firstName || (isStaff ? 'Trainer' : 'Learner');
 
-  // Quiz state
-  const [activeQuiz, setActiveQuiz] = useState<LiveQuizPayload | null>(null);
+  // Quiz state with session storage recovery for seamless reconnection
+  const [activeQuiz, setActiveQuiz] = useState<LiveQuizPayload | null>(() => {
+    if (typeof window === 'undefined' || !session?.id) return null;
+    try {
+      const saved = sessionStorage.getItem(`live_quiz_${session.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.activeQuiz) return parsed.activeQuiz;
+      }
+    } catch {}
+    return null;
+  });
 
   const [answers, setAnswers] = useState<
     Record<
@@ -133,12 +143,44 @@ function LiveKitInteractiveLayer({
         responseDurationSeconds?: number;
       }
     >
-  >({});
+  >(() => {
+    if (typeof window === 'undefined' || !session?.id) return {};
+    try {
+      const saved = sessionStorage.getItem(`live_quiz_${session.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.answers) return parsed.answers;
+      }
+    } catch {}
+    return {};
+  });
 
-  const [revealData, setRevealData] = useState<LiveQuizRevealPayload | null>(null);
+  const [revealData, setRevealData] = useState<LiveQuizRevealPayload | null>(() => {
+    if (typeof window === 'undefined' || !session?.id) return null;
+    try {
+      const saved = sessionStorage.getItem(`live_quiz_${session.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.revealData) return parsed.revealData;
+      }
+    } catch {}
+    return null;
+  });
+
   const [revealsByQuestionId, setRevealsByQuestionId] = useState<
     Record<string, LiveQuizRevealPayload>
-  >({});
+  >(() => {
+    if (typeof window === 'undefined' || !session?.id) return {};
+    try {
+      const saved = sessionStorage.getItem(`live_quiz_${session.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.revealsByQuestionId) return parsed.revealsByQuestionId;
+      }
+    } catch {}
+    return {};
+  });
+
   const [learnerDismissed, setLearnerDismissed] = useState(false);
 
   const [quizHistory, setQuizHistory] = useState<
@@ -157,7 +199,17 @@ function LiveKitInteractiveLayer({
       revealData?: LiveQuizRevealPayload | null;
       completedAt: number;
     }>
-  >([]);
+  >(() => {
+    if (typeof window === 'undefined' || !session?.id) return [];
+    try {
+      const saved = sessionStorage.getItem(`live_quiz_${session.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.quizHistory && Array.isArray(parsed.quizHistory)) return parsed.quizHistory;
+      }
+    } catch {}
+    return [];
+  });
 
   // Hand raise state
   const [raisedHands, setRaisedHands] = useState<RaisedHandEntry[]>([]);
@@ -183,10 +235,13 @@ function LiveKitInteractiveLayer({
                 ]);
                 return {};
               });
+            } else {
+              setAnswers({});
             }
             return event.payload;
           });
           setRevealData(null);
+          setRevealsByQuestionId({});
           break;
         case 'QUIZ_ANSWER':
           setAnswers((prev) => {
@@ -257,23 +312,62 @@ function LiveKitInteractiveLayer({
         case 'QUIZ_CLOSE':
           setLearnerDismissed(true);
           setRevealData(null);
+          setRevealsByQuestionId({});
           setActiveQuiz((currentActive) => {
             if (currentActive) {
               setAnswers((currentAnswers) => {
+                const snapshot = { ...currentAnswers };
                 setQuizHistory((prev) => [
                   ...prev.filter((h) => h.quiz.id !== currentActive.id),
                   {
                     quiz: currentActive,
-                    answers: currentAnswers,
+                    answers: snapshot,
                     revealData: revealsByQuestionId[currentActive.id] || revealData,
                     completedAt: Date.now(),
                   },
                 ]);
                 return {};
               });
+            } else {
+              setAnswers({});
             }
             return null;
           });
+          break;
+        case 'QUIZ_SYNC_REQUEST':
+          if (isStaff && (activeQuizRef.current || quizHistoryRef.current.length > 0)) {
+            broadcast({
+              type: 'QUIZ_SYNC_RESPONSE',
+              payload: {
+                activeQuiz: activeQuizRef.current,
+                answers: answersRef.current,
+                revealData: revealDataRef.current,
+                revealsByQuestionId: revealsByQuestionIdRef.current,
+                quizHistory: quizHistoryRef.current,
+              },
+            });
+          }
+          break;
+        case 'QUIZ_SYNC_RESPONSE':
+          if (event.payload.activeQuiz) {
+            setActiveQuiz(event.payload.activeQuiz);
+            setLearnerDismissed(false);
+          }
+          if (event.payload.answers) {
+            setAnswers((prev) => ({ ...prev, ...event.payload.answers }));
+          }
+          if (event.payload.revealData) {
+            setRevealData(event.payload.revealData);
+          }
+          if (event.payload.revealsByQuestionId) {
+            setRevealsByQuestionId((prev) => ({
+              ...prev,
+              ...event.payload.revealsByQuestionId,
+            }));
+          }
+          if (event.payload.quizHistory && Array.isArray(event.payload.quizHistory)) {
+            setQuizHistory(event.payload.quizHistory);
+          }
           break;
         case 'HAND_RAISE':
           if (event.payload.raised) {
@@ -300,13 +394,55 @@ function LiveKitInteractiveLayer({
           break;
       }
     },
-    [currentUserId],
+    [currentUserId, isStaff, session?.id],
   );
 
+  // State refs for synchronization
+  const activeQuizRef = useRef<LiveQuizPayload | null>(activeQuiz);
+  const answersRef = useRef(answers);
+  const revealDataRef = useRef(revealData);
+  const revealsByQuestionIdRef = useRef(revealsByQuestionId);
+  const quizHistoryRef = useRef(quizHistory);
+
+  useEffect(() => { activeQuizRef.current = activeQuiz; }, [activeQuiz]);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { revealDataRef.current = revealData; }, [revealData]);
+  useEffect(() => { revealsByQuestionIdRef.current = revealsByQuestionId; }, [revealsByQuestionId]);
+  useEffect(() => { quizHistoryRef.current = quizHistory; }, [quizHistory]);
+
+  // Persist live quiz state to sessionStorage per session
+  useEffect(() => {
+    if (typeof window === 'undefined' || !session?.id) return;
+    try {
+      if (activeQuiz || quizHistory.length > 0) {
+        sessionStorage.setItem(
+          `live_quiz_${session.id}`,
+          JSON.stringify({
+            activeQuiz,
+            answers,
+            revealData,
+            revealsByQuestionId,
+            quizHistory,
+          }),
+        );
+      }
+    } catch {}
+  }, [session?.id, activeQuiz, answers, revealData, revealsByQuestionId, quizHistory]);
+
   // Hook into Data Channel for remote events
-  const { broadcast } = useLiveKitDataChannel({
+  const { broadcast, isConnected } = useLiveKitDataChannel({
     onEvent: processEvent,
   });
+
+  // Automatically request sync when connecting if learner
+  useEffect(() => {
+    if (isConnected && !isStaff) {
+      broadcast({
+        type: 'QUIZ_SYNC_REQUEST',
+        payload: { requesterId: currentUserId },
+      });
+    }
+  }, [isConnected, isStaff, broadcast, currentUserId]);
 
   // Outbound broadcast that also applies locally immediately
   const handleBroadcast = useCallback(
@@ -454,13 +590,20 @@ function LiveKitInteractiveLayer({
           attendees={attendees}
           onClearQuiz={() => {
             if (activeQuiz) {
+              const snapshotAnswers = { ...answers };
               setQuizHistory((prev) => [
                 ...prev.filter((h) => h.quiz.id !== activeQuiz.id),
-                { quiz: activeQuiz, answers, completedAt: Date.now() },
+                {
+                  quiz: activeQuiz,
+                  answers: snapshotAnswers,
+                  revealData: revealsByQuestionId[activeQuiz.id] || revealData,
+                  completedAt: Date.now(),
+                },
               ]);
             }
             setActiveQuiz(null);
             setRevealData(null);
+            setRevealsByQuestionId({});
             setAnswers({});
           }}
         />

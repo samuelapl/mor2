@@ -24,6 +24,9 @@ interface PreparedQuizPanelProps {
   sessionId?: string;
   onBroadcastQuizGroup: (quizGroup: PreparedQuizGroup) => void;
   activeQuizId?: string;
+  activeQuizTitle?: string;
+  broadcastedQuizTitles?: Set<string>;
+  broadcastedQuestionIds?: Set<string>;
   onSwitchToBank?: () => void;
 }
 
@@ -31,6 +34,9 @@ export function PreparedQuizPanel({
   sessionId,
   onBroadcastQuizGroup,
   activeQuizId,
+  activeQuizTitle,
+  broadcastedQuizTitles,
+  broadcastedQuestionIds,
   onSwitchToBank,
 }: PreparedQuizPanelProps) {
   const {
@@ -162,6 +168,20 @@ export function PreparedQuizPanel({
           {quizzes.map((quiz, idx) => {
             const isExpanded = expandedQuizId === quiz.id;
             const hasQuestions = quiz.questions.length > 0;
+            const isThisQuizActive = Boolean(
+              (activeQuizTitle && activeQuizTitle === quiz.title) ||
+              (activeQuizId && (
+                activeQuizId === quiz.id ||
+                quiz.questions.some((q) => q.questionId === activeQuizId || q.question?.id === activeQuizId)
+              ))
+            );
+            const isOtherQuizActive = Boolean((activeQuizId || activeQuizTitle) && !isThisQuizActive);
+            const isBroadcasted = Boolean(
+              (broadcastedQuizTitles && broadcastedQuizTitles.has(quiz.title)) ||
+              (broadcastedQuestionIds &&
+                quiz.questions.length > 0 &&
+                quiz.questions.every((q) => broadcastedQuestionIds.has(q.questionId || q.question?.id)))
+            );
 
             return (
               <div
@@ -184,6 +204,18 @@ export function PreparedQuizPanel({
                           <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
                             {quiz.questions.length} {quiz.questions.length === 1 ? 'Question' : 'Questions'}
                           </span>
+                          {isThisQuizActive && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800 animate-pulse">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
+                              Broadcasting Active
+                            </span>
+                          )}
+                          {isBroadcasted && !isThisQuizActive && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 border border-purple-200 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                              <CheckCircle2 className="h-3 w-3 text-purple-600" />
+                              Broadcasted
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-slate-400">
                           Ready for classroom whole-quiz broadcast
@@ -203,79 +235,95 @@ export function PreparedQuizPanel({
 
                       <Button
                         size="sm"
-                        disabled={!hasQuestions}
+                        disabled={!hasQuestions || isBroadcasted || isThisQuizActive || isOtherQuizActive}
                         onClick={() => onBroadcastQuizGroup(quiz)}
-                        className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md"
+                        className={`gap-1.5 font-semibold text-xs shadow-md transition ${
+                          isThisQuizActive
+                            ? 'bg-emerald-600 text-white opacity-90 cursor-not-allowed'
+                            : isBroadcasted
+                            ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed'
+                            : isOtherQuizActive
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        }`}
                       >
                         <Play className="h-3.5 w-3.5 fill-current" />
-                        Broadcast {quiz.title} ({quiz.timeLimitMinutes}m)
+                        {isThisQuizActive
+                          ? 'Broadcasting Active...'
+                          : isBroadcasted
+                          ? 'Already Broadcasted'
+                          : isOtherQuizActive
+                          ? 'Broadcast Locked (Quiz Running)'
+                          : `Broadcast ${quiz.title} (${quiz.timeLimitMinutes}m)`}
                       </Button>
                     </div>
                   </div>
 
-                  {/* Timer Controls Right in Live Session */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 bg-slate-50/50 p-2.5 rounded-xl">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                        <Clock className="h-3.5 w-3.5 text-indigo-600" />
-                        Live Timer:
-                      </span>
+                  {/* Timer Controls Right in Live Session (Hidden during active broadcasting or if already broadcasted) */}
+                  {!isThisQuizActive && !isOtherQuizActive && !isBroadcasted && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 bg-slate-50/50 p-2.5 rounded-xl">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                          <Clock className="h-3.5 w-3.5 text-indigo-600" />
+                          Live Timer:
+                        </span>
 
-                      {/* Quick Presets */}
-                      {[1, 2, 3, 5, 7, 10, 15].map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => handleUpdateMinutes(quiz.id, m)}
-                          className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
-                            quiz.timeLimitMinutes === m
-                              ? 'bg-indigo-600 text-white shadow-2xs'
-                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          {m}m
-                        </button>
-                      ))}
+                        {/* Quick Presets */}
+                        {[1, 2, 3, 5, 7, 10, 15].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => handleUpdateMinutes(quiz.id, m)}
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+                              quiz.timeLimitMinutes === m
+                                ? 'bg-indigo-600 text-white shadow-2xs'
+                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            {m}m
+                          </button>
+                        ))}
 
-                      {/* Custom Desired Minute Input */}
-                      <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateMinutes(quiz.id, Math.max(1, quiz.timeLimitMinutes - 1))}
-                          className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 flex items-center justify-center font-bold text-xs bg-white"
-                          title="Decrease minute"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          max={180}
-                          value={quiz.timeLimitMinutes}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value, 10);
-                            if (!isNaN(val) && val >= 1) {
-                              handleUpdateMinutes(quiz.id, val);
-                            }
-                          }}
-                          className="w-10 bg-white text-center text-xs font-bold text-slate-900 outline-none [color-scheme:light]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateMinutes(quiz.id, Math.min(180, quiz.timeLimitMinutes + 1))}
-                          className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 flex items-center justify-center font-bold text-xs bg-white"
-                          title="Increase minute"
-                        >
-                          +
-                        </button>
-                        <span className="text-[11px] font-semibold text-slate-500 pr-2">mins</span>
+                        {/* Custom Desired Minute Input */}
+                        <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateMinutes(quiz.id, Math.max(1, quiz.timeLimitMinutes - 1))}
+                            className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 flex items-center justify-center font-bold text-xs bg-white"
+                            title="Decrease minute"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={180}
+                            value={quiz.timeLimitMinutes}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 1) {
+                                handleUpdateMinutes(quiz.id, val);
+                              }
+                            }}
+                            className="w-10 bg-white text-center text-xs font-bold text-slate-900 outline-none [color-scheme:light]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateMinutes(quiz.id, Math.min(180, quiz.timeLimitMinutes + 1))}
+                            className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 flex items-center justify-center font-bold text-xs bg-white"
+                            title="Increase minute"
+                          >
+                            +
+                          </button>
+                          <span className="text-[11px] font-semibold text-slate-500 pr-2">mins</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Learners get <strong className="text-indigo-700">{quiz.timeLimitMinutes} mins</strong> total
-                    </span>
-                  </div>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Learners get <strong className="text-indigo-700">{quiz.timeLimitMinutes} mins</strong> total
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expandable Questions List Preview & Deletion */}
@@ -319,6 +367,12 @@ export function PreparedQuizPanel({
                                   <span className="text-[10px] text-slate-400">· {q.points || 10} pts</span>
                                   {q.category && (
                                     <span className="text-[10px] text-slate-400">· {q.category}</span>
+                                  )}
+                                  {broadcastedQuestionIds && (broadcastedQuestionIds.has(item.questionId) || broadcastedQuestionIds.has(q.id)) && (
+                                    <span className="inline-flex items-center gap-1 rounded bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.2 text-[9px] font-bold shrink-0">
+                                      <CheckCircle2 className="h-2.5 w-2.5 text-purple-600" />
+                                      Previously Broadcasted
+                                    </span>
                                   )}
                                 </div>
                                 <p className="text-xs font-semibold text-slate-800 leading-snug">
