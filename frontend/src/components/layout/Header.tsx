@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { Bell, CheckCheck } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Bell, CheckCheck, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
 import { useLms } from '@/lib/lms-store';
 import {
@@ -31,7 +31,8 @@ interface ApiNotificationListItem extends ApiNotification {}
 
 export default function Header() {
   const pathname = usePathname();
-  const { currentUser } = useLms();
+  const router = useRouter();
+  const { currentUser, logout } = useLms();
   const { lang, tRole } = useTranslation();
   const isAmharic = lang === 'am';
   const role = currentUser?.role ?? getRoleFromPath(pathname);
@@ -41,8 +42,10 @@ export default function Header() {
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<ApiNotificationListItem[]>([]);
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -74,6 +77,17 @@ export default function Header() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   const readOne = async (id: string) => {
     setNotifications((prev) =>
@@ -186,30 +200,91 @@ export default function Header() {
           ) : null}
         </div>
 
-        {/* User Account Button - opens AccountModal directly */}
-        <button
-          type="button"
-          onClick={() => setAccountOpen(true)}
-          title={isAmharic ? 'የመለያ ቅንብሮች' : 'Account Settings'}
-          className="flex items-center gap-2.5 rounded-xl border-l border-slate-200/80 dark:border-slate-700/80 pl-3 py-1 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
-        >
-          {demoUser?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={demoUser.avatarUrl}
-              alt="Avatar"
-              className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-white/30 dark:ring-white/10"
-            />
-          ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 ring-1 ring-white/30 dark:ring-white/10">
-              {getInitials(demoUser?.name ?? roleLabel)}
+        {/* User Account / Profile Button with Separate Actions */}
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            title={demoUser?.name ?? 'Profile'}
+            className="flex items-center gap-2.5 rounded-xl border-l border-slate-200/80 dark:border-slate-700/80 pl-3 py-1 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+          >
+            {demoUser?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={demoUser.avatarUrl}
+                alt="Avatar"
+                className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-white/30 dark:ring-white/10"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 ring-1 ring-white/30 dark:ring-white/10">
+                {getInitials(demoUser?.name ?? roleLabel)}
+              </div>
+            )}
+            <div className="hidden text-left leading-tight lg:block">
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{demoUser?.name ?? 'Demo User'}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{demoUser?.email}</p>
             </div>
-          )}
-          <div className="hidden text-left leading-tight lg:block">
-            <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{demoUser?.name ?? 'Demo User'}</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{demoUser?.email}</p>
-          </div>
-        </button>
+            <ChevronDown
+              className={cn(
+                'hidden h-4 w-4 text-slate-400 transition-transform duration-200 lg:block',
+                menuOpen && 'rotate-180 text-slate-600 dark:text-slate-200',
+              )}
+            />
+          </button>
+
+          {menuOpen ? (
+            <div className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50 animate-fade-in-up">
+              {/* Profile summary */}
+              <div className="border-b border-slate-100 dark:border-slate-700/60 p-3">
+                <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                  {demoUser?.name ?? 'User'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  {demoUser?.email}
+                </p>
+                <div className="mt-1.5">
+                  <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/60 capitalize">
+                    {roleLabel}
+                  </span>
+                </div>
+              </div>
+
+              {/* Separate actions: Account Settings & Log out */}
+              <div className="p-1.5 space-y-1">
+                {/* 1. Account Settings */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setAccountOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer"
+                >
+                  <UserIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                  <span>{isAmharic ? 'የመለያ ቅንብሮች' : 'Account Settings'}</span>
+                </button>
+
+                <div className="my-1 border-t border-slate-100 dark:border-slate-700/60" />
+
+                {/* 2. Log out */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                    router.push('/login');
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  <span>{isAmharic ? 'ውጣ' : 'Log out'}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <AccountModal open={accountOpen} onClose={() => setAccountOpen(false)} />
