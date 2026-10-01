@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { CircleCheck, ClipboardCheck, Clock, Pause } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -32,6 +32,9 @@ import {
   useLessonHeartbeat,
   usePlayhead,
 } from '@/features/progress';
+import { offlineDb } from '@/features/offline';
+import { syncQueue } from '@/core/sync/sync-queue';
+import type { ApiLesson } from '@/features/classroom/types/lesson.types';
 
 /**
  * Classroom player (architecture §6.5–§6.6, spec §5.1, §6.2–§6.4).
@@ -51,13 +54,69 @@ export default function LessonScreen() {
   const completion = useLessonCompletion(lessonId);
   const complete = useCompleteLesson(courseId);
 
+  const [offlineData, setOfflineData] = useState<ApiLesson | null>(null);
+  const [locallyCompleted, setLocallyCompleted] = useState(false);
+
+  useEffect(() => {
+    if (!lesson.data || !online) {
+      void (async () => {
+        const offL = await offlineDb.getLesson(lessonId);
+        if (offL) {
+          const atts = await offlineDb.getAttachmentsForLesson(lessonId);
+          const subLessons = await offlineDb.getLessonsForModule(offL.moduleId);
+          setOfflineData({
+            id: offL.id,
+            moduleId: offL.moduleId,
+            parentId: offL.parentId ?? null,
+            order: offL.sortOrder,
+            title: offL.title,
+            titleEn: offL.title,
+            titleAm: offL.titleAm ?? undefined,
+            contentType: offL.contentType as any,
+            durationMinutes: offL.durationMinutes ?? null,
+            content: offL.content ?? null,
+            contentEn: offL.content ?? null,
+            contentAm: offL.contentAm ?? undefined,
+            resourceUrl: offL.localMediaUri || offL.resourceUrl || null,
+            attachments: atts.map((a) => ({
+              id: a.id,
+              fileName: a.fileName,
+              fileUrl: a.localFileUri || a.fileUrl,
+              fileType: a.fileType,
+              sizeBytes: a.sizeBytes,
+            })),
+            parent: null,
+            subLessons: subLessons
+              .filter((s) => s.parentId === offL.id)
+              .map((s) => ({
+                id: s.id,
+                moduleId: s.moduleId,
+                parentId: s.parentId ?? null,
+                order: s.sortOrder,
+                title: s.title,
+                contentType: s.contentType as any,
+                durationMinutes: s.durationMinutes ?? null,
+                content: s.content ?? null,
+                resourceUrl: s.localMediaUri || s.resourceUrl || null,
+                attachments: [],
+              })),
+            module: { id: offL.moduleId, courseId, order: 0 },
+          });
+          if (offL.isCompleted === 1) {
+            setLocallyCompleted(true);
+          }
+        }
+      })();
+    }
+  }, [lesson.data, online, lessonId, courseId]);
+
   const lookup = findLessonProgress(progress.data, lessonId);
   const entry = lookup?.entry;
   const quiz = lookup?.lesson?.assessment ?? null;
-  const data = lesson.data;
+  const data = lesson.data ?? offlineData;
   const subLessons = [...(data?.subLessons ?? [])].sort((a, b) => a.order - b.order);
   const hasSubLessons = subLessons.length > 0;
-  const completed = entry?.completed ?? completion.data?.completed ?? false;
+  const completed = entry?.completed ?? completion.data?.completed ?? locallyCompleted ?? false;
 
   const isYoutube = Boolean(data?.resourceUrl && /youtu\.?be/.test(data.resourceUrl));
   const isPlayable =
@@ -76,7 +135,7 @@ export default function LessonScreen() {
   });
   const playhead = usePlayhead(lessonId, completed);
 
-  const required = entry?.requiredSeconds ?? 0;
+  const required = entry?.requiredSeconds ?? (data?.durationMinutes ? data.durationMinutes * 60 : 0);
   const satisfied =
     completed || (entry?.timeSatisfied ?? false) || heartbeat.liveSeconds >= required;
   const remaining = Math.max(0, required - heartbeat.liveSeconds);
@@ -92,6 +151,20 @@ export default function LessonScreen() {
 
   // The React Compiler memoizes these; no manual useCallback needed.
   const markComplete = (lastPosition?: number) => {
+    if (!online) {
+      setLocallyCompleted(true);
+      void offlineDb.updateLessonProgress(lessonId, { isCompleted: true, lastPosition });
+      void offlineDb.enqueueProgress(courseId, lessonId, 'COMPLETION', { lastPosition });
+      syncQueue.enqueue('LESSON_COMPLETE', { lessonId, lastPosition }, `complete-${lessonId}`);
+      Alert.alert(
+        t('classroom.completed'),
+        t('classroom.offlineCompletedHint', {
+          defaultValue: 'Lesson completed offline! Your progress will sync automatically when back online.',
+        }),
+      );
+      return;
+    }
+
     complete.mutate(
       { lessonId, lastPosition },
       {
@@ -116,10 +189,10 @@ export default function LessonScreen() {
 
   const onEnded = () => {
     // Finishing a video auto-completes it when nothing else is required (architecture §6.6).
-    if (!completed && !quiz && !hasSubLessons && satisfied && online) markComplete(0);
+    if (!completed && !quiz && !hasSubLessons && satisfied) markComplete(0);
   };
 
-  if (lesson.isPending) {
+  if (lesson.isPending && !data) {
     return (
       <Screen>
         <Skeleton height={200} />
@@ -128,7 +201,7 @@ export default function LessonScreen() {
       </Screen>
     );
   }
-  if (lesson.isError || !data) {
+  if (!data) {
     return (
       <Screen>
         <ErrorState error={lesson.error} onRetry={() => void lesson.refetch()} />
@@ -310,26 +383,32 @@ export default function LessonScreen() {
                 <Button
                   title={t('classroom.takeQuiz')}
                   icon={<ClipboardCheck size={18} color="#fff" />}
-                  disabled={!quizOpen || !online}
+                  disabled={!quizOpen}
                   onPress={() => openQuiz(quiz.id)}
                   fullWidth
                 />
                 <AppText variant="caption" className="text-center">
-                  {!online ? t('classroom.offlineComplete') : t('classroom.quizCompletesLesson')}
+                  {!online
+                    ? t('classroom.offlineQuizAvailable', {
+                        defaultValue: 'Quiz available offline · Syncs automatically on reconnect',
+                      })
+                    : t('classroom.quizCompletesLesson')}
                 </AppText>
               </>
             ) : hasSubLessons ? null : (
               <>
                 <Button
                   title={t('classroom.markComplete')}
-                  disabled={!satisfied || !online}
+                  disabled={!satisfied}
                   loading={complete.isPending}
                   onPress={() => markComplete()}
                   fullWidth
                 />
                 {!online ? (
                   <AppText variant="caption" className="text-center">
-                    {t('classroom.offlineComplete')}
+                    {t('classroom.offlineCompleteHint', {
+                      defaultValue: 'Offline mode · Progress saved locally and syncs automatically',
+                    })}
                   </AppText>
                 ) : null}
               </>

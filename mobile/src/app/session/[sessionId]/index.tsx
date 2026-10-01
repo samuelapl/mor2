@@ -3,16 +3,20 @@ import * as WebBrowser from 'expo-web-browser';
 import {
   CalendarDays,
   CircleCheck,
+  Download,
   KeyRound,
   MapPin,
   PlayCircle,
   QrCode,
   Radio,
+  Trash2,
   Video,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, View } from 'react-native';
+import { Directory, File, Paths } from 'expo-file-system';
+import { downloadAndOpen } from '@/features/classroom/utils/open-file';
 
 import { Alert } from '@/core/utils/alert';
 import {
@@ -84,6 +88,60 @@ export default function SessionScreen() {
   const threshold = meeting.last?.threshold ?? data.attendanceThreshold;
   const checkedIn = Boolean(mine?.checkInMethod) && mine?.status === 'PRESENT';
   const description = localized(data, 'description');
+
+  const [recordingDownloaded, setRecordingDownloaded] = useState(false);
+  const [downloadingRecording, setDownloadingRecording] = useState(false);
+
+  useEffect(() => {
+    try {
+      const dir = new Directory(Paths.document, 'offline_recordings');
+      const file = new File(dir, `session_${sessionId}.mp4`);
+      setRecordingDownloaded(file.exists);
+    } catch {}
+  }, [sessionId]);
+
+  const handleDownloadRecording = async () => {
+    if (!data.recordingUrl) return;
+    setDownloadingRecording(true);
+    try {
+      const dir = new Directory(Paths.document, 'offline_recordings');
+      if (!dir.exists) dir.create({ intermediates: true });
+      const target = new File(dir, `session_${sessionId}.mp4`);
+      await File.downloadFileAsync(data.recordingUrl, target, { idempotent: true });
+      setRecordingDownloaded(true);
+      Alert.alert(
+        t('sessions.recordingDownloaded', { defaultValue: 'Downloaded' }),
+        t('sessions.recordingDownloadedBody', {
+          defaultValue: 'Session recording is now saved for offline viewing.',
+        }),
+      );
+    } catch (err: any) {
+      Alert.alert(t('common.somethingWrong'), err?.message || 'Download failed');
+    } finally {
+      setDownloadingRecording(false);
+    }
+  };
+
+  const handleOpenDownloadedRecording = async () => {
+    const dir = new Directory(Paths.document, 'offline_recordings');
+    const file = new File(dir, `session_${sessionId}.mp4`);
+    if (file.exists) {
+      await downloadAndOpen({
+        url: file.uri,
+        fileName: `${data.title || 'Session'}_recording.mp4`,
+        mimeType: 'video/mp4',
+      });
+    }
+  };
+
+  const handleRemoveRecording = () => {
+    try {
+      const dir = new Directory(Paths.document, 'offline_recordings');
+      const file = new File(dir, `session_${sessionId}.mp4`);
+      if (file.exists) file.delete();
+      setRecordingDownloaded(false);
+    } catch {}
+  };
 
   const join = async () => {
     setJoining(true);
@@ -297,13 +355,63 @@ export default function SessionScreen() {
         ) : null}
 
         {data.recordingUrl && data.status === 'COMPLETED' ? (
-          <Button
-            title={t('sessions.watchRecording')}
-            variant="secondary"
-            icon={<PlayCircle size={18} color={colors.primary} />}
-            onPress={() => void WebBrowser.openBrowserAsync(data.recordingUrl!)}
-            fullWidth
-          />
+          <Card className="gap-3 border-brand-200 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/20">
+            <View className="flex-row items-center gap-2">
+              <PlayCircle size={20} color={colors.primary} />
+              <AppText className="font-semibold text-slate-900 dark:text-slate-50">
+                {t('sessions.recordingTitle', { defaultValue: 'Session Recording' })}
+              </AppText>
+            </View>
+            <AppText variant="caption">
+              {recordingDownloaded
+                ? t('sessions.recordingDownloadedHint', {
+                    defaultValue: 'Downloaded for offline viewing on your device.',
+                  })
+                : t('sessions.recordingOnlineHint', {
+                    defaultValue: 'Watch online or download to view without an internet connection.',
+                  })}
+            </AppText>
+            <View className="gap-2">
+              {recordingDownloaded ? (
+                <>
+                  <Button
+                    title={t('sessions.playOffline', { defaultValue: 'Play Offline Recording' })}
+                    icon={<PlayCircle size={18} color="#fff" />}
+                    onPress={handleOpenDownloadedRecording}
+                    fullWidth
+                  />
+                  <Button
+                    title={t('sessions.removeRecording', { defaultValue: 'Delete Download' })}
+                    variant="outline"
+                    icon={<Trash2 size={16} color={colors.danger} />}
+                    onPress={handleRemoveRecording}
+                    fullWidth
+                  />
+                </>
+              ) : (
+                <>
+                  <Button
+                    title={t('sessions.downloadRecording', {
+                      defaultValue: 'Download for Offline',
+                    })}
+                    icon={<Download size={18} color={palette.brand600} />}
+                    variant="secondary"
+                    loading={downloadingRecording}
+                    disabled={!online}
+                    onPress={handleDownloadRecording}
+                    fullWidth
+                  />
+                  <Button
+                    title={t('sessions.watchOnline', { defaultValue: 'Watch in Browser' })}
+                    variant="ghost"
+                    disabled={!online}
+                    onPress={() => void WebBrowser.openBrowserAsync(data.recordingUrl!)}
+                    fullWidth
+                  />
+                </>
+              )}
+            </View>
+          </Card>
         ) : null}
       </Screen>
     </>

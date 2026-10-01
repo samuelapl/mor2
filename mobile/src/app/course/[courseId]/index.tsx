@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Award, CalendarDays, Clock, MapPin } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -31,6 +31,9 @@ import {
 } from '@/features/courses';
 import { useCertificateForCourse, useClaimCertificate } from '@/features/certificates';
 import { findNextLesson, useCourseProgress } from '@/features/progress';
+import { downloadManager, OfflineDownloadCard } from '@/features/offline';
+import { useIsOnline } from '@/core/hooks/useNetworkStatus';
+import type { ApiCourseDetail } from '@/features/courses/types/course.types';
 
 export default function CourseScreen() {
   const { t } = useTranslation();
@@ -42,6 +45,15 @@ export default function CourseScreen() {
   const enrollment = useEnrollmentForCourse(courseId);
   const enrolled = course.data?.enrolled ?? false;
   const progress = useCourseProgress(courseId, enrolled);
+
+  const online = useIsOnline();
+  const [offlineData, setOfflineData] = useState<ApiCourseDetail | null>(null);
+
+  useEffect(() => {
+    if (!course.data || !online) {
+      void downloadManager.getOfflineCourseDetail(courseId).then(setOfflineData);
+    }
+  }, [course.data, online, courseId]);
 
   const certificate = useCertificateForCourse(courseId);
   const claim = useClaimCertificate();
@@ -56,9 +68,12 @@ export default function CourseScreen() {
     void course.refetch();
     void enrollment.refetch();
     if (enrolled) void progress.refetch();
+    void downloadManager.getOfflineCourseDetail(courseId).then(setOfflineData);
   };
 
-  if (course.isPending) {
+  const data = course.data ?? offlineData;
+
+  if (course.isPending && !data) {
     return (
       <Screen>
         <Skeleton height={180} />
@@ -67,15 +82,13 @@ export default function CourseScreen() {
       </Screen>
     );
   }
-  if (course.isError || !course.data) {
+  if (!data) {
     return (
       <Screen>
         <ErrorState error={course.error} onRetry={() => void course.refetch()} />
       </Screen>
     );
   }
-
-  const data = course.data;
   const status = data.enrollmentStatus;
   const percent = progress.data?.stats.overallPercent ?? 0;
   const next = findNextLesson(progress.data);
@@ -219,6 +232,9 @@ export default function CourseScreen() {
               </AppText>
             </View>
           )}
+
+          {/* Offline Learning download manager */}
+          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} />
 
           {/* In-person seat */}
           {enrolled &&

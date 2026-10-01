@@ -24,15 +24,21 @@ export async function downloadAndOpen(options: {
   /** Presigned URLs must not be host-rewritten (spec §1.8). */
   presigned?: boolean;
 }): Promise<void> {
-  const source = options.presigned ? options.url : resolveMediaUrl(options.url);
+  const isLocalFile = options.url.startsWith('file://') || options.url.startsWith('file:');
+  const source = isLocalFile || options.presigned ? options.url : resolveMediaUrl(options.url);
   if (!source) throw new Error('NO_URL');
 
-  const dir = new Directory(Paths.cache, 'lesson-files');
-  if (!dir.exists) dir.create({ intermediates: true });
-  const target = new File(dir, safeName(options.fileName));
-  const file = target.exists
-    ? target
-    : await File.downloadFileAsync(source, target, { idempotent: true });
+  let file: File;
+  if (isLocalFile) {
+    file = new File(source);
+  } else {
+    const dir = new Directory(Paths.cache, 'lesson-files');
+    if (!dir.exists) dir.create({ intermediates: true });
+    const target = new File(dir, safeName(options.fileName));
+    file = target.exists
+      ? target
+      : await File.downloadFileAsync(source, target, { idempotent: true });
+  }
   const mimeType = options.mimeType ?? guessMime(options.fileName);
 
   if (Platform.OS === 'android') {

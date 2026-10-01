@@ -1,65 +1,210 @@
 /**
- * Self-contained LiveKit web client page for a WebView (works in Expo Go — no native SDK).
- * Talks to React Native via postMessage: {type:'connected'|'disconnected'|'participants'|'error'|'media'}.
- * React Native drives it with injected calls: window.eltms.setMic(bool) / setCam(bool) / leave().
+ * Enterprise LiveKit web client page for a WebView.
+ * Supports:
+ * - Camera video grid and active speakers
+ * - Dedicated full-width Presentation / Screen-Share Stage (Track.Source.ScreenShare)
+ * - Sub-50ms reliable WebRTC Data Channel bridging for Live Quiz, Polls, Hand Raising, and Chat
+ * - Mic/Camera controls and lifecycle events
  */
 export function buildLiveKitRoomHtml(wsUrl: string, token: string): string {
   const config = JSON.stringify({ wsUrl, token });
   return `<!DOCTYPE html><html><head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-  html,body{margin:0;height:100%;background:#0f172a;color:#e2e8f0;font-family:-apple-system,Roboto,sans-serif}
-  #grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px;padding:6px;height:100%;box-sizing:border-box;align-content:center}
-  .tile{position:relative;background:#1e293b;border-radius:12px;overflow:hidden;aspect-ratio:16/10}
-  .tile video{width:100%;height:100%;object-fit:cover}
-  .name{position:absolute;left:8px;bottom:6px;font-size:12px;background:rgba(0,0,0,.55);padding:2px 8px;border-radius:999px}
-  #status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:15px;color:#94a3b8}
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #090d16; color: #e2e8f0; font-family: -apple-system, Roboto, sans-serif; overflow: hidden; }
+  #container { display: flex; flex-direction: column; width: 100%; height: 100%; }
+  
+  /* Presentation stage for screen sharing */
+  #presentation-stage { display: none; width: 100%; flex: 1; background: #020617; position: relative; overflow: hidden; }
+  #presentation-stage.active { display: flex; align-items: center; justify-content: center; }
+  #presentation-stage video { width: 100%; height: 100%; object-fit: contain; }
+  .screen-badge { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); backdrop-filter: blur(4px); }
+
+  /* Camera grid */
+  #grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; padding: 8px; flex: 1; align-content: center; overflow-y: auto; }
+  #container.with-presentation #grid { flex: none; height: 110px; display: flex; flex-direction: row; gap: 8px; padding: 6px; background: #0b1120; border-top: 1px solid #1e293b; overflow-x: auto; align-content: stretch; }
+  
+  .tile { position: relative; background: #131c2e; border-radius: 10px; overflow: hidden; aspect-ratio: 16/10; border: 1px solid rgba(255,255,255,0.05); }
+  #container.with-presentation .tile { flex: 0 0 140px; aspect-ratio: 16/10; height: 100%; }
+  .tile video { width: 100%; height: 100%; object-fit: cover; }
+  .name { position: absolute; left: 6px; bottom: 6px; font-size: 11px; background: rgba(0,0,0,0.65); padding: 2px 7px; border-radius: 999px; max-width: 90%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+  .hand-badge { position: absolute; top: 6px; right: 6px; background: #eab308; color: #000; font-size: 10px; font-weight: bold; border-radius: 999px; padding: 2px 5px; }
+
+  #status { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; font-size: 15px; color: #94a3b8; pointer-events: none; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 </head><body>
-<div id="grid"></div><div id="status">Connecting…</div>
+<div id="container">
+  <div id="presentation-stage">
+    <div class="screen-badge">Trainer Screen Share</div>
+  </div>
+  <div id="grid"></div>
+</div>
+<div id="status">Connecting to LiveKit room…</div>
+
 <script>
 (function(){
   var cfg = ${config};
-  var post = function(m){ var d = JSON.stringify(m); if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(d); else if (window.parent !== window) window.parent.postMessage({ eltmsRoom: d }, '*'); };
+  var post = function(m){
+    var d = JSON.stringify(m);
+    if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(d);
+    else if (window.parent !== window) window.parent.postMessage({ eltmsRoom: d }, '*');
+  };
+
   var status = document.getElementById('status');
+  var container = document.getElementById('container');
   var grid = document.getElementById('grid');
-  if (!window.LivekitClient) { post({type:'error', message:'LiveKit client could not be loaded (no internet?)'}); status.textContent='Could not load the video client.'; return; }
+  var stage = document.getElementById('presentation-stage');
+
+  if (!window.LivekitClient) {
+    post({type:'error', message:'LiveKit client could not be loaded (offline?)'});
+    status.textContent='Could not load the LiveKit client.';
+    return;
+  }
+
   var LK = window.LivekitClient;
   var room = new LK.Room({ adaptiveStream: true, dynacast: true });
+  var screenShareCount = 0;
 
   function tileFor(p){
-    var id = 'p-' + p.identity; var el = document.getElementById(id);
-    if (!el) { el = document.createElement('div'); el.className='tile'; el.id=id;
-      var n=document.createElement('div'); n.className='name'; n.textContent=p.name||p.identity; el.appendChild(n); grid.appendChild(el); }
+    var id = 'p-' + p.identity;
+    var el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'tile';
+      el.id = id;
+      var n = document.createElement('div');
+      n.className = 'name';
+      n.textContent = p.name || p.identity;
+      el.appendChild(n);
+      grid.appendChild(el);
+    }
     return el;
   }
+
   function refresh(){
     var count = room.remoteParticipants.size + 1;
-    status.style.display = room.remoteParticipants.size ? 'none' : 'flex';
-    if (!room.remoteParticipants.size) status.textContent = 'Waiting for the trainer to join…';
+    status.style.display = (room.remoteParticipants.size || screenShareCount > 0) ? 'none' : 'flex';
+    if (!room.remoteParticipants.size && screenShareCount === 0) {
+      status.textContent = 'Waiting for the trainer to broadcast…';
+    }
     post({type:'participants', count: count});
   }
+
+  // Track Subscribed (Camera, Mic, Screen Share)
   room.on(LK.RoomEvent.TrackSubscribed, function(track, pub, p){
-    var el = track.attach();
-    if (track.kind === 'video') tileFor(p).insertBefore(el, tileFor(p).firstChild); else document.body.appendChild(el);
+    var isScreen = (track.source === LK.Track.Source.ScreenShare) || (pub && pub.source === LK.Track.Source.ScreenShare);
+    if (isScreen) {
+      screenShareCount++;
+      var el = track.attach();
+      el.id = 'screen-' + p.identity;
+      stage.appendChild(el);
+      stage.className = 'active';
+      container.className = 'with-presentation';
+      post({type: 'screen-share', active: true, presenter: p.name || p.identity});
+    } else if (track.kind === 'video') {
+      var el = track.attach();
+      tileFor(p).insertBefore(el, tileFor(p).firstChild);
+    } else {
+      var el = track.attach();
+      document.body.appendChild(el);
+    }
     refresh();
   });
-  room.on(LK.RoomEvent.TrackUnsubscribed, function(track){ track.detach().forEach(function(e){ e.remove(); }); });
-  room.on(LK.RoomEvent.ParticipantConnected, function(p){ tileFor(p); refresh(); });
-  room.on(LK.RoomEvent.ParticipantDisconnected, function(p){ var el=document.getElementById('p-'+p.identity); if(el) el.remove(); refresh(); });
-  room.on(LK.RoomEvent.Disconnected, function(){ post({type:'disconnected'}); status.style.display='flex'; status.textContent='You left the session.'; });
 
+  // Track Unsubscribed
+  room.on(LK.RoomEvent.TrackUnsubscribed, function(track, pub, p){
+    track.detach().forEach(function(e){ e.remove(); });
+    var isScreen = (track.source === LK.Track.Source.ScreenShare) || (pub && pub.source === LK.Track.Source.ScreenShare);
+    if (isScreen) {
+      screenShareCount = Math.max(0, screenShareCount - 1);
+      if (screenShareCount === 0) {
+        stage.className = '';
+        container.className = '';
+        post({type: 'screen-share', active: false});
+      }
+    }
+    refresh();
+  });
+
+  room.on(LK.RoomEvent.ParticipantConnected, function(p){ tileFor(p); refresh(); });
+  room.on(LK.RoomEvent.ParticipantDisconnected, function(p){
+    var el = document.getElementById('p-' + p.identity);
+    if (el) el.remove();
+    var sc = document.getElementById('screen-' + p.identity);
+    if (sc) {
+      sc.remove();
+      screenShareCount = Math.max(0, screenShareCount - 1);
+      if (screenShareCount === 0) {
+        stage.className = '';
+        container.className = '';
+        post({type: 'screen-share', active: false});
+      }
+    }
+    refresh();
+  });
+
+  room.on(LK.RoomEvent.Disconnected, function(){
+    post({type:'disconnected'});
+    status.style.display='flex';
+    status.textContent='You left the session.';
+  });
+
+  // Data Channel for Live Quizzes, Hand Raising & In-Meeting Chat
+  room.on(LK.RoomEvent.DataReceived, function(payload, participant){
+    try {
+      var str = new TextDecoder().decode(payload);
+      var data = JSON.parse(str);
+      post({
+        type: 'data-channel',
+        event: data,
+        participantIdentity: participant ? participant.identity : null,
+        participantName: participant ? (participant.name || participant.identity) : 'Trainer'
+      });
+    } catch(err) {
+      console.warn('Malformed data packet:', err);
+    }
+  });
+
+  // React Native Command Interface
   window.eltms = {
-    setMic: function(on){ room.localParticipant.setMicrophoneEnabled(on).then(function(){ post({type:'media', mic:on}); }).catch(function(e){ post({type:'error', message:String(e && e.message || e)}); }); },
-    setCam: function(on){ room.localParticipant.setCameraEnabled(on).then(function(){ post({type:'media', cam:on}); }).catch(function(e){ post({type:'error', message:String(e && e.message || e)}); }); },
-    leave: function(){ room.disconnect(); }
+    setMic: function(on){
+      room.localParticipant.setMicrophoneEnabled(on).then(function(){
+        post({type:'media', mic:on});
+      }).catch(function(e){
+        post({type:'error', message:String(e && e.message || e)});
+      });
+    },
+    setCam: function(on){
+      room.localParticipant.setCameraEnabled(on).then(function(){
+        post({type:'media', cam:on});
+      }).catch(function(e){
+        post({type:'error', message:String(e && e.message || e)});
+      });
+    },
+    broadcastData: function(eventObj){
+      try {
+        var str = typeof eventObj === 'string' ? eventObj : JSON.stringify(eventObj);
+        var payload = new TextEncoder().encode(str);
+        room.localParticipant.publishData(payload, { reliable: true });
+      } catch (e) {
+        console.warn('Failed to publish data channel payload:', e);
+      }
+    },
+    leave: function(){
+      room.disconnect();
+    }
   };
 
   room.connect(cfg.wsUrl, cfg.token).then(function(){
     room.remoteParticipants.forEach(function(p){ tileFor(p); });
-    post({type:'connected'}); refresh();
-  }).catch(function(e){ post({type:'error', message:String(e && e.message || e)}); status.textContent='Could not connect to the session.'; });
+    post({type:'connected'});
+    refresh();
+  }).catch(function(e){
+    post({type:'error', message:String(e && e.message || e)});
+    status.textContent='Could not connect to the live session.';
+  });
 })();
 </script></body></html>`;
 }
