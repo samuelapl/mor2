@@ -82,7 +82,8 @@
 ### Phase 3: Profile Action Menu, Clean Account Settings & Sidebar Log Out
 
 1. **Header Profile Action Menu (`Header.tsx`):**
-   - Clicking the user account avatar/name in the top-right header displays a dedicated menu (matching mockup) presenting:
+   - Removed the dropdown chevron arrow icon (`^` / `v`) completely from the profile badge in the header.
+   - Clicking the user account avatar/name in the top-right header displays a clean popup menu (matching mockup) presenting:
      - User header: Avatar initials ("TM"), full name ("Tewodros Melkamu"), and email address.
      - Divider line.
      - **`Account`** (Amharic: **`መለያ`**) with `UserCircle` icon $\rightarrow$ opens the Account Settings modal.

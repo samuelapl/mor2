@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, CheckCheck, ChevronDown, LogOut, UserCircle } from 'lucide-react';
+import { Bell, CheckCheck, LogOut, UserCircle } from 'lucide-react';
 import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
 import { useLms } from '@/lib/lms-store';
 import {
@@ -226,12 +226,6 @@ export default function Header() {
               <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{demoUser?.name ?? 'Demo User'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{demoUser?.email}</p>
             </div>
-            <ChevronDown
-              className={cn(
-                'hidden h-4 w-4 text-slate-400 transition-transform duration-200 lg:block',
-                menuOpen && 'rotate-180 text-slate-600 dark:text-slate-200',
-              )}
-            />
           </button>
 
           {menuOpen ? (
