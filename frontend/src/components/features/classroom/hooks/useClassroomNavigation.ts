@@ -71,9 +71,11 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       });
     }
 
+    const isOpenProgression = progress?.progressionMode === 'OPEN';
+
     course.modules.forEach((mod, moduleIndex) => {
       const modProg = moduleProgressMap.get(mod.id);
-      const modUnlocked = modProg?.unlocked ?? moduleIndex === 0;
+      const modUnlocked = isOpenProgression ? true : (modProg?.unlocked ?? moduleIndex === 0);
 
       // Module Overview & Objectives (if module has description, objectives, or attachments)
       const hasModuleOverview = Boolean(
@@ -96,8 +98,9 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
 
       mod.lessons.forEach((lesson, lessonIndex) => {
         const lessonProg = lessonProgressMap.get(lesson.id);
-        const lessonUnlocked =
-          modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
+        const lessonUnlocked = isOpenProgression
+          ? true
+          : modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
         const lessonCompleted = lessonProg?.completed ?? false;
 
         // 1. Parent Lesson Item
@@ -119,7 +122,9 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         if (lesson.subLessons && lesson.subLessons.length > 0) {
           lesson.subLessons.forEach((sub, subIndex) => {
             const subProg = lessonProg?.subLessons?.find((s) => s.lessonId === sub.id);
-            const subUnlocked = lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
+            const subUnlocked = isOpenProgression
+              ? true
+              : lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
             const subCompleted = subProg?.completed ?? false;
 
             items.push({
@@ -147,7 +152,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
           const subLessonsAllDone = hasSubLessons
             ? (lessonProg?.subLessons?.every((s) => s.completed) ?? false)
             : true;
-          const quizUnlocked = lessonUnlocked && subLessonsAllDone;
+          const quizUnlocked = isOpenProgression ? true : lessonUnlocked && subLessonsAllDone;
           const quizCompleted = lessonAssessment.passed;
 
           items.push({
@@ -173,7 +178,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         const totalLessons = modProg?.totalLessons ?? mod.lessons.length;
         const completedLessons = modProg?.completedLessons ?? 0;
         const allLessonsComplete = totalLessons > 0 && completedLessons === totalLessons;
-        const quizUnlocked = modUnlocked && allLessonsComplete;
+        const quizUnlocked = isOpenProgression ? true : modUnlocked && allLessonsComplete;
         const quizCompleted = modAssessment.passed;
 
         items.push({

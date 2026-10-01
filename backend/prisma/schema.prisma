@@ -11,12 +11,18 @@ datasource db {
 // 0. Course policy (dynamic, admin-editable)
 // ──────────────────────────────────────────────────────────
 
+enum CourseProgressionMode {
+  LOCKED
+  OPEN
+}
+
 model CoursePolicySettings {
-  id                    String   @id @default("default")
-  timeSpentPercent      Float    @default(50) @map("time_spent_percent")
-  retakeCooldownMinutes Int      @default(0) @map("retake_cooldown_minutes")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-  updatedBy             String?  @map("updated_by")
+  id                    String                @id @default("default")
+  timeSpentPercent      Float                 @default(50) @map("time_spent_percent")
+  retakeCooldownMinutes Int                   @default(0) @map("retake_cooldown_minutes")
+  progressionMode       CourseProgressionMode @default(LOCKED) @map("progression_mode")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  updatedBy             String?               @map("updated_by")
 
   @@map("course_policy_settings")
 }

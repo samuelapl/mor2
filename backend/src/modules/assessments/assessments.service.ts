@@ -320,18 +320,81 @@ export class AssessmentsService {
   private async assertFinalEligible(courseId: string, userId: string) {
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
-      select: { id: true, lessons: { where: { deletedAt: null }, select: { id: true } } },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        lessons: {
+          where: { deletedAt: null, parentId: null },
+          orderBy: { order: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+              select: { id: true, title: true },
+            },
+          },
+        },
+      },
     });
-    const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
-    if (lessonIds.length > 0) {
-      const completedCount = await this.prisma.lessonCompletion.count({
-        where: { userId, lessonId: { in: lessonIds }, completed: true },
-      });
-      if (completedCount < lessonIds.length) {
-        throw new ForbiddenException(
-          'Prerequisite course content must be completed before taking the final assessment',
-        );
+
+    const leafLessons: Array<{ id: string; title: string }> = [];
+    for (const mod of modules) {
+      for (const l of mod.lessons) {
+        if (l.subLessons && l.subLessons.length > 0) {
+          for (const s of l.subLessons) {
+            leafLessons.push({ id: s.id, title: s.title });
+          }
+        } else {
+          leafLessons.push({ id: l.id, title: l.title });
+        }
       }
+    }
+
+    if (leafLessons.length > 0) {
+      const completions = await this.prisma.lessonCompletion.findMany({
+        where: {
+          userId,
+          lessonId: { in: leafLessons.map((l) => l.id) },
+          completed: true,
+        },
+        select: { lessonId: true },
+      });
+      const completedSet = new Set(completions.map((c) => c.lessonId));
+      const incomplete = leafLessons.filter((l) => !completedSet.has(l.id));
+
+      if (incomplete.length > 0) {
+        throw new ForbiddenException({
+          reason: 'PREREQUISITES_INCOMPLETE',
+          message:
+            'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
+          incompleteCount: incomplete.length,
+          incompleteLessons: incomplete.slice(0, 5),
+        });
+      }
+    }
+
+    // Also verify all module assessments are passed if any exist
+    const moduleAssessments = await this.prisma.assessment.findMany({
+      where: {
+        courseId,
+        type: AssessmentType.MODULE_ASSESSMENT,
+      },
+      include: {
+        attempts: { where: { userId, passed: true }, take: 1 },
+      },
+    });
+    const unpassedModuleQuizzes = moduleAssessments.filter((a) => a.attempts.length === 0);
+    if (unpassedModuleQuizzes.length > 0) {
+      throw new ForbiddenException({
+        reason: 'PREREQUISITES_INCOMPLETE',
+        message:
+          'You have uncompleted module assessments. Pass all module assessments before taking the final assessment.',
+        incompleteCount: unpassedModuleQuizzes.length,
+        incompleteAssessments: unpassedModuleQuizzes.map((a) => ({ id: a.id, title: a.titleEn })),
+      });
     }
   }
 

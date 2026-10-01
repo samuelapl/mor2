@@ -1,14 +1,6 @@
-export type BackendRoleName =
-  | 'SYSTEM_ADMIN'
-  | 'TRAINING_ADMIN'
-  | 'COURSE_OWNER'
-  | 'TRAINER'
-  | 'CONTENT_APPROVER'
-  | 'LEARNER'
-  | (string & {});
+export type BackendRoleName = 'SYSTEM_ADMIN' | 'TRAINING_ADMIN' | 'COURSE_OWNER' | 'TRAINER' | 'CONTENT_APPROVER' | 'LEARNER' | (string & {});
 
-export type BackendCourseStatus =
-  'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
+export type BackendCourseStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
 
 export type BackendApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION';
 
@@ -16,8 +8,7 @@ export type BackendCourseLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
 export type BackendEnrollmentStatus = 'ACTIVE' | 'DROPPED' | 'COMPLETED';
 
-export type BackendLessonContentType =
-  'VIDEO' | 'DOCUMENT' | 'PRESENTATION' | 'INTERACTIVE' | 'SCORM' | 'EXTERNAL_LINK' | 'AUDIO';
+export type BackendLessonContentType = 'VIDEO' | 'DOCUMENT' | 'PRESENTATION' | 'INTERACTIVE' | 'SCORM' | 'EXTERNAL_LINK' | 'AUDIO';
 
 /* -------------------------------------------------------------------------- */
 /*  Paginated response                                                        */
@@ -420,6 +411,7 @@ export interface ApiCourseCompletion {
 
 export interface ApiCourseProgress {
   courseId: string;
+  progressionMode?: 'LOCKED' | 'OPEN';
   stats: {
     totalModules: number;
     totalLessons: number;
@@ -624,13 +616,7 @@ export interface CreateBatchSessionInput {
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */
 
-export type BackendSessionPlatform =
-  | 'LIVEKIT'
-  | 'ZOOM'
-  | 'GOOGLE_MEET'
-  | 'MS_TEAMS'
-  | 'CUSTOM'
-  | 'IN_PERSON';
+export type BackendSessionPlatform = 'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM' | 'IN_PERSON';
 export type BackendSessionStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
 export type BackendAttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 export type BackendCheckInMethod = 'VIRTUAL' | 'QR' | 'GPS' | 'BIOMETRIC';

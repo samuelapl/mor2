@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
+  Compass,
   Info,
   Loader2,
+  Lock,
   RotateCcw,
   Save,
   ShieldAlert,
   ShieldCheck,
   Timer,
+  Unlock,
   Users,
   Video,
 } from 'lucide-react';
@@ -19,7 +22,7 @@ import PageShell from '@/components/shared/PageShell';
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { fetchCoursePolicy, updateCoursePolicy } from '@/lib/api/policy';
+import { type CourseProgressionMode, fetchCoursePolicy, updateCoursePolicy } from '@/lib/api/policy';
 import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
 import { ApiError } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
@@ -39,6 +42,7 @@ export default function PoliciesPage() {
   const [savingCoursePolicy, setSavingCoursePolicy] = useState(false);
   const [timeSpentPercent, setTimeSpentPercent] = useState(50);
   const [retakeCooldownMinutes, setRetakeCooldownMinutes] = useState(0);
+  const [progressionMode, setProgressionMode] = useState<CourseProgressionMode>('LOCKED');
   const [coursePolicyUpdatedAt, setCoursePolicyUpdatedAt] = useState<string | null>(null);
 
   // Live session attendance policy states
@@ -55,6 +59,7 @@ export default function PoliciesPage() {
       const policy = await fetchCoursePolicy();
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
+      setProgressionMode(policy.progressionMode ?? 'LOCKED');
       setCoursePolicyUpdatedAt(policy.updatedAt);
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Unable to load course policy settings.');
@@ -96,9 +101,14 @@ export default function PoliciesPage() {
   const saveCoursePolicy = async () => {
     setSavingCoursePolicy(true);
     try {
-      const policy = await updateCoursePolicy({ timeSpentPercent, retakeCooldownMinutes });
+      const policy = await updateCoursePolicy({
+        timeSpentPercent,
+        retakeCooldownMinutes,
+        progressionMode,
+      });
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
+      setProgressionMode(policy.progressionMode ?? 'LOCKED');
       setCoursePolicyUpdatedAt(policy.updatedAt);
       toast.success('Course completion policies saved successfully.');
     } catch (err) {
@@ -210,10 +220,195 @@ export default function PoliciesPage() {
 
           {loadingCoursePolicy ? (
             <div className="grid gap-5 lg:grid-cols-2">
-              <CardSkeleton count={2} />
+              <CardSkeleton count={3} />
             </div>
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
+              {/* Course Progress Policy (Progression Mode Accordion) */}
+              <Card className="lg:col-span-2 border-indigo-100/80 shadow-xs">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                      <Compass className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle>{tBilingual('Course Progress Policy', 'የኮርስ እድገት ፖሊሲ')}</CardTitle>
+                      <CardDescription>
+                        {tBilingual(
+                          'Configure how learners navigate course modules and lessons. In Open Progression, lessons and quizzes are open immediately, but the Final Assessment and Certificate remain strictly gated until 100% completion.',
+                          'ተማሪዎች የኮርስ ሞጁሎችን እና ትምህርቶችን እንዴት እንደሚያልፉ ይወስኑ። በክፍት እድገት ውስጥ ትምህርቶች እና ጥያቄዎች ክፍት ናቸው፣ ነገር ግን የመጨረሻው ፈተና እና ሰርተፍኬት ሙሉ በሙሉ እስኪጠናቀቅ ድረስ ተቆልፈው ይቆያሉ።',
+                        )}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={progressionMode === 'OPEN' ? 'blue' : 'slate'}
+                    className="text-xs uppercase tracking-wide px-3 py-1 font-semibold"
+                  >
+                    {progressionMode === 'OPEN'
+                      ? tBilingual('Open Progression', 'ክፍት እድገት')
+                      : tBilingual('Locked Progression', 'የተቆለፈ እድገት')}
+                  </Badge>
+                </div>
+
+                {/* Two Accordion Options */}
+                <div className="mt-6 space-y-3">
+                  {/* Option 1: Locked Progression */}
+                  <div
+                    onClick={() => setProgressionMode('LOCKED')}
+                    className={cn(
+                      'rounded-xl border transition-all cursor-pointer overflow-hidden',
+                      progressionMode === 'LOCKED'
+                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                            progressionMode === 'LOCKED'
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-slate-100 text-slate-500',
+                          )}
+                        >
+                          <Lock className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold text-slate-900">
+                              {tBilingual(
+                                'Locked Progression (Sequential)',
+                                'የተቆለፈ የትምህርት ቅደም ተከተል (ቅደም-ተከተላዊ)',
+                              )}
+                            </h4>
+                            <Badge variant="slate" className="text-[10px] py-0 px-1.5">
+                              {tBilingual('Default', 'ነባሪ')}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {tBilingual(
+                              'Learners must complete modules, lessons, and required quizzes in strict sequential order.',
+                              'ተማሪዎች ሞጁሎችን፣ ትምህርቶችን እና አስፈላጊ ፈተናዎችን በቅደም ተከተል ማጠናቀቅ አለባቸው።',
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="progressionMode"
+                          checked={progressionMode === 'LOCKED'}
+                          onChange={() => setProgressionMode('LOCKED')}
+                          className="h-4 w-4 text-indigo-600 accent-indigo-600 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {progressionMode === 'LOCKED' && (
+                      <div className="border-t border-indigo-100 bg-indigo-50/60 px-4 py-3 text-xs text-slate-600 space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <span>
+                            {tBilingual(
+                              'A module or lesson unlocks only after preceding prerequisites are completed.',
+                              'አንድ ሞጁል ወይም ትምህርት የሚከፈተው ቀደም ሲል የነበሩ ቅድመ-ሁኔታዎች እንደተጠናቀቁ ከተመዘገቡ ብቻ ነው።',
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <span>
+                            {tBilingual(
+                              'Best suited for step-by-step onboarding, certification tracks, and structured compliance.',
+                              'ለደረጃ በደረጃ ስልጠናዎች፣ የብቃት ማረጋገጫ መንገዶች እና ጥብቅ የህግ ማሟያ ኮርሶች ተመራጭ ነው።',
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Option 2: Open Progression */}
+                  <div
+                    onClick={() => setProgressionMode('OPEN')}
+                    className={cn(
+                      'rounded-xl border transition-all cursor-pointer overflow-hidden',
+                      progressionMode === 'OPEN'
+                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                            progressionMode === 'OPEN'
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-slate-100 text-slate-500',
+                          )}
+                        >
+                          <Unlock className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold text-slate-900">
+                              {tBilingual(
+                                'Open Progression (Flexible / Self-Paced)',
+                                'ክፍት የትምህርት ቅደም ተከተል (ተለዋዋጭ / በራስ ፍጥነት)',
+                              )}
+                            </h4>
+                            <Badge variant="blue" className="text-[10px] py-0 px-1.5">
+                              {tBilingual('Flexible', 'ተለዋዋጭ')}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {tBilingual(
+                              'All modules, lessons, and quizzes are open immediately. Final Assessment & Certificate unlock upon 100% completion.',
+                              'ሁሉም ሞጁሎች፣ ትምህርቶች እና ጥያቄዎች ክፍት ናቸው። የመጨረሻው ምዘና እና ምስክር ወረቀት 100% ሲጠናቀቅ ይከፈታሉ።',
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="progressionMode"
+                          checked={progressionMode === 'OPEN'}
+                          onChange={() => setProgressionMode('OPEN')}
+                          className="h-4 w-4 text-indigo-600 accent-indigo-600 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {progressionMode === 'OPEN' && (
+                      <div className="border-t border-indigo-100 bg-indigo-50/60 px-4 py-3 text-xs text-slate-600 space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <span>
+                            {tBilingual(
+                              'Learners can explore any topic and take module or lesson quizzes in any order.',
+                              'ተማሪዎች ማንኛውንም ርዕስ መርጠው መማር እና የሞጁል ወይም የትምህርት ጥያቄዎችን በማንኛውም ቅደም ተከተል መውሰድ ይችላሉ።',
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <ShieldAlert className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                          <span>
+                            {tBilingual(
+                              'The Final Assessment and Certificate remain locked until all preceding lessons and quizzes are completed.',
+                              'ሁሉም ቀደም ሲል የነበሩ ትምህርቶች እና ፈተናዎች እስኪጠናቀቁ ድረስ የመጨረሻው ምዘና እና ምስክር ወረቀት ተቆልፈው ይቆያሉ።',
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
               <Card>
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">

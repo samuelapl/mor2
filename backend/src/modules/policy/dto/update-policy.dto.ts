@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { CourseProgressionMode } from '@prisma/client';
+import { IsEnum, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class UpdatePolicyDto {
   @ApiPropertyOptional({
@@ -22,4 +23,13 @@ export class UpdatePolicyDto {
   @IsInt()
   @Min(0)
   retakeCooldownMinutes?: number;
+
+  @ApiPropertyOptional({
+    enum: CourseProgressionMode,
+    example: CourseProgressionMode.LOCKED,
+    description: 'Course progression mode: LOCKED (sequential) or OPEN (flexible)',
+  })
+  @IsOptional()
+  @IsEnum(CourseProgressionMode)
+  progressionMode?: CourseProgressionMode;
 }

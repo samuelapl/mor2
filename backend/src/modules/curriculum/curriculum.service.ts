@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { CourseStatus, LessonContentType, RoleName } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { AuthenticatedUser } from '@common/interfaces';
-import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils/unlock.util';
 import { ProgressService } from '@modules/progress/progress.service';
 import {
   CreateModuleDto,
@@ -511,42 +510,10 @@ export class CurriculumService {
           );
         }
 
-        // 2. Sequential unlock check
-        const modules = await this.prisma.curriculumModule.findMany({
-          where: { courseId: lesson.module.courseId, deletedAt: null },
-          orderBy: { order: 'asc' },
-          include: {
-            lessons: {
-              where: { deletedAt: null, parentId: null },
-              orderBy: { order: 'asc' },
-              include: {
-                subLessons: {
-                  where: { deletedAt: null },
-                  orderBy: { order: 'asc' },
-                },
-              },
-            },
-          },
-        });
-
-        const allLessonIds = modules.flatMap((m) =>
-          m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
-        );
-        await this.progressService.reconcileModuleCompletions(
+        // 2. Progression unlock check
+        const { lessonUnlocked } = await this.progressService.getUnlockState(
           user.id,
-          modules.map((m) => m.id),
-        );
-        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-          this.prisma,
-          user.id,
-          modules.map((m) => m.id),
-          allLessonIds,
-        );
-
-        const { lessonUnlocked } = computeSequentialUnlocks(
-          modules,
-          moduleCompletions,
-          lessonCompletions,
+          lesson.module.courseId,
         );
 
         if (!(lessonUnlocked.get(lesson.id) ?? false)) {

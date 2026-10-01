@@ -21,8 +21,6 @@ import {
   buildPaginationArgs,
   buildPaginatedResponse,
   buildSearchFilter,
-  computeSequentialUnlocks,
-  loadUserCompletionState,
 } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { NotificationsService } from '@modules/notifications/notifications.service';
@@ -394,26 +392,9 @@ export class CoursesService {
       }
 
       if (course.modules && course.modules.length > 0) {
-        const allLessonIds = course.modules.flatMap((m: any) =>
-          (m.lessons ?? []).flatMap((l: any) => [
-            l.id,
-            ...(l.subLessons ?? []).map((s: any) => s.id),
-          ]),
-        );
-        await this.progressService.reconcileModuleCompletions(
+        const { moduleUnlocked, lessonUnlocked } = await this.progressService.getUnlockState(
           userId,
-          course.modules.map((m: any) => m.id),
-        );
-        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-          this.prisma,
-          userId,
-          course.modules.map((m: any) => m.id),
-          allLessonIds,
-        );
-        const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
-          course.modules,
-          moduleCompletions,
-          lessonCompletions,
+          course.id,
         );
 
         const modules = course.modules.map((m: any) => {

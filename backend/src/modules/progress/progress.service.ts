@@ -122,10 +122,13 @@ export class ProgressService {
       }),
     }));
 
+    const progressionMode = await this.policyService.getProgressionMode();
+
     const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
       unlockModules,
       moduleCompletions,
       lessonCompletions,
+      progressionMode,
     );
 
     let totalLessons = 0;
@@ -225,6 +228,7 @@ export class ProgressService {
 
     return {
       courseId,
+      progressionMode,
       stats: {
         totalModules: modules.length,
         totalLessons,
@@ -318,13 +322,24 @@ export class ProgressService {
       allLessonIds,
     );
 
-    return computeSequentialUnlocks(unlockModules, moduleCompletions, lessonCompletions);
+    const progressionMode = await this.policyService.getProgressionMode();
+    return computeSequentialUnlocks(
+      unlockModules,
+      moduleCompletions,
+      lessonCompletions,
+      progressionMode,
+    );
   }
 
   private async assertLessonUnlocked(
     userId: string,
     lesson: { id: string; moduleId: string; module: { courseId: string } },
   ) {
+    const progressionMode = await this.policyService.getProgressionMode();
+    if (progressionMode === 'OPEN') {
+      return;
+    }
+
     const { lessonUnlocked } = await this.loadUnlockContext(userId, lesson.module.courseId);
     if (!(lessonUnlocked.get(lesson.id) ?? false)) {
       throw new ForbiddenException({

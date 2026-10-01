@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
+import { CourseProgressionMode } from '@prisma/client';
 import { UpdatePolicyDto } from './dto';
 
 const SETTINGS_ID = 'default';
@@ -26,6 +27,7 @@ export class PolicyService {
         ...(dto.retakeCooldownMinutes !== undefined
           ? { retakeCooldownMinutes: dto.retakeCooldownMinutes }
           : {}),
+        ...(dto.progressionMode !== undefined ? { progressionMode: dto.progressionMode } : {}),
         updatedBy: updatedBy ?? null,
       },
     });
@@ -41,5 +43,11 @@ export class PolicyService {
   async getRetakeCooldownMinutes(): Promise<number> {
     const settings = await this.getSettings();
     return settings.retakeCooldownMinutes;
+  }
+
+  /** Course progression mode (LOCKED = sequential, OPEN = flexible). */
+  async getProgressionMode(): Promise<CourseProgressionMode> {
+    const settings = await this.getSettings();
+    return settings.progressionMode ?? CourseProgressionMode.LOCKED;
   }
 }
