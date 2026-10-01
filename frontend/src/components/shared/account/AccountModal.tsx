@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 import { fetchMyProfile } from '@/lib/api/users';
 import type { ApiUser } from '@/lib/api/types';
+import { useLms } from '@/lib/lms-store';
 import ProfileTab from './ProfileTab';
 import SecurityTab from './SecurityTab';
 import DetailsTab from './DetailsTab';
@@ -19,6 +22,8 @@ interface AccountModalProps {
 }
 
 export default function AccountModal({ open, onClose }: AccountModalProps) {
+  const router = useRouter();
+  const { logout } = useLms();
   const [tab, setTab] = useState<TabKey>('profile');
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,6 +55,29 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
         'የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ',
       )}
       size="lg"
+      footer={
+        <div className="flex w-full items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              logout();
+              router.push('/login');
+            }}
+            className="flex items-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/30 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/50"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>{tBilingual('Sign out', 'ውጣ')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            {tBilingual('Close', 'ዝጋ')}
+          </button>
+        </div>
+      }
     >
       <div className="mb-5 flex gap-1 border-b border-slate-100 pb-3">
         {tabs.map((t) => (
