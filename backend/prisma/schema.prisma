@@ -257,7 +257,7 @@ model CourseOwner {
   userId   String @map("user_id")
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
+ 
   @@unique([courseId, userId])
   @@map("course_owners")
 }
