@@ -13,6 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { AssessmentType } from '@prisma/client';
+import { CurriculumAttachmentDto } from '@modules/curriculum/dto/module/create-module.dto';
 
 export class AssessmentQuestionDto {
   @ApiProperty({ example: 'q1' })
@@ -38,6 +39,17 @@ export class AssessmentQuestionDto {
   @ApiProperty({ example: 1, description: 'Index (or value) of the correct option' })
   @IsOptional()
   correctAnswer?: string | number;
+
+  @ApiPropertyOptional({ example: 'General' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ example: 10 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  points?: number;
 }
 
 export class CreateAssessmentDto {
@@ -112,4 +124,14 @@ export class CreateAssessmentDto {
   @ValidateNested({ each: true })
   @Type(() => AssessmentQuestionDto)
   questions!: AssessmentQuestionDto[];
+
+  @ApiPropertyOptional({
+    type: [CurriculumAttachmentDto],
+    description: 'Reference files shown with the assessment. Omit to keep the current files; [] removes them.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CurriculumAttachmentDto)
+  attachments?: CurriculumAttachmentDto[];
 }

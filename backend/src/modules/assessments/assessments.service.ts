@@ -15,6 +15,8 @@ import {
 import { PrismaService } from '@config/prisma.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
+import { deriveAttachmentFileKey } from '@common/utils';
+import type { CurriculumAttachmentDto } from '@modules/curriculum/dto/module/create-module.dto';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { ProgressService } from '@modules/progress/progress.service';
@@ -34,6 +36,7 @@ const assessmentInclude = {
   course: { select: { id: true, title: true } },
   module: { select: { id: true, title: true } },
   lesson: { select: { id: true, title: true } },
+  attachments: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.AssessmentInclude;
 
 @Injectable()
@@ -214,24 +217,25 @@ export class AssessmentsService {
   async replaceForCourse(courseId: string, dto: CreateAssessmentDto) {
     await this.assertCourseEditable(courseId);
 
-    await this.prisma.$transaction([
-      this.prisma.assessment.deleteMany({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.assessment.deleteMany({
         where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-      }),
-      this.prisma.assessment.create({
+      });
+      const created = await tx.assessment.create({
         data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
-      }),
-    ]);
+      });
+      await this.linkAttachments(tx, created.id, courseId, dto.attachments);
+    });
 
     return this.findByCourse(courseId, false);
   }
 
   /** Course-level (final) assessment — kept for backward compatibility with the current frontend. */
   async create(courseId: string, dto: CreateAssessmentDto) {
-    return this.prisma.assessment.create({
+    const created = await this.prisma.assessment.create({
       data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
-      include: assessmentInclude,
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   /** Module-level assessment (knowledge check — must be submitted to unlock the next module). */
@@ -246,10 +250,10 @@ export class AssessmentsService {
       await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
-    return this.prisma.assessment.create({
+    const created = await this.prisma.assessment.create({
       data: this.dataFor(dto, { courseId, moduleId, type: AssessmentType.MODULE_ASSESSMENT }),
-      include: assessmentInclude,
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   /** Lesson assessment. Only parent lessons can have assessments. */
@@ -272,21 +276,55 @@ export class AssessmentsService {
       await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
-    return this.prisma.assessment.create({
+    const created = await this.prisma.assessment.create({
       data: this.dataFor(dto, { courseId, moduleId, lessonId: targetLessonId, type }),
-      include: assessmentInclude,
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   async update(id: string, dto: CreateAssessmentDto) {
     const assessment = await this.prisma.assessment.findUnique({ where: { id } });
     if (!assessment) throw new NotFoundException('Assessment not found');
 
-    return this.prisma.assessment.update({
+    await this.prisma.assessment.update({
       where: { id },
       data: this.dataFor(dto, {}),
-      include: assessmentInclude,
     });
+    return this.withAttachments(id, assessment.courseId, dto.attachments);
+  }
+
+  /**
+   * Re-points uploaded files at an assessment. Upload already created a loose row per
+   * file, so rows with the same URL are replaced (same approach as curriculum replaceAll).
+   * `undefined` leaves existing files alone; `[]` removes them.
+   */
+  private async linkAttachments(
+    tx: Prisma.TransactionClient,
+    assessmentId: string,
+    courseId: string,
+    attachments: CurriculumAttachmentDto[] | undefined,
+  ) {
+    if (attachments === undefined) return;
+    await tx.attachment.deleteMany({ where: { assessmentId } });
+    for (const att of attachments) {
+      await tx.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+      await tx.attachment.create({
+        data: {
+          courseId,
+          assessmentId,
+          fileName: att.fileName,
+          fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+          fileUrl: att.fileUrl,
+          fileType: att.fileType || 'application/octet-stream',
+          sizeBytes: att.sizeBytes || 0,
+        },
+      });
+    }
+  }
+
+  private async withAttachments(id: string, courseId: string, attachments: CurriculumAttachmentDto[] | undefined) {
+    await this.prisma.$transaction((tx) => this.linkAttachments(tx, id, courseId, attachments));
+    return this.prisma.assessment.findUniqueOrThrow({ where: { id }, include: assessmentInclude });
   }
 
   async getAttempts(assessmentId: string, user: AuthenticatedUser) {

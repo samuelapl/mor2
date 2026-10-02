@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Pagination } from '@/components/ui/Pagination';
-import { LearnCourseModal } from '@/components/features/courses/LearnCourseModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
@@ -28,7 +27,6 @@ export default function ProgressPage() {
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [learnCourse, setLearnCourse] = useState<{ id: string; title: string } | null>(null);
 
   const rows = enrolled
     .map((course) => ({
@@ -212,14 +210,6 @@ export default function ProgressPage() {
         onPageSizeChange={setPageSize}
         pageSizeOptions={[6, 12, 24, 48]}
       />
-      {learnCourse ? (
-        <LearnCourseModal
-          open={learnCourse !== null}
-          onClose={() => setLearnCourse(null)}
-          courseId={learnCourse.id}
-          courseTitle={learnCourse.title}
-        />
-      ) : null}
     </PageShell>
   );
 }

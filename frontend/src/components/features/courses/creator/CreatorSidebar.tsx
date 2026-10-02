@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -89,6 +89,22 @@ export function CreatorSidebar({
     }
   };
 
+  // Up/Down moves focus between tree nodes; Enter/Space selects the focused node.
+  const handleTreeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.getAttribute('role') !== 'button') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      target.click();
+      return;
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const nodes = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="button"][tabindex="0"]'));
+    const next = nodes[nodes.indexOf(target) + (e.key === 'ArrowDown' ? 1 : -1)];
+    next?.focus();
+  };
+
   const isModuleActive = (moduleId: string) =>
     activeNode.type === 'MODULE' && activeNode.moduleId === moduleId;
 
@@ -119,7 +135,7 @@ export function CreatorSidebar({
       </div>
 
       {/* Scrollable Tree Area */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3" onKeyDown={handleTreeKeyDown}>
         {/* 1. Course Details Node */}
         <div
           role="button"

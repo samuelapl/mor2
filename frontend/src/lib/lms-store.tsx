@@ -544,6 +544,11 @@ async function syncCurriculumAndAssessments(
   // Fetch updated curriculum modules from backend to obtain their generated IDs
   const savedModules = await fetchCourseModules(courseId);
 
+  // Assessment failures are collected rather than aborting, so one bad quiz doesn't
+  // block the rest, but they are reported to the caller instead of being swallowed.
+  const failures: string[] = [];
+  const failureText = (label: string, err: unknown) => `${label}: ${errorMessage(err, 'request failed')}`;
+
   // Loop through modules and create module & lesson assessments
   for (let mIdx = 0; mIdx < rawModules.length; mIdx++) {
     const rawMod = rawModules[mIdx];
@@ -564,7 +569,7 @@ async function syncCurriculumAndAssessments(
           questions: formatQuestionsForApi(modAssess.questions),
         });
       } catch (err) {
-        console.error('Failed to create module assessment:', err);
+        failures.push(failureText(`Module assessment "${modAssess.title}"`, err));
       }
     }
 
@@ -588,7 +593,7 @@ async function syncCurriculumAndAssessments(
             questions: formatQuestionsForApi(lessonAssess.questions),
           });
         } catch (err) {
-          console.error('Failed to create lesson assessment:', err);
+          failures.push(failureText(`Lesson assessment "${lessonAssess.title}"`, err));
         }
       }
     }
@@ -608,8 +613,12 @@ async function syncCurriculumAndAssessments(
         questions: formatQuestionsForApi(quiz.questions),
       });
     } catch (err) {
-      console.error('Failed to replace final assessment:', err);
+      failures.push(failureText('Final assessment', err));
     }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`Course content saved, but some assessments were not: ${failures.join('; ')}`);
   }
 }
 

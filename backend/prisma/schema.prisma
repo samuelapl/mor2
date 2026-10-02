@@ -392,6 +392,7 @@ model Attachment {
   moduleId     String?  @map("module_id")
   lessonId     String?  @map("lesson_id")
   courseId     String?  @map("course_id")
+  assessmentId String?  @map("assessment_id")
   fileName     String   @map("file_name")
   fileKey      String   @map("file_key")
   fileUrl      String   @map("file_url")
@@ -403,10 +404,12 @@ model Attachment {
   module CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   lesson Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   course Course?           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  assessment Assessment?   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   @@index([moduleId])
   @@index([lessonId])
   @@index([courseId])
+  @@index([assessmentId])
   @@map("attachments")
 }
 
@@ -513,6 +516,7 @@ model Assessment {
 
   questions  Json   // structured question bank
   attempts   AssessmentAttempt[]
+  attachments Attachment[] // reference files learners see alongside the assessment
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

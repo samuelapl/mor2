@@ -6,6 +6,8 @@ import {
   BookOpen,
   Check,
   CheckCircle2,
+  CloudOff,
+  Eye,
   FileCheck,
   Globe2,
   Layers,
@@ -17,7 +19,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { CourseDeliveryMode } from '@/types';
-import type { CreatorActiveNode, CreatorPhase } from './types';
+import type { AutosaveStatus, CreatorActiveNode, CreatorPhase } from './types';
 import { cn } from '@/lib/utils';
 
 interface CreatorHeaderProps {
@@ -30,8 +32,14 @@ interface CreatorHeaderProps {
   saving: boolean;
   onSaveDraft: () => void;
   onSubmitForApproval: () => void;
+  onPreview: () => void;
   onExit: () => void;
   isEdit?: boolean;
+  autosaveStatus: AutosaveStatus;
+  autosaveError?: string | null;
+  lastSavedAt?: Date | null;
+  /** Why autosave can't run yet (e.g. no title/code). */
+  autosaveBlockedReason?: string | null;
 }
 
 export function CreatorHeader({
@@ -43,8 +51,13 @@ export function CreatorHeader({
   saving,
   onSaveDraft,
   onSubmitForApproval,
+  onPreview,
   onExit,
   isEdit,
+  autosaveStatus,
+  autosaveError,
+  lastSavedAt,
+  autosaveBlockedReason,
 }: CreatorHeaderProps) {
   const { lang, setLang, tBilingual } = useTranslation();
 
@@ -132,6 +145,12 @@ export function CreatorHeader({
           <h1 className="text-xs lg:text-sm font-bold text-slate-900 truncate mt-0.5" title={title}>
             {title.trim() || tBilingual('Untitled Course Studio', 'ስም ያልተሰጠው የኮርስ ስቱዲዮ')}
           </h1>
+          <AutosaveIndicator
+            status={autosaveStatus}
+            error={autosaveError}
+            lastSavedAt={lastSavedAt}
+            blockedReason={autosaveBlockedReason}
+          />
         </div>
       </div>
 
@@ -185,6 +204,17 @@ export function CreatorHeader({
         <Button
           variant="outline"
           size="sm"
+          onClick={onPreview}
+          className="gap-1.5 text-xs font-medium"
+          title={tBilingual('Preview as Learner', 'እንደ ተማሪ ይመልከቱ')}
+        >
+          <Eye className="h-3.5 w-3.5 text-slate-500" />
+          <span className="hidden lg:inline">{tBilingual('Preview as Learner', 'እንደ ተማሪ ይመልከቱ')}</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onSaveDraft}
           disabled={saving}
           className="gap-1.5 text-xs font-medium"
@@ -215,5 +245,55 @@ export function CreatorHeader({
         </Button>
       </div>
     </header>
+  );
+}
+
+function AutosaveIndicator({
+  status,
+  error,
+  lastSavedAt,
+  blockedReason,
+}: {
+  status: AutosaveStatus;
+  error?: string | null;
+  lastSavedAt?: Date | null;
+  blockedReason?: string | null;
+}) {
+  const { tBilingual } = useTranslation();
+  const time = lastSavedAt?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let icon = <Check className="h-3 w-3" />;
+  let text: string;
+  let tone = 'text-slate-400';
+  let hint: string | undefined;
+
+  if (status === 'saving') {
+    icon = <Loader2 className="h-3 w-3 animate-spin" />;
+    text = tBilingual('Saving…', 'በማስቀመጥ ላይ…');
+  } else if (status === 'error') {
+    icon = <CloudOff className="h-3 w-3" />;
+    text = tBilingual('Autosave failed', 'በራስ-ሰር ማስቀመጥ አልተሳካም');
+    tone = 'text-rose-600';
+    hint = error ?? undefined;
+  } else if (status === 'pending' && blockedReason) {
+    icon = <CloudOff className="h-3 w-3" />;
+    text = tBilingual('Not saved yet', 'ገና አልተቀመጠም');
+    tone = 'text-amber-600';
+    hint = blockedReason;
+  } else if (status === 'pending') {
+    text = tBilingual('Unsaved changes', 'ያልተቀመጡ ለውጦች');
+    tone = 'text-amber-600';
+  } else if (status === 'saved' && time) {
+    text = `${tBilingual('Saved', 'ተቀምጧል')} ${time}`;
+    tone = 'text-emerald-600';
+  } else {
+    text = tBilingual('Autosave on', 'በራስ-ሰር ማስቀመጥ በርቷል');
+  }
+
+  return (
+    <p className={cn('mt-0.5 flex items-center gap-1 text-[10px] font-medium', tone)} title={hint} aria-live="polite">
+      {icon}
+      <span className="truncate">{text}</span>
+    </p>
   );
 }

@@ -26,10 +26,12 @@ import { RichEditor } from '../../wizard-components';
 export interface CourseDetailsStageProps {
   title: string;
   setTitle: (val: string) => void;
-  titleAm: string;
-  setTitleAm: (val: string) => void;
   code: string;
   setCode: (val: string) => void;
+  /** Set when the entered code is already used by another course. */
+  codeError?: string | null;
+  /** True once the draft exists on the server; the code can no longer change. */
+  codeLocked?: boolean;
   category: string;
   setCategory: (val: string) => void;
   level: CourseLevel;
@@ -58,10 +60,10 @@ export interface CourseDetailsStageProps {
 export function CourseDetailsStage({
   title,
   setTitle,
-  titleAm,
-  setTitleAm,
   code,
   setCode,
+  codeError,
+  codeLocked = false,
   category,
   setCategory,
   level,
@@ -139,10 +141,10 @@ export function CourseDetailsStage({
           {tBilingual('Basic Identification', 'መሰረታዊ መለያ')}
         </h3>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <div>
             <label className={labelClass}>
-              {tBilingual('Course Title (English)', 'የኮርስ ርዕስ (እንግሊዝኛ)')} <span className="text-rose-500">*</span>
+              {tBilingual('Course Title', 'የኮርስ ርዕስ')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -150,19 +152,6 @@ export function CourseDetailsStage({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Tax Audit Fundamentals & Legal Compliance"
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label className={labelClass}>
-              {tBilingual('Course Title (Amharic / አማርኛ)', 'የኮርስ ርዕስ (አማርኛ)')}
-            </label>
-            <input
-              type="text"
-              value={titleAm}
-              onChange={(e) => setTitleAm(e.target.value)}
-              placeholder="የኮርስ ርዕስ በአማርኛ ያስገቡ (አማራጭ)"
               className={inputClass}
             />
           </div>
@@ -179,10 +168,15 @@ export function CourseDetailsStage({
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="e.g. TAX-201"
-              disabled={isEdit}
-              className={cn(inputClass, isEdit && 'opacity-75 cursor-not-allowed bg-slate-50')}
+              disabled={isEdit || codeLocked}
+              className={cn(
+                inputClass,
+                (isEdit || codeLocked) && 'opacity-75 cursor-not-allowed bg-slate-50',
+                codeError && 'border-rose-300 focus:border-rose-400',
+              )}
             />
-            {isEdit && (
+            {codeError && !isEdit && !codeLocked && <p className="mt-1 text-[11px] font-medium text-rose-600">{codeError}</p>}
+            {(isEdit || codeLocked) && (
               <p className="mt-1 text-[11px] text-slate-400">
                 {tBilingual('Course code cannot be changed once created.', 'የኮርስ ኮድ አንዴ ከተፈጠረ በኋላ ሊቀየር አይችልም።')}
               </p>

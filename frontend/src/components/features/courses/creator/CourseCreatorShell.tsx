@@ -7,9 +7,10 @@ import { uploadAttachment } from '@/lib/api/files';
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from '@/lib/api/quiz';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { toast } from '@/lib/toast';
+import type { ApiAssessment } from '@/lib/api/types';
 
 import { type LessonDraft, type ModuleDraft, uid } from '../wizard-types';
-import type { CreatorActiveNode, CreatorPhase } from './types';
+import type { AutosaveStatus, CreatorActiveNode, CreatorPhase } from './types';
 import { CreatorHeader } from './CreatorHeader';
 import { CreatorSidebar } from './CreatorSidebar';
 import { CourseDetailsStage } from './stages/CourseDetailsStage';
@@ -17,6 +18,27 @@ import { ModuleEditorStage } from './stages/ModuleEditorStage';
 import { LessonEditorStage } from './stages/LessonEditorStage';
 import { AssessmentEditorStage } from './stages/AssessmentEditorStage';
 import { ReviewSubmitStage } from './stages/ReviewSubmitStage';
+
+function mapApiQuestions(apiQuestions: ApiAssessment['questions'] | undefined): Question[] {
+  return ((apiQuestions ?? []) as any[]).map((q) => ({
+    id: q.id || uid('q'),
+    type: q.type === 'TRUE_FALSE' ? 'true_false' : q.type === 'SHORT_ANSWER' ? 'short_answer' : 'multiple_choice',
+    text: q.question || '',
+    options: Array.isArray(q.options) ? q.options : ['True', 'False'],
+    correctIndex: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+    answerText: typeof q.correctAnswer === 'string' ? q.correctAnswer : '',
+    points: q.points || 10,
+    category: q.category || '',
+  }));
+}
+
+const AUTOSAVE_DELAY_MS = 5000;
+
+const isModuleAssessmentLesson = (l: LessonDraft) =>
+  l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ' || l.title.toLowerCase().includes('module assessment');
+
+const isLessonAssessmentSub = (s: LessonDraft) =>
+  s.contentType === 'ASSESSMENT' || s.contentType === 'QUIZ' || s.title.toLowerCase().includes('lesson assessment');
 
 export interface CourseCreatorShellProps {
   onDone: () => void;
@@ -26,16 +48,16 @@ export interface CourseCreatorShellProps {
 }
 
 export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDeliveryMode = 'BOTH' }: CourseCreatorShellProps) {
-  const { createCourse, updateCourseFull, submitForApproval } = useLms();
+  const { courses, createCourse, updateCourseFull, submitForApproval } = useLms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedCourseIdRef = useRef<string | undefined>(editingCourse?.id);
+  const [savedCourseId, setSavedCourseId] = useState<string | undefined>(editingCourse?.id);
 
   const [saving, setSaving] = useState(false);
   const isEdit = Boolean(editingCourse);
 
   // ── Step 1: Course Details ──
   const [title, setTitle] = useState(editingCourse?.title ?? '');
-  const [titleAm, setTitleAm] = useState((editingCourse as any)?.titleAm ?? '');
   const [code, setCode] = useState(editingCourse?.code ?? '');
   const [category, setCategory] = useState(editingCourse?.category ?? COURSE_CATEGORIES[0]);
   const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? 'basic');
@@ -49,6 +71,13 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   const [prerequisites, setPrerequisites] = useState(editingCourse?.prerequisites ?? '');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(editingCourse?.cover ?? null);
+
+  const codeError = useMemo(() => {
+    const normalized = code.trim().toUpperCase();
+    if (!normalized || savedCourseId) return null;
+    const taken = courses.some((c) => c.code.toUpperCase() === normalized);
+    return taken ? 'This course code is already used by another course.' : null;
+  }, [code, courses, savedCourseId]);
 
   // ── Step 2: Curriculum Modules & Lessons ──
   const getInitialDraftResources = (item: {
@@ -176,36 +205,90 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   const [assessmentUploading, setAssessmentUploading] = useState(false);
   const [assessmentUploadError, setAssessmentUploadError] = useState<string | null>(null);
 
-  // Load existing assessment from backend if editing
+  // Load every saved assessment (final, module and lesson tiers) back into the draft when editing.
+  const [assessmentsLoaded, setAssessmentsLoaded] = useState(!editingCourse?.id);
   useEffect(() => {
     if (!editingCourse?.id) return;
     let cancelled = false;
     (async () => {
       try {
         const list = await fetchCourseAssessments(editingCourse.id);
-        if (cancelled || list.length === 0) return;
-        const detail = await fetchAssessmentWithAnswers(list[0].id);
-        if (cancelled || !detail) return;
-        setQuizTitle(detail.titleEn || 'Final Assessment');
-        if (detail.passingScore !== undefined) setPassMark(detail.passingScore);
-        if (detail.weight !== undefined) setFinalAssessmentWeight(detail.weight);
-        if (detail.maxAttempts !== undefined) setAttemptsAllowed(detail.maxAttempts);
-        setTimeLimitMinutes(detail.timeLimitMinutes ?? 60);
-        if (Array.isArray(detail.questions) && detail.questions.length > 0) {
-          setQuestions(
-            (detail.questions as any[]).map((q) => ({
-              id: q.id || uid('q'),
-              type: q.type === 'TRUE_FALSE' ? 'true_false' : q.type === 'SHORT_ANSWER' ? 'short_answer' : 'multiple_choice',
-              text: q.question || '',
-              options: Array.isArray(q.options) ? q.options : ['True', 'False'],
-              correctIndex: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
-              answerText: typeof q.correctAnswer === 'string' ? q.correctAnswer : '',
-              points: q.points || 10,
-              category: q.category || '',
-            })),
+        const details = await Promise.all(list.map((a) => fetchAssessmentWithAnswers(a.id).catch(() => null)));
+        if (cancelled) return;
+
+        const quizFields = (d: ApiAssessment) => ({
+          quizQuestions: mapApiQuestions(d.questions),
+          quizPassMark: d.passingScore,
+          quizWeight: d.weight ?? 20,
+          quizTimeLimitMinutes: d.timeLimitMinutes ?? undefined,
+          quizAttemptsAllowed: d.maxAttempts,
+        });
+
+        const moduleQuizzes = new Map<string, ApiAssessment>();
+        const lessonQuizzes = new Map<string, ApiAssessment>();
+        list.forEach((meta, i) => {
+          const d = details[i];
+          if (!d) return;
+          const type = meta.type ?? 'FINAL_ASSESSMENT';
+          if (type === 'FINAL_ASSESSMENT') {
+            setQuizTitle(d.titleEn || 'Final Assessment');
+            setPassMark(d.passingScore);
+            if (d.weight !== undefined) setFinalAssessmentWeight(d.weight);
+            setAttemptsAllowed(d.maxAttempts);
+            setTimeLimitMinutes(d.timeLimitMinutes ?? 60);
+            setQuestions(mapApiQuestions(d.questions));
+          } else if (type === 'MODULE_ASSESSMENT' && meta.moduleId) {
+            moduleQuizzes.set(meta.moduleId, d);
+          } else if (meta.lessonId) {
+            lessonQuizzes.set(meta.lessonId, d);
+          }
+        });
+
+        if (moduleQuizzes.size > 0 || lessonQuizzes.size > 0) {
+          setModules((prev) =>
+            prev.map((m) => {
+              const lessons = m.lessons.map((l) => {
+                const lq = lessonQuizzes.get(l.id);
+                if (!lq || (l.subLessons ?? []).some(isLessonAssessmentSub)) return l;
+                const sub: LessonDraft = {
+                  id: uid('les-ass'),
+                  title: lq.titleEn || 'Lesson Assessment',
+                  content: '',
+                  durationMin: 15,
+                  contentType: 'ASSESSMENT',
+                  resourceUrl: '',
+                  required: true,
+                  resources: [],
+                  attachments: [],
+                  subLessons: [],
+                  ...quizFields(lq),
+                };
+                return { ...l, subLessons: [...(l.subLessons ?? []), sub] };
+              });
+              const mq = moduleQuizzes.get(m.id);
+              if (!mq || lessons.some(isModuleAssessmentLesson)) return { ...m, lessons };
+              const row: LessonDraft = {
+                id: uid('mod-ass'),
+                title: mq.titleEn || 'Module Assessment',
+                content: '',
+                durationMin: 30,
+                contentType: 'ASSESSMENT',
+                resourceUrl: '',
+                required: true,
+                resources: [],
+                attachments: [],
+                subLessons: [],
+                ...quizFields(mq),
+              };
+              return { ...m, lessons: [...lessons, row] };
+            }),
           );
         }
-      } catch {}
+      } catch {
+        // Loading is best-effort; the course stays editable without its saved quizzes.
+      } finally {
+        if (!cancelled) setAssessmentsLoaded(true);
+      }
     })();
     return () => {
       cancelled = true;
@@ -372,10 +455,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     setModules((prev) =>
       prev.map((m) => {
         if (m.id !== moduleId) return m;
-        const exists = m.lessons.some(
-          (l) => l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ' || l.title.toLowerCase().includes('module assessment'),
-        );
-        if (exists) return m;
+        if (m.lessons.some(isModuleAssessmentLesson)) return m;
         const assessmentLesson: LessonDraft = {
           id: newAssId,
           title: 'Module Assessment',
@@ -414,9 +494,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         if (m.id !== moduleId) return m;
         return {
           ...m,
-          lessons: m.lessons.filter(
-            (l) => l.contentType !== 'ASSESSMENT' && l.contentType !== 'QUIZ' && !l.title.toLowerCase().includes('module assessment'),
-          ),
+          lessons: m.lessons.filter((l) => !isModuleAssessmentLesson(l)),
         };
       }),
     );
@@ -433,25 +511,35 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           ...m,
           lessons: m.lessons.map((l) => {
             if (l.id !== lessonId) return l;
-            return {
-              ...l,
-              quizQuestions: l.quizQuestions?.length
-                ? l.quizQuestions
-                : [
-                    {
-                      id: uid('q'),
-                      type: 'multiple_choice',
-                      text: 'Sample question on this lesson?',
-                      options: ['Choice 1', 'Choice 2', 'Choice 3', 'Choice 4'],
-                      correctIndex: 0,
-                      points: 10,
-                    },
-                  ],
-              quizWeight: l.quizWeight ?? 20,
-              quizPassMark: l.quizPassMark ?? passMark ?? 70,
-              quizTimeLimitMinutes: l.quizTimeLimitMinutes ?? 15,
-              quizAttemptsAllowed: l.quizAttemptsAllowed ?? 3,
+            const subs = l.subLessons ?? [];
+            if (subs.some(isLessonAssessmentSub)) return l;
+            const assessmentSub: LessonDraft = {
+              id: uid('les-ass'),
+              title: 'Lesson Assessment',
+              content: '',
+              durationMin: 15,
+              contentType: 'ASSESSMENT',
+              resourceUrl: '',
+              required: true,
+              quizQuestions: [
+                {
+                  id: uid('q'),
+                  type: 'multiple_choice',
+                  text: 'Sample question on this lesson?',
+                  options: ['Choice 1', 'Choice 2', 'Choice 3', 'Choice 4'],
+                  correctIndex: 0,
+                  points: 10,
+                },
+              ],
+              quizWeight: 20,
+              quizPassMark: passMark || 70,
+              quizTimeLimitMinutes: 15,
+              quizAttemptsAllowed: 3,
+              resources: [],
+              attachments: [],
+              subLessons: [],
             };
+            return { ...l, subLessons: [...subs, assessmentSub] };
           }),
         };
       }),
@@ -465,22 +553,38 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         if (m.id !== moduleId) return m;
         return {
           ...m,
-          lessons: m.lessons.map((l) => {
-            if (l.id !== lessonId) return l;
-            const updated = { ...l };
-            delete updated.quizQuestions;
-            delete updated.quizWeight;
-            delete updated.quizPassMark;
-            delete updated.quizTimeLimitMinutes;
-            delete updated.quizAttemptsAllowed;
-            return updated;
-          }),
+          lessons: m.lessons.map((l) =>
+            l.id === lessonId ? { ...l, subLessons: (l.subLessons ?? []).filter((s) => !isLessonAssessmentSub(s)) } : l,
+          ),
         };
       }),
     );
-    if (activeNode.type === 'LESSON_ASSESSMENT' && (activeNode as any).lessonId === lessonId) {
+    if (activeNode.type === 'LESSON_ASSESSMENT' && activeNode.lessonId === lessonId) {
       setActiveNode({ type: 'LESSON', moduleId, lessonId });
     }
+  };
+
+  /** Patches the ASSESSMENT sub-lesson that holds a lesson's checkpoint quiz. */
+  const updateLessonAssessment = (moduleId: string, lessonId: string, patch: (sub: LessonDraft) => Partial<LessonDraft>) => {
+    setModules((prev) =>
+      prev.map((m) =>
+        m.id !== moduleId
+          ? m
+          : {
+              ...m,
+              lessons: m.lessons.map((l) =>
+                l.id !== lessonId ? l : { ...l, subLessons: (l.subLessons ?? []).map((s) => (isLessonAssessmentSub(s) ? { ...s, ...patch(s) } : s)) },
+              ),
+            },
+      ),
+    );
+  };
+
+  /** Patches the ASSESSMENT lesson row that holds a module's checkpoint quiz. */
+  const updateModuleAssessment = (moduleId: string, patch: (lesson: LessonDraft) => Partial<LessonDraft>) => {
+    setModules((prev) =>
+      prev.map((m) => (m.id !== moduleId ? m : { ...m, lessons: m.lessons.map((l) => (isModuleAssessmentLesson(l) ? { ...l, ...patch(l) } : l)) })),
+    );
   };
 
   // ── File Uploads for Final Assessment ──
@@ -494,11 +598,11 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       for (const f of fileArray) {
         const res = await uploadAttachment(f, { courseId: editingCourse?.id });
         uploaded.push({
-          id: res.fileId || `res-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          name: res.originalName || f.name,
+          id: res.id || `res-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          name: res.fileName || f.name,
           url: res.fileUrl,
-          size: res.size || f.size,
-          type: res.mimeType || f.type,
+          size: res.sizeBytes || f.size,
+          type: res.fileType || f.type,
         });
       }
       setAssessmentResources((prev) => [...prev, ...uploaded]);
@@ -593,77 +697,188 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         }
       : undefined;
 
+  // ── Persistence (shared by autosave and the Save / Submit buttons) ──
+  const uploadedCoverRef = useRef<File | null>(null);
+  const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+
+  /**
+   * Writes the current draft to the server without leaving the studio. The first
+   * call creates the course; later calls update it. Calls are queued so an
+   * autosave and a button click never race to create the course twice.
+   */
+  const persistDraft = (): Promise<string> => {
+    const quiz = buildQuizPayload();
+    const curriculum = buildCurriculumPayload();
+    const cover = coverFile && coverFile !== uploadedCoverRef.current ? coverFile : null;
+    const details = {
+      title: title.trim(),
+      category,
+      level,
+      deliveryMode,
+      description: description.trim(),
+      objectives: objectives.trim(),
+      department: department.trim(),
+      targetAudience: targetAudience.trim(),
+      deliveryMethod: deliveryMethod.trim(),
+      language: language.trim(),
+      prerequisites: prerequisites.trim(),
+      cover,
+      modules: curriculum,
+      quiz,
+    };
+
+    const run = async () => {
+      const existingId = savedCourseIdRef.current;
+      if (existingId) {
+        const result = await updateCourseFull(existingId, details);
+        if (!result.ok) throw new Error(result.message);
+      } else {
+        const result = await createCourse({ ...details, code: code.trim().toUpperCase() });
+        if (result.courseId) {
+          savedCourseIdRef.current = result.courseId;
+          setSavedCourseId(result.courseId);
+        }
+        if (!result.ok) throw new Error(result.message);
+      }
+      if (cover) uploadedCoverRef.current = cover;
+      return savedCourseIdRef.current!;
+    };
+
+    const next = saveQueueRef.current.then(run, run);
+    saveQueueRef.current = next.catch(() => undefined);
+    return next;
+  };
+
+  // ── Autosave ──
+  const isUploading =
+    assessmentUploading ||
+    modules.some((m) => m.uploading || m.lessons.some((l) => l.uploading || (l.subLessons ?? []).some((sub) => sub.uploading)));
+
+  const draftSnapshot = useMemo(
+    () =>
+      JSON.stringify(
+        {
+          title,
+          code,
+          category,
+          level,
+          deliveryMode,
+          description,
+          objectives,
+          department,
+          targetAudience,
+          prerequisites,
+          cover: coverFile ? `${coverFile.name}:${coverFile.size}:${coverFile.lastModified}` : null,
+          modules,
+          quizTitle,
+          passMark,
+          finalAssessmentWeight,
+          timeLimitMinutes,
+          attemptsAllowed,
+          questions,
+          assessmentResources,
+        },
+        // Upload progress flags are UI state, not content.
+        (key, value) => (key === 'uploading' || key === 'uploadError' ? undefined : value),
+      ),
+    [
+      title,
+      code,
+      category,
+      level,
+      deliveryMode,
+      description,
+      objectives,
+      department,
+      targetAudience,
+      prerequisites,
+      coverFile,
+      modules,
+      quizTitle,
+      passMark,
+      finalAssessmentWeight,
+      timeLimitMinutes,
+      attemptsAllowed,
+      questions,
+      assessmentResources,
+    ],
+  );
+
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('idle');
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const latestSnapshotRef = useRef(draftSnapshot);
+  latestSnapshotRef.current = draftSnapshot;
+
+  // What the studio opened with (after saved quizzes are loaded) counts as already saved.
+  useEffect(() => {
+    if (assessmentsLoaded && lastSavedSnapshotRef.current === null) lastSavedSnapshotRef.current = draftSnapshot;
+  }, [assessmentsLoaded, draftSnapshot]);
+
+  const canAutosave = title.trim() !== '' && code.trim() !== '' && !codeError;
+  const isDirty = lastSavedSnapshotRef.current !== null && draftSnapshot !== lastSavedSnapshotRef.current;
+
+  useEffect(() => {
+    if (!isDirty) return;
+    setAutosaveStatus('pending');
+    if (!canAutosave || saving || isUploading) return;
+
+    const snapshot = draftSnapshot;
+    const timer = setTimeout(async () => {
+      setAutosaveStatus('saving');
+      try {
+        await persistDraft();
+        lastSavedSnapshotRef.current = snapshot;
+        setLastSavedAt(new Date());
+        setAutosaveError(null);
+        setAutosaveStatus(latestSnapshotRef.current === snapshot ? 'saved' : 'pending');
+      } catch (err) {
+        setAutosaveError(err instanceof Error ? err.message : 'Autosave failed.');
+        setAutosaveStatus('error');
+      }
+    }, AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+    // persistDraft is rebuilt every render; the snapshot captures everything it reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftSnapshot, isDirty, canAutosave, saving, isUploading]);
+
   // ── Save Draft & Submit Handlers ──
   const handleSave = async (andSubmit = false) => {
     setSaving(true);
-    const quiz = buildQuizPayload();
-    const curriculum = buildCurriculumPayload();
-
     try {
-      let savedCourseId = savedCourseIdRef.current || editingCourse?.id;
-
-      if (editingCourse || savedCourseIdRef.current) {
-        const courseId = savedCourseIdRef.current || editingCourse!.id;
-        const result = await updateCourseFull(courseId, {
-          title: title.trim(),
-          category,
-          level,
-          deliveryMode,
-          description: description.trim(),
-          objectives: objectives.trim(),
-          department: department.trim(),
-          targetAudience: targetAudience.trim(),
-          deliveryMethod: deliveryMethod.trim(),
-          language: language.trim(),
-          prerequisites: prerequisites.trim(),
-          cover: coverFile,
-          modules: curriculum,
-          quiz,
-        });
-
-        if (result?.id) savedCourseIdRef.current = result.id;
-        toast.success(andSubmit ? 'Course updated' : 'Course draft saved successfully');
-      } else {
-        const result = await createCourse({
-          title: title.trim(),
-          code: code.trim().toUpperCase() || 'DRAFT',
-          category,
-          level,
-          deliveryMode,
-          description: description.trim(),
-          objectives: objectives.trim(),
-          department: department.trim(),
-          targetAudience: targetAudience.trim(),
-          deliveryMethod: deliveryMethod.trim(),
-          language: language.trim(),
-          prerequisites: prerequisites.trim(),
-          cover: coverFile,
-          modules: curriculum,
-          quiz,
-        });
-
-        const newId = (result as any)?.courseId || (result as any)?.id;
-        if (newId) {
-          savedCourseId = newId;
-          savedCourseIdRef.current = newId;
-        }
-        toast.success(andSubmit ? 'Course created' : 'Course saved as draft');
-      }
+      const courseId = await persistDraft();
+      lastSavedSnapshotRef.current = draftSnapshot;
 
       if (andSubmit) {
-        const finalId = savedCourseIdRef.current || savedCourseId;
-        if (finalId) {
-          await submitForApproval(finalId);
-          toast.success('Course submitted for approval successfully!');
-        }
+        const submitRes = await submitForApproval(courseId);
+        if (!submitRes.ok) throw new Error(submitRes.message || 'Failed to submit course for approval.');
+        toast.success('Course submitted for approval successfully!');
+      } else {
+        toast.success('Course draft saved successfully!');
       }
 
       onDone();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save course');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save course.');
     } finally {
       setSaving(false);
     }
+  };
+
+  /** Leaving the studio flushes edits still waiting on the autosave timer. */
+  const handleExit = async () => {
+    if (isDirty && canAutosave && !isUploading) {
+      setSaving(true);
+      try {
+        await persistDraft();
+      } catch (err) {
+        setSaving(false);
+        toast.error(err instanceof Error ? `Could not save your latest changes: ${err.message}` : 'Could not save your latest changes.');
+        return;
+      }
+    }
+    onCancel();
   };
 
   // Calculate total allocated weights across final, modules, and lessons
@@ -687,10 +902,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         <CourseDetailsStage
           title={title}
           setTitle={setTitle}
-          titleAm={titleAm}
-          setTitleAm={setTitleAm}
           code={code}
           setCode={setCode}
+          codeError={codeError}
+          codeLocked={Boolean(savedCourseId)}
           category={category}
           setCategory={setCategory}
           level={level}
@@ -717,33 +932,40 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     }
 
     if (activeNode.type === 'MODULE') {
-      const currentModule = modules.find((m) => m.id === activeNode.moduleId);
+      const moduleIndex = modules.findIndex((m) => m.id === activeNode.moduleId);
+      const currentModule = modules[moduleIndex];
       if (!currentModule) {
         return <div className="p-8 text-center text-slate-500">Module not found. Please select another item from the sidebar.</div>;
       }
       return (
         <ModuleEditorStage
           module={currentModule}
+          moduleIndex={moduleIndex}
           onUpdateModule={(patch) => {
             setModules((prev) => prev.map((m) => (m.id === currentModule.id ? { ...m, ...patch } : m)));
           }}
           onAddLesson={() => handleAddLesson(currentModule.id)}
           onAddModuleAssessment={() => handleAddModuleAssessment(currentModule.id)}
           onSelectLesson={(lessonId) => setActiveNode({ type: 'LESSON', moduleId: currentModule.id, lessonId })}
-          onSelectAssessment={() => setActiveNode({ type: 'MODULE_ASSESSMENT', moduleId: currentModule.id })}
+          onSelectModuleAssessment={() => setActiveNode({ type: 'MODULE_ASSESSMENT', moduleId: currentModule.id })}
+          onDeleteLesson={(lessonId) => handleDeleteLesson(currentModule.id, lessonId)}
+          onDeleteModuleAssessment={() => handleDeleteModuleAssessment(currentModule.id)}
         />
       );
     }
 
     if (activeNode.type === 'LESSON') {
       const currentModule = modules.find((m) => m.id === activeNode.moduleId);
-      const currentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId);
+      const instructional = currentModule?.lessons.filter((l) => !isModuleAssessmentLesson(l)) ?? [];
+      const lessonIndex = instructional.findIndex((l) => l.id === activeNode.lessonId);
+      const currentLesson = instructional[lessonIndex];
       if (!currentModule || !currentLesson) {
         return <div className="p-8 text-center text-slate-500">Lesson not found. Please select another item from the sidebar.</div>;
       }
       return (
         <LessonEditorStage
           lesson={currentLesson}
+          lessonIndex={lessonIndex}
           moduleTitle={currentModule.title}
           onUpdateLesson={(patch) => {
             setModules((prev) =>
@@ -758,7 +980,6 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
             );
           }}
           onAddSubLesson={() => handleAddSubLesson(currentModule.id, currentLesson.id)}
-          onAddLessonAssessment={() => handleAddLessonAssessment(currentModule.id, currentLesson.id)}
           onSelectSubLesson={(subId) =>
             setActiveNode({
               type: 'SUB_LESSON',
@@ -767,13 +988,16 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
               subLessonId: subId,
             })
           }
-          onSelectAssessment={() =>
+          onDeleteSubLesson={(subId) => handleDeleteSubLesson(currentModule.id, currentLesson.id, subId)}
+          onAddLessonAssessment={() => handleAddLessonAssessment(currentModule.id, currentLesson.id)}
+          onSelectLessonAssessment={() =>
             setActiveNode({
               type: 'LESSON_ASSESSMENT',
               moduleId: currentModule.id,
               lessonId: currentLesson.id,
             })
           }
+          onDeleteLessonAssessment={() => handleDeleteLessonAssessment(currentModule.id, currentLesson.id)}
         />
       );
     }
@@ -781,15 +1005,19 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     if (activeNode.type === 'SUB_LESSON') {
       const currentModule = modules.find((m) => m.id === activeNode.moduleId);
       const parentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId);
-      const currentSub = parentLesson?.subLessons?.find((s) => s.id === activeNode.subLessonId);
+      const subs = (parentLesson?.subLessons ?? []).filter((s) => !isLessonAssessmentSub(s));
+      const subIndex = subs.findIndex((s) => s.id === activeNode.subLessonId);
+      const currentSub = subs[subIndex];
       if (!currentModule || !parentLesson || !currentSub) {
         return <div className="p-8 text-center text-slate-500">Sub-lesson not found. Please select another item from the sidebar.</div>;
       }
       return (
         <LessonEditorStage
           lesson={currentSub}
+          lessonIndex={subIndex}
           isSubLesson
-          moduleTitle={`${currentModule.title} › ${parentLesson.title}`}
+          parentLessonTitle={parentLesson.title}
+          moduleTitle={currentModule.title}
           onUpdateLesson={(patch) => {
             setModules((prev) =>
               prev.map((m) =>
@@ -809,108 +1037,35 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
               ),
             );
           }}
-          onBackToParentLesson={() =>
-            setActiveNode({
-              type: 'LESSON',
-              moduleId: currentModule.id,
-              lessonId: parentLesson.id,
-            })
-          }
         />
       );
     }
 
     if (activeNode.type === 'MODULE_ASSESSMENT') {
       const currentModule = modules.find((m) => m.id === activeNode.moduleId);
-      const assessmentLesson = currentModule?.lessons.find(
-        (l) => l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ' || l.title.toLowerCase().includes('module assessment'),
-      );
+      const assessmentLesson = currentModule?.lessons.find(isModuleAssessmentLesson);
       if (!currentModule || !assessmentLesson) {
         return <div className="p-8 text-center text-slate-500">Module assessment not found.</div>;
       }
+      const update = (patch: (l: LessonDraft) => Partial<LessonDraft>) => updateModuleAssessment(currentModule.id, patch);
       return (
         <AssessmentEditorStage
           scope="MODULE_ASSESSMENT"
           parentTitle={currentModule.title}
           quizTitle={assessmentLesson.title}
-          setQuizTitle={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, title: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setQuizTitle={(val) => update(() => ({ title: val }))}
           weight={assessmentLesson.quizWeight ?? 20}
-          setWeight={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, quizWeight: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setWeight={(val) => update(() => ({ quizWeight: val }))}
           totalAllocatedWeight={totalAllocatedWeight}
           passMark={assessmentLesson.quizPassMark ?? passMark ?? 70}
-          setPassMark={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, quizPassMark: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setPassMark={(val) => update(() => ({ quizPassMark: val }))}
           timeLimitMinutes={assessmentLesson.quizTimeLimitMinutes ?? 30}
-          setTimeLimitMinutes={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, quizTimeLimitMinutes: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setTimeLimitMinutes={(val) => update(() => ({ quizTimeLimitMinutes: val }))}
           attemptsAllowed={assessmentLesson.quizAttemptsAllowed ?? 2}
-          setAttemptsAllowed={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, quizAttemptsAllowed: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setAttemptsAllowed={(val) => update(() => ({ quizAttemptsAllowed: val }))}
           questions={assessmentLesson.quizQuestions ?? []}
-          setQuestions={(updater) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === assessmentLesson.id ? { ...l, quizQuestions: updater(l.quizQuestions ?? []) } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          setQuestions={(updater) => update((l) => ({ quizQuestions: updater(l.quizQuestions ?? []) }))}
+          courseId={editingCourse?.id}
         />
       );
     }
@@ -918,81 +1073,29 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     if (activeNode.type === 'LESSON_ASSESSMENT') {
       const currentModule = modules.find((m) => m.id === activeNode.moduleId);
       const currentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId);
-      if (!currentModule || !currentLesson) {
+      const assessmentSub = currentLesson?.subLessons?.find(isLessonAssessmentSub);
+      if (!currentModule || !currentLesson || !assessmentSub) {
         return <div className="p-8 text-center text-slate-500">Lesson assessment not found.</div>;
       }
+      const update = (patch: (s: LessonDraft) => Partial<LessonDraft>) => updateLessonAssessment(currentModule.id, currentLesson.id, patch);
       return (
         <AssessmentEditorStage
           scope="LESSON_ASSESSMENT"
           parentTitle={currentLesson.title}
-          quizTitle={`${currentLesson.title} Quiz`}
-          setQuizTitle={() => {}}
-          weight={currentLesson.quizWeight ?? 20}
-          setWeight={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === currentLesson.id ? { ...l, quizWeight: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          quizTitle={assessmentSub.title}
+          setQuizTitle={(val) => update(() => ({ title: val }))}
+          weight={assessmentSub.quizWeight ?? 20}
+          setWeight={(val) => update(() => ({ quizWeight: val }))}
           totalAllocatedWeight={totalAllocatedWeight}
-          passMark={currentLesson.quizPassMark ?? passMark ?? 70}
-          setPassMark={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === currentLesson.id ? { ...l, quizPassMark: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
-          timeLimitMinutes={currentLesson.quizTimeLimitMinutes ?? 15}
-          setTimeLimitMinutes={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === currentLesson.id ? { ...l, quizTimeLimitMinutes: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
-          attemptsAllowed={currentLesson.quizAttemptsAllowed ?? 3}
-          setAttemptsAllowed={(val) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === currentLesson.id ? { ...l, quizAttemptsAllowed: val } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
-          questions={currentLesson.quizQuestions ?? []}
-          setQuestions={(updater) => {
-            setModules((prev) =>
-              prev.map((m) =>
-                m.id === currentModule.id
-                  ? {
-                      ...m,
-                      lessons: m.lessons.map((l) => (l.id === currentLesson.id ? { ...l, quizQuestions: updater(l.quizQuestions ?? []) } : l)),
-                    }
-                  : m,
-              ),
-            );
-          }}
+          passMark={assessmentSub.quizPassMark ?? passMark ?? 70}
+          setPassMark={(val) => update(() => ({ quizPassMark: val }))}
+          timeLimitMinutes={assessmentSub.quizTimeLimitMinutes ?? 15}
+          setTimeLimitMinutes={(val) => update(() => ({ quizTimeLimitMinutes: val }))}
+          attemptsAllowed={assessmentSub.quizAttemptsAllowed ?? 3}
+          setAttemptsAllowed={(val) => update(() => ({ quizAttemptsAllowed: val }))}
+          questions={assessmentSub.quizQuestions ?? []}
+          setQuestions={(updater) => update((s) => ({ quizQuestions: updater(s.quizQuestions ?? []) }))}
+          courseId={editingCourse?.id}
         />
       );
     }
@@ -1032,7 +1135,6 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       return (
         <ReviewSubmitStage
           title={title}
-          titleAm={titleAm}
           code={code}
           category={category}
           level={level}
@@ -1065,18 +1167,25 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-800">
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans antialiased text-slate-800">
       {/* Top Header */}
       <CreatorHeader
-        courseTitle={title}
-        courseCode={code}
+        phase={currentPhase}
+        onPhaseChange={handleStepSelect}
+        activeNode={activeNode}
+        title={title}
+        code={code}
         deliveryMode={deliveryMode}
-        currentPhase={currentPhase}
-        onSelectPhase={handleStepSelect}
+        saving={saving}
         onSaveDraft={() => handleSave(false)}
         onSubmitForApproval={() => handleSave(true)}
-        onClose={onCancel}
-        saving={saving}
+        onPreview={() => setActiveNode({ type: 'REVIEW_SUBMIT' })}
+        onExit={handleExit}
+        isEdit={isEdit}
+        autosaveStatus={autosaveStatus}
+        autosaveError={autosaveError}
+        lastSavedAt={lastSavedAt}
+        autosaveBlockedReason={!title.trim() || !code.trim() ? 'Add a title and course code to start autosaving' : codeError ? codeError : null}
       />
 
       {/* Main Studio Body: Sidebar + Editor Stage */}

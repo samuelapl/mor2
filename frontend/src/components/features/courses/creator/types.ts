@@ -7,6 +7,9 @@ export type CreatorPhase =
   | 'FINAL_ASSESSMENT'
   | 'REVIEW_SUBMIT';
 
+/** pending = unsaved edits waiting on the debounce (or on a title/code). */
+export type AutosaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
+
 export type CreatorNodeType =
   | 'COURSE_DETAILS'
   | 'MODULE'
@@ -26,7 +29,6 @@ export interface CreatorActiveNode {
 
 export interface CreatorDraftState {
   title: string;
-  titleAm: string;
   code: string;
   category: string;
   level: CourseLevel;

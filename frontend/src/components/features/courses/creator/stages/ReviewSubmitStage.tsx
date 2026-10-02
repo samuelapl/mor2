@@ -23,7 +23,6 @@ import type { CreatorActiveNode } from '../types';
 
 export interface ReviewSubmitStageProps {
   title: string;
-  titleAm?: string;
   code: string;
   category: string;
   level: CourseLevel;
@@ -55,7 +54,6 @@ export interface ReviewSubmitStageProps {
 
 export function ReviewSubmitStage({
   title,
-  titleAm,
   code,
   category,
   level,
@@ -108,10 +106,57 @@ export function ReviewSubmitStage({
     });
   });
 
+  const isAssessmentRow = (l: ModuleDraft['lessons'][number]) =>
+    l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ';
+
+  // Blocking problems: anything here prevents submission.
+  const issues: { message: string; node: CreatorActiveNode }[] = [];
+  if (!code.trim()) issues.push({ message: tBilingual('Course code is required', 'የኮርስ ኮድ ያስፈልጋል'), node: { type: 'COURSE_DETAILS' } });
+  if (modules.length === 0) issues.push({ message: tBilingual('Add at least one module', 'ቢያንስ አንድ ሞጁል ያክሉ'), node: { type: 'COURSE_DETAILS' } });
+
+  const checkQuestions = (qs: Question[] | undefined, label: string, node: CreatorActiveNode) => {
+    if (!qs || qs.length === 0) {
+      issues.push({ message: `${label}: ${tBilingual('has no questions', 'ጥያቄ የለውም')}`, node });
+      return;
+    }
+    qs.forEach((q, i) => {
+      const n = `${label} · Q${i + 1}`;
+      if (!q.text.trim()) issues.push({ message: `${n}: ${tBilingual('question text is empty', 'የጥያቄ ጽሑፍ ባዶ ነው')}`, node });
+      else if (q.type === 'multiple_choice' && q.options.some((o) => !o.trim()))
+        issues.push({ message: `${n}: ${tBilingual('has blank options', 'ባዶ አማራጮች አሉት')}`, node });
+      else if (q.type === 'short_answer' && !q.answerText?.trim())
+        issues.push({ message: `${n}: ${tBilingual('expected answer is missing', 'የሚጠበቀው መልስ የለም')}`, node });
+    });
+  };
+
+  modules.forEach((m, mIdx) => {
+    const mLabel = m.title.trim() || `${tBilingual('Module', 'ሞጁል')} ${mIdx + 1}`;
+    const moduleNode: CreatorActiveNode = { type: 'MODULE', moduleId: m.id };
+    if (!m.title.trim()) issues.push({ message: `${mLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: moduleNode });
+    const lessons = m.lessons.filter((l) => !isAssessmentRow(l));
+    if (lessons.length === 0) issues.push({ message: `${mLabel}: ${tBilingual('has no lessons', 'ትምህርት የለውም')}`, node: moduleNode });
+    m.lessons.filter(isAssessmentRow).forEach((a) =>
+      checkQuestions(a.quizQuestions, `${mLabel} › ${a.title || 'Module Assessment'}`, { type: 'MODULE_ASSESSMENT', moduleId: m.id }),
+    );
+    lessons.forEach((l, lIdx) => {
+      const lLabel = `${mLabel} › ${l.title.trim() || `${tBilingual('Lesson', 'ትምህርት')} ${lIdx + 1}`}`;
+      if (!l.title.trim())
+        issues.push({ message: `${lLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: { type: 'LESSON', moduleId: m.id, lessonId: l.id } });
+      (l.subLessons ?? []).filter(isAssessmentRow).forEach((a) =>
+        checkQuestions(a.quizQuestions, `${lLabel} › ${a.title || 'Lesson Assessment'}`, {
+          type: 'LESSON_ASSESSMENT',
+          moduleId: m.id,
+          lessonId: l.id,
+        }),
+      );
+    });
+  });
+  if (questions.length > 0) checkQuestions(questions, quizTitle || 'Final Assessment', { type: 'FINAL_ASSESSMENT' });
+
   const isTitleValid = Boolean(title.trim());
   const isModulesValid = modules.length > 0 && totalLessons > 0;
   const isWeightValid = calculatedWeights === 100;
-  const isReadyToSubmit = isTitleValid && isModulesValid;
+  const isReadyToSubmit = isTitleValid && isModulesValid && issues.length === 0;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-16">
@@ -232,11 +277,37 @@ export function ReviewSubmitStage({
               </p>
               <p className="text-[11px] text-slate-500">
                 {tBilingual('Total:', 'ድምር:')} {calculatedWeights}%{' '}
-                {isWeightValid ? '✓' : `(${100 - calculatedWeights}% unallocated)`}
+                {isWeightValid
+                  ? '✓'
+                  : calculatedWeights > 100
+                    ? `(${calculatedWeights - 100}% over-allocated)`
+                    : `(${100 - calculatedWeights}% unallocated)`}
               </p>
             </div>
           </div>
         </div>
+
+        {issues.length > 0 && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4">
+            <p className="mb-2 text-xs font-bold text-rose-700">
+              {tBilingual(`Fix ${issues.length} issue(s) before submitting`, `ከማስገባትዎ በፊት ${issues.length} ችግር(ዎች) ያስተካክሉ`)}
+            </p>
+            <ul className="space-y-1">
+              {issues.map((issue, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectNode(issue.node)}
+                    className="flex items-start gap-1.5 text-left text-[11px] text-rose-700 hover:underline"
+                  >
+                    <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                    {issue.message}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Embedded Full Learner-style Review */}
@@ -255,7 +326,6 @@ export function ReviewSubmitStage({
 
         <StepReviewSubmit
           title={title}
-          titleAm={titleAm}
           code={code}
           category={category}
           level={level}

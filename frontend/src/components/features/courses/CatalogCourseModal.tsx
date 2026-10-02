@@ -81,7 +81,7 @@ function formatTime(value: string): string {
 /**
  * Pre-enrollment course preview for the learner catalog. Shows a transparent,
  * modern curriculum syllabus roadmap, course objectives, metadata, and a
- * prominent Enroll CTA. Once the learner is enrolled, hands off to LearnCourseModal.
+ * prominent Enroll CTA. Once the learner is enrolled, hands off to the classroom.
  */
 /** Seats taken, using the server's count (active enrollments) when available. */
 function bookedSeatCount(session: ApiLiveSession) {

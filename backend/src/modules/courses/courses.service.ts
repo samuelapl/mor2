@@ -265,7 +265,7 @@ export class CoursesService {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
           include: {
-            attachments: true,
+            attachments: { where: { lessonId: null } }, // lesson files also carry moduleId
             assessments: {
               where: { type: 'MODULE_ASSESSMENT' },
               select: {
@@ -308,9 +308,11 @@ export class CoursesService {
             titleAm: true,
             passingScore: true,
             timeLimitMinutes: true,
+            attachments: { orderBy: { createdAt: 'asc' } },
           },
         },
-        attachments: true,
+        // Module and lesson files also carry courseId; keep only files attached to the course itself.
+        attachments: { where: { moduleId: null, lessonId: null, assessmentId: null } },
       },
     });
 

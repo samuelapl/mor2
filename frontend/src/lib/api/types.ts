@@ -317,6 +317,9 @@ export interface ApiAssessmentAttempt {
 export interface ApiAssessmentListing {
   id: string;
   courseId: string;
+  type?: 'FINAL_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'SUB_LESSON_ASSESSMENT';
+  moduleId?: string | null;
+  lessonId?: string | null;
   titleEn: string;
   titleAm: string;
   passingScore: number;
