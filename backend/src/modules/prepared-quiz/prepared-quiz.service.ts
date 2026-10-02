@@ -7,6 +7,7 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import Redis from 'ioredis';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { RedisConfig } from '@config/app.config';
 import {
@@ -82,6 +83,8 @@ export class PreparedQuizService implements OnModuleDestroy {
 
   private get quizInclude() {
     return {
+      // Weighted course quiz this prepared quiz runs, if any (weight / pass mark shown to the trainer).
+      assessment: { select: { id: true, weight: true, passingScore: true } },
       questions: {
         orderBy: { order: 'asc' as const },
         include: {
@@ -100,6 +103,43 @@ export class PreparedQuizService implements OnModuleDestroy {
         },
       },
     };
+  }
+
+  /**
+   * A weighted session quiz keeps its answer key on its Assessment (like every other graded
+   * assessment), so its question list is copied there whenever the prepared quiz changes.
+   */
+  private async syncLinkedAssessment(quizId: string) {
+    const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
+      where: { id: quizId },
+      select: {
+        assessmentId: true,
+        questions: {
+          orderBy: { order: 'asc' },
+          select: { question: { select: { id: true, type: true, question: true, options: true, correctAnswer: true, points: true, category: true } } },
+        },
+      },
+    });
+    if (!quiz?.assessmentId) return;
+
+    const questions = quiz.questions.map(({ question: q }) => {
+      const answer = q.correctAnswer ?? undefined;
+      // Choice questions store the correct option index; short answers store the text.
+      const correctAnswer = q.type !== 'SHORT_ANSWER' && answer !== undefined && /^\d+$/.test(answer) ? Number(answer) : answer;
+      return {
+        id: q.id,
+        type: q.type,
+        question: q.question,
+        options: Array.isArray(q.options) ? q.options : [],
+        correctAnswer,
+        points: q.points,
+        category: q.category,
+      };
+    });
+    await this.prisma.assessment.update({
+      where: { id: quiz.assessmentId },
+      data: { questions: questions as unknown as Prisma.InputJsonValue },
+    });
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
@@ -183,7 +223,12 @@ export class PreparedQuizService implements OnModuleDestroy {
 
   /** Delete a quiz group and its questions */
   async deleteQuiz(sessionId: string, quizId: string) {
-    await this.assertQuizExists(sessionId, quizId);
+    const quiz = await this.assertQuizExists(sessionId, quizId);
+    if (quiz.assessmentId) {
+      throw new BadRequestException(
+        'This is a weighted course quiz planned with the course. Add questions to it; it cannot be deleted here.',
+      );
+    }
 
     await this.prisma.sessionPreparedQuiz.delete({
       where: { id: quizId },
@@ -236,6 +281,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       );
     }
 
+    await this.syncLinkedAssessment(quizId);
     await this.invalidateCache(sessionId);
 
     return this.prisma.sessionPreparedQuiz.findUnique({
@@ -252,6 +298,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       where: { quizId, questionId },
     });
 
+    await this.syncLinkedAssessment(quizId);
     await this.invalidateCache(sessionId);
   }
 
@@ -272,6 +319,7 @@ export class PreparedQuizService implements OnModuleDestroy {
       ),
     );
 
+    await this.syncLinkedAssessment(quizId);
     await this.invalidateCache(sessionId);
 
     return this.prisma.sessionPreparedQuiz.findUnique({

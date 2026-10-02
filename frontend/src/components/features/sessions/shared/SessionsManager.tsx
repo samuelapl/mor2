@@ -40,6 +40,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { SessionTable, type SessionRow } from "./SessionTable";
 import { ScheduleSessionModal } from "./ScheduleSessionModal";
+import { RebalanceWeightsDialog } from "./RebalanceWeightsDialog";
 import { EditSessionModal } from "./EditSessionModal";
 import { SessionDetailModal } from "./SessionDetailModal";
 import { SessionAttendanceModal } from "./SessionAttendanceModal";
@@ -280,11 +281,24 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
     }
   };
 
-  const confirmDeleteSession = async () => {
+  /**
+   * A session scheduled from a course plan whose quizzes carry weight on an approved course
+   * needs its weight handed to other session quizzes before it can go.
+   */
+  const deletePlan = (() => {
+    if (!sessionToDelete?.sessionPlanId) return null;
+    const course = courseMap.get(sessionToDelete.courseId);
+    if (!course || course.status === "draft" || course.status === "rejected") return null;
+    const plan = course.sessionPlans?.find((p) => p.id === sessionToDelete.sessionPlanId);
+    const weight = plan?.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0) ?? 0;
+    return weight > 0 ? { planId: sessionToDelete.sessionPlanId } : null;
+  })();
+
+  const confirmDeleteSession = async (rebalance?: Array<{ assessmentId: string; weight: number }>) => {
     if (!sessionToDelete) return;
     setDeletingId(sessionToDelete.id);
     try {
-      await deleteLiveSession(sessionToDelete.id);
+      await deleteLiveSession(sessionToDelete.id, rebalance);
       toast.success(`Session "${sessionToDelete.titleEn}" was deleted successfully.`);
       setSessionToDelete(null);
       loadSessions();
@@ -690,10 +704,21 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       )}
 
       {/* Delete Confirmation Modal */}
+      {deletePlan && sessionToDelete ? (
+        <RebalanceWeightsDialog
+          open
+          courseId={sessionToDelete.courseId}
+          sessionPlanId={deletePlan.planId}
+          sessionTitle={sessionToDelete.titleEn}
+          busy={Boolean(deletingId)}
+          onClose={() => !deletingId && setSessionToDelete(null)}
+          onConfirm={(rebalance) => void confirmDeleteSession(rebalance)}
+        />
+      ) : null}
       <ConfirmModal
-        open={Boolean(sessionToDelete)}
+        open={Boolean(sessionToDelete) && !deletePlan}
         onClose={() => !deletingId && setSessionToDelete(null)}
-        onConfirm={confirmDeleteSession}
+        onConfirm={() => confirmDeleteSession()}
         title="Delete Live Session"
         description={
           <>

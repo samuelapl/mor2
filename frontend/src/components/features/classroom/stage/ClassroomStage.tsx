@@ -11,6 +11,7 @@ import { QuizStage } from './QuizStage';
 import { CourseOverviewStage } from './CourseOverviewStage';
 import { ModuleOverviewStage } from './ModuleOverviewStage';
 import { CertificateStage } from './CertificateStage';
+import { LiveSessionsStage } from './LiveSessionsStage';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface ClassroomStageProps {
@@ -88,6 +89,10 @@ export function ClassroomStage({
         onStartQuiz={() => onTakeQuiz(assessment?.id || item.quizId || '')}
       />
     );
+  }
+
+  if (item.type === 'LIVE_SESSIONS') {
+    return <LiveSessionsStage sessions={progress?.liveSessions ?? []} />;
   }
 
   // 4. If active item is Certificate of Completion

@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/Badge";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ApiError } from "@/lib/api/client";
 import { scheduleSession } from "@/lib/api/monitoring";
+import { fetchSessionPlans } from "@/lib/api/session-plans";
+import type { ApiSessionPlan } from "@/lib/api/types";
 import { fetchTrainers } from "@/lib/api/users";
 import { createBatchLiveSessions, fetchVenues } from "@/lib/api/venues";
 import type { ApiUser, ApiVenue, SessionType } from "@/lib/api/types";
@@ -62,6 +64,9 @@ export function ScheduleSessionModal({
   const [titleEn, setTitleEn] = useState("");
   const [titleAm, setTitleAm] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
+  // Sessions the course owner planned during preparation, not yet scheduled.
+  const [plannedSessions, setPlannedSessions] = useState<ApiSessionPlan[]>([]);
+  const [sessionPlanId, setSessionPlanId] = useState("");
   const [date, setDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -111,6 +116,30 @@ export function ScheduleSessionModal({
       })
       .finally(() => setVenuesLoading(false));
   }, [open]);
+
+  // Load the selected course's unscheduled planned sessions (approved / published courses only).
+  useEffect(() => {
+    setSessionPlanId("");
+    setPlannedSessions([]);
+    const course = courses.find((c) => c.id === courseId);
+    if (!open || !course || (course.status !== "approved" && course.status !== "published")) return;
+    let cancelled = false;
+    fetchSessionPlans(courseId)
+      .then((plans) => !cancelled && setPlannedSessions(plans.filter((p) => !p.liveSession)))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, courseId, courses]);
+
+  const pickPlannedSession = (planId: string) => {
+    setSessionPlanId(planId);
+    const plan = plannedSessions.find((p) => p.id === planId);
+    if (!plan) return;
+    // Pre-filled from the course plan; the scheduler can still edit both.
+    setTitleEn(plan.titleEn);
+    setDescriptionEn([plan.descriptionEn, plan.objectivesEn ? `<p><strong>Objectives</strong></p>${plan.objectivesEn}` : ""].filter(Boolean).join(""));
+  };
 
   // When courseId changes, auto-select trainer & align sessionType with course.deliveryMode
   const selectedCourse = courses.find((c) => c.id === courseId);
@@ -229,6 +258,7 @@ export function ScheduleSessionModal({
         scheduledAt: new Date(`${date}T${time}`).toISOString(),
         durationMinutes: Number(duration),
         allowViewAttendance,
+        sessionPlanId: sessionPlanId || undefined,
       });
 
       toast.success("Virtual live session scheduled successfully!");
@@ -414,6 +444,31 @@ export function ScheduleSessionModal({
                 }}
               />
             </div>
+
+            {plannedSessions.length > 0 && (
+              <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 space-y-2">
+                <label className="block text-xs font-bold text-slate-800">Planned session from the course</label>
+                <select
+                  value={sessionPlanId}
+                  onChange={(event) => pickPlannedSession(event.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">New unplanned session (no graded quiz)</option>
+                  {plannedSessions.map((plan) => {
+                    const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
+                    return (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.order + 1}. {plan.titleEn}
+                        {plan.quizzes.length ? ` — ${plan.quizzes.length} quiz(zes), ${weight}% of the grade` : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[11px] text-slate-500">
+                  Picking one fills in its title and description, and creates its weighted quizzes for the trainer to prepare.
+                </p>
+              </div>
+            )}
 
             {/* Searchable Assigned Trainer Selection */}
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2.5">

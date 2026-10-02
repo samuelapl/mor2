@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Course, CourseDeliveryMode } from '@/types';
 import { DeliveryFormatModal } from './creator/modal/DeliveryFormatModal';
 import { CourseCreatorShell } from './creator/CourseCreatorShell';
+import { DEFAULT_DELIVERY_MODE } from '@/constants/delivery-modes';
 
 export interface CourseCreationWizardProps {
   onDone: () => void;
@@ -16,7 +17,7 @@ export interface CourseCreationWizardProps {
 export function CourseCreationWizard({ onDone, onCancel, editingCourse }: CourseCreationWizardProps) {
   // If editing an existing course, we bypass format selection modal
   const [showDeliveryModal, setShowDeliveryModal] = useState<boolean>(!editingCourse);
-  const [deliveryMode, setDeliveryMode] = useState<CourseDeliveryMode>(editingCourse?.deliveryMode ?? 'BOTH');
+  const [deliveryMode, setDeliveryMode] = useState<CourseDeliveryMode>(editingCourse?.deliveryMode ?? DEFAULT_DELIVERY_MODE);
 
   if (showDeliveryModal && !editingCourse) {
     return (

@@ -208,6 +208,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     targetAudience: course.targetAudience ?? undefined,
     deliveryMethod: course.deliveryMethod ?? undefined,
     deliveryMode: course.deliveryMode ?? 'BOTH',
+    hasOnlineSessions: course.hasOnlineSessions ?? false,
     language: course.language ?? 'en',
     prerequisites: course.prerequisites ?? undefined,
     objectives: course.objectives || course.objectivesEn || course.objectivesAm || undefined,
@@ -259,6 +260,22 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
     attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
     rejectionReason: latest.reason,
     lastRejectionReason: secondLatest?.reason,
+    sessionPlans: (apiCourse.sessionPlans ?? []).map((p) => ({
+      id: p.id,
+      order: p.order,
+      titleEn: p.titleEn,
+      descriptionEn: p.descriptionEn ?? undefined,
+      objectivesEn: p.objectivesEn ?? undefined,
+      quizzes: p.assessments.map((a) => ({
+        id: a.id,
+        titleEn: a.titleEn,
+        weight: a.weight,
+        passingScore: a.passingScore,
+        timeLimitMinutes: a.timeLimitMinutes,
+      })),
+      // A removed (soft-deleted) session leaves the plan unscheduled.
+      liveSession: p.liveSession && !p.liveSession.deletedAt ? p.liveSession : null,
+    })),
     approvals: (apiCourse.approvals ?? [])
       .map((a) => ({
         id: a.id,
@@ -371,6 +388,7 @@ export function courseToCreateBody(input: {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: Course['deliveryMode'];
+  hasOnlineSessions?: boolean;
   language?: string;
   prerequisites?: string;
   objectives?: string;
@@ -388,6 +406,7 @@ export function courseToCreateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
+    hasOnlineSessions: input.hasOnlineSessions,
     prerequisites: input.prerequisites,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
@@ -403,6 +422,7 @@ export function courseToUpdateBody(input: {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: Course['deliveryMode'];
+  hasOnlineSessions?: boolean;
   language?: string;
   prerequisites?: string;
   level?: Course['level'];
@@ -416,6 +436,7 @@ export function courseToUpdateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
+    hasOnlineSessions: input.hasOnlineSessions,
     prerequisites: input.prerequisites,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };

@@ -2,13 +2,14 @@ import type { ApiAssessment } from '@/lib/api/types';
 
 /** Items a reviewer can select. Same shape as the creator's `CreatorActiveNode`. */
 export type ReviewNodeType =
-  'OVERVIEW' | 'MODULE' | 'LESSON' | 'SUB_LESSON' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'FINAL_ASSESSMENT' | 'APPROVAL_HISTORY';
+  'OVERVIEW' | 'MODULE' | 'LESSON' | 'SUB_LESSON' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'FINAL_ASSESSMENT' | 'SESSION_PLAN' | 'APPROVAL_HISTORY';
 
 export interface ReviewNode {
   type: ReviewNodeType;
   moduleId?: string;
   lessonId?: string;
   subLessonId?: string;
+  sessionPlanId?: string;
 }
 
 export type CourseActionKey = 'edit' | 'submit' | 'approve' | 'reject' | 'publish' | 'unpublish' | 'archive' | 'delete' | 'assignTrainer';

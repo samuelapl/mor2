@@ -70,6 +70,7 @@ import {
   archiveCourse as apiArchiveCourse,
 } from '@/lib/api/courses';
 import { uploadAttachment, uploadCover } from '@/lib/api/files';
+import { replaceSessionPlans } from '@/lib/api/session-plans';
 import {
   createCourseAssessment,
   createLessonAssessment,
@@ -91,6 +92,7 @@ import type {
   BulkCreateUserItem,
   BulkCreateUsersResult,
   CreateCurriculumAttachmentBody,
+  ReplaceSessionPlansBody,
 } from '@/lib/api/types';
 import type {
   ActionResult,
@@ -135,6 +137,9 @@ export interface WizardLessonInput {
   quizAttemptsAllowed?: number;
   subLessons?: WizardLessonInput[];
 }
+
+/** A planned online session as the creator studio sends it (see ReplaceSessionPlansBody). */
+export type SessionPlanInput = ReplaceSessionPlansBody['plans'][number];
 
 export interface WizardModuleInput {
   title: string;
@@ -230,6 +235,9 @@ interface LmsContextValue {
     modules?: WizardModuleInput[];
     attachments?: Attachment[];
     quiz?: Quiz;
+    hasOnlineSessions?: boolean;
+    /** Omit to leave planned sessions untouched; [] removes them. */
+    sessionPlans?: SessionPlanInput[];
   }) => Promise<ActionResult & { courseId?: string }>;
   updateCourse: (
     courseId: string,
@@ -253,6 +261,9 @@ interface LmsContextValue {
       modules?: WizardModuleInput[];
       attachments?: Attachment[];
       quiz?: Quiz;
+      hasOnlineSessions?: boolean;
+      /** Omit to leave planned sessions untouched; [] removes them. */
+      sessionPlans?: SessionPlanInput[];
     },
   ) => Promise<ActionResult>;
   saveCourseCover: (courseId: string, file: File) => Promise<ActionResult>;
@@ -433,7 +444,7 @@ function extractModuleAssessmentDef(mod: WizardModuleInput) {
     title: item.title.trim() || 'Module Assessment',
     questions: item.quizQuestions,
     weight: item.quizWeight ?? 20,
-    passMark: item.quizPassMark ?? 50,
+    passMark: item.quizPassMark,
     timeLimitMinutes: item.quizTimeLimitMinutes,
     attemptsAllowed: item.quizAttemptsAllowed,
   };
@@ -449,7 +460,7 @@ function extractLessonAssessmentDef(lesson: WizardLessonInput) {
       title: sub.title.trim() || 'Lesson Assessment',
       questions: sub.quizQuestions,
       weight: sub.quizWeight ?? 20,
-      passMark: sub.quizPassMark ?? 50,
+      passMark: sub.quizPassMark,
       timeLimitMinutes: sub.quizTimeLimitMinutes,
       attemptsAllowed: sub.quizAttemptsAllowed,
     };
@@ -461,7 +472,7 @@ function extractLessonAssessmentDef(lesson: WizardLessonInput) {
       title: lesson.title.trim() || 'Lesson Assessment',
       questions: lesson.quizQuestions,
       weight: lesson.quizWeight ?? 20,
-      passMark: lesson.quizPassMark ?? 50,
+      passMark: lesson.quizPassMark,
       timeLimitMinutes: lesson.quizTimeLimitMinutes,
       attemptsAllowed: lesson.quizAttemptsAllowed,
     };
@@ -936,6 +947,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             targetAudience: input.targetAudience,
             deliveryMethod: input.deliveryMethod,
             deliveryMode: input.deliveryMode,
+            hasOnlineSessions: input.hasOnlineSessions,
             language: input.language,
             prerequisites: input.prerequisites,
             objectives: input.objectives,
@@ -984,6 +996,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               ];
 
         await syncCurriculumAndAssessments(created.id, modulesToCreate, input.quiz);
+        if (input.sessionPlans) await replaceSessionPlans(created.id, { plans: input.sessionPlans });
 
         // Course-level materials.
         for (const attachment of input.attachments ?? []) {
@@ -1234,6 +1247,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             targetAudience: input.targetAudience,
             deliveryMethod: input.deliveryMethod,
             deliveryMode: input.deliveryMode,
+            hasOnlineSessions: input.hasOnlineSessions,
             language: input.language,
             prerequisites: input.prerequisites,
             objectives: input.objectives,
@@ -1279,6 +1293,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               ];
 
         await syncCurriculumAndAssessments(courseId, modulesToReplace, input.quiz);
+        // After the curriculum: the server checks the combined weights stay within 100%.
+        if (input.sessionPlans) await replaceSessionPlans(courseId, { plans: input.sessionPlans });
 
         // Newly attached course materials (existing rows are left untouched).
         for (const attachment of input.attachments ?? []) {

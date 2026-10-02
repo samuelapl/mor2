@@ -332,6 +332,14 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
                 }`}
               >
                 <span>{q.title}</span>
+                {q.assessment && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${isActive ? 'bg-amber-300/30 text-white' : 'bg-amber-100 text-amber-800'}`}
+                    title="Weighted course quiz: graded into the course result when the session ends"
+                  >
+                    Graded · {q.assessment.weight}% · pass {q.assessment.passingScore}%
+                  </span>
+                )}
                 <span
                   className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
                     isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
@@ -399,7 +407,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
                   <span className="text-[10px] font-bold text-slate-500">mins</span>
                 </div>
 
-                {quizzes.length > 1 && (
+                {quizzes.length > 1 && !activeQuiz.assessmentId && (
                   <button
                     type="button"
                     onClick={() => handleDeleteQuizGroup(activeQuiz.id)}
@@ -412,6 +420,12 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
               </div>
             </div>
 
+            {activeQuiz.assessment && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                Weighted course quiz ({activeQuiz.assessment.weight}% of the course grade, pass mark {activeQuiz.assessment.passingScore}%). When the session
+                is marked completed, each learner&apos;s answers become their result; learners who did not answer score 0.
+              </p>
+            )}
             <p className="text-[11px] text-slate-500">
               Active pack: <strong className="text-slate-700">{activeQuiz.title}</strong> will give learners{' '}
               <strong className="text-indigo-700">{activeQuiz.timeLimitMinutes} minutes</strong> total to submit all {activeQuiz.questions.length} questions when broadcasted during live session.

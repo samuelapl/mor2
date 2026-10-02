@@ -2,7 +2,7 @@ import type { ApiAssessment } from '@/lib/api/types';
 import type { Course } from '@/types';
 import type { AssessmentsByScope, ReviewNode } from './types';
 
-export const nodeKey = (n: ReviewNode) => [n.type, n.moduleId ?? '', n.lessonId ?? '', n.subLessonId ?? ''].join(':');
+export const nodeKey = (n: ReviewNode) => [n.type, n.moduleId ?? '', n.lessonId ?? '', n.subLessonId ?? '', n.sessionPlanId ?? ''].join(':');
 
 export const sameNode = (a: ReviewNode, b: ReviewNode) => nodeKey(a) === nodeKey(b);
 
@@ -23,6 +23,7 @@ export function buildNodeOrder(course: Course, assessments: AssessmentsByScope):
     }
     if (assessments.byModule[m.id]) order.push({ type: 'MODULE_ASSESSMENT', moduleId: m.id });
   }
+  for (const plan of course.sessionPlans ?? []) order.push({ type: 'SESSION_PLAN', sessionPlanId: plan.id });
   if (assessments.final.length > 0) order.push({ type: 'FINAL_ASSESSMENT' });
   order.push({ type: 'APPROVAL_HISTORY' });
   return order;
@@ -64,6 +65,22 @@ export function buildIssueMap(course: Course, assessments: AssessmentsByScope): 
       if (!l.title?.trim()) add({ type: 'LESSON', moduleId: m.id, lessonId: l.id }, ['Lesson title is missing']);
       add({ type: 'LESSON_ASSESSMENT', moduleId: m.id, lessonId: l.id }, assessmentIssues(assessments.byLesson[l.id]));
     }
+  }
+
+  for (const plan of course.sessionPlans ?? []) {
+    const planIssues: string[] = [];
+    if (!plan.titleEn?.trim()) planIssues.push('Session title is missing');
+    plan.quizzes.forEach((q, i) => {
+      if (!q.weight) planIssues.push(`Quiz ${i + 1} has 0% weight`);
+    });
+    if (course.status === 'approved' || course.status === 'published') {
+      if (!plan.liveSession) planIssues.push('Not scheduled yet (blocks publishing)');
+      plan.quizzes.forEach((q) => {
+        const prepared = assessments.all.find((a) => a.id === q.id);
+        if (!prepared?.questions?.length) planIssues.push(`"${q.titleEn}" has no questions (blocks publishing)`);
+      });
+    }
+    add({ type: 'SESSION_PLAN', sessionPlanId: plan.id }, planIssues);
   }
 
   add({ type: 'FINAL_ASSESSMENT' }, assessments.final.flatMap(assessmentIssues));

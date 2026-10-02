@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { CourseDeliveryMode } from '@/types';
+import { DEFAULT_DELIVERY_MODE, isDeliveryModeEnabled } from '@/constants/delivery-modes';
 import { cn } from '@/lib/utils';
 
 interface DeliveryFormatModalProps {
@@ -26,12 +27,12 @@ interface DeliveryFormatModalProps {
 
 export function DeliveryFormatModal({
   open,
-  initialMode = 'BOTH',
+  initialMode = DEFAULT_DELIVERY_MODE,
   onSelect,
   onCancel,
 }: DeliveryFormatModalProps) {
   const { tBilingual, isAmharic } = useTranslation();
-  const [selected, setSelected] = useState<CourseDeliveryMode>(initialMode);
+  const [selected, setSelected] = useState<CourseDeliveryMode>(isDeliveryModeEnabled(initialMode) ? initialMode : DEFAULT_DELIVERY_MODE);
 
   const options: Array<{
     id: CourseDeliveryMode;
@@ -51,8 +52,8 @@ export function DeliveryFormatModal({
       id: 'ONLINE_ONLY',
       titleEn: 'Online Self-Paced',
       titleAm: 'የመስመር ላይ (ራስ-አገዝ)',
-      badgeEn: 'Digital Delivery',
-      badgeAm: 'ዲጂታል ስልጠና',
+      badgeEn: 'Recommended',
+      badgeAm: 'ተመራጭ',
       descriptionEn:
         'Learners study at their own pace using video streams, rich documents, downloadable attachments, and automated quizzes.',
       descriptionAm:
@@ -99,8 +100,8 @@ export function DeliveryFormatModal({
       id: 'BOTH',
       titleEn: 'Hybrid / Blended Learning',
       titleAm: 'ድብልቅ ስልጠና (ኦንላይን እና በአካል)',
-      badgeEn: 'Recommended',
-      badgeAm: 'ተመራጭ',
+      badgeEn: 'Blended',
+      badgeAm: 'ድብልቅ',
       descriptionEn:
         'The best of both worlds. Learners complete digital self-paced preparation modules and attend scheduled live virtual or in-person workshops.',
       descriptionAm:
@@ -139,26 +140,32 @@ export function DeliveryFormatModal({
       <div className="space-y-4 pt-1">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {options.map((opt) => {
-            const isSelected = selected === opt.id;
+            const enabled = isDeliveryModeEnabled(opt.id);
+            const isSelected = enabled && selected === opt.id;
             const Icon = opt.icon;
+            const select = () => enabled && setSelected(opt.id);
 
             return (
               <div
                 key={opt.id}
                 role="button"
-                tabIndex={0}
-                onClick={() => setSelected(opt.id)}
+                tabIndex={enabled ? 0 : -1}
+                aria-disabled={!enabled}
+                aria-pressed={isSelected}
+                onClick={select}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    setSelected(opt.id);
+                    select();
                   }
                 }}
                 className={cn(
-                  'relative rounded-2xl border p-5 text-left transition cursor-pointer flex flex-col justify-between group',
-                  isSelected
-                    ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                    : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50 shadow-2xs',
+                  'relative rounded-2xl border p-5 text-left transition flex flex-col justify-between group',
+                  !enabled
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60 grayscale'
+                    : isSelected
+                      ? 'cursor-pointer border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                      : 'cursor-pointer border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50 shadow-2xs',
                 )}
               >
                 <div>
@@ -178,10 +185,10 @@ export function DeliveryFormatModal({
                       <span
                         className={cn(
                           'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border',
-                          opt.badgeBg,
+                          enabled ? opt.badgeBg : 'bg-slate-100 text-slate-500 border-slate-200',
                         )}
                       >
-                        {tBilingual(opt.badgeEn, opt.badgeAm)}
+                        {enabled ? tBilingual(opt.badgeEn, opt.badgeAm) : tBilingual('Coming soon', 'በቅርቡ')}
                       </span>
                       <div
                         className={cn(

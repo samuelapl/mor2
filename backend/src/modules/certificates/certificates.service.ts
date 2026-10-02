@@ -1,10 +1,12 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AssessmentType, NotificationType, Prisma } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { CERTIFICATE_CONFIG } from '@config/constants';
 import { FilesService } from '@modules/files/files.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { AuditService } from '@modules/audit/audit.service';
+import { PolicyService } from '@modules/policy/policy.service';
+import { computeCourseGrade, isSessionQuizClosed, SESSION_PLAN_STATUS_SELECT } from '@common/utils';
 import { PDFDocument, PDFPage, RGB, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
@@ -59,6 +61,7 @@ export class CertificatesService {
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
     private readonly auditService: AuditService,
+    private readonly policyService: PolicyService,
   ) {}
 
   private async getActiveTemplate() {
@@ -603,17 +606,24 @@ export class CertificatesService {
     });
     if (completedLessons !== lessonIds.length) return null;
 
-    const assessments = await this.prisma.assessment.findMany({
-      where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-      select: { id: true },
-    });
-    if (assessments.length > 0) {
-      const passed = await this.prisma.assessmentAttempt.findFirst({
-        where: { assessmentId: { in: assessments.map((a) => a.id) }, userId, passed: true },
-        orderBy: { submittedAt: 'desc' },
-      });
-      if (!passed) return null;
-    }
+    // Same rule as ProgressService: every assessment passed on its own mark, and the
+    // weighted course grade at or above the global policy mark.
+    const assessments = (
+      await this.prisma.assessment.findMany({
+        where: { courseId },
+        select: {
+          id: true,
+          type: true,
+          weight: true,
+          passingScore: true,
+          attempts: { where: { userId, submittedAt: { not: null } }, select: { score: true, passed: true } },
+          sessionPlan: SESSION_PLAN_STATUS_SELECT,
+        },
+      })
+    ).map((a) => ({ ...a, closed: a.type === 'SESSION_ASSESSMENT' ? isSessionQuizClosed(a) : undefined }));
+    const grade = computeCourseGrade(assessments, await this.policyService.getPassingScorePercent());
+    // Includes: no session quiz still waiting for its session.
+    if (!grade.certificateReady) return null;
 
     return this.issue(userId, courseId);
   }

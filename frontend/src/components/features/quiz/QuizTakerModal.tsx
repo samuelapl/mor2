@@ -93,7 +93,9 @@ export function QuizTakerModal({
           setNotFound(true);
           return;
         }
-        const detail = await fetchAssessment(list[0].id);
+        // Without an explicit id, open the course's final assessment, not whichever was created first.
+        const target = list.find((a) => a.type === 'FINAL_ASSESSMENT') ?? list[0];
+        const detail = await fetchAssessment(target.id);
         if (!cancelled) setAssessment(detail);
       } catch (err) {
         if (!cancelled) {

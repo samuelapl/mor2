@@ -8,7 +8,6 @@ import {
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import {
   ApprovalStatus,
-  CourseDeliveryMode,
   CourseStatus,
   EnrollmentStatus,
   NotificationType,
@@ -26,6 +25,8 @@ import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
+import { assertDeliveryModeAllowed, DEFAULT_DELIVERY_MODE } from './delivery-modes';
+import { assertCourseWeightsTotal } from '@common/utils';
 import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
 
 const STAFF_ROLES: RoleName[] = [
@@ -313,6 +314,17 @@ export class CoursesService {
         },
         // Module and lesson files also carry courseId; keep only files attached to the course itself.
         attachments: { where: { moduleId: null, lessonId: null, assessmentId: null } },
+        sessionPlans: {
+          orderBy: { order: 'asc' },
+          include: {
+            assessments: {
+              where: { type: 'SESSION_ASSESSMENT' },
+              orderBy: { createdAt: 'asc' },
+              select: { id: true, titleEn: true, weight: true, passingScore: true, timeLimitMinutes: true },
+            },
+            liveSession: { select: { id: true, scheduledAt: true, status: true, trainerId: true, platform: true, durationMinutes: true, deletedAt: true } },
+          },
+        },
       },
     });
 
@@ -456,6 +468,8 @@ export class CoursesService {
     if (existing && !existing.deletedAt) {
       throw new ForbiddenException(`Course code '${dto.code}' already exists`);
     }
+    const deliveryMode = dto.deliveryMode ?? DEFAULT_DELIVERY_MODE;
+    assertDeliveryModeAllowed(deliveryMode);
 
     const course = await this.prisma.course.create({
       data: {
@@ -467,7 +481,8 @@ export class CoursesService {
         department: dto.department,
         targetAudience: dto.targetAudience,
         deliveryMethod: dto.deliveryMethod,
-        deliveryMode: dto.deliveryMode ?? CourseDeliveryMode.BOTH,
+        deliveryMode,
+        hasOnlineSessions: dto.hasOnlineSessions ?? false,
         prerequisites: dto.prerequisites,
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
@@ -506,7 +521,11 @@ export class CoursesService {
     if (dto.department !== undefined) data.department = dto.department;
     if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
     if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
-    if (dto.deliveryMode !== undefined) data.deliveryMode = dto.deliveryMode;
+    if (dto.deliveryMode !== undefined) {
+      assertDeliveryModeAllowed(dto.deliveryMode, course.deliveryMode);
+      data.deliveryMode = dto.deliveryMode;
+    }
+    if (dto.hasOnlineSessions !== undefined) data.hasOnlineSessions = dto.hasOnlineSessions;
     if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
@@ -526,6 +545,7 @@ export class CoursesService {
     const course = await this.findById(id);
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PENDING_APPROVAL);
+    await assertCourseWeightsTotal(this.prisma, id, 'exact');
 
     return this.prisma.course.update({
       where: { id },
@@ -600,6 +620,35 @@ export class CoursesService {
     return updated;
   }
 
+  /**
+   * Learners cannot get a certificate until every session quiz has been held, so a course
+   * with planned sessions only goes live once each one is scheduled and each weighted quiz
+   * has questions.
+   */
+  private async assertSessionsReadyToPublish(courseId: string) {
+    const plans = await this.prisma.courseSessionPlan.findMany({
+      where: { courseId },
+      orderBy: { order: 'asc' },
+      select: {
+        titleEn: true,
+        liveSession: { select: { deletedAt: true } },
+        assessments: { where: { type: 'SESSION_ASSESSMENT' }, select: { titleEn: true, questions: true } },
+      },
+    });
+    const problems: string[] = [];
+    for (const plan of plans) {
+      if (!plan.liveSession || plan.liveSession.deletedAt) problems.push(`"${plan.titleEn}" is not scheduled yet`);
+      for (const quiz of plan.assessments) {
+        if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+          problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
+        }
+      }
+    }
+    if (problems.length > 0) {
+      throw new BadRequestException(`Online sessions are not ready: ${problems.join('; ')}.`);
+    }
+  }
+
   async publish(id: string) {
     const course = await this.findById(id);
 
@@ -608,6 +657,7 @@ export class CoursesService {
     if (!course.trainers || course.trainers.length === 0) {
       throw new ForbiddenException('Assign at least one trainer to this course before publishing.');
     }
+    await this.assertSessionsReadyToPublish(id);
 
     const updated = await this.prisma.course.update({
       where: { id },

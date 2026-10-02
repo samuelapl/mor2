@@ -16,6 +16,7 @@ const NODE_TYPES: ReviewNodeType[] = [
   'MODULE_ASSESSMENT',
   'LESSON_ASSESSMENT',
   'FINAL_ASSESSMENT',
+  'SESSION_PLAN',
   'APPROVAL_HISTORY',
 ];
 
@@ -29,6 +30,7 @@ function nodeFromHash(hash: string): ReviewNode {
     moduleId: params.get('moduleId') ?? undefined,
     lessonId: params.get('lessonId') ?? undefined,
     subLessonId: params.get('subLessonId') ?? undefined,
+    sessionPlanId: params.get('sessionPlanId') ?? undefined,
   };
 }
 
@@ -38,6 +40,7 @@ function nodeToHash(node: ReviewNode): string {
   if (node.moduleId) params.set('moduleId', node.moduleId);
   if (node.lessonId) params.set('lessonId', node.lessonId);
   if (node.subLessonId) params.set('subLessonId', node.subLessonId);
+  if (node.sessionPlanId) params.set('sessionPlanId', node.sessionPlanId);
   return `#${params.toString()}`;
 }
 
@@ -47,7 +50,7 @@ function groupAssessments(list: ApiAssessment[]): AssessmentsByScope {
     const type = a.type ?? 'FINAL_ASSESSMENT';
     if (type === 'FINAL_ASSESSMENT') scope.final.push(a);
     else if (type === 'MODULE_ASSESSMENT' && a.moduleId) scope.byModule[a.moduleId] = a;
-    else if (a.lessonId) scope.byLesson[a.lessonId] = a;
+    else if (type !== 'SESSION_ASSESSMENT' && a.lessonId) scope.byLesson[a.lessonId] = a;
   }
   return scope;
 }

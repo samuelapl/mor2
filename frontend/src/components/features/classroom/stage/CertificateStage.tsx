@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Loader2,
   AlertCircle,
+  CalendarClock,
 } from 'lucide-react';
 import type { Course } from '@/types';
 import type {
@@ -20,6 +21,7 @@ import type {
   ApiCertificate,
   ApiCertificateTemplate,
   ApiUser,
+  ApiLearnerSession,
 } from '@/lib/api/types';
 import {
   fetchMyCertificates,
@@ -30,6 +32,7 @@ import {
 import { fetchMyProfile } from '@/lib/api/users';
 import { CertificateRenderer } from '../../certificates/CertificateRenderer';
 import { CourseFeedbackSurvey } from './CourseFeedbackSurvey';
+import { CourseGradeSummary } from './CourseGradeSummary';
 import { hasSubmittedFeedback, hasSkippedFeedback, markFeedbackSkipped } from '@/lib/api/feedback';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -54,15 +57,9 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
 
   const isInPerson = course.deliveryMode === 'IN_PERSON_ONLY';
 
-  const isCompleted =
-    !isInPerson &&
-    (unlocked ||
-      Boolean(progress?.courseCompletion.certificateEligible) ||
-      Boolean(
-        progress?.courseCompletion.contentCompleted &&
-        (!progress?.courseCompletion.finalAssessment ||
-          progress?.courseCompletion.finalAssessmentPassed),
-      ));
+  // The backend's eligibility verdict is the only source of truth: it requires all content,
+  // every assessment passed, AND the weighted course grade at the global pass mark.
+  const isCompleted = !isInPerson && (progress ? progress.courseCompletion.certificateEligible : unlocked);
 
   useEffect(() => {
     let mounted = true;
@@ -205,8 +202,8 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     );
   }
 
-  // 1. Locked State: Course not yet completed
-  if (!isCompleted) {
+  // 1. Locked State: Course not yet completed (a certificate already issued is always shown)
+  if (!isCompleted && !certificate) {
     const totalLessons =
       progress?.stats.totalLessons ?? course.modules.flatMap((m) => m.lessons).length;
     const completedLessons = progress?.stats.completedLessons ?? 0;
@@ -307,6 +304,12 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
             </div>
           </div>
         </div>
+
+        {!isInPerson && (progress?.courseCompletion.sessionsPending ?? 0) > 0 && (
+          <PendingSessionsNotice sessions={(progress?.liveSessions ?? []).filter((s) => s.status !== 'COMPLETED')} />
+        )}
+
+        {!isInPerson && progress && <CourseGradeSummary completion={progress.courseCompletion} />}
 
         {/* Certificate Watermark Preview */}
         <div className="relative rounded-2xl border border-slate-200 bg-slate-50/50 p-6 overflow-hidden shadow-2xs">
@@ -484,6 +487,36 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           </strong>
           .
         </p>
+      </div>
+    </div>
+  );
+}
+
+/** Shown while a session quiz is still to come: the certificate waits for every session. */
+function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) {
+  const { tBilingual, isAmharic } = useTranslation();
+  return (
+    <div className="flex gap-3 rounded-2xl border border-sky-200 bg-sky-50/80 p-5 text-left">
+      <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
+      <div className="space-y-2">
+        <p className="text-sm font-bold text-sky-900">
+          {tBilingual(
+            `You have ${sessions.length} upcoming session${sessions.length === 1 ? '' : 's'}. Your certificate is issued after they have been held.`,
+            `${sessions.length} የሚመጡ ክፍለ-ጊዜ(ዎች) አሉዎት። ሰርተፊኬትዎ የሚሰጠው ከተካሄዱ በኋላ ነው።`,
+          )}
+        </p>
+        <ul className="space-y-1 text-sm text-sky-900/90">
+          {sessions.map((s) => (
+            <li key={s.id}>
+              <span className="font-medium">{s.titleEn}</span>
+              {' — '}
+              {s.scheduledAt
+                ? new Date(s.scheduledAt).toLocaleString(isAmharic ? 'am-ET' : undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                : tBilingual('date to be announced', 'ቀኑ ይገለጻል')}
+              {s.status === 'CANCELLED' ? ` (${tBilingual('cancelled — to be rescheduled', 'ተሰርዟል — እንደገና ይታቀዳል')})` : ''}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

@@ -214,6 +214,20 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
 
     const isInPerson = course?.deliveryMode === 'IN_PERSON_ONLY';
 
+    // 4b. Online sessions (dates only; their quizzes are run live by the trainer)
+    const liveSessions = progress?.liveSessions ?? [];
+    if (liveSessions.length > 0) {
+      items.push({
+        key: 'live-sessions',
+        type: 'LIVE_SESSIONS',
+        title: 'Live Sessions',
+        moduleId: 'final',
+        moduleIndex: 9998,
+        unlocked: true,
+        completed: liveSessions.every((s) => s.status === 'COMPLETED'),
+      });
+    }
+
     // 5. Final Certification Assessment (if course has final assessment)
     const finalAssessment = progress?.courseCompletion.finalAssessment;
     if (finalAssessment) {
@@ -281,6 +295,10 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       const found = flatItems.find((i) => i.type === 'CERTIFICATE');
       if (found) return found.key;
     }
+    if (viewParam === 'sessions') {
+      const found = flatItems.find((i) => i.type === 'LIVE_SESSIONS');
+      if (found) return found.key;
+    }
     if (quizParam) {
       const found = flatItems.find((i) => i.quizId === quizParam);
       if (found) return found.key;
@@ -313,7 +331,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         !i.completed &&
         i.type !== 'COURSE_OVERVIEW' &&
         i.type !== 'MODULE_OVERVIEW' &&
-        i.type !== 'CERTIFICATE',
+        i.type !== 'CERTIFICATE' &&
+        i.type !== 'LIVE_SESSIONS',
     );
     if (firstIncomplete) return firstIncomplete.key;
 
@@ -384,6 +403,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         params.set('module', item.moduleId);
       } else if (item.type === 'CERTIFICATE') {
         params.set('view', 'certificate');
+      } else if (item.type === 'LIVE_SESSIONS') {
+        params.set('view', 'sessions');
       } else if (item.type === 'QUIZ' && item.quizId) {
         params.set('quiz', item.quizId);
       } else if (item.type === 'SUB_LESSON' && item.subLessonId) {

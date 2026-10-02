@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { LessonDraft, ModuleDraft } from '../wizard-types';
-import type { CreatorActiveNode } from './types';
+import type { CreatorActiveNode, SessionPlanDraft } from './types';
 import { cn } from '@/lib/utils';
 
 interface CreatorSidebarProps {
@@ -39,6 +39,11 @@ interface CreatorSidebarProps {
   onDeleteSubLesson: (moduleId: string, lessonId: string, subLessonId: string) => void;
   onDeleteModuleAssessment: (moduleId: string) => void;
   onDeleteLessonAssessment: (moduleId: string, lessonId: string) => void;
+  /** Planned online sessions; the group is shown only when the course includes them. */
+  showSessions?: boolean;
+  sessionPlans?: SessionPlanDraft[];
+  onAddSessionPlan?: () => void;
+  onDeleteSessionPlan?: (sessionPlanId: string) => void;
 }
 
 export function CreatorSidebar({
@@ -58,6 +63,10 @@ export function CreatorSidebar({
   onDeleteSubLesson,
   onDeleteModuleAssessment,
   onDeleteLessonAssessment,
+  showSessions = false,
+  sessionPlans = [],
+  onAddSessionPlan,
+  onDeleteSessionPlan,
 }: CreatorSidebarProps) {
   const { tBilingual } = useTranslation();
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
@@ -509,6 +518,68 @@ export function CreatorSidebar({
           <Plus className="h-4 w-4" />
           <span>{tBilingual('Add New Module', 'አዲስ ሞጁል ጨምር')}</span>
         </button>
+
+        {/* 3b. Planned Online Sessions */}
+        {showSessions && (
+          <div className="space-y-1.5 rounded-2xl border border-sky-200/80 bg-white p-2.5 shadow-2xs">
+            <div className="flex items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-700">
+                <Video className="h-3.5 w-3.5" />
+                {tBilingual('Online Sessions', 'የኦንላይን ክፍለ-ጊዜዎች')}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">{sessionPlans.length}</span>
+            </div>
+            {sessionPlans.map((plan, i) => {
+              const active = activeNode.type === 'SESSION_PLAN' && activeNode.sessionPlanId === plan.id;
+              const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
+              return (
+                <div
+                  key={plan.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectNode({ type: 'SESSION_PLAN', sessionPlanId: plan.id })}
+                  className={cn(
+                    'group flex cursor-pointer items-center gap-2 rounded-lg p-1.5 text-[11px] transition',
+                    active ? 'bg-indigo-600 font-semibold text-white' : 'text-slate-700 hover:bg-sky-50',
+                  )}
+                >
+                  <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold', active ? 'bg-white/20' : 'bg-sky-50 text-sky-700')}>
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
+                  {plan.quizzes.length > 0 && (
+                    <span className={cn('shrink-0 rounded-full px-1.5 text-[10px] font-bold', active ? 'bg-white/20' : 'border border-indigo-200/60 bg-indigo-50 text-indigo-700')}>
+                      {plan.quizzes.length}Q · {weight}%
+                    </span>
+                  )}
+                  {onDeleteSessionPlan && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSessionPlan(plan.id);
+                      }}
+                      className={cn('shrink-0 rounded p-0.5 opacity-0 transition group-hover:opacity-100', active ? 'hover:bg-white/20' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-600')}
+                      aria-label="Remove session"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {onAddSessionPlan && (
+              <button
+                type="button"
+                onClick={onAddSessionPlan}
+                className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-sky-300 py-1.5 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                <Plus className="h-3 w-3" />
+                {tBilingual('Add session', 'ክፍለ-ጊዜ ጨምር')}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 4. Final Assessment Node */}
         <div

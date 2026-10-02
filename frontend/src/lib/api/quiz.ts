@@ -25,7 +25,8 @@ export interface SaveAssessmentBody {
   titleAm?: string;
   descriptionEn?: string;
   descriptionAm?: string;
-  passingScore: number;
+  /** Omit to use the global policy pass mark. */
+  passingScore?: number;
   weight?: number;
   maxAttempts?: number;
   timeLimitMinutes?: number | null;

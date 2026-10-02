@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { uploadAttachment } from '@/lib/api/files';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useLookupCategories } from '@/lib/api/useLookupCategories';
+import { usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import { cn } from '@/lib/utils';
 import { inputClass, labelClass, uid } from '../../wizard-types';
 import { CompactRichEditor, MultiFileUploader } from '../../wizard-components';
@@ -33,6 +34,8 @@ export interface AssessmentEditorStageProps {
   setQuizTitle: (val: string) => void;
   weight: number;
   setWeight: (val: number) => void;
+  /** Most this assessment may weigh so the course total stays at or below 100%. */
+  maxWeight?: number;
   totalAllocatedWeight?: number;
   passMark: number;
   setPassMark: (val: number) => void;
@@ -84,6 +87,7 @@ export function AssessmentEditorStage({
   setQuizTitle,
   weight,
   setWeight,
+  maxWeight = 100,
   totalAllocatedWeight,
   passMark,
   setPassMark,
@@ -109,6 +113,7 @@ export function AssessmentEditorStage({
   courseId,
 }: AssessmentEditorStageProps) {
   const { tBilingual, isAmharic } = useTranslation();
+  const policyPassMark = usePolicyPassMark();
   const { items: dynamicQuestionTypes } = useLookupCategories('QUESTION_TYPE');
   const { items: dynamicCategories } = useLookupCategories('COURSE_CATEGORY');
 
@@ -301,17 +306,15 @@ export function AssessmentEditorStage({
                 {tBilingual('Course Grade Weight (%)', 'የውጤት ክብደት (%)')}
               </label>
               <span className="text-[10px] text-slate-400 font-medium">
-                {tBilingual('Contribution to 100%', 'ከ 100% ያለው ድርሻ')}
+                {tBilingual(`Up to ${Math.max(0, maxWeight)}% available`, `እስከ ${Math.max(0, maxWeight)}% ይቀራል`)}
               </span>
             </div>
             <input
               type="number"
               min={0}
-              max={100}
+              max={Math.max(0, maxWeight)}
               value={weight}
-              onChange={(e) =>
-                setWeight(Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)))
-              }
+              onChange={(e) => setWeight(Math.max(0, Math.min(Math.max(0, maxWeight), parseInt(e.target.value, 10) || 0)))}
               className={inputClass}
               placeholder="e.g. 20"
             />
@@ -327,10 +330,21 @@ export function AssessmentEditorStage({
                 min={1}
                 max={100}
                 value={passMark}
-                onChange={(e) => setPassMark(Math.max(1, Math.min(100, parseInt(e.target.value) || 70)))}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(v)) setPassMark(Math.max(1, Math.min(100, v)));
+                }}
                 className={inputClass}
               />
             </div>
+            {policyPassMark !== null && passMark < policyPassMark && (
+              <p className="mt-1.5 text-[11px] leading-snug text-amber-700">
+                {tBilingual(
+                  `The course needs a ${policyPassMark}% overall grade for the certificate. With a ${passMark}% pass mark here, learners can pass this quiz and still miss the certificate.`,
+                  `ለሰርተፊኬት የኮርሱ አጠቃላይ ውጤት ${policyPassMark}% መሆን አለበት። እዚህ ${passMark}% ማለፊያ ቢሆንም ሰልጣኞች ይህን ፈተና አልፈው ሰርተፊኬቱን ሊያጡ ይችላሉ።`,
+                )}
+              </p>
+            )}
           </div>
 
           <div>

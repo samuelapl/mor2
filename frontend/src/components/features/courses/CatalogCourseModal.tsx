@@ -160,7 +160,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     let cancelled = false;
     (async () => {
       try {
-        const list = await fetchCourseAssessments(courseId);
+        // Session quizzes are run live in their session, not listed in the catalog.
+        const list = (await fetchCourseAssessments(courseId)).filter((a) => a.type !== 'SESSION_ASSESSMENT');
         if (cancelled || list.length === 0) return;
         const details = await Promise.all(list.map((item) => fetchAssessment(item.id)));
         if (!cancelled) setAssessments(details);

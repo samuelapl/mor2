@@ -7,6 +7,7 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
   let policyServiceMock: any;
   let enrollmentsServiceMock: any;
   let certificatesServiceMock: any;
+  let notificationsServiceMock: any;
 
   beforeEach(() => {
     prismaMock = {
@@ -35,12 +36,22 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
       enrollment: {
         findUnique: jest.fn(),
       },
+      notification: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      // learner session list in getCourseProgress (no sessions in these scenarios)
+      courseSessionPlan: { findMany: jest.fn().mockResolvedValue([]) },
+      liveSession: { findMany: jest.fn().mockResolvedValue([]) },
+      course: {
+        findUnique: jest.fn().mockResolvedValue({ title: 'Test Course' }),
+      },
     };
 
     policyServiceMock = {
       getTimeRatio: jest.fn().mockResolvedValue(0.8),
       getProgressionMode: jest.fn().mockResolvedValue('FREE'),
       getPassingScorePercent: jest.fn().mockResolvedValue(50),
+      getRetakeCooldownMinutes: jest.fn().mockResolvedValue(0),
     };
 
     enrollmentsServiceMock = {
@@ -51,11 +62,16 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
       maybeIssueForCompletion: jest.fn().mockResolvedValue(undefined),
     };
 
+    notificationsServiceMock = {
+      send: jest.fn().mockResolvedValue(undefined),
+    };
+
     progressService = new ProgressService(
       prismaMock,
       enrollmentsServiceMock,
       certificatesServiceMock,
       policyServiceMock,
+      notificationsServiceMock,
     );
   });
 
@@ -249,6 +265,43 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
       await progressService.maybeCompleteCourse('user-1', 'course-1');
 
       expect(enrollmentsServiceMock.markCompleted).not.toHaveBeenCalled();
+      expect(certificatesServiceMock.maybeIssueForCompletion).not.toHaveBeenCalled();
+      // The learner did everything asked of them, so they are told why there is no certificate.
+      expect(notificationsServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(notificationsServiceMock.send).toHaveBeenCalledWith(
+        'user-1',
+        'CERTIFICATE_GRADE_NOT_MET',
+        expect.any(Object),
+        expect.objectContaining({ en: expect.stringContaining('55%') }),
+        expect.objectContaining({ courseId: 'course-1', grade: 55, required: 60 }),
+      );
+    });
+
+    it('does not repeat the grade-not-met notification for the same grade', async () => {
+      policyServiceMock.getPassingScorePercent.mockResolvedValue(60);
+      prismaMock.curriculumModule.findMany.mockResolvedValue([{ id: 'mod-1', lessons: [{ id: 'les-1' }] }]);
+      prismaMock.lessonCompletion.count.mockResolvedValue(1);
+      prismaMock.assessment.findMany.mockResolvedValue([
+        { id: 'quiz-1', weight: 80, passingScore: 50, attempts: [{ score: 52, passed: true }] },
+        { id: 'quiz-2', weight: 20, passingScore: 50, attempts: [{ score: 65, passed: true }] },
+      ]);
+      prismaMock.notification.findFirst.mockResolvedValue({ metadata: { courseId: 'course-1', grade: 55 } });
+
+      await progressService.maybeCompleteCourse('user-1', 'course-1');
+
+      expect(notificationsServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('does not send the grade notification while an assessment is still failed', async () => {
+      prismaMock.curriculumModule.findMany.mockResolvedValue([{ id: 'mod-1', lessons: [{ id: 'les-1' }] }]);
+      prismaMock.lessonCompletion.count.mockResolvedValue(1);
+      prismaMock.assessment.findMany.mockResolvedValue([
+        { id: 'quiz-1', weight: 100, passingScore: 70, attempts: [{ score: 40, passed: false }] },
+      ]);
+
+      await progressService.maybeCompleteCourse('user-1', 'course-1');
+
+      expect(notificationsServiceMock.send).not.toHaveBeenCalled();
     });
 
     it('completes course and issues certificate when all assessments and cumulative grade meet pass mark', async () => {

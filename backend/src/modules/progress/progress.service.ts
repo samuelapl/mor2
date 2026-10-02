@@ -1,7 +1,10 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssessmentType, EnrollmentStatus } from '@prisma/client';
+import { AssessmentType, EnrollmentStatus, NotificationType } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import {
+  computeCourseGrade,
+  isSessionQuizClosed,
+  SESSION_PLAN_STATUS_SELECT,
   computeSequentialUnlocks,
   isTimeSatisfied,
   loadUserCompletionState,
@@ -12,6 +15,7 @@ import { MarkLessonCompleteDto } from './dto';
 import { EnrollmentsService } from '@modules/enrollments/enrollments.service';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { PolicyService } from '@modules/policy/policy.service';
+import { NotificationsService } from '@modules/notifications/notifications.service';
 
 export interface AttachedAssessmentInfo {
   id: string;
@@ -22,6 +26,30 @@ export interface AttachedAssessmentInfo {
   weight?: number;
   bestScore?: number;
   earnedPoints?: number;
+  /** False when the learner never submitted an attempt (counts as 0 in the course grade). */
+  attempted?: boolean;
+  /** AssessmentType, so session quizzes can be labelled (they are graded live, not retaken). */
+  type?: string;
+  attemptsUsed?: number;
+  maxAttempts?: number;
+  /** Whether the learner can still take another attempt (attempts left, or a retake cooldown applies). */
+  retakeAvailable?: boolean;
+}
+
+export interface LearnerSessionInfo {
+  /** Plan id for planned sessions, otherwise the session id. */
+  id: string;
+  /** Null until a planned session is scheduled. */
+  sessionId: string | null;
+  titleEn: string;
+  scheduledAt: string | null;
+  durationMinutes: number | null;
+  platform: string | null;
+  trainerName: string | null;
+  status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
+  attended: boolean;
+  /** Planned with the course (may carry a graded quiz; details are not exposed to learners). */
+  planned: boolean;
 }
 
 @Injectable()
@@ -31,7 +59,42 @@ export class ProgressService {
     private readonly enrollmentsService: EnrollmentsService,
     private readonly certificatesService: CertificatesService,
     private readonly policyService: PolicyService,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  /**
+   * Tells a learner who finished the content and passed every assessment that their
+   * weighted course grade is below the certificate requirement. Sent once per distinct
+   * grade, so retaking and improving (or staying put) never spams them.
+   */
+  private async notifyCertificateGradeNotMet(userId: string, courseId: string, grade: number, required: number) {
+    try {
+      const last = await this.prisma.notification.findFirst({
+        where: {
+          userId,
+          type: NotificationType.CERTIFICATE_GRADE_NOT_MET,
+          metadata: { path: ['courseId'], equals: courseId },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if ((last?.metadata as { grade?: number } | null)?.grade === grade) return;
+
+      const course = await this.prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
+      const title = course?.title ?? 'this course';
+      await this.notificationsService.send(
+        userId,
+        NotificationType.CERTIFICATE_GRADE_NOT_MET,
+        { en: `Certificate not yet earned: ${title}`, am: `ሰርተፊኬት ገና አልተገኘም፦ ${title}` },
+        {
+          en: `You missed the certificate for ${title}: your course grade is ${grade}%, and ${required}% is required. Improve your other assessments or contact support.`,
+          am: `ለ${title} ሰርተፊኬቱን አላገኙም፦ የኮርስ ውጤትዎ ${grade}% ነው፤ ${required}% ያስፈልጋል። ሌሎች ምዘናዎችን ያሻሽሉ ወይም ድጋፍ ያግኙ።`,
+        },
+        { courseId, grade, required, link: `/learner/courses/${courseId}/learn` },
+      );
+    } catch {
+      // Best-effort: a notification failure must never block progress tracking.
+    }
+  }
 
   async getCourseProgress(userId: string, courseId: string) {
     const ratio = await this.policyService.getTimeRatio();
@@ -84,43 +147,45 @@ export class ProgressService {
       allLessonIds,
     );
     // Load every assessment attached to this course along with attempts for weighted scoring
-    const assessments = await this.prisma.assessment.findMany({
-      where: { courseId },
-      include: {
-        attempts: {
-          where: { userId, submittedAt: { not: null } },
-          orderBy: { score: 'desc' },
+    const assessments = (
+      await this.prisma.assessment.findMany({
+        where: { courseId },
+        include: {
+          attempts: {
+            where: { userId, submittedAt: { not: null } },
+            orderBy: { score: 'desc' },
+          },
+          sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
-      },
-    });
+      })
+    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
 
-    const globalPassingScore = await this.policyService.getPassingScorePercent();
+    const [globalPassingScore, retakeCooldownMinutes] = await Promise.all([
+      this.policyService.getPassingScorePercent(),
+      this.policyService.getRetakeCooldownMinutes(),
+    ]);
+    const grade = computeCourseGrade(assessments, globalPassingScore);
 
-    // Determine weight distribution: if no weights set (legacy), split evenly among assessments
-    const totalConfiguredWeight = assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
-    const useEqualSplit = totalConfiguredWeight === 0 && assessments.length > 0;
-    const equalWeight = useEqualSplit ? Math.round(100 / assessments.length) : 0;
-
-    const toAssessmentInfo = (a: (typeof assessments)[number]): AttachedAssessmentInfo => {
-      const bestAttempt = a.attempts[0];
-      const bestScore = bestAttempt ? bestAttempt.score : 0;
-      const effectivePassingScore = a.passingScore > 0 ? a.passingScore : globalPassingScore;
-      const passed = a.attempts.some((att) => att.passed || att.score >= effectivePassingScore);
-      const effectiveWeight = useEqualSplit ? equalWeight : (a.weight || 0);
-      const earnedPoints = Math.round((bestScore * (effectiveWeight / 100)) * 10) / 10;
+    const assessmentInfos: AttachedAssessmentInfo[] = assessments.map((a, i) => {
+      const g = grade.assessments[i]!;
       return {
         id: a.id,
         titleEn: a.titleEn,
         titleAm: a.titleAm,
-        passingScore: effectivePassingScore,
-        passed,
-        weight: effectiveWeight,
-        bestScore,
-        earnedPoints,
+        passingScore: g.passingScore,
+        passed: g.passed,
+        weight: g.weight,
+        bestScore: g.bestScore,
+        earnedPoints: g.earnedPoints,
+        attempted: g.attempted,
+        type: a.type,
+        attemptsUsed: a.attempts.length,
+        maxAttempts: a.maxAttempts,
+        // Session quizzes run live once; they cannot be retaken from the classroom.
+        retakeAvailable:
+          a.type !== 'SESSION_ASSESSMENT' && (a.attempts.length < a.maxAttempts || retakeCooldownMinutes > 0),
       };
-    };
-
-    const assessmentInfos = assessments.map(toAssessmentInfo);
+    });
     const assessmentInfoMap = new Map<string, AttachedAssessmentInfo>();
     for (const info of assessmentInfos) {
       assessmentInfoMap.set(info.id, info);
@@ -258,13 +323,7 @@ export class ProgressService {
     const contentCompleted = totalLessons > 0 && completedLessons === totalLessons;
     const finalAssessmentRequired = finalAssessment !== null;
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
-    const totalCourseGrade = Math.min(
-      100,
-      Math.round(assessmentInfos.reduce((sum, a) => sum + (a.earnedPoints ?? 0), 0)),
-    );
-    const allAssessmentsPassed =
-      assessments.length === 0 || assessmentInfos.every((a) => a.passed);
-    const gradeSatisfied = assessments.length === 0 || totalCourseGrade >= globalPassingScore;
+    const { totalCourseGrade, allAssessmentsPassed, gradeSatisfied } = grade;
 
     return {
       courseId,
@@ -288,12 +347,77 @@ export class ProgressService {
         certificateEligible:
           contentCompleted &&
           (!finalAssessmentRequired || finalAssessmentPassed) &&
-          allAssessmentsPassed &&
-          gradeSatisfied,
+          grade.certificateReady,
+        /** Session quizzes still waiting for their session; the certificate waits for them. */
+        sessionsPending: grade.sessionsPending,
         finalAssessment,
         assessmentBreakdown: assessmentInfos,
       },
+      liveSessions: await this.learnerSessions(userId, courseId),
     };
+  }
+
+  /**
+   * The course's online sessions as a learner sees them: planned ones (even before they are
+   * scheduled) in plan order, then any extra sessions. No quiz details are exposed.
+   */
+  private async learnerSessions(userId: string, courseId: string): Promise<LearnerSessionInfo[]> {
+    const [plans, sessions] = await Promise.all([
+      this.prisma.courseSessionPlan.findMany({
+        where: { courseId },
+        orderBy: { order: 'asc' },
+        select: { id: true, titleEn: true, liveSession: { select: { id: true, deletedAt: true } } },
+      }),
+      this.prisma.liveSession.findMany({
+        where: { courseId, deletedAt: null },
+        orderBy: { scheduledAt: 'asc' },
+        select: {
+          id: true,
+          sessionPlanId: true,
+          titleEn: true,
+          scheduledAt: true,
+          durationMinutes: true,
+          platform: true,
+          status: true,
+          trainer: { select: { firstName: true, lastName: true } },
+          attendees: { where: { userId }, select: { status: true } },
+        },
+      }),
+    ]);
+
+    const toInfo = (s: (typeof sessions)[number], planId: string | null): LearnerSessionInfo => ({
+      id: planId ?? s.id,
+      sessionId: s.id,
+      titleEn: s.titleEn,
+      scheduledAt: s.scheduledAt.toISOString(),
+      durationMinutes: s.durationMinutes,
+      platform: s.platform,
+      trainerName: s.trainer ? `${s.trainer.firstName} ${s.trainer.lastName}`.trim() : null,
+      status: s.status,
+      attended: s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
+      planned: planId !== null,
+    });
+
+    const byId = new Map(sessions.map((s) => [s.id, s]));
+    const planned = plans.map((p): LearnerSessionInfo => {
+      const live = p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
+      return live
+        ? toInfo(live, p.id)
+        : {
+            id: p.id,
+            sessionId: null,
+            titleEn: p.titleEn,
+            scheduledAt: null,
+            durationMinutes: null,
+            platform: null,
+            trainerName: null,
+            status: 'TO_BE_SCHEDULED',
+            attended: false,
+            planned: true,
+          };
+    });
+    const extra = sessions.filter((s) => !s.sessionPlanId).map((s) => toInfo(s, null));
+    return [...planned, ...extra];
   }
 
   /**
@@ -704,36 +828,26 @@ export class ProgressService {
     if (completedLessons !== lessonIds.length) return;
 
     // Verify all assessments for this course meet the pass mark and cumulative grade
-    const assessments = await this.prisma.assessment.findMany({
-      where: { courseId },
-      include: {
-        attempts: {
-          where: { userId, submittedAt: { not: null } },
-          orderBy: { score: 'desc' },
+    const assessments = (
+      await this.prisma.assessment.findMany({
+        where: { courseId },
+        include: {
+          attempts: {
+            where: { userId, submittedAt: { not: null } },
+            orderBy: { score: 'desc' },
+          },
+          sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
-      },
-    });
+      })
+    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
 
-    if (assessments.length > 0) {
-      const globalPassingScore = await this.policyService.getPassingScorePercent();
-      const totalConfiguredWeight = assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
-      const useEqualSplit = totalConfiguredWeight === 0;
-      const equalWeight = useEqualSplit ? Math.round(100 / assessments.length) : 0;
-
-      let totalEarnedPoints = 0;
-      for (const a of assessments) {
-        const bestAttempt = a.attempts[0];
-        const bestScore = bestAttempt ? bestAttempt.score : 0;
-        const effectivePassingScore = a.passingScore > 0 ? a.passingScore : globalPassingScore;
-        const passed = a.attempts.some((att) => att.passed || att.score >= effectivePassingScore);
-        if (!passed) return; // Every individual assessment must be passed
-
-        const effectiveWeight = useEqualSplit ? equalWeight : (a.weight || 0);
-        totalEarnedPoints += bestScore * (effectiveWeight / 100);
-      }
-
-      const totalCourseGrade = Math.round(totalEarnedPoints);
-      if (totalCourseGrade < globalPassingScore) return; // Weighted cumulative grade must reach pass mark
+    const grade = computeCourseGrade(assessments, await this.policyService.getPassingScorePercent());
+    if (!grade.allAssessmentsPassed) return; // every assessment must pass on its own mark
+    if (grade.sessionsPending > 0) return; // a session quiz is still to come; judge the grade after it
+    if (!grade.gradeSatisfied) {
+      // Content done and every assessment passed, but the weighted grade is short.
+      await this.notifyCertificateGradeNotMet(userId, courseId, grade.totalCourseGrade, grade.requiredGrade);
+      return;
     }
 
     const enrollment = await this.prisma.enrollment.findUnique({

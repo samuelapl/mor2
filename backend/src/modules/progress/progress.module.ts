@@ -5,9 +5,10 @@ import { PrismaService } from '@config/prisma.service';
 import { EnrollmentsModule } from '@modules/enrollments/enrollments.module';
 import { CertificatesModule } from '@modules/certificates/certificates.module';
 import { PolicyModule } from '@modules/policy/policy.module';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
 
 @Module({
-  imports: [EnrollmentsModule, CertificatesModule, PolicyModule],
+  imports: [EnrollmentsModule, CertificatesModule, PolicyModule, NotificationsModule],
   controllers: [ProgressController],
   providers: [ProgressService, PrismaService],
   exports: [ProgressService],

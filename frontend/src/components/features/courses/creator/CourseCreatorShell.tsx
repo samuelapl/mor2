@@ -7,10 +7,13 @@ import { uploadAttachment } from '@/lib/api/files';
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from '@/lib/api/quiz';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { toast } from '@/lib/toast';
+import { DEFAULT_DELIVERY_MODE } from '@/constants/delivery-modes';
+import { computeWeightTotal, isLessonAssessmentSub, isModuleAssessmentLesson } from './weights';
+import { FALLBACK_PASS_MARK, usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import type { ApiAssessment } from '@/lib/api/types';
 
 import { type LessonDraft, type ModuleDraft, uid } from '../wizard-types';
-import type { AutosaveStatus, CreatorActiveNode, CreatorPhase } from './types';
+import type { AutosaveStatus, CreatorActiveNode, CreatorPhase, SessionPlanDraft } from './types';
 import { CreatorHeader } from './CreatorHeader';
 import { CreatorSidebar } from './CreatorSidebar';
 import { CourseDetailsStage } from './stages/CourseDetailsStage';
@@ -18,6 +21,8 @@ import { ModuleEditorStage } from './stages/ModuleEditorStage';
 import { LessonEditorStage } from './stages/LessonEditorStage';
 import { AssessmentEditorStage } from './stages/AssessmentEditorStage';
 import { ReviewSubmitStage } from './stages/ReviewSubmitStage';
+import { SessionPlanEditorStage } from './stages/SessionPlanEditorStage';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 function mapApiQuestions(apiQuestions: ApiAssessment['questions'] | undefined): Question[] {
   return ((apiQuestions ?? []) as any[]).map((q) => ({
@@ -34,11 +39,6 @@ function mapApiQuestions(apiQuestions: ApiAssessment['questions'] | undefined): 
 
 const AUTOSAVE_DELAY_MS = 5000;
 
-const isModuleAssessmentLesson = (l: LessonDraft) =>
-  l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ' || l.title.toLowerCase().includes('module assessment');
-
-const isLessonAssessmentSub = (s: LessonDraft) =>
-  s.contentType === 'ASSESSMENT' || s.contentType === 'QUIZ' || s.title.toLowerCase().includes('lesson assessment');
 
 export interface CourseCreatorShellProps {
   onDone: () => void;
@@ -47,7 +47,7 @@ export interface CourseCreatorShellProps {
   initialDeliveryMode?: CourseDeliveryMode;
 }
 
-export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDeliveryMode = 'BOTH' }: CourseCreatorShellProps) {
+export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDeliveryMode = DEFAULT_DELIVERY_MODE }: CourseCreatorShellProps) {
   const { courses, createCourse, updateCourseFull, submitForApproval } = useLms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedCourseIdRef = useRef<string | undefined>(editingCourse?.id);
@@ -71,6 +71,29 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   const [prerequisites, setPrerequisites] = useState(editingCourse?.prerequisites ?? '');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(editingCourse?.cover ?? null);
+
+  // ── Planned online sessions (Online Self-Paced only) ──
+  const [hasOnlineSessions, setHasOnlineSessions] = useState<boolean>(
+    Boolean(editingCourse?.hasOnlineSessions || editingCourse?.sessionPlans?.length),
+  );
+  const [sessionPlans, setSessionPlans] = useState<SessionPlanDraft[]>(() =>
+    (editingCourse?.sessionPlans ?? []).map((p) => ({
+      id: p.id,
+      titleEn: p.titleEn,
+      descriptionEn: p.descriptionEn ?? '',
+      objectivesEn: p.objectivesEn ?? '',
+      quizzes: p.quizzes.map((q) => ({
+        id: q.id,
+        titleEn: q.titleEn,
+        weight: q.weight,
+        passingScore: q.passingScore,
+        timeLimitMinutes: q.timeLimitMinutes ?? 10,
+      })),
+    })),
+  );
+  const [confirmDisableSessions, setConfirmDisableSessions] = useState(false);
+  /** Sessions only exist on Online Self-Paced courses; switching mode hides (and on save drops) them. */
+  const sessionsActive = deliveryMode === 'ONLINE_ONLY' && hasOnlineSessions;
 
   const codeError = useMemo(() => {
     const normalized = code.trim().toUpperCase();
@@ -192,7 +215,14 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
   // ── Step 3: Final Assessment ──
   const [quizTitle, setQuizTitle] = useState((editingCourse as any)?.quiz?.title ?? 'Final Assessment');
-  const [passMark, setPassMark] = useState((editingCourse as any)?.quiz?.passMark ?? 70);
+  // New assessments start at the global policy pass mark; each can then set its own.
+  const policyPassMark = usePolicyPassMark();
+  const defaultPassMark = policyPassMark ?? FALLBACK_PASS_MARK;
+  const [passMark, setPassMark] = useState<number>((editingCourse as any)?.quiz?.passMark ?? FALLBACK_PASS_MARK);
+  const passMarkTouchedRef = useRef(Boolean((editingCourse as any)?.quiz));
+  useEffect(() => {
+    if (policyPassMark !== null && !passMarkTouchedRef.current) setPassMark(policyPassMark);
+  }, [policyPassMark]);
   const [finalAssessmentWeight, setFinalAssessmentWeight] = useState((editingCourse as any)?.quiz?.weight ?? 60);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number | null>((editingCourse as any)?.quiz?.timeLimitMinutes ?? 60);
   const [attemptsAllowed, setAttemptsAllowed] = useState((editingCourse as any)?.quiz?.attemptsAllowed ?? 2);
@@ -232,6 +262,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           const type = meta.type ?? 'FINAL_ASSESSMENT';
           if (type === 'FINAL_ASSESSMENT') {
             setQuizTitle(d.titleEn || 'Final Assessment');
+            passMarkTouchedRef.current = true;
             setPassMark(d.passingScore);
             if (d.weight !== undefined) setFinalAssessmentWeight(d.weight);
             setAttemptsAllowed(d.maxAttempts);
@@ -308,6 +339,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       case 'SUB_LESSON':
       case 'MODULE_ASSESSMENT':
       case 'LESSON_ASSESSMENT':
+      case 'SESSION_PLAN':
         return 'CURRICULUM';
       case 'FINAL_ASSESSMENT':
         return 'FINAL_ASSESSMENT';
@@ -340,6 +372,9 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   };
 
   // ── Tree Mutation Handlers ──
+  /** New checkpoint quizzes take 20%, or whatever is left if less, so the total never passes 100%. */
+  const initialQuizWeight = () => Math.max(0, Math.min(20, 100 - totalAllocatedWeight));
+
   const handleAddModule = () => {
     const newModId = uid('mod');
     const newMod: ModuleDraft = {
@@ -474,8 +509,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
               points: 10,
             },
           ],
-          quizPassMark: passMark || 70,
-          quizWeight: 20,
+          quizPassMark: defaultPassMark,
+          quizWeight: initialQuizWeight(),
           quizTimeLimitMinutes: 30,
           quizAttemptsAllowed: 2,
           resources: [],
@@ -531,8 +566,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
                   points: 10,
                 },
               ],
-              quizWeight: 20,
-              quizPassMark: passMark || 70,
+              quizWeight: initialQuizWeight(),
+              quizPassMark: defaultPassMark,
               quizTimeLimitMinutes: 15,
               quizAttemptsAllowed: 3,
               resources: [],
@@ -585,6 +620,32 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     setModules((prev) =>
       prev.map((m) => (m.id !== moduleId ? m : { ...m, lessons: m.lessons.map((l) => (isModuleAssessmentLesson(l) ? { ...l, ...patch(l) } : l)) })),
     );
+  };
+
+  // ── Planned Online Sessions ──
+  const handleAddSessionPlan = () => {
+    const id = uid('plan');
+    setSessionPlans((prev) => [...prev, { id, titleEn: `Online session ${prev.length + 1}`, descriptionEn: '', objectivesEn: '', quizzes: [] }]);
+    setActiveNode({ type: 'SESSION_PLAN', sessionPlanId: id });
+  };
+
+  const handleUpdateSessionPlan = (id: string, patch: Partial<SessionPlanDraft>) =>
+    setSessionPlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+
+  const handleDeleteSessionPlan = (id: string) => {
+    setSessionPlans((prev) => prev.filter((p) => p.id !== id));
+    if (activeNode.type === 'SESSION_PLAN' && activeNode.sessionPlanId === id) setActiveNode({ type: 'COURSE_DETAILS' });
+  };
+
+  /** Turning sessions off removes the plans and their quizzes, so ask first when there are any. */
+  const handleToggleOnlineSessions = (next: boolean) => {
+    if (next) {
+      setHasOnlineSessions(true);
+      if (sessionPlans.length === 0) handleAddSessionPlan();
+      return;
+    }
+    if (sessionPlans.length > 0) setConfirmDisableSessions(true);
+    else setHasOnlineSessions(false);
   };
 
   // ── File Uploads for Final Assessment ──
@@ -651,7 +712,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
                 attachments: lResources,
                 quizQuestions: l.quizQuestions,
                 quizWeight: l.quizWeight,
-                quizPassMark: l.quizPassMark || passMark,
+                quizPassMark: l.quizPassMark,
                 quizTimeLimitMinutes: l.quizTimeLimitMinutes,
                 quizAttemptsAllowed: l.quizAttemptsAllowed,
                 subLessons: (l.subLessons ?? [])
@@ -670,7 +731,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
                       attachments: sResources,
                       quizQuestions: sub.quizQuestions,
                       quizWeight: sub.quizWeight,
-                      quizPassMark: sub.quizPassMark || passMark,
+                      quizPassMark: sub.quizPassMark,
                       quizTimeLimitMinutes: sub.quizTimeLimitMinutes,
                       quizAttemptsAllowed: sub.quizAttemptsAllowed,
                     };
@@ -725,6 +786,20 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       cover,
       modules: curriculum,
       quiz,
+      hasOnlineSessions: sessionsActive,
+      sessionPlans: sessionsActive
+        ? sessionPlans.map((p) => ({
+            titleEn: p.titleEn.trim() || 'Online session',
+            descriptionEn: p.descriptionEn || undefined,
+            objectivesEn: p.objectivesEn || undefined,
+            quizzes: p.quizzes.map((q) => ({
+              titleEn: q.titleEn.trim() || `${p.titleEn.trim() || 'Session'} quiz`,
+              weight: q.weight,
+              passingScore: q.passingScore,
+              timeLimitMinutes: q.timeLimitMinutes,
+            })),
+          }))
+        : [],
     };
 
     const run = async () => {
@@ -777,6 +852,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           attemptsAllowed,
           questions,
           assessmentResources,
+          sessionsActive,
+          sessionPlans,
         },
         // Upload progress flags are UI state, not content.
         (key, value) => (key === 'uploading' || key === 'uploadError' ? undefined : value),
@@ -801,6 +878,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       attemptsAllowed,
       questions,
       assessmentResources,
+      sessionsActive,
+      sessionPlans,
     ],
   );
 
@@ -881,19 +960,14 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     onCancel();
   };
 
-  // Calculate total allocated weights across final, modules, and lessons
-  const totalAllocatedWeight = useMemo(() => {
-    let sum = finalAssessmentWeight || 0;
-    modules.forEach((m) => {
-      m.lessons.forEach((l) => {
-        if (l.quizWeight) sum += l.quizWeight;
-        l.subLessons?.forEach((s) => {
-          if (s.quizWeight) sum += s.quizWeight;
-        });
-      });
-    });
-    return sum;
-  }, [finalAssessmentWeight, modules]);
+  // Weight of every assessment that will be saved (lesson, module, final, session). Must reach exactly 100%.
+  const activeSessionPlans = useMemo(() => (sessionsActive ? sessionPlans : []), [sessionsActive, sessionPlans]);
+  const totalAllocatedWeight = useMemo(
+    () => computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length }, activeSessionPlans),
+    [finalAssessmentWeight, modules, questions.length, activeSessionPlans],
+  );
+  /** Highest weight one assessment may take without pushing the course total past 100%. */
+  const maxWeightFor = (currentWeight: number, counted: boolean) => 100 - (totalAllocatedWeight - (counted ? currentWeight : 0));
 
   // ── Render Active Stage Content ──
   const renderActiveStage = () => {
@@ -906,6 +980,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           setCode={setCode}
           codeError={codeError}
           codeLocked={Boolean(savedCourseId)}
+          hasOnlineSessions={sessionsActive}
+          onToggleOnlineSessions={handleToggleOnlineSessions}
           category={category}
           setCategory={setCategory}
           level={level}
@@ -1055,9 +1131,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           quizTitle={assessmentLesson.title}
           setQuizTitle={(val) => update(() => ({ title: val }))}
           weight={assessmentLesson.quizWeight ?? 20}
+          maxWeight={maxWeightFor(assessmentLesson.quizWeight ?? 20, (assessmentLesson.quizQuestions?.length ?? 0) > 0)}
           setWeight={(val) => update(() => ({ quizWeight: val }))}
           totalAllocatedWeight={totalAllocatedWeight}
-          passMark={assessmentLesson.quizPassMark ?? passMark ?? 70}
+          passMark={assessmentLesson.quizPassMark ?? defaultPassMark}
           setPassMark={(val) => update(() => ({ quizPassMark: val }))}
           timeLimitMinutes={assessmentLesson.quizTimeLimitMinutes ?? 30}
           setTimeLimitMinutes={(val) => update(() => ({ quizTimeLimitMinutes: val }))}
@@ -1085,9 +1162,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           quizTitle={assessmentSub.title}
           setQuizTitle={(val) => update(() => ({ title: val }))}
           weight={assessmentSub.quizWeight ?? 20}
+          maxWeight={maxWeightFor(assessmentSub.quizWeight ?? 20, (assessmentSub.quizQuestions?.length ?? 0) > 0)}
           setWeight={(val) => update(() => ({ quizWeight: val }))}
           totalAllocatedWeight={totalAllocatedWeight}
-          passMark={assessmentSub.quizPassMark ?? passMark ?? 70}
+          passMark={assessmentSub.quizPassMark ?? defaultPassMark}
           setPassMark={(val) => update(() => ({ quizPassMark: val }))}
           timeLimitMinutes={assessmentSub.quizTimeLimitMinutes ?? 15}
           setTimeLimitMinutes={(val) => update(() => ({ quizTimeLimitMinutes: val }))}
@@ -1107,10 +1185,14 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           quizTitle={quizTitle}
           setQuizTitle={setQuizTitle}
           weight={finalAssessmentWeight}
+          maxWeight={maxWeightFor(finalAssessmentWeight, questions.length > 0)}
           setWeight={setFinalAssessmentWeight}
           totalAllocatedWeight={totalAllocatedWeight}
           passMark={passMark}
-          setPassMark={setPassMark}
+          setPassMark={(val) => {
+            passMarkTouchedRef.current = true;
+            setPassMark(val);
+          }}
           timeLimitMinutes={timeLimitMinutes}
           setTimeLimitMinutes={setTimeLimitMinutes}
           attemptsAllowed={attemptsAllowed}
@@ -1127,6 +1209,25 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           onFileUpload={handleFinalAssessmentFileUpload}
           onFileRemove={removeFinalAssessmentFile}
           courseId={editingCourse?.id}
+        />
+      );
+    }
+
+    if (activeNode.type === 'SESSION_PLAN') {
+      const index = activeSessionPlans.findIndex((p) => p.id === activeNode.sessionPlanId);
+      const plan = activeSessionPlans[index];
+      if (!plan) {
+        return <div className="p-8 text-center text-slate-500">Session not found. Please select another item from the sidebar.</div>;
+      }
+      return (
+        <SessionPlanEditorStage
+          plan={plan}
+          index={index}
+          onUpdate={(patch) => handleUpdateSessionPlan(plan.id, patch)}
+          onDelete={() => handleDeleteSessionPlan(plan.id)}
+          totalAllocatedWeight={totalAllocatedWeight}
+          defaultPassMark={defaultPassMark}
+          policyPassMark={policyPassMark}
         />
       );
     }
@@ -1155,6 +1256,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           questions={questions}
           finalAssessmentWeight={finalAssessmentWeight}
           assessmentResources={assessmentResources}
+          sessionPlans={activeSessionPlans}
           saving={saving}
           onSubmitForApproval={() => handleSave(true)}
           onSaveDraft={() => handleSave(false)}
@@ -1208,11 +1310,30 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           onDeleteSubLesson={handleDeleteSubLesson}
           onDeleteModuleAssessment={handleDeleteModuleAssessment}
           onDeleteLessonAssessment={handleDeleteLessonAssessment}
+          showSessions={sessionsActive}
+          sessionPlans={activeSessionPlans}
+          onAddSessionPlan={handleAddSessionPlan}
+          onDeleteSessionPlan={handleDeleteSessionPlan}
         />
 
         {/* Center Main Stage Content */}
         <main className="flex-1 overflow-y-auto px-6 py-8 md:px-10 lg:px-12 bg-slate-50/70">{renderActiveStage()}</main>
       </div>
+
+      <ConfirmModal
+        open={confirmDisableSessions}
+        title="Remove online sessions?"
+        description={`This removes ${sessionPlans.length} planned session(s) and their quizzes from the course. Their weight is freed up for other assessments.`}
+        confirmText="Remove sessions"
+        variant="warning"
+        onClose={() => setConfirmDisableSessions(false)}
+        onConfirm={() => {
+          setSessionPlans([]);
+          setHasOnlineSessions(false);
+          setConfirmDisableSessions(false);
+          if (activeNode.type === 'SESSION_PLAN') setActiveNode({ type: 'COURSE_DETAILS' });
+        }}
+      />
     </div>
   );
 }

@@ -13,6 +13,11 @@ import {
 import { SessionPlatform, SessionType } from '@prisma/client';
 
 export class CreateSessionDto {
+  @ApiPropertyOptional({ description: 'Schedule a session planned with the course (pre-fills its title, description and weighted quizzes)' })
+  @IsOptional()
+  @IsString()
+  sessionPlanId?: string;
+
   @ApiPropertyOptional({ enum: SessionType, default: SessionType.VIRTUAL })
   @IsOptional()
   @IsEnum(SessionType)

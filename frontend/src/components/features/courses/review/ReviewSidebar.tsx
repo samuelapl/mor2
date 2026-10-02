@@ -224,6 +224,34 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
           );
         })}
 
+        {(course.sessionPlans?.length ?? 0) > 0 && (
+          <div className="space-y-0.5 border-t border-slate-200/80 pt-2">
+            <p className="flex items-center gap-1.5 px-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700">
+              <Video className="h-3 w-3" />
+              {tBilingual('Online Sessions', 'የኦንላይን ክፍለ-ጊዜዎች')}
+            </p>
+            {course.sessionPlans!.map((plan, i) => {
+              const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
+              return (
+                <React.Fragment key={plan.id}>
+                  {node(
+                    { type: 'SESSION_PLAN', sessionPlanId: plan.id },
+                    <>
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-black/5 text-[10px] font-bold">{i + 1}</span>
+                      <span className="min-w-0 flex-1 truncate">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
+                      {plan.quizzes.length > 0 && (
+                        <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">
+                          {plan.quizzes.length}Q · {weight}%
+                        </span>
+                      )}
+                    </>,
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+
         <div className="space-y-1 border-t border-slate-200/80 pt-2">
           {assessments.final.length > 0 ? (
             node(

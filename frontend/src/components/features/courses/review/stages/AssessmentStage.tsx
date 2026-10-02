@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Award, FileQuestion, Paperclip } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import { uploadedResourceFromApi } from '@/lib/api/transform';
 import type { ApiAssessment } from '@/lib/api/types';
 import { AttachmentCard } from '../../detail/AttachmentCard';
@@ -28,7 +29,16 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
         ? `${tBilingual('Module assessment', 'የሞጁል ምዘና')} · ${parentTitle ?? ''}`
         : `${tBilingual('Lesson assessment', 'የትምህርት ምዘና')} · ${parentTitle ?? ''}`;
 
+  const policyPassMark = usePolicyPassMark();
   const issues = assessments.flatMap(assessmentIssues);
+  if (policyPassMark !== null) {
+    for (const a of assessments) {
+      if (a.passingScore < policyPassMark)
+        issues.push(
+          `Pass mark ${a.passingScore}% is below the ${policyPassMark}% course grade needed for the certificate — learners can pass this and still miss it`,
+        );
+    }
+  }
   const files = assessments.flatMap((a) => (a.attachments ?? []).map(uploadedResourceFromApi));
 
   return (
@@ -37,6 +47,20 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
         icon={scope === 'FINAL_ASSESSMENT' ? <Award className="h-4 w-4" /> : <FileQuestion className="h-4 w-4" />}
         eyebrow={eyebrow}
         title={assessments[0]?.titleEn || tBilingual('Assessment', 'ምዘና')}
+        meta={
+          assessments[0] && (
+            <>
+              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700">
+                {tBilingual(`Pass mark ${assessments[0].passingScore}% (this assessment)`, `ማለፊያ ${assessments[0].passingScore}% (ይህ ምዘና)`)}
+              </span>
+              {policyPassMark !== null && (
+                <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-semibold text-slate-600">
+                  {tBilingual(`Course requires ${policyPassMark}% overall (policy)`, `ኮርሱ በአጠቃላይ ${policyPassMark}% ይፈልጋል (ፖሊሲ)`)}
+                </span>
+              )}
+            </>
+          )
+        }
       />
 
       {issues.length > 0 && (

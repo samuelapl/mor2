@@ -12,6 +12,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { CourseDeliveryMode, CourseLevel } from '@/types';
@@ -19,6 +20,7 @@ import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useLookupCategories } from '@/lib/api/useLookupCategories';
 import { cn } from '@/lib/utils';
+import { isDeliveryModeEnabled } from '@/constants/delivery-modes';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { inputClass, labelClass } from '../../wizard-types';
 import { RichEditor } from '../../wizard-components';
@@ -32,6 +34,9 @@ export interface CourseDetailsStageProps {
   codeError?: string | null;
   /** True once the draft exists on the server; the code can no longer change. */
   codeLocked?: boolean;
+  /** "Include online sessions" toggle; only offered for Online Self-Paced courses. */
+  hasOnlineSessions?: boolean;
+  onToggleOnlineSessions?: (next: boolean) => void;
   category: string;
   setCategory: (val: string) => void;
   level: CourseLevel;
@@ -57,6 +62,50 @@ export interface CourseDetailsStageProps {
   onNext?: () => void;
 }
 
+const DELIVERY_OPTIONS: Array<{
+  id: CourseDeliveryMode;
+  labelEn: string;
+  labelAm: string;
+  descriptionEn: string;
+  descriptionAm: string;
+  icon: typeof Globe2;
+  iconClass: string;
+  selectedClass: string;
+  recommended?: boolean;
+}> = [
+  {
+    id: 'ONLINE_ONLY',
+    labelEn: 'Online Self-Paced',
+    labelAm: 'ኦንላይን (ራስ-አገዝ)',
+    descriptionEn: 'Self-paced digital modules, video streams, and automated quizzes.',
+    descriptionAm: 'በራስ ፍጥነት የሚጠኑ ዲጂታል ሞጁሎች፣ ቪዲዮዎች እና ራስ-ሰር ፈተናዎች።',
+    icon: Globe2,
+    iconClass: 'text-indigo-600',
+    selectedClass: 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500',
+    recommended: true,
+  },
+  {
+    id: 'IN_PERSON_ONLY',
+    labelEn: 'In-Person Classroom',
+    labelAm: 'በአካል በክፍል ውስጥ',
+    descriptionEn: 'Physical attendance at ministry branch rooms with QR check-in.',
+    descriptionAm: 'በሚኒስቴሩ ቅርንጫፍ ክፍሎች በአካል መገኘት፣ በQR ምዝገባ።',
+    icon: Building2,
+    iconClass: 'text-amber-600',
+    selectedClass: 'border-amber-600 bg-amber-50/60 shadow-xs ring-1 ring-amber-500',
+  },
+  {
+    id: 'BOTH',
+    labelEn: 'Hybrid / Blended',
+    labelAm: 'ድብልቅ',
+    descriptionEn: 'Digital online preparation modules + scheduled workshops.',
+    descriptionAm: 'የኦንላይን ዝግጅት ሞጁሎች እና የታቀዱ አውደ ጥናቶች።',
+    icon: Layers,
+    iconClass: 'text-emerald-600',
+    selectedClass: 'border-emerald-600 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-500',
+  },
+];
+
 export function CourseDetailsStage({
   title,
   setTitle,
@@ -64,6 +113,8 @@ export function CourseDetailsStage({
   setCode,
   codeError,
   codeLocked = false,
+  hasOnlineSessions = false,
+  onToggleOnlineSessions,
   category,
   setCategory,
   level,
@@ -226,61 +277,77 @@ export function CourseDetailsStage({
             {tBilingual('Course Delivery Format', 'የኮርስ አሰጣጥ ዘዴ')} <span className="text-rose-500">*</span>
           </label>
           <div className="grid gap-3 sm:grid-cols-3 mt-1.5">
-            <button
-              type="button"
-              onClick={() => setDeliveryMode('ONLINE_ONLY')}
-              className={cn(
-                'flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer',
-                deliveryMode === 'ONLINE_ONLY'
-                  ? 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
-              )}
-            >
-              <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
-                <Globe2 className="h-4 w-4 text-indigo-600" /> Pure Online Only
-              </div>
-              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                Self-paced digital modules, video streams, and automated quizzes.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDeliveryMode('IN_PERSON_ONLY')}
-              className={cn(
-                'flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer',
-                deliveryMode === 'IN_PERSON_ONLY'
-                  ? 'border-amber-600 bg-amber-50/60 shadow-xs ring-1 ring-amber-500'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
-              )}
-            >
-              <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
-                <Building2 className="h-4 w-4 text-amber-600" /> In-Person Only
-              </div>
-              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                Physical attendance at ministry branch rooms with QR check-in.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDeliveryMode('BOTH')}
-              className={cn(
-                'flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer',
-                deliveryMode === 'BOTH'
-                  ? 'border-emerald-600 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-500'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
-              )}
-            >
-              <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
-                <Layers className="h-4 w-4 text-emerald-600" /> Hybrid / Blended
-              </div>
-              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                Digital online preparation modules + scheduled workshops.
-              </p>
-            </button>
+            {DELIVERY_OPTIONS.map((opt) => {
+              const enabled = isDeliveryModeEnabled(opt.id);
+              const isSelected = deliveryMode === opt.id;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={!enabled}
+                  aria-pressed={isSelected}
+                  onClick={() => setDeliveryMode(opt.id)}
+                  className={cn(
+                    'flex flex-col text-left p-3.5 rounded-xl border transition',
+                    isSelected
+                      ? opt.selectedClass
+                      : enabled
+                        ? 'cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                        : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60',
+                  )}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
+                    <Icon className={cn('h-4 w-4', opt.iconClass)} /> {tBilingual(opt.labelEn, opt.labelAm)}
+                    {enabled ? (
+                      opt.recommended && (
+                        <span className="ml-auto rounded-full border border-indigo-200 bg-indigo-50 px-1.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700">
+                          {tBilingual('Recommended', 'ተመራጭ')}
+                        </span>
+                      )
+                    ) : (
+                      <span className="ml-auto rounded-full border border-slate-200 bg-slate-100 px-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                        {tBilingual('Coming soon', 'በቅርቡ')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">{tBilingual(opt.descriptionEn, opt.descriptionAm)}</p>
+                </button>
+              );
+            })}
           </div>
+          {!isDeliveryModeEnabled(deliveryMode) && (
+            <p className="mt-2 text-[11px] font-medium text-amber-700">
+              {tBilingual(
+                'This delivery mode is no longer offered for new courses. This course keeps it; it can only be switched to Online Self-Paced.',
+                'ይህ የአሰጣጥ ዘዴ ለአዳዲስ ኮርሶች አይሰጥም። ይህ ኮርስ ይህንኑ ይቀጥላል፤ ወደ ኦንላይን (ራስ-አገዝ) ብቻ መቀየር ይችላል።',
+              )}
+            </p>
+          )}
         </div>
+
+        {deliveryMode === 'ONLINE_ONLY' && onToggleOnlineSessions && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/50 p-3.5">
+            <input
+              type="checkbox"
+              checked={hasOnlineSessions}
+              onChange={(e) => onToggleOnlineSessions(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                <Video className="h-4 w-4 text-sky-600" />
+                {tBilingual('Include online sessions', 'የኦንላይን ክፍለ-ጊዜዎችን አካት')}
+              </span>
+              <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
+                {tBilingual(
+                  'Plan live online sessions now, with optional weighted quizzes. They are scheduled (date, trainer, platform) after the course is approved.',
+                  'የቀጥታ ኦንላይን ክፍለ-ጊዜዎችን አሁን ያቅዱ፤ ክብደት ያላቸው ፈተናዎች መጨመር ይቻላል። ኮርሱ ከጸደቀ በኋላ ቀን፣ አሰልጣኝ እና መድረክ ይወሰናሉ።',
+                )}
+              </span>
+            </span>
+          </label>
+        )}
 
         <div>
           <label className={labelClass}>{tBilingual('Course Cover Image', 'የኮርስ ሽፋን ምስል')}</label>

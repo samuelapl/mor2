@@ -18,6 +18,7 @@ export type CreatorNodeType =
   | 'MODULE_ASSESSMENT'
   | 'LESSON_ASSESSMENT'
   | 'FINAL_ASSESSMENT'
+  | 'SESSION_PLAN'
   | 'REVIEW_SUBMIT';
 
 export interface CreatorActiveNode {
@@ -25,6 +26,25 @@ export interface CreatorActiveNode {
   moduleId?: string;
   lessonId?: string;
   subLessonId?: string;
+  sessionPlanId?: string;
+}
+
+/** A weighted quiz planned for an online session; its questions are prepared after approval. */
+export interface SessionQuizDraft {
+  id: string;
+  titleEn: string;
+  weight: number;
+  passingScore: number;
+  timeLimitMinutes: number;
+}
+
+/** A placeholder online session the owner plans while preparing the course. */
+export interface SessionPlanDraft {
+  id: string;
+  titleEn: string;
+  descriptionEn: string;
+  objectivesEn: string;
+  quizzes: SessionQuizDraft[];
 }
 
 export interface CreatorDraftState {

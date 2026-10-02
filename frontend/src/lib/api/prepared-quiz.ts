@@ -23,6 +23,9 @@ export interface PreparedQuizQuestionItem {
 }
 
 export interface PreparedQuizGroup {
+  /** Set when this is a weighted course quiz planned with the course; it is graded into the course result. */
+  assessmentId?: string | null;
+  assessment?: { id: string; weight: number; passingScore: number } | null;
   id: string;
   sessionId: string;
   title: string;

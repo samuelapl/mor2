@@ -19,6 +19,7 @@ import { ModuleStage } from './stages/ModuleStage';
 import { LessonStage } from './stages/LessonStage';
 import { AssessmentStage } from './stages/AssessmentStage';
 import { ApprovalHistoryStage } from './stages/ApprovalHistoryStage';
+import { SessionPlanStage } from './stages/SessionPlanStage';
 import { RejectDialog } from './dialogs/RejectDialog';
 import { PublishDialog } from './dialogs/PublishDialog';
 import { ConfirmActionDialog } from './dialogs/ConfirmActionDialog';
@@ -149,6 +150,19 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
       case 'FINAL_ASSESSMENT':
         if (assessments.final.length === 0) break;
         return <AssessmentStage scope="FINAL_ASSESSMENT" assessments={assessments.final} />;
+      case 'SESSION_PLAN': {
+        const index = (course.sessionPlans ?? []).findIndex((p) => p.id === selectedNode.sessionPlanId);
+        if (index === -1) break;
+        const plan = course.sessionPlans![index]!;
+        return (
+          <SessionPlanStage
+            plan={plan}
+            index={index}
+            courseStatus={course.status}
+            quizAssessments={assessments.all.filter((a) => plan.quizzes.some((q) => q.id === a.id))}
+          />
+        );
+      }
       case 'APPROVAL_HISTORY':
         return <ApprovalHistoryStage course={course} />;
       default:

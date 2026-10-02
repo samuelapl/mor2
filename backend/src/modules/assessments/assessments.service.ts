@@ -165,17 +165,23 @@ export class AssessmentsService {
     }
   }
 
+  /**
+   * @param defaultPassMark used when the request has no `passingScore` (the global policy
+   *   mark on create). Pass `undefined` on update to keep the stored pass mark.
+   */
   private dataFor(
     dto: CreateAssessmentDto,
     overrides: Partial<Prisma.AssessmentUncheckedCreateInput>,
+    defaultPassMark?: number,
   ): Prisma.AssessmentUncheckedCreateInput {
     this.assertUniqueQuestionIds(dto.questions);
+    const passingScore = dto.passingScore ?? defaultPassMark;
     return {
       titleAm: dto.titleAm,
       titleEn: dto.titleEn,
       descriptionAm: dto.descriptionAm,
       descriptionEn: dto.descriptionEn,
-      passingScore: dto.passingScore ?? 50,
+      ...(passingScore !== undefined ? { passingScore } : {}),
       weight: dto.weight ?? 0,
       maxAttempts: dto.maxAttempts ?? 3,
       timeLimitMinutes: dto.timeLimitMinutes,
@@ -216,13 +222,14 @@ export class AssessmentsService {
   /** Replaces the course's final assessment (delete-all + create) atomically. Only DRAFT/REJECTED courses. */
   async replaceForCourse(courseId: string, dto: CreateAssessmentDto) {
     await this.assertCourseEditable(courseId);
+    const defaultPassMark = await this.policyService.getPassingScorePercent();
 
     await this.prisma.$transaction(async (tx) => {
       await tx.assessment.deleteMany({
         where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
       });
       const created = await tx.assessment.create({
-        data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
+        data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, defaultPassMark),
       });
       await this.linkAttachments(tx, created.id, courseId, dto.attachments);
     });
@@ -233,7 +240,7 @@ export class AssessmentsService {
   /** Course-level (final) assessment — kept for backward compatibility with the current frontend. */
   async create(courseId: string, dto: CreateAssessmentDto) {
     const created = await this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
+      data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, await this.policyService.getPassingScorePercent()),
     });
     return this.withAttachments(created.id, courseId, dto.attachments);
   }
@@ -251,7 +258,11 @@ export class AssessmentsService {
     }
 
     const created = await this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, moduleId, type: AssessmentType.MODULE_ASSESSMENT }),
+      data: this.dataFor(
+        dto,
+        { courseId, moduleId, type: AssessmentType.MODULE_ASSESSMENT },
+        await this.policyService.getPassingScorePercent(),
+      ),
     });
     return this.withAttachments(created.id, courseId, dto.attachments);
   }
@@ -277,7 +288,11 @@ export class AssessmentsService {
     }
 
     const created = await this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, moduleId, lessonId: targetLessonId, type }),
+      data: this.dataFor(
+        dto,
+        { courseId, moduleId, lessonId: targetLessonId, type },
+        await this.policyService.getPassingScorePercent(),
+      ),
     });
     return this.withAttachments(created.id, courseId, dto.attachments);
   }
@@ -617,8 +632,11 @@ export class AssessmentsService {
     }
 
     const gradedAnswers = gradeAnswers(questions, dto.answers);
-    const globalPassMark = await this.policyService.getPassingScorePercent();
-    const effectivePassMark = globalPassMark ?? assessment.passingScore ?? 50;
+    // The assessment's own pass mark decides this attempt; the global policy mark only
+    // fills in for an assessment without one (same rule as ProgressService), and gates
+    // the weighted course grade for certification.
+    const effectivePassMark =
+      assessment.passingScore > 0 ? assessment.passingScore : await this.policyService.getPassingScorePercent();
     const { score, passed, correctCount } = computeResult(
       gradedAnswers,
       questions.length,
