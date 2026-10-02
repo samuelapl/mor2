@@ -161,6 +161,7 @@ export interface ApiAttachment {
   moduleId: string | null;
   lessonId: string | null;
   courseId: string | null;
+  assessmentId?: string | null;
   fileName: string;
   fileKey: string;
   fileUrl: string;
@@ -284,6 +285,9 @@ export interface ApiAssessmentQuestion {
 export interface ApiAssessment {
   id: string;
   courseId: string;
+  type?: 'FINAL_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'SUB_LESSON_ASSESSMENT';
+  moduleId?: string | null;
+  lessonId?: string | null;
   titleEn: string;
   titleAm: string;
   descriptionEn: string | null;
@@ -298,6 +302,8 @@ export interface ApiAssessment {
   fileSize?: number | null;
   questions: ApiAssessmentQuestion[];
   attempts: ApiAssessmentAttempt[];
+  /** Reference files attached to the assessment itself. */
+  attachments?: ApiAttachment[];
   createdAt: string;
   updatedAt: string;
 }

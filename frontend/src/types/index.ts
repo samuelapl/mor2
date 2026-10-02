@@ -170,6 +170,17 @@ export interface Course {
   progress: Record<string, number>;
   modules: Module[];
   attachments?: Attachment[];
+  /** Reviewer decisions, newest first. Only present on courses loaded with detail. */
+  approvals?: CourseApprovalEntry[];
+}
+
+export interface CourseApprovalEntry {
+  id: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION';
+  comments?: string;
+  reviewerName?: string;
+  decidedAt?: string;
+  createdAt: string;
 }
 
 export type ActionResult = { ok: true } | { ok: false; message: string };

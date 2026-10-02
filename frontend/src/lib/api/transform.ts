@@ -259,6 +259,16 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
     attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
     rejectionReason: latest.reason,
     lastRejectionReason: secondLatest?.reason,
+    approvals: (apiCourse.approvals ?? [])
+      .map((a) => ({
+        id: a.id,
+        status: a.status,
+        comments: a.comments ?? undefined,
+        reviewerName: a.approver ? `${a.approver.firstName} ${a.approver.lastName}` : undefined,
+        decidedAt: a.decidedAt ?? undefined,
+        createdAt: a.createdAt,
+      }))
+      .sort((a, b) => new Date(b.decidedAt ?? b.createdAt).getTime() - new Date(a.decidedAt ?? a.createdAt).getTime()),
     rejectedBy: latest.by,
     rejectedAt: latest.at,
   };
