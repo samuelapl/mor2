@@ -141,6 +141,16 @@ export function hasSubmittedFeedback(courseId: string, userId: string): boolean 
   return found;
 }
 
+export function hasSkippedFeedback(courseId: string, userId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(`mor_feedback_skipped_${courseId}_${userId}`) === 'true';
+}
+
+export function markFeedbackSkipped(courseId: string, userId: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(`mor_feedback_skipped_${courseId}_${userId}`, 'true');
+}
+
 export async function submitCourseFeedback(input: {
   courseId: string;
   courseTitle: string;

@@ -30,7 +30,7 @@ import {
 import { fetchMyProfile } from '@/lib/api/users';
 import { CertificateRenderer } from '../../certificates/CertificateRenderer';
 import { CourseFeedbackSurvey } from './CourseFeedbackSurvey';
-import { hasSubmittedFeedback } from '@/lib/api/feedback';
+import { hasSubmittedFeedback, hasSkippedFeedback, markFeedbackSkipped } from '@/lib/api/feedback';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CertificateStageProps {
@@ -50,6 +50,7 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [feedbackSkipped, setFeedbackSkipped] = useState(false);
 
   const isInPerson = course.deliveryMode === 'IN_PERSON_ONLY';
 
@@ -80,8 +81,11 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
         if (profile) {
           setUser(profile);
           const alreadySubmitted = hasSubmittedFeedback(courseId, profile.id);
+          const alreadySkipped = hasSkippedFeedback(courseId, profile.id);
           if (alreadySubmitted) {
             setFeedbackDone(true);
+          } else if (alreadySkipped) {
+            setFeedbackSkipped(true);
           }
         }
         if (activeTpl) setTemplate(activeTpl);
@@ -94,7 +98,9 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           setCertificate(existing);
         } else if (
           isCompleted &&
-          (feedbackDone || (profile && hasSubmittedFeedback(courseId, profile.id)))
+          (feedbackDone ||
+            feedbackSkipped ||
+            (profile && (hasSubmittedFeedback(courseId, profile.id) || hasSkippedFeedback(courseId, profile.id))))
         ) {
           try {
             setClaiming(true);
@@ -120,7 +126,7 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     return () => {
       mounted = false;
     };
-  }, [courseId, isCompleted, feedbackDone]);
+  }, [courseId, isCompleted, feedbackDone, feedbackSkipped]);
 
   const handlePrint = () => {
     window.print();
@@ -333,29 +339,43 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     );
   }
 
-  // 2. Pre-Certificate Feedback Gate:
-  // If the course is completed, but the student hasn't completed feedback yet, show the survey!
-  const userFeedbackGiven =
-    feedbackDone || (user ? hasSubmittedFeedback(courseId, user.id) : false);
+  // 2. Pre-Certificate Feedback Gate (Optional):
+  // If the course is completed, but the student hasn't submitted or skipped feedback yet, offer the survey with skip option!
+  const userFeedbackGivenOrSkipped =
+    feedbackDone ||
+    feedbackSkipped ||
+    (user
+      ? hasSubmittedFeedback(courseId, user.id) || hasSkippedFeedback(courseId, user.id)
+      : false);
 
-  if (!userFeedbackGiven) {
+  const handleClaimCertificate = async () => {
+    if (certificate) return;
+    try {
+      setClaiming(true);
+      const claimed = await claimCertificate(courseId);
+      if (claimed) setCertificate(claimed);
+    } catch (claimErr) {
+      console.warn('Notice claiming certificate:', claimErr);
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  if (!userFeedbackGivenOrSkipped) {
     return (
       <CourseFeedbackSurvey
         course={course}
         user={user}
         onSubmitted={async () => {
           setFeedbackDone(true);
-          if (!certificate) {
-            try {
-              setClaiming(true);
-              const claimed = await claimCertificate(courseId);
-              if (claimed) setCertificate(claimed);
-            } catch (claimErr) {
-              console.warn('Notice claiming certificate:', claimErr);
-            } finally {
-              setClaiming(false);
-            }
+          await handleClaimCertificate();
+        }}
+        onSkip={async () => {
+          setFeedbackSkipped(true);
+          if (user) {
+            markFeedbackSkipped(courseId, user.id);
           }
+          await handleClaimCertificate();
         }}
       />
     );

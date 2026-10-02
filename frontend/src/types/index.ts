@@ -110,6 +110,7 @@ export interface Question {
   points: number;
   imageUrl?: string;
   category?: string;
+  explanation?: string;
 }
 
 export interface Quiz {
