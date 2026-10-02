@@ -28,11 +28,11 @@ export class CreateQuestionBankQuestionDto {
 
   @ApiProperty({ enum: QuestionType, example: QuestionType.MULTIPLE_CHOICE })
   @IsEnum(QuestionType)
-  type: QuestionType;
+  type!: QuestionType;
 
   @ApiProperty({ example: 'What is the primary function of an inverter?' })
   @IsString()
-  question: string;
+  question!: string;
 
   @ApiProperty({
     example: ['Convert DC to AC', 'Convert AC to DC', 'Store charge'],
@@ -40,7 +40,7 @@ export class CreateQuestionBankQuestionDto {
   })
   @IsArray()
   @IsString({ each: true })
-  options: string[];
+  options!: string[];
 
   @ApiPropertyOptional({
     example: '0',

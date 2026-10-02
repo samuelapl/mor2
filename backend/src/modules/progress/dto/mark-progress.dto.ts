@@ -4,7 +4,7 @@ import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
 export class MarkLessonCompleteDto {
   @ApiProperty({ default: true })
   @IsBoolean()
-  completed: boolean;
+  completed!: boolean;
 
   @ApiPropertyOptional({ description: 'Video position in seconds' })
   @IsOptional()

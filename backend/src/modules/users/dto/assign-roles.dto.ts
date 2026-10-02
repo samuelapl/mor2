@@ -5,10 +5,10 @@ export class AssignRoleDto {
   @ApiProperty({ example: 'LEARNER' })
   @IsString()
   @IsNotEmpty()
-  role: string;
+  role!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 }

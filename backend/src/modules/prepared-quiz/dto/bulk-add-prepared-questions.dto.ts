@@ -9,5 +9,5 @@ export class BulkAddPreparedQuestionsDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
-  questionIds: string[];
+  questionIds!: string[];
 }

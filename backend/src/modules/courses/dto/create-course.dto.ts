@@ -1,25 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CourseDeliveryMode, CourseLevel } from '@prisma/client';
-import {
-  IsArray,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUrl,
-  MinLength,
-} from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, IsUrl, MinLength } from 'class-validator';
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'CS101' })
   @IsString()
   @MinLength(3)
-  code: string;
+  code!: string;
 
   @ApiProperty({ example: 'Computer Basics' })
   @IsString()
   @MinLength(2)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'An introductory course on computer basics.' })
   @IsOptional()
@@ -60,6 +52,11 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   prerequisites?: string;
+
+  @ApiPropertyOptional({ example: 'English' })
+  @IsOptional()
+  @IsString()
+  language?: string;
 
   @ApiPropertyOptional({ example: 20 })
   @IsOptional()

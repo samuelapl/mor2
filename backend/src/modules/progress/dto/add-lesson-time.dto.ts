@@ -11,5 +11,5 @@ export class AddLessonTimeDto {
   @IsInt()
   @Min(1)
   @Max(300)
-  secondsDelta: number;
+  secondsDelta!: number;
 }

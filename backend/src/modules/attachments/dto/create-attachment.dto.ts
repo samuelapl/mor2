@@ -14,16 +14,16 @@ export class CreateAttachmentDto {
 
   @ApiProperty({ example: 'lesson-notes.pdf' })
   @IsString()
-  fileName: string;
+  fileName!: string;
 
   @ApiProperty({ example: 'attachments/abc123/lesson-notes.pdf' })
   @IsString()
-  fileKey: string;
+  fileKey!: string;
 
   @ApiProperty({ example: 'pdf' })
   @IsString()
-  fileType: string;
+  fileType!: string;
 
   @ApiProperty({ example: 1048576 })
-  sizeBytes: number;
+  sizeBytes!: number;
 }

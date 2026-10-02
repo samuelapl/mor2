@@ -802,7 +802,6 @@ export interface CreateCourseBody {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: CourseDeliveryMode;
-  language?: string;
   prerequisites?: string;
   estimatedHours?: number;
   ownerIds?: string[];
@@ -820,7 +819,6 @@ export interface UpdateCourseBody {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: CourseDeliveryMode;
-  language?: string;
   prerequisites?: string;
   estimatedHours?: number;
   thumbnailUrl?: string | null;
@@ -845,14 +843,8 @@ export interface CreateCurriculumAttachmentBody {
 
 export interface CreateModuleBody {
   title?: string;
-  titleEn?: string;
-  titleAm?: string;
   description?: string;
-  descriptionEn?: string;
-  descriptionAm?: string;
   objectives?: string;
-  objectivesEn?: string;
-  objectivesAm?: string;
   durationMinutes?: number;
   order?: number;
   passingScore?: number;
@@ -862,11 +854,7 @@ export interface CreateModuleBody {
 
 export interface CreateInlineLessonBody {
   title?: string;
-  titleEn?: string;
-  titleAm?: string;
   content?: string;
-  contentEn?: string;
-  contentAm?: string;
   contentType?: BackendLessonContentType;
   durationMinutes?: number;
   resourceUrl?: string;

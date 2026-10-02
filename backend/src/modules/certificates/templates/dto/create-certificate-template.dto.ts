@@ -14,7 +14,7 @@ export class CertificateFieldDto {
   /** Placeholder key — one of holderName/courseTitle/courseCode/orgName/certificateNumber/verificationCode/issuedAt/expiresAt */
   @ApiProperty({ example: 'holderName' })
   @IsString()
-  key: string;
+  key!: string;
 
   @ApiPropertyOptional({ example: 'left' })
   @IsOptional()
@@ -81,7 +81,7 @@ export class CreateCertificateTemplateDto {
   @ApiProperty({ example: 'MoR Standard Certificate' })
   @IsString()
   @MinLength(2)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'Official certificate for ETIMS Academy courses' })
   @IsOptional()

@@ -17,21 +17,21 @@ export class BulkCreateUserItemDto {
   @ApiProperty({ example: 'John' })
   @IsString()
   @IsNotEmpty()
-  firstName: string;
+  firstName!: string;
 
   @ApiProperty({ example: 'Doe' })
   @IsString()
   @IsNotEmpty()
-  lastName: string;
+  lastName!: string;
 
   @ApiProperty({ example: 'john.doe@mor.gov.et' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: '+251911000000' })
   @IsString()
   @IsNotEmpty()
-  phone: string;
+  phone!: string;
 
   @ApiPropertyOptional({
     example: '0012345678',
@@ -59,5 +59,5 @@ export class BulkCreateUsersDto {
   @ArrayMaxSize(BULK_CREATE_MAX_ROWS)
   @ValidateNested({ each: true })
   @Type(() => BulkCreateUserItemDto)
-  users: BulkCreateUserItemDto[];
+  users!: BulkCreateUserItemDto[];
 }

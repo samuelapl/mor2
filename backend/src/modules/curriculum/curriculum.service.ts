@@ -300,17 +300,17 @@ export class CurriculumService {
     const mod = await this.prisma.curriculumModule.create({
       data: {
         courseId,
-        title: dto.title,
-        description: dto.description,
-        objectives: dto.objectives,
+        title: dto.title || dto.titleEn || 'Module',
+        description: dto.description || dto.descriptionEn,
+        objectives: dto.objectives || dto.objectivesEn,
         durationMinutes: dto.durationMinutes,
         order,
         passingScore: dto.passingScore,
         lessons: dto.lessons?.length
           ? {
               create: dto.lessons.map((lesson, idx) => ({
-                title: lesson.title,
-                content: lesson.content,
+                title: lesson.title || lesson.titleEn || 'Lesson',
+                content: lesson.content || lesson.contentEn,
                 contentType: (lesson.contentType as any) ?? 'DOCUMENT',
                 durationMinutes: lesson.durationMinutes,
                 order: idx,

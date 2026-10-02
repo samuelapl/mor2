@@ -17,7 +17,7 @@ import { AssessmentType } from '@prisma/client';
 export class AssessmentQuestionDto {
   @ApiProperty({ example: 'q1' })
   @IsString()
-  id: string;
+  id!: string;
 
   @ApiPropertyOptional({ example: 'mcq' })
   @IsOptional()
@@ -44,12 +44,12 @@ export class CreateAssessmentDto {
   @ApiProperty({ example: 'Module 1 Quiz' })
   @IsString()
   @MinLength(2)
-  titleEn: string;
+  titleEn!: string;
 
   @ApiProperty({ example: 'የሞዱል 1 ፈተና' })
   @IsString()
   @MinLength(2)
-  titleAm: string;
+  titleAm!: string;
 
   @ApiPropertyOptional({ enum: AssessmentType, example: AssessmentType.FINAL_ASSESSMENT })
   @IsOptional()
@@ -111,5 +111,5 @@ export class CreateAssessmentDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AssessmentQuestionDto)
-  questions: AssessmentQuestionDto[];
+  questions!: AssessmentQuestionDto[];
 }

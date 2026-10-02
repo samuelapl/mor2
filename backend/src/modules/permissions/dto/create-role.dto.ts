@@ -5,12 +5,12 @@ export class CreateRoleDto {
   @ApiProperty({ example: 'REGIONAL_COORDINATOR' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'Regional Coordinator' })
   @IsString()
   @IsNotEmpty()
-  label: string;
+  label!: string;
 
   @ApiPropertyOptional({ example: 'Coordinates regional training programs.' })
   @IsOptional()

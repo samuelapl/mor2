@@ -5,5 +5,5 @@ import { AttendanceStatus } from '@prisma/client';
 export class OverrideAttendanceDto {
   @ApiProperty({ enum: AttendanceStatus })
   @IsEnum(AttendanceStatus)
-  status: AttendanceStatus;
+  status!: AttendanceStatus;
 }

@@ -26,12 +26,12 @@ export class CreateSessionDto {
   @ApiProperty({ example: 'Live Q&A Session' })
   @IsString()
   @MinLength(2)
-  titleEn: string;
+  titleEn!: string;
 
   @ApiProperty({ example: 'የቀጥታ ጥያቄና መልስ ክፍለ ጊዜ' })
   @IsString()
   @MinLength(2)
-  titleAm: string;
+  titleAm!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -45,7 +45,7 @@ export class CreateSessionDto {
 
   @ApiProperty({ enum: SessionPlatform, default: SessionPlatform.GOOGLE_MEET })
   @IsEnum(SessionPlatform)
-  platform: SessionPlatform;
+  platform!: SessionPlatform;
 
   @ApiPropertyOptional({ example: 'https://meet.google.com/abc-defg-hij' })
   @IsOptional()
@@ -64,12 +64,12 @@ export class CreateSessionDto {
 
   @ApiProperty({ example: '2026-09-20T10:00:00.000Z' })
   @IsDateString()
-  scheduledAt: string;
+  scheduledAt!: string;
 
   @ApiProperty({ example: 60 })
   @IsInt()
   @Min(5)
-  durationMinutes: number;
+  durationMinutes!: number;
 
   @ApiPropertyOptional({ example: 'uuid-of-trainer', description: 'Assigned trainer ID' })
   @IsOptional()

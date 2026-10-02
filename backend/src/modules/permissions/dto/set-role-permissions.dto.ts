@@ -5,5 +5,5 @@ export class SetRolePermissionsDto {
   @ApiProperty({ type: [String], description: 'Full replace-set of permission IDs for the role' })
   @IsArray()
   @IsString({ each: true })
-  permissionIds: string[];
+  permissionIds!: string[];
 }

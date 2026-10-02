@@ -609,7 +609,7 @@ export function CourseCreationWizard({ onDone, onCancel, editingCourse }: Course
         });
         if (!result.ok) throw new Error(result.message);
       } else {
-        const result = await createCourse({
+        let result = await createCourse({
           title: title.trim(),
           code: code.trim().toUpperCase(),
           category,
@@ -626,9 +626,41 @@ export function CourseCreationWizard({ onDone, onCancel, editingCourse }: Course
           modules: curriculum,
           quiz,
         });
+
+        if (result?.courseId) {
+          savedCourseId = result.courseId;
+          savedCourseIdRef.current = result.courseId;
+        }
+
+        if (!result.ok) {
+          const existingCourse = courses.find(
+            (c) => c.code.toUpperCase() === code.trim().toUpperCase() && (c.status === 'draft' || c.status === 'rejected'),
+          );
+          if (existingCourse) {
+            savedCourseId = existingCourse.id;
+            savedCourseIdRef.current = existingCourse.id;
+            result = await updateCourseFull(existingCourse.id, {
+              title: title.trim(),
+              category,
+              level,
+              deliveryMode,
+              description: description.trim(),
+              objectives: objectives.trim(),
+              department: department.trim(),
+              targetAudience: targetAudience.trim(),
+              deliveryMethod: deliveryMethod.trim(),
+              language: language.trim(),
+              prerequisites: prerequisites.trim(),
+              cover: coverFile,
+              modules: curriculum,
+              quiz,
+            });
+          }
+        }
+
         if (!result.ok) throw new Error(result.message);
-        savedCourseId = result.courseId;
-        savedCourseIdRef.current = result.courseId;
+        savedCourseId = result.courseId || savedCourseId;
+        savedCourseIdRef.current = savedCourseId;
       }
 
       if (andSubmit && savedCourseId) {

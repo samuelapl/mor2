@@ -4,72 +4,72 @@ import { IsEmail, IsNotEmpty, IsString, MinLength, Matches } from 'class-validat
 export class ForgotPasswordDto {
   @ApiProperty({ example: 'john.doe@mor.gov.et' })
   @IsEmail()
-  email: string;
+  email!: string;
 }
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'john.doe@mor.gov.et' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()
   @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
-  code: string;
+  code!: string;
 
   @ApiProperty({ example: 'NewPass123' })
   @IsString()
   @MinLength(8)
-  newPassword: string;
+  newPassword!: string;
 }
 
 export class VerifyResetCodeDto {
   @ApiProperty({ example: 'john.doe@mor.gov.et' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()
   @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
-  code: string;
+  code!: string;
 }
 
 export class FirstLoginResendCodeDto {
   @ApiProperty({ description: 'Challenge token returned by /auth/login' })
   @IsString()
   @IsNotEmpty()
-  challengeToken: string;
+  challengeToken!: string;
 }
 
 export class FirstLoginVerifyCodeDto {
   @ApiProperty({ description: 'Challenge token returned by /auth/login' })
   @IsString()
   @IsNotEmpty()
-  challengeToken: string;
+  challengeToken!: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()
   @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
-  code: string;
+  code!: string;
 }
 
 export class FirstLoginCompleteDto {
   @ApiProperty({ description: 'Challenge token returned by /auth/login' })
   @IsString()
   @IsNotEmpty()
-  challengeToken: string;
+  challengeToken!: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()
   @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits.' })
-  code: string;
+  code!: string;
 
   @ApiProperty({ example: 'NewPass123' })
   @IsString()
   @MinLength(8)
-  newPassword: string;
+  newPassword!: string;
 
   @ApiProperty({ example: 'NewPass123' })
   @IsString()
-  confirmPassword: string;
+  confirmPassword!: string;
 }

@@ -378,7 +378,6 @@ export function courseToCreateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
-    language: input.language,
     prerequisites: input.prerequisites,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
@@ -407,7 +406,6 @@ export function courseToUpdateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
-    language: input.language,
     prerequisites: input.prerequisites,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
@@ -450,45 +448,31 @@ export function moduleToCreateBody(input: {
     }[];
   }[];
 }): CreateModuleBody {
-  const title = input.title || input.titleEn || '';
+  const title = input.title || input.titleEn || 'Module';
   const description = input.description || input.descriptionEn || undefined;
   const objectives = input.objectives || input.objectivesEn || undefined;
   return {
     title,
-    titleEn: title,
-    titleAm: input.titleAm || title,
     description,
-    descriptionEn: description,
-    descriptionAm: input.descriptionAm || description,
     objectives,
-    objectivesEn: objectives,
-    objectivesAm: input.objectivesAm || objectives,
     durationMinutes: input.durationMinutes,
     attachments: input.attachments,
     lessons: (input.lessons ?? []).map((l) => {
-      const lTitle = l.title || l.titleEn || '';
+      const lTitle = l.title || l.titleEn || 'Lesson';
       const lContent = l.content || l.contentEn || undefined;
       return {
         title: lTitle,
-        titleEn: lTitle,
-        titleAm: l.titleAm || lTitle,
         content: lContent,
-        contentEn: lContent,
-        contentAm: l.contentAm || lContent,
         contentType: l.contentType ?? 'DOCUMENT',
         durationMinutes: l.durationMinutes,
         resourceUrl: l.resourceUrl,
         attachments: l.attachments,
         subLessons: (l.subLessons ?? []).map((sub) => {
-          const subTitle = sub.title || sub.titleEn || '';
+          const subTitle = sub.title || sub.titleEn || 'Sub-lesson';
           const subContent = sub.content || sub.contentEn || undefined;
           return {
             title: subTitle,
-            titleEn: subTitle,
-            titleAm: sub.titleAm || subTitle,
             content: subContent,
-            contentEn: subContent,
-            contentAm: sub.contentAm || subContent,
             contentType: sub.contentType ?? 'DOCUMENT',
             durationMinutes: sub.durationMinutes,
             resourceUrl: sub.resourceUrl,

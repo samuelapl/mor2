@@ -13,11 +13,11 @@ import {
 export class CurriculumAttachmentDto {
   @ApiProperty({ example: 'syllabus.pdf' })
   @IsString()
-  fileName: string;
+  fileName!: string;
 
   @ApiProperty({ example: 'http://localhost:9000/eltms-files/attachments/123.pdf' })
   @IsString()
-  fileUrl: string;
+  fileUrl!: string;
 
   @ApiPropertyOptional({ example: 'application/pdf' })
   @IsOptional()
@@ -35,12 +35,32 @@ export class LessonDto {
   @ApiProperty({ example: 'Introduction to Computers' })
   @IsString()
   @MinLength(2)
-  title: string;
+  title!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleAm?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   content?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contentEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contentAm?: string;
 
   @ApiPropertyOptional({
     enum: ['VIDEO', 'DOCUMENT', 'PRESENTATION', 'INTERACTIVE', 'SCORM', 'EXTERNAL_LINK', 'AUDIO'],
@@ -84,17 +104,47 @@ export class CreateModuleDto {
   @ApiProperty({ example: 'Module 1: Fundamentals' })
   @IsString()
   @MinLength(2)
-  title: string;
+  title!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleAm?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  descriptionAm?: string;
+
   @ApiPropertyOptional({ example: 'Understand the basic concepts of revenue assessment' })
   @IsOptional()
   @IsString()
   objectives?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  objectivesEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  objectivesAm?: string;
 
   @ApiPropertyOptional({ example: 60 })
   @IsOptional()
