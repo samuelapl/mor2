@@ -34,7 +34,11 @@ export function AssessmentDetailSection({ assessments, isAmharic }: AssessmentDe
           </div>
 
           {/* Metrics cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
+              <p className="text-slate-500 font-medium">{tBilingual('Grade Weight', 'የውጤት ክብደት')}</p>
+              <p className="text-lg font-bold text-indigo-700 mt-1">{assessment.weight ?? 0}%</p>
+            </div>
             <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
               <p className="text-slate-500 font-medium">{tBilingual('Passing Score', 'ማለፊያ ነጥብ')}</p>
               <p className="text-lg font-bold text-emerald-600 mt-1">{assessment.passingScore}%</p>

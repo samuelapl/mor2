@@ -28,6 +28,9 @@ export class PolicyService {
           ? { retakeCooldownMinutes: dto.retakeCooldownMinutes }
           : {}),
         ...(dto.progressionMode !== undefined ? { progressionMode: dto.progressionMode } : {}),
+        ...(dto.passingScorePercent !== undefined
+          ? { passingScorePercent: dto.passingScorePercent }
+          : {}),
         updatedBy: updatedBy ?? null,
       },
     });
@@ -49,5 +52,11 @@ export class PolicyService {
   async getProgressionMode(): Promise<CourseProgressionMode> {
     const settings = await this.getSettings();
     return settings.progressionMode ?? CourseProgressionMode.LOCKED;
+  }
+
+  /** Global pass mark percentage (1-100) required for individual assessments and cumulative course grade. */
+  async getPassingScorePercent(): Promise<number> {
+    const settings = await this.getSettings();
+    return settings.passingScorePercent ?? 50;
   }
 }

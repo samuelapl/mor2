@@ -16,6 +16,8 @@ export interface AssessmentQuestionInput {
   question: string;
   options: string[];
   correctAnswer?: number | string;
+  category?: string;
+  points?: number;
 }
 
 export interface SaveAssessmentBody {
@@ -24,6 +26,7 @@ export interface SaveAssessmentBody {
   descriptionEn?: string;
   descriptionAm?: string;
   passingScore: number;
+  weight?: number;
   maxAttempts?: number;
   timeLimitMinutes?: number | null;
   shuffleQuestions?: boolean;
@@ -88,6 +91,23 @@ export async function createCourseAssessment(
   body: SaveAssessmentBody,
 ): Promise<ApiAssessment> {
   return api<ApiAssessment>(`courses/${courseId}/assessments`, { method: 'POST', body });
+}
+
+export async function createModuleAssessment(
+  courseId: string,
+  moduleId: string,
+  body: SaveAssessmentBody,
+): Promise<ApiAssessment> {
+  return api<ApiAssessment>(`courses/${courseId}/modules/${moduleId}/assessments`, { method: 'POST', body });
+}
+
+export async function createLessonAssessment(
+  courseId: string,
+  moduleId: string,
+  lessonId: string,
+  body: SaveAssessmentBody,
+): Promise<ApiAssessment> {
+  return api<ApiAssessment>(`courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessments`, { method: 'POST', body });
 }
 
 /** Replaces the final assessment of a draft / rejected course. */

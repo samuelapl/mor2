@@ -19,6 +19,9 @@ export interface AttachedAssessmentInfo {
   titleAm: string;
   passingScore: number;
   passed: boolean;
+  weight?: number;
+  bestScore?: number;
+  earnedPoints?: number;
 }
 
 @Injectable()
@@ -80,30 +83,60 @@ export class ProgressService {
       modules.map((m) => m.id),
       allLessonIds,
     );
-    // Load every assessment attached to this course along with whether the learner has passed it.
+    // Load every assessment attached to this course along with attempts for weighted scoring
     const assessments = await this.prisma.assessment.findMany({
       where: { courseId },
       include: {
-        attempts: { where: { userId, passed: true }, take: 1 },
+        attempts: {
+          where: { userId, submittedAt: { not: null } },
+          orderBy: { score: 'desc' },
+        },
       },
     });
-    const toAssessmentInfo = (a: (typeof assessments)[number]): AttachedAssessmentInfo => ({
-      id: a.id,
-      titleEn: a.titleEn,
-      titleAm: a.titleAm,
-      passingScore: a.passingScore,
-      passed: a.attempts.length > 0,
-    });
+
+    const globalPassingScore = await this.policyService.getPassingScorePercent();
+
+    // Determine weight distribution: if no weights set (legacy), split evenly among assessments
+    const totalConfiguredWeight = assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
+    const useEqualSplit = totalConfiguredWeight === 0 && assessments.length > 0;
+    const equalWeight = useEqualSplit ? Math.round(100 / assessments.length) : 0;
+
+    const toAssessmentInfo = (a: (typeof assessments)[number]): AttachedAssessmentInfo => {
+      const bestAttempt = a.attempts[0];
+      const bestScore = bestAttempt ? bestAttempt.score : 0;
+      const effectivePassingScore = a.passingScore > 0 ? a.passingScore : globalPassingScore;
+      const passed = a.attempts.some((att) => att.passed || att.score >= effectivePassingScore);
+      const effectiveWeight = useEqualSplit ? equalWeight : (a.weight || 0);
+      const earnedPoints = Math.round((bestScore * (effectiveWeight / 100)) * 10) / 10;
+      return {
+        id: a.id,
+        titleEn: a.titleEn,
+        titleAm: a.titleAm,
+        passingScore: effectivePassingScore,
+        passed,
+        weight: effectiveWeight,
+        bestScore,
+        earnedPoints,
+      };
+    };
+
+    const assessmentInfos = assessments.map(toAssessmentInfo);
+    const assessmentInfoMap = new Map<string, AttachedAssessmentInfo>();
+    for (const info of assessmentInfos) {
+      assessmentInfoMap.set(info.id, info);
+    }
+
     const moduleAssessmentByModuleId = new Map<string, AttachedAssessmentInfo>();
     const lessonAssessmentByLessonId = new Map<string, AttachedAssessmentInfo>();
     let finalAssessment: AttachedAssessmentInfo | null = null;
     for (const a of assessments) {
+      const info = assessmentInfoMap.get(a.id)!;
       if (a.type === AssessmentType.MODULE_ASSESSMENT && a.moduleId) {
-        moduleAssessmentByModuleId.set(a.moduleId, toAssessmentInfo(a));
+        moduleAssessmentByModuleId.set(a.moduleId, info);
       } else if (a.type === AssessmentType.LESSON_ASSESSMENT && a.lessonId) {
-        lessonAssessmentByLessonId.set(a.lessonId, toAssessmentInfo(a));
+        lessonAssessmentByLessonId.set(a.lessonId, info);
       } else if (a.type === AssessmentType.FINAL_ASSESSMENT) {
-        finalAssessment = toAssessmentInfo(a);
+        finalAssessment = info;
       }
     }
 
@@ -225,6 +258,13 @@ export class ProgressService {
     const contentCompleted = totalLessons > 0 && completedLessons === totalLessons;
     const finalAssessmentRequired = finalAssessment !== null;
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
+    const totalCourseGrade = Math.min(
+      100,
+      Math.round(assessmentInfos.reduce((sum, a) => sum + (a.earnedPoints ?? 0), 0)),
+    );
+    const allAssessmentsPassed =
+      assessments.length === 0 || assessmentInfos.every((a) => a.passed);
+    const gradeSatisfied = assessments.length === 0 || totalCourseGrade >= globalPassingScore;
 
     return {
       courseId,
@@ -241,9 +281,17 @@ export class ProgressService {
         contentCompleted,
         finalAssessmentRequired,
         finalAssessmentPassed,
+        allAssessmentsPassed,
+        totalCourseGrade,
+        passingScorePercent: globalPassingScore,
+        gradeSatisfied,
         certificateEligible:
-          contentCompleted && (!finalAssessmentRequired || finalAssessmentPassed),
+          contentCompleted &&
+          (!finalAssessmentRequired || finalAssessmentPassed) &&
+          allAssessmentsPassed &&
+          gradeSatisfied,
         finalAssessment,
+        assessmentBreakdown: assessmentInfos,
       },
     };
   }
@@ -655,15 +703,37 @@ export class ProgressService {
 
     if (completedLessons !== lessonIds.length) return;
 
-    const finalAssessment = await this.prisma.assessment.findFirst({
-      where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-      select: { id: true },
+    // Verify all assessments for this course meet the pass mark and cumulative grade
+    const assessments = await this.prisma.assessment.findMany({
+      where: { courseId },
+      include: {
+        attempts: {
+          where: { userId, submittedAt: { not: null } },
+          orderBy: { score: 'desc' },
+        },
+      },
     });
-    if (finalAssessment) {
-      const passed = await this.prisma.assessmentAttempt.findFirst({
-        where: { assessmentId: finalAssessment.id, userId, passed: true },
-      });
-      if (!passed) return;
+
+    if (assessments.length > 0) {
+      const globalPassingScore = await this.policyService.getPassingScorePercent();
+      const totalConfiguredWeight = assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
+      const useEqualSplit = totalConfiguredWeight === 0;
+      const equalWeight = useEqualSplit ? Math.round(100 / assessments.length) : 0;
+
+      let totalEarnedPoints = 0;
+      for (const a of assessments) {
+        const bestAttempt = a.attempts[0];
+        const bestScore = bestAttempt ? bestAttempt.score : 0;
+        const effectivePassingScore = a.passingScore > 0 ? a.passingScore : globalPassingScore;
+        const passed = a.attempts.some((att) => att.passed || att.score >= effectivePassingScore);
+        if (!passed) return; // Every individual assessment must be passed
+
+        const effectiveWeight = useEqualSplit ? equalWeight : (a.weight || 0);
+        totalEarnedPoints += bestScore * (effectiveWeight / 100);
+      }
+
+      const totalCourseGrade = Math.round(totalEarnedPoints);
+      if (totalCourseGrade < globalPassingScore) return; // Weighted cumulative grade must reach pass mark
     }
 
     const enrollment = await this.prisma.enrollment.findUnique({

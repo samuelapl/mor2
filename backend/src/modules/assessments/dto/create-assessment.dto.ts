@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
   MinLength,
   ValidateNested,
@@ -65,10 +66,18 @@ export class CreateAssessmentDto {
   @IsString()
   descriptionAm?: string;
 
-  @ApiProperty({ example: 60 })
+  @ApiPropertyOptional({ example: 50, description: 'Passing score percentage (defaults to global policy)' })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  passingScore: number;
+  passingScore?: number;
+
+  @ApiPropertyOptional({ example: 20, description: 'Weight % contribution to final course grade (0-100)' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  weight?: number;
 
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()

@@ -32,4 +32,16 @@ export class UpdatePolicyDto {
   @IsOptional()
   @IsEnum(CourseProgressionMode)
   progressionMode?: CourseProgressionMode;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 100,
+    example: 50,
+    description: 'Global pass mark percentage required for assessments and certification (1-100)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  passingScorePercent?: number;
 }

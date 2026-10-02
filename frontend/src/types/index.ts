@@ -109,12 +109,14 @@ export interface Question {
   answerText?: string;
   points: number;
   imageUrl?: string;
+  category?: string;
 }
 
 export interface Quiz {
   id: string;
   title: string;
   passMark: number;
+  weight?: number;
   attemptsAllowed: number;
   timeLimitMinutes?: number | null;
   questions: Question[];

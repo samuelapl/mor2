@@ -289,6 +289,7 @@ export interface ApiAssessment {
   descriptionEn: string | null;
   descriptionAm: string | null;
   passingScore: number;
+  weight?: number;
   maxAttempts: number;
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
@@ -319,6 +320,7 @@ export interface ApiAssessmentListing {
   titleEn: string;
   titleAm: string;
   passingScore: number;
+  weight?: number;
   maxAttempts: number;
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
@@ -336,6 +338,9 @@ export interface ApiAttachedAssessment {
   titleAm: string;
   passingScore: number;
   passed: boolean;
+  weight?: number;
+  bestScore?: number;
+  earnedPoints?: number;
 }
 
 export interface AssessmentReviewItem {
@@ -405,8 +410,13 @@ export interface ApiCourseCompletion {
   contentCompleted: boolean;
   finalAssessmentRequired: boolean;
   finalAssessmentPassed: boolean;
+  allAssessmentsPassed?: boolean;
+  totalCourseGrade?: number;
+  passingScorePercent?: number;
+  gradeSatisfied?: boolean;
   certificateEligible: boolean;
   finalAssessment: ApiAttachedAssessment | null;
+  assessmentBreakdown?: ApiAttachedAssessment[];
 }
 
 export interface ApiCourseProgress {

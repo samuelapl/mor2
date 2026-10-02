@@ -172,7 +172,8 @@ export class AssessmentsService {
       titleEn: dto.titleEn,
       descriptionAm: dto.descriptionAm,
       descriptionEn: dto.descriptionEn,
-      passingScore: dto.passingScore,
+      passingScore: dto.passingScore ?? 50,
+      weight: dto.weight ?? 0,
       maxAttempts: dto.maxAttempts ?? 3,
       timeLimitMinutes: dto.timeLimitMinutes,
       shuffleQuestions: dto.shuffleQuestions ?? false,
@@ -583,10 +584,12 @@ export class AssessmentsService {
     }
 
     const gradedAnswers = gradeAnswers(questions, dto.answers);
+    const globalPassMark = await this.policyService.getPassingScorePercent();
+    const effectivePassMark = globalPassMark ?? assessment.passingScore ?? 50;
     const { score, passed, correctCount } = computeResult(
       gradedAnswers,
       questions.length,
-      assessment.passingScore,
+      effectivePassMark,
     );
     const now = new Date();
     const startedAt = pending?.startedAt ?? new Date(now.getTime() - 60000);
@@ -669,11 +672,10 @@ export class AssessmentsService {
       }
     }
 
-    // Final assessment drives course completion + certificate (pass required).
-    // `maybeCompleteCourse` re-checks that all lessons are complete and the
-    // final assessment is passed before marking the enrollment COMPLETED and
-    // issuing the certificate.
-    if (isFinal && passed) {
+    // Any passed assessment can trigger course completion + certificate check
+    // (re-verifies that all lessons and all required assessments are passed,
+    // and overall weighted grade meets the global pass mark).
+    if (passed) {
       try {
         await this.progressService.maybeCompleteCourse(userId, assessmentCourseId);
       } catch {

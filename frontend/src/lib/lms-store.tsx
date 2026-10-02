@@ -337,6 +337,8 @@ function questionToApi(q: {
   options: string[];
   correctIndex: number;
   answerText?: string;
+  category?: string;
+  points?: number;
 }): AssessmentQuestionInput {
   if (q.type === 'short_answer') {
     return {
@@ -345,6 +347,8 @@ function questionToApi(q: {
       question: q.text,
       options: [],
       correctAnswer: (q.answerText ?? '').trim(),
+      category: q.category,
+      points: q.points,
     };
   }
   return {
@@ -353,6 +357,8 @@ function questionToApi(q: {
     question: q.text,
     options: q.options,
     correctAnswer: q.correctIndex,
+    category: q.category,
+    points: q.points,
   };
 }
 
@@ -789,6 +795,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               titleEn: quizTitle,
               titleAm: quizTitle,
               passingScore: input.quiz.passMark,
+              weight: input.quiz.weight ?? 100,
               maxAttempts: input.quiz.attemptsAllowed,
               timeLimitMinutes: input.quiz.timeLimitMinutes,
               questions: input.quiz.questions.map(questionToApi),
@@ -1152,6 +1159,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               titleEn: quizTitle,
               titleAm: quizTitle,
               passingScore: quiz.passMark,
+              weight: quiz.weight ?? 100,
               maxAttempts: quiz.attemptsAllowed,
               timeLimitMinutes: quiz.timeLimitMinutes,
               questions: quiz.questions.map(questionToApi),

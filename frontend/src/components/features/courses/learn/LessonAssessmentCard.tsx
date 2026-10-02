@@ -73,7 +73,16 @@ export function LessonAssessmentCard({
                     : 'Checkpoint Locked'}
               </span>
               <span className="text-[11px] text-slate-600 font-medium">
-                Passing Score: <strong className="text-slate-900">{assessment.passingScore}%</strong>
+                Pass: <strong className="text-slate-900">{assessment.passingScore}%</strong>
+                {assessment.weight !== undefined && assessment.weight > 0 ? (
+                  <> · Weight: <strong className="text-indigo-700">{assessment.weight}%</strong></>
+                ) : null}
+                {assessment.bestScore !== undefined ? (
+                  <> · Best Score: <strong className={isPassed ? 'text-emerald-700' : 'text-amber-700'}>{assessment.bestScore}%</strong></>
+                ) : null}
+                {assessment.earnedPoints !== undefined ? (
+                  <> · Points: <strong className="text-indigo-700">{assessment.earnedPoints}%</strong></>
+                ) : null}
               </span>
             </div>
             <h4

@@ -36,7 +36,7 @@ export function FinalAssessmentCard({
           <h3 className="text-sm font-bold text-slate-900">Comprehensive Final Assessment</h3>
           {finalAssessment.passed ? (
             <Badge variant="green" dot>
-              Passed
+              Passed {finalAssessment.bestScore !== undefined ? `(${finalAssessment.bestScore}%)` : ''}
             </Badge>
           ) : contentCompleted ? (
             <Badge variant="blue">
@@ -46,6 +46,14 @@ export function FinalAssessmentCard({
             <Badge variant="slate">
               <Lock className="h-3 w-3 mr-1" />
               Locked (Complete all lessons first)
+            </Badge>
+          )}
+          {finalAssessment.weight !== undefined && finalAssessment.weight > 0 && (
+            <Badge variant="indigo" className="text-[11px] font-semibold">
+              Weight: {finalAssessment.weight}%
+              {finalAssessment.earnedPoints !== undefined
+                ? ` · Earned: ${finalAssessment.earnedPoints}%`
+                : ''}
             </Badge>
           )}
         </div>

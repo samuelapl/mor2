@@ -19,6 +19,7 @@ import { uploadAttachment } from '@/lib/api/files';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useLookupCategories } from '@/lib/api/useLookupCategories';
 import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 import { inputClass, labelClass, uid } from './wizard-types';
 import { CompactRichEditor, MultiFileUploader } from './wizard-components';
 
@@ -47,16 +48,21 @@ export interface StepFinalAssessmentProps {
   handleFinalAssessmentFileUpload: (files: File | File[] | FileList) => Promise<void>;
   removeFinalAssessmentFile: (fileIdOrUrl: string) => void;
   editingCourseId?: string;
+  weight?: number;
+  setWeight?: (val: number) => void;
+  totalAllocatedWeight?: number;
 }
 
-function blankQuestion(type: QuestionType = 'multiple_choice'): Question {
+function blankQuestion(type: QuestionType = 'multiple_choice', category = ''): Question {
   return {
     id: uid('q'),
     type,
     text: '',
     options: type === 'true_false' ? ['True', 'False'] : ['', ''],
     correctIndex: 0,
+    answerText: '',
     points: 10,
+    category,
   };
 }
 
@@ -91,9 +97,13 @@ export function StepFinalAssessment({
   handleFinalAssessmentFileUpload,
   removeFinalAssessmentFile,
   editingCourseId,
+  weight = 100,
+  setWeight,
+  totalAllocatedWeight,
 }: StepFinalAssessmentProps) {
   const { isAmharic } = useTranslation();
   const { items: dynamicQuestionTypes } = useLookupCategories('QUESTION_TYPE');
+  const { items: dynamicCategories } = useLookupCategories('COURSE_CATEGORY');
 
   const questionTypeOptions =
     dynamicQuestionTypes.length > 0
@@ -198,19 +208,45 @@ export function StepFinalAssessment({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <div>
-            <label className={labelClass}>Passing Score (%)</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700">Grade Weight (%)</label>
+              {totalAllocatedWeight !== undefined && (
+                <span
+                  className={cn(
+                    'text-[10px] font-bold px-1.5 py-0.2 rounded',
+                    totalAllocatedWeight === 100
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800',
+                  )}
+                >
+                  Total: {totalAllocatedWeight}%
+                </span>
+              )}
+            </div>
             <input
               type="number"
-              min={1}
+              min={0}
               max={100}
-              value={passMark}
+              value={weight}
               onChange={(e) =>
-                setPassMark(Math.max(1, Math.min(100, parseInt(e.target.value) || 70)))
+                setWeight?.(Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)))
               }
               className={inputClass}
+              placeholder="e.g. 60"
             />
+          </div>
+
+          <div>
+            <label className={labelClass}>Passing Score (%)</label>
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-800">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+              <div>
+                <span className="font-bold">{passMark}%</span>
+                <p className="text-[10px] text-emerald-700/80">Global Policy Threshold</p>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -383,6 +419,19 @@ export function StepFinalAssessment({
                     {questionTypeOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={q.category || ''}
+                    onChange={(e) => patchQuestion(qIdx, { category: e.target.value })}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
+                  >
+                    <option value="">{isAmharic ? 'ምድብ ምረጥ (አማራጭ)' : 'Select Category (Optional)'}</option>
+                    {dynamicCategories.map((c) => (
+                      <option key={c.id || c.value} value={c.value}>
+                        {isAmharic && c.labelAm ? c.labelAm : c.labelEn || c.value}
                       </option>
                     ))}
                   </select>

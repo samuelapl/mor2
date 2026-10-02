@@ -623,15 +623,29 @@ export function LearnCourseModal({ open, onClose, courseId, courseTitle, showQui
       title={course.title}
       subtitle={`${course.code} · ${course.category}`}
       badge={
-        certificateEligible ? (
-          <Badge variant="green" dot>
-            Course Completed
-          </Badge>
-        ) : (
-          <Badge variant="blue" dot>
-            {Math.round(overall)}% Progress
-          </Badge>
-        )
+        <div className="flex items-center gap-2">
+          {certificateEligible ? (
+            <Badge variant="green" dot>
+              Course Completed
+            </Badge>
+          ) : (
+            <Badge variant="blue" dot>
+              {Math.round(overall)}% Progress
+            </Badge>
+          )}
+          {courseCompletion?.totalCourseGrade !== undefined && (
+            <Badge
+              variant={
+                (courseCompletion.totalCourseGrade ?? 0) >= (courseCompletion.passingScorePercent ?? 50)
+                  ? 'green'
+                  : 'amber'
+              }
+              className="font-mono text-xs font-bold"
+            >
+              Grade: {courseCompletion.totalCourseGrade}% (Pass: {courseCompletion.passingScorePercent ?? 50}%)
+            </Badge>
+          )}
+        </div>
       }
     >
       <div className="space-y-6 w-full pb-8">
@@ -690,6 +704,89 @@ export function LearnCourseModal({ open, onClose, courseId, courseTitle, showQui
             </div>
           </div>
         </div>
+
+        {/* Course Assessment & Grade Breakdown Card */}
+        {courseCompletion?.assessmentBreakdown && courseCompletion.assessmentBreakdown.length > 0 && (
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-indigo-600" />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Course Assessment & Grade Breakdown</h3>
+                  <p className="text-xs text-slate-500">
+                    Pass Mark Policy: <strong>{courseCompletion.passingScorePercent ?? 50}%</strong> required per quiz & cumulative total
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Total Course Grade:</span>
+                <span
+                  className={cn(
+                    'text-base font-extrabold font-mono px-3 py-1 rounded-xl border',
+                    (courseCompletion.totalCourseGrade ?? 0) >= (courseCompletion.passingScorePercent ?? 50)
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200',
+                  )}
+                >
+                  {courseCompletion.totalCourseGrade ?? 0}%
+                </span>
+                <Badge
+                  variant={
+                    (courseCompletion.totalCourseGrade ?? 0) >= (courseCompletion.passingScorePercent ?? 50)
+                      ? 'green'
+                      : 'amber'
+                  }
+                >
+                  {(courseCompletion.totalCourseGrade ?? 0) >= (courseCompletion.passingScorePercent ?? 50)
+                    ? 'Passing'
+                    : 'Below Pass Mark'}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+              {courseCompletion.assessmentBreakdown.map((ass) => (
+                <div
+                  key={ass.id}
+                  className={cn(
+                    'rounded-xl border p-3.5 space-y-2 transition-all',
+                    ass.passed
+                      ? 'border-emerald-200 bg-emerald-50/40'
+                      : (ass.bestScore ?? 0) > 0
+                        ? 'border-amber-200 bg-amber-50/40'
+                        : 'border-slate-200 bg-slate-50/50',
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-900 truncate pr-2">
+                      {ass.titleEn || 'Assessment'}
+                    </span>
+                    <Badge
+                      variant={ass.passed ? 'green' : (ass.bestScore ?? 0) > 0 ? 'amber' : 'slate'}
+                      className="text-[10px] py-0 px-1.5"
+                    >
+                      {ass.passed ? 'Passed' : (ass.bestScore ?? 0) > 0 ? 'Retake' : 'Pending'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-600">
+                    <span>
+                      Best Score: <strong className="text-slate-900">{ass.bestScore ?? 0}%</strong>
+                    </span>
+                    <span>
+                      Weight: <strong className="text-indigo-700">{ass.weight ?? 0}%</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] border-t border-slate-100 pt-1.5 font-medium">
+                    <span className="text-slate-500">Contribution:</span>
+                    <span className="font-bold text-indigo-900 font-mono">
+                      +{ass.earnedPoints ?? 0}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading && !progress ? (
           <div className="flex items-center justify-center py-8 text-xs text-slate-400">

@@ -2,21 +2,14 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Check, Loader2, Save, Send, Sparkles, BookmarkCheck } from 'lucide-react';
-import type {
-  Course,
-  CourseDeliveryMode,
-  CourseLevel,
-  Question,
-  QuestionType,
-  Quiz,
-  UploadedResource,
-} from '@/types';
+import type { Course, CourseDeliveryMode, CourseLevel, Question, QuestionType, Quiz, UploadedResource } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
 import { useLms } from '@/lib/lms-store';
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from '@/lib/api/quiz';
 import { uploadAttachment } from '@/lib/api/files';
+import { fetchCoursePolicy } from '@/lib/api/policy';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { toast } from '@/lib/toast';
 
@@ -33,18 +26,9 @@ interface CourseCreationWizardProps {
   editingCourse?: Course | null;
 }
 
-const STEPS = [
-  'Course Details',
-  'Curriculum & Content',
-  'Final Assessment & Rules',
-  'Review & Submit',
-];
+const STEPS = ['Course Details', 'Curriculum & Content', 'Final Assessment & Rules', 'Review & Submit'];
 
-export function CourseCreationWizard({
-  onDone,
-  onCancel,
-  editingCourse,
-}: CourseCreationWizardProps) {
+export function CourseCreationWizard({ onDone, onCancel, editingCourse }: CourseCreationWizardProps) {
   const { courses, createCourse, updateCourseFull, submitForApproval } = useLms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
@@ -60,9 +44,7 @@ export function CourseCreationWizard({
   const [code, setCode] = useState(editingCourse?.code ?? '');
   const [category, setCategory] = useState(editingCourse?.category ?? COURSE_CATEGORIES[0]);
   const [level, setLevel] = useState<CourseLevel>(editingCourse?.level ?? 'basic');
-  const [deliveryMode, setDeliveryMode] = useState<CourseDeliveryMode>(
-    editingCourse?.deliveryMode ?? 'BOTH',
-  );
+  const [deliveryMode, setDeliveryMode] = useState<CourseDeliveryMode>(editingCourse?.deliveryMode ?? 'BOTH');
   const [description, setDescription] = useState(editingCourse?.description ?? '');
   const [objectives, setObjectives] = useState(editingCourse?.objectives ?? '');
   const [department, setDepartment] = useState(editingCourse?.department ?? '');
@@ -125,8 +107,7 @@ export function CourseCreationWizard({
               resources: lesRes,
               attachments: lesRes,
               required: true,
-              assignmentInstructions:
-                lesson.contentType === 'ASSIGNMENT' ? (lesson.content ?? '') : undefined,
+              assignmentInstructions: lesson.contentType === 'ASSIGNMENT' ? (lesson.content ?? '') : undefined,
               assignmentFileTypes: ['PDF', 'DOCX', 'PPTX'],
               assignmentMaxMarks: 100,
               subLessons: (lesson.subLessons ?? []).map((sub) => {
@@ -143,8 +124,7 @@ export function CourseCreationWizard({
                   resources: subRes,
                   attachments: subRes,
                   required: true,
-                  assignmentInstructions:
-                    sub.contentType === 'ASSIGNMENT' ? (sub.content ?? '') : undefined,
+                  assignmentInstructions: sub.contentType === 'ASSIGNMENT' ? (sub.content ?? '') : undefined,
                   assignmentFileTypes: ['PDF', 'DOCX', 'PPTX'],
                   assignmentMaxMarks: 100,
                 };
@@ -164,7 +144,8 @@ export function CourseCreationWizard({
 
   // Step 3: Final Assessment & Completion Rules
   const [quizTitle, setQuizTitle] = useState('Final Assessment');
-  const [passMark, setPassMark] = useState(70);
+  const [passMark, setPassMark] = useState(50);
+  const [finalAssessmentWeight, setFinalAssessmentWeight] = useState(100);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number | null>(60);
   const [attemptsAllowed, setAttemptsAllowed] = useState(2);
   const [allowEarlySubmission, setAllowEarlySubmission] = useState(true);
@@ -188,11 +169,7 @@ export function CourseCreationWizard({
   const [assessmentUploadError, setAssessmentUploadError] = useState<string | null>(null);
 
   const handleFinalAssessmentFileUpload = async (files: File | File[] | FileList) => {
-    const fileList = Array.isArray(files)
-      ? files
-      : files instanceof File
-        ? [files]
-        : Array.from(files);
+    const fileList = Array.isArray(files) ? files : files instanceof File ? [files] : Array.from(files);
     if (fileList.length === 0) return;
 
     setAssessmentUploading(true);
@@ -215,18 +192,14 @@ export function CourseCreationWizard({
       setAssessmentFileName(combined[0]?.name || '');
       setAssessmentFileSize(combined[0]?.size || 0);
     } catch (err) {
-      setAssessmentUploadError(
-        err instanceof Error ? err.message : 'Failed to upload reference file',
-      );
+      setAssessmentUploadError(err instanceof Error ? err.message : 'Failed to upload reference file');
     } finally {
       setAssessmentUploading(false);
     }
   };
 
   const removeFinalAssessmentFile = (fileIdOrUrl: string) => {
-    const filtered = assessmentResources.filter(
-      (f) => f.id !== fileIdOrUrl && f.url !== fileIdOrUrl,
-    );
+    const filtered = assessmentResources.filter((f) => f.id !== fileIdOrUrl && f.url !== fileIdOrUrl);
     setAssessmentResources(filtered);
     setAssessmentFileUrl(filtered[0]?.url || '');
     setAssessmentFileName(filtered[0]?.name || '');
@@ -246,12 +219,7 @@ export function CourseCreationWizard({
             const detail = await fetchAssessmentWithAnswers(ass.id);
             if (detail?.questions && Array.isArray(detail.questions)) {
               for (const q of detail.questions as any[]) {
-                const type: QuestionType =
-                  q.type === 'TRUE_FALSE'
-                    ? 'true_false'
-                    : q.type === 'SHORT_ANSWER'
-                      ? 'short_answer'
-                      : 'multiple_choice';
+                const type: QuestionType = q.type === 'TRUE_FALSE' ? 'true_false' : q.type === 'SHORT_ANSWER' ? 'short_answer' : 'multiple_choice';
                 loaded.push({
                   id: q.id || uid('bank'),
                   type,
@@ -260,6 +228,7 @@ export function CourseCreationWizard({
                   correctIndex: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
                   answerText: typeof q.correctAnswer === 'string' ? q.correctAnswer : '',
                   points: q.points || 10,
+                  category: q.category || '',
                 });
               }
             }
@@ -269,6 +238,17 @@ export function CourseCreationWizard({
       })
       .catch(() => {});
   }, [courses, editingCourse?.id]);
+
+  // Load global policy pass mark on mount
+  useEffect(() => {
+    fetchCoursePolicy()
+      .then((policy: any) => {
+        if (policy?.passingScorePercent) {
+          setPassMark(policy.passingScorePercent);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Prefill assessment if editing an existing course
   useEffect(() => {
@@ -282,16 +262,12 @@ export function CourseCreationWizard({
         if (cancelled || !detail) return;
         setQuizTitle(detail.titleEn || 'Final Assessment');
         setPassMark(detail.passingScore);
+        if (detail.weight !== undefined) setFinalAssessmentWeight(detail.weight);
         setAttemptsAllowed(detail.maxAttempts);
         setTimeLimitMinutes(detail.timeLimitMinutes ?? 60);
         setQuestions(
           (detail.questions as any[]).map((q) => {
-            const type: QuestionType =
-              q.type === 'TRUE_FALSE'
-                ? 'true_false'
-                : q.type === 'SHORT_ANSWER'
-                  ? 'short_answer'
-                  : 'multiple_choice';
+            const type: QuestionType = q.type === 'TRUE_FALSE' ? 'true_false' : q.type === 'SHORT_ANSWER' ? 'short_answer' : 'multiple_choice';
             return {
               id: q.id,
               type,
@@ -299,7 +275,8 @@ export function CourseCreationWizard({
               options: q.options,
               correctIndex: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
               answerText: typeof q.correctAnswer === 'string' ? q.correctAnswer : '',
-              points: 10,
+              points: q.points || 10,
+              category: q.category || '',
             };
           }),
         );
@@ -315,8 +292,7 @@ export function CourseCreationWizard({
   const codeText = stripHtmlTags(code);
   const descriptionText = stripHtmlTags(description);
   const objectivesText = stripHtmlTags(objectives);
-  const detailsValid =
-    titleText !== '' && codeText !== '' && descriptionText !== '' && objectivesText.length >= 10;
+  const detailsValid = titleText !== '' && codeText !== '' && descriptionText !== '' && objectivesText.length >= 10;
 
   // Restore unfinished course draft on initial mount
   useEffect(() => {
@@ -325,12 +301,7 @@ export function CourseCreationWizard({
       const raw = localStorage.getItem('mor_draft_new_course');
       if (!raw) return;
       const draft = JSON.parse(raw);
-      if (
-        draft &&
-        (draft.title?.trim() ||
-          (Array.isArray(draft.modules) && draft.modules.length > 0) ||
-          draft.description?.trim())
-      ) {
+      if (draft && (draft.title?.trim() || (Array.isArray(draft.modules) && draft.modules.length > 0) || draft.description?.trim())) {
         if (draft.title) setTitle(draft.title);
         if (draft.titleAm) setTitleAm(draft.titleAm);
         if (draft.code) setCode(draft.code);
@@ -347,8 +318,7 @@ export function CourseCreationWizard({
         if (typeof draft.passMark === 'number') setPassMark(draft.passMark);
         if (typeof draft.timeLimitMinutes === 'number') setTimeLimitMinutes(draft.timeLimitMinutes);
         if (typeof draft.attemptsAllowed === 'number') setAttemptsAllowed(draft.attemptsAllowed);
-        if (Array.isArray(draft.questions) && draft.questions.length > 0)
-          setQuestions(draft.questions);
+        if (Array.isArray(draft.questions) && draft.questions.length > 0) setQuestions(draft.questions);
         if (draft.savedCourseId) savedCourseIdRef.current = draft.savedCourseId;
         if (typeof draft.step === 'number' && draft.step >= 0 && draft.step < STEPS.length) {
           setStep(draft.step);
@@ -421,11 +391,7 @@ export function CourseCreationWizard({
     modules
       .filter((m) => m.title.trim() !== '' || m.lessons.some((l) => l.title.trim() !== ''))
       .map((m) => {
-        const mResources = m.resources?.length
-          ? m.resources
-          : m.attachments?.length
-            ? m.attachments
-            : [];
+        const mResources = m.resources?.length ? m.resources : m.attachments?.length ? m.attachments : [];
         return {
           title: m.title.trim() || 'Module',
           description: m.description?.trim() || undefined,
@@ -439,17 +405,10 @@ export function CourseCreationWizard({
           lessons: m.lessons
             .filter((l) => l.title.trim() !== '')
             .map((l) => {
-              const lResources = l.resources?.length
-                ? l.resources
-                : l.attachments?.length
-                  ? l.attachments
-                  : [];
+              const lResources = l.resources?.length ? l.resources : l.attachments?.length ? l.attachments : [];
               return {
                 title: l.title.trim(),
-                content:
-                  l.contentType === 'ASSIGNMENT'
-                    ? l.assignmentInstructions || l.content || ''
-                    : l.content || '',
+                content: l.contentType === 'ASSIGNMENT' ? l.assignmentInstructions || l.content || '' : l.content || '',
                 durationMin: l.durationMin || 15,
                 contentType: l.contentType,
                 resourceUrl: l.resourceUrl?.trim() || lResources[0]?.url || undefined,
@@ -457,20 +416,18 @@ export function CourseCreationWizard({
                 fileSize: l.fileSize || lResources[0]?.size || undefined,
                 resources: lResources,
                 attachments: lResources,
+                quizQuestions: l.quizQuestions,
+                quizWeight: l.quizWeight,
+                quizPassMark: passMark,
+                quizTimeLimitMinutes: l.quizTimeLimitMinutes,
+                quizAttemptsAllowed: l.quizAttemptsAllowed,
                 subLessons: (l.subLessons ?? [])
                   .filter((sub) => sub.title.trim() !== '')
                   .map((sub) => {
-                    const sResources = sub.resources?.length
-                      ? sub.resources
-                      : sub.attachments?.length
-                        ? sub.attachments
-                        : [];
+                    const sResources = sub.resources?.length ? sub.resources : sub.attachments?.length ? sub.attachments : [];
                     return {
                       title: sub.title.trim(),
-                      content:
-                        sub.contentType === 'ASSIGNMENT'
-                          ? sub.assignmentInstructions || sub.content || ''
-                          : sub.content || '',
+                      content: sub.contentType === 'ASSIGNMENT' ? sub.assignmentInstructions || sub.content || '' : sub.content || '',
                       durationMin: sub.durationMin || 15,
                       contentType: sub.contentType,
                       resourceUrl: sub.resourceUrl?.trim() || sResources[0]?.url || undefined,
@@ -478,6 +435,11 @@ export function CourseCreationWizard({
                       fileSize: sub.fileSize || sResources[0]?.size || undefined,
                       resources: sResources,
                       attachments: sResources,
+                      quizQuestions: sub.quizQuestions,
+                      quizWeight: sub.quizWeight,
+                      quizPassMark: passMark,
+                      quizTimeLimitMinutes: sub.quizTimeLimitMinutes,
+                      quizAttemptsAllowed: sub.quizAttemptsAllowed,
                     };
                   }),
               };
@@ -491,6 +453,7 @@ export function CourseCreationWizard({
           id: `q-${Date.now()}`,
           title: quizTitle.trim() || 'Final Assessment',
           passMark,
+          weight: finalAssessmentWeight,
           attemptsAllowed,
           timeLimitMinutes: timeLimitMinutes || null,
           questions,
@@ -690,14 +653,29 @@ export function CourseCreationWizard({
     }
   };
 
+  const totalAllocatedWeight =
+    modules.reduce(
+      (modSum, m) =>
+        modSum +
+        m.lessons.reduce((lesSum, l) => {
+          let sum = l.contentType === 'QUIZ' || l.contentType === 'ASSESSMENT' ? (l.quizWeight ?? 0) : 0;
+          if (l.subLessons) {
+            sum += l.subLessons.reduce(
+              (subSum, s) => subSum + (s.contentType === 'QUIZ' || s.contentType === 'ASSESSMENT' ? (s.quizWeight ?? 0) : 0),
+              0,
+            );
+          }
+          return lesSum + sum;
+        }, 0),
+      0,
+    ) + (questions.length > 0 ? finalAssessmentWeight : 0);
+
   return (
     <div className="space-y-6">
       {/* Step Indicator Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/90 pb-5">
         <div>
-          <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
-            {isEdit ? 'Edit Course' : 'Create New Course'}
-          </h2>
+          <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">{isEdit ? 'Edit Course' : 'Create New Course'}</h2>
           <p className="mt-0.5 text-xs text-slate-500">
             Step {step + 1} of {STEPS.length} — {STEPS[step]}
           </p>
@@ -722,11 +700,7 @@ export function CourseCreationWizard({
               <span
                 className={cn(
                   'flex h-4 w-4 items-center justify-center rounded-full text-[10px]',
-                  step === idx
-                    ? 'bg-white/20 text-white'
-                    : idx < step
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-200 text-slate-500',
+                  step === idx ? 'bg-white/20 text-white' : idx < step ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500',
                 )}
               >
                 {idx < step ? <Check className="h-2.5 w-2.5" /> : idx + 1}
@@ -746,8 +720,7 @@ export function CourseCreationWizard({
             <div>
               <p className="font-semibold text-indigo-900">Restored unfinished course draft</p>
               <p className="text-[11px] text-indigo-700">
-                Continuing from where you left off. All your entered details, curriculum, and
-                settings are preserved.
+                Continuing from where you left off. All your entered details, curriculum, and settings are preserved.
               </p>
             </div>
           </div>
@@ -823,6 +796,7 @@ export function CourseCreationWizard({
           expandedSubLessons={expandedSubLessons}
           setExpandedSubLessons={setExpandedSubLessons}
           editingCourseId={editingCourse?.id}
+          globalPassMark={passMark}
         />
       ) : null}
 
@@ -833,6 +807,9 @@ export function CourseCreationWizard({
           setQuizTitle={setQuizTitle}
           passMark={passMark}
           setPassMark={setPassMark}
+          weight={finalAssessmentWeight}
+          setWeight={setFinalAssessmentWeight}
+          totalAllocatedWeight={totalAllocatedWeight}
           timeLimitMinutes={timeLimitMinutes}
           setTimeLimitMinutes={setTimeLimitMinutes}
           attemptsAllowed={attemptsAllowed}
@@ -873,6 +850,7 @@ export function CourseCreationWizard({
           modules={modules}
           quizTitle={quizTitle}
           passMark={passMark}
+          finalAssessmentWeight={finalAssessmentWeight}
           timeLimitMinutes={timeLimitMinutes}
           attemptsAllowed={attemptsAllowed}
           allowEarlySubmission={allowEarlySubmission}
@@ -911,11 +889,7 @@ export function CourseCreationWizard({
           </Button>
 
           {step < STEPS.length - 1 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={step === 0 && !detailsValid}
-              className="gap-1.5 shadow-xs"
-            >
+            <Button onClick={() => setStep(step + 1)} disabled={step === 0 && !detailsValid} className="gap-1.5 shadow-xs">
               Next <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           ) : (

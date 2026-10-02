@@ -19,6 +19,7 @@ import {
   Plus,
   Presentation,
   MousePointerClick,
+  ShieldCheck,
   Trash2,
   Upload,
   Video,
@@ -30,6 +31,8 @@ import { Badge } from '@/components/ui/Badge';
 import { RichTextArea } from '@/components/ui/RichTextArea';
 import { cn } from '@/lib/utils';
 import { uploadAttachment } from '@/lib/api/files';
+import { useLookupCategories } from '@/lib/api/useLookupCategories';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import {
   inputClass,
   labelClass,
@@ -50,16 +53,19 @@ export interface StepCurriculumProps {
   expandedSubLessons: Set<string>;
   setExpandedSubLessons: React.Dispatch<React.SetStateAction<Set<string>>>;
   editingCourseId?: string;
+  globalPassMark?: number;
 }
 
-function blankQuestion(type: QuestionType = 'multiple_choice'): Question {
+function blankQuestion(type: QuestionType = 'multiple_choice', category = ''): Question {
   return {
     id: uid('q'),
     type,
     text: '',
     options: type === 'true_false' ? ['True', 'False'] : ['', ''],
     correctIndex: 0,
+    answerText: '',
     points: 10,
+    category,
   };
 }
 
@@ -73,7 +79,32 @@ export function StepCurriculum({
   expandedSubLessons,
   setExpandedSubLessons,
   editingCourseId,
+  globalPassMark = 50,
 }: StepCurriculumProps) {
+  const { isAmharic } = useTranslation();
+  const { items: dynamicQuestionTypes } = useLookupCategories('QUESTION_TYPE');
+  const { items: dynamicCategories } = useLookupCategories('COURSE_CATEGORY');
+
+  const questionTypeOptions =
+    dynamicQuestionTypes.length > 0
+      ? dynamicQuestionTypes.map((qt) => ({
+          value: qt.value.toLowerCase() as QuestionType,
+          label: isAmharic && qt.labelAm ? qt.labelAm : qt.labelEn,
+        }))
+      : [
+          {
+            value: 'multiple_choice' as QuestionType,
+            label: isAmharic ? 'ብዙ ምርጫ' : 'Multiple Choice',
+          },
+          {
+            value: 'true_false' as QuestionType,
+            label: isAmharic ? 'እውነት / ሀሰት' : 'True / False',
+          },
+          {
+            value: 'short_answer' as QuestionType,
+            label: isAmharic ? 'አጭር መልስ' : 'Short Answer',
+          },
+        ];
   const toggleModule = (id: string) =>
     setExpandedModules((prev) => {
       const next = new Set(prev);
@@ -169,6 +200,7 @@ export function StepCurriculum({
                   quizQuestions:
                     type === 'QUIZ' || type === 'ASSESSMENT' ? [blankQuestion()] : undefined,
                   quizPassMark: type === 'QUIZ' || type === 'ASSESSMENT' ? 70 : undefined,
+                  quizWeight: type === 'QUIZ' || type === 'ASSESSMENT' ? 20 : undefined,
                   quizTimeLimitMinutes:
                     type === 'QUIZ' ? 20 : type === 'ASSESSMENT' ? 45 : undefined,
                   quizAttemptsAllowed: type === 'QUIZ' ? 3 : type === 'ASSESSMENT' ? 2 : undefined,
@@ -262,6 +294,7 @@ export function StepCurriculum({
                   quizQuestions:
                     type === 'QUIZ' || type === 'ASSESSMENT' ? [blankQuestion()] : undefined,
                   quizPassMark: type === 'QUIZ' || type === 'ASSESSMENT' ? 70 : undefined,
+                  quizWeight: type === 'QUIZ' || type === 'ASSESSMENT' ? 20 : undefined,
                   quizTimeLimitMinutes:
                     type === 'QUIZ' ? 15 : type === 'ASSESSMENT' ? 30 : undefined,
                   quizAttemptsAllowed: type === 'QUIZ' ? 3 : type === 'ASSESSMENT' ? 2 : undefined,
@@ -687,23 +720,129 @@ export function StepCurriculum({
             </Button>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs items-center">
+            <div>
+              <label className={labelClass}>Grade Weight (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={lesson.quizWeight ?? 0}
+                onChange={(e) =>
+                  applyPatch({
+                    quizWeight: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)),
+                  })
+                }
+                className={inputClass}
+                placeholder="e.g. 20"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Time Limit (Minutes)</label>
+              <input
+                type="number"
+                min={1}
+                max={180}
+                value={lesson.quizTimeLimitMinutes ?? 15}
+                onChange={(e) =>
+                  applyPatch({
+                    quizTimeLimitMinutes: Math.max(1, parseInt(e.target.value, 10) || 15),
+                  })
+                }
+                className={inputClass}
+                placeholder="e.g. 15"
+              />
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-50/80 px-3 py-2 border border-emerald-200 text-xs text-emerald-800">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+              <div>
+                <span className="font-bold">Pass Mark: {globalPassMark}%</span>
+                <p className="text-[11px] text-emerald-700/80">
+                  Global Policy Threshold
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3">
             {questions.map((q, qIdx) => (
               <div
                 key={q.id || qIdx}
                 className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-3 shadow-2xs"
               >
-                <div className="flex items-center justify-between">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
-                    {qIdx + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeQ(qIdx)}
-                    className="p-1 text-slate-400 hover:text-red-600 transition"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                      {qIdx + 1}
+                    </span>
+
+                    {/* Dynamic Question Type Selector from DB */}
+                    <select
+                      value={q.type}
+                      onChange={(e) => {
+                        const newType = e.target.value as QuestionType;
+                        const opts =
+                          newType === 'true_false'
+                            ? ['True', 'False']
+                            : newType === 'multiple_choice'
+                              ? q.options && q.options.length >= 2
+                                ? q.options
+                                : ['', '', '', '']
+                              : [];
+                        patchQ(qIdx, {
+                          type: newType,
+                          options: opts,
+                          correctIndex: 0,
+                          answerText: '',
+                        });
+                      }}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none"
+                    >
+                      {questionTypeOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Dynamic Question Category Selector from DB */}
+                    <select
+                      value={q.category ?? ''}
+                      onChange={(e) => patchQ(qIdx, { category: e.target.value })}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 outline-none max-w-[180px]"
+                    >
+                      <option value="">Category: General</option>
+                      {dynamicCategories.map((cat) => (
+                        <option key={cat.id} value={cat.value}>
+                          {isAmharic && cat.labelAm ? cat.labelAm : cat.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                      <span className="font-medium text-slate-600">Pts:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={q.points || 10}
+                        onChange={(e) =>
+                          patchQ(qIdx, { points: Math.max(1, parseInt(e.target.value, 10) || 10) })
+                        }
+                        className="w-12 rounded-lg border border-slate-200 px-1.5 py-0.5 text-xs text-center font-medium"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeQ(qIdx)}
+                      className="p-1 text-slate-400 hover:text-red-600 transition"
+                      title="Delete question"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -715,9 +854,24 @@ export function StepCurriculum({
                   />
                 </div>
 
+                {/* Multiple Choice Options */}
                 {q.type === 'multiple_choice' && (
                   <div className="space-y-2">
-                    <label className={labelClass}>Options (select correct answer)</label>
+                    <div className="flex items-center justify-between">
+                      <label className={labelClass}>Options (select correct answer)</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (q.options.length < 6) {
+                            patchQ(qIdx, { options: [...q.options, ''] });
+                          }
+                        }}
+                        disabled={q.options.length >= 6}
+                        className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-40"
+                      >
+                        + Add Option
+                      </button>
+                    </div>
                     {q.options.map((opt, optIdx) => (
                       <div key={optIdx} className="flex items-center gap-2">
                         <input
@@ -725,7 +879,7 @@ export function StepCurriculum({
                           name={`quiz-q-${lesson.id}-${qIdx}`}
                           checked={q.correctIndex === optIdx}
                           onChange={() => patchQ(qIdx, { correctIndex: optIdx })}
-                          className="h-4 w-4 text-indigo-600"
+                          className="h-4 w-4 text-indigo-600 accent-indigo-600 cursor-pointer"
                         />
                         <input
                           type="text"
@@ -738,8 +892,78 @@ export function StepCurriculum({
                           }}
                           className={inputClass}
                         />
+                        {q.options.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newOpts = q.options.filter((_, idx) => idx !== optIdx);
+                              const newCorrect =
+                                q.correctIndex >= newOpts.length
+                                  ? 0
+                                  : q.correctIndex === optIdx
+                                    ? 0
+                                    : q.correctIndex > optIdx
+                                      ? q.correctIndex - 1
+                                      : q.correctIndex;
+                              patchQ(qIdx, { options: newOpts, correctIndex: newCorrect });
+                            }}
+                            className="p-1 text-slate-300 hover:text-red-500 transition"
+                            title="Remove option"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* True / False Options */}
+                {q.type === 'true_false' && (
+                  <div className="space-y-2">
+                    <label className={labelClass}>Correct Answer</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: isAmharic ? 'እውነት (True)' : 'True', index: 0 },
+                        { label: isAmharic ? 'ሀሰት (False)' : 'False', index: 1 },
+                      ].map((item) => (
+                        <label
+                          key={item.index}
+                          className={cn(
+                            'flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition font-medium text-xs',
+                            q.correctIndex === item.index
+                              ? 'border-indigo-600 bg-indigo-50/60 text-indigo-900 ring-1 ring-indigo-500/20'
+                              : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name={`quiz-tf-${lesson.id}-${qIdx}`}
+                            checked={q.correctIndex === item.index}
+                            onChange={() => patchQ(qIdx, { correctIndex: item.index })}
+                            className="h-4 w-4 text-indigo-600 accent-indigo-600"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Short Answer Key */}
+                {q.type === 'short_answer' && (
+                  <div className="space-y-1.5">
+                    <label className={labelClass}>Expected Model Answer / Keywords</label>
+                    <input
+                      type="text"
+                      value={q.answerText ?? ''}
+                      placeholder="Enter expected answer phrase or keywords…"
+                      onChange={(e) => patchQ(qIdx, { answerText: e.target.value })}
+                      className={inputClass}
+                    />
+                    <p className="text-[11px] text-slate-400">
+                      Learner response will be evaluated against this key.
+                    </p>
                   </div>
                 )}
               </div>
@@ -1116,9 +1340,7 @@ export function StepCurriculum({
                                 <option value="VIDEO">Video</option>
                                 <option value="AUDIO">Audio</option>
                                 <option value="PRESENTATION">Presentation</option>
-                                <option value="QUIZ">Quiz (Interactive)</option>
-                                <option value="ASSIGNMENT">Assignment</option>
-                                <option value="ASSESSMENT">Assessment (Exam)</option>
+                                <option value="ASSESSMENT">Assessment</option>
                                 <option value="INTERACTIVE">Interactive Activity</option>
                                 <option value="EXTERNAL_LINK">External Link</option>
                               </select>
@@ -1218,35 +1440,6 @@ export function StepCurriculum({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        addSubLesson(mod.id, lesson.id, 'QUIZ', 'Lesson Quiz');
-                                        setExpandedSubLessons(
-                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
-                                        );
-                                      }}
-                                      className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition shadow-2xs"
-                                    >
-                                      <FileQuestion className="h-3.5 w-3.5" /> Quiz
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        addSubLesson(
-                                          mod.id,
-                                          lesson.id,
-                                          'ASSIGNMENT',
-                                          'Lesson Assignment',
-                                        );
-                                        setExpandedSubLessons(
-                                          (prev) => new Set(Array.from(prev).concat(lesson.id)),
-                                        );
-                                      }}
-                                      className="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-50 transition shadow-2xs"
-                                    >
-                                      <ClipboardList className="h-3.5 w-3.5" /> Assignment
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
                                         addSubLesson(
                                           mod.id,
                                           lesson.id,
@@ -1308,9 +1501,7 @@ export function StepCurriculum({
                                               <option value="VIDEO">Video</option>
                                               <option value="AUDIO">Audio</option>
                                               <option value="PRESENTATION">Slides</option>
-                                              <option value="QUIZ">Quiz (Interactive)</option>
-                                              <option value="ASSIGNMENT">Assignment</option>
-                                              <option value="ASSESSMENT">Assessment (Exam)</option>
+                                              <option value="ASSESSMENT">Assessment</option>
                                               <option value="INTERACTIVE">
                                                 Interactive Activity
                                               </option>
@@ -1387,22 +1578,6 @@ export function StepCurriculum({
                       className="gap-1.5 text-sky-700 border-sky-300 hover:bg-sky-50 shadow-2xs"
                     >
                       <Plus className="h-4 w-4" /> Add Lesson
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => addLesson(mod.id, 'QUIZ', 'Module Quiz')}
-                      className="gap-1.5 text-indigo-700 border-indigo-300 hover:bg-indigo-50 shadow-2xs"
-                    >
-                      <FileQuestion className="h-4 w-4" /> Add Quiz
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => addLesson(mod.id, 'ASSIGNMENT', 'Module Assignment')}
-                      className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50 shadow-2xs"
-                    >
-                      <ClipboardList className="h-4 w-4" /> Add Assignment
                     </Button>
                     <Button
                       size="sm"

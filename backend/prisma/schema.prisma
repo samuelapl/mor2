@@ -21,6 +21,7 @@ model CoursePolicySettings {
   timeSpentPercent      Float                 @default(50) @map("time_spent_percent")
   retakeCooldownMinutes Int                   @default(0) @map("retake_cooldown_minutes")
   progressionMode       CourseProgressionMode @default(LOCKED) @map("progression_mode")
+  passingScorePercent   Int                   @default(50) @map("passing_score_percent")
   updatedAt             DateTime              @updatedAt @map("updated_at")
   updatedBy             String?               @map("updated_by")
 
@@ -505,6 +506,7 @@ model Assessment {
   descriptionAm String? @map("description_am")
   descriptionEn String? @map("description_en")
   passingScore  Int    @map("passing_score") // percentage
+  weight        Int    @default(0) @map("weight") // percentage weight towards course grade (sum of course assessments = 100)
   maxAttempts   Int    @default(3) @map("max_attempts")
   timeLimitMinutes Int? @map("time_limit_minutes")
   shuffleQuestions Boolean @default(false) @map("shuffle_questions")

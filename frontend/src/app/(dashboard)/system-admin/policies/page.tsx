@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import {
+  Award,
   CheckCircle2,
   Clock,
   Compass,
   Info,
-  Loader2,
   Lock,
   RotateCcw,
   Save,
@@ -43,6 +43,7 @@ export default function PoliciesPage() {
   const [timeSpentPercent, setTimeSpentPercent] = useState(50);
   const [retakeCooldownMinutes, setRetakeCooldownMinutes] = useState(0);
   const [progressionMode, setProgressionMode] = useState<CourseProgressionMode>('LOCKED');
+  const [passingScorePercent, setPassingScorePercent] = useState(50);
   const [coursePolicyUpdatedAt, setCoursePolicyUpdatedAt] = useState<string | null>(null);
 
   // Live session attendance policy states
@@ -60,6 +61,7 @@ export default function PoliciesPage() {
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setProgressionMode(policy.progressionMode ?? 'LOCKED');
+      setPassingScorePercent(policy.passingScorePercent ?? 50);
       setCoursePolicyUpdatedAt(policy.updatedAt);
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Unable to load course policy settings.');
@@ -105,10 +107,12 @@ export default function PoliciesPage() {
         timeSpentPercent,
         retakeCooldownMinutes,
         progressionMode,
+        passingScorePercent,
       });
       setTimeSpentPercent(policy.timeSpentPercent);
       setRetakeCooldownMinutes(policy.retakeCooldownMinutes);
       setProgressionMode(policy.progressionMode ?? 'LOCKED');
+      setPassingScorePercent(policy.passingScorePercent ?? 50);
       setCoursePolicyUpdatedAt(policy.updatedAt);
       toast.success('Course completion policies saved successfully.');
     } catch (err) {
@@ -515,6 +519,116 @@ export default function PoliciesPage() {
                           `ሙከራዎቹን ያጠናቀቀ ተማሪ ከመጨረሻው ምዝገባው ከ ${retakeCooldownMinutes} ደቂቃ(ዎች) በኋላ እንደገና መሞከር ይችላል።`,
                         )}
                   </p>
+                </div>
+              </Card>
+
+              {/* Card 4: Global Assessment & Certification Pass Mark */}
+              <Card>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle>
+                        {tBilingual(
+                          'Global Assessment & Certification Pass Mark',
+                          'አጠቃላይ የምዘና እና ምስክር ወረቀት ማለፊያ ነጥብ',
+                        )}
+                      </CardTitle>
+                      <Badge variant="green" className="text-[10px] py-0 px-1.5 font-bold">
+                        {tBilingual('Dual Threshold', 'ድርብ ገደብ')}
+                      </Badge>
+                    </div>
+                    <CardDescription className="mt-1">
+                      {tBilingual(
+                        'The global minimum score required to pass individual assessments and earn course certification. Learners must meet or exceed this mark on each quiz and in their total weighted course grade.',
+                        'የግል ምዘናዎችን ለማለፍ እና የኮርስ የምስክር ወረቀት ለማግኘት የሚያስፈልገው አጠቃላይ ዝቅተኛ ውጤት። ተማሪዎች በእያንዳንዱ ፈተና እና በጠቅላላው የክብደት ውጤታቸው ይህንን ማሟላት አለባቸው።',
+                      )}
+                    </CardDescription>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <span>{tBilingual('Passing threshold', 'የማለፊያ መስፈርት')}</span>
+                    <span className="text-emerald-700 font-bold text-base">{passingScorePercent}%</span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min={1}
+                    max={100}
+                    step={1}
+                    value={passingScorePercent}
+                    onChange={(e) => setPassingScorePercent(Number(e.target.value))}
+                    className="w-full accent-emerald-600 cursor-pointer"
+                  />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={passingScorePercent}
+                      onChange={(e) =>
+                        setPassingScorePercent(
+                          Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 50)),
+                        )
+                      }
+                      className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 font-semibold text-slate-800"
+                    />
+                    <span className="text-xs text-slate-500">
+                      {tBilingual(
+                        'Select preset standard:',
+                        'ፈጣን መደበኛ ምረቃ፦',
+                      )}
+                    </span>
+                    {[
+                      { label: '50% (Standard)', value: 50 },
+                      { label: '60%', value: 60 },
+                      { label: '70% (Competency)', value: 70 },
+                      { label: '75%', value: 75 },
+                      { label: '80% (Mastery)', value: 80 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => setPassingScorePercent(preset.value)}
+                        className={cn(
+                          'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all shadow-xs border',
+                          passingScorePercent === preset.value
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 text-xs text-slate-700 space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                      <span>
+                        <strong>{tBilingual('Per-Assessment Gate:', 'በእያንዳንዱ ምዘና፦')}</strong>{' '}
+                        {tBilingual(
+                          `Learners must score at least ${passingScorePercent}% on every quiz to pass it, retaking attempts until reached.`,
+                          `ተማሪዎች እያንዳንዱን ፈተና ለማለፍ ቢያንስ ${passingScorePercent}% ማግኘት አለባቸው፤ እስኪያልፉ ድረስ ድጋሚ ይሞክራሉ።`,
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                      <span>
+                        <strong>{tBilingual('Certification Gate:', 'የምስክር ወረቀት መስፈርት፦')}</strong>{' '}
+                        {tBilingual(
+                          `Total course grade (sum of weighted assessments) must also reach ${passingScorePercent}% to unlock the certificate.`,
+                          `የምስክር ወረቀቱን ለመክፈት አጠቃላይ የተመዘነ የኮርስ ውጤት ቢያንስ ${passingScorePercent}% መድረስ አለበት።`,
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </Card>
             </div>

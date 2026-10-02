@@ -60,6 +60,7 @@ export interface StepReviewSubmitProps {
   allowEarlySubmission?: boolean;
   autoSubmitOnExpire?: boolean;
   questions: Question[];
+  finalAssessmentWeight?: number;
   assessmentResources?: UploadedResource[];
   assessmentFileUrl?: string;
   assessmentFileName?: string;
@@ -250,8 +251,8 @@ function getContentTypeBadge(type: WizardContentType) {
     case 'QUIZ':
     case 'ASSESSMENT':
       return {
-        label: 'Quiz Assessment',
-        icon: FileQuestion,
+        label: 'Assessment',
+        icon: Award,
         color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
       };
     case 'ASSIGNMENT':
@@ -286,6 +287,7 @@ export function StepReviewSubmit({
   allowEarlySubmission = true,
   autoSubmitOnExpire = true,
   questions,
+  finalAssessmentWeight = 100,
   assessmentResources = [],
   assessmentFileUrl,
   assessmentFileName,
@@ -308,6 +310,41 @@ export function StepReviewSubmit({
     }
     return ids;
   }, [modules]);
+
+  const curriculumQuizzes = useMemo(() => {
+    const list: Array<{ title: string; weight: number; passMark: number; moduleTitle: string }> = [];
+    for (const m of modules) {
+      for (const l of m.lessons) {
+        if (l.contentType === 'QUIZ' || l.contentType === 'ASSESSMENT') {
+          list.push({
+            title: l.title || 'Lesson Assessment',
+            weight: l.quizWeight ?? 0,
+            passMark: passMark,
+            moduleTitle: m.title || 'Module',
+          });
+        }
+        if (l.subLessons) {
+          for (const sub of l.subLessons) {
+            if (sub.contentType === 'QUIZ' || sub.contentType === 'ASSESSMENT') {
+              list.push({
+                title: sub.title || 'Sub-lesson Assessment',
+                weight: sub.quizWeight ?? 0,
+                passMark: passMark,
+                moduleTitle: m.title || 'Module',
+              });
+            }
+          }
+        }
+      }
+    }
+    return list;
+  }, [modules, passMark]);
+
+  const hasFinalAssessment = questions.length > 0;
+  const totalAllocatedWeight =
+    curriculumQuizzes.reduce((sum, q) => sum + q.weight, 0) +
+    (hasFinalAssessment ? finalAssessmentWeight : 0);
+  const totalAssessmentsCount = curriculumQuizzes.length + (hasFinalAssessment ? 1 : 0);
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(initialModuleIds);
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(initialLessonIds);
@@ -1148,10 +1185,15 @@ export function StepReviewSubmit({
         </div>
 
         {/* Assessment Parameter Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
+            <p className="text-slate-500 font-medium">Grade Weight</p>
+            <p className="text-lg font-bold text-indigo-700 mt-1">{finalAssessmentWeight}%</p>
+          </div>
           <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
             <p className="text-slate-500 font-medium">Passing Score</p>
             <p className="text-lg font-bold text-emerald-600 mt-1">{passMark}%</p>
+            <p className="text-[10px] text-emerald-700/80 font-medium mt-0.5">Global Policy</p>
           </div>
           <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
             <p className="text-slate-500 font-medium">Time Limit</p>
@@ -1168,6 +1210,65 @@ export function StepReviewSubmit({
             <p className="text-lg font-bold text-indigo-600 mt-1">{questions.length}</p>
           </div>
         </div>
+
+        {/* Course Assessment Weight Allocation Summary */}
+        {totalAssessmentsCount > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Course Assessment Weighting Summary ({totalAssessmentsCount} assessment{totalAssessmentsCount !== 1 ? 's' : ''})
+              </span>
+              <span
+                className={cn(
+                  'text-xs font-bold px-2.5 py-1 rounded-lg border',
+                  totalAllocatedWeight === 100
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200',
+                )}
+              >
+                Total Weight: {totalAllocatedWeight}% / 100% {totalAllocatedWeight === 100 ? '✓ Balanced' : '⚠ Action Needed'}
+              </span>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              {curriculumQuizzes.map((q, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/80"
+                >
+                  <span className="text-slate-700 font-medium">
+                    {q.moduleTitle} • {q.title}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500">Pass: {q.passMark}%</span>
+                    <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                      Weight: {q.weight}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {hasFinalAssessment && (
+                <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-indigo-200">
+                  <span className="text-indigo-900 font-semibold">
+                    Final Assessment • {quizTitle || 'Final Exam'}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500">Pass: {passMark}%</span>
+                    <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                      Weight: {finalAssessmentWeight}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {totalAllocatedWeight !== 100 && (
+              <p className="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                ⚠ The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Assessment Reference Files */}
         {allAssessmentAttachments.length > 0 && (
