@@ -97,6 +97,14 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       }
 
       mod.lessons.forEach((lesson, lessonIndex) => {
+        const titleLower = (lesson.title || '').trim().toLowerCase();
+        if (
+          titleLower === 'module assessment' ||
+          (lesson.contentType as string) === 'ASSESSMENT'
+        ) {
+          return;
+        }
+
         const lessonProg = lessonProgressMap.get(lesson.id);
         const lessonUnlocked = isOpenProgression
           ? true
@@ -121,6 +129,14 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         // 2. Sub-Lesson Items (if any)
         if (lesson.subLessons && lesson.subLessons.length > 0) {
           lesson.subLessons.forEach((sub, subIndex) => {
+            const subTitleLower = (sub.title || '').trim().toLowerCase();
+            if (
+              subTitleLower === 'lesson assessment' ||
+              (sub.contentType as string) === 'ASSESSMENT'
+            ) {
+              return;
+            }
+
             const subProg = lessonProg?.subLessons?.find((s) => s.lessonId === sub.id);
             const subUnlocked = isOpenProgression
               ? true

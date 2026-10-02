@@ -243,7 +243,7 @@ export class AssessmentsService {
       where: { moduleId, type: AssessmentType.MODULE_ASSESSMENT },
     });
     if (existing) {
-      throw new ForbiddenException('This module already has an assessment');
+      await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
     return this.prisma.assessment.create({
@@ -262,23 +262,18 @@ export class AssessmentsService {
     await this.assertCourseEditable(courseId);
     const lesson = await this.assertLessonInModule(moduleId, lessonId);
 
-    if (lesson.parentId) {
-      throw new BadRequestException(
-        'Sub-lessons cannot have assessments. Assessments are only supported at lesson, module, and course final levels.',
-      );
-    }
-
+    const targetLessonId = lesson.parentId ? lesson.parentId : lessonId;
     const type = AssessmentType.LESSON_ASSESSMENT;
 
     const existing = await this.prisma.assessment.findFirst({
-      where: { lessonId, type },
+      where: { lessonId: targetLessonId, type },
     });
     if (existing) {
-      throw new ForbiddenException('This lesson already has an assessment');
+      await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
     return this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, moduleId, lessonId, type }),
+      data: this.dataFor(dto, { courseId, moduleId, lessonId: targetLessonId, type }),
       include: assessmentInclude,
     });
   }
