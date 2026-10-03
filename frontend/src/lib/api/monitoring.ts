@@ -23,6 +23,8 @@ export interface ScheduleSessionBody {
   titleAm: string;
   descriptionEn?: string;
   descriptionAm?: string;
+  /** Learning objectives, separate from the description. */
+  objectivesEn?: string;
   platform?: 'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM';
   externalUrl?: string;
   meetingId?: string;

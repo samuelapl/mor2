@@ -29,6 +29,7 @@ import { InPersonSessionsService } from './in-person/in-person-sessions.service'
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import { SessionPlansService } from '@modules/session-plans/session-plans.service';
 import type { RemoveSessionPlanDto } from '@modules/session-plans/dto';
+import { assertCanRunSession } from './session-access';
 import { SessionQuizGradingService } from './session-quiz-grading.service';
 
 /**
@@ -134,6 +135,7 @@ export class LiveSessionsService {
           titleEn: dto.titleEn,
           descriptionAm: dto.descriptionAm,
           descriptionEn: dto.descriptionEn,
+          objectivesEn: dto.objectivesEn,
           sessionType:
             dto.sessionType || (isVenueSession ? SessionType.IN_PERSON : SessionType.VIRTUAL),
           platform:
@@ -415,6 +417,7 @@ export class LiveSessionsService {
           titleEn: dto.titleEn,
           descriptionAm: dto.descriptionAm,
           descriptionEn: dto.descriptionEn,
+          objectivesEn: dto.objectivesEn,
           platform: dto.platform,
           externalUrl: dto.externalUrl,
           meetingId: dto.meetingId,
@@ -447,8 +450,9 @@ export class LiveSessionsService {
     return this.virtualSessions.getJoinUrl(await this.findById(id), user);
   }
 
-  async changeStatus(id: string, status: SessionStatus) {
+  async changeStatus(id: string, status: SessionStatus, user?: AuthenticatedUser) {
     const existing = await this.findById(id);
+    if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
     if (status === SessionStatus.LIVE && existing.status !== SessionStatus.LIVE) {
       await this.assertGradedQuizzesReady(id);
     }
@@ -509,8 +513,9 @@ export class LiveSessionsService {
   }
 
   /** Re-grades the session's weighted quizzes (e.g. after a late response). */
-  async gradeSessionQuizzes(id: string) {
+  async gradeSessionQuizzes(id: string, user?: AuthenticatedUser) {
     await this.findById(id);
+    if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
     return this.sessionQuizGrading.gradeSession(id);
   }
 

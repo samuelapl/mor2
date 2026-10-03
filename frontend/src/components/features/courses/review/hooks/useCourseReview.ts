@@ -57,8 +57,14 @@ function groupAssessments(list: ApiAssessment[]): AssessmentsByScope {
 
 /** Loads the course under review plus every assessment (with answers) and tracks the selected item. */
 export function useCourseReview(courseId: string) {
-  const { ready, courseById } = useLms();
+  const { ready, courseById, refreshCourse } = useLms();
   const course = courseById(courseId);
+
+  // The store is loaded once at sign-in; re-fetch this course so scheduling, trainer and
+  // quiz changes made elsewhere since then show up here.
+  useEffect(() => {
+    if (ready && courseId) void refreshCourse(courseId);
+  }, [ready, courseId, refreshCourse]);
 
   const [assessments, setAssessments] = useState<AssessmentsByScope>(EMPTY_SCOPE);
   const [assessmentsLoading, setAssessmentsLoading] = useState(true);

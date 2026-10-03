@@ -193,6 +193,10 @@ export default function SessionQuizPrepPage() {
                 <RichContent html={session.descriptionAm} />
               </div>
             )}
+            <h3 className="pt-2 text-sm font-bold text-slate-900">Session Objectives</h3>
+            <div className="text-xs text-slate-600 leading-relaxed">
+              <RichContent html={session.objectivesEn} placeholder="No objectives provided for this session." />
+            </div>
           </div>
         )}
       </div>

@@ -140,7 +140,7 @@ const SCOPE_CONFIG: Record<
 
 export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const config = SCOPE_CONFIG[scope];
-  const { courses, users, currentUser } = useLms();
+  const { courses, users, currentUser, refreshCourse } = useLms();
   const { can, canAny } = usePermissions();
   const { tBilingual } = useTranslation();
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -312,6 +312,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
     try {
       await deleteLiveSession(sessionToDelete.id, rebalance);
       toast.success(`Session "${sessionToDelete.titleEn}" was deleted successfully.`);
+      void refreshCourse(sessionToDelete.courseId);
       setSessionToDelete(null);
       loadSessions();
     } catch (err: any) {
@@ -646,8 +647,10 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         <ScheduleSessionModal
           open={scheduleOpen}
           onClose={() => setScheduleOpen(false)}
-          onScheduled={() => {
+          onScheduled={(courseId) => {
             setScheduleOpen(false);
+            // The course's planned session is now scheduled: refresh it for the course pages.
+            void refreshCourse(courseId);
             toast.success("Live training session successfully scheduled and persisted.");
             loadSessions();
           }}

@@ -9,6 +9,9 @@ import {
 import Redis from 'ioredis';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { PermissionsService } from '@modules/permissions/permissions.service';
+import { assertCanRunSession } from '@modules/live-sessions/session-access';
+import type { AuthenticatedUser } from '@common/interfaces';
 import { RedisConfig } from '@config/app.config';
 import {
   CreatePreparedQuizDto,
@@ -30,7 +33,10 @@ export class PreparedQuizService implements OnModuleDestroy {
   private readonly logger = new Logger(PreparedQuizService.name);
   private readonly redis: Redis;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly permissions: PermissionsService,
+  ) {
     this.redis = new Redis({
       host: RedisConfig.host,
       port: RedisConfig.port,
@@ -184,6 +190,11 @@ export class PreparedQuizService implements OnModuleDestroy {
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
+
+  /** live_session.manage_own users may only prepare quizzes for sessions they run. */
+  async assertCanManage(user: AuthenticatedUser, sessionId: string): Promise<void> {
+    await assertCanRunSession(this.prisma, this.permissions, user, sessionId);
+  }
 
   /**
    * Return all prepared quiz groups for a session.

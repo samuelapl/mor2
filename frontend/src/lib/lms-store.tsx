@@ -218,6 +218,8 @@ interface LmsContextValue {
   logout: () => void;
   register: (input: RegisterInput) => Promise<ActionResult>;
   courseById: (courseId: string) => Course | undefined;
+  /** Re-fetches one course (e.g. after its sessions changed) and replaces it in the store. */
+  refreshCourse: (courseId: string) => Promise<void>;
   userName: (userId: string) => string;
   createCourse: (input: {
     code: string;
@@ -1732,6 +1734,22 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const refreshCourse = useCallback(async (courseId: string) => {
+    try {
+      const fresh = courseFromDetail(await fetchCourseDetail(courseId));
+      setCourses((prev) => {
+        const next = prev.map((c) =>
+          // Enrollment ids are loaded separately; keep the ones already known.
+          c.id === courseId ? { ...fresh, enrolledLearnerIds: c.enrolledLearnerIds } : c,
+        );
+        coursesRef.current = next;
+        return next;
+      });
+    } catch {
+      // Best effort: the next full reload picks it up.
+    }
+  }, []);
+
   const courseById = useCallback(
     (courseId: string) => courses.find((course) => course.id === courseId),
     [courses],
@@ -1823,6 +1841,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       logout,
       register,
       courseById,
+      refreshCourse,
       userName,
       createCourse,
       updateCourse,
@@ -1871,6 +1890,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       logout,
       register,
       courseById,
+      refreshCourse,
       userName,
       createCourse,
       updateCourse,

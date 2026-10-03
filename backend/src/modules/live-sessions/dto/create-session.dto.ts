@@ -48,6 +48,11 @@ export class CreateSessionDto {
   @IsString()
   descriptionAm?: string;
 
+  @ApiPropertyOptional({ description: 'Learning objectives of the session (separate from the description)' })
+  @IsOptional()
+  @IsString()
+  objectivesEn?: string;
+
   @ApiProperty({ enum: SessionPlatform, default: SessionPlatform.GOOGLE_MEET })
   @IsEnum(SessionPlatform)
   platform!: SessionPlatform;

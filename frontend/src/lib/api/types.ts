@@ -725,6 +725,7 @@ export interface ApiLiveSession {
   titleEn: string;
   descriptionAm: string | null;
   descriptionEn: string | null;
+  objectivesEn?: string | null;
   sessionType?: SessionType;
   venueId?: string | null;
   venue?: ApiVenue | null;

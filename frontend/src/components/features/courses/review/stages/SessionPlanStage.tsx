@@ -42,8 +42,20 @@ export function SessionPlanStage({ plan, index, courseStatus, quizAssessments }:
   if (afterApproval && !scheduled) publishBlockers.push(tBilingual('This session is not scheduled yet.', 'ይህ ክፍለ-ጊዜ ገና አልታቀደም።'));
   for (const q of plan.quizzes) {
     const prepared = quizAssessments.find((a) => a.id === q.id);
-    if (afterApproval && !(prepared?.questions?.length ?? 0)) {
+    const questions = prepared?.questions ?? [];
+    if (afterApproval && questions.length === 0) {
       publishBlockers.push(tBilingual(`"${q.titleEn}" has no questions yet.`, `"${q.titleEn}" ገና ጥያቄ የለውም።`));
+    } else if (afterApproval) {
+      // One point per percent of course weight, so a 10% quiz totals 10 points.
+      const points = questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
+      if (points !== q.weight) {
+        publishBlockers.push(
+          tBilingual(
+            `"${q.titleEn}" has ${points} of ${q.weight} points assigned.`,
+            `"${q.titleEn}" ${q.weight} ነጥብ ሊኖረው ይገባል፤ ${points} ብቻ ተመድቧል።`,
+          ),
+        );
+      }
     }
   }
 

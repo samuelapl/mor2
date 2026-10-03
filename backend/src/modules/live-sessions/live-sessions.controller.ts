@@ -190,14 +190,18 @@ export class LiveSessionsController {
 
   @Get('live-sessions/:id/quiz-results')
   @Permissions('live_session.manage_all', 'live_session.manage_own', 'attendance.view')
-  @ApiOperation({ summary: "Each learner's live quiz answers and scores for a session, per quiz group" })
+  @ApiOperation({
+    summary: "Each learner's live quiz answers and scores for a session, per quiz group",
+  })
   @ApiParam({ name: 'id', type: String })
   async getQuizResults(@Param('id') id: string) {
     return this.quizResults.forStaff(id);
   }
 
   @Get('live-sessions/:id/quiz-results/me')
-  @ApiOperation({ summary: "The current learner's own live quiz results, once the session is completed" })
+  @ApiOperation({
+    summary: "The current learner's own live quiz results, once the session is completed",
+  })
   @ApiParam({ name: 'id', type: String })
   async getMyQuizResults(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.quizResults.forLearner(id, user.id);
@@ -227,8 +231,12 @@ export class LiveSessionsController {
   @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Change session status (start, complete, cancel)' })
   @ApiParam({ name: 'id', type: String })
-  async changeStatus(@Param('id') id: string, @Body('status') status: SessionStatus) {
-    return this.liveSessionsService.changeStatus(id, status);
+  async changeStatus(
+    @Param('id') id: string,
+    @Body('status') status: SessionStatus,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.liveSessionsService.changeStatus(id, status, user);
   }
 
   @Delete('live-sessions/:id')
@@ -241,9 +249,11 @@ export class LiveSessionsController {
 
   @Post('live-sessions/:id/grade-quizzes')
   @Permissions('live_session.manage_all', 'live_session.manage_own')
-  @ApiOperation({ summary: "Grade the session's weighted quizzes into learners' course results (re-runnable)" })
+  @ApiOperation({
+    summary: "Grade the session's weighted quizzes into learners' course results (re-runnable)",
+  })
   @ApiParam({ name: 'id', type: String })
-  async gradeQuizzes(@Param('id') id: string) {
-    return this.liveSessionsService.gradeSessionQuizzes(id);
+  async gradeQuizzes(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.liveSessionsService.gradeSessionQuizzes(id, user);
   }
 }

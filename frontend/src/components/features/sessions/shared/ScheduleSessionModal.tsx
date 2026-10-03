@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import {
   Video,
   MonitorPlay,
@@ -19,6 +19,8 @@ import { scheduleSession } from "@/lib/api/monitoring";
 import { fetchSessionPlans } from "@/lib/api/session-plans";
 import type { ApiSessionPlan } from "@/lib/api/types";
 import { fetchTrainers } from "@/lib/api/users";
+import { useLms } from "@/lib/lms-store";
+import { usePermissions } from "@/lib/usePermissions";
 import { createBatchLiveSessions, fetchVenues } from "@/lib/api/venues";
 import type { ApiUser, ApiVenue, SessionType } from "@/lib/api/types";
 import { SearchableCourseSelect } from "./SearchableCourseSelect";
@@ -35,7 +37,8 @@ import { cn } from "@/lib/utils";
 interface ScheduleSessionModalProps {
   open: boolean;
   onClose: () => void;
-  onScheduled?: () => void;
+  /** Called with the course the session was scheduled for. */
+  onScheduled?: (courseId: string) => void;
   courses: Course[];
 }
 
@@ -64,6 +67,11 @@ export function ScheduleSessionModal({
   const [titleEn, setTitleEn] = useState("");
   const [titleAm, setTitleAm] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
+  const [objectivesEn, setObjectivesEn] = useState("");
+  const { currentUser } = useLms();
+  const { can } = usePermissions();
+  // With manage_all the scheduler picks the host; with only manage_own they host it themselves.
+  const canPickTrainer = can("live_session.manage_all");
   // Sessions the course owner planned during preparation, not yet scheduled.
   const [plannedSessions, setPlannedSessions] = useState<ApiSessionPlan[]>([]);
   const [sessionPlanId, setSessionPlanId] = useState("");
@@ -118,11 +126,13 @@ export function ScheduleSessionModal({
   }, [open]);
 
   // Load the selected course's unscheduled planned sessions (approved / published courses only).
+  // Keyed on the course id and status, not the `courses` array: callers may pass a freshly
+  // filtered array on every render, which would reset the picked planned session.
+  const plannedCourseStatus = courses.find((c) => c.id === courseId)?.status;
   useEffect(() => {
     setSessionPlanId("");
     setPlannedSessions([]);
-    const course = courses.find((c) => c.id === courseId);
-    if (!open || !course || (course.status !== "approved" && course.status !== "published")) return;
+    if (!open || (plannedCourseStatus !== "approved" && plannedCourseStatus !== "published")) return;
     let cancelled = false;
     fetchSessionPlans(courseId)
       .then((plans) => !cancelled && setPlannedSessions(plans.filter((p) => !p.liveSession)))
@@ -130,21 +140,24 @@ export function ScheduleSessionModal({
     return () => {
       cancelled = true;
     };
-  }, [open, courseId, courses]);
+  }, [open, courseId, plannedCourseStatus]);
 
   const pickPlannedSession = (planId: string) => {
     setSessionPlanId(planId);
     const plan = plannedSessions.find((p) => p.id === planId);
     if (!plan) return;
-    // Pre-filled from the course plan; the scheduler can still edit both.
+    // Pre-filled from the course plan; the scheduler can still edit them.
     setTitleEn(plan.titleEn);
-    setDescriptionEn([plan.descriptionEn, plan.objectivesEn ? `<p><strong>Objectives</strong></p>${plan.objectivesEn}` : ""].filter(Boolean).join(""));
+    setDescriptionEn(plan.descriptionEn || "");
+    setObjectivesEn(plan.objectivesEn || "");
   };
 
   // When courseId changes, auto-select trainer & align sessionType with course.deliveryMode
   const selectedCourse = courses.find((c) => c.id === courseId);
   useEffect(() => {
-    if (selectedCourse?.trainerId) {
+    if (!canPickTrainer && currentUser) {
+      setTrainerId(currentUser.id);
+    } else if (selectedCourse?.trainerId) {
       setTrainerId(selectedCourse.trainerId);
     }
     if (selectedCourse?.deliveryMode === "IN_PERSON_ONLY") {
@@ -158,7 +171,18 @@ export function ScheduleSessionModal({
     [selectedCourse?.trainerId, ...(selectedCourse?.trainerIds || [])].filter(Boolean) as string[],
   );
 
-  const courseTrainers = availableTrainers.filter((t) => courseTrainerIds.has(t.id));
+  // The scheduler is always an option when they train this course (or may only host their own
+  // sessions), even if the trainer list doesn't include them.
+  const trainerOptions = useMemo<ApiUser[]>(() => {
+    if (!currentUser || availableTrainers.some((t) => t.id === currentUser.id)) return availableTrainers;
+    if (canPickTrainer && !courseTrainerIds.has(currentUser.id)) return availableTrainers;
+    const [firstName, ...rest] = currentUser.name.split(" ");
+    const self = { id: currentUser.id, email: currentUser.email, firstName, lastName: rest.join(" ") } as ApiUser;
+    return [...availableTrainers, self];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableTrainers, currentUser, canPickTrainer, selectedCourse]);
+
+  const courseTrainers = trainerOptions.filter((t) => courseTrainerIds.has(t.id));
 
   // New venue rows start from the step-1 schedule and the course's trainer (if qualified).
   const venueRowDefaults: VenueRowDefaults = {
@@ -250,6 +274,7 @@ export function ScheduleSessionModal({
         titleEn: titleEn.trim(),
         titleAm: titleAm.trim() || titleEn.trim(),
         descriptionEn: descriptionEn.trim() || undefined,
+        objectivesEn: objectivesEn.trim() || undefined,
         trainerId: trainerId || undefined,
         platform: backendPlatform,
         externalUrl: externalUrl.trim() || undefined,
@@ -263,7 +288,7 @@ export function ScheduleSessionModal({
 
       toast.success("Virtual live session scheduled successfully!");
       resetForm();
-      onScheduled?.();
+      onScheduled?.(courseId);
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to schedule the session.");
@@ -326,7 +351,7 @@ export function ScheduleSessionModal({
         `Successfully created ${venueRows.length} in-person sessions across assigned branch venues!`,
       );
       resetForm();
-      onScheduled?.();
+      onScheduled?.(courseId);
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create in-person sessions.");
@@ -339,6 +364,7 @@ export function ScheduleSessionModal({
     setTitleEn("");
     setTitleAm("");
     setDescriptionEn("");
+    setObjectivesEn("");
     setTrainerId("");
     setExternalUrl("");
     setMeetingPassword("");
@@ -477,7 +503,7 @@ export function ScheduleSessionModal({
                   <UserCheck className="h-4 w-4 text-indigo-600" />
                   Assigned Trainer (Instructor &amp; Host) *
                 </label>
-                {trainersLoading ? (
+                {!canPickTrainer ? null : trainersLoading ? (
                   <span className="text-[11px] font-medium text-indigo-600 animate-pulse">Loading trainers…</span>
                 ) : availableTrainers.length > 0 ? (
                   <span className="text-[11px] text-slate-500 font-medium">
@@ -486,13 +512,25 @@ export function ScheduleSessionModal({
                 ) : null}
               </div>
 
-              <SearchableTrainerSelect
-                trainers={availableTrainers}
-                courseTrainers={courseTrainers}
-                value={trainerId}
-                onChange={setTrainerId}
-                loading={trainersLoading}
-              />
+              {canPickTrainer ? (
+                <SearchableTrainerSelect
+                  trainers={trainerOptions}
+                  courseTrainers={courseTrainers}
+                  value={trainerId}
+                  onChange={setTrainerId}
+                  loading={trainersLoading}
+                />
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl border border-indigo-200 bg-white px-3.5 py-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+                    {currentUser?.name?.charAt(0) ?? "?"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900">{currentUser?.name} (you)</p>
+                    <p className="text-[11px] text-slate-500">You host the sessions you schedule for your assigned courses.</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -522,10 +560,20 @@ export function ScheduleSessionModal({
 
             <div>
               <RichTextArea
-                label="Session Description & Agenda (Interactive Rich Text)"
-                placeholder="Outline objectives, key discussion topics, required preparation, or session notes…"
+                label="Session Description"
+                placeholder="What the session covers, required preparation, or session notes…"
                 value={descriptionEn}
                 onChange={setDescriptionEn}
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <RichTextArea
+                label="Session Objectives"
+                placeholder="What learners will be able to do after this session…"
+                value={objectivesEn}
+                onChange={setObjectivesEn}
                 rows={3}
               />
             </div>

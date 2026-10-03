@@ -623,6 +623,7 @@ model LiveSession {
   titleEn         String            @map("title_en")
   descriptionAm   String?           @map("description_am")
   descriptionEn   String?           @map("description_en")
+  objectivesEn    String?           @map("objectives_en")
   platform        SessionPlatform
   externalUrl     String?           @map("external_url")
   meetingId       String?           @map("meeting_id")
