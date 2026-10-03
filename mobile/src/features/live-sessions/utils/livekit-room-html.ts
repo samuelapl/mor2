@@ -1,3 +1,5 @@
+import { LIVEKIT_CLIENT_JS } from './livekit-client-bundle';
+
 /**
  * Enterprise LiveKit web client page for a WebView.
  * Supports:
@@ -30,7 +32,119 @@ export function buildLiveKitRoomHtml(wsUrl: string, token: string): string {
   .tile video { width: 100%; height: 100%; object-fit: cover; }
   .name { position: absolute; left: 6px; bottom: 6px; font-size: 11px; background: rgba(0,0,0,0.7); padding: 2px 7px; border-radius: 999px; max-width: 90%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+<script>
+window.__LIVEKIT_CONFIG__ = ${config};
+(function installWebRtcAdapter() {
+  var cfg = window.__LIVEKIT_CONFIG__;
+  var OrigPC = window.RTCPeerConnection;
+  if (!OrigPC) return;
+
+  var wsHost = '';
+  try {
+    var match = cfg.wsUrl.match(/wss?:\/\/([^:\/]+)/);
+    if (match && match[1]) wsHost = match[1];
+  } catch(e) {}
+
+  function getCandidateHosts() {
+    var list = [];
+    if (wsHost && wsHost !== 'localhost' && wsHost !== '127.0.0.1') {
+      list.push(wsHost);
+    }
+    if (list.indexOf('10.0.2.2') === -1) list.push('10.0.2.2');
+    if (list.indexOf('127.0.0.1') === -1) list.push('127.0.0.1');
+    return list;
+  }
+
+  function rewriteSdp(sdp) {
+    if (!sdp || typeof sdp !== 'string') return sdp;
+    var hosts = getCandidateHosts();
+    var primaryHost = hosts[0] || '10.0.2.2';
+    var lines = sdp.split('\r\n');
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf('c=IN IP4') === 0) {
+        out.push('c=IN IP4 ' + primaryHost);
+        continue;
+      }
+      var candMatch = line.match(/^a=candidate:(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.*)$/);
+      if (candMatch) {
+        var found = candMatch[1];
+        var comp = candMatch[2];
+        var proto = candMatch[3];
+        var prio = candMatch[4];
+        var origIp = candMatch[5];
+        var port = candMatch[6];
+        var rest = candMatch[7];
+
+        // Keep original candidate
+        out.push(line);
+
+        // Add candidate variants for accessible host interfaces (LAN, emulator 10.0.2.2, loopback)
+        for (var h = 0; h < hosts.length; h++) {
+          var targetH = hosts[h];
+          if (targetH === origIp) continue;
+          var fId = 'r' + targetH.replace(/[^a-zA-Z0-9]/g, '') + found;
+          out.push('a=candidate:' + fId + ' ' + comp + ' ' + proto + ' ' + prio + ' ' + targetH + ' ' + port + ' ' + rest);
+        }
+      } else {
+        out.push(line);
+      }
+    }
+    return out.join('\r\n');
+  }
+
+  var origSetRemoteDescription = OrigPC.prototype.setRemoteDescription;
+  OrigPC.prototype.setRemoteDescription = function(desc) {
+    if (desc && desc.sdp) {
+      try {
+        var newSdp = rewriteSdp(desc.sdp);
+        desc = new RTCSessionDescription({
+          type: desc.type,
+          sdp: newSdp
+        });
+      } catch(e) {
+        console.warn('[WebRTC Adapter] SDP rewrite error:', e);
+      }
+    }
+    return origSetRemoteDescription.apply(this, arguments);
+  };
+
+  var origAddIceCandidate = OrigPC.prototype.addIceCandidate;
+  OrigPC.prototype.addIceCandidate = function(candidate) {
+    if (candidate && candidate.candidate) {
+      var cMatch = candidate.candidate.match(/^candidate:(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.*)$/);
+      if (cMatch) {
+        var self = this;
+        var hosts = getCandidateHosts();
+        var promises = [];
+        promises.push(origAddIceCandidate.apply(self, arguments).catch(function(){}));
+
+        for (var h = 0; h < hosts.length; h++) {
+          var targetH = hosts[h];
+          if (targetH === cMatch[5]) continue;
+          var fId = 'r' + targetH.replace(/[^a-zA-Z0-9]/g, '') + cMatch[1];
+          var newCandStr = 'candidate:' + fId + ' ' + cMatch[2] + ' ' + cMatch[3] + ' ' + cMatch[4] + ' ' + targetH + ' ' + cMatch[6] + ' ' + cMatch[7];
+          var newCandObj = {
+            candidate: newCandStr,
+            sdpMid: candidate.sdpMid,
+            sdpMLineIndex: candidate.sdpMLineIndex,
+            usernameFragment: candidate.usernameFragment
+          };
+          try {
+            promises.push(origAddIceCandidate.call(self, new RTCIceCandidate(newCandObj)).catch(function(){}));
+          } catch(e) {
+            promises.push(origAddIceCandidate.call(self, newCandObj).catch(function(){}));
+          }
+        }
+        return Promise.all(promises);
+      }
+    }
+    return origAddIceCandidate.apply(this, arguments);
+  };
+})();
+</script>
+<script>${LIVEKIT_CLIENT_JS}</script>
 </head><body>
 <div id="container">
   <div id="presentation-stage">
@@ -41,7 +155,8 @@ export function buildLiveKitRoomHtml(wsUrl: string, token: string): string {
 
 <script>
 (function(){
-  var cfg = ${config};
+  console.log('[In-Room LiveKit WebView] Initializing, LivekitClient:', Boolean(window.LivekitClient));
+  var cfg = window.__LIVEKIT_CONFIG__;
   var post = function(m){
     var d = JSON.stringify(m);
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(d);
@@ -56,117 +171,6 @@ export function buildLiveKitRoomHtml(wsUrl: string, token: string): string {
     post({type:'error', message:'LiveKit client library could not be loaded'});
     return;
   }
-
-  // WebRTC ICE Candidate & SDP Adapter for Local / Emulator / Docker environments
-  (function installWebRtcAdapter() {
-    if (!window.RTCPeerConnection) return;
-    var OrigPC = window.RTCPeerConnection;
-
-    var wsHost = '';
-    try {
-      var match = cfg.wsUrl.match(/wss?:\/\/([^:\/]+)/);
-      if (match && match[1]) wsHost = match[1];
-    } catch(e) {}
-
-    function getCandidateHosts() {
-      var list = [];
-      if (wsHost && wsHost !== 'localhost' && wsHost !== '127.0.0.1') {
-        list.push(wsHost);
-      }
-      if (list.indexOf('10.0.2.2') === -1) list.push('10.0.2.2');
-      if (list.indexOf('127.0.0.1') === -1) list.push('127.0.0.1');
-      return list;
-    }
-
-    function rewriteSdp(sdp) {
-      if (!sdp || typeof sdp !== 'string') return sdp;
-      var hosts = getCandidateHosts();
-      var primaryHost = hosts[0] || '10.0.2.2';
-      var lines = sdp.split('\r\n');
-      var out = [];
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (line.indexOf('c=IN IP4') === 0) {
-          out.push('c=IN IP4 ' + primaryHost);
-          continue;
-        }
-        var candMatch = line.match(/^a=candidate:(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.*)$/);
-        if (candMatch && (candMatch[6] === '7881' || candMatch[6] === '7882')) {
-          var found = candMatch[1];
-          var comp = candMatch[2];
-          var proto = candMatch[3];
-          var prio = candMatch[4];
-          var origIp = candMatch[5];
-          var port = candMatch[6];
-          var rest = candMatch[7];
-
-          // Keep original candidate as fallback
-          out.push(line);
-
-          // Add candidate variants for accessible host interfaces (LAN, emulator 10.0.2.2, loopback)
-          for (var h = 0; h < hosts.length; h++) {
-            var targetH = hosts[h];
-            if (targetH === origIp) continue;
-            var fId = 'r' + targetH.replace(/[^a-zA-Z0-9]/g, '') + found;
-            out.push('a=candidate:' + fId + ' ' + comp + ' ' + proto + ' ' + prio + ' ' + targetH + ' ' + port + ' ' + rest);
-          }
-        } else {
-          out.push(line);
-        }
-      }
-      return out.join('\r\n');
-    }
-
-    var origSetRemoteDescription = OrigPC.prototype.setRemoteDescription;
-    OrigPC.prototype.setRemoteDescription = function(desc) {
-      if (desc && desc.sdp) {
-        try {
-          var newSdp = rewriteSdp(desc.sdp);
-          desc = new RTCSessionDescription({
-            type: desc.type,
-            sdp: newSdp
-          });
-        } catch(e) {
-          console.warn('[WebRTC Adapter] SDP rewrite error:', e);
-        }
-      }
-      return origSetRemoteDescription.apply(this, arguments);
-    };
-
-    var origAddIceCandidate = OrigPC.prototype.addIceCandidate;
-    OrigPC.prototype.addIceCandidate = function(candidate) {
-      if (candidate && candidate.candidate) {
-        var cMatch = candidate.candidate.match(/^candidate:(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.*)$/);
-        if (cMatch && (cMatch[6] === '7881' || cMatch[6] === '7882')) {
-          var self = this;
-          var hosts = getCandidateHosts();
-          var promises = [];
-          // Add original candidate first
-          promises.push(origAddIceCandidate.apply(self, arguments).catch(function(){}));
-
-          for (var h = 0; h < hosts.length; h++) {
-            var targetH = hosts[h];
-            if (targetH === cMatch[5]) continue;
-            var fId = 'r' + targetH.replace(/[^a-zA-Z0-9]/g, '') + cMatch[1];
-            var newCandStr = 'candidate:' + fId + ' ' + cMatch[2] + ' ' + cMatch[3] + ' ' + cMatch[4] + ' ' + targetH + ' ' + cMatch[6] + ' ' + cMatch[7];
-            var newCandObj = {
-              candidate: newCandStr,
-              sdpMid: candidate.sdpMid,
-              sdpMLineIndex: candidate.sdpMLineIndex,
-              usernameFragment: candidate.usernameFragment
-            };
-            try {
-              promises.push(origAddIceCandidate.call(self, new RTCIceCandidate(newCandObj)).catch(function(){}));
-            } catch(e) {
-              promises.push(origAddIceCandidate.call(self, newCandObj).catch(function(){}));
-            }
-          }
-          return Promise.all(promises);
-        }
-      }
-      return origAddIceCandidate.apply(this, arguments);
-    };
-  })();
 
   var LK = window.LivekitClient;
   var room = new LK.Room({ adaptiveStream: true, dynacast: true });

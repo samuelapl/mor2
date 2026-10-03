@@ -1,0 +1,25 @@
+# Desktop build artifacts (Electron + electron-builder)
+desktop/dist/
+desktop/out/
+desktop/node_modules/
+*.asar
+*.asar.unpacked
+*.asar.cmd
+*.asar.ps1
+*.ejs.cmd
+*.ejs.ps1
+electron
+electron.cmd
+electron.ps1
+electron-builder
+electron-builder.cmd
+electron-builder.ps1
+*.zip
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
+
+

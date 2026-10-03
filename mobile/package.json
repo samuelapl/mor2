@@ -74,7 +74,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
     "start:dev-client": "expo start --dev-client",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "reverse": "~/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse tcp:3001 tcp:3001 && ~/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse tcp:7880 tcp:7880 && ~/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse tcp:7881 tcp:7881 && ~/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse tcp:9000 tcp:9000 && ~/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse tcp:8081 tcp:8081"
   },
   "private": true
 }

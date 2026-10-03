@@ -1,0 +1,70 @@
+{
+  "name": "mor-lms-desktop",
+  "productName": "MoR LMS",
+  "version": "1.0.0",
+  "description": "MoR Tele ELTMS Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "keywords": [
+    "mor",
+    "lms",
+    "elms",
+    "e-learning"
+  ],
+  "author": "MoR Tele ELTMS",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "et.gov.mor.lms",
+    "productName": "MoR LMS",
+
+    "directories": {
+      "output": "out"
+    },
+     "afterPack": "./afterPack.js",
+
+    "files": [
+      "**/*"
+    ],
+
+    "extraResources": [
+  {
+    "from": "../frontend/.next/standalone",
+    "to": "standalone",
+    "filter": [
+      "**/*"
+    ]
+  },
+  {
+    "from": "runtime/node.exe",
+    "to": "node.exe"
+  }
+],
+
+    "win": {
+      "target": {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      "icon": "assets/mor-lms.ico"
+    },
+
+    "nsis": {
+  "oneClick": false,
+  "allowToChangeInstallationDirectory": true,
+  "shortcutName": "MoR LMS",
+  "runAfterFinish": false,
+  "artifactName": "MoR-LMS-Setup.exe",
+  "include": "installer.nsh"
+}
+  }
+}

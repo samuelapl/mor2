@@ -509,6 +509,7 @@ export function LiveKitRoom({
           onMessage={(event) => {
             try {
               const message = JSON.parse(event.nativeEvent.data);
+              console.log('[LiveKitRoom onMessage]:', message.type, message);
               if (message.type === 'connected') {
                 setConnectionState('connected');
                 setIsReconnecting(false);
