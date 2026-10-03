@@ -8,5 +8,5 @@ export class BulkCreateQuestionBankDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateQuestionBankQuestionDto)
-  questions: CreateQuestionBankQuestionDto[];
+  questions!: CreateQuestionBankQuestionDto[];
 }

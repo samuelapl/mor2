@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Loader2,
   AlertCircle,
+  CalendarClock,
 } from 'lucide-react';
 import type { Course } from '@/types';
 import type {
@@ -20,6 +21,7 @@ import type {
   ApiCertificate,
   ApiCertificateTemplate,
   ApiUser,
+  ApiLearnerSession,
 } from '@/lib/api/types';
 import {
   fetchMyCertificates,
@@ -30,7 +32,8 @@ import {
 import { fetchMyProfile } from '@/lib/api/users';
 import { CertificateRenderer } from '../../certificates/CertificateRenderer';
 import { CourseFeedbackSurvey } from './CourseFeedbackSurvey';
-import { hasSubmittedFeedback } from '@/lib/api/feedback';
+import { CourseGradeSummary } from './CourseGradeSummary';
+import { hasSubmittedFeedback, hasSkippedFeedback, markFeedbackSkipped } from '@/lib/api/feedback';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CertificateStageProps {
@@ -50,18 +53,13 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [feedbackSkipped, setFeedbackSkipped] = useState(false);
 
   const isInPerson = course.deliveryMode === 'IN_PERSON_ONLY';
 
-  const isCompleted =
-    !isInPerson &&
-    (unlocked ||
-      Boolean(progress?.courseCompletion.certificateEligible) ||
-      Boolean(
-        progress?.courseCompletion.contentCompleted &&
-        (!progress?.courseCompletion.finalAssessment ||
-          progress?.courseCompletion.finalAssessmentPassed),
-      ));
+  // The backend's eligibility verdict is the only source of truth: it requires all content,
+  // every assessment passed, AND the weighted course grade at the global pass mark.
+  const isCompleted = !isInPerson && (progress ? progress.courseCompletion.certificateEligible : unlocked);
 
   useEffect(() => {
     let mounted = true;
@@ -80,8 +78,11 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
         if (profile) {
           setUser(profile);
           const alreadySubmitted = hasSubmittedFeedback(courseId, profile.id);
+          const alreadySkipped = hasSkippedFeedback(courseId, profile.id);
           if (alreadySubmitted) {
             setFeedbackDone(true);
+          } else if (alreadySkipped) {
+            setFeedbackSkipped(true);
           }
         }
         if (activeTpl) setTemplate(activeTpl);
@@ -94,7 +95,9 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           setCertificate(existing);
         } else if (
           isCompleted &&
-          (feedbackDone || (profile && hasSubmittedFeedback(courseId, profile.id)))
+          (feedbackDone ||
+            feedbackSkipped ||
+            (profile && (hasSubmittedFeedback(courseId, profile.id) || hasSkippedFeedback(courseId, profile.id))))
         ) {
           try {
             setClaiming(true);
@@ -120,7 +123,7 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     return () => {
       mounted = false;
     };
-  }, [courseId, isCompleted, feedbackDone]);
+  }, [courseId, isCompleted, feedbackDone, feedbackSkipped]);
 
   const handlePrint = () => {
     window.print();
@@ -199,12 +202,13 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     );
   }
 
-  // 1. Locked State: Course not yet completed
-  if (!isCompleted) {
+  // 1. Locked State: Course not yet completed (a certificate already issued is always shown)
+  if (!isCompleted && !certificate) {
     const totalLessons =
       progress?.stats.totalLessons ?? course.modules.flatMap((m) => m.lessons).length;
     const completedLessons = progress?.stats.completedLessons ?? 0;
-    const overallPercent = progress?.stats.overallPercent ?? 0;
+    // This checklist item is about lessons only; assessments have their own items below.
+    const lessonPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
     const finalAssessment = progress?.courseCompletion.finalAssessment;
     const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
 
@@ -250,13 +254,13 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
                   {tBilingual('Course Lessons Completed', 'የተጠናቀቁ የኮርስ ትምህርቶች')}
                 </span>
                 <span className="font-mono text-indigo-600">
-                  {completedLessons}/{totalLessons} ({overallPercent}%)
+                  {completedLessons}/{totalLessons} ({lessonPercent}%)
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-                  style={{ width: `${overallPercent}%` }}
+                  style={{ width: `${lessonPercent}%` }}
                 />
               </div>
             </div>
@@ -302,6 +306,12 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           </div>
         </div>
 
+        {!isInPerson && (progress?.courseCompletion.sessionsPending ?? 0) > 0 && (
+          <PendingSessionsNotice sessions={(progress?.liveSessions ?? []).filter((s) => s.status !== 'COMPLETED')} />
+        )}
+
+        {!isInPerson && progress && <CourseGradeSummary completion={progress.courseCompletion} />}
+
         {/* Certificate Watermark Preview */}
         <div className="relative rounded-2xl border border-slate-200 bg-slate-50/50 p-6 overflow-hidden shadow-2xs">
           <div className="absolute inset-0 bg-slate-900/5 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6 text-center">
@@ -333,29 +343,43 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     );
   }
 
-  // 2. Pre-Certificate Feedback Gate:
-  // If the course is completed, but the student hasn't completed feedback yet, show the survey!
-  const userFeedbackGiven =
-    feedbackDone || (user ? hasSubmittedFeedback(courseId, user.id) : false);
+  // 2. Pre-Certificate Feedback Gate (Optional):
+  // If the course is completed, but the student hasn't submitted or skipped feedback yet, offer the survey with skip option!
+  const userFeedbackGivenOrSkipped =
+    feedbackDone ||
+    feedbackSkipped ||
+    (user
+      ? hasSubmittedFeedback(courseId, user.id) || hasSkippedFeedback(courseId, user.id)
+      : false);
 
-  if (!userFeedbackGiven) {
+  const handleClaimCertificate = async () => {
+    if (certificate) return;
+    try {
+      setClaiming(true);
+      const claimed = await claimCertificate(courseId);
+      if (claimed) setCertificate(claimed);
+    } catch (claimErr) {
+      console.warn('Notice claiming certificate:', claimErr);
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  if (!userFeedbackGivenOrSkipped) {
     return (
       <CourseFeedbackSurvey
         course={course}
         user={user}
         onSubmitted={async () => {
           setFeedbackDone(true);
-          if (!certificate) {
-            try {
-              setClaiming(true);
-              const claimed = await claimCertificate(courseId);
-              if (claimed) setCertificate(claimed);
-            } catch (claimErr) {
-              console.warn('Notice claiming certificate:', claimErr);
-            } finally {
-              setClaiming(false);
-            }
+          await handleClaimCertificate();
+        }}
+        onSkip={async () => {
+          setFeedbackSkipped(true);
+          if (user) {
+            markFeedbackSkipped(courseId, user.id);
           }
+          await handleClaimCertificate();
         }}
       />
     );
@@ -464,6 +488,36 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           </strong>
           .
         </p>
+      </div>
+    </div>
+  );
+}
+
+/** Shown while a session quiz is still to come: the certificate waits for every session. */
+function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) {
+  const { tBilingual, isAmharic } = useTranslation();
+  return (
+    <div className="flex gap-3 rounded-2xl border border-sky-200 bg-sky-50/80 p-5 text-left">
+      <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
+      <div className="space-y-2">
+        <p className="text-sm font-bold text-sky-900">
+          {tBilingual(
+            `You have ${sessions.length} upcoming session${sessions.length === 1 ? '' : 's'}. Your certificate is issued after they have been held.`,
+            `${sessions.length} የሚመጡ ክፍለ-ጊዜ(ዎች) አሉዎት። ሰርተፊኬትዎ የሚሰጠው ከተካሄዱ በኋላ ነው።`,
+          )}
+        </p>
+        <ul className="space-y-1 text-sm text-sky-900/90">
+          {sessions.map((s) => (
+            <li key={s.id}>
+              <span className="font-medium">{s.titleEn}</span>
+              {' — '}
+              {s.scheduledAt
+                ? new Date(s.scheduledAt).toLocaleString(isAmharic ? 'am-ET' : undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                : tBilingual('date to be announced', 'ቀኑ ይገለጻል')}
+              {s.status === 'CANCELLED' ? ` (${tBilingual('cancelled — to be rescheduled', 'ተሰርዟል — እንደገና ይታቀዳል')})` : ''}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

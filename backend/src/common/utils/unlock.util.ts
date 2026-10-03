@@ -30,16 +30,32 @@ export interface ModuleUnlockRow {
   lessons: LessonUnlockRow[];
 }
 
+export type ProgressionMode = 'LOCKED' | 'OPEN';
+
 export function computeSequentialUnlocks(
   modules: ModuleUnlockRow[],
   moduleCompletions: Map<string, boolean>,
   lessonCompletions: Set<string>,
+  mode: ProgressionMode = 'LOCKED',
 ): {
   moduleUnlocked: Map<string, boolean>;
   lessonUnlocked: Map<string, boolean>;
 } {
   const moduleUnlocked = new Map<string, boolean>();
   const lessonUnlocked = new Map<string, boolean>();
+
+  if (mode === 'OPEN') {
+    for (const mod of modules) {
+      moduleUnlocked.set(mod.id, true);
+      for (const lesson of mod.lessons ?? []) {
+        lessonUnlocked.set(lesson.id, true);
+        for (const sub of lesson.subLessons ?? []) {
+          lessonUnlocked.set(sub.id, true);
+        }
+      }
+    }
+    return { moduleUnlocked, lessonUnlocked };
+  }
 
   const isLessonComplete = (l: LessonUnlockRow): boolean => {
     // If the lesson has an assessment, it MUST be passed to be considered complete

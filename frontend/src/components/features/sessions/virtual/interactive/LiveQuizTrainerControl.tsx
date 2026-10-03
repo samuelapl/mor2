@@ -1478,7 +1478,8 @@ export function LiveQuizTrainerControl({
         question: q.question,
         options: Array.isArray(options) ? options : [],
         correctAnswer: q.correctAnswer !== undefined && q.correctAnswer !== null ? String(q.correctAnswer) : null,
-        points: q.points || 10,
+        // The points set for this question in the prepared quiz.
+        points: item.points,
         category: q.category || 'General',
         createdAt: item.addedAt,
         updatedAt: item.addedAt,
@@ -1856,6 +1857,8 @@ export function LiveQuizTrainerControl({
           points: 10,
           category: 'Live Assessment',
           explanation: customExplanation.trim() || undefined,
+          // Don't hold up a live session over similar questions; identical ones are still refused.
+          acknowledgeSimilar: true,
         });
         if (saved?.id) {
           questionId = saved.id;
@@ -1958,6 +1961,8 @@ export function LiveQuizTrainerControl({
           points: 10,
           category: 'Live Assessment',
           explanation: customExplanation.trim() || undefined,
+          // Don't hold up a live session over similar questions; identical ones are still refused.
+          acknowledgeSimilar: true,
         });
         if (saved?.id) {
           questionId = saved.id;

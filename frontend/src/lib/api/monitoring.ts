@@ -23,6 +23,8 @@ export interface ScheduleSessionBody {
   titleAm: string;
   descriptionEn?: string;
   descriptionAm?: string;
+  /** Learning objectives, separate from the description. */
+  objectivesEn?: string;
   platform?: 'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM';
   externalUrl?: string;
   meetingId?: string;
@@ -32,6 +34,8 @@ export interface ScheduleSessionBody {
   allowViewAttendance?: boolean;
   attendanceThreshold?: number;
   trainerId?: string;
+  /** Schedule a session planned with the course; its weighted quizzes come along. */
+  sessionPlanId?: string;
 }
 
 export function fetchLiveSessions(
@@ -78,8 +82,20 @@ export function updateLiveSession(
   return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'PATCH', body });
 }
 
-export function deleteLiveSession(id: string): Promise<ApiLiveSession> {
-  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE' });
+/**
+ * `rebalance` is required when the session came from a course plan whose quizzes carry weight
+ * on an approved course: it says which session quizzes take over that weight.
+ */
+export function deleteLiveSession(
+  id: string,
+  rebalance?: Array<{ assessmentId: string; weight: number }>,
+): Promise<ApiLiveSession> {
+  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE', body: rebalance ? { rebalance } : undefined });
+}
+
+/** Re-grades the session's weighted quizzes into learners' course results. */
+export function gradeSessionQuizzes(id: string): Promise<{ quizzes: number; learners: number }> {
+  return api(`live-sessions/${id}/grade-quizzes`, { method: 'POST' });
 }
 
 export function setSessionStatus(
@@ -280,6 +296,77 @@ export interface ApiLiveQuizReport {
 
 export function fetchLiveSessionQuizReport(sessionId: string): Promise<ApiLiveQuizReport> {
   return api<ApiLiveQuizReport>(`live-sessions/${sessionId}/quiz-report`);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Session quiz results (per learner, per quiz group)                         */
+/* -------------------------------------------------------------------------- */
+
+export interface ApiSessionQuizQuestion {
+  id: string;
+  type: string;
+  question: string;
+  options: string[];
+  /** Correct answer as text (option label for choice questions). */
+  correctAnswer: string | null;
+  points: number;
+}
+
+export interface ApiSessionQuizGroup {
+  /** Prepared quiz id, or `other` for questions broadcast outside a prepared group. */
+  id: string;
+  title: string;
+  graded: boolean;
+  weight: number | null;
+  passingScore: number | null;
+  questions: ApiSessionQuizQuestion[];
+}
+
+export interface ApiLearnerQuizAnswer {
+  questionId: string;
+  /** What the learner picked, as text; null when not answered. */
+  answer: string | null;
+  isCorrect: boolean | null;
+  answeredAt: string | null;
+}
+
+export interface ApiLearnerQuizResult {
+  quizId: string;
+  answered: number;
+  correct: number;
+  earnedPoints: number;
+  totalPoints: number;
+  scorePercent: number;
+  /** Result recorded in the course grade when the session was completed (graded quizzes). */
+  recorded: { score: number; passed: boolean } | null;
+  answers: ApiLearnerQuizAnswer[];
+}
+
+export interface ApiLearnerSessionResult {
+  userId: string;
+  name: string;
+  email: string;
+  attendance: string | null;
+  quizzes: ApiLearnerQuizResult[];
+}
+
+export interface ApiSessionQuizResults {
+  sessionId: string;
+  title: string;
+  status: string;
+  completed: boolean;
+  quizzes: ApiSessionQuizGroup[];
+  learners: ApiLearnerSessionResult[];
+}
+
+/** Every learner's answers and scores for a session's live quizzes (trainers / attendance viewers). */
+export function fetchSessionQuizResults(sessionId: string): Promise<ApiSessionQuizResults> {
+  return api<ApiSessionQuizResults>(`live-sessions/${sessionId}/quiz-results`);
+}
+
+/** The current learner's own results; `available` is false until the session is completed. */
+export function fetchMySessionQuizResults(sessionId: string): Promise<ApiSessionQuizResults & { available: boolean }> {
+  return api<ApiSessionQuizResults & { available: boolean }>(`live-sessions/${sessionId}/quiz-results/me`);
 }
 
 /* -------------------------------------------------------------------------- */

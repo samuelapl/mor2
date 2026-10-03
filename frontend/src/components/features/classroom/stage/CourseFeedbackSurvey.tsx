@@ -26,9 +26,10 @@ interface CourseFeedbackSurveyProps {
   course: Course;
   user: ApiUser | null;
   onSubmitted: () => void;
+  onSkip?: () => void;
 }
 
-export function CourseFeedbackSurvey({ course, user, onSubmitted }: CourseFeedbackSurveyProps) {
+export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: CourseFeedbackSurveyProps) {
   const { tBilingual } = useTranslation();
 
   const [curriculumRelevance, setCurriculumRelevance] = useState<number>(5);
@@ -77,8 +78,8 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted }: CourseFeedba
 
       toast.success(
         tBilingual(
-          'Thank you! Your feedback has been sent to course administrators. Certificate unlocked!',
-          'እናመሰግናለን! አስተያየትዎ ለስልጠና አስተዳዳሪዎች ተልኳል። ሰርተፊኬትዎ ተከፍቷል!',
+          'Thank you! Your feedback has been submitted.',
+          'እናመሰግናለን! አስተያየትዎ ገብቷል።',
         ),
       );
 
@@ -148,15 +149,15 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted }: CourseFeedba
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100/80 px-3 py-1 text-xs font-bold text-indigo-900">
               <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              {tBilingual('Pre-Certificate Evaluation', 'የቅድመ-ሰርተፊኬት ግምገማ')}
+              {tBilingual('Course Evaluation (Optional)', 'የኮርስ ግምገማ (አማራጭ)')}
             </div>
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
               {tBilingual('Course Feedback & Evaluation', 'የኮርስ ግምገማ እና ግብረ-መልስ')}
             </h2>
             <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
               {tBilingual(
-                `Congratulations on passing the final assessment! Please complete this short evaluation for "${course.title}". Your feedback is submitted directly to designated training coordinators to help improve future programs and unlock your official certificate.`,
-                `የማጠቃለያ ፈተናውን በተሳካ ሁኔታ ስላጠናቀቁ እንኳን ደስ አለዎት! እባክዎ ለ"${course.title}" ይህን አጭር ግምገማ ይሙሉ፤ አስተያየትዎ ለተፈቀደላቸው የስልጠና አስተባባሪዎች በቀጥታ የሚላክ ሲሆን ሰርተፊኬትዎን ወዲያውኑ ይከፍታል።`,
+                `Congratulations on completing "${course.title}"! Please take a moment to submit your feedback to help us improve future programs, or skip ahead to claim your certificate.`,
+                `"${course.title}"ን በማጠናቀቅዎ እንኳን ደስ አለዎት! የወደፊት ስልጠናዎችን እንድናሻሽል እባክዎ አስተያየትዎን ያካፍሉ፣ ወይም በቀጥታ ሰርተፊኬትዎን ይውሰዱ።`,
               )}
             </p>
           </div>
@@ -270,29 +271,44 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted }: CourseFeedba
           />
         </div>
 
-        {/* Submit Actions */}
+        {/* Submit & Skip Actions */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Award className="h-4 w-4 text-amber-500 shrink-0" />
+            <MessageSquareHeart className="h-4 w-4 text-indigo-500 shrink-0" />
             <span>
               {tBilingual(
-                'Submitting feedback unlocks your downloadable PDF certificate.',
-                'ግብረ-መልስ ማስገባት የሚወርድ የፒዲኤፍ ሰርተፊኬትዎን ይከፍታል።',
+                'Submit your feedback',
+                'ግብረ-መልስዎን ያስገቡ',
               )}
             </span>
           </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting}
-            isLoading={submitting}
-            loadingText={tBilingual('Submitting Feedback...', 'ግብረ-መልስ በማስገባት ላይ...')}
-            className="w-full sm:w-auto gap-2 px-6 py-2.5 shadow-md shadow-indigo-600/20"
-          >
-            <Send className="h-4 w-4" />
-            {tBilingual('Submit Feedback & Unlock Certificate', 'ግብረ-መልስ አስገባ እና ሰርተፊኬት ክፈት')}
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+            {onSkip && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting}
+                onClick={onSkip}
+                className="w-full sm:w-auto gap-2 px-5 py-2.5 text-slate-700 hover:text-slate-900 border-slate-300 hover:bg-slate-50"
+              >
+                <Award className="h-4 w-4 text-amber-500" />
+                {tBilingual('Skip to Certificate', 'ይለፉ እና ሰርተፊኬት ይውሰዱ')}
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={submitting}
+              isLoading={submitting}
+              loadingText={tBilingual('Submitting Feedback...', 'ግብረ-መልስ በማስገባት ላይ...')}
+              className="w-full sm:w-auto gap-2 px-6 py-2.5 shadow-md shadow-indigo-600/20"
+            >
+              <Send className="h-4 w-4" />
+              {tBilingual('Submit Feedback', 'ግብረ-መልስ አስገባ')}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

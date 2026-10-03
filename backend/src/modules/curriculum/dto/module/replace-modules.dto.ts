@@ -11,5 +11,5 @@ export class ReplaceModulesDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateModuleDto)
-  modules: CreateModuleDto[];
+  modules!: CreateModuleDto[];
 }

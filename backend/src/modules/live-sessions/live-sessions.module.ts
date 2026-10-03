@@ -10,12 +10,18 @@ import { PrismaService } from '@config/prisma.service';
 import { AttendanceModule } from '@modules/attendance/attendance.module';
 import { InPersonSessionsModule } from './in-person/in-person-sessions.module';
 import { PermissionsModule } from '@modules/permissions/permissions.module';
+import { SessionPlansModule } from '@modules/session-plans/session-plans.module';
+import { ProgressModule } from '@modules/progress/progress.module';
+import { SessionQuizGradingService } from './session-quiz-grading.service';
+import { SessionQuizResultsService } from './session-quiz-results.service';
 
 @Module({
-  imports: [AttendanceModule, InPersonSessionsModule, PermissionsModule],
+  imports: [AttendanceModule, InPersonSessionsModule, PermissionsModule, SessionPlansModule, ProgressModule],
   controllers: [LiveSessionsController],
   providers: [
     LiveSessionsService,
+    SessionQuizGradingService,
+    SessionQuizResultsService,
     VirtualSessionsService,
     BigBlueButtonProvider,
     JitsiProvider,

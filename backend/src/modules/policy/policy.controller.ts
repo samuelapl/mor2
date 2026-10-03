@@ -15,7 +15,6 @@ export class PolicyController {
   constructor(private readonly policyService: PolicyService) {}
 
   @Get()
-  @Permissions('course_policy.manage')
   @ApiOperation({
     summary: 'Get the current course policy settings (time-spent %, retake cooldown)',
   })

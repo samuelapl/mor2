@@ -16,6 +16,8 @@ export interface AssessmentQuestionInput {
   question: string;
   options: string[];
   correctAnswer?: number | string;
+  category?: string;
+  points?: number;
 }
 
 export interface SaveAssessmentBody {
@@ -23,7 +25,9 @@ export interface SaveAssessmentBody {
   titleAm?: string;
   descriptionEn?: string;
   descriptionAm?: string;
-  passingScore: number;
+  /** Omit to use the global policy pass mark. */
+  passingScore?: number;
+  weight?: number;
   maxAttempts?: number;
   timeLimitMinutes?: number | null;
   shuffleQuestions?: boolean;
@@ -88,6 +92,23 @@ export async function createCourseAssessment(
   body: SaveAssessmentBody,
 ): Promise<ApiAssessment> {
   return api<ApiAssessment>(`courses/${courseId}/assessments`, { method: 'POST', body });
+}
+
+export async function createModuleAssessment(
+  courseId: string,
+  moduleId: string,
+  body: SaveAssessmentBody,
+): Promise<ApiAssessment> {
+  return api<ApiAssessment>(`courses/${courseId}/modules/${moduleId}/assessments`, { method: 'POST', body });
+}
+
+export async function createLessonAssessment(
+  courseId: string,
+  moduleId: string,
+  lessonId: string,
+  body: SaveAssessmentBody,
+): Promise<ApiAssessment> {
+  return api<ApiAssessment>(`courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessments`, { method: 'POST', body });
 }
 
 /** Replaces the final assessment of a draft / rejected course. */
@@ -186,6 +207,8 @@ export interface CreateBankQuestionInput {
   points?: number;
   category?: string;
   explanation?: string | null;
+  /** Save even when similar questions exist. Identical questions are always rejected. */
+  acknowledgeSimilar?: boolean;
 }
 
 export interface UpdateBankQuestionInput {
@@ -200,6 +223,8 @@ export interface UpdateBankQuestionInput {
   points?: number;
   category?: string;
   explanation?: string | null;
+  /** Save even when similar questions exist. Identical questions are always rejected. */
+  acknowledgeSimilar?: boolean;
 }
 
 export interface QueryBankQuestionsParams {
@@ -258,5 +283,52 @@ export async function bulkCreateQuestionBankItems(
   return api<ApiQuestionBankQuestion[]>('question-bank/bulk', {
     method: 'POST',
     body: { questions },
+  });
+}
+
+export type DuplicateSeverity = 'EXACT' | 'LIKELY' | 'SIMILAR';
+
+/** An existing bank question that is identical or similar to a draft. */
+export interface SimilarQuestionMatch {
+  id: string;
+  question: string;
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+  /** Text similarity, 0–1. */
+  score: number;
+  severity: DuplicateSeverity;
+  level: 'GLOBAL' | 'COURSE' | 'MODULE' | 'LESSON' | 'SUB_LESSON';
+  location: {
+    courseTitle: string | null;
+    moduleTitle: string | null;
+    lessonTitle: string | null;
+    subLessonTitle: string | null;
+  };
+}
+
+/** A bulk-create row the server rejected (409 `QUESTION_BATCH_DUPLICATES`). */
+export interface BatchDuplicateIssue {
+  index: number;
+  /** EXACT: never saved. SIMILAR: saved once acknowledged. */
+  reason: 'EXACT' | 'SIMILAR';
+  matches: SimilarQuestionMatch[];
+  /** Earlier rows of the same batch this row duplicates. */
+  batchMatches: { index: number; score: number; severity: DuplicateSeverity }[];
+}
+
+export interface CheckBankDuplicatesInput {
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+  question: string;
+  options: string[];
+  courseId?: string | null;
+  excludeId?: string;
+}
+
+/** Existing questions in the course (any level) or the reusable bank similar to a draft. */
+export async function checkQuestionBankDuplicates(
+  body: CheckBankDuplicatesInput,
+): Promise<{ matches: SimilarQuestionMatch[] }> {
+  return api<{ matches: SimilarQuestionMatch[] }>('question-bank/check-duplicates', {
+    method: 'POST',
+    body,
   });
 }

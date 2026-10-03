@@ -71,9 +71,11 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       });
     }
 
+    const isOpenProgression = progress?.progressionMode === 'OPEN';
+
     course.modules.forEach((mod, moduleIndex) => {
       const modProg = moduleProgressMap.get(mod.id);
-      const modUnlocked = modProg?.unlocked ?? moduleIndex === 0;
+      const modUnlocked = isOpenProgression ? true : (modProg?.unlocked ?? moduleIndex === 0);
 
       // Module Overview & Objectives (if module has description, objectives, or attachments)
       const hasModuleOverview = Boolean(
@@ -95,9 +97,18 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       }
 
       mod.lessons.forEach((lesson, lessonIndex) => {
+        const titleLower = (lesson.title || '').trim().toLowerCase();
+        if (
+          titleLower === 'module assessment' ||
+          (lesson.contentType as string) === 'ASSESSMENT'
+        ) {
+          return;
+        }
+
         const lessonProg = lessonProgressMap.get(lesson.id);
-        const lessonUnlocked =
-          modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
+        const lessonUnlocked = isOpenProgression
+          ? true
+          : modUnlocked && (lessonProg?.unlocked ?? (moduleIndex === 0 && lessonIndex === 0));
         const lessonCompleted = lessonProg?.completed ?? false;
 
         // 1. Parent Lesson Item
@@ -118,8 +129,18 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         // 2. Sub-Lesson Items (if any)
         if (lesson.subLessons && lesson.subLessons.length > 0) {
           lesson.subLessons.forEach((sub, subIndex) => {
+            const subTitleLower = (sub.title || '').trim().toLowerCase();
+            if (
+              subTitleLower === 'lesson assessment' ||
+              (sub.contentType as string) === 'ASSESSMENT'
+            ) {
+              return;
+            }
+
             const subProg = lessonProg?.subLessons?.find((s) => s.lessonId === sub.id);
-            const subUnlocked = lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
+            const subUnlocked = isOpenProgression
+              ? true
+              : lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
             const subCompleted = subProg?.completed ?? false;
 
             items.push({
@@ -147,7 +168,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
           const subLessonsAllDone = hasSubLessons
             ? (lessonProg?.subLessons?.every((s) => s.completed) ?? false)
             : true;
-          const quizUnlocked = lessonUnlocked && subLessonsAllDone;
+          const quizUnlocked = isOpenProgression ? true : lessonUnlocked && subLessonsAllDone;
           const quizCompleted = lessonAssessment.passed;
 
           items.push({
@@ -173,7 +194,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         const totalLessons = modProg?.totalLessons ?? mod.lessons.length;
         const completedLessons = modProg?.completedLessons ?? 0;
         const allLessonsComplete = totalLessons > 0 && completedLessons === totalLessons;
-        const quizUnlocked = modUnlocked && allLessonsComplete;
+        const quizUnlocked = isOpenProgression ? true : modUnlocked && allLessonsComplete;
         const quizCompleted = modAssessment.passed;
 
         items.push({
@@ -192,6 +213,20 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
     });
 
     const isInPerson = course?.deliveryMode === 'IN_PERSON_ONLY';
+
+    // 4b. Online sessions (dates only; their quizzes are run live by the trainer)
+    const liveSessions = progress?.liveSessions ?? [];
+    if (liveSessions.length > 0) {
+      items.push({
+        key: 'live-sessions',
+        type: 'LIVE_SESSIONS',
+        title: 'Live Sessions',
+        moduleId: 'final',
+        moduleIndex: 9998,
+        unlocked: true,
+        completed: liveSessions.every((s) => s.status === 'COMPLETED'),
+      });
+    }
 
     // 5. Final Certification Assessment (if course has final assessment)
     const finalAssessment = progress?.courseCompletion.finalAssessment;
@@ -260,6 +295,10 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       const found = flatItems.find((i) => i.type === 'CERTIFICATE');
       if (found) return found.key;
     }
+    if (viewParam === 'sessions') {
+      const found = flatItems.find((i) => i.type === 'LIVE_SESSIONS');
+      if (found) return found.key;
+    }
     if (quizParam) {
       const found = flatItems.find((i) => i.quizId === quizParam);
       if (found) return found.key;
@@ -292,7 +331,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         !i.completed &&
         i.type !== 'COURSE_OVERVIEW' &&
         i.type !== 'MODULE_OVERVIEW' &&
-        i.type !== 'CERTIFICATE',
+        i.type !== 'CERTIFICATE' &&
+        i.type !== 'LIVE_SESSIONS',
     );
     if (firstIncomplete) return firstIncomplete.key;
 
@@ -363,6 +403,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         params.set('module', item.moduleId);
       } else if (item.type === 'CERTIFICATE') {
         params.set('view', 'certificate');
+      } else if (item.type === 'LIVE_SESSIONS') {
+        params.set('view', 'sessions');
       } else if (item.type === 'QUIZ' && item.quizId) {
         params.set('quiz', item.quizId);
       } else if (item.type === 'SUB_LESSON' && item.subLessonId) {

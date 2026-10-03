@@ -5,7 +5,7 @@ export class CreateVenueDto {
   @ApiProperty({ example: 'MoR HQ - Computer Lab 1' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'Main Building, 3rd Floor, Room 304' })
   @IsString()
@@ -15,12 +15,12 @@ export class CreateVenueDto {
   @ApiProperty({ example: 'Addis Ababa Head Office' })
   @IsString()
   @IsNotEmpty()
-  branch: string;
+  branch!: string;
 
   @ApiProperty({ example: 30 })
   @IsInt()
   @Min(1)
-  capacity: number;
+  capacity!: number;
 
   @ApiPropertyOptional({ example: ['Projector', '30 Desktop PCs', 'Ministry Intranet'], type: [String] })
   @IsArray()

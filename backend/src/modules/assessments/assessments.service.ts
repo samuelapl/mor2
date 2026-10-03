@@ -15,6 +15,8 @@ import {
 import { PrismaService } from '@config/prisma.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
+import { deriveAttachmentFileKey } from '@common/utils';
+import type { CurriculumAttachmentDto } from '@modules/curriculum/dto/module/create-module.dto';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { ProgressService } from '@modules/progress/progress.service';
@@ -34,6 +36,7 @@ const assessmentInclude = {
   course: { select: { id: true, title: true } },
   module: { select: { id: true, title: true } },
   lesson: { select: { id: true, title: true } },
+  attachments: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.AssessmentInclude;
 
 @Injectable()
@@ -162,17 +165,24 @@ export class AssessmentsService {
     }
   }
 
+  /**
+   * @param defaultPassMark used when the request has no `passingScore` (the global policy
+   *   mark on create). Pass `undefined` on update to keep the stored pass mark.
+   */
   private dataFor(
     dto: CreateAssessmentDto,
     overrides: Partial<Prisma.AssessmentUncheckedCreateInput>,
+    defaultPassMark?: number,
   ): Prisma.AssessmentUncheckedCreateInput {
     this.assertUniqueQuestionIds(dto.questions);
+    const passingScore = dto.passingScore ?? defaultPassMark;
     return {
       titleAm: dto.titleAm,
       titleEn: dto.titleEn,
       descriptionAm: dto.descriptionAm,
       descriptionEn: dto.descriptionEn,
-      passingScore: dto.passingScore,
+      ...(passingScore !== undefined ? { passingScore } : {}),
+      weight: dto.weight ?? 0,
       maxAttempts: dto.maxAttempts ?? 3,
       timeLimitMinutes: dto.timeLimitMinutes,
       shuffleQuestions: dto.shuffleQuestions ?? false,
@@ -212,25 +222,27 @@ export class AssessmentsService {
   /** Replaces the course's final assessment (delete-all + create) atomically. Only DRAFT/REJECTED courses. */
   async replaceForCourse(courseId: string, dto: CreateAssessmentDto) {
     await this.assertCourseEditable(courseId);
+    const defaultPassMark = await this.policyService.getPassingScorePercent();
 
-    await this.prisma.$transaction([
-      this.prisma.assessment.deleteMany({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.assessment.deleteMany({
         where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-      }),
-      this.prisma.assessment.create({
-        data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
-      }),
-    ]);
+      });
+      const created = await tx.assessment.create({
+        data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, defaultPassMark),
+      });
+      await this.linkAttachments(tx, created.id, courseId, dto.attachments);
+    });
 
     return this.findByCourse(courseId, false);
   }
 
   /** Course-level (final) assessment — kept for backward compatibility with the current frontend. */
   async create(courseId: string, dto: CreateAssessmentDto) {
-    return this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }),
-      include: assessmentInclude,
+    const created = await this.prisma.assessment.create({
+      data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, await this.policyService.getPassingScorePercent()),
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   /** Module-level assessment (knowledge check — must be submitted to unlock the next module). */
@@ -242,13 +254,17 @@ export class AssessmentsService {
       where: { moduleId, type: AssessmentType.MODULE_ASSESSMENT },
     });
     if (existing) {
-      throw new ForbiddenException('This module already has an assessment');
+      await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
-    return this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, moduleId, type: AssessmentType.MODULE_ASSESSMENT }),
-      include: assessmentInclude,
+    const created = await this.prisma.assessment.create({
+      data: this.dataFor(
+        dto,
+        { courseId, moduleId, type: AssessmentType.MODULE_ASSESSMENT },
+        await this.policyService.getPassingScorePercent(),
+      ),
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   /** Lesson assessment. Only parent lessons can have assessments. */
@@ -261,36 +277,69 @@ export class AssessmentsService {
     await this.assertCourseEditable(courseId);
     const lesson = await this.assertLessonInModule(moduleId, lessonId);
 
-    if (lesson.parentId) {
-      throw new BadRequestException(
-        'Sub-lessons cannot have assessments. Assessments are only supported at lesson, module, and course final levels.',
-      );
-    }
-
+    const targetLessonId = lesson.parentId ? lesson.parentId : lessonId;
     const type = AssessmentType.LESSON_ASSESSMENT;
 
     const existing = await this.prisma.assessment.findFirst({
-      where: { lessonId, type },
+      where: { lessonId: targetLessonId, type },
     });
     if (existing) {
-      throw new ForbiddenException('This lesson already has an assessment');
+      await this.prisma.assessment.delete({ where: { id: existing.id } });
     }
 
-    return this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, moduleId, lessonId, type }),
-      include: assessmentInclude,
+    const created = await this.prisma.assessment.create({
+      data: this.dataFor(
+        dto,
+        { courseId, moduleId, lessonId: targetLessonId, type },
+        await this.policyService.getPassingScorePercent(),
+      ),
     });
+    return this.withAttachments(created.id, courseId, dto.attachments);
   }
 
   async update(id: string, dto: CreateAssessmentDto) {
     const assessment = await this.prisma.assessment.findUnique({ where: { id } });
     if (!assessment) throw new NotFoundException('Assessment not found');
 
-    return this.prisma.assessment.update({
+    await this.prisma.assessment.update({
       where: { id },
       data: this.dataFor(dto, {}),
-      include: assessmentInclude,
     });
+    return this.withAttachments(id, assessment.courseId, dto.attachments);
+  }
+
+  /**
+   * Re-points uploaded files at an assessment. Upload already created a loose row per
+   * file, so rows with the same URL are replaced (same approach as curriculum replaceAll).
+   * `undefined` leaves existing files alone; `[]` removes them.
+   */
+  private async linkAttachments(
+    tx: Prisma.TransactionClient,
+    assessmentId: string,
+    courseId: string,
+    attachments: CurriculumAttachmentDto[] | undefined,
+  ) {
+    if (attachments === undefined) return;
+    await tx.attachment.deleteMany({ where: { assessmentId } });
+    for (const att of attachments) {
+      await tx.attachment.deleteMany({ where: { fileUrl: att.fileUrl } });
+      await tx.attachment.create({
+        data: {
+          courseId,
+          assessmentId,
+          fileName: att.fileName,
+          fileKey: deriveAttachmentFileKey(att.fileUrl, att.fileName),
+          fileUrl: att.fileUrl,
+          fileType: att.fileType || 'application/octet-stream',
+          sizeBytes: att.sizeBytes || 0,
+        },
+      });
+    }
+  }
+
+  private async withAttachments(id: string, courseId: string, attachments: CurriculumAttachmentDto[] | undefined) {
+    await this.prisma.$transaction((tx) => this.linkAttachments(tx, id, courseId, attachments));
+    return this.prisma.assessment.findUniqueOrThrow({ where: { id }, include: assessmentInclude });
   }
 
   async getAttempts(assessmentId: string, user: AuthenticatedUser) {
@@ -320,18 +369,81 @@ export class AssessmentsService {
   private async assertFinalEligible(courseId: string, userId: string) {
     const modules = await this.prisma.curriculumModule.findMany({
       where: { courseId, deletedAt: null },
-      select: { id: true, lessons: { where: { deletedAt: null }, select: { id: true } } },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        lessons: {
+          where: { deletedAt: null, parentId: null },
+          orderBy: { order: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            subLessons: {
+              where: { deletedAt: null },
+              orderBy: { order: 'asc' },
+              select: { id: true, title: true },
+            },
+          },
+        },
+      },
     });
-    const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
-    if (lessonIds.length > 0) {
-      const completedCount = await this.prisma.lessonCompletion.count({
-        where: { userId, lessonId: { in: lessonIds }, completed: true },
-      });
-      if (completedCount < lessonIds.length) {
-        throw new ForbiddenException(
-          'Prerequisite course content must be completed before taking the final assessment',
-        );
+
+    const leafLessons: Array<{ id: string; title: string }> = [];
+    for (const mod of modules) {
+      for (const l of mod.lessons) {
+        if (l.subLessons && l.subLessons.length > 0) {
+          for (const s of l.subLessons) {
+            leafLessons.push({ id: s.id, title: s.title });
+          }
+        } else {
+          leafLessons.push({ id: l.id, title: l.title });
+        }
       }
+    }
+
+    if (leafLessons.length > 0) {
+      const completions = await this.prisma.lessonCompletion.findMany({
+        where: {
+          userId,
+          lessonId: { in: leafLessons.map((l) => l.id) },
+          completed: true,
+        },
+        select: { lessonId: true },
+      });
+      const completedSet = new Set(completions.map((c) => c.lessonId));
+      const incomplete = leafLessons.filter((l) => !completedSet.has(l.id));
+
+      if (incomplete.length > 0) {
+        throw new ForbiddenException({
+          reason: 'PREREQUISITES_INCOMPLETE',
+          message:
+            'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
+          incompleteCount: incomplete.length,
+          incompleteLessons: incomplete.slice(0, 5),
+        });
+      }
+    }
+
+    // Also verify all module assessments are passed if any exist
+    const moduleAssessments = await this.prisma.assessment.findMany({
+      where: {
+        courseId,
+        type: AssessmentType.MODULE_ASSESSMENT,
+      },
+      include: {
+        attempts: { where: { userId, passed: true }, take: 1 },
+      },
+    });
+    const unpassedModuleQuizzes = moduleAssessments.filter((a) => a.attempts.length === 0);
+    if (unpassedModuleQuizzes.length > 0) {
+      throw new ForbiddenException({
+        reason: 'PREREQUISITES_INCOMPLETE',
+        message:
+          'You have uncompleted module assessments. Pass all module assessments before taking the final assessment.',
+        incompleteCount: unpassedModuleQuizzes.length,
+        incompleteAssessments: unpassedModuleQuizzes.map((a) => ({ id: a.id, title: a.titleEn })),
+      });
     }
   }
 
@@ -520,10 +632,15 @@ export class AssessmentsService {
     }
 
     const gradedAnswers = gradeAnswers(questions, dto.answers);
+    // The assessment's own pass mark decides this attempt; the global policy mark only
+    // fills in for an assessment without one (same rule as ProgressService), and gates
+    // the weighted course grade for certification.
+    const effectivePassMark =
+      assessment.passingScore > 0 ? assessment.passingScore : await this.policyService.getPassingScorePercent();
     const { score, passed, correctCount } = computeResult(
       gradedAnswers,
       questions.length,
-      assessment.passingScore,
+      effectivePassMark,
     );
     const now = new Date();
     const startedAt = pending?.startedAt ?? new Date(now.getTime() - 60000);
@@ -606,11 +723,10 @@ export class AssessmentsService {
       }
     }
 
-    // Final assessment drives course completion + certificate (pass required).
-    // `maybeCompleteCourse` re-checks that all lessons are complete and the
-    // final assessment is passed before marking the enrollment COMPLETED and
-    // issuing the certificate.
-    if (isFinal && passed) {
+    // Any passed assessment can trigger course completion + certificate check
+    // (re-verifies that all lessons and all required assessments are passed,
+    // and overall weighted grade meets the global pass mark).
+    if (passed) {
       try {
         await this.progressService.maybeCompleteCourse(userId, assessmentCourseId);
       } catch {
@@ -621,6 +737,7 @@ export class AssessmentsService {
     const review = this.buildReview(
       questions as unknown as Array<Record<string, any>>,
       gradedAnswers,
+      passed,
     );
 
     return {
@@ -634,9 +751,15 @@ export class AssessmentsService {
     };
   }
 
+  /**
+   * Per-question review of a submitted attempt. Correct answers and right/wrong marks are only
+   * included once the attempt passed: after a fail (even the last attempt, since a retake can
+   * still open after the cooldown) the learner only sees what they picked.
+   */
   private buildReview(
     questions: Array<Record<string, any>>,
     graded: GradedAnswer[],
+    reveal: boolean,
   ): Array<{
     questionId: string;
     type?: string;
@@ -645,7 +768,7 @@ export class AssessmentsService {
     imageUrl?: string | null;
     selectedOption?: number | string;
     correctAnswer?: number | string;
-    isCorrect: boolean;
+    isCorrect?: boolean;
   }> {
     const byId = new Map(graded.map((g) => [g.questionId, g]));
     return questions.map((q) => {
@@ -657,8 +780,7 @@ export class AssessmentsService {
         options: q.options,
         imageUrl: q.imageUrl ?? null,
         selectedOption: g?.selectedOption,
-        correctAnswer: q.correctAnswer,
-        isCorrect: g?.isCorrect ?? false,
+        ...(reveal ? { correctAnswer: q.correctAnswer, isCorrect: g?.isCorrect ?? false } : {}),
       };
     });
   }

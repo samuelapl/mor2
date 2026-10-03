@@ -35,7 +35,18 @@ export function CourseCard({
   deliveryMode,
   deliveryDetail,
 }: CourseCardProps) {
-  const attachmentCount = course.attachments?.length ?? 0;
+  const attachmentCount =
+    (course.attachments?.length ?? 0) +
+    course.modules.reduce(
+      (sum, m) =>
+        sum +
+        (m.attachments?.length ?? 0) +
+        m.lessons.reduce(
+          (a, l) => a + (l.attachments?.length ?? 0) + (l.subLessons ?? []).reduce((b, s) => b + (s.attachments?.length ?? 0), 0),
+          0,
+        ),
+      0,
+    );
   const durationMin = course.modules.reduce(
     (sum, module) => sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
     0,

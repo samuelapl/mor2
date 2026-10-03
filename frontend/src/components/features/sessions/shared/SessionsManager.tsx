@@ -40,10 +40,12 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { SessionTable, type SessionRow } from "./SessionTable";
 import { ScheduleSessionModal } from "./ScheduleSessionModal";
+import { RebalanceWeightsDialog } from "./RebalanceWeightsDialog";
 import { EditSessionModal } from "./EditSessionModal";
 import { SessionDetailModal } from "./SessionDetailModal";
 import { SessionAttendanceModal } from "./SessionAttendanceModal";
 import { LiveSessionWorkspace } from "../virtual/LiveSessionWorkspace";
+import { useQuizReadinessGate } from "@/components/features/prepared-quiz/useQuizReadinessGate";
 
 /**
  * `all` — every session (admin "All Sessions", can schedule new ones).
@@ -138,7 +140,7 @@ const SCOPE_CONFIG: Record<
 
 export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const config = SCOPE_CONFIG[scope];
-  const { courses, users, currentUser } = useLms();
+  const { courses, users, currentUser, refreshCourse } = useLms();
   const { can, canAny } = usePermissions();
   const { tBilingual } = useTranslation();
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -159,8 +161,16 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
 
   const canManageAll = can("live_session.manage_all");
   const canConductSession = canAny(["live_session.manage_all", "live_session.manage_own"]);
+  // Staff can't start or join a session whose graded quiz isn't prepared yet.
+  const quizGate = useQuizReadinessGate();
+  const joinRoom = async (session: ApiLiveSession) => {
+    if (canConductSession && !(await quizGate.guard(session.id))) return;
+    setActiveJoinSession(session);
+  };
   const canViewAttendance = canAny(["attendance.view", "attendance.manage"]);
-  const canSchedule = config.canSchedule && canManageAll;
+  // All Sessions: schedulers with manage_all. My Sessions: anyone who conducts sessions can
+  // schedule for the courses they're assigned to (incl. the course's planned sessions).
+  const canSchedule = (config.canSchedule && canManageAll) || (scope === "own" && canConductSession);
   const role = currentUser?.role ?? config.defaultRole;
 
   const loadSessions = () => {
@@ -194,6 +204,8 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   );
   // Course dropdown: a trainer sees their assigned courses (falling back to all if none).
   const filterCourses = scope === "own" && assignedCourses.length > 0 ? assignedCourses : courses;
+  // Scheduling from My Sessions is limited to the user's assigned courses (the server checks it too).
+  const scheduleCourses = scope === "own" ? assignedCourses : courses;
 
   const trainerNameFor = (s: ApiLiveSession) => {
     if (s.trainer) return `${s.trainer.firstName || ''} ${s.trainer.lastName || ''}`.trim();
@@ -257,6 +269,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const pastRows = usePagination(toRows(past), config.pageSize);
 
   const handleToggleLive = async (session: ApiLiveSession) => {
+    if (session.status === "SCHEDULED" && !(await quizGate.guard(session.id))) return;
     setStatusUpdatingId(session.id);
     const newStatus = session.status === "SCHEDULED" ? "LIVE" : "COMPLETED";
     try {
@@ -280,12 +293,26 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
     }
   };
 
-  const confirmDeleteSession = async () => {
+  /**
+   * A session scheduled from a course plan whose quizzes carry weight on an approved course
+   * needs its weight handed to other session quizzes before it can go.
+   */
+  // A planned session of an approved course always goes through the weight dialog: it loads
+  // the plan's quiz weight itself (the course in the store may not carry its session plans).
+  const deletePlan = (() => {
+    if (!sessionToDelete?.sessionPlanId) return null;
+    const course = courseMap.get(sessionToDelete.courseId);
+    if (course && (course.status === "draft" || course.status === "rejected")) return null;
+    return { planId: sessionToDelete.sessionPlanId };
+  })();
+
+  const confirmDeleteSession = async (rebalance?: Array<{ assessmentId: string; weight: number }>) => {
     if (!sessionToDelete) return;
     setDeletingId(sessionToDelete.id);
     try {
-      await deleteLiveSession(sessionToDelete.id);
+      await deleteLiveSession(sessionToDelete.id, rebalance);
       toast.success(`Session "${sessionToDelete.titleEn}" was deleted successfully.`);
+      void refreshCourse(sessionToDelete.courseId);
       setSessionToDelete(null);
       loadSessions();
     } catch (err: any) {
@@ -508,7 +535,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                         <Button
                           size="sm"
                           variant="outline"
-                          isLoading={statusUpdatingId === row.session.id}
+                          isLoading={statusUpdatingId === row.session.id || quizGate.checkingId === row.session.id}
                           onClick={() => handleToggleLive(row.session)}
                           className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
@@ -542,7 +569,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                       ) : (
                         <Button
                           size="sm"
-                          onClick={() => setActiveJoinSession(row.session)}
+                          onClick={() => void joinRoom(row.session)}
                           className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs text-xs h-8 px-3 rounded-lg shrink-0 font-medium"
                         >
                           <MonitorPlay className="h-3.5 w-3.5" />
@@ -620,12 +647,14 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         <ScheduleSessionModal
           open={scheduleOpen}
           onClose={() => setScheduleOpen(false)}
-          onScheduled={() => {
+          onScheduled={(courseId) => {
             setScheduleOpen(false);
+            // The course's planned session is now scheduled: refresh it for the course pages.
+            void refreshCourse(courseId);
             toast.success("Live training session successfully scheduled and persisted.");
             loadSessions();
           }}
-          courses={courses}
+          courses={scheduleCourses}
         />
       ) : null}
 
@@ -674,11 +703,13 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
           }}
           onJoin={() => {
             const found = sessions.find((s) => s.id === selectedDetailId);
-            if (found) setActiveJoinSession(found);
+            if (found) void joinRoom(found);
             setSelectedDetailId(null);
           }}
         />
       )}
+
+      {quizGate.modal}
 
       {/* Dedicated Session Attendance Modal */}
       {selectedAttendanceSessionId && (
@@ -690,10 +721,21 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       )}
 
       {/* Delete Confirmation Modal */}
+      {deletePlan && sessionToDelete ? (
+        <RebalanceWeightsDialog
+          open
+          courseId={sessionToDelete.courseId}
+          sessionPlanId={deletePlan.planId}
+          sessionTitle={sessionToDelete.titleEn}
+          busy={Boolean(deletingId)}
+          onClose={() => !deletingId && setSessionToDelete(null)}
+          onConfirm={(rebalance) => void confirmDeleteSession(rebalance)}
+        />
+      ) : null}
       <ConfirmModal
-        open={Boolean(sessionToDelete)}
+        open={Boolean(sessionToDelete) && !deletePlan}
         onClose={() => !deletingId && setSessionToDelete(null)}
-        onConfirm={confirmDeleteSession}
+        onConfirm={() => confirmDeleteSession()}
         title="Delete Live Session"
         description={
           <>

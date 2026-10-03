@@ -9,5 +9,5 @@ export class ReorderPreparedQuestionsDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
-  orderedIds: string[];
+  orderedIds!: string[];
 }

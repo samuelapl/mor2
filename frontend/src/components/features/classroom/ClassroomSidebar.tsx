@@ -17,12 +17,14 @@ import {
   PlayCircle,
   GraduationCap,
   Layers,
+  Video,
 } from 'lucide-react';
 import type { Course, Lesson, Module } from '@/types';
 import type { ApiCourseProgress } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 import type { ClassroomActiveContent, ClassroomFlatItem } from './types';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { toast } from '@/lib/toast';
 
 interface ClassroomSidebarProps {
   course: Course;
@@ -450,6 +452,38 @@ export function ClassroomSidebar({
           );
         })}
 
+        {/* Live Sessions (dates only) */}
+        {(() => {
+          const sessionsItem = flatItems.find((i) => i.type === 'LIVE_SESSIONS');
+          if (!sessionsItem) return null;
+          const isActive = activeKey === sessionsItem.key;
+          return (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => onSelectItem(sessionsItem)}
+                className={cn(
+                  'w-full flex items-center gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs',
+                  isActive
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white dark:bg-slate-900 border-sky-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300',
+                )}
+              >
+                <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border', isActive ? 'bg-sky-400 text-slate-950 border-sky-300' : 'bg-sky-50 border-sky-200 text-sky-700')}>
+                  <Video className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold truncate">{tBilingual('Live Sessions', 'የቀጥታ ክፍለ-ጊዜዎች')}</p>
+                  <p className="text-[10px] opacity-75 mt-0.5 truncate">
+                    {sessionsItem.completed ? tBilingual('All sessions held', 'ሁሉም ተካሂደዋል') : tBilingual('Upcoming sessions', 'የሚመጡ ክፍለ-ጊዜዎች')}
+                  </p>
+                </div>
+                {sessionsItem.completed && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
+              </button>
+            </div>
+          );
+        })()}
+
         {/* Final Course Certification Assessment Item */}
         {flatItems.find((i) => i.quizKind === 'FINAL_ASSESSMENT')
           ? (() => {
@@ -457,25 +491,37 @@ export function ClassroomSidebar({
               const isActive = activeKey === finalItem.key;
               const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
 
+              const handleFinalClick = () => {
+                if (isClickable) {
+                  onSelectItem(finalItem);
+                } else {
+                  toast.warning(
+                    tBilingual(
+                      'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
+                      'ያልተጠናቀቁ ሞጁሎች ወይም ትምህርቶች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ቅድመ-ሁኔታዎች ያጠናቅቁ።',
+                    ),
+                  );
+                }
+              };
+
               return (
                 <div className="pt-2">
                   <button
                     type="button"
-                    onClick={() => isClickable && onSelectItem(finalItem)}
-                    disabled={!isClickable}
+                    onClick={handleFinalClick}
                     className={cn(
-                      'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs',
+                      'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs cursor-pointer',
                       isActive
                         ? finalItem.isInPersonLocked
                           ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                           : 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                         : finalItem.isInPersonLocked
-                          ? 'bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80 cursor-pointer'
+                          ? 'bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80'
                           : finalItem.unlocked
                             ? finalItem.completed
                               ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                               : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
-                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-75',
+                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">

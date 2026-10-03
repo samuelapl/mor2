@@ -19,10 +19,15 @@ export interface PreparedQuizQuestionItem {
   questionId: string;
   addedAt: string;
   order: number;
+  /** Points of this question in this quiz (set by the trainer; starts from the bank question's points). */
+  points: number;
   question: PreparedQuestionBankQuestion;
 }
 
 export interface PreparedQuizGroup {
+  /** Set when this is a weighted course quiz planned with the course; it is graded into the course result. */
+  assessmentId?: string | null;
+  assessment?: { id: string; weight: number; passingScore: number } | null;
   id: string;
   sessionId: string;
   title: string;
@@ -88,6 +93,21 @@ export async function removePreparedQuestion(
 ): Promise<void> {
   await api<void>(`${BASE(sessionId)}/${quizId}/questions/${questionId}`, {
     method: 'DELETE',
+  });
+}
+
+/**
+ * Set the points of questions in a quiz group. For a weighted quiz the total may not exceed
+ * its course weight (one point per percent of the course grade).
+ */
+export async function setPreparedQuestionPoints(
+  sessionId: string,
+  quizId: string,
+  points: { questionId: string; points: number }[],
+): Promise<PreparedQuizGroup> {
+  return api<PreparedQuizGroup>(`${BASE(sessionId)}/${quizId}/questions/points`, {
+    method: 'PATCH',
+    body: { points },
   });
 }
 

@@ -1,66 +1,60 @@
-import type { HTMLAttributes } from 'react';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type SpinnerVariant = 'primary' | 'white' | 'slate' | 'accent';
+// Opacity of each of the 12 spokes, fading around the circle.
+const SPOKES: { d: string; opacity: number }[] = [
+  { d: 'M12 2.75V5.25', opacity: 0.15 },
+  { d: 'M16.95 4.08L15.7 6.25', opacity: 0.22 },
+  { d: 'M19.92 7.05L17.75 8.3', opacity: 0.32 },
+  { d: 'M21.25 12H18.75', opacity: 0.42 },
+  { d: 'M19.92 16.95L17.75 15.7', opacity: 0.54 },
+  { d: 'M16.95 19.92L15.7 17.75', opacity: 0.66 },
+  { d: 'M12 21.25V18.75', opacity: 0.78 },
+  { d: 'M7.05 19.92L8.3 17.75', opacity: 0.9 },
+  { d: 'M4.08 16.95L6.25 15.7', opacity: 1 },
+  { d: 'M2.75 12H5.25', opacity: 0.86 },
+  { d: 'M4.08 7.05L6.25 8.3', opacity: 0.7 },
+  { d: 'M7.05 4.08L8.3 6.25', opacity: 0.5 },
+];
 
-interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
-  size?: SpinnerSize;
-  variant?: SpinnerVariant;
+interface SpinnerProps {
+  /** Size and colour classes for the icon; colour comes from `currentColor`. */
+  className?: string;
+  /** Screen-reader text. */
   label?: string;
-  inline?: boolean;
 }
 
-const SIZE_CLASSES: Record<SpinnerSize, string> = {
-  xs: 'h-3.5 w-3.5',
-  sm: 'h-4 w-4',
-  md: 'h-5 w-5',
-  lg: 'h-7 w-7',
-  xl: 'h-10 w-10',
-};
-
-const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
-  primary: 'text-indigo-600',
-  white: 'text-white',
-  slate: 'text-slate-400',
-  accent: 'text-violet-600',
-};
-
-export function Spinner({
-  size = 'md',
-  variant = 'primary',
-  label,
-  inline = false,
-  className,
-  ...props
-}: SpinnerProps) {
-  const content = (
-    <div
-      role="status"
-      className={cn(
-        'flex items-center gap-2',
-        inline ? 'inline-flex' : 'flex flex-col justify-center items-center',
-        className,
-      )}
-      {...props}
-    >
-      <Loader2
-        className={cn('animate-spin shrink-0', SIZE_CLASSES[size], VARIANT_CLASSES[variant])}
-      />
-      {label && (
-        <span
-          className={cn(
-            'text-xs font-medium',
-            variant === 'white' ? 'text-white/90' : 'text-slate-600',
-          )}
-        >
-          {label}
-        </span>
-      )}
-      <span className="sr-only">{label || 'Loading...'}</span>
+export function Spinner({ className, label = 'Loading...' }: SpinnerProps) {
+  return (
+    <div className="inline-flex" role="status" aria-label={label}>
+      <svg
+        className={cn('size-6 shrink-0 animate-spin text-slate-700 dark:text-slate-200', className)}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <g stroke="currentColor" strokeLinecap="round" strokeWidth="2">
+          {SPOKES.map((spoke) => (
+            <path key={spoke.d} d={spoke.d} opacity={spoke.opacity} />
+          ))}
+        </g>
+      </svg>
+      <span className="sr-only">{label}</span>
     </div>
   );
+}
 
-  return content;
+/** Centered spinner used by the route `loading.tsx` files while a page loads. */
+export function PageLoader({ fullScreen = false }: { fullScreen?: boolean }) {
+  return (
+    <div
+      className={cn(
+        'flex w-full items-center justify-center',
+        // h-full centres it in the dashboard content area and in full-screen pages (classroom, course review).
+        fullScreen ? 'min-h-screen bg-slate-50 dark:bg-slate-950' : 'h-full min-h-[60vh]',
+      )}
+    >
+      <Spinner className="size-8" />
+    </div>
+  );
 }

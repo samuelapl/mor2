@@ -1,7 +1,13 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssessmentType, EnrollmentStatus } from '@prisma/client';
+import { AssessmentType, EnrollmentStatus, NotificationType } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import {
+  computeCourseGrade,
+  computeProgressPercent,
+  countsTowardProgress,
+  isAssessmentPassed,
+  isSessionQuizClosed,
+  SESSION_PLAN_STATUS_SELECT,
   computeSequentialUnlocks,
   isTimeSatisfied,
   loadUserCompletionState,
@@ -12,6 +18,7 @@ import { MarkLessonCompleteDto } from './dto';
 import { EnrollmentsService } from '@modules/enrollments/enrollments.service';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { PolicyService } from '@modules/policy/policy.service';
+import { NotificationsService } from '@modules/notifications/notifications.service';
 
 export interface AttachedAssessmentInfo {
   id: string;
@@ -19,6 +26,33 @@ export interface AttachedAssessmentInfo {
   titleAm: string;
   passingScore: number;
   passed: boolean;
+  weight?: number;
+  bestScore?: number;
+  earnedPoints?: number;
+  /** False when the learner never submitted an attempt (counts as 0 in the course grade). */
+  attempted?: boolean;
+  /** AssessmentType, so session quizzes can be labelled (they are graded live, not retaken). */
+  type?: string;
+  attemptsUsed?: number;
+  maxAttempts?: number;
+  /** Whether the learner can still take another attempt (attempts left, or a retake cooldown applies). */
+  retakeAvailable?: boolean;
+}
+
+export interface LearnerSessionInfo {
+  /** Plan id for planned sessions, otherwise the session id. */
+  id: string;
+  /** Null until a planned session is scheduled. */
+  sessionId: string | null;
+  titleEn: string;
+  scheduledAt: string | null;
+  durationMinutes: number | null;
+  platform: string | null;
+  trainerName: string | null;
+  status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
+  attended: boolean;
+  /** Planned with the course (may carry a graded quiz; details are not exposed to learners). */
+  planned: boolean;
 }
 
 @Injectable()
@@ -28,7 +62,42 @@ export class ProgressService {
     private readonly enrollmentsService: EnrollmentsService,
     private readonly certificatesService: CertificatesService,
     private readonly policyService: PolicyService,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  /**
+   * Tells a learner who finished the content and passed every assessment that their
+   * weighted course grade is below the certificate requirement. Sent once per distinct
+   * grade, so retaking and improving (or staying put) never spams them.
+   */
+  private async notifyCertificateGradeNotMet(userId: string, courseId: string, grade: number, required: number) {
+    try {
+      const last = await this.prisma.notification.findFirst({
+        where: {
+          userId,
+          type: NotificationType.CERTIFICATE_GRADE_NOT_MET,
+          metadata: { path: ['courseId'], equals: courseId },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if ((last?.metadata as { grade?: number } | null)?.grade === grade) return;
+
+      const course = await this.prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
+      const title = course?.title ?? 'this course';
+      await this.notificationsService.send(
+        userId,
+        NotificationType.CERTIFICATE_GRADE_NOT_MET,
+        { en: `Certificate not yet earned: ${title}`, am: `ሰርተፊኬት ገና አልተገኘም፦ ${title}` },
+        {
+          en: `You missed the certificate for ${title}: your course grade is ${grade}%, and ${required}% is required. Improve your other assessments or contact support.`,
+          am: `ለ${title} ሰርተፊኬቱን አላገኙም፦ የኮርስ ውጤትዎ ${grade}% ነው፤ ${required}% ያስፈልጋል። ሌሎች ምዘናዎችን ያሻሽሉ ወይም ድጋፍ ያግኙ።`,
+        },
+        { courseId, grade, required, link: `/learner/courses/${courseId}/learn` },
+      );
+    } catch {
+      // Best-effort: a notification failure must never block progress tracking.
+    }
+  }
 
   async getCourseProgress(userId: string, courseId: string) {
     const ratio = await this.policyService.getTimeRatio();
@@ -80,30 +149,62 @@ export class ProgressService {
       modules.map((m) => m.id),
       allLessonIds,
     );
-    // Load every assessment attached to this course along with whether the learner has passed it.
-    const assessments = await this.prisma.assessment.findMany({
-      where: { courseId },
-      include: {
-        attempts: { where: { userId, passed: true }, take: 1 },
-      },
+    // Load every assessment attached to this course along with attempts for weighted scoring
+    const assessments = (
+      await this.prisma.assessment.findMany({
+        where: { courseId },
+        include: {
+          attempts: {
+            where: { userId, submittedAt: { not: null } },
+            orderBy: { score: 'desc' },
+          },
+          sessionPlan: SESSION_PLAN_STATUS_SELECT,
+        },
+      })
+    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
+
+    const [globalPassingScore, retakeCooldownMinutes] = await Promise.all([
+      this.policyService.getPassingScorePercent(),
+      this.policyService.getRetakeCooldownMinutes(),
+    ]);
+    const grade = computeCourseGrade(assessments, globalPassingScore);
+
+    const assessmentInfos: AttachedAssessmentInfo[] = assessments.map((a, i) => {
+      const g = grade.assessments[i]!;
+      return {
+        id: a.id,
+        titleEn: a.titleEn,
+        titleAm: a.titleAm,
+        passingScore: g.passingScore,
+        passed: g.passed,
+        weight: g.weight,
+        bestScore: g.bestScore,
+        earnedPoints: g.earnedPoints,
+        attempted: g.attempted,
+        type: a.type,
+        attemptsUsed: a.attempts.length,
+        maxAttempts: a.maxAttempts,
+        // Session quizzes run live once; they cannot be retaken from the classroom.
+        retakeAvailable:
+          a.type !== 'SESSION_ASSESSMENT' && (a.attempts.length < a.maxAttempts || retakeCooldownMinutes > 0),
+      };
     });
-    const toAssessmentInfo = (a: (typeof assessments)[number]): AttachedAssessmentInfo => ({
-      id: a.id,
-      titleEn: a.titleEn,
-      titleAm: a.titleAm,
-      passingScore: a.passingScore,
-      passed: a.attempts.length > 0,
-    });
+    const assessmentInfoMap = new Map<string, AttachedAssessmentInfo>();
+    for (const info of assessmentInfos) {
+      assessmentInfoMap.set(info.id, info);
+    }
+
     const moduleAssessmentByModuleId = new Map<string, AttachedAssessmentInfo>();
     const lessonAssessmentByLessonId = new Map<string, AttachedAssessmentInfo>();
     let finalAssessment: AttachedAssessmentInfo | null = null;
     for (const a of assessments) {
+      const info = assessmentInfoMap.get(a.id)!;
       if (a.type === AssessmentType.MODULE_ASSESSMENT && a.moduleId) {
-        moduleAssessmentByModuleId.set(a.moduleId, toAssessmentInfo(a));
+        moduleAssessmentByModuleId.set(a.moduleId, info);
       } else if (a.type === AssessmentType.LESSON_ASSESSMENT && a.lessonId) {
-        lessonAssessmentByLessonId.set(a.lessonId, toAssessmentInfo(a));
+        lessonAssessmentByLessonId.set(a.lessonId, info);
       } else if (a.type === AssessmentType.FINAL_ASSESSMENT) {
-        finalAssessment = toAssessmentInfo(a);
+        finalAssessment = info;
       }
     }
 
@@ -122,10 +223,13 @@ export class ProgressService {
       }),
     }));
 
+    const progressionMode = await this.policyService.getProgressionMode();
+
     const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
       unlockModules,
       moduleCompletions,
       lessonCompletions,
+      progressionMode,
     );
 
     let totalLessons = 0;
@@ -219,29 +323,118 @@ export class ProgressService {
       };
     });
 
+    // Lesson, module and final assessments count as progress items once passed.
+    const progressAssessments = grade.assessments.filter((_, i) =>
+      countsTowardProgress(assessments[i]!.type),
+    );
+    const totalAssessments = progressAssessments.length;
+    const passedAssessments = progressAssessments.filter((g) => g.passed).length;
+
     const contentCompleted = totalLessons > 0 && completedLessons === totalLessons;
     const finalAssessmentRequired = finalAssessment !== null;
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
+    const { totalCourseGrade, allAssessmentsPassed, gradeSatisfied } = grade;
 
     return {
       courseId,
+      progressionMode,
       stats: {
         totalModules: modules.length,
         totalLessons,
         completedLessons,
         unlockedLessons,
-        overallPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+        totalAssessments,
+        passedAssessments,
+        overallPercent: computeProgressPercent({
+          totalLessons,
+          completedLessons,
+          totalAssessments,
+          passedAssessments,
+        }),
       },
       modules: moduleProgress,
       courseCompletion: {
         contentCompleted,
         finalAssessmentRequired,
         finalAssessmentPassed,
+        allAssessmentsPassed,
+        totalCourseGrade,
+        passingScorePercent: globalPassingScore,
+        gradeSatisfied,
         certificateEligible:
-          contentCompleted && (!finalAssessmentRequired || finalAssessmentPassed),
+          contentCompleted &&
+          (!finalAssessmentRequired || finalAssessmentPassed) &&
+          grade.certificateReady,
+        /** Session quizzes still waiting for their session; the certificate waits for them. */
+        sessionsPending: grade.sessionsPending,
         finalAssessment,
+        assessmentBreakdown: assessmentInfos,
       },
+      liveSessions: await this.learnerSessions(userId, courseId),
     };
+  }
+
+  /**
+   * The course's online sessions as a learner sees them: planned ones (even before they are
+   * scheduled) in plan order, then any extra sessions. No quiz details are exposed.
+   */
+  private async learnerSessions(userId: string, courseId: string): Promise<LearnerSessionInfo[]> {
+    const [plans, sessions] = await Promise.all([
+      this.prisma.courseSessionPlan.findMany({
+        where: { courseId },
+        orderBy: { order: 'asc' },
+        select: { id: true, titleEn: true, liveSession: { select: { id: true, deletedAt: true } } },
+      }),
+      this.prisma.liveSession.findMany({
+        where: { courseId, deletedAt: null },
+        orderBy: { scheduledAt: 'asc' },
+        select: {
+          id: true,
+          sessionPlanId: true,
+          titleEn: true,
+          scheduledAt: true,
+          durationMinutes: true,
+          platform: true,
+          status: true,
+          trainer: { select: { firstName: true, lastName: true } },
+          attendees: { where: { userId }, select: { status: true } },
+        },
+      }),
+    ]);
+
+    const toInfo = (s: (typeof sessions)[number], planId: string | null): LearnerSessionInfo => ({
+      id: planId ?? s.id,
+      sessionId: s.id,
+      titleEn: s.titleEn,
+      scheduledAt: s.scheduledAt.toISOString(),
+      durationMinutes: s.durationMinutes,
+      platform: s.platform,
+      trainerName: s.trainer ? `${s.trainer.firstName} ${s.trainer.lastName}`.trim() : null,
+      status: s.status,
+      attended: s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
+      planned: planId !== null,
+    });
+
+    const byId = new Map(sessions.map((s) => [s.id, s]));
+    const planned = plans.map((p): LearnerSessionInfo => {
+      const live = p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
+      return live
+        ? toInfo(live, p.id)
+        : {
+            id: p.id,
+            sessionId: null,
+            titleEn: p.titleEn,
+            scheduledAt: null,
+            durationMinutes: null,
+            platform: null,
+            trainerName: null,
+            status: 'TO_BE_SCHEDULED',
+            attended: false,
+            planned: true,
+          };
+    });
+    const extra = sessions.filter((s) => !s.sessionPlanId).map((s) => toInfo(s, null));
+    return [...planned, ...extra];
   }
 
   /**
@@ -318,13 +511,24 @@ export class ProgressService {
       allLessonIds,
     );
 
-    return computeSequentialUnlocks(unlockModules, moduleCompletions, lessonCompletions);
+    const progressionMode = await this.policyService.getProgressionMode();
+    return computeSequentialUnlocks(
+      unlockModules,
+      moduleCompletions,
+      lessonCompletions,
+      progressionMode,
+    );
   }
 
   private async assertLessonUnlocked(
     userId: string,
     lesson: { id: string; moduleId: string; module: { courseId: string } },
   ) {
+    const progressionMode = await this.policyService.getProgressionMode();
+    if (progressionMode === 'OPEN') {
+      return;
+    }
+
     const { lessonUnlocked } = await this.loadUnlockContext(userId, lesson.module.courseId);
     if (!(lessonUnlocked.get(lesson.id) ?? false)) {
       throw new ForbiddenException({
@@ -400,27 +604,38 @@ export class ProgressService {
 
     await this.assertLessonUnlocked(userId, lesson);
 
-    const cappedDelta = Math.min(Math.max(secondsDelta, 0), 300);
+    const ratio = await this.policyService.getTimeRatio();
+    const required = requiredSeconds(lesson.durationMinutes, ratio);
+
+    // Study time stops once the lesson's required time is reached; a lesson without a set
+    // time keeps counting. Each heartbeat adds at most 5 minutes.
+    let delta = Math.min(Math.max(secondsDelta, 0), 300);
+    if (required > 0) {
+      const existing = await this.prisma.lessonCompletion.findUnique({
+        where: { userId_lessonId: { userId, lessonId } },
+        select: { timeSpentSeconds: true },
+      });
+      delta = Math.max(0, Math.min(delta, required - (existing?.timeSpentSeconds ?? 0)));
+    }
 
     const completion = await this.prisma.lessonCompletion.upsert({
       where: { userId_lessonId: { userId, lessonId } },
       update: {
-        timeSpentSeconds: { increment: cappedDelta },
+        timeSpentSeconds: { increment: delta },
         lastAccessed: new Date(),
       },
       create: {
         userId,
         lessonId,
-        timeSpentSeconds: cappedDelta,
+        timeSpentSeconds: delta,
         lastAccessed: new Date(),
       },
     });
 
-    const ratio = await this.policyService.getTimeRatio();
     return {
       lessonId,
       timeSpentSeconds: completion.timeSpentSeconds,
-      requiredSeconds: requiredSeconds(lesson.durationMinutes, ratio),
+      requiredSeconds: required,
       satisfied: isTimeSatisfied(completion.timeSpentSeconds, lesson.durationMinutes, ratio),
     };
   }
@@ -640,15 +855,27 @@ export class ProgressService {
 
     if (completedLessons !== lessonIds.length) return;
 
-    const finalAssessment = await this.prisma.assessment.findFirst({
-      where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-      select: { id: true },
-    });
-    if (finalAssessment) {
-      const passed = await this.prisma.assessmentAttempt.findFirst({
-        where: { assessmentId: finalAssessment.id, userId, passed: true },
-      });
-      if (!passed) return;
+    // Verify all assessments for this course meet the pass mark and cumulative grade
+    const assessments = (
+      await this.prisma.assessment.findMany({
+        where: { courseId },
+        include: {
+          attempts: {
+            where: { userId, submittedAt: { not: null } },
+            orderBy: { score: 'desc' },
+          },
+          sessionPlan: SESSION_PLAN_STATUS_SELECT,
+        },
+      })
+    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
+
+    const grade = computeCourseGrade(assessments, await this.policyService.getPassingScorePercent());
+    if (!grade.allAssessmentsPassed) return; // every assessment must pass on its own mark
+    if (grade.sessionsPending > 0) return; // a session quiz is still to come; judge the grade after it
+    if (!grade.gradeSatisfied) {
+      // Content done and every assessment passed, but the weighted grade is short.
+      await this.notifyCertificateGradeNotMet(userId, courseId, grade.totalCourseGrade, grade.requiredGrade);
+      return;
     }
 
     const enrollment = await this.prisma.enrollment.findUnique({
@@ -667,13 +894,16 @@ export class ProgressService {
   }
 
   async getCourseLearnersProgress(courseId: string) {
-    const [modules, enrollments] = await Promise.all([
+    const [modules, enrollments, assessments, globalPassMark] = await Promise.all([
       this.prisma.curriculumModule.findMany({
-        where: { courseId },
+        where: { courseId, deletedAt: null },
         orderBy: { order: 'asc' },
         select: {
           id: true,
-          lessons: { select: { id: true } },
+          lessons: {
+            where: { deletedAt: null, parentId: null },
+            select: { id: true, subLessons: { where: { deletedAt: null }, select: { id: true } } },
+          },
         },
       }),
       this.prisma.enrollment.findMany({
@@ -682,9 +912,23 @@ export class ProgressService {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
         },
       }),
+      this.prisma.assessment.findMany({
+        where: { courseId, type: { not: AssessmentType.SESSION_ASSESSMENT } },
+        select: {
+          passingScore: true,
+          attempts: {
+            where: { submittedAt: { not: null } },
+            select: { userId: true, score: true, passed: true },
+          },
+        },
+      }),
+      this.policyService.getPassingScorePercent(),
     ]);
 
-    const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+    // Same items as the learner's own progress: a lesson with sub-lessons counts its sub-lessons.
+    const lessonIds = modules.flatMap((m) =>
+      m.lessons.flatMap((l) => (l.subLessons.length > 0 ? l.subLessons.map((s) => s.id) : [l.id])),
+    );
     const completions = await this.prisma.lessonCompletion.findMany({
       where: { lessonId: { in: lessonIds }, completed: true },
       select: { userId: true, lessonId: true },
@@ -693,6 +937,24 @@ export class ProgressService {
     const countByUser = new Map<string, number>();
     for (const completion of completions) {
       countByUser.set(completion.userId, (countByUser.get(completion.userId) ?? 0) + 1);
+    }
+
+    const passedByUser = new Map<string, number>();
+    for (const assessment of assessments) {
+      const attemptsByUser = new Map<string, typeof assessment.attempts>();
+      for (const attempt of assessment.attempts) {
+        attemptsByUser.set(attempt.userId, [
+          ...(attemptsByUser.get(attempt.userId) ?? []),
+          attempt,
+        ]);
+      }
+      for (const [userId, attempts] of attemptsByUser) {
+        if (
+          isAssessmentPassed({ passingScore: assessment.passingScore, attempts }, globalPassMark)
+        ) {
+          passedByUser.set(userId, (passedByUser.get(userId) ?? 0) + 1);
+        }
+      }
     }
 
     const totalLessons = lessonIds.length;
@@ -709,7 +971,12 @@ export class ProgressService {
           email: enrollment.user.email,
           status: enrollment.status,
           completedLessons: done,
-          progressPercent: totalLessons > 0 ? Math.round((done / totalLessons) * 100) : 0,
+          progressPercent: computeProgressPercent({
+            totalLessons,
+            completedLessons: done,
+            totalAssessments: assessments.length,
+            passedAssessments: passedByUser.get(enrollment.userId) ?? 0,
+          }),
         };
       }),
     };

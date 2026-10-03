@@ -337,14 +337,20 @@ export function SessionDetailModal({
             ) : null}
           </div>
 
-          {/* Session Description / Objectives */}
+          {/* Session Description and Objectives (separate, as in course preparation) */}
           {session.descriptionEn && (
             <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Session Description &amp; Objectives
-              </h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Session Description</h3>
               <div className="text-xs leading-relaxed text-slate-600">
                 <RichContent html={session.descriptionEn} />
+              </div>
+            </div>
+          )}
+          {session.objectivesEn && (
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Session Objectives</h3>
+              <div className="text-xs leading-relaxed text-slate-600">
+                <RichContent html={session.objectivesEn} />
               </div>
             </div>
           )}

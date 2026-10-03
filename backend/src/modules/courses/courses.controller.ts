@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CourseStatus } from '@prisma/client';
 import { CoursesService } from './courses.service';
-import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
+import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto, ReturnToDraftDto } from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -26,7 +26,13 @@ export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Get()
-  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned')
+  @Permissions(
+    'course.browse',
+    'course.view.own',
+    'course.view.all',
+    'course.view.assigned',
+    'course.create',
+  )
   @ApiOperation({ summary: 'List courses (all authenticated users)' })
   async findAll(
     @Query() query: PaginationQuery & { status?: CourseStatus },
@@ -36,7 +42,13 @@ export class CoursesController {
   }
 
   @Get(':id')
-  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned')
+  @Permissions(
+    'course.browse',
+    'course.view.own',
+    'course.view.all',
+    'course.view.assigned',
+    'course.create',
+  )
   @ApiOperation({ summary: 'Get course details by ID (learner-aware: unlock flags + enrollment)' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
@@ -51,7 +63,7 @@ export class CoursesController {
   }
 
   @Patch(':id')
-  @Permissions('course.update.own', 'course.update.all')
+  @Permissions('course.update.own', 'course.update.all', 'course.create')
   @ApiOperation({ summary: 'Update a course' })
   @ApiParam({ name: 'id', type: String })
   async update(
@@ -80,6 +92,20 @@ export class CoursesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.coursesService.review(id, dto, user.id);
+  }
+
+  @Post(':id/return-to-draft')
+  @Permissions('course.approve_reject')
+  @ApiOperation({
+    summary: 'Withdraw the approval of an approved (unpublished) course and return it to draft',
+  })
+  @ApiParam({ name: 'id', type: String })
+  async returnToDraft(
+    @Param('id') id: string,
+    @Body() dto: ReturnToDraftDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.returnToDraft(id, dto, user.id);
   }
 
   @Post(':id/publish')

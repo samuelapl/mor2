@@ -8,7 +8,6 @@ import {
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import {
   ApprovalStatus,
-  CourseDeliveryMode,
   CourseStatus,
   EnrollmentStatus,
   NotificationType,
@@ -21,14 +20,14 @@ import {
   buildPaginationArgs,
   buildPaginatedResponse,
   buildSearchFilter,
-  computeSequentialUnlocks,
-  loadUserCompletionState,
 } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
-import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
+import { assertDeliveryModeAllowed, DEFAULT_DELIVERY_MODE } from './delivery-modes';
+import { assertCourseWeightsTotal } from '@common/utils';
+import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto, ReturnToDraftDto } from './dto';
 
 const STAFF_ROLES: RoleName[] = [
   RoleName.SYSTEM_ADMIN,
@@ -90,7 +89,8 @@ export class CoursesService {
 
     const or: Prisma.CourseWhereInput[] = [];
     if (permissions.size > 0) {
-      if (permissions.has('course.view.own')) {
+      // Creators always see the courses they own, at every stage.
+      if (permissions.has('course.view.own') || permissions.has('course.create')) {
         or.push({ owners: { some: { userId: user.id } } });
       }
       if (permissions.has('course.view.assigned')) {
@@ -182,7 +182,10 @@ export class CoursesService {
     const course = await this.findById(courseId);
 
     if (permissions.size > 0) {
-      if (permissions.has('course.view.own') && course.owners.some((o) => o.userId === user.id)) {
+      if (
+        (permissions.has('course.view.own') || permissions.has('course.create')) &&
+        course.owners.some((o) => o.userId === user.id)
+      ) {
         return;
       }
       if (
@@ -219,9 +222,35 @@ export class CoursesService {
     if (permissions.has('course.update.all')) return;
 
     const course = await this.findById(courseId);
-    const canUpdateOwn = permissions.size > 0 ? permissions.has('course.update.own') : roles.has(RoleName.COURSE_OWNER);
+    const canUpdateOwn =
+      permissions.size > 0
+        ? permissions.has('course.update.own') || permissions.has('course.create')
+        : roles.has(RoleName.COURSE_OWNER);
     if (canUpdateOwn && course.owners.some((o) => o.userId === user.id)) {
       return;
+    }
+
+    throw new ForbiddenException('You are not allowed to modify this course');
+  }
+
+  /**
+   * Draft-editing endpoints (curriculum, quizzes, session plans, cover) each have their own
+   * permission. A course creator without it may still edit the courses they own, so saving
+   * a draft from the course studio only needs `course.create`.
+   */
+  async assertCanEditDraft(
+    courseId: string,
+    user: AuthenticatedUser,
+    permissionCodes: string[],
+  ): Promise<void> {
+    if (this.roleSet(user).has(RoleName.SYSTEM_ADMIN)) return;
+
+    const permissions = await this.resolvePermissions(user);
+    if (permissionCodes.some((code) => permissions.has(code))) return;
+
+    if (permissions.has('course.create')) {
+      const course = await this.findById(courseId);
+      if (course.owners.some((o) => o.userId === user.id)) return;
     }
 
     throw new ForbiddenException('You are not allowed to modify this course');
@@ -267,7 +296,7 @@ export class CoursesService {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
           include: {
-            attachments: true,
+            attachments: { where: { lessonId: null } }, // lesson files also carry moduleId
             assessments: {
               where: { type: 'MODULE_ASSESSMENT' },
               select: {
@@ -310,9 +339,22 @@ export class CoursesService {
             titleAm: true,
             passingScore: true,
             timeLimitMinutes: true,
+            attachments: { orderBy: { createdAt: 'asc' } },
           },
         },
-        attachments: true,
+        // Module and lesson files also carry courseId; keep only files attached to the course itself.
+        attachments: { where: { moduleId: null, lessonId: null, assessmentId: null } },
+        sessionPlans: {
+          orderBy: { order: 'asc' },
+          include: {
+            assessments: {
+              where: { type: 'SESSION_ASSESSMENT' },
+              orderBy: { createdAt: 'asc' },
+              select: { id: true, titleEn: true, weight: true, passingScore: true, timeLimitMinutes: true },
+            },
+            liveSession: { select: { id: true, scheduledAt: true, status: true, trainerId: true, platform: true, durationMinutes: true, deletedAt: true } },
+          },
+        },
       },
     });
 
@@ -394,26 +436,9 @@ export class CoursesService {
       }
 
       if (course.modules && course.modules.length > 0) {
-        const allLessonIds = course.modules.flatMap((m: any) =>
-          (m.lessons ?? []).flatMap((l: any) => [
-            l.id,
-            ...(l.subLessons ?? []).map((s: any) => s.id),
-          ]),
-        );
-        await this.progressService.reconcileModuleCompletions(
+        const { moduleUnlocked, lessonUnlocked } = await this.progressService.getUnlockState(
           userId,
-          course.modules.map((m: any) => m.id),
-        );
-        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-          this.prisma,
-          userId,
-          course.modules.map((m: any) => m.id),
-          allLessonIds,
-        );
-        const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
-          course.modules,
-          moduleCompletions,
-          lessonCompletions,
+          course.id,
         );
 
         const modules = course.modules.map((m: any) => {
@@ -473,6 +498,8 @@ export class CoursesService {
     if (existing && !existing.deletedAt) {
       throw new ForbiddenException(`Course code '${dto.code}' already exists`);
     }
+    const deliveryMode = dto.deliveryMode ?? DEFAULT_DELIVERY_MODE;
+    assertDeliveryModeAllowed(deliveryMode);
 
     const course = await this.prisma.course.create({
       data: {
@@ -484,7 +511,8 @@ export class CoursesService {
         department: dto.department,
         targetAudience: dto.targetAudience,
         deliveryMethod: dto.deliveryMethod,
-        deliveryMode: dto.deliveryMode ?? CourseDeliveryMode.BOTH,
+        deliveryMode,
+        hasOnlineSessions: dto.hasOnlineSessions ?? false,
         prerequisites: dto.prerequisites,
         estimatedHours: dto.estimatedHours,
         thumbnailUrl: dto.thumbnailUrl,
@@ -523,7 +551,11 @@ export class CoursesService {
     if (dto.department !== undefined) data.department = dto.department;
     if (dto.targetAudience !== undefined) data.targetAudience = dto.targetAudience;
     if (dto.deliveryMethod !== undefined) data.deliveryMethod = dto.deliveryMethod;
-    if (dto.deliveryMode !== undefined) data.deliveryMode = dto.deliveryMode;
+    if (dto.deliveryMode !== undefined) {
+      assertDeliveryModeAllowed(dto.deliveryMode, course.deliveryMode);
+      data.deliveryMode = dto.deliveryMode;
+    }
+    if (dto.hasOnlineSessions !== undefined) data.hasOnlineSessions = dto.hasOnlineSessions;
     if (dto.prerequisites !== undefined) data.prerequisites = dto.prerequisites;
     if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
     if (dto.thumbnailUrl) data.thumbnailUrl = dto.thumbnailUrl;
@@ -543,6 +575,7 @@ export class CoursesService {
     const course = await this.findById(id);
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PENDING_APPROVAL);
+    await assertCourseWeightsTotal(this.prisma, id, 'exact');
 
     return this.prisma.course.update({
       where: { id },
@@ -617,14 +650,133 @@ export class CoursesService {
     return updated;
   }
 
+  /**
+   * Withdraws an approval: an approved (not yet published) course goes back to DRAFT so its
+   * owners can change it and resubmit. Refused while the course has enrollments or scheduled
+   * sessions, because a draft's curriculum and session plans can be replaced wholesale, which
+   * would wipe learner progress and detach scheduled sessions from their plans.
+   */
+  async returnToDraft(id: string, dto: ReturnToDraftDto, approverId: string) {
+    const course = await this.findById(id);
+
+    if (course.status === CourseStatus.PUBLISHED) {
+      throw new BadRequestException(
+        'A published course cannot be returned to draft. Unpublish it first.',
+      );
+    }
+    if (course.status !== CourseStatus.APPROVED) {
+      throw new BadRequestException('Only an approved course can be returned to draft');
+    }
+    const reason = dto.reason?.trim();
+    if (!reason) {
+      throw new BadRequestException('A reason is required when returning a course to draft');
+    }
+
+    const [enrollments, sessions] = await Promise.all([
+      this.prisma.enrollment.count({ where: { courseId: id } }),
+      this.prisma.liveSession.count({ where: { courseId: id, deletedAt: null } }),
+    ]);
+    const blockers: string[] = [];
+    if (enrollments > 0) blockers.push(`${enrollments} enrollment(s)`);
+    if (sessions > 0) blockers.push(`${sessions} scheduled session(s)`);
+    if (blockers.length > 0) {
+      throw new BadRequestException(
+        `This course cannot be returned to draft because it has ${blockers.join(' and ')}. Remove them first.`,
+      );
+    }
+
+    this.stateMachine.assertCanTransition(course.status, CourseStatus.DRAFT);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.course.update({
+        where: { id },
+        data: { status: CourseStatus.DRAFT },
+      });
+      await tx.contentApproval.create({
+        data: {
+          courseId: id,
+          approverId,
+          status: ApprovalStatus.NEEDS_REVISION,
+          comments: reason,
+          decidedAt: new Date(),
+        },
+      });
+      return result;
+    });
+
+    const ownerIds = course.owners.map((o) => o.userId).filter((uid) => uid !== approverId);
+    await this.notificationsService.sendToMany(
+      ownerIds,
+      NotificationType.COURSE_REJECTED,
+      { en: 'Course approval withdrawn', am: 'የኮርሱ ማጽደቅ ተሰርዟል' },
+      {
+        en: `The approval of "${course.title}" was withdrawn and the course moved back to draft for changes. Reason: ${reason}`,
+        am: `የ"${course.title}" ማጽደቅ ተሰርዞ ኮርሱ ለማስተካከያ ወደ ረቂቅ ተመልሷል። ምክንያት፦ ${reason}`,
+      },
+      { courseId: id, reason },
+    );
+
+    return updated;
+  }
+
+  /**
+   * Learners cannot get a certificate until every session quiz has been held, so a course
+   * with planned sessions only goes live once each one is scheduled and each weighted quiz
+   * has questions.
+   */
+  private async assertSessionsReadyToPublish(courseId: string) {
+    const plans = await this.prisma.courseSessionPlan.findMany({
+      where: { courseId },
+      orderBy: { order: 'asc' },
+      select: {
+        titleEn: true,
+        liveSession: { select: { deletedAt: true } },
+        assessments: {
+          where: { type: 'SESSION_ASSESSMENT' },
+          select: {
+            titleEn: true,
+            weight: true,
+            questions: true,
+            preparedQuiz: { select: { questions: { select: { points: true } } } },
+          },
+        },
+      },
+    });
+    const problems: string[] = [];
+    for (const plan of plans) {
+      if (!plan.liveSession || plan.liveSession.deletedAt) problems.push(`"${plan.titleEn}" is not scheduled yet`);
+      for (const quiz of plan.assessments) {
+        if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+          problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
+          continue;
+        }
+        // One point per percent of course weight, so a 10% quiz totals 10 points.
+        const points = (quiz.preparedQuiz?.questions ?? []).reduce((sum, q) => sum + q.points, 0);
+        if (quiz.preparedQuiz && points !== quiz.weight) {
+          problems.push(
+            `quiz "${quiz.titleEn}" in "${plan.titleEn}" has ${points} points but must total ${quiz.weight} (its course weight)`,
+          );
+        }
+      }
+    }
+    if (problems.length > 0) {
+      throw new BadRequestException(`Online sessions are not ready: ${problems.join('; ')}.`);
+    }
+  }
+
   async publish(id: string) {
     const course = await this.findById(id);
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PUBLISHED);
 
-    if (!course.trainers || course.trainers.length === 0) {
-      throw new ForbiddenException('Assign at least one trainer to this course before publishing.');
+    // A trainer runs the planned online sessions; a course without any is self-paced.
+    const plannedSessions = await this.prisma.courseSessionPlan.count({ where: { courseId: id } });
+    if (plannedSessions > 0 && (!course.trainers || course.trainers.length === 0)) {
+      throw new ForbiddenException(
+        'This course has planned sessions. Assign at least one trainer before publishing.',
+      );
     }
+    await this.assertSessionsReadyToPublish(id);
 
     const updated = await this.prisma.course.update({
       where: { id },

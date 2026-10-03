@@ -37,6 +37,7 @@ export function EditSessionModal({
   const [titleEn, setTitleEn] = useState('');
   const [titleAm, setTitleAm] = useState('');
   const [descriptionEn, setDescriptionEn] = useState('');
+  const [objectivesEn, setObjectivesEn] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
   const [duration, setDuration] = useState(60);
@@ -55,6 +56,7 @@ export function EditSessionModal({
     setTitleEn(session.titleEn || '');
     setTitleAm(session.titleAm || '');
     setDescriptionEn(session.descriptionEn || '');
+    setObjectivesEn(session.objectivesEn || '');
     setTrainerId(session.trainerId || session.trainer?.id || '');
     setDuration(session.durationMinutes || 60);
     setStatus(session.status);
@@ -160,6 +162,7 @@ export function EditSessionModal({
         titleEn: titleEn.trim(),
         titleAm: titleAm.trim() || titleEn.trim(),
         descriptionEn: descriptionEn.trim() || undefined,
+        objectivesEn: objectivesEn.trim() || undefined,
         trainerId: trainerId || undefined,
         platform: backendPlatform,
         externalUrl: externalUrl.trim() || undefined,
@@ -261,10 +264,20 @@ export function EditSessionModal({
 
           <div>
             <RichTextArea
-              label="Session Description & Agenda"
-              placeholder="Outline objectives, key discussion topics, required preparation…"
+              label="Session Description"
+              placeholder="What the session covers, required preparation, or session notes…"
               value={descriptionEn}
               onChange={setDescriptionEn}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <RichTextArea
+              label="Session Objectives"
+              placeholder="What learners will be able to do after this session…"
+              value={objectivesEn}
+              onChange={setObjectivesEn}
               rows={3}
             />
           </div>

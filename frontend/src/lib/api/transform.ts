@@ -208,6 +208,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     targetAudience: course.targetAudience ?? undefined,
     deliveryMethod: course.deliveryMethod ?? undefined,
     deliveryMode: course.deliveryMode ?? 'BOTH',
+    hasOnlineSessions: course.hasOnlineSessions ?? false,
     language: course.language ?? 'en',
     prerequisites: course.prerequisites ?? undefined,
     objectives: course.objectives || course.objectivesEn || course.objectivesAm || undefined,
@@ -259,6 +260,32 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
     attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
     rejectionReason: latest.reason,
     lastRejectionReason: secondLatest?.reason,
+    sessionPlans: (apiCourse.sessionPlans ?? []).map((p) => ({
+      id: p.id,
+      order: p.order,
+      titleEn: p.titleEn,
+      descriptionEn: p.descriptionEn ?? undefined,
+      objectivesEn: p.objectivesEn ?? undefined,
+      quizzes: p.assessments.map((a) => ({
+        id: a.id,
+        titleEn: a.titleEn,
+        weight: a.weight,
+        passingScore: a.passingScore,
+        timeLimitMinutes: a.timeLimitMinutes,
+      })),
+      // A removed (soft-deleted) session leaves the plan unscheduled.
+      liveSession: p.liveSession && !p.liveSession.deletedAt ? p.liveSession : null,
+    })),
+    approvals: (apiCourse.approvals ?? [])
+      .map((a) => ({
+        id: a.id,
+        status: a.status,
+        comments: a.comments ?? undefined,
+        reviewerName: a.approver ? `${a.approver.firstName} ${a.approver.lastName}` : undefined,
+        decidedAt: a.decidedAt ?? undefined,
+        createdAt: a.createdAt,
+      }))
+      .sort((a, b) => new Date(b.decidedAt ?? b.createdAt).getTime() - new Date(a.decidedAt ?? a.createdAt).getTime()),
     rejectedBy: latest.by,
     rejectedAt: latest.at,
   };
@@ -361,6 +388,7 @@ export function courseToCreateBody(input: {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: Course['deliveryMode'];
+  hasOnlineSessions?: boolean;
   language?: string;
   prerequisites?: string;
   objectives?: string;
@@ -378,7 +406,7 @@ export function courseToCreateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
-    language: input.language,
+    hasOnlineSessions: input.hasOnlineSessions,
     prerequisites: input.prerequisites,
     ownerIds: input.ownerId ? [input.ownerId] : undefined,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
@@ -394,6 +422,7 @@ export function courseToUpdateBody(input: {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: Course['deliveryMode'];
+  hasOnlineSessions?: boolean;
   language?: string;
   prerequisites?: string;
   level?: Course['level'];
@@ -407,7 +436,7 @@ export function courseToUpdateBody(input: {
     targetAudience: input.targetAudience,
     deliveryMethod: input.deliveryMethod,
     deliveryMode: input.deliveryMode,
-    language: input.language,
+    hasOnlineSessions: input.hasOnlineSessions,
     prerequisites: input.prerequisites,
     level: input.level ? LEVEL_FE_TO_API[input.level] : undefined,
   };
@@ -450,45 +479,31 @@ export function moduleToCreateBody(input: {
     }[];
   }[];
 }): CreateModuleBody {
-  const title = input.title || input.titleEn || '';
+  const title = input.title || input.titleEn || 'Module';
   const description = input.description || input.descriptionEn || undefined;
   const objectives = input.objectives || input.objectivesEn || undefined;
   return {
     title,
-    titleEn: title,
-    titleAm: input.titleAm || title,
     description,
-    descriptionEn: description,
-    descriptionAm: input.descriptionAm || description,
     objectives,
-    objectivesEn: objectives,
-    objectivesAm: input.objectivesAm || objectives,
     durationMinutes: input.durationMinutes,
     attachments: input.attachments,
     lessons: (input.lessons ?? []).map((l) => {
-      const lTitle = l.title || l.titleEn || '';
+      const lTitle = l.title || l.titleEn || 'Lesson';
       const lContent = l.content || l.contentEn || undefined;
       return {
         title: lTitle,
-        titleEn: lTitle,
-        titleAm: l.titleAm || lTitle,
         content: lContent,
-        contentEn: lContent,
-        contentAm: l.contentAm || lContent,
         contentType: l.contentType ?? 'DOCUMENT',
         durationMinutes: l.durationMinutes,
         resourceUrl: l.resourceUrl,
         attachments: l.attachments,
         subLessons: (l.subLessons ?? []).map((sub) => {
-          const subTitle = sub.title || sub.titleEn || '';
+          const subTitle = sub.title || sub.titleEn || 'Sub-lesson';
           const subContent = sub.content || sub.contentEn || undefined;
           return {
             title: subTitle,
-            titleEn: subTitle,
-            titleAm: sub.titleAm || subTitle,
             content: subContent,
-            contentEn: subContent,
-            contentAm: sub.contentAm || subContent,
             contentType: sub.contentType ?? 'DOCUMENT',
             durationMinutes: sub.durationMinutes,
             resourceUrl: sub.resourceUrl,

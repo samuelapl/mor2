@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Eye, FilePenLine, PackageOpen, Plus } from 'lucide-react';
 import { useLms } from '@/lib/lms-store';
@@ -7,12 +8,10 @@ import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import PageShell from '@/components/shared/PageShell';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Pagination } from '@/components/ui/Pagination';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { CourseCard } from '@/components/features/courses/CourseCard';
-import { CourseDetailModal } from '@/components/features/courses/CourseDetailModal';
 import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar } from '@/components/ui/FilterBar';
@@ -32,7 +31,7 @@ export default function CoursesPage() {
   const canCreate = can('course.create');
   const canViewAssignedOnly = can('course.view.assigned') && !can('course.view.all');
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [creationMode, setCreationMode] = useState<'manual' | 'scorm' | null>(null);
   const [search, setSearch] = useState('');
@@ -55,27 +54,20 @@ export default function CoursesPage() {
     return courses.filter((course) => {
       if (statusTab === 'draft' && course.status !== 'draft') return false;
       if (statusTab === 'under_review' && course.status !== 'under_review') return false;
-      if (statusTab === 'approved' && (course.status !== 'approved' || course.published))
-        return false;
-      if (statusTab === 'published' && !course.published && course.status !== 'published')
-        return false;
+      if (statusTab === 'approved' && (course.status !== 'approved' || course.published)) return false;
+      if (statusTab === 'published' && !course.published && course.status !== 'published') return false;
       if (statusTab === 'archived' && course.status !== 'archived') return false;
 
       if (category !== 'all' && course.category !== category) return false;
 
       if (!q) return true;
       return (
-        course.title.toLowerCase().includes(q) ||
-        course.code.toLowerCase().includes(q) ||
-        (course.rejectionReason ?? '').toLowerCase().includes(q)
+        course.title.toLowerCase().includes(q) || course.code.toLowerCase().includes(q) || (course.rejectionReason ?? '').toLowerCase().includes(q)
       );
     });
   }, [courses, search, statusTab, category]);
 
-  const { page, totalPages, setPage, pageItems, totalItems, pageSize, setPageSize } = usePagination(
-    filtered,
-    6,
-  );
+  const { page, totalPages, setPage, pageItems, totalItems, pageSize, setPageSize } = usePagination(filtered, 6);
 
   const tabs: { id: StatusTab; label: string; count: number }[] = [
     { id: 'all', label: isAmharic ? 'ሁሉም' : 'All', count: counts.all },
@@ -100,15 +92,11 @@ export default function CoursesPage() {
     : canCreate
       ? {
           title: isAmharic ? 'እስካሁን ምንም ኮርስ የለም' : 'No courses yet',
-          description: isAmharic
-            ? 'ለመጀመር አዲስ ኮርስ ይፍጠሩ ወይም ማጣሪያዎችን ያስተካክሉ።'
-            : 'Create one to get started, or adjust the filters above.',
+          description: isAmharic ? 'ለመጀመር አዲስ ኮርስ ይፍጠሩ ወይም ማጣሪያዎችን ያስተካክሉ።' : 'Create one to get started, or adjust the filters above.',
         }
       : {
           title: isAmharic ? 'ምንም የተዛመደ ኮርስ የለም' : 'No courses match',
-          description: isAmharic
-            ? 'ሌሎች ኮርሶችን ለማየት ከላይ ያሉትን ማጣሪያዎች ያስተካክሉ።'
-            : 'Adjust the filters above to see other courses.',
+          description: isAmharic ? 'ሌሎች ኮርሶችን ለማየት ከላይ ያሉትን ማጣሪያዎች ያስተካክሉ።' : 'Adjust the filters above to see other courses.',
         };
 
   return (
@@ -142,9 +130,7 @@ export default function CoursesPage() {
               }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150',
-                active
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
               )}
             >
               <span>{tab.label}</span>
@@ -171,10 +157,7 @@ export default function CoursesPage() {
             label: 'Category',
             value: category,
             onChange: setCategory,
-            options: [
-              { value: 'all', label: 'All Categories' },
-              ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
-            ],
+            options: [{ value: 'all', label: 'All Categories' }, ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item }))],
           },
         ]}
         onClear={() => {
@@ -204,11 +187,6 @@ export default function CoursesPage() {
             <CourseCard
               key={course.id}
               course={course}
-              extraBadge={
-                course.status === 'under_review' ? (
-                  <Badge variant="blue">Pending review</Badge>
-                ) : undefined
-              }
             >
               {course.status === 'rejected' && course.rejectionReason ? (
                 <div className="w-full rounded-xl border border-red-200/70 bg-red-50/80 px-3 py-2 text-xs text-red-700">
@@ -216,7 +194,7 @@ export default function CoursesPage() {
                   <p className="mt-0.5">{course.rejectionReason}</p>
                 </div>
               ) : null}
-              <Button size="sm" variant="outline" onClick={() => setSelectedId(course.id)}>
+              <Button size="sm" variant="outline" onClick={() => router.push(`/courses/${course.id}`)}>
                 <Eye className="h-3.5 w-3.5" />
                 Details
               </Button>
@@ -232,12 +210,6 @@ export default function CoursesPage() {
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
         pageSizeOptions={[6, 12, 24, 48]}
-      />
-
-      <CourseDetailModal
-        open={selectedId !== null}
-        onClose={() => setSelectedId(null)}
-        courseId={selectedId ?? ''}
       />
 
       <WorkspaceDetailOverlay
@@ -265,8 +237,7 @@ export default function CoursesPage() {
                     key: 'manual' as const,
                     icon: FilePenLine,
                     title: 'Create manually',
-                    description:
-                      'Build the course step by step — details, curriculum, materials and a final assessment.',
+                    description: 'Build the course step by step — details, curriculum, materials and a final assessment.',
                   },
                   {
                     key: 'scorm' as const,
@@ -288,12 +259,8 @@ export default function CoursesPage() {
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-110">
                     <option.icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">
-                    {option.title}
-                  </h3>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    {option.description}
-                  </p>
+                  <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">{option.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{option.description}</p>
                 </button>
               ))}
             </div>
@@ -317,12 +284,9 @@ export default function CoursesPage() {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <PackageOpen className="h-7 w-7" />
               </div>
-              <h2 className="mt-4 font-display text-lg font-bold text-slate-900">
-                SCORM upload — coming soon
-              </h2>
+              <h2 className="mt-4 font-display text-lg font-bold text-slate-900">SCORM upload — coming soon</h2>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-                Uploading and importing SCORM packages isn&apos;t wired up yet. For now, build your
-                course manually.
+                Uploading and importing SCORM packages isn&apos;t wired up yet. For now, build your course manually.
               </p>
               <button
                 type="button"

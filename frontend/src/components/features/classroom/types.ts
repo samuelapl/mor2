@@ -8,7 +8,7 @@ import type {
 } from '@/lib/api/types';
 
 export type ClassroomItemType =
-  'COURSE_OVERVIEW' | 'MODULE_OVERVIEW' | 'LESSON' | 'SUB_LESSON' | 'QUIZ' | 'CERTIFICATE';
+  'COURSE_OVERVIEW' | 'MODULE_OVERVIEW' | 'LESSON' | 'SUB_LESSON' | 'QUIZ' | 'LIVE_SESSIONS' | 'CERTIFICATE';
 
 export type ClassroomQuizKind = 'LESSON_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'FINAL_ASSESSMENT';
 

@@ -16,7 +16,7 @@ export class VenueSessionItemDto {
   @ApiProperty({ example: 'venue-uuid-1' })
   @IsString()
   @IsNotEmpty()
-  venueId: string;
+  venueId!: string;
 
   @ApiPropertyOptional({ example: 'trainer-uuid-1' })
   @IsOptional()
@@ -25,24 +25,24 @@ export class VenueSessionItemDto {
 
   @ApiProperty({ example: '2026-10-15T09:00:00.000Z' })
   @IsDateString()
-  scheduledAt: string;
+  scheduledAt!: string;
 
   @ApiProperty({ example: 180 })
   @IsInt()
   @Min(5)
-  durationMinutes: number;
+  durationMinutes!: number;
 }
 
 export class CreateBatchSessionDto {
   @ApiProperty({ example: 'course-uuid-1' })
   @IsString()
   @IsNotEmpty()
-  courseId: string;
+  courseId!: string;
 
   @ApiProperty({ example: 'Practical Tax Auditing Lab' })
   @IsString()
   @MinLength(2)
-  titleEn: string;
+  titleEn!: string;
 
   @ApiPropertyOptional({ example: 'የግብር ኦዲት የተግባር ልምምድ' })
   @IsOptional()
@@ -63,6 +63,6 @@ export class CreateBatchSessionDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VenueSessionItemDto)
-  venueSessions: VenueSessionItemDto[];
+  venueSessions!: VenueSessionItemDto[];
 }
 

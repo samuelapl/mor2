@@ -5,15 +5,15 @@ import { AttendanceStatus } from '@prisma/client';
 export class MarkAttendanceDto {
   @ApiProperty()
   @IsUUID()
-  sessionId: string;
+  sessionId!: string;
 
   @ApiProperty()
   @IsUUID()
-  userId: string;
+  userId!: string;
 
   @ApiProperty({ enum: AttendanceStatus, default: AttendanceStatus.PRESENT })
   @IsEnum(AttendanceStatus)
-  status: AttendanceStatus;
+  status!: AttendanceStatus;
 
   @ApiPropertyOptional({ description: 'Duration attended in minutes' })
   @IsOptional()
@@ -30,13 +30,13 @@ export class MarkAttendanceDto {
 export class BulkMarkAttendanceDto {
   @ApiProperty()
   @IsUUID()
-  sessionId: string;
+  sessionId!: string;
 
   @ApiProperty({
     type: [MarkAttendanceDto],
     description: 'Attendance records; userId + status are required per entry',
   })
-  records: Array<{
+  records!: Array<{
     userId: string;
     status: AttendanceStatus;
     durationMinutes?: number;

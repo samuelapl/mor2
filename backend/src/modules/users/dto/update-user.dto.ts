@@ -42,17 +42,17 @@ export class ChangePasswordDto {
   @ApiPropertyOptional()
   @IsString()
   @MinLength(6)
-  currentPassword: string;
+  currentPassword!: string;
 
   @ApiPropertyOptional()
   @IsString()
   @MinLength(6)
-  newPassword: string;
+  newPassword!: string;
 }
 
 export class AdminResetPasswordDto {
   @ApiPropertyOptional()
   @IsString()
   @MinLength(6)
-  newPassword: string;
+  newPassword!: string;
 }

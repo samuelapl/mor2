@@ -1,3 +1,4 @@
+import { CoursesModule } from '@modules/courses/courses.module';
 import { Module } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
 import { AssessmentsController } from './assessments.controller';
@@ -8,7 +9,7 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
 import { PolicyModule } from '@modules/policy/policy.module';
 
 @Module({
-  imports: [ProgressModule, CertificatesModule, NotificationsModule, PolicyModule],
+  imports: [ProgressModule, CertificatesModule, NotificationsModule, PolicyModule, CoursesModule],
   controllers: [AssessmentsController],
   providers: [AssessmentsService, PrismaService],
   exports: [AssessmentsService],

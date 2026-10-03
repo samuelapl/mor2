@@ -35,6 +35,7 @@ export interface LessonDraft {
   /** Quiz / Assessment specific fields */
   quizQuestions?: Question[];
   quizPassMark?: number;
+  quizWeight?: number;
   quizTimeLimitMinutes?: number | null;
   quizAttemptsAllowed?: number;
   quizShuffle?: boolean;

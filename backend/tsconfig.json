@@ -12,10 +12,21 @@
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
+    "typeRoots": ["./node_modules/@types"],
+    "types": [
+      "jest",
+      "node",
+      "multer",
+      "express",
+      "passport",
+      "passport-jwt",
+      "bcrypt",
+      "uuid"
+    ],
     "paths": {
       "@common/*": ["./src/common/*"],
       "@config/*": ["./src/config/*"],

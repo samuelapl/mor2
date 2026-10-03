@@ -6,7 +6,7 @@ export class CreateEnrollmentDto {
   @ApiProperty({ example: 'course-uuid' })
   @IsString()
   @IsNotEmpty()
-  courseId: string;
+  courseId!: string;
 
   @ApiPropertyOptional({ enum: CourseDeliveryMode, default: CourseDeliveryMode.ONLINE_ONLY })
   @IsOptional()
@@ -28,5 +28,5 @@ export class AdminEnrollDto extends CreateEnrollmentDto {
   @ApiProperty({ example: 'learner-uuid' })
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 }

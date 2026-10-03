@@ -18,12 +18,7 @@ function cleanModuleTitle(rawTitle: string): string {
   return rawTitle.replace(/^Module\s+\d+[\s:.-]*/i, '').trim();
 }
 
-export function ModuleOverviewStage({
-  module,
-  moduleIndex,
-  moduleProgress,
-  onStartLessons,
-}: ModuleOverviewStageProps) {
+export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onStartLessons }: ModuleOverviewStageProps) {
   const hasDescription = Boolean(module.description && stripHtmlTags(module.description).trim());
   const hasObjectives = Boolean(module.objectives && stripHtmlTags(module.objectives).trim());
 
@@ -34,13 +29,7 @@ export function ModuleOverviewStage({
 
   const totalDurationMin =
     module.durationMinutes ??
-    module.lessons.reduce(
-      (acc, l) =>
-        acc +
-        (l.durationMin || 0) +
-        (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0),
-      0,
-    );
+    module.lessons.reduce((acc, l) => acc + (l.durationMin || 0) + (l.subLessons?.reduce((sAcc, s) => sAcc + (s.durationMin || 0), 0) ?? 0), 0);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -70,8 +59,7 @@ export function ModuleOverviewStage({
             Module {moduleIndex + 1}: {cleanModuleTitle(module.title)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Carefully review the module overview, key learning objectives, and attached study
-            references before starting.
+            Carefully review the module overview, key learning objectives, and attached study references before starting.
           </p>
         </div>
 
@@ -91,9 +79,7 @@ export function ModuleOverviewStage({
             <Clock className="h-4 w-4 text-amber-600 shrink-0" />
             <div>
               <p className="text-[10px] font-semibold text-slate-400 uppercase">Module Duration</p>
-              <p className="text-xs font-bold text-slate-800">
-                {totalDurationMin > 0 ? `${totalDurationMin} min` : 'Self-paced'}
-              </p>
+              <p className="text-xs font-bold text-slate-800">{totalDurationMin > 0 ? `${totalDurationMin} min` : 'Self-paced'}</p>
             </div>
           </div>
 
@@ -108,21 +94,7 @@ export function ModuleOverviewStage({
           </div>
         </div>
 
-        {/* Start / Continue Button */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            Ready to proceed? Jump right into the first topic or exercise.
-          </p>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={onStartLessons}
-            className="flex items-center gap-2 font-semibold shadow-xs"
-          >
-            <span>{completedLessons > 0 ? 'Continue Module Lessons' : 'Start Module Lessons'}</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
+       
       </div>
 
       {/* Module Description & Overview */}
@@ -130,9 +102,7 @@ export function ModuleOverviewStage({
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-slate-900">
             <BookOpen className="h-4 w-4 text-indigo-600" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              Module Overview & Description
-            </h2>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">Module Overview & Description</h2>
           </div>
           <div className="text-sm text-slate-700 leading-relaxed max-w-none">
             <RichContent html={module.description!} />
@@ -145,13 +115,9 @@ export function ModuleOverviewStage({
         <div className="rounded-2xl border border-indigo-200/90 bg-indigo-50/50 p-6 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-indigo-950">
             <Target className="h-4 w-4 text-indigo-600" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-950">
-              Module Learning Objectives
-            </h2>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-950">Module Learning Objectives</h2>
           </div>
-          <p className="text-xs text-indigo-800/90">
-            By the end of this module, you should understand and be able to apply:
-          </p>
+          <p className="text-xs text-indigo-800/90">By the end of this module, you should understand and be able to apply:</p>
           <div className="text-sm text-indigo-950 leading-relaxed bg-white/80 rounded-xl border border-indigo-100 p-4 shadow-2xs">
             <RichContent html={module.objectives!} />
           </div>
@@ -160,12 +126,7 @@ export function ModuleOverviewStage({
 
       {/* Bottom Start Action */}
       <div className="pt-2 flex justify-end">
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onStartLessons}
-          className="flex items-center gap-2 font-semibold shadow-xs"
-        >
+        <Button type="button" variant="primary" onClick={onStartLessons} className="flex items-center gap-2 font-semibold shadow-xs">
           <span>Begin Module Lessons</span>
           <ArrowRight className="h-4 w-4" />
         </Button>

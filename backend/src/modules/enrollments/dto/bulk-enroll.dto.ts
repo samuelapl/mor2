@@ -6,5 +6,5 @@ export class BulkEnrollDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })
-  userIds: string[];
+  userIds!: string[];
 }

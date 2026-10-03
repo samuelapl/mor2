@@ -133,6 +133,11 @@ export async function unassignTrainer(courseId: string, userId: string): Promise
   await api<unknown>(`courses/${courseId}/trainers/${userId}`, { method: 'DELETE' });
 }
 
+/** Withdraws the approval of an approved, unpublished course and moves it back to draft. */
+export async function returnCourseToDraft(id: string, reason: string): Promise<ApiCourseListItem> {
+  return api<ApiCourseListItem>(`courses/${id}/return-to-draft`, { method: 'POST', body: { reason } });
+}
+
 export async function unpublishCourse(id: string): Promise<ApiCourseListItem> {
   return api<ApiCourseListItem>(`courses/${id}/unpublish`, { method: 'POST' });
 }

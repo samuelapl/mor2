@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '@prisma/client';
-import { IsArray, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateQuestionBankQuestionDto {
   @ApiPropertyOptional({
@@ -28,11 +28,11 @@ export class CreateQuestionBankQuestionDto {
 
   @ApiProperty({ enum: QuestionType, example: QuestionType.MULTIPLE_CHOICE })
   @IsEnum(QuestionType)
-  type: QuestionType;
+  type!: QuestionType;
 
   @ApiProperty({ example: 'What is the primary function of an inverter?' })
   @IsString()
-  question: string;
+  question!: string;
 
   @ApiProperty({
     example: ['Convert DC to AC', 'Convert AC to DC', 'Store charge'],
@@ -40,7 +40,7 @@ export class CreateQuestionBankQuestionDto {
   })
   @IsArray()
   @IsString({ each: true })
-  options: string[];
+  options!: string[];
 
   @ApiPropertyOptional({
     example: '0',
@@ -60,4 +60,13 @@ export class CreateQuestionBankQuestionDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'Save even if similar questions exist in the course. Identical questions are always rejected.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  acknowledgeSimilar?: boolean;
 }

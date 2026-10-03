@@ -10,21 +10,18 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
-import { Permissions } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
+import { AuthenticatedUser } from '@common/interfaces';
 import { PreparedQuizService } from './prepared-quiz.service';
 import {
   CreatePreparedQuizDto,
   UpdatePreparedQuizDto,
   BulkAddPreparedQuestionsDto,
   ReorderPreparedQuestionsDto,
+  SetPreparedQuestionPointsDto,
 } from './dto';
 
 @ApiTags('prepared-quiz')
@@ -38,7 +35,8 @@ export class PreparedQuizController {
   @Permissions('live_session.manage_own', 'live_session.manage_all')
   @ApiOperation({ summary: 'Get all prepared quiz groups for a session' })
   @ApiParam({ name: 'sessionId', type: String })
-  async findAll(@Param('sessionId') sessionId: string) {
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Param('sessionId') sessionId: string) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     return this.preparedQuizService.findAll(sessionId);
   }
 
@@ -47,9 +45,11 @@ export class PreparedQuizController {
   @ApiOperation({ summary: 'Create a new prepared quiz group (e.g. Lesson 1 Quiz)' })
   @ApiParam({ name: 'sessionId', type: String })
   async createQuiz(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Body() dto: CreatePreparedQuizDto,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     return this.preparedQuizService.createQuiz(sessionId, dto);
   }
 
@@ -59,10 +59,12 @@ export class PreparedQuizController {
   @ApiParam({ name: 'sessionId', type: String })
   @ApiParam({ name: 'quizId', type: String })
   async updateQuiz(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Param('quizId') quizId: string,
     @Body() dto: UpdatePreparedQuizDto,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     return this.preparedQuizService.updateQuiz(sessionId, quizId, dto);
   }
 
@@ -72,9 +74,11 @@ export class PreparedQuizController {
   @ApiParam({ name: 'sessionId', type: String })
   @ApiParam({ name: 'quizId', type: String })
   async deleteQuiz(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Param('quizId') quizId: string,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     await this.preparedQuizService.deleteQuiz(sessionId, quizId);
     return { success: true };
   }
@@ -85,10 +89,12 @@ export class PreparedQuizController {
   @ApiParam({ name: 'sessionId', type: String })
   @ApiParam({ name: 'quizId', type: String })
   async bulkAddQuestions(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Param('quizId') quizId: string,
     @Body() dto: BulkAddPreparedQuestionsDto,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     return this.preparedQuizService.bulkAddQuestions(sessionId, quizId, dto);
   }
 
@@ -98,11 +104,31 @@ export class PreparedQuizController {
   @ApiParam({ name: 'sessionId', type: String })
   @ApiParam({ name: 'quizId', type: String })
   async reorderQuestions(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Param('quizId') quizId: string,
     @Body() dto: ReorderPreparedQuestionsDto,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     return this.preparedQuizService.reorderQuestions(sessionId, quizId, dto);
+  }
+
+  @Patch(':quizId/questions/points')
+  @Permissions('live_session.manage_own', 'live_session.manage_all')
+  @ApiOperation({
+    summary:
+      'Set the points of questions in a quiz group; a weighted quiz may not exceed its course weight',
+  })
+  @ApiParam({ name: 'sessionId', type: String })
+  @ApiParam({ name: 'quizId', type: String })
+  async setQuestionPoints(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
+    @Body() dto: SetPreparedQuestionPointsDto,
+  ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
+    return this.preparedQuizService.setQuestionPoints(sessionId, quizId, dto);
   }
 
   @Delete(':quizId/questions/:questionId')
@@ -112,10 +138,12 @@ export class PreparedQuizController {
   @ApiParam({ name: 'quizId', type: String })
   @ApiParam({ name: 'questionId', type: String })
   async removeQuestion(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sessionId') sessionId: string,
     @Param('quizId') quizId: string,
     @Param('questionId') questionId: string,
   ) {
+    await this.preparedQuizService.assertCanManage(user, sessionId);
     await this.preparedQuizService.removeQuestion(sessionId, quizId, questionId);
     return { success: true };
   }

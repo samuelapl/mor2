@@ -9,9 +9,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   // Check specifically for classroom route (/learner/courses/[id]/learn), not just any /learner page
   const isClassroom = Boolean(pathname && /\/courses\/[^/]+\/learn(\/|$)/.test(pathname));
+  // The staff course review page (/courses/[id]) is full-screen too, like the creator studio.
+  const isCourseReview = Boolean(pathname && /^\/courses\/[^/]+\/?$/.test(pathname));
 
-  // When inside the classroom, cover everything (no dashboard sidebar, no dashboard header)
-  if (isClassroom) {
+  // When inside the classroom or course review, cover everything (no dashboard sidebar, no dashboard header)
+  if (isClassroom || isCourseReview) {
     return <div className="relative h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-900">{children}</div>;
   }
 

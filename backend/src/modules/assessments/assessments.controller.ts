@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { AssessmentsService } from './assessments.service';
+import { CoursesService } from '@modules/courses/courses.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
@@ -13,7 +14,10 @@ import { RolesGuard } from '@common/guards';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller()
 export class AssessmentsController {
-  constructor(private readonly assessmentsService: AssessmentsService) {}
+  constructor(
+    private readonly assessmentsService: AssessmentsService,
+    private readonly coursesService: CoursesService,
+  ) {}
 
   @Get('courses/:courseId/assessments')
   @ApiOperation({ summary: 'List assessments for a course' })
@@ -32,12 +36,17 @@ export class AssessmentsController {
   }
 
   @Put('courses/:courseId/assessment')
-  @Permissions('quiz.create')
+  @Permissions('quiz.create', 'course.create')
   @ApiOperation({
     summary: 'Replace the course final assessment (delete-all + create). Only DRAFT/REJECTED',
   })
   @ApiParam({ name: 'courseId', type: String })
-  async replaceForCourse(@Param('courseId') courseId: string, @Body() dto: CreateAssessmentDto) {
+  async replaceForCourse(
+    @Param('courseId') courseId: string,
+    @Body() dto: CreateAssessmentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['quiz.create']);
     return this.assessmentsService.replaceForCourse(courseId, dto);
   }
 
@@ -51,7 +60,7 @@ export class AssessmentsController {
   }
 
   @Post('courses/:courseId/modules/:moduleId/assessments')
-  @Permissions('quiz.create')
+  @Permissions('quiz.create', 'course.create')
   @ApiOperation({ summary: 'Create a module assessment (must be submitted to unlock next module)' })
   @ApiParam({ name: 'courseId', type: String })
   @ApiParam({ name: 'moduleId', type: String })
@@ -59,7 +68,9 @@ export class AssessmentsController {
     @Param('courseId') courseId: string,
     @Param('moduleId') moduleId: string,
     @Body() dto: CreateAssessmentDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['quiz.create']);
     return this.assessmentsService.createForModule(courseId, moduleId, dto);
   }
 
@@ -73,7 +84,7 @@ export class AssessmentsController {
   }
 
   @Post('courses/:courseId/modules/:moduleId/lessons/:lessonId/assessments')
-  @Permissions('quiz.create')
+  @Permissions('quiz.create', 'course.create')
   @ApiOperation({
     summary:
       'Create a lesson assessment (or sub-lesson assessment if lessonId is a sub-lesson). Must be submitted to unlock the next content',
@@ -86,7 +97,9 @@ export class AssessmentsController {
     @Param('moduleId') moduleId: string,
     @Param('lessonId') lessonId: string,
     @Body() dto: CreateAssessmentDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['quiz.create']);
     return this.assessmentsService.createForLesson(courseId, moduleId, lessonId, dto);
   }
 

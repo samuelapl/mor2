@@ -109,12 +109,15 @@ export interface Question {
   answerText?: string;
   points: number;
   imageUrl?: string;
+  category?: string;
+  explanation?: string;
 }
 
 export interface Quiz {
   id: string;
   title: string;
   passMark: number;
+  weight?: number;
   attemptsAllowed: number;
   timeLimitMinutes?: number | null;
   questions: Question[];
@@ -167,6 +170,49 @@ export interface Course {
   progress: Record<string, number>;
   modules: Module[];
   attachments?: Attachment[];
+  /** Reviewer decisions, newest first. Only present on courses loaded with detail. */
+  approvals?: CourseApprovalEntry[];
+  /** Owner planned online sessions during preparation (Online Self-Paced only). */
+  hasOnlineSessions?: boolean;
+  /** Planned online sessions, in order. Only present on courses loaded with detail. */
+  sessionPlans?: SessionPlan[];
+}
+
+/** A placeholder online session planned during course preparation. */
+export interface SessionPlan {
+  id: string;
+  order: number;
+  titleEn: string;
+  descriptionEn?: string;
+  objectivesEn?: string;
+  quizzes: SessionQuizPlan[];
+  /** Set once the plan has been scheduled as a live session. */
+  liveSession?: {
+    id: string;
+    scheduledAt: string;
+    status: string;
+    trainerId: string | null;
+    platform?: string;
+    durationMinutes?: number;
+  } | null;
+}
+
+/** A weighted quiz planned for a session; its questions are prepared after approval. */
+export interface SessionQuizPlan {
+  id: string;
+  titleEn: string;
+  weight: number;
+  passingScore: number;
+  timeLimitMinutes?: number | null;
+}
+
+export interface CourseApprovalEntry {
+  id: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION';
+  comments?: string;
+  reviewerName?: string;
+  decidedAt?: string;
+  createdAt: string;
 }
 
 export type ActionResult = { ok: true } | { ok: false; message: string };

@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  Inject,
   Param,
   Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  forwardRef,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -19,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { FilesService, FilePurpose } from './files.service';
+import { CoursesService } from '@modules/courses/courses.service';
 import { CurrentUser, Permissions, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -29,7 +32,11 @@ import { RolesGuard } from '@common/guards';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    @Inject(forwardRef(() => CoursesService))
+    private readonly coursesService: CoursesService,
+  ) {}
 
   @Post('upload')
   @Roles(
@@ -87,7 +94,7 @@ export class FilesController {
   }
 
   @Post('cover/:courseId')
-  @Permissions('course.update.own', 'course.update.all')
+  @Permissions('course.update.own', 'course.update.all', 'course.create')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a course cover image' })
   @ApiConsumes('multipart/form-data')
@@ -103,7 +110,9 @@ export class FilesController {
   async uploadCover(
     @UploadedFile() file: Express.Multer.File,
     @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['course.update.own', 'course.update.all']);
     return this.filesService.uploadCover(file, courseId);
   }
 

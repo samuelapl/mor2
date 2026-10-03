@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Eye, Send } from 'lucide-react';
 import { useLms } from '@/lib/lms-store';
@@ -10,14 +11,13 @@ import { Table, Td } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { Badge, CourseStatusBadge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
-import { CourseDetailModal } from '@/components/features/courses/CourseDetailModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar } from '@/components/ui/FilterBar';
 
 export default function ContentStatusPage() {
   const { courses, submitForApproval } = useLms();
   const { t, tBilingual } = useTranslation();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
 
@@ -27,25 +27,17 @@ export default function ContentStatusPage() {
       if (status !== 'all' && course.status !== status) return false;
       if (!q) return true;
       return (
-        course.title.toLowerCase().includes(q) ||
-        course.code.toLowerCase().includes(q) ||
-        (course.rejectionReason ?? '').toLowerCase().includes(q)
+        course.title.toLowerCase().includes(q) || course.code.toLowerCase().includes(q) || (course.rejectionReason ?? '').toLowerCase().includes(q)
       );
     });
   }, [courses, search, status]);
-  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
-    filtered,
-    5,
-  );
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filtered, 5);
 
   return (
     <PageShell
       role="course_owner"
       title={tBilingual('Content Status', 'የይዘት ሁኔታ')}
-      description={tBilingual(
-        'Monitor the approval pipeline and administrator rejection feedback.',
-        'የማረጋገጫ ሂደቱን እና የአስተዳዳሪ ግብረመልስን ይከታተሉ።',
-      )}
+      description={tBilingual('Monitor the approval pipeline and administrator rejection feedback.', 'የማረጋገጫ ሂደቱን እና የአስተዳዳሪ ግብረመልስን ይከታተሉ።')}
     >
       <FilterBar
         search={search}
@@ -76,10 +68,7 @@ export default function ContentStatusPage() {
       {filtered.length === 0 ? (
         <EmptyState
           title={tBilingual('No courses', 'ምንም ኮርሶች የሉም')}
-          description={tBilingual(
-            'Nothing matches the current filters.',
-            'ከአሁኑ ማጣሪያዎች ጋር የሚዛመድ ምንም ነገር የለም።',
-          )}
+          description={tBilingual('Nothing matches the current filters.', 'ከአሁኑ ማጣሪያዎች ጋር የሚዛመድ ምንም ነገር የለም።')}
         />
       ) : (
         <Table
@@ -104,9 +93,7 @@ export default function ContentStatusPage() {
               </Td>
               <Td>
                 <Badge variant={course.published ? 'green' : 'slate'}>
-                  {course.published
-                    ? tBilingual('Published', 'የታተመ')
-                    : tBilingual('Not published', 'ያልታተመ')}
+                  {course.published ? tBilingual('Published', 'የታተመ') : tBilingual('Not published', 'ያልታተመ')}
                 </Badge>
               </Td>
               <Td className="max-w-[260px]">
@@ -122,16 +109,14 @@ export default function ContentStatusPage() {
               </Td>
               <Td className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setSelectedId(course.id)}>
+                  <Button size="sm" variant="outline" onClick={() => router.push(`/courses/${course.id}`)}>
                     <Eye className="h-3.5 w-3.5" />
                     {tBilingual('Details', 'ዝርዝሮች')}
                   </Button>
                   {course.status === 'draft' || course.status === 'rejected' ? (
                     <Button size="sm" onClick={() => void submitForApproval(course.id)}>
                       <Send className="h-3.5 w-3.5" />
-                      {course.status === 'rejected'
-                        ? tBilingual('Resubmit', 'እንደገና አስገባ')
-                        : tBilingual('Submit', 'አስገባ')}
+                      {course.status === 'rejected' ? tBilingual('Resubmit', 'እንደገና አስገባ') : tBilingual('Submit', 'አስገባ')}
                     </Button>
                   ) : null}
                 </div>
@@ -148,12 +133,6 @@ export default function ContentStatusPage() {
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
         pageSizeOptions={[5, 10, 20, 50]}
-      />
-
-      <CourseDetailModal
-        open={selectedId !== null}
-        onClose={() => setSelectedId(null)}
-        courseId={selectedId ?? ''}
       />
     </PageShell>
   );

@@ -11,12 +11,19 @@ datasource db {
 // 0. Course policy (dynamic, admin-editable)
 // ──────────────────────────────────────────────────────────
 
+enum CourseProgressionMode {
+  LOCKED
+  OPEN
+}
+
 model CoursePolicySettings {
-  id                    String   @id @default("default")
-  timeSpentPercent      Float    @default(50) @map("time_spent_percent")
-  retakeCooldownMinutes Int      @default(0) @map("retake_cooldown_minutes")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-  updatedBy             String?  @map("updated_by")
+  id                    String                @id @default("default")
+  timeSpentPercent      Float                 @default(50) @map("time_spent_percent")
+  retakeCooldownMinutes Int                   @default(0) @map("retake_cooldown_minutes")
+  progressionMode       CourseProgressionMode @default(LOCKED) @map("progression_mode")
+  passingScorePercent   Int                   @default(50) @map("passing_score_percent")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  updatedBy             String?               @map("updated_by")
 
   @@map("course_policy_settings")
 }
@@ -207,6 +214,8 @@ model Course {
   targetAudience String? @map("target_audience")
   deliveryMethod String? @map("delivery_method")
   deliveryMode   CourseDeliveryMode @default(BOTH) @map("delivery_mode")
+  /// Course owner planned online sessions during preparation (see CourseSessionPlan).
+  hasOnlineSessions Boolean @default(false) @map("has_online_sessions")
   objectives  String?  @map("objectives")
   prerequisites String? @map("prerequisites")
 
@@ -218,6 +227,7 @@ model Course {
   enrollments     Enrollment[]
   assessments     Assessment[]
   liveSessions    LiveSession[]
+  sessionPlans    CourseSessionPlan[]
   certificates    Certificate[]
   attachments     Attachment[]
   questionBankQuestions QuestionBankQuestion[]
@@ -385,6 +395,7 @@ model Attachment {
   moduleId     String?  @map("module_id")
   lessonId     String?  @map("lesson_id")
   courseId     String?  @map("course_id")
+  assessmentId String?  @map("assessment_id")
   fileName     String   @map("file_name")
   fileKey      String   @map("file_key")
   fileUrl      String   @map("file_url")
@@ -396,10 +407,12 @@ model Attachment {
   module CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   lesson Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   course Course?           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  assessment Assessment?   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   @@index([moduleId])
   @@index([lessonId])
   @@index([courseId])
+  @@index([assessmentId])
   @@map("attachments")
 }
 
@@ -486,6 +499,7 @@ enum AssessmentType {
   MODULE_ASSESSMENT
   LESSON_ASSESSMENT
   SUB_LESSON_ASSESSMENT
+  SESSION_ASSESSMENT
 }
 
 model Assessment {
@@ -494,17 +508,21 @@ model Assessment {
   moduleId      String? @map("module_id")
   lessonId      String? @map("lesson_id")
   type          AssessmentType @default(FINAL_ASSESSMENT) @map("type")
+  /// Set for SESSION_ASSESSMENT: the planned session this weighted quiz belongs to.
+  sessionPlanId String? @map("session_plan_id")
   titleAm       String @map("title_am")
   titleEn       String @map("title_en")
   descriptionAm String? @map("description_am")
   descriptionEn String? @map("description_en")
   passingScore  Int    @map("passing_score") // percentage
+  weight        Int    @default(0) @map("weight") // percentage weight towards course grade (sum of course assessments = 100)
   maxAttempts   Int    @default(3) @map("max_attempts")
   timeLimitMinutes Int? @map("time_limit_minutes")
   shuffleQuestions Boolean @default(false) @map("shuffle_questions")
 
   questions  Json   // structured question bank
   attempts   AssessmentAttempt[]
+  attachments Attachment[] // reference files learners see alongside the assessment
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -512,10 +530,14 @@ model Assessment {
   course  Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   module  CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   lesson  Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  sessionPlan CourseSessionPlan? @relation(fields: [sessionPlanId], references: [id], onDelete: Cascade)
+  /// For SESSION_ASSESSMENT: the prepared quiz the trainer runs live for it.
+  preparedQuiz SessionPreparedQuiz?
 
   @@index([courseId])
   @@index([moduleId])
   @@index([lessonId])
+  @@index([sessionPlanId])
   @@map("assessments")
 }
 
@@ -567,6 +589,11 @@ model QuestionBankQuestion {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
+  // Generated columns (see migration 20261003090000) used for duplicate detection.
+  // Read-only: never write them; QuestionBankService queries them via raw SQL.
+  contentHash    String? @default(dbgenerated("qb_content_hash(type, question, options)")) @map("content_hash")
+  similarityText String? @default(dbgenerated("qb_similarity_text(question, options)")) @map("similarity_text")
+
   course        Course?            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   module        CurriculumModule?  @relation(fields: [moduleId], references: [id], onDelete: SetNull)
   lesson        Lesson?            @relation("QuestionBankLesson", fields: [lessonId], references: [id], onDelete: SetNull)
@@ -579,6 +606,8 @@ model QuestionBankQuestion {
   @@index([lessonId])
   @@index([subLessonId])
   @@index([createdById])
+  @@index([courseId, contentHash])
+  @@index([similarityText(ops: raw("gin_trgm_ops"))], type: Gin)
   @@map("question_bank_questions")
 }
 
@@ -594,6 +623,7 @@ model LiveSession {
   titleEn         String            @map("title_en")
   descriptionAm   String?           @map("description_am")
   descriptionEn   String?           @map("description_en")
+  objectivesEn    String?           @map("objectives_en")
   platform        SessionPlatform
   externalUrl     String?           @map("external_url")
   meetingId       String?           @map("meeting_id")
@@ -613,6 +643,8 @@ model LiveSession {
   attendanceLogs    AttendanceLog[]
   enrollments       Enrollment[]                  @relation("EnrollmentSession")
   preparedQuizzes   SessionPreparedQuiz[]         @relation("SessionPreparedQuizzes")
+  /// The planned session this was scheduled from, if any. Deleting the plan keeps the held session.
+  sessionPlanId     String?                       @unique @map("session_plan_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -621,6 +653,7 @@ model LiveSession {
   course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   trainer User?  @relation("LiveSessionTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
   venue   Venue? @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  sessionPlan CourseSessionPlan? @relation(fields: [sessionPlanId], references: [id], onDelete: SetNull)
 
   @@index([courseId])
   @@index([scheduledAt])
@@ -629,16 +662,40 @@ model LiveSession {
   @@map("live_sessions")
 }
 
+/// A placeholder online session the course owner plans during course preparation.
+/// It has no date, trainer or platform; those are set when it is scheduled as a LiveSession.
+model CourseSessionPlan {
+  id            String   @id @default(uuid())
+  courseId      String   @map("course_id")
+  order         Int
+  titleEn       String   @map("title_en")
+  descriptionEn String?  @map("description_en")
+  objectivesEn  String?  @map("objectives_en")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Weighted quizzes (type SESSION_ASSESSMENT) planned for this session.
+  assessments Assessment[]
+  liveSession LiveSession?
+
+  @@index([courseId])
+  @@map("course_session_plans")
+}
+
 model SessionPreparedQuiz {
   id               String   @id @default(uuid())
   sessionId        String   @map("session_id")
   title            String   @default("Quiz 1")
   timeLimitMinutes Int      @default(3) @map("time_limit_minutes")
   order            Int      @default(0)
+  /// Set when this quiz is a weighted session quiz planned with the course (graded into the course result).
+  assessmentId     String?  @unique @map("assessment_id")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   session          LiveSession               @relation("SessionPreparedQuizzes", fields: [sessionId], references: [id], onDelete: Cascade)
+  assessment       Assessment?               @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   questions        SessionPreparedQuestion[] @relation("QuizPreparedQuestions")
 
   @@index([sessionId])
@@ -651,6 +708,9 @@ model SessionPreparedQuestion {
   questionId String   @map("question_id")
   addedAt    DateTime @default(now()) @map("added_at")
   order      Int      @default(0)
+  /// Points for this question in this quiz (the bank question's points are only the starting
+  /// value). For a weighted session quiz the points of all its questions must total its weight.
+  points     Int      @default(0)
 
   quiz       SessionPreparedQuiz  @relation("QuizPreparedQuestions", fields: [quizId], references: [id], onDelete: Cascade)
   question   QuestionBankQuestion @relation("PreparedQuizQuestions", fields: [questionId], references: [id], onDelete: Cascade)
@@ -870,6 +930,7 @@ enum NotificationType {
   COURSE_REJECTED
   ASSESSMENT_GRADED
   CERTIFICATE_ISSUED
+  CERTIFICATE_GRADE_NOT_MET
   SESSION_REMINDER
   TRAINING_REMINDER
   REGISTRATION_APPROVED

@@ -13,6 +13,7 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { LiveSessionsModule } from './modules/live-sessions/live-sessions.module';
+import { SessionPlansModule } from './modules/session-plans/session-plans.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -48,6 +49,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     EnrollmentsModule,
     ProgressModule,
     LiveSessionsModule,
+    SessionPlansModule,
     PreparedQuizModule,
     AttendanceModule,
     CertificatesModule,

@@ -1,14 +1,6 @@
-export type BackendRoleName =
-  | 'SYSTEM_ADMIN'
-  | 'TRAINING_ADMIN'
-  | 'COURSE_OWNER'
-  | 'TRAINER'
-  | 'CONTENT_APPROVER'
-  | 'LEARNER'
-  | (string & {});
+export type BackendRoleName = 'SYSTEM_ADMIN' | 'TRAINING_ADMIN' | 'COURSE_OWNER' | 'TRAINER' | 'CONTENT_APPROVER' | 'LEARNER' | (string & {});
 
-export type BackendCourseStatus =
-  'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
+export type BackendCourseStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
 
 export type BackendApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION';
 
@@ -16,8 +8,7 @@ export type BackendCourseLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
 export type BackendEnrollmentStatus = 'ACTIVE' | 'DROPPED' | 'COMPLETED';
 
-export type BackendLessonContentType =
-  'VIDEO' | 'DOCUMENT' | 'PRESENTATION' | 'INTERACTIVE' | 'SCORM' | 'EXTERNAL_LINK' | 'AUDIO';
+export type BackendLessonContentType = 'VIDEO' | 'DOCUMENT' | 'PRESENTATION' | 'INTERACTIVE' | 'SCORM' | 'EXTERNAL_LINK' | 'AUDIO';
 
 /* -------------------------------------------------------------------------- */
 /*  Paginated response                                                        */
@@ -152,6 +143,7 @@ export interface ApiCourseListItem {
   targetAudience?: string | null;
   deliveryMethod?: string | null;
   deliveryMode?: CourseDeliveryMode;
+  hasOnlineSessions?: boolean;
   language?: string | null;
   objectives?: string | null;
   objectivesAm?: string | null;
@@ -170,6 +162,7 @@ export interface ApiAttachment {
   moduleId: string | null;
   lessonId: string | null;
   courseId: string | null;
+  assessmentId?: string | null;
   fileName: string;
   fileKey: string;
   fileUrl: string;
@@ -184,6 +177,49 @@ export interface ApiCourseDetail extends ApiCourseListItem {
   modules: ApiModule[];
   approvals: ApiApproval[];
   attachments?: ApiAttachment[];
+  sessionPlans?: ApiCourseSessionPlanRow[];
+}
+
+/** A planned online session as included in the course detail. */
+export interface ApiCourseSessionPlanRow {
+  id: string;
+  order: number;
+  titleEn: string;
+  descriptionEn: string | null;
+  objectivesEn: string | null;
+  assessments: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null }>;
+  liveSession: ApiSessionPlanLiveSession | null;
+}
+
+export interface ApiSessionPlanLiveSession {
+  id: string;
+  scheduledAt: string;
+  status: string;
+  trainerId: string | null;
+  platform?: string;
+  durationMinutes?: number;
+  deletedAt?: string | null;
+}
+
+/** GET/PUT /courses/:courseId/session-plans. */
+export interface ApiSessionPlan {
+  id: string;
+  courseId: string;
+  order: number;
+  titleEn: string;
+  descriptionEn: string | null;
+  objectivesEn: string | null;
+  quizzes: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null; questionCount: number }>;
+  liveSession: ApiSessionPlanLiveSession | null;
+}
+
+export interface ReplaceSessionPlansBody {
+  plans: Array<{
+    titleEn: string;
+    descriptionEn?: string;
+    objectivesEn?: string;
+    quizzes: Array<{ titleEn: string; weight: number; passingScore?: number; timeLimitMinutes?: number }>;
+  }>;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -288,16 +324,22 @@ export interface ApiAssessmentQuestion {
   options: string[];
   imageUrl?: string | null;
   correctAnswer?: number | string;
+  /** Points for this question (session quizzes: set by the trainer while preparing the quiz). */
+  points?: number;
 }
 
 export interface ApiAssessment {
   id: string;
   courseId: string;
+  type?: 'FINAL_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'SUB_LESSON_ASSESSMENT' | 'SESSION_ASSESSMENT';
+  moduleId?: string | null;
+  lessonId?: string | null;
   titleEn: string;
   titleAm: string;
   descriptionEn: string | null;
   descriptionAm: string | null;
   passingScore: number;
+  weight?: number;
   maxAttempts: number;
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
@@ -306,6 +348,8 @@ export interface ApiAssessment {
   fileSize?: number | null;
   questions: ApiAssessmentQuestion[];
   attempts: ApiAssessmentAttempt[];
+  /** Reference files attached to the assessment itself. */
+  attachments?: ApiAttachment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -325,9 +369,13 @@ export interface ApiAssessmentAttempt {
 export interface ApiAssessmentListing {
   id: string;
   courseId: string;
+  type?: 'FINAL_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT' | 'SUB_LESSON_ASSESSMENT' | 'SESSION_ASSESSMENT';
+  moduleId?: string | null;
+  lessonId?: string | null;
   titleEn: string;
   titleAm: string;
   passingScore: number;
+  weight?: number;
   maxAttempts: number;
   timeLimitMinutes: number | null;
   shuffleQuestions: boolean;
@@ -345,6 +393,17 @@ export interface ApiAttachedAssessment {
   titleAm: string;
   passingScore: number;
   passed: boolean;
+  weight?: number;
+  bestScore?: number;
+  earnedPoints?: number;
+  /** False when never submitted; it counts as 0 in the course grade. */
+  attempted?: boolean;
+  /** AssessmentType; SESSION_ASSESSMENT quizzes run live in a session and are graded when it ends. */
+  type?: string;
+  attemptsUsed?: number;
+  maxAttempts?: number;
+  /** Attempts are left, or a retake cooldown lets the learner try again later. */
+  retakeAvailable?: boolean;
 }
 
 export interface AssessmentReviewItem {
@@ -354,8 +413,9 @@ export interface AssessmentReviewItem {
   options?: string[];
   imageUrl?: string | null;
   selectedOption?: number | string;
+  /** Only sent once the attempt passed (with isCorrect); a failed attempt shows just the picks. */
   correctAnswer?: number | string;
-  isCorrect: boolean;
+  isCorrect?: boolean;
 }
 
 export interface ApiProgressLesson {
@@ -414,21 +474,48 @@ export interface ApiCourseCompletion {
   contentCompleted: boolean;
   finalAssessmentRequired: boolean;
   finalAssessmentPassed: boolean;
+  allAssessmentsPassed?: boolean;
+  totalCourseGrade?: number;
+  passingScorePercent?: number;
+  gradeSatisfied?: boolean;
   certificateEligible: boolean;
+  /** Session quizzes still waiting for their session; the certificate waits for them. */
+  sessionsPending?: number;
   finalAssessment: ApiAttachedAssessment | null;
+  assessmentBreakdown?: ApiAttachedAssessment[];
 }
 
 export interface ApiCourseProgress {
   courseId: string;
+  progressionMode?: 'LOCKED' | 'OPEN';
   stats: {
     totalModules: number;
     totalLessons: number;
     completedLessons: number;
     unlockedLessons?: number;
+    /** Lesson, module and final assessments (session quizzes excluded). */
+    totalAssessments?: number;
+    passedAssessments?: number;
+    /** Lessons completed plus assessments passed, out of all of them. */
     overallPercent: number;
   };
   modules: ApiProgressModule[];
   courseCompletion: ApiCourseCompletion;
+  /** The course's online sessions (planned ones even before scheduling). No quiz details. */
+  liveSessions?: ApiLearnerSession[];
+}
+
+export interface ApiLearnerSession {
+  id: string;
+  sessionId: string | null;
+  titleEn: string;
+  scheduledAt: string | null;
+  durationMinutes: number | null;
+  platform: string | null;
+  trainerName: string | null;
+  status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
+  attended: boolean;
+  planned: boolean;
 }
 
 export interface ApiLearnerProgress {
@@ -624,13 +711,7 @@ export interface CreateBatchSessionInput {
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */
 
-export type BackendSessionPlatform =
-  | 'LIVEKIT'
-  | 'ZOOM'
-  | 'GOOGLE_MEET'
-  | 'MS_TEAMS'
-  | 'CUSTOM'
-  | 'IN_PERSON';
+export type BackendSessionPlatform = 'LIVEKIT' | 'ZOOM' | 'GOOGLE_MEET' | 'MS_TEAMS' | 'CUSTOM' | 'IN_PERSON';
 export type BackendSessionStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
 export type BackendAttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 export type BackendCheckInMethod = 'VIRTUAL' | 'QR' | 'GPS' | 'BIOMETRIC';
@@ -638,10 +719,13 @@ export type BackendCheckInMethod = 'VIRTUAL' | 'QR' | 'GPS' | 'BIOMETRIC';
 export interface ApiLiveSession {
   id: string;
   courseId: string;
+  /** Set when the session was scheduled from a course's planned session. */
+  sessionPlanId?: string | null;
   titleAm: string;
   titleEn: string;
   descriptionAm: string | null;
   descriptionEn: string | null;
+  objectivesEn?: string | null;
   sessionType?: SessionType;
   venueId?: string | null;
   venue?: ApiVenue | null;
@@ -806,7 +890,7 @@ export interface CreateCourseBody {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: CourseDeliveryMode;
-  language?: string;
+  hasOnlineSessions?: boolean;
   prerequisites?: string;
   estimatedHours?: number;
   ownerIds?: string[];
@@ -824,7 +908,7 @@ export interface UpdateCourseBody {
   targetAudience?: string;
   deliveryMethod?: string;
   deliveryMode?: CourseDeliveryMode;
-  language?: string;
+  hasOnlineSessions?: boolean;
   prerequisites?: string;
   estimatedHours?: number;
   thumbnailUrl?: string | null;
@@ -849,14 +933,8 @@ export interface CreateCurriculumAttachmentBody {
 
 export interface CreateModuleBody {
   title?: string;
-  titleEn?: string;
-  titleAm?: string;
   description?: string;
-  descriptionEn?: string;
-  descriptionAm?: string;
   objectives?: string;
-  objectivesEn?: string;
-  objectivesAm?: string;
   durationMinutes?: number;
   order?: number;
   passingScore?: number;
@@ -866,11 +944,7 @@ export interface CreateModuleBody {
 
 export interface CreateInlineLessonBody {
   title?: string;
-  titleEn?: string;
-  titleAm?: string;
   content?: string;
-  contentEn?: string;
-  contentAm?: string;
   contentType?: BackendLessonContentType;
   durationMinutes?: number;
   resourceUrl?: string;

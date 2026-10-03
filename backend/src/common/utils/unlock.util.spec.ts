@@ -132,4 +132,49 @@ describe('computeSequentialUnlocks — module assessment gating', () => {
     expect(lessonUnlocked.get('l1')).toBe(true);
     expect(lessonUnlocked.get('l2')).toBe(true); // Lesson 2 unlocks!
   });
+
+  describe('computeSequentialUnlocks — OPEN progression mode', () => {
+    it('unlocks all modules, lessons, and sub-lessons regardless of completion state when mode is OPEN', () => {
+      const testModules: ModuleUnlockRow[] = [
+        {
+          id: 'm1',
+          order: 1,
+          lessons: [
+            {
+              id: 'l1',
+              order: 1,
+              subLessons: [
+                { id: 's1', order: 1 },
+                { id: 's2', order: 2 },
+              ],
+              hasAssessment: true,
+              assessmentPassed: false,
+            },
+            { id: 'l2', order: 2 },
+          ],
+        },
+        {
+          id: 'm2',
+          order: 2,
+          lessons: [{ id: 'l3', order: 1 }],
+        },
+      ];
+
+      // Nothing is completed
+      const { moduleUnlocked, lessonUnlocked } = computeSequentialUnlocks(
+        testModules,
+        new Map(),
+        new Set(),
+        'OPEN',
+      );
+
+      expect(moduleUnlocked.get('m1')).toBe(true);
+      expect(moduleUnlocked.get('m2')).toBe(true);
+      expect(lessonUnlocked.get('l1')).toBe(true);
+      expect(lessonUnlocked.get('s1')).toBe(true);
+      expect(lessonUnlocked.get('s2')).toBe(true);
+      expect(lessonUnlocked.get('l2')).toBe(true);
+      expect(lessonUnlocked.get('l3')).toBe(true);
+    });
+  });
 });

@@ -6,16 +6,36 @@ export class CreateLessonDto {
   @ApiProperty({ example: 'Introduction to Computers' })
   @IsString()
   @MinLength(2)
-  title: string;
+  title!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  titleAm?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   content?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contentEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contentAm?: string;
+
   @ApiProperty({ enum: LessonContentType, default: LessonContentType.DOCUMENT })
   @IsEnum(LessonContentType)
-  contentType: LessonContentType;
+  contentType!: LessonContentType;
 
   @ApiPropertyOptional({ example: 15 })
   @IsOptional()

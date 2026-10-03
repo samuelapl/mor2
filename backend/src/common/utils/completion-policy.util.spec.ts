@@ -11,19 +11,19 @@ describe('requiredSeconds', () => {
     expect(requiredSeconds(-5)).toBe(0);
   });
 
-  it('requires half of the duration in seconds, rounded up', () => {
-    expect(requiredSeconds(10)).toBe(300); // 10min * 60 * 0.5 = 300s
-    expect(requiredSeconds(1)).toBe(30);
+  it('requires reduced duration in seconds for fast flow walkthrough', () => {
+    expect(requiredSeconds(10)).toBe(10); // capped at 10s
+    expect(requiredSeconds(1)).toBe(5); // <= 1 min returns 5s
   });
 });
 
 describe('isTimeSatisfied', () => {
-  it('is satisfied once exactly at the 50% boundary', () => {
-    expect(isTimeSatisfied(300, 10)).toBe(true);
+  it('is satisfied once exactly at the required boundary', () => {
+    expect(isTimeSatisfied(10, 10)).toBe(true);
   });
 
   it('is not satisfied one second below the boundary', () => {
-    expect(isTimeSatisfied(299, 10)).toBe(false);
+    expect(isTimeSatisfied(9, 10)).toBe(false);
   });
 
   it('is always satisfied when there is no duration configured', () => {

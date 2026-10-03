@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -26,6 +27,10 @@ import { VirtualSessionsService } from './virtual/virtual-sessions.service';
 import { isInPersonEnrollment, isInPersonSession } from './session-mode';
 import { InPersonSessionsService } from './in-person/in-person-sessions.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
+import { SessionPlansService } from '@modules/session-plans/session-plans.service';
+import type { RemoveSessionPlanDto } from '@modules/session-plans/dto';
+import { assertCanRunSession } from './session-access';
+import { SessionQuizGradingService } from './session-quiz-grading.service';
 
 /**
  * Which sessions a user may list:
@@ -38,11 +43,15 @@ type SessionVisibility =
 
 @Injectable()
 export class LiveSessionsService {
+  private readonly logger = new Logger(LiveSessionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly virtualSessions: VirtualSessionsService,
     private readonly inPersonSessions: InPersonSessionsService,
     private readonly permissions: PermissionsService,
+    private readonly sessionPlans: SessionPlansService,
+    private readonly sessionQuizGrading: SessionQuizGradingService,
   ) {}
 
   private async sessionVisibility(user: AuthenticatedUser): Promise<SessionVisibility> {
@@ -85,12 +94,27 @@ export class LiveSessionsService {
     };
   }
 
-  async create(courseId: string, dto: CreateSessionDto) {
+  async create(courseId: string, dto: CreateSessionDto, user?: AuthenticatedUser) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
 
     if (!course || course.deletedAt) {
       throw new NotFoundException('Course not found');
     }
+
+    // Without manage_all (i.e. live_session.manage_own) a user schedules only for courses
+    // they are assigned to train, and the session is theirs to run.
+    if (user && (await this.sessionVisibility(user)).kind !== 'all') {
+      const assigned = await this.prisma.trainerAssignment.findFirst({
+        where: { courseId, userId: user.id },
+        select: { id: true },
+      });
+      if (!assigned) {
+        throw new ForbiddenException('You can only schedule sessions for courses you are assigned to');
+      }
+      dto = { ...dto, trainerId: user.id };
+    }
+
+    const plan = dto.sessionPlanId ? await this.assertPlanSchedulable(courseId, dto.sessionPlanId) : null;
 
     const isVenueSession = isInPersonSession(dto);
     const session = await this.prisma.$transaction(async (tx) => {
@@ -103,13 +127,15 @@ export class LiveSessionsService {
           tx,
         );
       }
-      return tx.liveSession.create({
+      const created = await tx.liveSession.create({
         data: {
           courseId,
+          sessionPlanId: plan?.id ?? null,
           titleAm: dto.titleAm,
           titleEn: dto.titleEn,
           descriptionAm: dto.descriptionAm,
           descriptionEn: dto.descriptionEn,
+          objectivesEn: dto.objectivesEn,
           sessionType:
             dto.sessionType || (isVenueSession ? SessionType.IN_PERSON : SessionType.VIRTUAL),
           platform:
@@ -132,6 +158,34 @@ export class LiveSessionsService {
           venue: true,
         },
       });
+
+      if (plan) {
+        // One prepared quiz per planned quiz, already linked to its weighted assessment;
+        // the trainer only has to add questions from the question bank.
+        for (const [order, quiz] of plan.assessments.entries()) {
+          await tx.sessionPreparedQuiz.create({
+            data: {
+              sessionId: created.id,
+              assessmentId: quiz.id,
+              title: quiz.titleEn,
+              timeLimitMinutes: quiz.timeLimitMinutes ?? 10,
+              order,
+            },
+          });
+        }
+      }
+
+      // The host must be a course trainer, so the course appears in their question bank
+      // and quiz tools even before it is published.
+      if (created.trainerId) {
+        await tx.trainerAssignment.upsert({
+          where: { courseId_userId: { courseId, userId: created.trainerId } },
+          create: { courseId, userId: created.trainerId },
+          update: {},
+        });
+      }
+
+      return created;
     });
 
     // Notify all enrolled learners, assigned trainers, and active learners about the new live session (best-effort)
@@ -330,6 +384,13 @@ export class LiveSessionsService {
   }
 
   async update(id: string, dto: UpdateSessionDto) {
+    const before = (await this.findById(id)).status;
+    const updated = await this.updateSession(id, dto);
+    await this.gradeIfJustCompleted(id, before, dto.status);
+    return updated;
+  }
+
+  private async updateSession(id: string, dto: UpdateSessionDto) {
     const existing = await this.findById(id);
 
     if (existing.status === SessionStatus.COMPLETED && !dto.status && !dto.scheduledAt) {
@@ -356,6 +417,7 @@ export class LiveSessionsService {
           titleEn: dto.titleEn,
           descriptionAm: dto.descriptionAm,
           descriptionEn: dto.descriptionEn,
+          objectivesEn: dto.objectivesEn,
           platform: dto.platform,
           externalUrl: dto.externalUrl,
           meetingId: dto.meetingId,
@@ -388,22 +450,103 @@ export class LiveSessionsService {
     return this.virtualSessions.getJoinUrl(await this.findById(id), user);
   }
 
-  async changeStatus(id: string, status: SessionStatus) {
-    await this.findById(id);
+  async changeStatus(id: string, status: SessionStatus, user?: AuthenticatedUser) {
+    const existing = await this.findById(id);
+    if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
+    if (status === SessionStatus.LIVE && existing.status !== SessionStatus.LIVE) {
+      await this.assertGradedQuizzesReady(id);
+    }
 
-    return this.prisma.liveSession.update({
+    const updated = await this.prisma.liveSession.update({
       where: { id },
       data: { status },
     });
+    await this.gradeIfJustCompleted(id, existing.status, status);
+    return updated;
   }
 
-  async softDelete(id: string) {
-    await this.findById(id);
+  /**
+   * Removing a session that was scheduled from a course plan removes the plan too. If its
+   * quizzes carry weight on an approved course, `rebalance` says where that weight goes.
+   */
+  async softDelete(id: string, rebalance?: RemoveSessionPlanDto['rebalance']) {
+    const existing = await this.findById(id);
+
+    if (existing.sessionPlanId) {
+      await this.sessionPlans.removePlan(existing.courseId, existing.sessionPlanId, { rebalance }, id);
+      return { ...existing, deletedAt: new Date() };
+    }
 
     return this.prisma.liveSession.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  /**
+   * A session with graded quizzes can only go live once each one is prepared: it has questions
+   * and their points total the quiz's course weight (one point per percent).
+   */
+  private async assertGradedQuizzesReady(sessionId: string) {
+    const quizzes = await this.prisma.sessionPreparedQuiz.findMany({
+      where: { sessionId, assessmentId: { not: null } },
+      select: {
+        title: true,
+        assessment: { select: { weight: true } },
+        questions: { select: { points: true } },
+      },
+    });
+    const problems = quizzes.flatMap((q) => {
+      const weight = q.assessment?.weight ?? 0;
+      const total = q.questions.reduce((sum, x) => sum + x.points, 0);
+      if (q.questions.length === 0) return [`"${q.title}" has no questions`];
+      if (total !== weight) return [`"${q.title}" has ${total} of ${weight} points assigned`];
+      return [];
+    });
+    if (problems.length > 0) {
+      throw new BadRequestException({
+        message: `Unable to start this session now: prepare its graded quiz first (${problems.join('; ')}).`,
+        code: 'SESSION_QUIZ_NOT_READY',
+        problems,
+      });
+    }
+  }
+
+  /** Re-grades the session's weighted quizzes (e.g. after a late response). */
+  async gradeSessionQuizzes(id: string, user?: AuthenticatedUser) {
+    await this.findById(id);
+    if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
+    return this.sessionQuizGrading.gradeSession(id);
+  }
+
+  private async gradeIfJustCompleted(id: string, before: SessionStatus, after?: SessionStatus) {
+    if (after !== SessionStatus.COMPLETED || before === SessionStatus.COMPLETED) return;
+    try {
+      await this.sessionQuizGrading.gradeSession(id);
+    } catch (err) {
+      // Grading never blocks ending a session; it can be re-run from the session.
+      this.logger.warn(`Session quiz grading failed for ${id}: ${(err as Error).message}`);
+    }
+  }
+
+  /** The plan must belong to the course, not be scheduled yet, and the course must be approved. */
+  private async assertPlanSchedulable(courseId: string, planId: string) {
+    const plan = await this.prisma.courseSessionPlan.findUnique({
+      where: { id: planId },
+      include: {
+        course: { select: { status: true } },
+        liveSession: { select: { id: true, deletedAt: true } },
+        assessments: { where: { type: 'SESSION_ASSESSMENT' }, orderBy: { createdAt: 'asc' } },
+      },
+    });
+    if (!plan || plan.courseId !== courseId) throw new NotFoundException('Planned session not found for this course');
+    if (plan.course.status !== CourseStatus.APPROVED && plan.course.status !== CourseStatus.PUBLISHED) {
+      throw new BadRequestException('Planned sessions can be scheduled once the course is approved');
+    }
+    if (plan.liveSession && !plan.liveSession.deletedAt) {
+      throw new BadRequestException('This planned session is already scheduled');
+    }
+    return plan;
   }
 
   async getLiveKitToken(

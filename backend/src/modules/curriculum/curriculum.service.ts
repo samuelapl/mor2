@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CourseStatus, LessonContentType, RoleName } from '@prisma/client';
+import { deriveAttachmentFileKey } from '@common/utils';
 import { PrismaService } from '@config/prisma.service';
 import { AuthenticatedUser } from '@common/interfaces';
-import { computeSequentialUnlocks, loadUserCompletionState } from '@common/utils/unlock.util';
 import { ProgressService } from '@modules/progress/progress.service';
 import {
   CreateModuleDto,
@@ -35,21 +35,6 @@ function sanitizeLessonContentType(type?: any): LessonContentType {
   return LessonContentType.DOCUMENT;
 }
 
-function deriveAttachmentFileKey(fileUrl: string, fileName?: string): string {
-  try {
-    const url = new URL(fileUrl);
-    const parts = url.pathname.split('/');
-    if (parts.length >= 3) {
-      return parts.slice(2).join('/');
-    }
-  } catch {
-    // fallback if fileUrl is relative
-  }
-  if (fileUrl.includes('/attachments/')) {
-    return `attachments/${fileUrl.split('/attachments/')[1]}`;
-  }
-  return `attachments/${fileName || 'file'}`;
-}
 
 @Injectable()
 export class CurriculumService {
@@ -242,7 +227,7 @@ export class CurriculumService {
             },
           },
         },
-        attachments: true,
+        attachments: { where: { lessonId: null } },
         assessments: {
           where: { type: 'MODULE_ASSESSMENT' },
           include: { attempts: true },
@@ -275,7 +260,7 @@ export class CurriculumService {
             },
           },
         },
-        attachments: true,
+        attachments: { where: { lessonId: null } },
         assessments: {
           where: { type: 'MODULE_ASSESSMENT' },
           include: { attempts: true },
@@ -301,17 +286,17 @@ export class CurriculumService {
     const mod = await this.prisma.curriculumModule.create({
       data: {
         courseId,
-        title: dto.title,
-        description: dto.description,
-        objectives: dto.objectives,
+        title: dto.title || dto.titleEn || 'Module',
+        description: dto.description || dto.descriptionEn,
+        objectives: dto.objectives || dto.objectivesEn,
         durationMinutes: dto.durationMinutes,
         order,
         passingScore: dto.passingScore,
         lessons: dto.lessons?.length
           ? {
               create: dto.lessons.map((lesson, idx) => ({
-                title: lesson.title,
-                content: lesson.content,
+                title: lesson.title || lesson.titleEn || 'Lesson',
+                content: lesson.content || lesson.contentEn,
                 contentType: (lesson.contentType as any) ?? 'DOCUMENT',
                 durationMinutes: lesson.durationMinutes,
                 order: idx,
@@ -511,42 +496,10 @@ export class CurriculumService {
           );
         }
 
-        // 2. Sequential unlock check
-        const modules = await this.prisma.curriculumModule.findMany({
-          where: { courseId: lesson.module.courseId, deletedAt: null },
-          orderBy: { order: 'asc' },
-          include: {
-            lessons: {
-              where: { deletedAt: null, parentId: null },
-              orderBy: { order: 'asc' },
-              include: {
-                subLessons: {
-                  where: { deletedAt: null },
-                  orderBy: { order: 'asc' },
-                },
-              },
-            },
-          },
-        });
-
-        const allLessonIds = modules.flatMap((m) =>
-          m.lessons.flatMap((l) => [l.id, ...(l.subLessons ?? []).map((s) => s.id)]),
-        );
-        await this.progressService.reconcileModuleCompletions(
+        // 2. Progression unlock check
+        const { lessonUnlocked } = await this.progressService.getUnlockState(
           user.id,
-          modules.map((m) => m.id),
-        );
-        const { moduleCompletions, lessonCompletions } = await loadUserCompletionState(
-          this.prisma,
-          user.id,
-          modules.map((m) => m.id),
-          allLessonIds,
-        );
-
-        const { lessonUnlocked } = computeSequentialUnlocks(
-          modules,
-          moduleCompletions,
-          lessonCompletions,
+          lesson.module.courseId,
         );
 
         if (!(lessonUnlocked.get(lesson.id) ?? false)) {

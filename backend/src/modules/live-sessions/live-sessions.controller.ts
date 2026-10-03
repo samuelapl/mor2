@@ -15,7 +15,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
+import { SessionQuizResultsService } from './session-quiz-results.service';
 import { LiveSessionsService } from './live-sessions.service';
+import { RemoveSessionPlanDto } from '@modules/session-plans/dto';
 import {
   CreateSessionDto,
   UpdateSessionDto,
@@ -40,6 +42,7 @@ export class LiveSessionsController {
     private readonly liveSessionsService: LiveSessionsService,
     private readonly liveKitProvider: LiveKitProvider,
     private readonly attendanceService: AttendanceService,
+    private readonly quizResults: SessionQuizResultsService,
   ) {}
 
   @Get('live-sessions')
@@ -185,12 +188,35 @@ export class LiveSessionsController {
     return this.liveSessionsService.getLiveQuizReport(id);
   }
 
+  @Get('live-sessions/:id/quiz-results')
+  @Permissions('live_session.manage_all', 'live_session.manage_own', 'attendance.view')
+  @ApiOperation({
+    summary: "Each learner's live quiz answers and scores for a session, per quiz group",
+  })
+  @ApiParam({ name: 'id', type: String })
+  async getQuizResults(@Param('id') id: string) {
+    return this.quizResults.forStaff(id);
+  }
+
+  @Get('live-sessions/:id/quiz-results/me')
+  @ApiOperation({
+    summary: "The current learner's own live quiz results, once the session is completed",
+  })
+  @ApiParam({ name: 'id', type: String })
+  async getMyQuizResults(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.quizResults.forLearner(id, user.id);
+  }
+
   @Post('courses/:courseId/live-sessions')
   @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Schedule a live session for a course' })
   @ApiParam({ name: 'courseId', type: String })
-  async create(@Param('courseId') courseId: string, @Body() dto: CreateSessionDto) {
-    return this.liveSessionsService.create(courseId, dto);
+  async create(
+    @Param('courseId') courseId: string,
+    @Body() dto: CreateSessionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.liveSessionsService.create(courseId, dto, user);
   }
 
   @Patch('live-sessions/:id')
@@ -205,15 +231,29 @@ export class LiveSessionsController {
   @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({ summary: 'Change session status (start, complete, cancel)' })
   @ApiParam({ name: 'id', type: String })
-  async changeStatus(@Param('id') id: string, @Body('status') status: SessionStatus) {
-    return this.liveSessionsService.changeStatus(id, status);
+  async changeStatus(
+    @Param('id') id: string,
+    @Body('status') status: SessionStatus,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.liveSessionsService.changeStatus(id, status, user);
   }
 
   @Delete('live-sessions/:id')
   @Permissions('live_session.manage_all')
   @ApiOperation({ summary: 'Soft delete a live session' })
   @ApiParam({ name: 'id', type: String })
-  async remove(@Param('id') id: string) {
-    return this.liveSessionsService.softDelete(id);
+  async remove(@Param('id') id: string, @Body() dto: RemoveSessionPlanDto) {
+    return this.liveSessionsService.softDelete(id, dto?.rebalance);
+  }
+
+  @Post('live-sessions/:id/grade-quizzes')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
+  @ApiOperation({
+    summary: "Grade the session's weighted quizzes into learners' course results (re-runnable)",
+  })
+  @ApiParam({ name: 'id', type: String })
+  async gradeQuizzes(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.liveSessionsService.gradeSessionQuizzes(id, user);
   }
 }

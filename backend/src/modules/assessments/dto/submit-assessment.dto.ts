@@ -10,5 +10,5 @@ export class SubmitAssessmentDto {
   })
   @IsArray()
   @IsNotEmpty()
-  answers: Array<Record<string, unknown>>;
+  answers!: Array<Record<string, unknown>>;
 }
