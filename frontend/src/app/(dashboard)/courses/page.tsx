@@ -8,7 +8,6 @@ import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import PageShell from '@/components/shared/PageShell';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Pagination } from '@/components/ui/Pagination';
 import { CardSkeleton } from '@/components/ui/Skeleton';
@@ -188,7 +187,6 @@ export default function CoursesPage() {
             <CourseCard
               key={course.id}
               course={course}
-              extraBadge={course.status === 'under_review' ? <Badge variant="blue">Pending review</Badge> : undefined}
             >
               {course.status === 'rejected' && course.rejectionReason ? (
                 <div className="w-full rounded-xl border border-red-200/70 bg-red-50/80 px-3 py-2 text-xs text-red-700">
