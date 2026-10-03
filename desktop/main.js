@@ -1,5 +1,4 @@
-const { app, BrowserWindow } = require("electron");
-const { spawn } = require("child_process");
+const { app, BrowserWindow, Menu } = require("electron");const { spawn } = require("child_process");
 const path = require("path");
 const http = require("http");
 
@@ -37,14 +36,14 @@ function startNextServer() {
   let standalonePath;
 
   if (app.isPackaged) {
-  nodePath = path.join(process.resourcesPath, "node.exe");
+    nodePath = path.join(process.resourcesPath, "node.exe");
 
-  standalonePath = path.join(
-    process.resourcesPath,
-    "standalone",
-    "server.js"
-  );
-} else {
+    standalonePath = path.join(
+      process.resourcesPath,
+      "standalone",
+      "server.js"
+    );
+  } else {
     nodePath = "C:\\Program Files\\nodejs\\node.exe";
 
     standalonePath = path.join(
@@ -62,14 +61,33 @@ function startNextServer() {
 
   nextServer = spawn(nodePath, [standalonePath], {
     cwd: path.dirname(standalonePath),
+
     env: {
       ...process.env,
       NODE_ENV: "production",
       PORT: String(NEXT_PORT),
       HOSTNAME: "localhost",
     },
-    stdio: "inherit",
+
+    // IMPORTANT:
+    // Prevent the bundled Node.js process from opening
+    // a separate Windows console window.
+    windowsHide: true,
+
+    // Do not inherit the terminal/console.
+    stdio: ["ignore", "pipe", "pipe"],
+
     shell: false,
+  });
+
+  // Keep Next.js logs available for debugging without
+  // creating a visible console window.
+  nextServer.stdout.on("data", (data) => {
+    console.log(`[Next.js] ${data.toString().trim()}`);
+  });
+
+  nextServer.stderr.on("data", (data) => {
+    console.error(`[Next.js] ${data.toString().trim()}`);
   });
 
   nextServer.on("error", (error) => {
@@ -93,6 +111,7 @@ async function createWindow() {
     height: 900,
     minWidth: 1100,
     minHeight: 700,
+
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -103,6 +122,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null);
   try {
     await createWindow();
   } catch (error) {
@@ -119,6 +139,7 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
   if (nextServer) {
     nextServer.kill();
+    nextServer = null;
   }
 
   if (process.platform !== "darwin") {
@@ -129,5 +150,6 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   if (nextServer) {
     nextServer.kill();
+    nextServer = null;
   }
 });
