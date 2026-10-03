@@ -297,6 +297,77 @@ export function fetchLiveSessionQuizReport(sessionId: string): Promise<ApiLiveQu
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Session quiz results (per learner, per quiz group)                         */
+/* -------------------------------------------------------------------------- */
+
+export interface ApiSessionQuizQuestion {
+  id: string;
+  type: string;
+  question: string;
+  options: string[];
+  /** Correct answer as text (option label for choice questions). */
+  correctAnswer: string | null;
+  points: number;
+}
+
+export interface ApiSessionQuizGroup {
+  /** Prepared quiz id, or `other` for questions broadcast outside a prepared group. */
+  id: string;
+  title: string;
+  graded: boolean;
+  weight: number | null;
+  passingScore: number | null;
+  questions: ApiSessionQuizQuestion[];
+}
+
+export interface ApiLearnerQuizAnswer {
+  questionId: string;
+  /** What the learner picked, as text; null when not answered. */
+  answer: string | null;
+  isCorrect: boolean | null;
+  answeredAt: string | null;
+}
+
+export interface ApiLearnerQuizResult {
+  quizId: string;
+  answered: number;
+  correct: number;
+  earnedPoints: number;
+  totalPoints: number;
+  scorePercent: number;
+  /** Result recorded in the course grade when the session was completed (graded quizzes). */
+  recorded: { score: number; passed: boolean } | null;
+  answers: ApiLearnerQuizAnswer[];
+}
+
+export interface ApiLearnerSessionResult {
+  userId: string;
+  name: string;
+  email: string;
+  attendance: string | null;
+  quizzes: ApiLearnerQuizResult[];
+}
+
+export interface ApiSessionQuizResults {
+  sessionId: string;
+  title: string;
+  status: string;
+  completed: boolean;
+  quizzes: ApiSessionQuizGroup[];
+  learners: ApiLearnerSessionResult[];
+}
+
+/** Every learner's answers and scores for a session's live quizzes (trainers / attendance viewers). */
+export function fetchSessionQuizResults(sessionId: string): Promise<ApiSessionQuizResults> {
+  return api<ApiSessionQuizResults>(`live-sessions/${sessionId}/quiz-results`);
+}
+
+/** The current learner's own results; `available` is false until the session is completed. */
+export function fetchMySessionQuizResults(sessionId: string): Promise<ApiSessionQuizResults & { available: boolean }> {
+  return api<ApiSessionQuizResults & { available: boolean }>(`live-sessions/${sessionId}/quiz-results/me`);
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Audit                                                                      */
 /* -------------------------------------------------------------------------- */
 

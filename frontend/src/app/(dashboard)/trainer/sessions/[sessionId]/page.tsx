@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PreparedQuizManager } from '@/components/features/prepared-quiz/PreparedQuizManager';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQuizReadinessGate';
 import { isInPersonSession } from '@/lib/session-mode';
 import { RichContent } from '@/components/ui/RichContent';
 
@@ -24,6 +25,11 @@ export default function SessionQuizPrepPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'quiz' | 'info'>('quiz');
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);
+  // The graded quiz must be prepared before the trainer can join the room.
+  const quizGate = useQuizReadinessGate();
+  const joinRoom = async () => {
+    if (session && (await quizGate.guard(session.id))) setLiveWorkspaceOpen(true);
+  };
 
   useEffect(() => {
     if (!sessionId) return;
@@ -95,7 +101,8 @@ export default function SessionQuizPrepPage() {
           {isVirtual && !isEnded && (
             <Button
               size="sm"
-              onClick={() => setLiveWorkspaceOpen(true)}
+              onClick={() => void joinRoom()}
+              isLoading={quizGate.checkingId === session.id}
               className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs shadow-xs"
             >
               <MonitorPlay className="h-4 w-4" />
@@ -191,6 +198,7 @@ export default function SessionQuizPrepPage() {
       </div>
 
       {/* Live Workspace Modal if Trainer clicks Join */}
+      {quizGate.modal}
       {liveWorkspaceOpen && (
         <LiveSessionWorkspace open={liveWorkspaceOpen} onClose={() => setLiveWorkspaceOpen(false)} session={session} userRole="trainer" />
       )}

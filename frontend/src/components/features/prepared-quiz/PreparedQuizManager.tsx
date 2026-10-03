@@ -11,6 +11,7 @@ import { NoQuizGroups, QuizGroupBar } from './manager/QuizGroupBar';
 import { QuizGroupSettings } from './manager/QuizGroupSettings';
 import { BankBrowser } from './manager/BankBrowser';
 import { QuizQuestionList } from './manager/QuizQuestionList';
+import { AddQuestionsConfirm } from './manager/AddQuestionsConfirm';
 import { pointsStatus } from './quiz-points';
 
 interface PreparedQuizManagerProps {
@@ -29,6 +30,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
   const store = usePreparedQuizStore();
   const { quizzes, isLoading, isSaving } = store;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmAdd, setConfirmAdd] = useState(false);
 
   useEffect(() => {
     void store.loadForSession(sessionId);
@@ -61,6 +63,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
       async () => {
         await store.bulkAddQuestions(sessionId, activeQuiz.id, ids);
         bank.clearSelection();
+        setConfirmAdd(false);
       },
       `Added ${ids.length} ${ids.length === 1 ? 'question' : 'questions'} to ${activeQuiz.title}`,
       'Could not add the questions',
@@ -128,7 +131,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
           />
 
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-            <BankBrowser bank={bank} inQuiz={inQuiz} quizTitle={activeQuiz.title} busy={isSaving} onAddSelected={addSelected} />
+            <BankBrowser bank={bank} inQuiz={inQuiz} quizTitle={activeQuiz.title} busy={isSaving} onAddSelected={() => setConfirmAdd(true)} />
             <QuizQuestionList
               quiz={activeQuiz}
               busy={isSaving}
@@ -139,6 +142,16 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
             />
           </div>
         </>
+      )}
+
+      {confirmAdd && (
+        <AddQuestionsConfirm
+          quiz={activeQuiz}
+          questions={bank.selectedQuestions}
+          busy={isSaving}
+          onCancel={() => setConfirmAdd(false)}
+          onConfirm={addSelected}
+        />
       )}
 
       <Modal

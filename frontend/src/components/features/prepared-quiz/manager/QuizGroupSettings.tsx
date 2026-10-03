@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Clock, GraduationCap, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PreparedQuizGroup } from '@/lib/api/prepared-quiz';
+import { totalPoints } from '../quiz-points';
 
 const TIMER_PRESETS = [1, 2, 3, 5, 10, 15];
 
@@ -104,6 +105,8 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
         )}
       </div>
 
+      {graded && <PointsAllocation allocated={graded.weight} assigned={totalPoints(quiz)} />}
+
       {graded && (
         <div className="flex gap-3 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-orange-50/40 p-3.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
@@ -121,6 +124,46 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Allocated (the quiz's course weight), assigned and remaining points of a graded quiz. */
+function PointsAllocation({ allocated, assigned }: { allocated: number; assigned: number }) {
+  const remaining = allocated - assigned;
+  const done = remaining === 0;
+  const cells = [
+    { label: 'Allocated', value: allocated, hint: 'Points this quiz must total', tone: 'text-slate-900' },
+    { label: 'Assigned', value: assigned, hint: 'Points set on its questions', tone: 'text-indigo-700' },
+    {
+      label: 'Remaining',
+      value: remaining,
+      hint: done ? 'Ready to broadcast' : 'Assign before going live',
+      tone: done ? 'text-emerald-700' : 'text-amber-700',
+    },
+  ];
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {cells.map((cell) => (
+        <div
+          key={cell.label}
+          className={cn(
+            'rounded-xl border p-3',
+            cell.label === 'Remaining'
+              ? done
+                ? 'border-emerald-200 bg-emerald-50/60'
+                : 'border-amber-200 bg-amber-50/60'
+              : 'border-slate-200 bg-slate-50/60',
+          )}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{cell.label}</p>
+          <p className={cn('mt-0.5 text-2xl font-extrabold leading-tight', cell.tone)}>
+            {cell.value}
+            <span className="ml-1 text-xs font-semibold text-slate-400">pts</span>
+          </p>
+          <p className="text-[11px] text-slate-500">{cell.hint}</p>
+        </div>
+      ))}
     </div>
   );
 }

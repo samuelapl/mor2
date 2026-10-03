@@ -14,6 +14,12 @@ export function splitEvenly(total: number, count: number): number[] {
   return Array.from({ length: count }, (_, i) => base + (i < remainder ? 1 : 0));
 }
 
+/** True when `points` is an even split of `total` in any order (an empty quiz counts as even). */
+export function isEvenSplit(points: number[], total: number): boolean {
+  const even = splitEvenly(total, points.length);
+  return [...points].sort((a, b) => b - a).every((p, i) => p === even[i]);
+}
+
 export function totalPoints(quiz: PreparedQuizGroup): number {
   return quiz.questions.reduce((sum, q) => sum + (q.points ?? 0), 0);
 }

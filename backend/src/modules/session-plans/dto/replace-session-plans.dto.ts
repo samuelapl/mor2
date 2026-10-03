@@ -109,7 +109,7 @@ export class RemoveSessionPlanDto {
 export class AddSessionQuizDto extends SessionQuizPlanDto {
   @ApiPropertyOptional({
     type: [WeightRebalanceDto],
-    description: 'Weight taken from other session quizzes to make room.',
+    description: 'New weights for other assessments of the course, to make room.',
   })
   @IsOptional()
   @IsArray()

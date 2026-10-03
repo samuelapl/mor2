@@ -130,6 +130,7 @@ export function useQuestionBankBrowser(courseId: string, excludeIds: Set<string>
       return next;
     });
   const clearSelection = () => setSelectedIds(new Set());
+  const selectedQuestions = useMemo(() => questions.filter((q) => selectedIds.has(q.id)), [questions, selectedIds]);
 
   /** Selects `count` random questions from the current filter that aren't in the quiz yet. */
   const pickRandom = (count: number) => {
@@ -157,6 +158,7 @@ export function useQuestionBankBrowser(courseId: string, excludeIds: Set<string>
     locationOf,
     titleOf,
     selectedIds,
+    selectedQuestions,
     toggle,
     clearSelection,
     pickRandom,

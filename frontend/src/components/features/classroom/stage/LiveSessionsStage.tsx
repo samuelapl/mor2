@@ -5,6 +5,7 @@ import { CalendarClock, CheckCircle2, Radio, Video, XCircle } from 'lucide-react
 import type { ApiLearnerSession } from '@/lib/api/types';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
+import { MySessionQuizResults } from './MySessionQuizResults';
 
 const PLATFORM_LABEL: Record<string, string> = {
   LIVEKIT: 'Virtual classroom',
@@ -87,6 +88,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   )}
                 </div>
               </div>
+              {s.status === 'COMPLETED' && s.sessionId && <MySessionQuizResults sessionId={s.sessionId} />}
             </li>
           );
         })}

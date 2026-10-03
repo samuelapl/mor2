@@ -36,6 +36,7 @@ import { Table, Td } from '@/components/ui/Table';
 import { CourseCard } from '@/components/features/courses/CourseCard';
 import { DonutChart, BarChart } from '@/components/ui/charts';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQuizReadinessGate';
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 import { isInPersonSession } from '@/lib/session-mode';
 
@@ -51,6 +52,11 @@ export default function TrainerDashboardPage() {
 
   // Overlays
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
+  // The graded quiz must be prepared before the trainer can start or join the session.
+  const quizGate = useQuizReadinessGate();
+  const startSession = async (session: ApiLiveSession) => {
+    if (await quizGate.guard(session.id)) setActiveLiveSession(session);
+  };
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -479,7 +485,7 @@ export default function TrainerDashboardPage() {
                     ) : (
                       <Button
                         size="sm"
-                        onClick={() => setActiveLiveSession(session)}
+                        onClick={() => void startSession(session)}
                         className={
                           isLive
                             ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -694,6 +700,8 @@ export default function TrainerDashboardPage() {
         )}
       </PageSection>
 
+      {quizGate.modal}
+
       {/* Full-Screen Live Meeting Overlay */}
       {activeLiveSession && (
         <LiveSessionWorkspace
@@ -712,7 +720,7 @@ export default function TrainerDashboardPage() {
           onJoin={() => {
             const s = allSessions.find((x) => x.id === detailSessionId);
             setDetailSessionId(null);
-            if (s) setActiveLiveSession(s);
+            if (s) void startSession(s);
           }}
         />
       )}

@@ -28,7 +28,17 @@ const planInclude = {
       questions: true,
     },
   },
-  liveSession: { select: { id: true, scheduledAt: true, status: true, trainerId: true, platform: true, durationMinutes: true, deletedAt: true } },
+  liveSession: {
+    select: {
+      id: true,
+      scheduledAt: true,
+      status: true,
+      trainerId: true,
+      platform: true,
+      durationMinutes: true,
+      deletedAt: true,
+    },
+  },
 } satisfies Prisma.CourseSessionPlanInclude;
 
 type PlanRow = Prisma.CourseSessionPlanGetPayload<{ include: typeof planInclude }>;
@@ -113,9 +123,11 @@ export class SessionPlansService {
 
   /**
    * Removes a planned session and its quizzes. Before approval the plan just goes; after
-   * approval its weight must be handed to other session quizzes (`rebalance`) so the course
-   * still totals exactly 100%. A quiz that already has learner results cannot be removed.
-   * `alsoDeleteSessionId` soft-deletes the scheduled session in the same transaction.
+   * approval its weight moves to other assessments of the course so it still totals exactly
+   * 100%: as given in `rebalance`, or, when none is given, all of it to the final assessment
+   * (or the heaviest remaining assessment if there is no final). A quiz that already has
+   * learner results cannot be removed. `alsoDeleteSessionId` soft-deletes the scheduled
+   * session in the same transaction.
    */
   async removePlan(
     courseId: string,
@@ -140,11 +152,7 @@ export class SessionPlansService {
     const preparing =
       plan.course.status === CourseStatus.DRAFT || plan.course.status === CourseStatus.REJECTED;
     const releasedWeight = plan.assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
-    if (!preparing && releasedWeight > 0 && !dto.rebalance?.length) {
-      throw new BadRequestException(
-        `This session's quizzes carry ${releasedWeight}% of the course grade. Give that weight to other session quizzes before removing it.`,
-      );
-    }
+    const autoMoveWeight = !preparing && releasedWeight > 0 && !dto.rebalance?.length;
 
     await this.prisma.$transaction(async (tx) => {
       if (alsoDeleteSessionId) {
@@ -154,7 +162,8 @@ export class SessionPlansService {
         });
       }
       await tx.courseSessionPlan.delete({ where: { id: planId } });
-      await this.applyRebalance(tx, courseId, dto.rebalance ?? []);
+      if (autoMoveWeight) await this.giveWeightToDefault(tx, courseId, releasedWeight);
+      else await this.applyRebalance(tx, courseId, dto.rebalance ?? []);
       if (!preparing) await assertCourseWeightsTotal(tx, courseId, 'exact');
       const remaining = await tx.courseSessionPlan.count({ where: { courseId } });
       if (remaining === 0)
@@ -223,6 +232,29 @@ export class SessionPlansService {
   }
 
   /** Only session quizzes of the same course can absorb weight; approved lesson/module/final weights stay as approved. */
+  /** Freed weight goes to the final assessment, or the heaviest remaining one if there is none. */
+  private async giveWeightToDefault(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    weight: number,
+  ) {
+    const target =
+      (await tx.assessment.findFirst({
+        where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
+        orderBy: { createdAt: 'asc' },
+      })) ?? (await tx.assessment.findFirst({ where: { courseId }, orderBy: { weight: 'desc' } }));
+    if (!target) {
+      throw new BadRequestException(
+        `This session's quizzes carry ${weight}% of the course grade and the course has no other assessment to take it over.`,
+      );
+    }
+    await tx.assessment.update({
+      where: { id: target.id },
+      data: { weight: { increment: weight } },
+    });
+  }
+
+  /** Sets new weights on assessments of this course (any type) to rebalance the course grade. */
   private async applyRebalance(
     tx: Prisma.TransactionClient,
     courseId: string,
@@ -231,15 +263,11 @@ export class SessionPlansService {
     for (const r of rebalance) {
       const target = await tx.assessment.findUnique({
         where: { id: r.assessmentId },
-        select: { courseId: true, type: true },
+        select: { courseId: true },
       });
-      if (
-        !target ||
-        target.courseId !== courseId ||
-        target.type !== AssessmentType.SESSION_ASSESSMENT
-      ) {
+      if (!target || target.courseId !== courseId) {
         throw new BadRequestException(
-          'Weight can only be moved between session quizzes of this course',
+          'Weight can only be moved between assessments of this course',
         );
       }
       await tx.assessment.update({ where: { id: r.assessmentId }, data: { weight: r.weight } });

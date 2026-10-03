@@ -93,11 +93,24 @@ export class LiveSessionsService {
     };
   }
 
-  async create(courseId: string, dto: CreateSessionDto) {
+  async create(courseId: string, dto: CreateSessionDto, user?: AuthenticatedUser) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
 
     if (!course || course.deletedAt) {
       throw new NotFoundException('Course not found');
+    }
+
+    // Without manage_all (i.e. live_session.manage_own) a user schedules only for courses
+    // they are assigned to train, and the session is theirs to run.
+    if (user && (await this.sessionVisibility(user)).kind !== 'all') {
+      const assigned = await this.prisma.trainerAssignment.findFirst({
+        where: { courseId, userId: user.id },
+        select: { id: true },
+      });
+      if (!assigned) {
+        throw new ForbiddenException('You can only schedule sessions for courses you are assigned to');
+      }
+      dto = { ...dto, trainerId: user.id };
     }
 
     const plan = dto.sessionPlanId ? await this.assertPlanSchedulable(courseId, dto.sessionPlanId) : null;
@@ -436,6 +449,9 @@ export class LiveSessionsService {
 
   async changeStatus(id: string, status: SessionStatus) {
     const existing = await this.findById(id);
+    if (status === SessionStatus.LIVE && existing.status !== SessionStatus.LIVE) {
+      await this.assertGradedQuizzesReady(id);
+    }
 
     const updated = await this.prisma.liveSession.update({
       where: { id },
@@ -461,6 +477,35 @@ export class LiveSessionsService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  /**
+   * A session with graded quizzes can only go live once each one is prepared: it has questions
+   * and their points total the quiz's course weight (one point per percent).
+   */
+  private async assertGradedQuizzesReady(sessionId: string) {
+    const quizzes = await this.prisma.sessionPreparedQuiz.findMany({
+      where: { sessionId, assessmentId: { not: null } },
+      select: {
+        title: true,
+        assessment: { select: { weight: true } },
+        questions: { select: { points: true } },
+      },
+    });
+    const problems = quizzes.flatMap((q) => {
+      const weight = q.assessment?.weight ?? 0;
+      const total = q.questions.reduce((sum, x) => sum + x.points, 0);
+      if (q.questions.length === 0) return [`"${q.title}" has no questions`];
+      if (total !== weight) return [`"${q.title}" has ${total} of ${weight} points assigned`];
+      return [];
+    });
+    if (problems.length > 0) {
+      throw new BadRequestException({
+        message: `Unable to start this session now: prepare its graded quiz first (${problems.join('; ')}).`,
+        code: 'SESSION_QUIZ_NOT_READY',
+        problems,
+      });
+    }
   }
 
   /** Re-grades the session's weighted quizzes (e.g. after a late response). */

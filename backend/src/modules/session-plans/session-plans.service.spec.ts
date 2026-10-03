@@ -106,6 +106,9 @@ describe('SessionPlansService after approval', () => {
       assessment: {
         findUnique: jest.fn().mockResolvedValue({ courseId: 'c1', type: 'SESSION_ASSESSMENT' }),
         update: jest.fn(),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'final', type: 'FINAL_ASSESSMENT', weight: 50 }),
         create: jest.fn().mockResolvedValue({ id: 'new', titleEn: 'Extra', timeLimitMinutes: 10 }),
         findMany: jest
           .fn()
@@ -125,7 +128,17 @@ describe('SessionPlansService after approval', () => {
     } as any);
   });
 
-  it('requires the removed weight to be rebalanced on an approved course', async () => {
+  it('gives the removed weight to the final assessment when no rebalance is given', async () => {
+    await service.removePlan('c1', 'p1', {}, 'session-1');
+    expect(tx.courseSessionPlan.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
+    expect(tx.assessment.update).toHaveBeenCalledWith({
+      where: { id: 'final' },
+      data: { weight: { increment: 10 } },
+    });
+  });
+
+  it('refuses when the course has no other assessment to take the weight', async () => {
+    tx.assessment.findFirst.mockResolvedValue(null);
     await expect(service.removePlan('c1', 'p1', {})).rejects.toThrow(BadRequestException);
   });
 
@@ -155,10 +168,19 @@ describe('SessionPlansService after approval', () => {
     );
   });
 
-  it('only lets weight move between session quizzes', async () => {
+  it('lets weight move to any assessment of the course', async () => {
     tx.assessment.findUnique.mockResolvedValue({ courseId: 'c1', type: 'FINAL_ASSESSMENT' });
+    await service.removePlan('c1', 'p1', { rebalance: [{ assessmentId: 'final', weight: 60 }] });
+    expect(tx.assessment.update).toHaveBeenCalledWith({
+      where: { id: 'final' },
+      data: { weight: 60 },
+    });
+  });
+
+  it('refuses to move weight to an assessment of another course', async () => {
+    tx.assessment.findUnique.mockResolvedValue({ courseId: 'other' });
     await expect(
-      service.removePlan('c1', 'p1', { rebalance: [{ assessmentId: 'final', weight: 70 }] }),
+      service.removePlan('c1', 'p1', { rebalance: [{ assessmentId: 'x', weight: 60 }] }),
     ).rejects.toThrow(BadRequestException);
   });
 
