@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApprovalStatus } from '@prisma/client';
 
 export class ReviewCourseDto {
@@ -11,6 +11,16 @@ export class ReviewCourseDto {
   @IsOptional()
   @IsString()
   comments?: string;
+}
+
+export class ReturnToDraftDto {
+  @ApiProperty({
+    example: 'Please add the two online sessions agreed with the department.',
+    description: 'Why the approval is withdrawn; sent to the course owners',
+  })
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
 }
 
 export class RequestApprovalDto {

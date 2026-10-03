@@ -35,7 +35,7 @@ export class SessionQuizGradingService {
           select: {
             assessmentId: true,
             assessment: { select: { passingScore: true } },
-            questions: { select: { questionId: true, question: { select: { points: true } } } },
+            questions: { select: { questionId: true, points: true } },
           },
         },
       },
@@ -68,14 +68,18 @@ export class SessionQuizGradingService {
 
     const now = new Date();
     for (const quiz of session.preparedQuizzes) {
-      const totalPoints = quiz.questions.reduce((sum, q) => sum + (q.question.points || 0), 0);
+      // Trainer-set points per question. If none were assigned, every question counts the same
+      // rather than everyone scoring 0.
+      const allZero = quiz.questions.every((q) => !q.points);
+      const pointsOf = (q: { points: number }) => (allZero ? 1 : q.points);
+      const totalPoints = quiz.questions.reduce((sum, q) => sum + pointsOf(q), 0);
       const passingScore = quiz.assessment?.passingScore ?? 0;
 
       for (const { userId } of enrollments) {
         const answers = latest.get(userId);
         const answered = quiz.questions.filter((q) => answers?.has(q.questionId));
         const earned = answered.reduce(
-          (sum, q) => sum + (answers!.get(q.questionId)!.isCorrect ? q.question.points || 0 : 0),
+          (sum, q) => sum + (answers!.get(q.questionId)!.isCorrect ? pointsOf(q) : 0),
           0,
         );
         const score = totalPoints > 0 ? Math.round((earned / totalPoints) * 100) : 0;

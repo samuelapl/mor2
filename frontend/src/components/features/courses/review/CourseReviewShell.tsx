@@ -36,7 +36,8 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const actions = useCourseActions(course, { onDeleted: () => router.push('/courses') });
 
   const [editing, setEditing] = useState(false);
-  const [rejectOpen, setRejectOpen] = useState(false);
+  /** Which reason dialog is open: rejecting a submission or withdrawing an approval. */
+  const [reasonDialog, setReasonDialog] = useState<'reject' | 'returnToDraft' | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | null>(null);
 
@@ -61,12 +62,12 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   };
 
   const handlePublish = () => {
-    if (actions.hasTrainer) {
+    if (actions.hasTrainer || !actions.requiresTrainer) {
       void actions.publish();
     } else if (actions.can.assignTrainer) {
       setPublishOpen(true);
     } else {
-      toast.error('Assign a trainer before publishing the course.');
+      toast.error('This course has planned sessions. Assign a trainer before publishing it.');
     }
   };
 
@@ -174,7 +175,8 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
         assessments={assessments}
         canEdit={actions.can.edit}
         onEdit={() => setEditing(true)}
-        canAssignTrainer={actions.can.assignTrainer}
+        // Trainers run planned sessions; a self-paced course has no trainer section.
+        canAssignTrainer={actions.can.assignTrainer && actions.requiresTrainer}
         trainerOptions={actions.trainerOptions}
         busy={actions.busy}
         onAssignTrainer={(id) => void actions.assignTrainer(id)}
@@ -198,7 +200,8 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
         onBack={goBack}
         onEdit={() => setEditing(true)}
         onSubmit={() => void actions.submit()}
-        onReject={() => setRejectOpen(true)}
+        onReject={() => setReasonDialog('reject')}
+        onReturnToDraft={() => setReasonDialog('returnToDraft')}
         onApprove={() => void actions.approve()}
         onPublish={handlePublish}
         onUnpublish={() => void actions.unpublish()}
@@ -245,7 +248,14 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
         </main>
       </div>
 
-      <RejectDialog open={rejectOpen} onClose={() => setRejectOpen(false)} courseLabel={courseLabel} busy={actions.busy} onConfirm={actions.reject} />
+      <RejectDialog
+        open={reasonDialog !== null}
+        mode={reasonDialog ?? 'reject'}
+        onClose={() => setReasonDialog(null)}
+        courseLabel={courseLabel}
+        busy={actions.busy}
+        onConfirm={reasonDialog === 'returnToDraft' ? actions.returnToDraft : actions.reject}
+      />
       <PublishDialog
         open={publishOpen}
         onClose={() => setPublishOpen(false)}

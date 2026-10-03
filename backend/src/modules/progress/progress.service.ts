@@ -3,6 +3,9 @@ import { AssessmentType, EnrollmentStatus, NotificationType } from '@prisma/clie
 import { PrismaService } from '@config/prisma.service';
 import {
   computeCourseGrade,
+  computeProgressPercent,
+  countsTowardProgress,
+  isAssessmentPassed,
   isSessionQuizClosed,
   SESSION_PLAN_STATUS_SELECT,
   computeSequentialUnlocks,
@@ -320,6 +323,13 @@ export class ProgressService {
       };
     });
 
+    // Lesson, module and final assessments count as progress items once passed.
+    const progressAssessments = grade.assessments.filter((_, i) =>
+      countsTowardProgress(assessments[i]!.type),
+    );
+    const totalAssessments = progressAssessments.length;
+    const passedAssessments = progressAssessments.filter((g) => g.passed).length;
+
     const contentCompleted = totalLessons > 0 && completedLessons === totalLessons;
     const finalAssessmentRequired = finalAssessment !== null;
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
@@ -333,7 +343,14 @@ export class ProgressService {
         totalLessons,
         completedLessons,
         unlockedLessons,
-        overallPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+        totalAssessments,
+        passedAssessments,
+        overallPercent: computeProgressPercent({
+          totalLessons,
+          completedLessons,
+          totalAssessments,
+          passedAssessments,
+        }),
       },
       modules: moduleProgress,
       courseCompletion: {
@@ -587,27 +604,38 @@ export class ProgressService {
 
     await this.assertLessonUnlocked(userId, lesson);
 
-    const cappedDelta = Math.min(Math.max(secondsDelta, 0), 300);
+    const ratio = await this.policyService.getTimeRatio();
+    const required = requiredSeconds(lesson.durationMinutes, ratio);
+
+    // Study time stops once the lesson's required time is reached; a lesson without a set
+    // time keeps counting. Each heartbeat adds at most 5 minutes.
+    let delta = Math.min(Math.max(secondsDelta, 0), 300);
+    if (required > 0) {
+      const existing = await this.prisma.lessonCompletion.findUnique({
+        where: { userId_lessonId: { userId, lessonId } },
+        select: { timeSpentSeconds: true },
+      });
+      delta = Math.max(0, Math.min(delta, required - (existing?.timeSpentSeconds ?? 0)));
+    }
 
     const completion = await this.prisma.lessonCompletion.upsert({
       where: { userId_lessonId: { userId, lessonId } },
       update: {
-        timeSpentSeconds: { increment: cappedDelta },
+        timeSpentSeconds: { increment: delta },
         lastAccessed: new Date(),
       },
       create: {
         userId,
         lessonId,
-        timeSpentSeconds: cappedDelta,
+        timeSpentSeconds: delta,
         lastAccessed: new Date(),
       },
     });
 
-    const ratio = await this.policyService.getTimeRatio();
     return {
       lessonId,
       timeSpentSeconds: completion.timeSpentSeconds,
-      requiredSeconds: requiredSeconds(lesson.durationMinutes, ratio),
+      requiredSeconds: required,
       satisfied: isTimeSatisfied(completion.timeSpentSeconds, lesson.durationMinutes, ratio),
     };
   }
@@ -866,13 +894,16 @@ export class ProgressService {
   }
 
   async getCourseLearnersProgress(courseId: string) {
-    const [modules, enrollments] = await Promise.all([
+    const [modules, enrollments, assessments, globalPassMark] = await Promise.all([
       this.prisma.curriculumModule.findMany({
-        where: { courseId },
+        where: { courseId, deletedAt: null },
         orderBy: { order: 'asc' },
         select: {
           id: true,
-          lessons: { select: { id: true } },
+          lessons: {
+            where: { deletedAt: null, parentId: null },
+            select: { id: true, subLessons: { where: { deletedAt: null }, select: { id: true } } },
+          },
         },
       }),
       this.prisma.enrollment.findMany({
@@ -881,9 +912,23 @@ export class ProgressService {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
         },
       }),
+      this.prisma.assessment.findMany({
+        where: { courseId, type: { not: AssessmentType.SESSION_ASSESSMENT } },
+        select: {
+          passingScore: true,
+          attempts: {
+            where: { submittedAt: { not: null } },
+            select: { userId: true, score: true, passed: true },
+          },
+        },
+      }),
+      this.policyService.getPassingScorePercent(),
     ]);
 
-    const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+    // Same items as the learner's own progress: a lesson with sub-lessons counts its sub-lessons.
+    const lessonIds = modules.flatMap((m) =>
+      m.lessons.flatMap((l) => (l.subLessons.length > 0 ? l.subLessons.map((s) => s.id) : [l.id])),
+    );
     const completions = await this.prisma.lessonCompletion.findMany({
       where: { lessonId: { in: lessonIds }, completed: true },
       select: { userId: true, lessonId: true },
@@ -892,6 +937,24 @@ export class ProgressService {
     const countByUser = new Map<string, number>();
     for (const completion of completions) {
       countByUser.set(completion.userId, (countByUser.get(completion.userId) ?? 0) + 1);
+    }
+
+    const passedByUser = new Map<string, number>();
+    for (const assessment of assessments) {
+      const attemptsByUser = new Map<string, typeof assessment.attempts>();
+      for (const attempt of assessment.attempts) {
+        attemptsByUser.set(attempt.userId, [
+          ...(attemptsByUser.get(attempt.userId) ?? []),
+          attempt,
+        ]);
+      }
+      for (const [userId, attempts] of attemptsByUser) {
+        if (
+          isAssessmentPassed({ passingScore: assessment.passingScore, attempts }, globalPassMark)
+        ) {
+          passedByUser.set(userId, (passedByUser.get(userId) ?? 0) + 1);
+        }
+      }
     }
 
     const totalLessons = lessonIds.length;
@@ -908,7 +971,12 @@ export class ProgressService {
           email: enrollment.user.email,
           status: enrollment.status,
           completedLessons: done,
-          progressPercent: totalLessons > 0 ? Math.round((done / totalLessons) * 100) : 0,
+          progressPercent: computeProgressPercent({
+            totalLessons,
+            completedLessons: done,
+            totalAssessments: assessments.length,
+            passedAssessments: passedByUser.get(enrollment.userId) ?? 0,
+          }),
         };
       }),
     };

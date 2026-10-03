@@ -14,6 +14,8 @@ export class ApiError extends Error {
     public readonly code?: string,
     public readonly reason?: ApiErrorReason,
     public readonly remainingSeconds?: number,
+    /** The full JSON error body, for endpoints that return structured details. */
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -114,6 +116,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     let code: string | undefined;
     let reason: ApiErrorReason | undefined;
     let remainingSeconds: number | undefined;
+    let details: Record<string, unknown> | undefined;
     try {
       const body = (await res.json()) as {
         message?: string | string[];
@@ -125,10 +128,11 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
       code = body.code;
       reason = body.reason;
       remainingSeconds = body.remainingSeconds;
+      details = body as Record<string, unknown>;
     } catch {
       // non-JSON error body
     }
-    throw new ApiError(message, res.status, code, reason, remainingSeconds);
+    throw new ApiError(message, res.status, code, reason, remainingSeconds, details);
   };
 
   try {

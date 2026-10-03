@@ -7,6 +7,7 @@ import {
   bulkAddPreparedQuestions,
   removePreparedQuestion,
   reorderPreparedQuestions,
+  setPreparedQuestionPoints,
   type PreparedQuizGroup,
 } from '@/lib/api/prepared-quiz';
 
@@ -29,6 +30,11 @@ interface PreparedQuizActions {
   bulkAddQuestions: (sessionId: string, quizId: string, questionIds: string[]) => Promise<void>;
   removeQuestion: (sessionId: string, quizId: string, questionId: string) => Promise<void>;
   reorderQuestions: (sessionId: string, quizId: string, orderedIds: string[]) => Promise<void>;
+  setQuestionPoints: (
+    sessionId: string,
+    quizId: string,
+    points: { questionId: string; points: number }[],
+  ) => Promise<void>;
   reset: () => void;
 }
 
@@ -172,6 +178,20 @@ export const usePreparedQuizStore = create<PreparedQuizStore>((set, get) => ({
       }));
     } catch (err: any) {
       set({ quizzes: previous, isSaving: false, error: err.message || 'Failed to reorder questions' });
+      throw err;
+    }
+  },
+
+  setQuestionPoints: async (sessionId, quizId, points) => {
+    set({ isSaving: true, error: null });
+    try {
+      const updatedQuiz = await setPreparedQuestionPoints(sessionId, quizId, points);
+      set((s) => ({
+        quizzes: s.quizzes.map((q) => (q.id === quizId ? updatedQuiz : q)),
+        isSaving: false,
+      }));
+    } catch (err: any) {
+      set({ isSaving: false, error: err.message || 'Failed to update points' });
       throw err;
     }
   },

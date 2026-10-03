@@ -1,3 +1,5 @@
+import type { DuplicateSeverity, SimilarQuestionMatch } from '@/lib/api/quiz';
+
 export type BankQuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
 
 export interface BankQuestion {
@@ -39,6 +41,18 @@ export interface StagedQuestion {
   correctAnswer: string | null;
   points: number;
   category: string;
+  /** The author confirmed it differs from the similar questions already in the bank. */
+  acknowledgeSimilar?: boolean;
+}
+
+/** Why the server refused to save a queued question. */
+export interface StagedDuplicateIssue {
+  /** EXACT: must be edited or removed. SIMILAR: can be kept anyway. */
+  reason: 'EXACT' | 'SIMILAR';
+  /** Existing bank questions it repeats. */
+  matches: SimilarQuestionMatch[];
+  /** Other queued questions it repeats. */
+  queuedMatches: { question: string; severity: DuplicateSeverity }[];
 }
 
 /** Where a question being edited will be placed. */

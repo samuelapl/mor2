@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Archive, ArrowLeft, Check, Globe2, MoreHorizontal, Pencil, Send, Trash2, X } from 'lucide-react';
+import { Archive, ArrowLeft, Check, Globe2, MoreHorizontal, Pencil, Send, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CourseStatusBadge } from '@/components/ui/Badge';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -17,6 +17,7 @@ interface ReviewHeaderProps {
   onEdit: () => void;
   onSubmit: () => void;
   onReject: () => void;
+  onReturnToDraft: () => void;
   onApprove: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
@@ -38,6 +39,7 @@ export function ReviewHeader({
   onEdit,
   onSubmit,
   onReject,
+  onReturnToDraft,
   onApprove,
   onPublish,
   onUnpublish,
@@ -107,6 +109,20 @@ export function ReviewHeader({
           </Button>
         )}
 
+        {can.returnToDraft && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={onReturnToDraft}
+            className="gap-1.5 text-xs"
+            title={tBilingual('Withdraw the approval so the owner can make changes', 'ባለቤቱ ማስተካከያ እንዲያደርግ ማጽደቁን ሰርዝ')}
+          >
+            <Undo2 className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">{tBilingual('Return to draft', 'ወደ ረቂቅ መልስ')}</span>
+          </Button>
+        )}
+
         {hasOverflow && (
           <OverflowMenu
             busy={busy}
@@ -145,7 +161,7 @@ export function ReviewHeader({
             onClick={onPublish}
             className="gap-1.5 bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700"
             title={
-              course.trainerId
+              course.trainerId || !(course.sessionPlans?.length ?? 0)
                 ? tBilingual('Publish this course to all learners', 'ይህንን ኮርስ ለሁሉም ሰልጣኞች አትም')
                 : tBilingual('Assign a trainer before publishing', 'ከማተምዎ በፊት አሰልጣኝ ይመድቡ')
             }

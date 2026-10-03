@@ -135,22 +135,6 @@ export function CourseOverviewStage({ course, progress, onStartCourse }: CourseO
           </div>
         </div>
 
-        {/* Start / Continue Learning Action */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            Review the syllabus, objectives, and reference materials below, then start your first
-            lesson.
-          </p>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={onStartCourse}
-            className="flex items-center gap-2 font-semibold shadow-xs"
-          >
-            <span>{overallPercent > 0 ? 'Continue Course' : 'Start Learning'}</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       {/* Course Description */}

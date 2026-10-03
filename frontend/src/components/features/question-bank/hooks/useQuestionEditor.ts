@@ -1,10 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ApiError } from '@/lib/api/client';
 import {
   bulkCreateQuestionBankItems,
+  checkQuestionBankDuplicates,
   createQuestionBankItem,
   deleteQuestionBankItem,
   updateQuestionBankItem,
   type ApiQuestionBankQuestion,
+  type BatchDuplicateIssue,
+  type SimilarQuestionMatch,
 } from '@/lib/api/quiz';
 import type { ApiModule } from '@/lib/api/types';
 import { toast } from '@/lib/toast';
@@ -12,10 +16,21 @@ import type {
   ActiveCurriculumNode,
   BankQuestion,
   BankQuestionType,
+  StagedDuplicateIssue,
   StagedQuestion,
   TargetLevel,
 } from '../types';
-import { correctAnswerForType, optionsForType, toBankQuestion } from '../utils';
+import { correctAnswerForType, optionsForType, stripHtml, toBankQuestion } from '../utils';
+
+/** Prompts shorter than this (plain text) are not checked for duplicates yet. */
+const MIN_DUPLICATE_CHECK_LENGTH = 12;
+const DUPLICATE_CHECK_DEBOUNCE_MS = 500;
+
+const matchKey = (matches: SimilarQuestionMatch[]) =>
+  matches
+    .map((m) => m.id)
+    .sort()
+    .join(',');
 
 interface UseQuestionEditorArgs {
   selectedCourseId: string;
@@ -54,6 +69,116 @@ export function useQuestionEditor({
 
   const [deletingQuestion, setDeletingQuestion] = useState<BankQuestion | null>(null);
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
+
+  // Duplicate detection: bank questions similar to the one in the form, and
+  // why the server refused queued questions on the last save.
+  const [similarMatches, setSimilarMatches] = useState<SimilarQuestionMatch[]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  /** Match set the author confirmed as "different question"; a new set needs a new confirmation. */
+  const [acknowledgedMatchKey, setAcknowledgedMatchKey] = useState<string | null>(null);
+  const [stagedIssues, setStagedIssues] = useState<Record<string, StagedDuplicateIssue>>({});
+  const duplicateCheckSeq = useRef(0);
+
+  const isGlobalTarget = targetLevel === 'GLOBAL' || qIsReusable;
+  const hasExactMatch = similarMatches.some((m) => m.severity === 'EXACT');
+  const acknowledgeSimilar =
+    similarMatches.length > 0 && acknowledgedMatchKey === matchKey(similarMatches);
+  const setAcknowledgeSimilar = (value: boolean) =>
+    setAcknowledgedMatchKey(value ? matchKey(similarMatches) : null);
+
+  // Live check against the whole course bank (every curriculum level) and the
+  // reusable bank. Advisory only: the server repeats the check on save.
+  useEffect(() => {
+    if (!editorOpen) return;
+    const seq = ++duplicateCheckSeq.current;
+    if (stripHtml(qText).length < MIN_DUPLICATE_CHECK_LENGTH) {
+      setSimilarMatches([]);
+      setCheckingDuplicates(false);
+      return;
+    }
+
+    setCheckingDuplicates(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { matches } = await checkQuestionBankDuplicates({
+          type: qType,
+          question: qText,
+          options: optionsForType(qType, qOptions),
+          courseId: isGlobalTarget ? null : selectedCourseId || null,
+          excludeId: editingQuestion?.id,
+        });
+        if (seq === duplicateCheckSeq.current) setSimilarMatches(matches);
+      } catch {
+        // Ignore: saving still runs the authoritative check.
+      } finally {
+        if (seq === duplicateCheckSeq.current) setCheckingDuplicates(false);
+      }
+    }, DUPLICATE_CHECK_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [editorOpen, qText, qType, qOptions, isGlobalTarget, selectedCourseId, editingQuestion?.id]);
+
+  // Like the server, only re-check an edited question whose content or course
+  // changed, so legacy duplicates can still have points or placement edited.
+  const editContentUnchanged =
+    !!editingQuestion &&
+    editingQuestion.type === qType &&
+    editingQuestion.question === qText.trim() &&
+    JSON.stringify(editingQuestion.options) === JSON.stringify(optionsForType(qType, qOptions)) &&
+    (editingQuestion.courseId ?? null) === (isGlobalTarget ? null : selectedCourseId || null);
+
+  /** Why the question in the form may not be saved or queued yet, if anything. */
+  const duplicateBlockReason = (): string | null => {
+    // While a check is pending the matches may be stale; the server decides.
+    if (checkingDuplicates || editContentUnchanged) return null;
+    if (hasExactMatch) {
+      return 'An identical question already exists in this course bank. Edit the existing question instead of adding a copy.';
+    }
+    if (similarMatches.length > 0 && !acknowledgeSimilar) {
+      return 'Similar questions already exist in this course bank. Review them and tick "Save anyway" if this one is different.';
+    }
+    return null;
+  };
+
+  const resetDuplicateState = () => {
+    setSimilarMatches([]);
+    setAcknowledgedMatchKey(null);
+    setStagedIssues({});
+  };
+
+  /** Shows a 409 from create / update / bulk create next to the questions it concerns. */
+  const showDuplicateConflict = (err: ApiError, batchItems: StagedQuestion[]) => {
+    const details = err.details ?? {};
+    if (err.code !== 'QUESTION_BATCH_DUPLICATES') {
+      setSimilarMatches((details.matches as SimilarQuestionMatch[] | undefined) ?? []);
+      return;
+    }
+
+    const issueList = (details.issues as BatchDuplicateIssue[] | undefined) ?? [];
+    // Only the form's own question was being saved: keep it in the form.
+    if (batchItems.length === 1 && batchItems[0].id.startsWith('temp-')) {
+      setSimilarMatches(issueList[0]?.matches ?? []);
+      return;
+    }
+
+    // Everything that was being saved goes back to the queue (including the
+    // question in the form) with its problem attached, so each can be fixed,
+    // removed or kept individually.
+    const issues: Record<string, StagedDuplicateIssue> = {};
+    for (const issue of issueList) {
+      const item = batchItems[issue.index];
+      if (!item) continue;
+      issues[item.id] = {
+        reason: issue.reason,
+        matches: issue.matches,
+        queuedMatches: issue.batchMatches
+          .filter((b) => batchItems[b.index])
+          .map((b) => ({ question: batchItems[b.index].question, severity: b.severity })),
+      };
+    }
+    setStagedQuestions(batchItems);
+    setStagedIssues(issues);
+    resetQuestionFields();
+  };
 
   // Derived options for the placement dropdowns
   const activeModule = useMemo(() => {
@@ -127,6 +252,7 @@ export function useQuestionEditor({
     setQPoints(10);
     setQCategory('General');
     setSaveError(null);
+    resetDuplicateState();
 
     if (target.type === 'GLOBAL') {
       setQIsReusable(true);
@@ -165,6 +291,7 @@ export function useQuestionEditor({
     setQCategory(q.category || 'General');
     setQIsReusable(!q.courseId);
     setSaveError(null);
+    resetDuplicateState();
 
     if (!q.courseId) {
       setTarget('GLOBAL');
@@ -194,6 +321,12 @@ export function useQuestionEditor({
       return;
     }
 
+    const blockReason = duplicateBlockReason();
+    if (blockReason) {
+      setSaveError(blockReason);
+      return;
+    }
+
     const newStaged: StagedQuestion = {
       id: `staged-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: qType,
@@ -202,6 +335,7 @@ export function useQuestionEditor({
       correctAnswer: correctAnswerForType(qType, qCorrectIndex, qAnswerText),
       points: qPoints,
       category: qCategory.trim() || 'General',
+      acknowledgeSimilar,
     };
 
     setStagedQuestions((prev) => [...prev, newStaged]);
@@ -209,6 +343,10 @@ export function useQuestionEditor({
     resetQuestionFields();
     setSaveError(null);
     toast.success(`Question added to queue! (${stagedQuestions.length + 1} ready to save)`);
+  };
+
+  const dropStagedIssue = (id: string) => {
+    setStagedIssues(({ [id]: _dropped, ...rest }) => rest);
   };
 
   const handleEditStagedQuestion = (idx: number) => {
@@ -232,14 +370,30 @@ export function useQuestionEditor({
     setQPoints(sq.points || 10);
     setQCategory(sq.category || 'General');
     setStagedQuestions((prev) => prev.filter((_, i) => i !== idx));
+    dropStagedIssue(sq.id);
     toast.info('Question loaded back into form for editing.');
   };
 
   const removeStagedQuestion = (idx: number) => {
+    const sq = stagedQuestions[idx];
     setStagedQuestions((prev) => prev.filter((_, i) => i !== idx));
+    if (sq) dropStagedIssue(sq.id);
   };
 
-  const clearStagedQuestions = () => setStagedQuestions([]);
+  /** Confirms a queued question differs from the similar ones the server reported. */
+  const keepStagedQuestionAnyway = (idx: number) => {
+    const sq = stagedQuestions[idx];
+    if (!sq) return;
+    setStagedQuestions((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, acknowledgeSimilar: true } : item)),
+    );
+    dropStagedIssue(sq.id);
+  };
+
+  const clearStagedQuestions = () => {
+    setStagedQuestions([]);
+    setStagedIssues({});
+  };
 
   const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,10 +404,18 @@ export function useQuestionEditor({
       return;
     }
 
+    if (hasCurrentText) {
+      const blockReason = duplicateBlockReason();
+      if (blockReason) {
+        setSaveError(blockReason);
+        return;
+      }
+    }
+
     setSavingQuestion(true);
     setSaveError(null);
 
-    const isGlobal = targetLevel === 'GLOBAL' || qIsReusable;
+    const isGlobal = isGlobalTarget;
     const finalModuleId =
       !isGlobal &&
       (targetLevel === 'MODULE' || targetLevel === 'LESSON' || targetLevel === 'SUB_LESSON')
@@ -265,6 +427,9 @@ export function useQuestionEditor({
         : null;
     const finalSubLessonId =
       !isGlobal && targetLevel === 'SUB_LESSON' ? targetSubLessonId || null : null;
+
+    // Questions sent in a create batch, so a 409 can be mapped back onto them.
+    const batchItems: StagedQuestion[] = [...stagedQuestions];
 
     try {
       if (editingQuestion) {
@@ -279,6 +444,7 @@ export function useQuestionEditor({
           correctAnswer: correctAnswerForType(qType, qCorrectIndex, qAnswerText),
           points: qPoints,
           category: qCategory.trim() || 'General',
+          acknowledgeSimilar,
         };
 
         const updated = await updateQuestionBankItem(editingQuestion.id, payload);
@@ -288,8 +454,6 @@ export function useQuestionEditor({
         );
         toast.success('Question updated successfully!');
       } else {
-        const batchItems: StagedQuestion[] = [...stagedQuestions];
-
         if (hasCurrentText) {
           const options = optionsForType(qType, qOptions);
           if (qType === 'MULTIPLE_CHOICE' && options.length < 2) {
@@ -306,6 +470,7 @@ export function useQuestionEditor({
             correctAnswer: correctAnswerForType(qType, qCorrectIndex, qAnswerText),
             points: qPoints,
             category: qCategory.trim() || 'General',
+            acknowledgeSimilar,
           });
         }
 
@@ -320,12 +485,15 @@ export function useQuestionEditor({
           correctAnswer: item.correctAnswer,
           points: item.points,
           category: item.category,
+          acknowledgeSimilar: item.acknowledgeSimilar,
         }));
 
         let createdList: ApiQuestionBankQuestion[] = [];
         try {
           createdList = await bulkCreateQuestionBankItems(payloads);
-        } catch {
+        } catch (err) {
+          // Duplicates are a verdict, not a failure: retrying one by one would save part of the batch.
+          if (err instanceof ApiError && err.status === 409) throw err;
           // Fallback to sequential creation if bulk endpoint encountered error
           for (const p of payloads) {
             const res = await createQuestionBankItem(p);
@@ -336,6 +504,7 @@ export function useQuestionEditor({
         const mappedList = createdList.map(toBankQuestion);
         setQuestions((prev) => [...mappedList, ...prev]);
         setStagedQuestions([]);
+        setStagedIssues({});
         toast.success(
           mappedList.length > 1
             ? `Successfully saved ${mappedList.length} questions to question bank!`
@@ -344,6 +513,11 @@ export function useQuestionEditor({
       }
       setEditorOpen(false);
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) {
+        showDuplicateConflict(err, batchItems);
+        setSaveError(err.message);
+        return;
+      }
       setSaveError(err?.message || 'Failed to save question to bank');
       toast.error(err?.message || 'Failed to save question to bank');
     } finally {
@@ -382,6 +556,8 @@ export function useQuestionEditor({
             : null,
         points: q.points,
         category: q.category,
+        // An intentional copy, meant to be edited afterwards.
+        acknowledgeSimilar: true,
       });
       setQuestions((prev) => [toBankQuestion(created), ...prev]);
       toast.success('Question duplicated successfully.');
@@ -431,6 +607,12 @@ export function useQuestionEditor({
     isDeletingQuestion,
     confirmDeleteQuestion,
     handleDuplicateQuestion,
+    similarMatches,
+    checkingDuplicates,
+    acknowledgeSimilar,
+    setAcknowledgeSimilar,
+    stagedIssues,
+    keepStagedQuestionAnyway,
   };
 }
 

@@ -324,6 +324,8 @@ export interface ApiAssessmentQuestion {
   options: string[];
   imageUrl?: string | null;
   correctAnswer?: number | string;
+  /** Points for this question (session quizzes: set by the trainer while preparing the quiz). */
+  points?: number;
 }
 
 export interface ApiAssessment {
@@ -411,8 +413,9 @@ export interface AssessmentReviewItem {
   options?: string[];
   imageUrl?: string | null;
   selectedOption?: number | string;
+  /** Only sent once the attempt passed (with isCorrect); a failed attempt shows just the picks. */
   correctAnswer?: number | string;
-  isCorrect: boolean;
+  isCorrect?: boolean;
 }
 
 export interface ApiProgressLesson {
@@ -490,6 +493,10 @@ export interface ApiCourseProgress {
     totalLessons: number;
     completedLessons: number;
     unlockedLessons?: number;
+    /** Lesson, module and final assessments (session quizzes excluded). */
+    totalAssessments?: number;
+    passedAssessments?: number;
+    /** Lessons completed plus assessments passed, out of all of them. */
     overallPercent: number;
   };
   modules: ApiProgressModule[];

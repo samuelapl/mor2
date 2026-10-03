@@ -12,7 +12,7 @@ export interface ReviewNode {
   sessionPlanId?: string;
 }
 
-export type CourseActionKey = 'edit' | 'submit' | 'approve' | 'reject' | 'publish' | 'unpublish' | 'archive' | 'delete' | 'assignTrainer';
+export type CourseActionKey = 'edit' | 'submit' | 'approve' | 'reject' | 'publish' | 'unpublish' | 'archive' | 'delete' | 'assignTrainer' | 'returnToDraft';
 
 /** Every assessment on the course, with answers, grouped by where it is attached. */
 export interface AssessmentsByScope {

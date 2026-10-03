@@ -3,16 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  HelpCircle,
-  Info,
-  Loader2,
-  MonitorPlay,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, HelpCircle, Info, Loader2, MonitorPlay, Sparkles } from 'lucide-react';
 import { fetchLiveSession } from '@/lib/api/monitoring';
 import type { ApiLiveSession } from '@/lib/api/types';
 import PageShell from '@/components/shared/PageShell';
@@ -26,9 +17,7 @@ import { RichContent } from '@/components/ui/RichContent';
 export default function SessionQuizPrepPage() {
   const params = useParams();
   const router = useRouter();
-  const sessionId = Array.isArray(params?.sessionId)
-    ? params.sessionId[0]
-    : (params?.sessionId as string);
+  const sessionId = Array.isArray(params?.sessionId) ? params.sessionId[0] : (params?.sessionId as string);
 
   const [session, setSession] = useState<ApiLiveSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,10 +49,7 @@ export default function SessionQuizPrepPage() {
 
   if (loading) {
     return (
-      <PageShell
-        title="Session Preparation"
-        description="Preparing session live quiz questions..."
-      >
+      <PageShell title="Session Preparation" description="Preparing session live quiz questions...">
         <div className="flex h-72 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
@@ -77,12 +63,7 @@ export default function SessionQuizPrepPage() {
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
           <p className="text-sm font-semibold text-red-700">{error || 'Session not found'}</p>
           <div className="mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/trainer/sessions')}
-              className="gap-2"
-            >
+            <Button variant="outline" size="sm" onClick={() => router.push('/trainer/sessions')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Sessions
             </Button>
@@ -128,25 +109,12 @@ export default function SessionQuizPrepPage() {
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Session
-            </span>
-            <Badge
-              variant={
-                session.status === 'LIVE'
-                  ? 'green'
-                  : session.status === 'SCHEDULED'
-                  ? 'blue'
-                  : 'slate'
-              }
-              dot
-            >
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Session</span>
+            <Badge variant={session.status === 'LIVE' ? 'green' : session.status === 'SCHEDULED' ? 'blue' : 'slate'} dot>
               {session.status}
             </Badge>
             <span className="text-xs text-slate-300">|</span>
-            <span className="text-xs font-medium text-slate-500">
-              {session.platform}
-            </span>
+            <span className="text-xs font-medium text-slate-500">{session.platform}</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs text-slate-500">
@@ -167,25 +135,19 @@ export default function SessionQuizPrepPage() {
             type="button"
             onClick={() => setActiveTab('quiz')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
-              activeTab === 'quiz'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+              activeTab === 'quiz' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
             Prepare Quiz
-            <span className="rounded-full bg-indigo-50 px-1.5 py-0.2 text-[10px] font-bold text-indigo-600">
-              Pre-load
-            </span>
+            <span className="rounded-full bg-indigo-50 px-1.5 py-0.2 text-[10px] font-bold text-indigo-600">Pre-load</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('info')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
-              activeTab === 'info'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+              activeTab === 'info' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <Info className="h-3.5 w-3.5" />
@@ -200,12 +162,13 @@ export default function SessionQuizPrepPage() {
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-indigo-500" />
-                  Pre-Session Live Quiz Preparation
+                  Quiz preparation
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Import and prepare questions from the bank before joining. When you start the live session, these questions will be available to broadcast instantly.
+                  Build quiz groups from the question bank, set the timer and each question&apos;s points. In the live room you can
+                  broadcast a prepared group to learners in one click.
                 </p>
               </div>
             </div>
@@ -229,12 +192,7 @@ export default function SessionQuizPrepPage() {
 
       {/* Live Workspace Modal if Trainer clicks Join */}
       {liveWorkspaceOpen && (
-        <LiveSessionWorkspace
-          open={liveWorkspaceOpen}
-          onClose={() => setLiveWorkspaceOpen(false)}
-          session={session}
-          userRole="trainer"
-        />
+        <LiveSessionWorkspace open={liveWorkspaceOpen} onClose={() => setLiveWorkspaceOpen(false)} session={session} userRole="trainer" />
       )}
     </PageShell>
   );

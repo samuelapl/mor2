@@ -27,7 +27,7 @@ import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
 import { assertDeliveryModeAllowed, DEFAULT_DELIVERY_MODE } from './delivery-modes';
 import { assertCourseWeightsTotal } from '@common/utils';
-import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto } from './dto';
+import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto, ReturnToDraftDto } from './dto';
 
 const STAFF_ROLES: RoleName[] = [
   RoleName.SYSTEM_ADMIN,
@@ -651,6 +651,75 @@ export class CoursesService {
   }
 
   /**
+   * Withdraws an approval: an approved (not yet published) course goes back to DRAFT so its
+   * owners can change it and resubmit. Refused while the course has enrollments or scheduled
+   * sessions, because a draft's curriculum and session plans can be replaced wholesale, which
+   * would wipe learner progress and detach scheduled sessions from their plans.
+   */
+  async returnToDraft(id: string, dto: ReturnToDraftDto, approverId: string) {
+    const course = await this.findById(id);
+
+    if (course.status === CourseStatus.PUBLISHED) {
+      throw new BadRequestException(
+        'A published course cannot be returned to draft. Unpublish it first.',
+      );
+    }
+    if (course.status !== CourseStatus.APPROVED) {
+      throw new BadRequestException('Only an approved course can be returned to draft');
+    }
+    const reason = dto.reason?.trim();
+    if (!reason) {
+      throw new BadRequestException('A reason is required when returning a course to draft');
+    }
+
+    const [enrollments, sessions] = await Promise.all([
+      this.prisma.enrollment.count({ where: { courseId: id } }),
+      this.prisma.liveSession.count({ where: { courseId: id, deletedAt: null } }),
+    ]);
+    const blockers: string[] = [];
+    if (enrollments > 0) blockers.push(`${enrollments} enrollment(s)`);
+    if (sessions > 0) blockers.push(`${sessions} scheduled session(s)`);
+    if (blockers.length > 0) {
+      throw new BadRequestException(
+        `This course cannot be returned to draft because it has ${blockers.join(' and ')}. Remove them first.`,
+      );
+    }
+
+    this.stateMachine.assertCanTransition(course.status, CourseStatus.DRAFT);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.course.update({
+        where: { id },
+        data: { status: CourseStatus.DRAFT },
+      });
+      await tx.contentApproval.create({
+        data: {
+          courseId: id,
+          approverId,
+          status: ApprovalStatus.NEEDS_REVISION,
+          comments: reason,
+          decidedAt: new Date(),
+        },
+      });
+      return result;
+    });
+
+    const ownerIds = course.owners.map((o) => o.userId).filter((uid) => uid !== approverId);
+    await this.notificationsService.sendToMany(
+      ownerIds,
+      NotificationType.COURSE_REJECTED,
+      { en: 'Course approval withdrawn', am: 'የኮርሱ ማጽደቅ ተሰርዟል' },
+      {
+        en: `The approval of "${course.title}" was withdrawn and the course moved back to draft for changes. Reason: ${reason}`,
+        am: `የ"${course.title}" ማጽደቅ ተሰርዞ ኮርሱ ለማስተካከያ ወደ ረቂቅ ተመልሷል። ምክንያት፦ ${reason}`,
+      },
+      { courseId: id, reason },
+    );
+
+    return updated;
+  }
+
+  /**
    * Learners cannot get a certificate until every session quiz has been held, so a course
    * with planned sessions only goes live once each one is scheduled and each weighted quiz
    * has questions.
@@ -662,7 +731,15 @@ export class CoursesService {
       select: {
         titleEn: true,
         liveSession: { select: { deletedAt: true } },
-        assessments: { where: { type: 'SESSION_ASSESSMENT' }, select: { titleEn: true, questions: true } },
+        assessments: {
+          where: { type: 'SESSION_ASSESSMENT' },
+          select: {
+            titleEn: true,
+            weight: true,
+            questions: true,
+            preparedQuiz: { select: { questions: { select: { points: true } } } },
+          },
+        },
       },
     });
     const problems: string[] = [];
@@ -671,6 +748,14 @@ export class CoursesService {
       for (const quiz of plan.assessments) {
         if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
           problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
+          continue;
+        }
+        // One point per percent of course weight, so a 10% quiz totals 10 points.
+        const points = (quiz.preparedQuiz?.questions ?? []).reduce((sum, q) => sum + q.points, 0);
+        if (quiz.preparedQuiz && points !== quiz.weight) {
+          problems.push(
+            `quiz "${quiz.titleEn}" in "${plan.titleEn}" has ${points} points but must total ${quiz.weight} (its course weight)`,
+          );
         }
       }
     }
@@ -684,8 +769,12 @@ export class CoursesService {
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PUBLISHED);
 
-    if (!course.trainers || course.trainers.length === 0) {
-      throw new ForbiddenException('Assign at least one trainer to this course before publishing.');
+    // A trainer runs the planned online sessions; a course without any is self-paced.
+    const plannedSessions = await this.prisma.courseSessionPlan.count({ where: { courseId: id } });
+    if (plannedSessions > 0 && (!course.trainers || course.trainers.length === 0)) {
+      throw new ForbiddenException(
+        'This course has planned sessions. Assign at least one trainer before publishing.',
+      );
     }
     await this.assertSessionsReadyToPublish(id);
 

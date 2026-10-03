@@ -15,7 +15,9 @@ import {
   UpdatePreparedQuizDto,
   BulkAddPreparedQuestionsDto,
   ReorderPreparedQuestionsDto,
+  SetPreparedQuestionPointsDto,
 } from './dto';
+import { isEvenSplit, splitEvenly } from './quiz-points';
 
 const CACHE_TTL_SECONDS = 300;
 
@@ -74,6 +76,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   private async assertQuizExists(sessionId: string, quizId: string) {
     const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
       where: { id: quizId },
+      include: { assessment: { select: { weight: true } } },
     });
     if (!quiz || quiz.sessionId !== sessionId) {
       throw new NotFoundException(`Prepared quiz group "${quizId}" not found for this session`);
@@ -116,23 +119,38 @@ export class PreparedQuizService implements OnModuleDestroy {
         assessmentId: true,
         questions: {
           orderBy: { order: 'asc' },
-          select: { question: { select: { id: true, type: true, question: true, options: true, correctAnswer: true, points: true, category: true } } },
+          select: {
+            points: true,
+            question: {
+              select: {
+                id: true,
+                type: true,
+                question: true,
+                options: true,
+                correctAnswer: true,
+                category: true,
+              },
+            },
+          },
         },
       },
     });
     if (!quiz?.assessmentId) return;
 
-    const questions = quiz.questions.map(({ question: q }) => {
+    const questions = quiz.questions.map(({ points, question: q }) => {
       const answer = q.correctAnswer ?? undefined;
       // Choice questions store the correct option index; short answers store the text.
-      const correctAnswer = q.type !== 'SHORT_ANSWER' && answer !== undefined && /^\d+$/.test(answer) ? Number(answer) : answer;
+      const correctAnswer =
+        q.type !== 'SHORT_ANSWER' && answer !== undefined && /^\d+$/.test(answer)
+          ? Number(answer)
+          : answer;
       return {
         id: q.id,
         type: q.type,
         question: q.question,
         options: Array.isArray(q.options) ? q.options : [],
         correctAnswer,
-        points: q.points,
+        points,
         category: q.category,
       };
     });
@@ -140,6 +158,29 @@ export class PreparedQuizService implements OnModuleDestroy {
       where: { id: quiz.assessmentId },
       data: { questions: questions as unknown as Prisma.InputJsonValue },
     });
+  }
+
+  /** Points of a quiz's questions in order. */
+  private async orderedPoints(quizId: string) {
+    return this.prisma.sessionPreparedQuestion.findMany({
+      where: { quizId },
+      orderBy: [{ order: 'asc' }, { addedAt: 'asc' }],
+      select: { id: true, points: true },
+    });
+  }
+
+  /** Writes the even split of `weight` over the quiz's questions. */
+  private async applyEvenSplit(quizId: string, weight: number) {
+    const rows = await this.orderedPoints(quizId);
+    const split = splitEvenly(weight, rows.length);
+    await this.prisma.$transaction(
+      rows.map((row, i) =>
+        this.prisma.sessionPreparedQuestion.update({
+          where: { id: row.id },
+          data: { points: split[i] },
+        }),
+      ),
+    );
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
@@ -241,12 +282,17 @@ export class PreparedQuizService implements OnModuleDestroy {
    * Bulk-add questions to a specific quiz group.
    * Silently skips already added questions.
    */
-  async bulkAddQuestions(
-    sessionId: string,
-    quizId: string,
-    dto: BulkAddPreparedQuestionsDto,
-  ) {
-    await this.assertQuizExists(sessionId, quizId);
+  async bulkAddQuestions(sessionId: string, quizId: string, dto: BulkAddPreparedQuestionsDto) {
+    const quiz = await this.assertQuizExists(sessionId, quizId);
+    const weight = quiz.assessment?.weight ?? null;
+    // A weighted quiz whose points are still the even split stays evenly split; once the
+    // trainer has customised them, new questions start at 0 for the trainer to assign.
+    const keepEven =
+      weight !== null &&
+      isEvenSplit(
+        (await this.orderedPoints(quizId)).map((r) => r.points),
+        weight,
+      );
 
     const last = await this.prisma.sessionPreparedQuestion.findFirst({
       where: { quizId },
@@ -263,22 +309,27 @@ export class PreparedQuizService implements OnModuleDestroy {
 
     const validQuestions = await this.prisma.questionBankQuestion.findMany({
       where: { id: { in: dto.questionIds } },
-      select: { id: true },
+      select: { id: true, points: true },
     });
-    const validIds = new Set(validQuestions.map((q) => q.id));
+    const bankPoints = new Map(validQuestions.map((q) => [q.id, q.points]));
 
-    const toCreate = dto.questionIds.filter(
-      (id) => !existingIds.has(id) && validIds.has(id),
-    );
+    const toCreate = dto.questionIds.filter((id) => !existingIds.has(id) && bankPoints.has(id));
 
     if (toCreate.length > 0) {
       await this.prisma.$transaction(
         toCreate.map((questionId) =>
           this.prisma.sessionPreparedQuestion.create({
-            data: { quizId, questionId, order: nextOrder++ },
+            data: {
+              quizId,
+              questionId,
+              order: nextOrder++,
+              // Ungraded quizzes start from the bank question's points.
+              points: weight === null ? (bankPoints.get(questionId) ?? 0) : 0,
+            },
           }),
         ),
       );
+      if (keepEven) await this.applyEvenSplit(quizId, weight);
     }
 
     await this.syncLinkedAssessment(quizId);
@@ -292,22 +343,73 @@ export class PreparedQuizService implements OnModuleDestroy {
 
   /** Remove a question from a quiz group */
   async removeQuestion(sessionId: string, quizId: string, questionId: string) {
-    await this.assertQuizExists(sessionId, quizId);
+    const quiz = await this.assertQuizExists(sessionId, quizId);
+    const weight = quiz.assessment?.weight ?? null;
+    const keepEven =
+      weight !== null &&
+      isEvenSplit(
+        (await this.orderedPoints(quizId)).map((r) => r.points),
+        weight,
+      );
 
     await this.prisma.sessionPreparedQuestion.deleteMany({
       where: { quizId, questionId },
     });
+    if (keepEven) await this.applyEvenSplit(quizId, weight);
 
     await this.syncLinkedAssessment(quizId);
     await this.invalidateCache(sessionId);
   }
 
+  /**
+   * Sets the points of some questions in a quiz group. For a weighted quiz the total may not
+   * exceed its course weight (it must equal it before the quiz can be broadcast or the course
+   * published; a lower total is allowed while the trainer is still assigning points).
+   */
+  async setQuestionPoints(sessionId: string, quizId: string, dto: SetPreparedQuestionPointsDto) {
+    const quiz = await this.assertQuizExists(sessionId, quizId);
+    const rows = await this.prisma.sessionPreparedQuestion.findMany({
+      where: { quizId },
+      select: { questionId: true, points: true },
+    });
+    const next = new Map(rows.map((r) => [r.questionId, r.points]));
+    for (const item of dto.points) {
+      if (!next.has(item.questionId)) {
+        throw new NotFoundException(`Question "${item.questionId}" is not in this quiz group`);
+      }
+      next.set(item.questionId, item.points);
+    }
+
+    const weight = quiz.assessment?.weight;
+    if (weight !== undefined) {
+      const total = [...next.values()].reduce((sum, p) => sum + p, 0);
+      if (total > weight) {
+        throw new BadRequestException(
+          `Points total ${total} but this quiz is worth ${weight}% of the course grade, so its questions must total ${weight} points.`,
+        );
+      }
+    }
+
+    await this.prisma.$transaction(
+      dto.points.map((item) =>
+        this.prisma.sessionPreparedQuestion.updateMany({
+          where: { quizId, questionId: item.questionId },
+          data: { points: item.points },
+        }),
+      ),
+    );
+
+    await this.syncLinkedAssessment(quizId);
+    await this.invalidateCache(sessionId);
+
+    return this.prisma.sessionPreparedQuiz.findUnique({
+      where: { id: quizId },
+      include: this.quizInclude,
+    });
+  }
+
   /** Reorder questions inside a quiz group */
-  async reorderQuestions(
-    sessionId: string,
-    quizId: string,
-    dto: ReorderPreparedQuestionsDto,
-  ) {
+  async reorderQuestions(sessionId: string, quizId: string, dto: ReorderPreparedQuestionsDto) {
     await this.assertQuizExists(sessionId, quizId);
 
     await this.prisma.$transaction(

@@ -10,12 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
 import { Permissions } from '@common/decorators';
@@ -25,6 +20,7 @@ import {
   UpdatePreparedQuizDto,
   BulkAddPreparedQuestionsDto,
   ReorderPreparedQuestionsDto,
+  SetPreparedQuestionPointsDto,
 } from './dto';
 
 @ApiTags('prepared-quiz')
@@ -46,10 +42,7 @@ export class PreparedQuizController {
   @Permissions('live_session.manage_own', 'live_session.manage_all')
   @ApiOperation({ summary: 'Create a new prepared quiz group (e.g. Lesson 1 Quiz)' })
   @ApiParam({ name: 'sessionId', type: String })
-  async createQuiz(
-    @Param('sessionId') sessionId: string,
-    @Body() dto: CreatePreparedQuizDto,
-  ) {
+  async createQuiz(@Param('sessionId') sessionId: string, @Body() dto: CreatePreparedQuizDto) {
     return this.preparedQuizService.createQuiz(sessionId, dto);
   }
 
@@ -71,10 +64,7 @@ export class PreparedQuizController {
   @ApiOperation({ summary: 'Delete a prepared quiz group and its questions' })
   @ApiParam({ name: 'sessionId', type: String })
   @ApiParam({ name: 'quizId', type: String })
-  async deleteQuiz(
-    @Param('sessionId') sessionId: string,
-    @Param('quizId') quizId: string,
-  ) {
+  async deleteQuiz(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
     await this.preparedQuizService.deleteQuiz(sessionId, quizId);
     return { success: true };
   }
@@ -103,6 +93,22 @@ export class PreparedQuizController {
     @Body() dto: ReorderPreparedQuestionsDto,
   ) {
     return this.preparedQuizService.reorderQuestions(sessionId, quizId, dto);
+  }
+
+  @Patch(':quizId/questions/points')
+  @Permissions('live_session.manage_own', 'live_session.manage_all')
+  @ApiOperation({
+    summary:
+      'Set the points of questions in a quiz group; a weighted quiz may not exceed its course weight',
+  })
+  @ApiParam({ name: 'sessionId', type: String })
+  @ApiParam({ name: 'quizId', type: String })
+  async setQuestionPoints(
+    @Param('sessionId') sessionId: string,
+    @Param('quizId') quizId: string,
+    @Body() dto: SetPreparedQuestionPointsDto,
+  ) {
+    return this.preparedQuizService.setQuestionPoints(sessionId, quizId, dto);
   }
 
   @Delete(':quizId/questions/:questionId')

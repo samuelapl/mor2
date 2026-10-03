@@ -737,6 +737,7 @@ export class AssessmentsService {
     const review = this.buildReview(
       questions as unknown as Array<Record<string, any>>,
       gradedAnswers,
+      passed,
     );
 
     return {
@@ -750,9 +751,15 @@ export class AssessmentsService {
     };
   }
 
+  /**
+   * Per-question review of a submitted attempt. Correct answers and right/wrong marks are only
+   * included once the attempt passed: after a fail (even the last attempt, since a retake can
+   * still open after the cooldown) the learner only sees what they picked.
+   */
   private buildReview(
     questions: Array<Record<string, any>>,
     graded: GradedAnswer[],
+    reveal: boolean,
   ): Array<{
     questionId: string;
     type?: string;
@@ -761,7 +768,7 @@ export class AssessmentsService {
     imageUrl?: string | null;
     selectedOption?: number | string;
     correctAnswer?: number | string;
-    isCorrect: boolean;
+    isCorrect?: boolean;
   }> {
     const byId = new Map(graded.map((g) => [g.questionId, g]));
     return questions.map((q) => {
@@ -773,8 +780,7 @@ export class AssessmentsService {
         options: q.options,
         imageUrl: q.imageUrl ?? null,
         selectedOption: g?.selectedOption,
-        correctAnswer: q.correctAnswer,
-        isCorrect: g?.isCorrect ?? false,
+        ...(reveal ? { correctAnswer: q.correctAnswer, isCorrect: g?.isCorrect ?? false } : {}),
       };
     });
   }

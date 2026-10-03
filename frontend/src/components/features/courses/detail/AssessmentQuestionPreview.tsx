@@ -26,7 +26,7 @@ export function AssessmentQuestionPreview({
     <div className="rounded-xl border border-slate-200/90 bg-slate-50/40 p-4 text-xs space-y-2.5 shadow-2xs hover:border-slate-300 transition">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
         <div className="flex items-center gap-2">
-          <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white text-[11px] font-bold">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white text-[11px] font-bold">
             {index + 1}
           </span>
           <Badge variant="slate" className="font-semibold text-slate-700 bg-white border-slate-200">
@@ -37,9 +37,11 @@ export function AssessmentQuestionPreview({
                 : tBilingual('Short Answer', 'አጭር መልስ')}
           </Badge>
         </div>
-        <span className="font-bold text-indigo-700 text-xs">
-          10 {tBilingual('Points', 'ነጥብ')}
-        </span>
+        {question.points !== undefined && (
+          <span className="font-bold text-indigo-700 text-xs">
+            {question.points} {question.points === 1 ? tBilingual('Point', 'ነጥብ') : tBilingual('Points', 'ነጥብ')}
+          </span>
+        )}
       </div>
 
       {/* Prompt */}

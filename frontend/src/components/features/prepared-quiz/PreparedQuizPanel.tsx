@@ -18,6 +18,8 @@ import {
 import { usePreparedQuizStore } from '@/lib/stores/prepared-quiz-store';
 import type { PreparedQuizGroup } from '@/lib/api/prepared-quiz';
 import { Button } from '@/components/ui/Button';
+import { RichContent } from '@/components/ui/RichContent';
+import { broadcastBlocker } from './quiz-points';
 import { toast } from '@/lib/toast';
 
 interface PreparedQuizPanelProps {
@@ -176,6 +178,8 @@ export function PreparedQuizPanel({
               ))
             );
             const isOtherQuizActive = Boolean((activeQuizId || activeQuizTitle) && !isThisQuizActive);
+            // A graded quiz's points must total its course weight before it can be run.
+            const blocker = broadcastBlocker(quiz);
             const isBroadcasted = Boolean(
               (broadcastedQuizTitles && broadcastedQuizTitles.has(quiz.title)) ||
               (broadcastedQuestionIds &&
@@ -217,8 +221,8 @@ export function PreparedQuizPanel({
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-400">
-                          Ready for classroom whole-quiz broadcast
+                        <p className={`text-[11px] ${blocker && hasQuestions ? 'font-semibold text-amber-700' : 'text-slate-400'}`}>
+                          {blocker && hasQuestions ? blocker : 'Ready for classroom whole-quiz broadcast'}
                         </p>
                       </div>
                     </div>
@@ -235,7 +239,8 @@ export function PreparedQuizPanel({
 
                       <Button
                         size="sm"
-                        disabled={!hasQuestions || isBroadcasted || isThisQuizActive || isOtherQuizActive}
+                        disabled={Boolean(blocker) || isBroadcasted || isThisQuizActive || isOtherQuizActive}
+                        title={blocker ?? undefined}
                         onClick={() => onBroadcastQuizGroup(quiz)}
                         className={`gap-1.5 font-semibold text-xs shadow-md transition ${
                           isThisQuizActive
@@ -364,7 +369,7 @@ export function PreparedQuizPanel({
                                       ? 'True/False'
                                       : 'Short'}
                                   </span>
-                                  <span className="text-[10px] text-slate-400">· {q.points || 10} pts</span>
+                                  <span className="text-[10px] text-slate-400">· {item.points} pts</span>
                                   {q.category && (
                                     <span className="text-[10px] text-slate-400">· {q.category}</span>
                                   )}
@@ -375,9 +380,9 @@ export function PreparedQuizPanel({
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs font-semibold text-slate-800 leading-snug">
-                                  {q.question}
-                                </p>
+                                <div className="text-xs font-semibold text-slate-800 leading-snug">
+                                  <RichContent html={q.question} inline inheritText />
+                                </div>
                               </div>
                             </div>
 

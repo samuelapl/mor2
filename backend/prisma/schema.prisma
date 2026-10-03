@@ -589,6 +589,11 @@ model QuestionBankQuestion {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
+  // Generated columns (see migration 20261003090000) used for duplicate detection.
+  // Read-only: never write them; QuestionBankService queries them via raw SQL.
+  contentHash    String? @default(dbgenerated("qb_content_hash(type, question, options)")) @map("content_hash")
+  similarityText String? @default(dbgenerated("qb_similarity_text(question, options)")) @map("similarity_text")
+
   course        Course?            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   module        CurriculumModule?  @relation(fields: [moduleId], references: [id], onDelete: SetNull)
   lesson        Lesson?            @relation("QuestionBankLesson", fields: [lessonId], references: [id], onDelete: SetNull)
@@ -601,6 +606,8 @@ model QuestionBankQuestion {
   @@index([lessonId])
   @@index([subLessonId])
   @@index([createdById])
+  @@index([courseId, contentHash])
+  @@index([similarityText(ops: raw("gin_trgm_ops"))], type: Gin)
   @@map("question_bank_questions")
 }
 
@@ -700,6 +707,9 @@ model SessionPreparedQuestion {
   questionId String   @map("question_id")
   addedAt    DateTime @default(now()) @map("added_at")
   order      Int      @default(0)
+  /// Points for this question in this quiz (the bank question's points are only the starting
+  /// value). For a weighted session quiz the points of all its questions must total its weight.
+  points     Int      @default(0)
 
   quiz       SessionPreparedQuiz  @relation("QuizPreparedQuestions", fields: [quizId], references: [id], onDelete: Cascade)
   question   QuestionBankQuestion @relation("PreparedQuizQuestions", fields: [questionId], references: [id], onDelete: Cascade)

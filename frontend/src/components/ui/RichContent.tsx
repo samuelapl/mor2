@@ -60,10 +60,15 @@ interface RichContentProps {
   className?: string;
   placeholder?: string;
   inline?: boolean;
+  /** Take font size, line height and colour from the surrounding text (e.g. a question title). */
+  inheritText?: boolean;
 }
 
-export function RichContent({ html, className, placeholder, inline = false }: RichContentProps) {
+export function RichContent({ html, className, placeholder, inline = false, inheritText = false }: RichContentProps) {
   const sanitized = sanitizeRichContent(html ?? '');
+  if (inheritText) {
+    className = cn('[color:inherit] [font-size:inherit] [line-height:inherit]', className);
+  }
   if (!sanitized.trim()) {
     if (!placeholder) return null;
     return inline ? (

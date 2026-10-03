@@ -27,6 +27,7 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
     submitForApproval,
     approveCourse,
     rejectCourse,
+    returnCourseToDraft,
     publishCourse,
     unpublishCourse,
     archiveCourse,
@@ -40,6 +41,8 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
   const status = course?.status;
   const editable = status === 'draft' || status === 'rejected';
   const isPrivilegedAdmin = hasRole('training_admin') || hasRole('system_admin');
+  /** A trainer is only required when the course has planned online sessions (self-paced courses publish without one). */
+  const requiresTrainer = (course?.sessionPlans?.length ?? 0) > 0;
 
   const can: Record<CourseActionKey, boolean> = {
     edit: Boolean(course) && (hasPermission('course.update.own') || hasPermission('course.update.all')) && editable,
@@ -56,9 +59,11 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
       (isPrivilegedAdmin || status === 'draft'),
     delete: Boolean(course) && hasPermission('course.delete') && status !== 'published' && (isPrivilegedAdmin || status === 'draft'),
     assignTrainer: hasPermission('course.assign_trainer'),
+    // Only before publication: a published course must be unpublished first.
+    returnToDraft: hasPermission('course.approve_reject') && status === 'approved' && !course?.published,
   };
 
-  const needsTrainerOptions = can.assignTrainer || can.publish;
+  const needsTrainerOptions = requiresTrainer && (can.assignTrainer || can.publish);
   useEffect(() => {
     if (!needsTrainerOptions) {
       setTrainerOptions([]);
@@ -94,8 +99,8 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
     can,
     busy,
     trainerOptions,
-    /** Publishing requires a trainer; the caller shows the picker when this is false. */
     hasTrainer: Boolean(course?.trainerId),
+    requiresTrainer,
 
     submit: () => withBusy(async () => notify(await submitForApproval(id), 'Course submitted for approval.')),
 
@@ -109,6 +114,17 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
         const result = await rejectCourse(id, trimmed);
         if (!result.ok) return result.message;
         toast.success('Course rejected and moved back to draft. The owner has been notified.');
+        return null;
+      }),
+
+    /** Returns null on success, or the error to show next to the reason field. */
+    returnToDraft: (reason: string) =>
+      withBusy(async (): Promise<string | null> => {
+        const trimmed = reason.trim();
+        if (!trimmed) return 'A reason is required.';
+        const result = await returnCourseToDraft(id, trimmed);
+        if (!result.ok) return result.message;
+        toast.success('Approval withdrawn and course moved back to draft. The owner has been notified.');
         return null;
       }),
 

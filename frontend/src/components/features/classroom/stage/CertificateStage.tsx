@@ -207,7 +207,8 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     const totalLessons =
       progress?.stats.totalLessons ?? course.modules.flatMap((m) => m.lessons).length;
     const completedLessons = progress?.stats.completedLessons ?? 0;
-    const overallPercent = progress?.stats.overallPercent ?? 0;
+    // This checklist item is about lessons only; assessments have their own items below.
+    const lessonPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
     const finalAssessment = progress?.courseCompletion.finalAssessment;
     const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
 
@@ -253,13 +254,13 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
                   {tBilingual('Course Lessons Completed', 'የተጠናቀቁ የኮርስ ትምህርቶች')}
                 </span>
                 <span className="font-mono text-indigo-600">
-                  {completedLessons}/{totalLessons} ({overallPercent}%)
+                  {completedLessons}/{totalLessons} ({lessonPercent}%)
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-                  style={{ width: `${overallPercent}%` }}
+                  style={{ width: `${lessonPercent}%` }}
                 />
               </div>
             </div>

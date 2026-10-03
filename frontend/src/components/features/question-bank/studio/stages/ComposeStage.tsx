@@ -10,6 +10,7 @@ import type { Course } from '@/types';
 import type { QuestionEditorState } from '../../hooks/useQuestionEditor';
 import type { BankQuestionType, TargetLevel } from '../../types';
 import { cardClass, inputClass, labelClass, sectionTitleClass } from '../../styles';
+import { DuplicateWarning } from '../../components/DuplicateWarning';
 import { StagedQuestionList } from '../../components/StagedQuestionList';
 import { StageHeader } from '../StageHeader';
 
@@ -322,6 +323,13 @@ export function ComposeStage({ editor, courseModules, currentCourse, onCancel }:
                 </p>
               </div>
             )}
+
+            <DuplicateWarning
+              matches={editor.similarMatches}
+              checking={editor.checkingDuplicates}
+              acknowledged={editor.acknowledgeSimilar}
+              onAcknowledgedChange={editor.setAcknowledgeSimilar}
+            />
           </section>
         </div>
 
@@ -331,6 +339,8 @@ export function ComposeStage({ editor, courseModules, currentCourse, onCancel }:
 
           <StagedQuestionList
             questions={stagedQuestions}
+            issues={editor.stagedIssues}
+            onKeepAnyway={editor.keepStagedQuestionAnyway}
             onEdit={editor.handleEditStagedQuestion}
             onRemove={editor.removeStagedQuestion}
             onClear={editor.clearStagedQuestions}

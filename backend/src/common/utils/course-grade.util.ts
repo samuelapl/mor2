@@ -63,6 +63,15 @@ export interface CourseGrade {
   certificateReady: boolean;
 }
 
+/** An assessment is passed once any submitted attempt reaches its pass mark (or the global one). */
+export function isAssessmentPassed(
+  assessment: Pick<GradableAssessment, 'passingScore' | 'attempts'>,
+  globalPassMark: number,
+): boolean {
+  const passingScore = assessment.passingScore > 0 ? assessment.passingScore : globalPassMark;
+  return assessment.attempts.some((att) => att.passed || att.score >= passingScore);
+}
+
 export function computeCourseGrade(
   assessments: GradableAssessment[],
   globalPassMark: number,
@@ -78,7 +87,7 @@ export function computeCourseGrade(
     return {
       id: a.id,
       passingScore,
-      passed: a.attempts.some((att) => att.passed || att.score >= passingScore),
+      passed: isAssessmentPassed(a, globalPassMark),
       attempted: a.attempts.length > 0,
       bestScore,
       weight,

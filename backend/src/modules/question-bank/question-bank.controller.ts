@@ -15,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import { QuestionBankService } from './question-bank.service';
 import {
   BulkCreateQuestionBankDto,
+  CheckQuestionDuplicatesDto,
   CreateQuestionBankQuestionDto,
   QueryQuestionBankDto,
   UpdateQuestionBankQuestionDto,
@@ -43,6 +44,16 @@ export class QuestionBankController {
   @ApiOperation({ summary: 'Bulk create questions in the Question Bank' })
   async bulkCreate(@CurrentUser() user: AuthenticatedUser, @Body() dto: BulkCreateQuestionBankDto) {
     return this.questionBankService.bulkCreate(user.id, dto);
+  }
+
+  @Post('check-duplicates')
+  @HttpCode(HttpStatus.OK)
+  @Permissions('question_bank.manage', 'quiz.create')
+  @ApiOperation({
+    summary: 'Find existing questions identical or similar to a draft question in the same course',
+  })
+  async checkDuplicates(@Body() dto: CheckQuestionDuplicatesDto) {
+    return this.questionBankService.checkDuplicates(dto);
   }
 
   @Get()

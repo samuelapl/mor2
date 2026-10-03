@@ -1,4 +1,4 @@
-import type { ApiQuestionBankQuestion } from '@/lib/api/quiz';
+import type { ApiQuestionBankQuestion, SimilarQuestionMatch } from '@/lib/api/quiz';
 import type { BankQuestion, BankQuestionType } from './types';
 
 export function getCleanModuleTitle(title?: string | null): string {
@@ -72,4 +72,17 @@ export function correctAnswerForType(
 ): string | null {
   if (type === 'SHORT_ANSWER') return answerText.trim() ? answerText.trim() : null;
   return String(correctIndex);
+}
+
+/** Where a matched bank question lives, e.g. "Module 2 › Lesson 3". */
+export function describeMatchLocation(match: SimilarQuestionMatch): string {
+  const { courseTitle, moduleTitle, lessonTitle, subLessonTitle } = match.location;
+  switch (match.level) {
+    case 'GLOBAL':
+      return 'Reusable (all courses)';
+    case 'COURSE':
+      return `${courseTitle ?? 'Course'} › Course level`;
+    default:
+      return [moduleTitle, lessonTitle, subLessonTitle].filter(Boolean).join(' › ');
+  }
 }

@@ -16,6 +16,7 @@ import {
 import type { ApiAssessment, AssessmentReviewItem } from '@/lib/api/types';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Button } from '@/components/ui/Button';
+import { RichContent } from '@/components/ui/RichContent';
 import { Badge } from '@/components/ui/Badge';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/lib/toast';
@@ -265,13 +266,11 @@ export function QuizTakerModal({
         </div>
       ) : result ? (
         (() => {
-          // Hide correct answers (and per-question correctness) while a retry
-          // is still available — otherwise a learner could read off the
-          // correct answers here and simply reuse them on the next attempt.
-          // Once passed, or once attempts are exhausted, the full review
-          // (right/wrong + correct answers) is shown.
-          const canRetry = !result.passed && result.attemptNumber < assessment.maxAttempts;
-          const showCorrectAnswers = !canRetry;
+          // Correct answers (and per-question right/wrong) are only shown once the
+          // learner passes. After a fail, even on the last attempt, they only see
+          // what they picked: a retake can still open after the cooldown, and the
+          // backend leaves the answer key out of a failed attempt's review anyway.
+          const showCorrectAnswers = result.passed;
           return (
             <div className="space-y-6">
               <div className="flex flex-col items-center py-4 text-center">
@@ -298,7 +297,7 @@ export function QuizTakerModal({
                 <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
                   {result.passed
                     ? 'Congratulations! You passed the assessment. Review your answers below.'
-                    : `You need at least ${assessment.passingScore}% to continue. Review the answers below and try again.`}
+                    : `You need at least ${assessment.passingScore}% to continue. Review your choices below and try again.`}
                 </p>
                 {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
                 <div className="mt-6 flex gap-2">
@@ -326,7 +325,7 @@ export function QuizTakerModal({
                   </h4>
                   {!showCorrectAnswers ? (
                     <span className="text-[11px] text-slate-400">
-                      Correct answers are hidden while a retry is available
+                      Correct answers are shown once you pass
                     </span>
                   ) : null}
                 </div>
@@ -347,7 +346,7 @@ export function QuizTakerModal({
                             : 'border-rose-200 bg-rose-50/40',
                       )}
                     >
-                      <p className="flex items-start gap-2 text-sm font-semibold text-slate-800">
+                      <div className="flex items-start gap-2 text-sm font-semibold text-slate-800">
                         <span
                           className={cn(
                             'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white shadow-sm',
@@ -366,8 +365,10 @@ export function QuizTakerModal({
                             <X className="h-3.5 w-3.5" />
                           )}
                         </span>
-                        {index + 1}. {question.question}
-                      </p>
+                        <span>
+                          {index + 1}. <RichContent html={question.question} inline inheritText />
+                        </span>
+                      </div>
 
                       {isShortAnswer ? (
                         <div className="mt-3 space-y-1.5 pl-8 text-xs">
@@ -514,12 +515,12 @@ export function QuizTakerModal({
               key={question.id}
               className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
             >
-              <p className="flex items-start gap-2 text-sm font-semibold text-slate-800">
+              <div className="flex items-start gap-2 text-sm font-semibold text-slate-800">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
                   {index + 1}
                 </span>
-                {question.question}
-              </p>
+                <RichContent html={question.question} inline inheritText className="min-w-0" />
+              </div>
 
               {question.imageUrl ? (
                 <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">

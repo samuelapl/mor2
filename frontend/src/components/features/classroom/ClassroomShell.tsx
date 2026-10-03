@@ -77,10 +77,12 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
     },
   });
 
-  const spentSeconds =
+  const trackedSeconds =
     activeItemId && liveSeconds[activeItemId] !== undefined
       ? liveSeconds[activeItemId]
       : initialSeconds;
+  // Shown time stops at the required time (older records may have counted past it).
+  const spentSeconds = requiredSeconds > 0 ? Math.min(trackedSeconds, requiredSeconds) : trackedSeconds;
 
   const isOverview =
     activeContent?.item.type === 'COURSE_OVERVIEW' ||

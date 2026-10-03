@@ -36,6 +36,7 @@ import {
   createCourse as apiCreateCourse,
   createModule,
   publishCourse as apiPublishCourse,
+  returnCourseToDraft as apiReturnCourseToDraft,
   unpublishCourse as apiUnpublishCourse,
   replaceCurriculum,
   requestApproval,
@@ -273,6 +274,8 @@ interface LmsContextValue {
   approveCourse: (courseId: string) => Promise<ActionResult>;
   rejectCourse: (courseId: string, reason: string) => Promise<ActionResult>;
   requestChangesCourse: (courseId: string, reason: string) => Promise<ActionResult>;
+  /** Approver withdraws an approval: approved (unpublished) course → draft. */
+  returnCourseToDraft: (courseId: string, reason: string) => Promise<ActionResult>;
   publishCourse: (courseId: string) => Promise<ActionResult>;
   unpublishCourse: (courseId: string) => Promise<ActionResult>;
   archiveCourse: (courseId: string) => Promise<ActionResult>;
@@ -1402,6 +1405,27 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
+  const returnCourseToDraft = useCallback(
+    async (courseId: string, reason: string): Promise<ActionResult> => {
+      const approver = currentUserRef.current;
+      const trimmed = reason.trim();
+      if (!trimmed) {
+        return { ok: false, message: 'A reason is required when returning a course to draft.' };
+      }
+      try {
+        await apiReturnCourseToDraft(courseId, trimmed);
+        await reloadData(approver);
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, 'Failed to return course to draft.'),
+        };
+      }
+    },
+    [reloadData],
+  );
+
   const publishCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
@@ -1810,6 +1834,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveCourse,
       rejectCourse,
       requestChangesCourse,
+      returnCourseToDraft,
       publishCourse,
       unpublishCourse,
       archiveCourse,
@@ -1857,6 +1882,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       approveCourse,
       rejectCourse,
       requestChangesCourse,
+      returnCourseToDraft,
       publishCourse,
       unpublishCourse,
       archiveCourse,
