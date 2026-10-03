@@ -38,6 +38,20 @@ export default function QuizResultScreen() {
 
   return (
     <Screen contentClassName="gap-4 p-4 pb-8">
+      {result.attemptId.startsWith('offline-') ? (
+        <Card className="gap-2 border-brand-200 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/20">
+          <AppText className="font-semibold text-brand-900 dark:text-brand-300">
+            {t('quiz.offlineSavedTitle', { defaultValue: 'Saved Offline' })}
+          </AppText>
+          <AppText variant="caption" className="text-slate-600 dark:text-slate-400">
+            {t('quiz.offlineSavedBody', {
+              defaultValue:
+                'Your answers are safely recorded on your device. The server will officially grade and finalize your attempt as soon as you reconnect.',
+            })}
+          </AppText>
+        </Card>
+      ) : null}
+
       <Card className="items-center gap-3 py-6">
         <ProgressRing percent={result.score} size={96} strokeWidth={8} />
         <View className="flex-row items-center gap-2">

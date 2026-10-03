@@ -5,10 +5,12 @@ export {
   CertificateHostUnreachableError,
   CertificatePdfPendingError,
   certificateKeys,
+  downloadCertificatePdf,
   openCertificatePdf,
   useCertificate,
   useCertificateForCourse,
   useClaimCertificate,
   useMyCertificates,
 } from './api/certificate-api';
+export { CertificateDocumentView } from './components/CertificateDocumentView';
 export type * from './types/certificate.types';

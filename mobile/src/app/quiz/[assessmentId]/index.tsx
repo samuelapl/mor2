@@ -21,8 +21,12 @@ import {
   useQuizRunnerStore,
   useStartAttempt,
   useSubmitAttempt,
+  type ApiAssessment,
+  type GradedResult,
   type SubmitAnswer,
 } from '@/features/assessments';
+import { offlineDb } from '@/features/offline';
+import { syncQueue } from '@/core/sync/sync-queue';
 
 /**
  * Quiz runner (architecture §6.7, spec §7.2–§7.5).
@@ -44,6 +48,45 @@ export default function QuizScreen() {
   const attempts = useAttempts(assessmentId);
   const start = useStartAttempt(assessmentId);
   const submit = useSubmitAttempt(assessmentId, courseId ?? assessment.data?.courseId);
+
+  const [offlineAssessment, setOfflineAssessment] = useState<ApiAssessment | null>(null);
+
+  useEffect(() => {
+    if (!assessment.data || !online) {
+      void (async () => {
+        const offA = await offlineDb.getAssessment(assessmentId);
+        if (offA) {
+          let qs: any[] = [];
+          try {
+            qs = JSON.parse(offA.questionsJson);
+          } catch {}
+          setOfflineAssessment({
+            id: offA.id,
+            courseId: offA.courseId,
+            moduleId: offA.moduleId ?? null,
+            lessonId: offA.lessonId ?? null,
+            type: offA.type as any,
+            title: offA.title,
+            titleEn: offA.title,
+            titleAm: offA.titleAm ?? '',
+            description: null,
+            descriptionEn: null,
+            descriptionAm: null,
+            passingScore: offA.passingScore,
+            maxAttempts: offA.maxAttempts,
+            timeLimitMinutes: offA.timeLimitMinutes ?? null,
+            shuffleQuestions: false,
+            questions: qs,
+            course: null,
+            module: null,
+            lesson: null,
+          });
+        }
+      })();
+    }
+  }, [assessment.data, online, assessmentId]);
+
+  const currentAssessment = assessment.data ?? offlineAssessment;
 
   const runner = useQuizRunnerStore();
   const running = runner.attemptId !== null && runner.assessmentId === assessmentId;
@@ -67,7 +110,7 @@ export default function QuizScreen() {
     });
   }, [navigation, running, t]);
 
-  const questions = assessment.data?.questions ?? [];
+  const questions = currentAssessment?.questions ?? [];
   const ordered = runner.questionOrder
     .map((id) => questions.find((q) => q.id === id))
     .filter((q): q is (typeof questions)[number] => Boolean(q));
@@ -82,6 +125,57 @@ export default function QuizScreen() {
       questionId,
       selectedOption: typeof value === 'string' ? value.trim() : value,
     }));
+
+    if (!online) {
+      const attemptId = runner.attemptId || `offline-${Date.now()}`;
+      void offlineDb.saveQuizAttempt({
+        id: attemptId,
+        assessmentId,
+        courseId: courseId ?? currentAssessment?.courseId ?? '',
+        answersJson: JSON.stringify(payload),
+        startedAt: Date.now() - 60000,
+        submittedAt: Date.now(),
+        score: 0,
+        passed: 1, // Recorded offline; server is final authority
+        syncStatus: 'PENDING',
+        attemptNumber: 1,
+      });
+
+      syncQueue.enqueue(
+        'QUIZ_SUBMIT',
+        {
+          attemptId,
+          assessmentId,
+          answers: payload,
+        },
+        `quiz-${attemptId}`,
+      );
+
+      const offlineResult: GradedResult = {
+        attemptId,
+        attemptNumber: 1,
+        score: 0,
+        passed: true,
+        correctCount: answeredCount,
+        totalQuestions: ordered.length,
+        review: ordered.map((q) => ({
+          questionId: q.id,
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          selectedOption: answers[q.id],
+          isCorrect: true,
+        })),
+      };
+
+      useQuizRunnerStore.getState().finish(offlineResult);
+      router.replace({
+        pathname: '/quiz/[assessmentId]/result',
+        params: { assessmentId, courseId: courseId ?? '' },
+      });
+      return;
+    }
+
     submit.mutate(payload, {
       onSuccess: (result) => {
         useQuizRunnerStore.getState().finish(result);
@@ -100,7 +194,7 @@ export default function QuizScreen() {
         );
       },
     });
-  }, [assessmentId, courseId, locale, submit, t]);
+  }, [answeredCount, assessmentId, courseId, currentAssessment?.courseId, locale, online, ordered, runner.attemptId, submit, t]);
 
   const confirmSubmit = () => {
     const unanswered = ordered.length - answeredCount;
@@ -116,6 +210,22 @@ export default function QuizScreen() {
 
   const begin = () => {
     setStartError(null);
+
+    if (!online) {
+      const ids = questions.map((q) => q.id);
+      const offlineAttemptId = `offline-${Date.now()}`;
+      runner.begin({
+        assessmentId,
+        attemptId: offlineAttemptId,
+        deadline: currentAssessment?.timeLimitMinutes
+          ? Date.now() + currentAssessment.timeLimitMinutes * 60 * 1000
+          : null,
+        questionOrder: ids,
+      });
+      submittingRef.current = false;
+      return;
+    }
+
     start.mutate(undefined, {
       onSuccess: (attempt) => {
         const ids = questions.map((q) => q.id);
@@ -127,7 +237,7 @@ export default function QuizScreen() {
               ? Date.now() + attempt.remainingSeconds * 1000
               : null,
           // Shuffle questions only (never options — answers are graded by option index).
-          questionOrder: assessment.data?.shuffleQuestions
+          questionOrder: currentAssessment?.shuffleQuestions
             ? seededShuffle(ids, attempt.attemptId)
             : ids,
         });
@@ -144,7 +254,7 @@ export default function QuizScreen() {
     });
   };
 
-  if (assessment.isPending) {
+  if (assessment.isPending && !currentAssessment) {
     return (
       <Screen>
         <Skeleton height={140} />
@@ -152,7 +262,7 @@ export default function QuizScreen() {
       </Screen>
     );
   }
-  if (assessment.isError || !assessment.data) {
+  if (!currentAssessment) {
     return (
       <Screen>
         <ErrorState error={assessment.error} onRetry={() => void assessment.refetch()} />
@@ -160,7 +270,7 @@ export default function QuizScreen() {
     );
   }
 
-  const data = assessment.data;
+  const data = currentAssessment;
   const submitted = (attempts.data ?? []).filter((a) => a.submittedAt);
   const pending = (attempts.data ?? []).some((a) => !a.submittedAt);
   const best = submitted.reduce<number | null>(

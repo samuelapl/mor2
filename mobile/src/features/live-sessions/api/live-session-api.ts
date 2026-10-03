@@ -33,6 +33,17 @@ export const liveSessionApi = {
   leave: (id: string) => api.post<ApiAttendance | null>(endpoints.attendance.leave(id)),
   checkIn: (id: string, method: CheckInMethod, body: Omit<CheckInBody, 'method'> = {}) =>
     api.post<ApiAttendance>(endpoints.attendance.checkIn(id), body, { params: { method } }),
+  submitQuizResponse: (
+    id: string,
+    dto: {
+      questionId: string;
+      selectedOptionIds: string[];
+      responseDurationSeconds: number;
+      questionTitle?: string;
+      options?: string[];
+      correctAnswer?: string;
+    },
+  ) => api.post(endpoints.liveSessions.quizResponse(id), dto),
 };
 
 /** SCHEDULED + LIVE sessions visible to the learner, soonest first (spec §8.1). */

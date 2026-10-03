@@ -63,10 +63,14 @@ services:
     container_name: eltms-livekit
     restart: unless-stopped
     command: --config /etc/livekit.yaml
-    network_mode: host
+    ports:
+      - "7880:7880"         # Signaling & HTTP / WebSockets
+      - "7881:7881"         # WebRTC ICE over TCP
+      - "7882:7882/udp"     # WebRTC ICE over UDP
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml:ro
-
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:

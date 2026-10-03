@@ -6,17 +6,31 @@ import { View } from 'react-native';
 
 import { Alert } from '@/core/utils/alert';
 import { ErrorState, Screen, Skeleton } from '@/components/ui';
+import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import { resolveMediaUrl } from '@/core/media/resolveMediaUrl';
 import { liveSessionApi, LiveKitRoom, useMeetingStore, useSession } from '@/features/live-sessions';
 
 /** In-app LiveKit room (WebView + LiveKit web SDK) with attendance heartbeats (spec §8.4–§8.5). */
 export default function SessionRoomScreen() {
   const { t } = useTranslation();
+  const online = useIsOnline();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const session = useSession(sessionId);
   const start = useMeetingStore((s) => s.start);
   const leave = useMeetingStore((s) => s.leave);
   const started = useRef(false);
+
+  useEffect(() => {
+    if (!online) {
+      Alert.alert(
+        t('sessions.offlineTitle', { defaultValue: 'Connection Required' }),
+        t('sessions.offlineBody', {
+          defaultValue: 'Live sessions require an active internet connection to participate.',
+        }),
+        [{ text: t('common.ok'), onPress: () => router.back() }],
+      );
+    }
+  }, [online, t]);
 
   const token = useQuery({
     queryKey: ['live-sessions', 'livekit-token', sessionId],
@@ -24,6 +38,7 @@ export default function SessionRoomScreen() {
     staleTime: 0,
     gcTime: 0,
     retry: false,
+    enabled: online,
   });
 
   // Leaving the screen (back gesture, hardware back) ends attendance tracking.
@@ -33,6 +48,14 @@ export default function SessionRoomScreen() {
     },
     [leave],
   );
+
+  if (!online) {
+    return (
+      <Screen>
+        <Skeleton height={240} />
+      </Screen>
+    );
+  }
 
   if (token.isPending || session.isPending) {
     return (
@@ -57,6 +80,8 @@ export default function SessionRoomScreen() {
       <LiveKitRoom
         wsUrl={wsUrl}
         token={token.data.token}
+        sessionId={sessionId}
+        session={session.data}
         onConnected={() => {
           if (started.current) return;
           started.current = true;
@@ -69,7 +94,9 @@ export default function SessionRoomScreen() {
           }
           router.back();
         }}
-        onError={(message) => Alert.alert(t('sessions.roomError'), message)}
+        onError={(message) => {
+          console.warn('[LiveKitRoom error]:', message);
+        }}
       />
     </View>
   );
