@@ -6,7 +6,6 @@ import { AppText, Badge, Card, ProgressBar } from '@/components/ui';
 import type { EnrollmentStatus } from '@/core/api/types';
 import { useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
-import { useOfflineStore } from '@/features/offline';
 
 import type { ApiCourse } from '../types/course.types';
 import { CourseThumbnail } from './CourseThumbnail';
@@ -31,9 +30,6 @@ export function CourseCard({
   const localized = useLocalized();
   const colors = useThemeColors();
 
-  const isDownloaded = useOfflineStore((s) => s.downloadedCourses.some((c) => c.id === course.id));
-  const downloadProgress = useOfflineStore((s) => s.downloads[course.id]);
-
   return (
     <Card onPress={onPress} className="overflow-hidden p-0">
       <CourseThumbnail uri={course.thumbnailUrl} className="h-36 w-full" />
@@ -44,17 +40,6 @@ export function CourseCard({
             <Badge
               label={t(`courses.status.${enrollmentStatus}`)}
               tone={statusTone[enrollmentStatus]}
-            />
-          ) : null}
-          {isDownloaded ? (
-            <Badge
-              label={t('courses.offlineReady', { defaultValue: 'Offline Ready' })}
-              tone="success"
-            />
-          ) : downloadProgress?.status === 'downloading' ? (
-            <Badge
-              label={`${Math.round(downloadProgress.percent)}%`}
-              tone="brand"
             />
           ) : null}
           <AppText variant="caption">{course.code}</AppText>

@@ -62,6 +62,19 @@ export default function SessionScreen() {
   const inThisMeeting = meeting.active?.sessionId === sessionId;
   const [joining, setJoining] = useState(false);
 
+  // All hooks must be called unconditionally BEFORE any early returns
+  const [recordingDownloaded, setRecordingDownloaded] = useState(false);
+  const [downloadingRecording, setDownloadingRecording] = useState(false);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    try {
+      const dir = new Directory(Paths.document, 'offline_recordings');
+      const file = new File(dir, `session_${sessionId}.mp4`);
+      setRecordingDownloaded(file.exists);
+    } catch {}
+  }, [sessionId]);
+
   if (session.isPending) {
     return (
       <Screen>
@@ -88,17 +101,6 @@ export default function SessionScreen() {
   const threshold = meeting.last?.threshold ?? data.attendanceThreshold;
   const checkedIn = Boolean(mine?.checkInMethod) && mine?.status === 'PRESENT';
   const description = localized(data, 'description');
-
-  const [recordingDownloaded, setRecordingDownloaded] = useState(false);
-  const [downloadingRecording, setDownloadingRecording] = useState(false);
-
-  useEffect(() => {
-    try {
-      const dir = new Directory(Paths.document, 'offline_recordings');
-      const file = new File(dir, `session_${sessionId}.mp4`);
-      setRecordingDownloaded(file.exists);
-    } catch {}
-  }, [sessionId]);
 
   const handleDownloadRecording = async () => {
     if (!data.recordingUrl) return;

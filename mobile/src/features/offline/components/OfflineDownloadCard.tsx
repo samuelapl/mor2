@@ -1,7 +1,22 @@
-import { AlertCircle, CheckCircle2, Download, Trash2 } from 'lucide-react-native';
-import React, { useEffect } from 'react';
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FolderDown,
+  HardDrive,
+  PlayCircle,
+  RefreshCw,
+  Square,
+  Trash2,
+} from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
+import { router } from 'expo-router';
 
 import { AppText, Badge, Button, Card, ProgressBar } from '@/components/ui';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
@@ -9,14 +24,17 @@ import { palette, useThemeColors } from '@/core/theme/colors';
 import { Alert } from '@/core/utils/alert';
 import { formatFileSize } from '@/core/utils/formatters';
 
+import type { ApiCourseDetail } from '../../courses/types/course.types';
+import { offlineDb } from '../offline-db';
 import { useOfflineStore } from '../offline-store';
 
 export interface OfflineDownloadCardProps {
   courseId: string;
   enrolled: boolean;
+  course?: ApiCourseDetail;
 }
 
-export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardProps) {
+export function OfflineDownloadCard({ courseId, enrolled, course }: OfflineDownloadCardProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const online = useIsOnline();
@@ -24,13 +42,28 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
   const init = useOfflineStore((s) => s.init);
   const downloadedCourses = useOfflineStore((s) => s.downloadedCourses);
   const downloads = useOfflineStore((s) => s.downloads);
+  const isSyncing = useOfflineStore((s) => s.isSyncing);
   const startDownload = useOfflineStore((s) => s.startDownload);
   const cancelDownload = useOfflineStore((s) => s.cancelDownload);
   const removeDownload = useOfflineStore((s) => s.removeDownload);
 
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [showModuleSelector, setShowModuleSelector] = useState(false);
+  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
+
   useEffect(() => {
     void init();
   }, [init]);
+
+  useEffect(() => {
+    let mounted = true;
+    void offlineDb.getPendingCountForCourse(courseId).then((count) => {
+      if (mounted) setPendingSyncCount(count);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [courseId, isSyncing]);
 
   if (!enrolled) {
     return null;
@@ -42,12 +75,38 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
   const isDownloading = progress?.status === 'downloading';
   const isError = progress?.status === 'error';
 
-  const handleStartDownload = () => {
+  const handleStartDownloadAll = () => {
     if (!online) {
       Alert.alert(t('common.offline'), t('common.offlineAction'));
       return;
     }
     void startDownload(courseId);
+  };
+
+  const handleStartDownloadModule = (moduleId: string) => {
+    if (!online) {
+      Alert.alert(t('common.offline'), t('common.offlineAction'));
+      return;
+    }
+    void startDownload(courseId, { moduleIds: [moduleId] });
+  };
+
+  const handleStartDownloadSelected = () => {
+    if (!online) {
+      Alert.alert(t('common.offline'), t('common.offlineAction'));
+      return;
+    }
+    if (selectedModuleIds.length === 0) {
+      Alert.alert(t('offline.selectModule', { defaultValue: 'Select Modules' }), t('offline.selectModuleHint', { defaultValue: 'Please select at least one module to download.' }));
+      return;
+    }
+    void startDownload(courseId, { moduleIds: selectedModuleIds });
+  };
+
+  const toggleSelectModule = (moduleId: string) => {
+    setSelectedModuleIds((prev) =>
+      prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId],
+    );
   };
 
   const handleRemove = () => {
@@ -67,14 +126,37 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   };
 
-  // State 1: Downloading
+  // State 1: Syncing
+  if (isSyncing || (online && pendingSyncCount > 0 && isDownloaded)) {
+    return (
+      <Card className="gap-3 border-sky-800/40 bg-sky-950/20 p-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2.5">
+            <ActivityIndicator size="small" color="#38bdf8" />
+            <AppText className="text-base font-bold text-sky-200">
+              {t('courses.syncing', { defaultValue: 'Syncing Offline Progress…' })}
+            </AppText>
+          </View>
+          <Badge label="Syncing" tone="brand" />
+        </View>
+        <AppText className="text-sm text-slate-300 leading-5">
+          {t('courses.syncingDescription', {
+            defaultValue:
+              'Uploading recorded offline quiz attempts and study time to the server for verification.',
+          })}
+        </AppText>
+      </Card>
+    );
+  }
+
+  // State 2: Downloading with progress
   if (isDownloading) {
     return (
-      <Card className="gap-3 border-brand-200 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/30">
+      <Card className="gap-3 border-brand-500/40 bg-brand-950/20 p-4">
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <Download size={18} color={palette.brand600} />
-            <AppText className="font-semibold text-brand-900 dark:text-brand-300">
+          <View className="flex-row items-center gap-2.5">
+            <Download size={20} color={palette.brand500} />
+            <AppText className="text-base font-bold text-white">
               {t('courses.downloading', { defaultValue: 'Downloading for Offline' })}
             </AppText>
           </View>
@@ -83,8 +165,8 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
 
         <ProgressBar percent={progress.percent} tone="brand" />
 
-        <View className="flex-row items-center justify-between">
-          <AppText variant="caption" className="flex-1 text-slate-600 dark:text-slate-400">
+        <View className="flex-row items-center justify-between pt-1">
+          <AppText className="flex-1 text-xs text-slate-300">
             {progress.currentStep ||
               (progress.totalBytes > 0
                 ? `${formatFileSize(progress.downloadedBytes)} / ${formatFileSize(progress.totalBytes)}`
@@ -101,53 +183,88 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   }
 
-  // State 2: Downloaded
+  // State 3: Available Offline
   if (isDownloaded && downloadedCourse) {
     return (
-      <Card className="flex-row items-center justify-between gap-3 border-green-200 bg-green-50/50 dark:border-green-900/60 dark:bg-green-950/20">
-        <View className="flex-1 flex-row items-center gap-3">
-          <CheckCircle2 size={22} color={colors.success} />
-          <View className="flex-1">
-            <AppText className="font-semibold text-green-900 dark:text-green-300">
-              {t('courses.availableOffline', { defaultValue: 'Downloaded for Offline' })}
-            </AppText>
-            {downloadedCourse.sizeBytes > 0 ? (
-              <AppText variant="caption" className="text-slate-500 dark:text-slate-400">
-                {formatFileSize(downloadedCourse.sizeBytes)}
+      <Card className="gap-3.5 border-emerald-500/30 bg-emerald-950/15 p-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2.5 flex-1">
+            <View className="h-8 w-8 rounded-full bg-emerald-500/20 items-center justify-center">
+              <CheckCircle2 size={18} color="#10b981" />
+            </View>
+            <View className="flex-1">
+              <AppText className="text-base font-bold text-emerald-200">
+                {t('courses.availableOffline', { defaultValue: 'Available Offline' })}
               </AppText>
-            ) : null}
+              {downloadedCourse.sizeBytes > 0 ? (
+                <AppText className="text-xs text-slate-400">
+                  {formatFileSize(downloadedCourse.sizeBytes)} stored on device
+                </AppText>
+              ) : null}
+            </View>
           </View>
+          <Button
+            title={t('courses.removeDownload', { defaultValue: 'Remove' })}
+            variant="outline"
+            size="sm"
+            icon={<Trash2 size={14} color={colors.danger} />}
+            onPress={handleRemove}
+          />
         </View>
-        <Button
-          title={t('courses.removeDownload', { defaultValue: 'Remove' })}
-          variant="outline"
-          size="sm"
-          icon={<Trash2 size={14} color={colors.danger} />}
-          onPress={handleRemove}
-        />
+        <AppText className="text-xs text-slate-400 leading-4">
+          All downloaded lessons, attached documents, and quizzes are ready for offline learning.
+        </AppText>
+        
+        {/* Quick actions for downloaded course */}
+        <View className="flex-row items-center gap-2 pt-1">
+          <View className="flex-1">
+            <Button
+              title={t('offline.viewMyDownloads', { defaultValue: 'View in My Downloads' })}
+              variant="primary"
+              size="sm"
+              icon={<PlayCircle size={16} color="#fff" />}
+              onPress={() => router.push('/downloads')}
+              fullWidth
+            />
+          </View>
+          <Button
+            title={t('offline.updateContent', { defaultValue: 'Update' })}
+            variant="outline"
+            size="sm"
+            icon={<RefreshCw size={14} color={colors.primary} />}
+            onPress={handleStartDownloadAll}
+          />
+        </View>
       </Card>
     );
   }
 
-  // State 3: Error state
+  // State 4: Download failed / Retry
   if (isError) {
     return (
-      <Card className="gap-2 border-red-200 bg-red-50/50 dark:border-red-900/60 dark:bg-red-950/20">
-        <View className="flex-row items-center gap-2">
-          <AlertCircle size={18} color={colors.danger} />
-          <AppText className="font-semibold text-red-900 dark:text-red-300">
-            {t('courses.downloadFailed', { defaultValue: 'Download Failed' })}
-          </AppText>
+      <Card className="gap-3 border-red-500/40 bg-red-950/20 p-4">
+        <View className="flex-row items-center gap-2.5">
+          <View className="h-8 w-8 rounded-full bg-red-500/20 items-center justify-center">
+            <AlertCircle size={18} color={colors.danger} />
+          </View>
+          <View className="flex-1">
+            <AppText className="text-base font-bold text-red-200">
+              {t('courses.downloadFailed', { defaultValue: 'Download Failed' })}
+            </AppText>
+            <AppText className="text-xs text-slate-300 mt-0.5">
+              {progress?.error ||
+                t('courses.downloadFailedHint', {
+                  defaultValue: 'An error occurred during download. Please check your connection and retry.',
+                })}
+            </AppText>
+          </View>
         </View>
-        <AppText variant="caption" className="text-slate-600 dark:text-slate-400">
-          {progress?.error || t('courses.downloadFailedHint', { defaultValue: 'Please try again.' })}
-        </AppText>
-        <View className="flex-row gap-2 pt-1">
+        <View className="flex-row items-center gap-2 pt-1">
           <Button
-            title={t('common.retry', { defaultValue: 'Retry' })}
+            title={t('common.retry', { defaultValue: 'Retry Download' })}
             size="sm"
-            variant="outline"
-            onPress={handleStartDownload}
+            variant="primary"
+            onPress={handleStartDownloadAll}
           />
           <Button
             title={t('common.dismiss', { defaultValue: 'Dismiss' })}
@@ -160,26 +277,133 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   }
 
-  // State 4: Not downloaded (Explicit download trigger)
+  // State 5: Download Available Content (Full Download + Selective Module Download)
+  const modules = course?.modules ?? [];
+
   return (
-    <Card className="flex-row items-center justify-between gap-3">
-      <View className="flex-1">
-        <AppText className="font-semibold text-slate-900 dark:text-slate-100">
-          {t('courses.offlineLearning', { defaultValue: 'Offline Learning' })}
-        </AppText>
-        <AppText variant="caption">
-          {t('courses.offlineHint', {
-            defaultValue: 'Download lessons & quizzes to learn without internet.',
-          })}
-        </AppText>
+    <Card className="gap-3.5 border border-brand-500/30 bg-brand-950/20 p-4">
+      {/* Header */}
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center gap-2.5">
+          <View className="h-8 w-8 rounded-full bg-brand-500/20 items-center justify-center">
+            <Download size={18} color="#38bdf8" />
+          </View>
+          <AppText className="text-base font-bold text-white">
+            {t('courses.downloadAvailableContent', { defaultValue: 'Offline Learning & Downloads' })}
+          </AppText>
+        </View>
+        <Badge label="Offline Ready" tone="brand" />
       </View>
+
+      <AppText className="text-[14px] text-slate-300 leading-relaxed font-normal">
+        {t('courses.downloadAvailableHint', {
+          defaultValue:
+            'Download eligible content to study offline without internet. Choose to download all or select specific modules below.',
+        })}
+      </AppText>
+
+      {/* Main Download All Button */}
       <Button
-        title={t('courses.downloadOffline', { defaultValue: 'Download' })}
-        variant="secondary"
-        size="sm"
-        icon={<Download size={16} color={palette.brand600} />}
-        onPress={handleStartDownload}
+        title={t('offline.downloadAll', { defaultValue: 'Download All (Entire Course)' })}
+        variant="primary"
+        icon={<Download size={16} color="#fff" />}
+        onPress={handleStartDownloadAll}
+        fullWidth
       />
+
+      {/* Selective Module Download Toggle */}
+      {modules.length > 0 && (
+        <View className="border-t border-slate-800/80 pt-3 gap-2.5">
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowModuleSelector((prev) => !prev)}
+            className="flex-row items-center justify-between py-1"
+          >
+            <View className="flex-row items-center gap-2">
+              <FolderDown size={16} color={palette.brand500} />
+              <AppText className="text-sm font-semibold text-slate-200">
+                {t('offline.selectModules', { defaultValue: 'Select Specific Modules to Download' })}
+              </AppText>
+            </View>
+            {showModuleSelector ? (
+              <ChevronDown size={18} color={colors.textMuted} />
+            ) : (
+              <ChevronRight size={18} color={colors.textMuted} />
+            )}
+          </Pressable>
+
+          {showModuleSelector && (
+            <View className="gap-2 pt-1">
+              <AppText variant="caption" className="text-slate-400">
+                Tap a module to select, or download individual modules directly:
+              </AppText>
+
+              {modules.map((m, idx) => {
+                const isSelected = selectedModuleIds.includes(m.id);
+                const title = m.title ?? m.titleEn ?? `Module ${idx + 1}`;
+                const lessonCount = m.lessons?.length ?? 0;
+
+                return (
+                  <View
+                    key={m.id}
+                    className="flex-row items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800"
+                  >
+                    <Pressable
+                      onPress={() => toggleSelectModule(m.id)}
+                      className="flex-row items-center gap-2.5 flex-1 pr-2"
+                    >
+                      {isSelected ? (
+                        <CheckSquare size={18} color={palette.brand500} />
+                      ) : (
+                        <Square size={18} color={colors.textMuted} />
+                      )}
+                      <View className="flex-1">
+                        <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+                          {title}
+                        </AppText>
+                        <AppText variant="caption">
+                          {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
+                        </AppText>
+                      </View>
+                    </Pressable>
+
+                    <Button
+                      title={`Download`}
+                      size="sm"
+                      variant="outline"
+                      icon={<Download size={14} color={colors.primary} />}
+                      onPress={() => handleStartDownloadModule(m.id)}
+                    />
+                  </View>
+                );
+              })}
+
+              {selectedModuleIds.length > 0 && (
+                <Button
+                  title={`Download Selected (${selectedModuleIds.length} Modules)`}
+                  size="sm"
+                  variant="primary"
+                  icon={<Download size={16} color="#fff" />}
+                  onPress={handleStartDownloadSelected}
+                  fullWidth
+                />
+              )}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Link to My Downloads */}
+      <Pressable
+        onPress={() => router.push('/downloads')}
+        className="flex-row items-center justify-center gap-2 pt-1 py-1.5"
+      >
+        <HardDrive size={15} color={colors.textMuted} />
+        <AppText className="text-xs font-semibold text-sky-400">
+          {t('offline.openMyDownloads', { defaultValue: 'View My Downloaded Files & Recordings' })}
+        </AppText>
+        <ArrowRight size={14} color="#38bdf8" />
+      </Pressable>
     </Card>
   );
 }

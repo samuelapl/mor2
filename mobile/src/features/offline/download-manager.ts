@@ -20,6 +20,11 @@ import {
   type OfflineModule,
 } from './offline-db';
 
+export interface DownloadCourseOptions {
+  moduleIds?: string[];
+  lessonIds?: string[];
+}
+
 export interface CourseDownloadProgress {
   courseId: string;
   status: 'idle' | 'downloading' | 'completed' | 'error';
@@ -49,11 +54,12 @@ class OfflineDownloadManager {
   private activeDownloads = new Map<string, AbortController>();
 
   /**
-   * Downloads an enrolled course for offline learning.
+   * Downloads an enrolled course or selected modules/lessons for offline learning.
    */
   async downloadCourse(
     courseId: string,
     onProgress?: (progress: CourseDownloadProgress) => void,
+    options?: DownloadCourseOptions,
   ): Promise<void> {
     const notify = (update: Partial<CourseDownloadProgress>) => {
       onProgress?.({
@@ -143,7 +149,22 @@ class OfflineDownloadManager {
         }
       }
 
-      const totalMediaItems = allLessons.filter((l) => isPlayableRemoteUrl(l.resourceUrl)).length;
+      const targetModuleIds = options?.moduleIds?.length ? new Set(options.moduleIds) : null;
+      const targetLessonIds = options?.lessonIds?.length ? new Set(options.lessonIds) : null;
+
+      const isTargeted = (l: ApiCourseLesson) => {
+        if (!targetModuleIds && !targetLessonIds) return true;
+        if (targetModuleIds && targetModuleIds.has(l.moduleId)) return true;
+        if (targetLessonIds && targetLessonIds.has(l.id)) return true;
+        return false;
+      };
+
+      const existingLessons = await offlineDb.getLessonsForCourse(courseId).catch(() => []);
+      const existingMap = new Map(existingLessons.map((l) => [l.id, l]));
+
+      // Only eligible/unlocked lessons targeted in this download have their media downloaded!
+      const eligibleLessons = allLessons.filter((l) => Boolean(l.unlocked) && isTargeted(l));
+      const totalMediaItems = eligibleLessons.filter((l) => isPlayableRemoteUrl(l.resourceUrl)).length;
       let completedMedia = 0;
       let totalBytesAccumulated = 0;
 
@@ -154,9 +175,11 @@ class OfflineDownloadManager {
         if (abortController.signal.aborted) throw new Error('Download cancelled');
 
         let localMediaUri: string | null = null;
+        const isEligible = Boolean(lesson.unlocked);
+        const shouldDownload = isEligible && isTargeted(lesson);
 
-        // Download media if available
-        if (isPlayableRemoteUrl(lesson.resourceUrl)) {
+        // Download media ONLY if the lesson is targeted and eligible
+        if (shouldDownload && isPlayableRemoteUrl(lesson.resourceUrl)) {
           const resolvedMedia = resolveMediaUrl(lesson.resourceUrl);
           if (resolvedMedia) {
             try {
@@ -175,9 +198,11 @@ class OfflineDownloadManager {
           const mediaPercent = 35 + Math.round((completedMedia / (totalMediaItems || 1)) * 40);
           notify({
             percent: Math.min(75, mediaPercent),
-            currentStep: `Downloading media (${completedMedia}/${totalMediaItems})…`,
+            currentStep: `Downloading content (${completedMedia}/${totalMediaItems})…`,
             downloadedBytes: totalBytesAccumulated,
           });
+        } else if (existingMap.has(lesson.id)) {
+          localMediaUri = existingMap.get(lesson.id)?.localMediaUri ?? null;
         }
 
         offlineLessonsToSave.push({
@@ -190,47 +215,54 @@ class OfflineDownloadManager {
           sortOrder: lesson.order,
           contentType: lesson.contentType,
           durationMinutes: lesson.durationMinutes,
-          content: lesson.content ?? lesson.contentEn ?? null,
-          contentAm: lesson.contentAm ?? null,
-          resourceUrl: lesson.resourceUrl,
-          localMediaUri,
+          content: isEligible ? (lesson.content ?? lesson.contentEn ?? null) : null,
+          contentAm: isEligible ? (lesson.contentAm ?? null) : null,
+          resourceUrl: isEligible ? lesson.resourceUrl : null,
+          localMediaUri: isEligible ? localMediaUri : null,
           requiredSeconds: (lesson.durationMinutes ?? 0) * 60,
-          isCompleted: 0,
-          timeSpentSeconds: 0,
-          lastPosition: 0,
-          unlocked: lesson.unlocked ? 1 : 0,
+          isCompleted: existingMap.get(lesson.id)?.isCompleted ?? 0,
+          timeSpentSeconds: existingMap.get(lesson.id)?.timeSpentSeconds ?? 0,
+          lastPosition: existingMap.get(lesson.id)?.lastPosition ?? 0,
+          unlocked: isEligible ? 1 : 0,
         });
 
-        // Download attachments
-        for (const att of lesson.attachments ?? []) {
-          let localAttUri: string | null = null;
-          if (att.fileUrl) {
-            const resolvedAtt = resolveMediaUrl(att.fileUrl);
-            if (resolvedAtt) {
-              try {
-                const targetAtt = new File(
-                  courseDir,
-                  `att_${att.id}_${safeFilename(att.fileName)}`,
-                );
-                const downloaded = await File.downloadFileAsync(resolvedAtt, targetAtt, {
-                  idempotent: true,
-                });
-                localAttUri = downloaded.uri;
-                if (downloaded.size) totalBytesAccumulated += downloaded.size;
-              } catch (err) {
-                console.warn(`[OfflineDownloadManager] Attachment ${att.id} failed:`, err);
+        // Download attachments for targeted lessons, or retain existing
+        if (shouldDownload) {
+          for (const att of lesson.attachments ?? []) {
+            let localAttUri: string | null = null;
+            if (att.fileUrl) {
+              const resolvedAtt = resolveMediaUrl(att.fileUrl);
+              if (resolvedAtt) {
+                try {
+                  const targetAtt = new File(
+                    courseDir,
+                    `att_${att.id}_${safeFilename(att.fileName)}`,
+                  );
+                  const downloaded = await File.downloadFileAsync(resolvedAtt, targetAtt, {
+                    idempotent: true,
+                  });
+                  localAttUri = downloaded.uri;
+                  if (downloaded.size) totalBytesAccumulated += downloaded.size;
+                } catch (err) {
+                  console.warn(`[OfflineDownloadManager] Attachment ${att.id} failed:`, err);
+                }
               }
             }
+            offlineAttachmentsToSave.push({
+              id: att.id,
+              lessonId: lesson.id,
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              localFileUri: localAttUri,
+              sizeBytes: att.sizeBytes ?? 0,
+              fileType: att.fileType ?? 'DOCUMENT',
+            });
           }
-          offlineAttachmentsToSave.push({
-            id: att.id,
-            lessonId: lesson.id,
-            fileName: att.fileName,
-            fileUrl: att.fileUrl,
-            localFileUri: localAttUri,
-            sizeBytes: att.sizeBytes ?? 0,
-            fileType: att.fileType ?? 'DOCUMENT',
-          });
+        } else {
+          const existingAtts = await offlineDb.getAttachmentsForLesson(lesson.id).catch(() => []);
+          for (const att of existingAtts) {
+            offlineAttachmentsToSave.push(att);
+          }
         }
       }
 

@@ -563,6 +563,20 @@ class OfflineDatabaseManager {
       id,
     );
   }
+
+  async getPendingCountForCourse(courseId: string): Promise<number> {
+    await this.init();
+    const db = this.getDb();
+    const attempts = await db.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM offline_quiz_attempts WHERE courseId = ? AND syncStatus = 'PENDING';",
+      courseId,
+    );
+    const queue = await db.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM offline_progress_queue WHERE courseId = ? AND syncStatus = 'QUEUED';",
+      courseId,
+    );
+    return (attempts?.count ?? 0) + (queue?.count ?? 0);
+  }
 }
 
 export const offlineDb = new OfflineDatabaseManager();

@@ -80,6 +80,7 @@ export const endpoints = {
     detail: (sessionId: string) => `live-sessions/${id(sessionId)}`,
     joinUrl: (sessionId: string) => `live-sessions/${id(sessionId)}/join-url`,
     livekitToken: (sessionId: string) => `live-sessions/${id(sessionId)}/livekit-token`,
+    quizResponse: (sessionId: string) => `live-sessions/${id(sessionId)}/quiz-response`,
   },
   attendance: {
     mine: 'attendance/me',
@@ -101,6 +102,7 @@ export const endpoints = {
     claim: 'certificates/claim',
     detail: (certificateId: string) => `certificates/${id(certificateId)}`,
     download: (certificateId: string) => `certificates/${id(certificateId)}/download`,
+    pdf: (certificateId: string) => `certificates/${id(certificateId)}/pdf`,
     verify: 'certificates/verify',
   },
 

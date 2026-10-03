@@ -81,6 +81,7 @@ export default function SessionRoomScreen() {
         wsUrl={wsUrl}
         token={token.data.token}
         sessionId={sessionId}
+        session={session.data}
         onConnected={() => {
           if (started.current) return;
           started.current = true;
@@ -93,7 +94,9 @@ export default function SessionRoomScreen() {
           }
           router.back();
         }}
-        onError={(message) => Alert.alert(t('sessions.roomError'), message)}
+        onError={(message) => {
+          console.warn('[LiveKitRoom error]:', message);
+        }}
       />
     </View>
   );

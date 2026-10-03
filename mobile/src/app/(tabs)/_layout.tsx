@@ -1,5 +1,5 @@
 import { router, Tabs } from 'expo-router';
-import { Bell, BookOpen, Compass, Home, User, Video } from 'lucide-react-native';
+import { Bell, BookOpen, Compass, DownloadCloud, Home, User, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
@@ -7,6 +7,23 @@ import { HeaderThemeToggle } from '@/components/ThemeToggle';
 import { AppText } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
 import { useUnreadCount } from '@/features/notifications';
+
+/** Header Downloads / Offline Learning button (YouTube-style quick access). */
+function DownloadsButton() {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
+      hitSlop={10}
+      onPress={() => router.push('/downloads')}
+      className="p-1"
+    >
+      <DownloadCloud size={21} color={colors.text} />
+    </Pressable>
+  );
+}
 
 /** Header bell with the unread badge (spec §10.2). */
 function NotificationBell() {
@@ -36,6 +53,7 @@ function NotificationBell() {
 function HeaderRight() {
   return (
     <View className="mr-4 flex-row items-center gap-3">
+      <DownloadsButton />
       <HeaderThemeToggle />
       <NotificationBell />
     </View>

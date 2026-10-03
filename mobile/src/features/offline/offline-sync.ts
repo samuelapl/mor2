@@ -3,6 +3,7 @@ import { endpoints } from '@/core/api/endpoints';
 import { syncQueue } from '@/core/sync/sync-queue';
 
 import { offlineDb, type OfflineQuizAttempt } from './offline-db';
+import { useOfflineStore } from './offline-store';
 
 interface QuizSubmitPayload {
   attemptId: string;
@@ -133,5 +134,30 @@ export async function flushOfflineQueue(): Promise<void> {
   }
 
   // 3. Flush the unified sync queue
-  await syncQueue.flush();
+  const setSyncing = useOfflineStore.getState().setSyncing;
+  setSyncing(true);
+  try {
+    await syncQueue.flush();
+  } finally {
+    setSyncing(false);
+  }
+}
+
+/**
+ * Sync pending offline progress and quiz attempts with the server.
+ * Returns counts for user-facing feedback in the Downloads screen.
+ */
+export async function syncOfflineProgress(): Promise<{
+  syncedProgress: number;
+  syncedQuizzes: number;
+}> {
+  const [pendingAttempts, queuedProgress] = await Promise.all([
+    offlineDb.getPendingQuizAttempts(),
+    offlineDb.getQueuedProgress(),
+  ]);
+  await flushOfflineQueue();
+  return {
+    syncedProgress: queuedProgress.length,
+    syncedQuizzes: pendingAttempts.length,
+  };
 }

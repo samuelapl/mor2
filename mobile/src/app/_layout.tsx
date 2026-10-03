@@ -161,6 +161,10 @@ export default function RootLayout() {
                   name="settings/change-password"
                   options={{ title: t('screens.changePassword') }}
                 />
+                <Stack.Screen
+                  name="downloads/index"
+                  options={{ title: t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' }) }}
+                />
               </Stack.Protected>
 
               <Stack.Screen name="dev/ui-gallery" options={{ title: t('screens.uiGallery') }} />

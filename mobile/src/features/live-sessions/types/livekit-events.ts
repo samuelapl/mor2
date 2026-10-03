@@ -73,4 +73,13 @@ export type LiveKitDataEvent =
         text: string;
         time: string;
       };
+    }
+  | {
+      type: 'ANNOUNCEMENT';
+      payload: {
+        id?: string;
+        text?: string;
+        message?: string;
+        sender?: string;
+      };
     };

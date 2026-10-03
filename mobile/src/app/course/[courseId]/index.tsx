@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Award, CalendarDays, Clock, MapPin } from 'lucide-react-native';
+import { ArrowRight, Award, CalendarDays, Clock, MapPin } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -187,36 +187,45 @@ export default function CourseScreen() {
 
           {/* Primary action */}
           {enrolled && status !== 'DROPPED' ? (
-            <Card className="flex-row items-center gap-4">
-              <ProgressRing percent={percent} size={64} />
-              <View className="flex-1 gap-2">
-                <AppText variant="label">
-                  {progress.data
-                    ? t('courses.lessonsDone', {
-                        done: progress.data.stats.completedLessons,
-                        total: progress.data.stats.totalLessons,
-                      })
-                    : t('common.loading')}
-                </AppText>
-                {status === 'COMPLETED' || progress.data?.courseCompletion.certificateEligible ? (
-                  <Button
-                    title={certificate.data ? t('certificates.view') : t('certificates.claim')}
-                    size="sm"
-                    icon={<Award size={16} color="#fff" />}
-                    loading={claim.isPending}
-                    onPress={openCertificate}
-                  />
-                ) : next ? (
-                  <Button
-                    title={percent > 0 ? t('courses.continue') : t('courses.start')}
-                    size="sm"
-                    onPress={() => openLesson(next.lessonId)}
-                  />
-                ) : null}
+            <Card className="gap-3.5 border border-slate-800 bg-slate-900/90 p-4 shadow-sm">
+              <View className="flex-row items-center gap-4">
+                <ProgressRing percent={percent} size={64} strokeWidth={6} />
+                <View className="flex-1 gap-1">
+                  <View className="flex-row items-baseline gap-1.5">
+                    <AppText className="text-2xl font-black text-white">{Math.round(percent)}%</AppText>
+                    <AppText className="text-xs text-slate-400 font-medium">completed</AppText>
+                  </View>
+                  <AppText className="text-sm font-semibold text-slate-200">
+                    {progress.data
+                      ? t('courses.lessonsDoneRatio', {
+                          done: progress.data.stats.completedLessons,
+                          total: progress.data.stats.totalLessons,
+                          defaultValue: `${progress.data.stats.completedLessons} of ${progress.data.stats.totalLessons} lessons completed`,
+                        })
+                      : t('common.loading')}
+                  </AppText>
+                </View>
               </View>
+
+              {status === 'COMPLETED' || progress.data?.courseCompletion.certificateEligible ? (
+                <Button
+                  title={certificate.data ? t('certificates.view') : t('certificates.claim')}
+                  icon={<Award size={18} color="#fff" />}
+                  loading={claim.isPending}
+                  onPress={openCertificate}
+                  fullWidth
+                />
+              ) : (next?.lessonId || data.modules?.[0]?.lessons?.[0]?.id) ? (
+                <Button
+                  title={percent > 0 ? t('courses.continue') : t('courses.start')}
+                  icon={<ArrowRight size={18} color="#fff" />}
+                  onPress={() => openLesson(next?.lessonId || data.modules[0].lessons[0].id)}
+                  fullWidth
+                />
+              ) : null}
             </Card>
           ) : (
-            <View className="gap-2">
+            <View className="gap-2.5">
               {status === 'DROPPED' ? (
                 <AppText variant="muted">{t('courses.dropped')}</AppText>
               ) : null}
@@ -233,18 +242,18 @@ export default function CourseScreen() {
             </View>
           )}
 
-          {/* Offline Learning download manager */}
-          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} />
+          {/* Offline Learning download manager (Full & Selective downloads) */}
+          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} course={data} />
 
           {/* In-person seat */}
           {enrolled &&
           enrollment.data?.deliveryMode === 'IN_PERSON_ONLY' &&
           enrollment.data.venue ? (
-            <Card className="gap-2">
+            <Card className="gap-2.5 p-4 border border-slate-800 bg-slate-900/90">
               <AppText variant="label">{t('courses.yourSeat')}</AppText>
               <View className="flex-row items-center gap-2">
                 <MapPin size={16} color={colors.primary} />
-                <AppText className="flex-1">
+                <AppText className="flex-1 text-sm text-slate-300">
                   {enrollment.data.venue.name}
                   {enrollment.data.venue.building
                     ? ` · ${enrollment.data.venue.building}`
@@ -268,52 +277,83 @@ export default function CourseScreen() {
             </Card>
           ) : null}
 
+          {/* About this course */}
           {description ? (
-            <Card className="gap-2">
-              <AppText variant="heading">{t('courses.about')}</AppText>
-              <AppText>{description}</AppText>
-            </Card>
+            <View className="gap-2 pt-2">
+              <AppText className="text-lg font-bold text-white tracking-wide">
+                {t('courses.about')}
+              </AppText>
+              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
+                {description}
+              </AppText>
+            </View>
           ) : null}
 
+          {/* What you'll learn / Objectives */}
           {objectives ? (
-            <Card className="gap-2">
-              <AppText variant="heading">{t('courses.objectives')}</AppText>
-              <AppText>{objectives}</AppText>
-            </Card>
+            <View className="gap-2 pt-2">
+              <AppText className="text-lg font-bold text-white tracking-wide">
+                {t('courses.objectives')}
+              </AppText>
+              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
+                {objectives}
+              </AppText>
+            </View>
           ) : null}
 
+          {/* Prerequisites */}
           {data.prerequisites ? (
-            <Card className="gap-2">
-              <AppText variant="heading">{t('courses.prerequisites')}</AppText>
-              <AppText>{data.prerequisites}</AppText>
-            </Card>
+            <View className="gap-2 pt-2">
+              <AppText className="text-lg font-bold text-white tracking-wide">
+                {t('courses.prerequisites')}
+              </AppText>
+              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
+                {data.prerequisites}
+              </AppText>
+            </View>
           ) : null}
 
+          {/* Trainers */}
           {data.trainers.length > 0 ? (
-            <Card className="gap-3">
-              <AppText variant="heading">{t('courses.trainers')}</AppText>
-              {data.trainers.map(({ user }) => (
-                <View key={user.id} className="flex-row items-center gap-3">
-                  <Avatar
-                    uri={user.avatarUrl}
-                    firstName={user.firstName}
-                    lastName={user.lastName}
-                    size={36}
-                  />
-                  <AppText>
-                    {user.firstName} {user.lastName}
-                  </AppText>
-                </View>
-              ))}
-            </Card>
+            <View className="gap-3 pt-2">
+              <AppText className="text-lg font-bold text-white tracking-wide">
+                {t('courses.trainers')}
+              </AppText>
+              <View className="gap-2">
+                {data.trainers.map(({ user }) => (
+                  <View
+                    key={user.id}
+                    className="flex-row items-center gap-3.5 rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+                  >
+                    <Avatar
+                      uri={user.avatarUrl}
+                      firstName={user.firstName}
+                      lastName={user.lastName}
+                      size={40}
+                    />
+                    <View className="flex-1">
+                      <AppText className="text-[15px] font-semibold text-white">
+                        {user.firstName} {user.lastName}
+                      </AppText>
+                      {user.email ? (
+                        <AppText className="text-xs text-slate-400">{user.email}</AppText>
+                      ) : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
           ) : null}
 
-          <CourseSyllabus
-            course={data}
-            progress={enrolled ? progress.data : undefined}
-            onOpenLesson={openLesson}
-            onOpenAssessment={openAssessment}
-          />
+          {/* Syllabus */}
+          <View className="pt-2">
+            <CourseSyllabus
+              course={data}
+              progress={enrolled ? progress.data : undefined}
+              onOpenLesson={openLesson}
+              onOpenAssessment={openAssessment}
+            />
+          </View>
 
           {enrolled && status === 'ACTIVE' && enrollment.data ? (
             <Button title={t('courses.drop')} variant="ghost" onPress={() => setDropOpen(true)} />
