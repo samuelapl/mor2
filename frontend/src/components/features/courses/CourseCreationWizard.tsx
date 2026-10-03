@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import type { Course, CourseDeliveryMode } from '@/types';
 import { DeliveryFormatModal } from './creator/modal/DeliveryFormatModal';
 import { CourseCreatorShell } from './creator/CourseCreatorShell';
 import { DEFAULT_DELIVERY_MODE } from '@/constants/delivery-modes';
+import { StudioPortal } from '@/components/shared/StudioPortal';
 
 export interface CourseCreationWizardProps {
   onDone: () => void;
@@ -38,24 +38,4 @@ export function CourseCreationWizard({ onDone, onCancel, editingCourse }: Course
       <CourseCreatorShell onDone={onDone} onCancel={onCancel} editingCourse={editingCourse} initialDeliveryMode={deliveryMode} />
     </StudioPortal>
   );
-}
-
-/**
- * Every consumer mounts the wizard inside a dialog, so the studio is lifted to
- * <body> as a full-screen layer to escape the dialog's chrome and scroll container.
- */
-function StudioPortal({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, []);
-
-  if (!mounted) return null;
-  return createPortal(<div className="fixed inset-0 z-[100] bg-slate-50">{children}</div>, document.body);
 }

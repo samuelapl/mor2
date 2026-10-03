@@ -1,7 +1,7 @@
 'use client';
 
-import { QuestionBankWorkspace } from '@/components/features/quiz/QuestionBankWorkspace';
+import { QuestionBankStudio } from '@/components/features/question-bank';
 
 export default function CourseOwnerQuestionBankPage() {
-  return <QuestionBankWorkspace role="course_owner" />;
+  return <QuestionBankStudio role="course_owner" />;
 }
