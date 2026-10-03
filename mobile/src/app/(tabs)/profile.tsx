@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, Bell, Camera, HardDrive, KeyRound, LogOut, Moon, Pencil, Sun } from 'lucide-react-native';
+import { Award, Bell, Camera, KeyRound, LogOut, Moon, Pencil, Sun } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
@@ -127,11 +127,6 @@ export default function ProfileScreen() {
             label={t('screens.notifications')}
             icon={<Bell size={20} color={colors.primary} />}
             onPress={() => router.push('/notifications')}
-          />
-          <ListRow
-            label={t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
-            icon={<HardDrive size={20} color={colors.primary} />}
-            onPress={() => router.push('/downloads')}
           />
         </Card>
       </View>

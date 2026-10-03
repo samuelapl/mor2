@@ -15,15 +15,18 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 
 export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  if (url.startsWith('/')) return `${WEB_URL}${url}`;
+  if (url.startsWith('/')) {
+    const base = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : WEB_URL;
+    return `${base}${url}`;
+  }
   if (!__DEV__) return url;
   const parsed = parseUrl(url);
   if (parsed && LOOPBACK_HOSTS.has(parsed.hostname)) {
-    if (!LOOPBACK_HOSTS.has(API_HOSTNAME)) {
-      return withHostname(url, API_HOSTNAME);
-    }
     if (Platform.OS === 'android') {
       return withHostname(url, '10.0.2.2');
+    }
+    if (!LOOPBACK_HOSTS.has(API_HOSTNAME)) {
+      return withHostname(url, API_HOSTNAME);
     }
   }
   return url;

@@ -3,7 +3,6 @@ import { create } from 'zustand';
 import {
   downloadManager,
   type CourseDownloadProgress,
-  type DownloadCourseOptions,
 } from './download-manager';
 import { offlineDb, type OfflineCourse } from './offline-db';
 
@@ -17,7 +16,7 @@ interface OfflineStoreState {
   refresh: () => Promise<void>;
   setSyncing: (syncing: boolean) => void;
   getPendingCount: (courseId: string) => Promise<number>;
-  startDownload: (courseId: string, options?: DownloadCourseOptions) => Promise<void>;
+  startDownload: (courseId: string) => Promise<void>;
   cancelDownload: (courseId: string) => void;
   removeDownload: (courseId: string) => Promise<void>;
   isDownloaded: (courseId: string) => boolean;
@@ -51,7 +50,7 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
     return offlineDb.getPendingCountForCourse(courseId);
   },
 
-  startDownload: async (courseId: string, options?: DownloadCourseOptions) => {
+  startDownload: async (courseId: string) => {
     set((state) => ({
       downloads: {
         ...state.downloads,
@@ -61,24 +60,20 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
           percent: 0,
           downloadedBytes: 0,
           totalBytes: 0,
-          currentStep: options?.moduleIds ? 'Preparing selected modules…' : 'Starting download…',
+          currentStep: 'Starting download…',
         },
       },
     }));
 
     try {
-      await downloadManager.downloadCourse(
-        courseId,
-        (progress) => {
-          set((state) => ({
-            downloads: {
-              ...state.downloads,
-              [courseId]: progress,
-            },
-          }));
-        },
-        options,
-      );
+      await downloadManager.downloadCourse(courseId, (progress) => {
+        set((state) => ({
+          downloads: {
+            ...state.downloads,
+            [courseId]: progress,
+          },
+        }));
+      });
 
       await get().refresh();
     } catch (err: any) {

@@ -32,6 +32,7 @@ function normalizeApiUrl(raw: string | undefined): string {
     if (
       parsed &&
       parsed.hostname !== detectedHost &&
+      parsed.hostname !== '10.0.2.2' &&
       (parsed.hostname.startsWith('192.168.') ||
         parsed.hostname.startsWith('10.') ||
         parsed.hostname.startsWith('172.'))
@@ -70,6 +71,7 @@ function normalizeWebUrl(raw: string | undefined): string {
     if (
       parsed &&
       parsed.hostname !== detectedHost &&
+      parsed.hostname !== '10.0.2.2' &&
       (parsed.hostname.startsWith('192.168.') ||
         parsed.hostname.startsWith('10.') ||
         parsed.hostname.startsWith('172.'))

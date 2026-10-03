@@ -242,8 +242,8 @@ export default function CourseScreen() {
             </View>
           )}
 
-          {/* Offline Learning download manager (Full & Selective downloads) */}
-          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} course={data} />
+          {/* Offline Learning download manager */}
+          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} />
 
           {/* In-person seat */}
           {enrolled &&

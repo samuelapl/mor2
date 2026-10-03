@@ -8,23 +8,6 @@ import { AppText } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
 import { useUnreadCount } from '@/features/notifications';
 
-/** Header Downloads / Offline Learning button (YouTube-style quick access). */
-function DownloadsButton() {
-  const { t } = useTranslation();
-  const colors = useThemeColors();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
-      hitSlop={10}
-      onPress={() => router.push('/downloads')}
-      className="p-1"
-    >
-      <DownloadCloud size={21} color={colors.text} />
-    </Pressable>
-  );
-}
-
 /** Header bell with the unread badge (spec §10.2). */
 function NotificationBell() {
   const { t } = useTranslation();
@@ -46,6 +29,22 @@ function NotificationBell() {
           </AppText>
         </View>
       ) : null}
+    </Pressable>
+  );
+}
+
+function DownloadsButton() {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
+      hitSlop={10}
+      onPress={() => router.push('/downloads')}
+      className="p-1"
+    >
+      <DownloadCloud size={22} color={colors.text} />
     </Pressable>
   );
 }
