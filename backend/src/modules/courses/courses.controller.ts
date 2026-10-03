@@ -26,7 +26,7 @@ export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Get()
-  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned')
+  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned', 'course.create')
   @ApiOperation({ summary: 'List courses (all authenticated users)' })
   async findAll(
     @Query() query: PaginationQuery & { status?: CourseStatus },
@@ -36,7 +36,7 @@ export class CoursesController {
   }
 
   @Get(':id')
-  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned')
+  @Permissions('course.browse', 'course.view.own', 'course.view.all', 'course.view.assigned', 'course.create')
   @ApiOperation({ summary: 'Get course details by ID (learner-aware: unlock flags + enrollment)' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
@@ -51,7 +51,7 @@ export class CoursesController {
   }
 
   @Patch(':id')
-  @Permissions('course.update.own', 'course.update.all')
+  @Permissions('course.update.own', 'course.update.all', 'course.create')
   @ApiOperation({ summary: 'Update a course' })
   @ApiParam({ name: 'id', type: String })
   async update(

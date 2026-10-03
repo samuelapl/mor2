@@ -1190,7 +1190,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all'))
+        !(
+          hasPermission(owner, 'course.update.own') ||
+          hasPermission(owner, 'course.update.all') ||
+          hasPermission(owner, 'course.create')
+        )
       ) {
         return { ok: false, message: 'You are not allowed to edit this course.' };
       }
@@ -1227,7 +1231,11 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all'))
+        !(
+          hasPermission(owner, 'course.update.own') ||
+          hasPermission(owner, 'course.update.all') ||
+          hasPermission(owner, 'course.create')
+        )
       ) {
         return { ok: false, message: 'You are not allowed to edit this course.' };
       }

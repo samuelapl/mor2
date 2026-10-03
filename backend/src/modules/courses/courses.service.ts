@@ -89,7 +89,8 @@ export class CoursesService {
 
     const or: Prisma.CourseWhereInput[] = [];
     if (permissions.size > 0) {
-      if (permissions.has('course.view.own')) {
+      // Creators always see the courses they own, at every stage.
+      if (permissions.has('course.view.own') || permissions.has('course.create')) {
         or.push({ owners: { some: { userId: user.id } } });
       }
       if (permissions.has('course.view.assigned')) {
@@ -181,7 +182,10 @@ export class CoursesService {
     const course = await this.findById(courseId);
 
     if (permissions.size > 0) {
-      if (permissions.has('course.view.own') && course.owners.some((o) => o.userId === user.id)) {
+      if (
+        (permissions.has('course.view.own') || permissions.has('course.create')) &&
+        course.owners.some((o) => o.userId === user.id)
+      ) {
         return;
       }
       if (
@@ -218,9 +222,35 @@ export class CoursesService {
     if (permissions.has('course.update.all')) return;
 
     const course = await this.findById(courseId);
-    const canUpdateOwn = permissions.size > 0 ? permissions.has('course.update.own') : roles.has(RoleName.COURSE_OWNER);
+    const canUpdateOwn =
+      permissions.size > 0
+        ? permissions.has('course.update.own') || permissions.has('course.create')
+        : roles.has(RoleName.COURSE_OWNER);
     if (canUpdateOwn && course.owners.some((o) => o.userId === user.id)) {
       return;
+    }
+
+    throw new ForbiddenException('You are not allowed to modify this course');
+  }
+
+  /**
+   * Draft-editing endpoints (curriculum, quizzes, session plans, cover) each have their own
+   * permission. A course creator without it may still edit the courses they own, so saving
+   * a draft from the course studio only needs `course.create`.
+   */
+  async assertCanEditDraft(
+    courseId: string,
+    user: AuthenticatedUser,
+    permissionCodes: string[],
+  ): Promise<void> {
+    if (this.roleSet(user).has(RoleName.SYSTEM_ADMIN)) return;
+
+    const permissions = await this.resolvePermissions(user);
+    if (permissionCodes.some((code) => permissions.has(code))) return;
+
+    if (permissions.has('course.create')) {
+      const course = await this.findById(courseId);
+      if (course.owners.some((o) => o.userId === user.id)) return;
     }
 
     throw new ForbiddenException('You are not allowed to modify this course');

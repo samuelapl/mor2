@@ -40,6 +40,9 @@ export interface NavItem {
   children?: NavItem[];
 }
 
+/** Anyone who can see or create courses gets the Courses tab (creators see their own courses there). */
+const COURSE_LIST_PERMISSIONS = ['course.view.own', 'course.view.all', 'course.view.assigned', 'course.create'];
+
 export const ROLE_ICONS: Record<Role, LucideIcon> = {
   course_owner: BookOpen,
   content_approver: BadgeCheck,
@@ -56,7 +59,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: 'Courses',
       href: '/courses',
       icon: BookOpen,
-      permission: ['course.view.own', 'course.view.all', 'course.create'],
+      permission: COURSE_LIST_PERMISSIONS,
     },
     {
       label: 'Question Bank',
@@ -71,7 +74,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: 'Courses',
       href: '/courses',
       icon: BookOpen,
-      permission: ['course.view.all', 'course.approve_reject'],
+      permission: COURSE_LIST_PERMISSIONS,
     },
     {
       label: 'Pending Course Approvals',
@@ -86,7 +89,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: 'Courses',
       href: '/courses',
       icon: BookOpen,
-      permission: ['course.view.all', 'course.create'],
+      permission: COURSE_LIST_PERMISSIONS,
     },
     {
       label: 'Enrollments',
@@ -161,7 +164,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: 'Courses',
       href: '/courses',
       icon: BookOpen,
-      permission: ['course.view.assigned', 'course.view.all'],
+      permission: COURSE_LIST_PERMISSIONS,
     },
     {
       label: 'Sessions',
@@ -227,7 +230,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       label: 'Courses',
       href: '/courses',
       icon: BookOpen,
-      permission: ['course.view.all', 'course.view.own', 'course.create'],
+      permission: COURSE_LIST_PERMISSIONS,
     },
     {
       label: 'Registration',
@@ -399,13 +402,7 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     label: 'Courses',
     href: '/courses',
     icon: BookOpen,
-    permission: ['course.view.all', 'course.view.assigned', 'course.view.own', 'course.create'],
-  },
-  {
-    label: 'Create Course',
-    href: '/course-owner/create-course',
-    icon: FilePlus2,
-    permission: 'course.create',
+    permission: COURSE_LIST_PERMISSIONS,
   },
   {
     label: 'Attendance',
@@ -598,7 +595,8 @@ export function navItemsForRole(role: Role): NavItem[] {
     if (!item.href && !item.children) return false;
     if (item.href && existingHrefs.has(item.href)) return false;
     const normalizedLabel = item.label.toLowerCase().replace(/^(my|training)\s+/, '');
-    if (existingLabels.has(normalizedLabel)) return false;
+    // /courses is its own page, not a duplicate of the learner's "My Courses".
+    if (item.href !== '/courses' && existingLabels.has(normalizedLabel)) return false;
     return true;
   });
 

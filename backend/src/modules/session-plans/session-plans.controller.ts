@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Permissions } from '@common/decorators';
+import { CurrentUser, Permissions } from '@common/decorators';
+import { AuthenticatedUser } from '@common/interfaces';
 import { RolesGuard } from '@common/guards';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { SessionPlansService } from './session-plans.service';
+import { CoursesService } from '@modules/courses/courses.service';
 import { AddSessionQuizDto, RemoveSessionPlanDto, ReplaceSessionPlansDto } from './dto';
 
 @ApiTags('session-plans')
@@ -11,7 +13,10 @@ import { AddSessionQuizDto, RemoveSessionPlanDto, ReplaceSessionPlansDto } from 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller()
 export class SessionPlansController {
-  constructor(private readonly sessionPlansService: SessionPlansService) {}
+  constructor(
+    private readonly sessionPlansService: SessionPlansService,
+    private readonly coursesService: CoursesService,
+  ) {}
 
   @Get('courses/:courseId/session-plans')
   @ApiOperation({
@@ -23,12 +28,17 @@ export class SessionPlansController {
   }
 
   @Put('courses/:courseId/session-plans')
-  @Permissions('course.manage_curriculum')
+  @Permissions('course.manage_curriculum', 'course.create')
   @ApiOperation({
     summary: 'Replace all planned online sessions of a course (DRAFT / REJECTED only)',
   })
   @ApiParam({ name: 'courseId', type: String })
-  async replaceAll(@Param('courseId') courseId: string, @Body() dto: ReplaceSessionPlansDto) {
+  async replaceAll(
+    @Param('courseId') courseId: string,
+    @Body() dto: ReplaceSessionPlansDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['course.manage_curriculum']);
     return this.sessionPlansService.replaceAll(courseId, dto);
   }
 

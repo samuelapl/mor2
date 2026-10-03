@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } fro
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RoleName } from '@prisma/client';
 import { CurriculumService } from './curriculum.service';
+import { CoursesService } from '@modules/courses/courses.service';
 import {
   CreateModuleDto,
   UpdateModuleDto,
@@ -19,7 +20,10 @@ import { RolesGuard } from '@common/guards';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller()
 export class CurriculumController {
-  constructor(private readonly curriculumService: CurriculumService) {}
+  constructor(
+    private readonly curriculumService: CurriculumService,
+    private readonly coursesService: CoursesService,
+  ) {}
 
   // ── Modules ────────────────────────────────────────
   @Get('courses/:courseId/modules')
@@ -30,10 +34,15 @@ export class CurriculumController {
   }
 
   @Put('courses/:courseId/curriculum')
-  @Permissions('course.manage_curriculum')
+  @Permissions('course.manage_curriculum', 'course.create')
   @ApiOperation({ summary: 'Replace the full curriculum (modules + lessons) for a course' })
   @ApiParam({ name: 'courseId', type: String })
-  async replaceAll(@Param('courseId') courseId: string, @Body() dto: ReplaceModulesDto) {
+  async replaceAll(
+    @Param('courseId') courseId: string,
+    @Body() dto: ReplaceModulesDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.coursesService.assertCanEditDraft(courseId, user, ['course.manage_curriculum']);
     return this.curriculumService.replaceAll(courseId, dto);
   }
 

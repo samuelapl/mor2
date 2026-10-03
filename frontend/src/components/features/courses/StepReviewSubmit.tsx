@@ -29,6 +29,7 @@ import {
   Paperclip,
   Pencil,
   Presentation,
+  Scale,
   ShieldCheck,
 } from 'lucide-react';
 import type { CourseDeliveryMode, CourseLevel, Question, UploadedResource } from '@/types';
@@ -997,9 +998,12 @@ export function StepReviewSubmit({
                                                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
                                                   <span className="font-bold text-emerald-800 text-xs">
                                                     Q{qIdx + 1}:{' '}
-                                                    <span className="font-medium text-slate-700">
-                                                      {q.text}
-                                                    </span>
+                                                    <RichContent
+                                                      inline
+                                                      html={q.text}
+                                                      placeholder="No question prompt"
+                                                      className="font-medium text-slate-700"
+                                                    />
                                                   </span>
                                                   <span className="text-[11px] font-semibold text-slate-500">
                                                     {q.points || 10} pts
@@ -1211,65 +1215,6 @@ export function StepReviewSubmit({
           </div>
         </div>
 
-        {/* Course Assessment Weight Allocation Summary */}
-        {totalAssessmentsCount > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Course Assessment Weighting Summary ({totalAssessmentsCount} assessment{totalAssessmentsCount !== 1 ? 's' : ''})
-              </span>
-              <span
-                className={cn(
-                  'text-xs font-bold px-2.5 py-1 rounded-lg border',
-                  totalAllocatedWeight === 100
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200',
-                )}
-              >
-                Total Weight: {totalAllocatedWeight}% / 100% {totalAllocatedWeight === 100 ? '✓ Balanced' : '⚠ Action Needed'}
-              </span>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              {curriculumQuizzes.map((q, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/80"
-                >
-                  <span className="text-slate-700 font-medium">
-                    {q.moduleTitle} • {q.title}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-500">Pass: {q.passMark}%</span>
-                    <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                      Weight: {q.weight}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {hasFinalAssessment && (
-                <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-indigo-200">
-                  <span className="text-indigo-900 font-semibold">
-                    Final Assessment • {quizTitle || 'Final Exam'}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-500">Pass: {passMark}%</span>
-                    <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                      Weight: {finalAssessmentWeight}%
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {totalAllocatedWeight !== 100 && (
-              <p className="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                ⚠ The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Assessment Reference Files */}
         {allAssessmentAttachments.length > 0 && (
           <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-2.5">
@@ -1431,6 +1376,68 @@ export function StepReviewSubmit({
           )}
         </div>
       </div>
+
+      {/* Course Assessment Weight Allocation Summary */}
+      {totalAssessmentsCount > 0 && (
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2">
+              <Scale className="h-4 w-4 text-indigo-600" />
+              <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
+                Course Assessment Weighting Summary ({totalAssessmentsCount} assessment{totalAssessmentsCount !== 1 ? 's' : ''})
+              </h4>
+            </div>
+            <span
+              className={cn(
+                'text-xs font-bold px-2.5 py-1 rounded-lg border',
+                totalAllocatedWeight === 100
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border-amber-200',
+              )}
+            >
+              Total Weight: {totalAllocatedWeight}% / 100% {totalAllocatedWeight === 100 ? '✓ Balanced' : '⚠ Action Needed'}
+            </span>
+          </div>
+
+          <div className="space-y-1.5 text-xs">
+            {curriculumQuizzes.map((q, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/80"
+              >
+                <span className="text-slate-700 font-medium">
+                  {q.moduleTitle} • {q.title}
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-500">Pass: {q.passMark}%</span>
+                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                    Weight: {q.weight}%
+                  </span>
+                </div>
+              </div>
+            ))}
+            {hasFinalAssessment && (
+              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-indigo-200">
+                <span className="text-indigo-900 font-semibold">
+                  Final Assessment • {quizTitle || 'Final Exam'}
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-500">Pass: {passMark}%</span>
+                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                    Weight: {finalAssessmentWeight}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {totalAllocatedWeight !== 100 && (
+            <p className="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+              ⚠ The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
