@@ -243,7 +243,12 @@ export default function CourseScreen() {
           )}
 
           {/* Offline Learning download manager */}
-          <OfflineDownloadCard courseId={courseId} enrolled={enrolled} />
+          <OfflineDownloadCard
+            courseId={courseId}
+            enrolled={enrolled}
+            courseDetail={data}
+            progress={progress.data}
+          />
 
           {/* In-person seat */}
           {enrolled &&

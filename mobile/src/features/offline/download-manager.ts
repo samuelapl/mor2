@@ -11,6 +11,7 @@ import type {
   ApiCourseLesson,
   ApiCourseModule,
 } from '../courses/types/course.types';
+import type { CourseProgress } from '../progress/types/progress.types';
 import {
   offlineDb,
   type OfflineAssessment,
@@ -40,6 +41,13 @@ function isPlayableRemoteUrl(url: string | null | undefined): boolean {
   return true;
 }
 
+export interface DownloadCourseOptions {
+  moduleIds?: string[];
+  lessonIds?: string[];
+  subLessonIds?: string[];
+  assessmentIds?: string[];
+}
+
 /**
  * Enterprise offline download manager.
  * Explicit learner action only: downloads course metadata, lessons, media, attachments,
@@ -49,12 +57,17 @@ class OfflineDownloadManager {
   private activeDownloads = new Map<string, AbortController>();
 
   /**
-   * Downloads an enrolled course for offline learning.
+   * Downloads an enrolled course (or selected modules/lessons/quizzes) for offline learning.
    */
   async downloadCourse(
     courseId: string,
-    onProgress?: (progress: CourseDownloadProgress) => void,
+    optionsOrProgress?: DownloadCourseOptions | ((progress: CourseDownloadProgress) => void),
+    maybeProgress?: (progress: CourseDownloadProgress) => void,
   ): Promise<void> {
+    const options: DownloadCourseOptions | undefined =
+      typeof optionsOrProgress === 'object' ? optionsOrProgress : undefined;
+    const onProgress: ((progress: CourseDownloadProgress) => void) | undefined =
+      typeof optionsOrProgress === 'function' ? optionsOrProgress : maybeProgress;
     const notify = (update: Partial<CourseDownloadProgress>) => {
       onProgress?.({
         courseId,
@@ -77,19 +90,128 @@ class OfflineDownloadManager {
       const courseDetail = await api.get<ApiCourseDetail>(endpoints.courses.detail(courseId));
       if (!courseDetail) throw new Error('Course not found');
 
-      // 2. Fetch all assessments for this course
+      // 1. Fetch progress to verify unlock status
+      let progressData: CourseProgress | null = null;
+      try {
+        progressData = await api.get<CourseProgress>(endpoints.progress.course(courseId));
+      } catch {
+        // Ignored if offline or not enrolled
+      }
+
+      // Collect all lessons to check hierarchical unlock status
+      const allLessons: ApiCourseLesson[] = [];
+      for (const m of courseDetail.modules ?? []) {
+        for (const l of m.lessons ?? []) {
+          allLessons.push(l);
+          for (const sub of l.subLessons ?? []) {
+            allLessons.push(sub);
+          }
+        }
+      }
+
+      const isLessonUnlockedInCourse = (lesson: ApiCourseLesson): boolean => {
+        if (progressData?.modules) {
+          for (const m of progressData.modules) {
+            if (m.moduleId === lesson.moduleId) {
+              if (!m.unlocked) return false;
+              const lp = m.lessons?.find((l) => l.lessonId === lesson.id);
+              if (lp) return lp.unlocked === true;
+              for (const pl of m.lessons ?? []) {
+                const sp = pl.subLessons?.find((s) => s.lessonId === lesson.id);
+                if (sp) return sp.unlocked === true;
+              }
+            }
+          }
+        }
+        return Boolean(lesson.unlocked);
+      };
+
+      const isAssessmentUnlockedInCourse = (
+        aId: string,
+        modId?: string | null,
+        lesId?: string | null,
+      ): boolean => {
+        // Course final assessment: ONLY if content is completed
+        if (!modId && !lesId) {
+          return progressData ? progressData.courseCompletion?.contentCompleted === true : false;
+        }
+        if (modId) {
+          const modProg = progressData?.modules?.find((m) => m.moduleId === modId);
+          if (modProg && !modProg.unlocked) return false;
+        }
+        if (lesId) {
+          const lesItem = allLessons.find((l) => l.id === lesId);
+          if (lesItem && !isLessonUnlockedInCourse(lesItem)) return false;
+        }
+        return true;
+      };
+
+      // Check if selective filtering was requested
+      const hasSpecificFilter = Boolean(
+        (options?.moduleIds && options.moduleIds.length > 0) ||
+        (options?.lessonIds && options.lessonIds.length > 0) ||
+        (options?.subLessonIds && options.subLessonIds.length > 0) ||
+        (options?.assessmentIds && options.assessmentIds.length > 0),
+      );
+
+      const isLessonSelected = (lesson: ApiCourseLesson) => {
+        if (!hasSpecificFilter) return true;
+        if (options?.lessonIds?.includes(lesson.id)) return true;
+        if (options?.subLessonIds?.includes(lesson.id)) return true;
+        if (options?.moduleIds?.includes(lesson.moduleId)) return true;
+        return false;
+      };
+
+      const isAssessmentSelected = (aId: string, modId?: string | null, lesId?: string | null) => {
+        if (!hasSpecificFilter) return true;
+        if (options?.assessmentIds?.includes(aId)) return true;
+        if (modId && options?.moduleIds?.includes(modId)) return true;
+        if (lesId && options?.lessonIds?.includes(lesId)) return true;
+        return false;
+      };
+
+      // 2. Load existing stored offline data to preserve previously downloaded content
+      const existingLessons = await offlineDb.getLessonsForCourse(courseId);
+      const existingLessonMap = new Map(existingLessons.map((l) => [l.id, l]));
+
+      const existingAssessments = await offlineDb.getAssessmentsForCourse(courseId);
+      const existingAssessmentMap = new Map(existingAssessments.map((a) => [a.id, a]));
+
+      // 3. Fetch assessments for this course (UNLOCKED ONLY)
       notify({ percent: 15, currentStep: 'Fetching quizzes & assessments…' });
       const assessmentIds = new Set<string>();
 
       if (courseDetail.assessments) {
-        for (const a of courseDetail.assessments) assessmentIds.add(a.id);
+        for (const a of courseDetail.assessments) {
+          if (isAssessmentSelected(a.id) && isAssessmentUnlockedInCourse(a.id)) {
+            assessmentIds.add(a.id);
+          }
+        }
       }
       for (const m of courseDetail.modules ?? []) {
-        for (const a of m.assessments ?? []) assessmentIds.add(a.id);
+        for (const a of m.assessments ?? []) {
+          if (isAssessmentSelected(a.id, m.id) && isAssessmentUnlockedInCourse(a.id, m.id)) {
+            assessmentIds.add(a.id);
+          }
+        }
         for (const l of m.lessons ?? []) {
-          for (const a of l.assessments ?? []) assessmentIds.add(a.id);
+          for (const a of l.assessments ?? []) {
+            if (
+              isAssessmentSelected(a.id, m.id, l.id) &&
+              isAssessmentUnlockedInCourse(a.id, m.id, l.id)
+            ) {
+              assessmentIds.add(a.id);
+            }
+          }
           for (const sub of l.subLessons ?? []) {
-            for (const a of sub.assessments ?? []) assessmentIds.add(a.id);
+            for (const a of sub.assessments ?? []) {
+              if (
+                isAssessmentSelected(a.id, m.id, sub.id) &&
+                isAssessmentUnlockedInCourse(a.id, m.id, sub.id)
+              ) {
+                assessmentIds.add(a.id);
+              }
+            }
           }
         }
       }
@@ -105,14 +227,34 @@ class OfflineDownloadManager {
         }
       }
 
-      // 3. Prepare storage directories in document folder
+      // Merge fetched assessments with previously saved assessments that were not re-fetched
+      const mergedAssessments: OfflineAssessment[] = fetchedAssessments.map((a) => ({
+        id: a.id,
+        courseId,
+        moduleId: a.moduleId,
+        lessonId: a.lessonId,
+        type: a.type,
+        title: a.title ?? a.titleEn ?? 'Quiz',
+        titleAm: a.titleAm ?? null,
+        passingScore: a.passingScore,
+        maxAttempts: a.maxAttempts,
+        timeLimitMinutes: a.timeLimitMinutes,
+        questionsJson: JSON.stringify(a.questions ?? []),
+      }));
+      for (const prevA of existingAssessments) {
+        if (!mergedAssessments.some((a) => a.id === prevA.id)) {
+          mergedAssessments.push(prevA);
+        }
+      }
+
+      // 4. Prepare storage directories in document folder
       const baseDir = new Directory(Paths.document, 'offline_courses');
       if (!baseDir.exists) baseDir.create({ intermediates: true });
 
       const courseDir = new Directory(baseDir, courseId);
       if (!courseDir.exists) courseDir.create({ intermediates: true });
 
-      // 4. Download thumbnail
+      // 5. Download thumbnail if not already present
       notify({ percent: 25, currentStep: 'Downloading course cover…' });
       let localThumbnailUri: string | null = null;
       if (courseDetail.thumbnailUrl) {
@@ -121,31 +263,28 @@ class OfflineDownloadManager {
           try {
             const ext = thumbUrl.split('.').pop()?.split('?')[0] || 'jpg';
             const targetThumb = new File(courseDir, `cover.${ext}`);
-            const downloaded = await File.downloadFileAsync(thumbUrl, targetThumb, {
-              idempotent: true,
-            });
-            localThumbnailUri = downloaded.uri;
+            if (targetThumb.exists) {
+              localThumbnailUri = targetThumb.uri;
+            } else {
+              const downloaded = await File.downloadFileAsync(thumbUrl, targetThumb, {
+                idempotent: true,
+              });
+              localThumbnailUri = downloaded.uri;
+            }
           } catch (e) {
             console.warn('[OfflineDownloadManager] Cover download failed:', e);
           }
         }
       }
 
-      // 5. Collect lessons and media
+      // 6. Collect lessons and media (UNLOCKED ONLY)
       notify({ percent: 35, currentStep: 'Preparing media files…' });
-      const allLessons: ApiCourseLesson[] = [];
-      for (const m of courseDetail.modules ?? []) {
-        for (const l of m.lessons ?? []) {
-          allLessons.push(l);
-          for (const sub of l.subLessons ?? []) {
-            allLessons.push(sub);
-          }
-        }
-      }
 
-      // Only eligible/unlocked lessons have their media and attachments downloaded!
-      const eligibleLessons = allLessons.filter((l) => Boolean(l.unlocked));
-      const totalMediaItems = eligibleLessons.filter((l) => isPlayableRemoteUrl(l.resourceUrl)).length;
+      // Eligible lessons that match current selection and are UNLOCKED
+      const targetLessons = allLessons.filter(
+        (l) => isLessonUnlockedInCourse(l) && isLessonSelected(l),
+      );
+      const totalMediaItems = targetLessons.filter((l) => isPlayableRemoteUrl(l.resourceUrl)).length;
       let completedMedia = 0;
       let totalBytesAccumulated = 0;
 
@@ -155,21 +294,34 @@ class OfflineDownloadManager {
       for (const lesson of allLessons) {
         if (abortController.signal.aborted) throw new Error('Download cancelled');
 
-        let localMediaUri: string | null = null;
-        const isEligible = Boolean(lesson.unlocked);
+        const prevLesson = existingLessonMap.get(lesson.id);
+        const isEligible = isLessonUnlockedInCourse(lesson);
+        const shouldDownload = isEligible && isLessonSelected(lesson);
 
-        // Download media ONLY if the lesson is currently unlocked/eligible
-        if (isEligible && isPlayableRemoteUrl(lesson.resourceUrl)) {
+        // Never save locked content into offline storage
+        if (!isEligible && !prevLesson) {
+          continue;
+        }
+
+        let localMediaUri: string | null = prevLesson?.localMediaUri ?? null;
+
+        // Download media if selected and eligible
+        if (shouldDownload && isEligible && isPlayableRemoteUrl(lesson.resourceUrl)) {
           const resolvedMedia = resolveMediaUrl(lesson.resourceUrl);
           if (resolvedMedia) {
             try {
               const ext = resolvedMedia.split('.').pop()?.split('?')[0] || 'mp4';
               const target = new File(courseDir, `lesson_${lesson.id}.${ext}`);
-              const downloaded = await File.downloadFileAsync(resolvedMedia, target, {
-                idempotent: true,
-              });
-              localMediaUri = downloaded.uri;
-              if (downloaded.size) totalBytesAccumulated += downloaded.size;
+              if (!target.exists) {
+                const downloaded = await File.downloadFileAsync(resolvedMedia, target, {
+                  idempotent: true,
+                });
+                localMediaUri = downloaded.uri;
+                if (downloaded.size) totalBytesAccumulated += downloaded.size;
+              } else {
+                localMediaUri = target.uri;
+                if (target.size) totalBytesAccumulated += target.size;
+              }
             } catch (err) {
               console.warn(`[OfflineDownloadManager] Lesson ${lesson.id} media failed:`, err);
             }
@@ -196,16 +348,16 @@ class OfflineDownloadManager {
           content: isEligible ? (lesson.content ?? lesson.contentEn ?? null) : null,
           contentAm: isEligible ? (lesson.contentAm ?? null) : null,
           resourceUrl: isEligible ? lesson.resourceUrl : null,
-          localMediaUri: isEligible ? localMediaUri : null,
+          localMediaUri,
           requiredSeconds: (lesson.durationMinutes ?? 0) * 60,
-          isCompleted: 0,
-          timeSpentSeconds: 0,
-          lastPosition: 0,
+          isCompleted: prevLesson?.isCompleted ?? 0,
+          timeSpentSeconds: prevLesson?.timeSpentSeconds ?? 0,
+          lastPosition: prevLesson?.lastPosition ?? 0,
           unlocked: isEligible ? 1 : 0,
         });
 
-        // Download attachments ONLY for eligible/unlocked lessons
-        if (isEligible) {
+        // Download attachments if selected and eligible
+        if (shouldDownload && isEligible) {
           for (const att of lesson.attachments ?? []) {
             let localAttUri: string | null = null;
             if (att.fileUrl) {
@@ -216,11 +368,16 @@ class OfflineDownloadManager {
                     courseDir,
                     `att_${att.id}_${safeFilename(att.fileName)}`,
                   );
-                  const downloaded = await File.downloadFileAsync(resolvedAtt, targetAtt, {
-                    idempotent: true,
-                  });
-                  localAttUri = downloaded.uri;
-                  if (downloaded.size) totalBytesAccumulated += downloaded.size;
+                  if (!targetAtt.exists) {
+                    const downloaded = await File.downloadFileAsync(resolvedAtt, targetAtt, {
+                      idempotent: true,
+                    });
+                    localAttUri = downloaded.uri;
+                    if (downloaded.size) totalBytesAccumulated += downloaded.size;
+                  } else {
+                    localAttUri = targetAtt.uri;
+                    if (targetAtt.size) totalBytesAccumulated += targetAtt.size;
+                  }
                 } catch (err) {
                   console.warn(`[OfflineDownloadManager] Attachment ${att.id} failed:`, err);
                 }
@@ -269,25 +426,11 @@ class OfflineDownloadManager {
         durationMinutes: m.durationMinutes,
       }));
 
-      const offlineAssessments: OfflineAssessment[] = fetchedAssessments.map((a) => ({
-        id: a.id,
-        courseId,
-        moduleId: a.moduleId,
-        lessonId: a.lessonId,
-        type: a.type,
-        title: a.title ?? a.titleEn ?? 'Quiz',
-        titleAm: a.titleAm ?? null,
-        passingScore: a.passingScore,
-        maxAttempts: a.maxAttempts,
-        timeLimitMinutes: a.timeLimitMinutes,
-        questionsJson: JSON.stringify(a.questions ?? []),
-      }));
-
       await offlineDb.saveCourse(offlineCourse);
       await offlineDb.saveModules(offlineModules);
       await offlineDb.saveLessons(offlineLessonsToSave);
       await offlineDb.saveAttachments(offlineAttachmentsToSave);
-      await offlineDb.saveAssessments(offlineAssessments);
+      await offlineDb.saveAssessments(mergedAssessments);
 
       notify({
         status: 'completed',

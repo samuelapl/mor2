@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import {
   downloadManager,
   type CourseDownloadProgress,
+  type DownloadCourseOptions,
 } from './download-manager';
 import { offlineDb, type OfflineCourse } from './offline-db';
 
@@ -16,7 +17,7 @@ interface OfflineStoreState {
   refresh: () => Promise<void>;
   setSyncing: (syncing: boolean) => void;
   getPendingCount: (courseId: string) => Promise<number>;
-  startDownload: (courseId: string) => Promise<void>;
+  startDownload: (courseId: string, options?: DownloadCourseOptions) => Promise<void>;
   cancelDownload: (courseId: string) => void;
   removeDownload: (courseId: string) => Promise<void>;
   isDownloaded: (courseId: string) => boolean;
@@ -50,7 +51,7 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
     return offlineDb.getPendingCountForCourse(courseId);
   },
 
-  startDownload: async (courseId: string) => {
+  startDownload: async (courseId: string, options?: DownloadCourseOptions) => {
     set((state) => ({
       downloads: {
         ...state.downloads,
@@ -66,7 +67,7 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
     }));
 
     try {
-      await downloadManager.downloadCourse(courseId, (progress) => {
+      await downloadManager.downloadCourse(courseId, options, (progress) => {
         set((state) => ({
           downloads: {
             ...state.downloads,

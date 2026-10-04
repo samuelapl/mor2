@@ -1,33 +1,67 @@
+import { router } from 'expo-router';
 import {
   AlertCircle,
-  ArrowUpCircle,
+  Award,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CornerDownRight,
   Download,
-  RefreshCw,
+  DownloadCloud,
+  FileText,
+  FolderDown,
+  HelpCircle,
+  Lock,
+  Paperclip,
   Trash2,
+  Video,
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { AppText, Badge, Button, Card, ProgressBar } from '@/components/ui';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import { palette, useThemeColors } from '@/core/theme/colors';
 import { Alert } from '@/core/utils/alert';
 import { formatFileSize } from '@/core/utils/formatters';
-
+import type { ApiCourseDetail, ApiCourseLesson, ApiCourseModule } from '../../courses/types/course.types';
+import { useCourse } from '../../courses';
+import {
+  useCourseProgress,
+  type CourseProgress,
+  type LessonProgress,
+  type SubLessonProgress,
+} from '@/features/progress';
 import { offlineDb } from '../offline-db';
 import { useOfflineStore } from '../offline-store';
+import type { DownloadCourseOptions } from '../download-manager';
 
 export interface OfflineDownloadCardProps {
   courseId: string;
   enrolled: boolean;
+  courseDetail?: ApiCourseDetail | null;
+  progress?: CourseProgress | null;
 }
 
-export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardProps) {
+export function OfflineDownloadCard({
+  courseId,
+  enrolled,
+  courseDetail: propCourseDetail,
+  progress: propProgress,
+}: OfflineDownloadCardProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const online = useIsOnline();
+
+  // If courseDetail was not passed down, query it
+  const courseQuery = useCourse(courseId);
+  const courseDetail = propCourseDetail ?? courseQuery.data;
+
+  // Query progress if not passed down as prop
+  const progressQuery = useCourseProgress(courseId, enrolled && !propProgress);
+  const progressData = propProgress ?? progressQuery.data;
 
   const init = useOfflineStore((s) => s.init);
   const downloadedCourses = useOfflineStore((s) => s.downloadedCourses);
@@ -38,6 +72,141 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
   const removeDownload = useOfflineStore((s) => s.removeDownload);
 
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+  // Granular selection state
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [selectedModuleIds, setSelectedModuleIds] = useState<Set<string>>(new Set());
+  const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set());
+  const [selectedSubLessonIds, setSelectedSubLessonIds] = useState<Set<string>>(new Set());
+  const [selectedAssessmentIds, setSelectedAssessmentIds] = useState<Set<string>>(new Set());
+
+  // Accordion expansion state
+  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(new Set());
+
+  // Progress maps for unlock verification
+  const moduleProgress = useMemo(
+    () => new Map(progressData?.modules?.map((m) => [m.moduleId, m])),
+    [progressData],
+  );
+
+  const lessonProgress = useMemo(() => {
+    const map = new Map<string, LessonProgress | SubLessonProgress>();
+    progressData?.modules?.forEach((m) =>
+      m.lessons?.forEach((l) => {
+        map.set(l.lessonId, l);
+        l.subLessons?.forEach((s) => map.set(s.lessonId, s));
+      }),
+    );
+    return map;
+  }, [progressData]);
+
+  // Unlock verification checkers
+  const isModuleUnlocked = useCallback(
+    (mod: ApiCourseModule): boolean => {
+      if (!enrolled) return false;
+      const mp = moduleProgress.get(mod.id);
+      if (mp) return mp.unlocked === true;
+      return mod.unlocked === true;
+    },
+    [enrolled, moduleProgress],
+  );
+
+  const isLessonUnlocked = useCallback(
+    (lesson: ApiCourseLesson, mod: ApiCourseModule): boolean => {
+      if (!isModuleUnlocked(mod)) return false;
+      const lp = lessonProgress.get(lesson.id);
+      if (lp) return lp.unlocked === true;
+      return lesson.unlocked === true;
+    },
+    [isModuleUnlocked, lessonProgress],
+  );
+
+  const isSubLessonUnlocked = useCallback(
+    (sub: ApiCourseLesson, parentLesson: ApiCourseLesson, mod: ApiCourseModule): boolean => {
+      if (!isLessonUnlocked(parentLesson, mod)) return false;
+      const sp = lessonProgress.get(sub.id);
+      if (sp) return sp.unlocked === true;
+      return sub.unlocked === true;
+    },
+    [isLessonUnlocked, lessonProgress],
+  );
+
+  const isModuleAssessmentUnlocked = useCallback(
+    (mod: ApiCourseModule): boolean => {
+      return isModuleUnlocked(mod);
+    },
+    [isModuleUnlocked],
+  );
+
+  const isLessonAssessmentUnlocked = useCallback(
+    (lesson: ApiCourseLesson, mod: ApiCourseModule): boolean => {
+      return isLessonUnlocked(lesson, mod);
+    },
+    [isLessonUnlocked],
+  );
+
+  const isFinalAssessmentUnlocked = useCallback((): boolean => {
+    if (!enrolled) return false;
+    return progressData?.courseCompletion?.contentCompleted === true;
+  }, [enrolled, progressData]);
+
+  // Filter modules, lessons, and quizzes to UNLOCKED items only
+  const unlockedModules = useMemo(() => {
+    if (!courseDetail?.modules) return [];
+    return courseDetail.modules
+      .filter((mod) => isModuleUnlocked(mod))
+      .map((mod) => {
+        const filteredLessons = (mod.lessons ?? [])
+          .filter((lesson) => isLessonUnlocked(lesson, mod))
+          .map((lesson) => ({
+            ...lesson,
+            subLessons: (lesson.subLessons ?? []).filter((sub) =>
+              isSubLessonUnlocked(sub, lesson, mod),
+            ),
+            assessments: isLessonAssessmentUnlocked(lesson, mod)
+              ? (lesson.assessments ?? [])
+              : [],
+          }));
+
+        const filteredAssessments = isModuleAssessmentUnlocked(mod)
+          ? (mod.assessments ?? [])
+          : [];
+
+        return {
+          ...mod,
+          lessons: filteredLessons,
+          assessments: filteredAssessments,
+        };
+      })
+      .filter((mod) => mod.lessons.length > 0 || mod.assessments.length > 0);
+  }, [
+    courseDetail?.modules,
+    isModuleUnlocked,
+    isLessonUnlocked,
+    isSubLessonUnlocked,
+    isLessonAssessmentUnlocked,
+    isModuleAssessmentUnlocked,
+  ]);
+
+  const unlockedCourseAssessments = useMemo(() => {
+    if (!isFinalAssessmentUnlocked()) return [];
+    return courseDetail?.assessments ?? [];
+  }, [courseDetail?.assessments, isFinalAssessmentUnlocked]);
+
+  const totalUnlockedItemsCount = useMemo(() => {
+    let count = 0;
+    unlockedModules.forEach((m) => {
+      count++;
+      m.lessons.forEach((l) => {
+        count++;
+        count += l.subLessons?.length ?? 0;
+        count += l.assessments?.length ?? 0;
+      });
+      count += m.assessments?.length ?? 0;
+    });
+    count += unlockedCourseAssessments.length;
+    return count;
+  }, [unlockedModules, unlockedCourseAssessments]);
 
   useEffect(() => {
     void init();
@@ -63,12 +232,217 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
   const isDownloading = progress?.status === 'downloading';
   const isError = progress?.status === 'error';
 
-  const handleStartDownload = () => {
+  // Toggle module expansion
+  const toggleModuleExpanded = (modId: string) => {
+    setExpandedModuleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(modId)) next.delete(modId);
+      else next.add(modId);
+      return next;
+    });
+  };
+
+  // Toggle selection for module (and automatically all its unlocked lessons, sub-lessons & quizzes)
+  const toggleModuleSelection = (mod: (typeof unlockedModules)[number]) => {
+    const isSelected = selectedModuleIds.has(mod.id);
+    const nextModules = new Set(selectedModuleIds);
+    const nextLessons = new Set(selectedLessonIds);
+    const nextSubLessons = new Set(selectedSubLessonIds);
+    const nextAssessments = new Set(selectedAssessmentIds);
+
+    if (isSelected) {
+      nextModules.delete(mod.id);
+      mod.lessons.forEach((l) => {
+        nextLessons.delete(l.id);
+        l.subLessons?.forEach((sub) => nextSubLessons.delete(sub.id));
+        l.assessments?.forEach((a) => nextAssessments.delete(a.id));
+      });
+      mod.assessments?.forEach((a) => nextAssessments.delete(a.id));
+    } else {
+      nextModules.add(mod.id);
+      mod.lessons.forEach((l) => {
+        nextLessons.add(l.id);
+        l.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
+        l.assessments?.forEach((a) => nextAssessments.add(a.id));
+      });
+      mod.assessments?.forEach((a) => nextAssessments.add(a.id));
+    }
+
+    setSelectedModuleIds(nextModules);
+    setSelectedLessonIds(nextLessons);
+    setSelectedSubLessonIds(nextSubLessons);
+    setSelectedAssessmentIds(nextAssessments);
+  };
+
+  // Toggle lesson selection
+  const toggleLessonSelection = (lesson: ApiCourseLesson) => {
+    const nextLessons = new Set(selectedLessonIds);
+    const nextSubLessons = new Set(selectedSubLessonIds);
+    const nextAssessments = new Set(selectedAssessmentIds);
+
+    if (nextLessons.has(lesson.id)) {
+      nextLessons.delete(lesson.id);
+      lesson.subLessons?.forEach((sub) => nextSubLessons.delete(sub.id));
+      lesson.assessments?.forEach((a) => nextAssessments.delete(a.id));
+    } else {
+      nextLessons.add(lesson.id);
+      lesson.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
+      lesson.assessments?.forEach((a) => nextAssessments.add(a.id));
+    }
+
+    setSelectedLessonIds(nextLessons);
+    setSelectedSubLessonIds(nextSubLessons);
+    setSelectedAssessmentIds(nextAssessments);
+  };
+
+  // Toggle sub-lesson selection
+  const toggleSubLessonSelection = (subId: string) => {
+    const next = new Set(selectedSubLessonIds);
+    if (next.has(subId)) next.delete(subId);
+    else next.add(subId);
+    setSelectedSubLessonIds(next);
+  };
+
+  // Toggle assessment selection
+  const toggleAssessmentSelection = (aId: string) => {
+    const next = new Set(selectedAssessmentIds);
+    if (next.has(aId)) next.delete(aId);
+    else next.add(aId);
+    setSelectedAssessmentIds(next);
+  };
+
+  // Select all unlocked course items
+  const selectAll = () => {
+    const nextModules = new Set<string>();
+    const nextLessons = new Set<string>();
+    const nextSubLessons = new Set<string>();
+    const nextAssessments = new Set<string>();
+
+    unlockedModules.forEach((m) => {
+      nextModules.add(m.id);
+      m.lessons.forEach((l) => {
+        nextLessons.add(l.id);
+        l.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
+        l.assessments?.forEach((a) => nextAssessments.add(a.id));
+      });
+      m.assessments?.forEach((a) => nextAssessments.add(a.id));
+    });
+    unlockedCourseAssessments.forEach((a) => nextAssessments.add(a.id));
+
+    setSelectedModuleIds(nextModules);
+    setSelectedLessonIds(nextLessons);
+    setSelectedSubLessonIds(nextSubLessons);
+    setSelectedAssessmentIds(nextAssessments);
+  };
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedModuleIds(new Set());
+    setSelectedLessonIds(new Set());
+    setSelectedSubLessonIds(new Set());
+    setSelectedAssessmentIds(new Set());
+  };
+
+  const totalSelectedCount =
+    selectedModuleIds.size +
+    selectedLessonIds.size +
+    selectedSubLessonIds.size +
+    selectedAssessmentIds.size;
+
+  // Single item / batch triggers
+  const executeDownload = (options?: DownloadCourseOptions) => {
     if (!online) {
       Alert.alert(t('common.offline'), t('common.offlineAction'));
       return;
     }
-    void startDownload(courseId);
+    void startDownload(courseId, options);
+  };
+
+  const handleDownloadAll = () => {
+    const allUnlockedModuleIds = unlockedModules.map((m) => m.id);
+    const allUnlockedLessonIds = unlockedModules.flatMap((m) => m.lessons.map((l) => l.id));
+    const allUnlockedSubLessonIds = unlockedModules.flatMap((m) =>
+      m.lessons.flatMap((l) => l.subLessons?.map((s) => s.id) ?? []),
+    );
+    const allUnlockedAssessmentIds = [
+      ...unlockedModules.flatMap((m) => [
+        ...(m.assessments?.map((a) => a.id) ?? []),
+        ...m.lessons.flatMap((l) => l.assessments?.map((a) => a.id) ?? []),
+      ]),
+      ...unlockedCourseAssessments.map((a) => a.id),
+    ];
+
+    if (
+      allUnlockedModuleIds.length === 0 &&
+      allUnlockedLessonIds.length === 0 &&
+      allUnlockedSubLessonIds.length === 0 &&
+      allUnlockedAssessmentIds.length === 0
+    ) {
+      Alert.alert(
+        t('offline.noUnlockedContent', { defaultValue: 'No Unlocked Content' }),
+        t('offline.noUnlockedContentBody', {
+          defaultValue: 'There is no unlocked content available to download for this course yet.',
+        }),
+      );
+      return;
+    }
+
+    executeDownload({
+      moduleIds: allUnlockedModuleIds,
+      lessonIds: allUnlockedLessonIds,
+      subLessonIds: allUnlockedSubLessonIds,
+      assessmentIds: allUnlockedAssessmentIds,
+    });
+  };
+
+  const handleDownloadSelected = () => {
+    if (totalSelectedCount === 0) {
+      Alert.alert(
+        t('offline.selectItemsPrompt', { defaultValue: 'Select Content' }),
+        t('offline.selectItemsBody', {
+          defaultValue: 'Please select at least one module, lesson, or quiz to download.',
+        }),
+      );
+      return;
+    }
+
+    executeDownload({
+      moduleIds: Array.from(selectedModuleIds),
+      lessonIds: Array.from(selectedLessonIds),
+      subLessonIds: Array.from(selectedSubLessonIds),
+      assessmentIds: Array.from(selectedAssessmentIds),
+    });
+  };
+
+  const handleDownloadSingleModule = (mod: (typeof unlockedModules)[number]) => {
+    const modLessonIds = mod.lessons.map((l) => l.id);
+    const modSubLessonIds = mod.lessons.flatMap((l) => l.subLessons?.map((s) => s.id) ?? []);
+    const modAssessmentIds = [
+      ...(mod.assessments?.map((a) => a.id) ?? []),
+      ...mod.lessons.flatMap((l) => l.assessments?.map((a) => a.id) ?? []),
+    ];
+
+    executeDownload({
+      moduleIds: [mod.id],
+      lessonIds: modLessonIds,
+      subLessonIds: modSubLessonIds,
+      assessmentIds: modAssessmentIds,
+    });
+  };
+
+  const handleDownloadSingleLesson = (lessonId: string, moduleId: string) => {
+    executeDownload({ lessonIds: [lessonId], moduleIds: [moduleId] });
+  };
+
+  const handleDownloadSingleSubLesson = (subLessonId: string, moduleId: string) => {
+    executeDownload({ subLessonIds: [subLessonId], moduleIds: [moduleId] });
+  };
+
+  const handleDownloadSingleAssessment = (assessmentId: string, moduleId?: string | null) => {
+    executeDownload({
+      assessmentIds: [assessmentId],
+      moduleIds: moduleId ? [moduleId] : [],
+    });
   };
 
   const handleRemove = () => {
@@ -88,10 +462,10 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   };
 
-  // State 1: Syncing
+  // State: Syncing
   if (isSyncing || (online && pendingSyncCount > 0 && isDownloaded)) {
     return (
-      <Card className="gap-3 border-sky-800/40 bg-sky-950/20 p-4">
+      <Card className="gap-3 border border-sky-500/40 bg-sky-950/30 dark:bg-slate-900 p-4 rounded-2xl">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2.5">
             <ActivityIndicator size="small" color="#38bdf8" />
@@ -101,7 +475,7 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
           </View>
           <Badge label="Syncing" tone="brand" />
         </View>
-        <AppText className="text-sm text-slate-300 leading-5">
+        <AppText className="text-xs text-slate-300 leading-5">
           {t('courses.syncingDescription', {
             defaultValue:
               'Uploading recorded offline quiz attempts and study time to the server for verification.',
@@ -111,16 +485,23 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   }
 
-  // State 2: Downloading with progress
+  // State: Downloading with Progress
   if (isDownloading) {
     return (
-      <Card className="gap-3 border-brand-500/40 bg-brand-950/20 p-4">
+      <Card className="gap-3.5 border border-sky-500/50 bg-slate-900/95 p-4 rounded-2xl shadow-sm">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2.5">
-            <Download size={20} color={palette.brand500} />
-            <AppText className="text-base font-bold text-white">
-              {t('courses.downloading', { defaultValue: 'Downloading for Offline' })}
-            </AppText>
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-400/30">
+              <DownloadCloud size={18} color="#38bdf8" />
+            </View>
+            <View>
+              <AppText className="text-sm font-bold text-white tracking-wide">
+                {t('courses.downloading', { defaultValue: 'Downloading Offline Content' })}
+              </AppText>
+              <AppText className="text-xs text-sky-200 font-medium">
+                {progress.currentStep || t('courses.downloadingMedia', { defaultValue: 'Saving media & quizzes…' })}
+              </AppText>
+            </View>
           </View>
           <Badge label={`${Math.round(progress.percent)}%`} tone="brand" />
         </View>
@@ -128,11 +509,10 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
         <ProgressBar percent={progress.percent} tone="brand" />
 
         <View className="flex-row items-center justify-between pt-1">
-          <AppText className="flex-1 text-xs text-slate-300">
-            {progress.currentStep ||
-              (progress.totalBytes > 0
-                ? `${formatFileSize(progress.downloadedBytes)} / ${formatFileSize(progress.totalBytes)}`
-                : t('courses.downloadingMedia', { defaultValue: 'Saving course content…' }))}
+          <AppText className="flex-1 text-xs text-slate-300 font-medium">
+            {progress.totalBytes > 0
+              ? `${formatFileSize(progress.downloadedBytes)} / ${formatFileSize(progress.totalBytes)}`
+              : `${Math.round(progress.percent)}% completed`}
           </AppText>
           <Button
             title={t('common.cancel')}
@@ -145,58 +525,20 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   }
 
-  // State 3: Available Offline
-  if (isDownloaded && downloadedCourse) {
-    return (
-      <Card className="gap-3 border-emerald-500/30 bg-emerald-950/15 p-4">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2.5 flex-1">
-            <View className="h-8 w-8 rounded-full bg-emerald-500/20 items-center justify-center">
-              <CheckCircle2 size={18} color="#10b981" />
-            </View>
-            <View className="flex-1">
-              <AppText className="text-base font-bold text-emerald-200">
-                {t('courses.availableOffline', { defaultValue: 'Available Offline' })}
-              </AppText>
-              {downloadedCourse.sizeBytes > 0 ? (
-                <AppText className="text-xs text-slate-400">
-                  {formatFileSize(downloadedCourse.sizeBytes)} stored on device
-                </AppText>
-              ) : null}
-            </View>
-          </View>
-          <Button
-            title={t('courses.removeDownload', { defaultValue: 'Remove' })}
-            variant="outline"
-            size="sm"
-            icon={<Trash2 size={14} color={colors.danger} />}
-            onPress={handleRemove}
-          />
-        </View>
-        <AppText className="text-xs text-slate-400 leading-4">
-          All lessons, attached documents, and quizzes are ready for offline learning.
-        </AppText>
-      </Card>
-    );
-  }
-
-  // State 4: Download failed / Retry
+  // State: Error
   if (isError) {
     return (
-      <Card className="gap-3 border-red-500/40 bg-red-950/20 p-4">
+      <Card className="gap-3 border border-red-500/50 bg-red-950/25 dark:bg-slate-900 p-4 rounded-2xl">
         <View className="flex-row items-center gap-2.5">
-          <View className="h-8 w-8 rounded-full bg-red-500/20 items-center justify-center">
-            <AlertCircle size={18} color={colors.danger} />
+          <View className="h-9 w-9 rounded-xl bg-red-500/20 items-center justify-center border border-red-400/30">
+            <AlertCircle size={18} color={palette.danger} />
           </View>
           <View className="flex-1">
-            <AppText className="text-base font-bold text-red-200">
+            <AppText className="text-sm font-bold text-red-200">
               {t('courses.downloadFailed', { defaultValue: 'Download Failed' })}
             </AppText>
             <AppText className="text-xs text-slate-300 mt-0.5">
-              {progress?.error ||
-                t('courses.downloadFailedHint', {
-                  defaultValue: 'An error occurred during download. Please check your connection and retry.',
-                })}
+              {progress?.error || t('courses.downloadFailedHint', { defaultValue: 'Check connection and retry.' })}
             </AppText>
           </View>
         </View>
@@ -205,7 +547,7 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
             title={t('common.retry', { defaultValue: 'Retry Download' })}
             size="sm"
             variant="primary"
-            onPress={handleStartDownload}
+            onPress={handleDownloadAll}
           />
           <Button
             title={t('common.dismiss', { defaultValue: 'Dismiss' })}
@@ -218,33 +560,494 @@ export function OfflineDownloadCard({ courseId, enrolled }: OfflineDownloadCardP
     );
   }
 
-  // State 5: Download Available Content (Prominent explicit trigger - never auto-downloads)
+  // Main UI: Enterprise Course Download Card with Granular Selection
   return (
-    <Card className="gap-3 border border-brand-500/30 bg-brand-950/20 p-4">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2.5">
-          <View className="h-8 w-8 rounded-full bg-brand-500/20 items-center justify-center">
-            <Download size={18} color="#38bdf8" />
+    <Card className="gap-3.5 border border-slate-800 bg-slate-900/90 dark:bg-slate-900/95 p-4 rounded-2xl shadow-sm">
+      {/* Card Header & Status */}
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="flex-row items-center gap-3 flex-1">
+          <View
+            className={`h-10 w-10 items-center justify-center rounded-xl border ${
+              isDownloaded
+                ? 'bg-emerald-500/20 border-emerald-400/30'
+                : 'bg-sky-500/20 border-sky-400/30'
+            }`}
+          >
+            {isDownloaded ? (
+              <CheckCircle2 size={20} color="#10b981" />
+            ) : (
+              <DownloadCloud size={20} color="#38bdf8" />
+            )}
           </View>
-          <AppText className="text-base font-bold text-white">
-            {t('courses.downloadAvailableContent', { defaultValue: 'Download Available Content' })}
-          </AppText>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2">
+              <AppText className="text-sm font-bold text-white tracking-wide">
+                {isDownloaded
+                  ? t('courses.availableOffline', { defaultValue: 'Available Offline' })
+                  : t('courses.offlineLearning', { defaultValue: 'Offline Learning' })}
+              </AppText>
+              {isDownloaded && downloadedCourse?.sizeBytes ? (
+                <Badge label={formatFileSize(downloadedCourse.sizeBytes)} tone="neutral" />
+              ) : null}
+            </View>
+            <AppText className="text-xs font-medium text-slate-300 mt-0.5 leading-4">
+              {t('courses.offlineHint', {
+                defaultValue: 'Download lessons, documents & quizzes for offline study',
+              })}
+            </AppText>
+          </View>
         </View>
-        <Badge label="Offline Ready" tone="brand" />
+
+        {/* Quick Link to My Downloads page */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/downloads' as any)}
+          className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 active:bg-slate-700"
+          accessibilityRole="button"
+          accessibilityLabel="Open Downloads"
+        >
+          <FolderDown size={14} color="#38bdf8" />
+          <AppText className="text-xs font-semibold text-sky-400">
+            {t('screens.downloads', { defaultValue: 'Downloads' })}
+          </AppText>
+        </Pressable>
       </View>
-      <AppText className="text-[14px] text-slate-300 leading-relaxed font-normal">
-        {t('courses.downloadAvailableHint', {
-          defaultValue:
-            'Download currently unlocked lessons, media, and quizzes to study offline. Locked lessons unlock progressively as you complete coursework.',
-        })}
-      </AppText>
-      <Button
-        title={t('courses.downloadAvailableContent', { defaultValue: 'Download Available Content' })}
-        variant="primary"
-        icon={<Download size={16} color="#fff" />}
-        onPress={handleStartDownload}
-        fullWidth
-      />
+
+      {/* Primary Action Buttons Row */}
+      <View className="flex-row items-center gap-2 pt-1">
+        <View className="flex-1">
+          <Button
+            title={t('offline.downloadAll', { defaultValue: 'Download All' })}
+            variant="primary"
+            icon={<Download size={16} color="#ffffff" strokeWidth={2.2} />}
+            onPress={handleDownloadAll}
+            fullWidth
+          />
+        </View>
+
+        {isDownloaded && (
+          <Pressable
+            onPress={handleRemove}
+            className="flex-row items-center gap-1.5 px-3 py-2.5 rounded-xl bg-red-950/40 border border-red-800/40 active:bg-red-900/50"
+            accessibilityRole="button"
+            accessibilityLabel="Delete downloads"
+          >
+            <Trash2 size={16} color={palette.danger} />
+            <AppText className="text-xs font-semibold text-red-300">
+              {t('common.delete', { defaultValue: 'Delete' })}
+            </AppText>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Granular Selection Accordion Header */}
+      {courseDetail?.modules && courseDetail.modules.length > 0 && (
+        <View className="border-t border-slate-800/80 pt-3 gap-2.5">
+          <Pressable
+            onPress={() => setIsSelectorOpen((prev) => !prev)}
+            className="flex-row items-center justify-between p-2 rounded-xl bg-slate-800/60 active:bg-slate-800"
+          >
+            <View className="flex-row items-center gap-2 flex-1">
+              <Download size={15} color="#38bdf8" />
+              <AppText className="text-xs font-bold text-slate-200">
+                {t('offline.selectSpecificContent', {
+                  defaultValue: 'Select Specific Content to Download',
+                })}
+              </AppText>
+              {totalSelectedCount > 0 && (
+                <Badge label={`${totalSelectedCount} selected`} tone="brand" />
+              )}
+            </View>
+            <View className="h-6 w-6 items-center justify-center rounded-full bg-slate-700/50">
+              {isSelectorOpen ? (
+                <ChevronDown size={14} color="#94a3b8" />
+              ) : (
+                <ChevronRight size={14} color="#94a3b8" />
+              )}
+            </View>
+          </Pressable>
+
+          {/* Granular Selector Content */}
+          {isSelectorOpen && (
+            <View className="gap-3 pt-1">
+              {/* Batch Actions Bar */}
+              {totalUnlockedItemsCount === 0 ? (
+                <View className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 items-center gap-2">
+                  <Lock size={20} color="#94a3b8" />
+                  <AppText className="text-xs text-slate-300 text-center">
+                    {t('offline.noUnlockedContentBody', {
+                      defaultValue:
+                        'No unlocked content available for download yet. Complete earlier lessons to unlock and download material.',
+                    })}
+                  </AppText>
+                </View>
+              ) : (
+                <>
+                  <View className="flex-row items-center justify-between px-1">
+                    <View className="flex-row items-center gap-2">
+                      <Pressable
+                        onPress={selectAll}
+                        className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-800/40 active:bg-sky-900/60"
+                      >
+                        <AppText className="text-[11px] font-semibold text-sky-300">Select All</AppText>
+                      </Pressable>
+                      {totalSelectedCount > 0 && (
+                        <Pressable
+                          onPress={clearSelection}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 active:bg-slate-700"
+                        >
+                          <AppText className="text-[11px] font-medium text-slate-300">Clear</AppText>
+                        </Pressable>
+                      )}
+                    </View>
+
+                    {totalSelectedCount > 0 && (
+                      <Button
+                        title={`Download (${totalSelectedCount})`}
+                        size="sm"
+                        variant="primary"
+                        icon={<Download size={13} color="#fff" />}
+                        onPress={handleDownloadSelected}
+                      />
+                    )}
+                  </View>
+
+                  {/* Unlocked Modules List */}
+                  <View className="gap-2.5">
+                    {unlockedModules.map((mod, modIdx) => {
+                      const isModSelected = selectedModuleIds.has(mod.id);
+                      const isModExpanded = expandedModuleIds.has(mod.id);
+                      const lessonCount = mod.lessons.length;
+                      const quizCount = mod.assessments.length;
+
+                      return (
+                        <View
+                          key={mod.id}
+                          className="rounded-xl border border-slate-800 bg-slate-800/40 overflow-hidden"
+                        >
+                          {/* Module Header Row */}
+                          <View className="flex-row items-center justify-between p-3 gap-2 bg-slate-800/80">
+                            {/* Checkbox */}
+                            <Pressable
+                              onPress={() => toggleModuleSelection(mod)}
+                              className={`h-5 w-5 rounded-md border items-center justify-center ${
+                                isModSelected
+                                  ? 'bg-brand-600 border-brand-500'
+                                  : 'bg-slate-900 border-slate-600'
+                              }`}
+                            >
+                              {isModSelected && <Check size={13} color="#ffffff" strokeWidth={3} />}
+                            </Pressable>
+
+                            {/* Title & Badge */}
+                            <Pressable
+                              onPress={() => toggleModuleExpanded(mod.id)}
+                              className="flex-1 pr-1"
+                            >
+                              <AppText className="text-xs font-bold text-white" numberOfLines={1}>
+                                {mod.title || mod.titleEn || `Module ${modIdx + 1}`}
+                              </AppText>
+                              <View className="flex-row items-center gap-2 mt-0.5">
+                                <AppText className="text-[10px] text-slate-400">
+                                  {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
+                                </AppText>
+                                {quizCount > 0 && (
+                                  <AppText className="text-[10px] text-sky-400">
+                                    · {quizCount} {quizCount === 1 ? 'quiz' : 'quizzes'}
+                                  </AppText>
+                                )}
+                              </View>
+                            </Pressable>
+
+                            {/* Single Module Download Button */}
+                            <Pressable
+                              onPress={() => handleDownloadSingleModule(mod)}
+                              className="flex-row items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-950/80 border border-sky-600/40 active:bg-sky-900"
+                            >
+                              <Download size={12} color="#38bdf8" />
+                              <AppText className="text-[11px] font-semibold text-sky-300">
+                                Download
+                              </AppText>
+                            </Pressable>
+
+                            {/* Expand Chevron */}
+                            <Pressable
+                              onPress={() => toggleModuleExpanded(mod.id)}
+                              className="p-1"
+                            >
+                              {isModExpanded ? (
+                                <ChevronDown size={16} color="#94a3b8" />
+                              ) : (
+                                <ChevronRight size={16} color="#94a3b8" />
+                              )}
+                            </Pressable>
+                          </View>
+
+                          {/* Expanded Module Details: Lessons, Sub-lessons & Quizzes */}
+                          {isModExpanded && (
+                            <View className="p-2.5 gap-2 border-t border-slate-800 bg-slate-900/60">
+                              {/* Lessons in Module */}
+                              {mod.lessons.map((lesson, lesIdx) => {
+                                const isLesSelected = selectedLessonIds.has(lesson.id);
+                                const hasSubLessons = (lesson.subLessons?.length ?? 0) > 0;
+                                const hasAssessments = (lesson.assessments?.length ?? 0) > 0;
+
+                                return (
+                                  <View key={lesson.id} className="gap-1.5">
+                                    {/* Lesson Item Row */}
+                                    <View className="flex-row items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+                                      {/* Checkbox */}
+                                      <Pressable
+                                        onPress={() => toggleLessonSelection(lesson)}
+                                        className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                                          isLesSelected
+                                            ? 'bg-brand-600 border-brand-500'
+                                            : 'bg-slate-900 border-slate-600'
+                                        }`}
+                                      >
+                                        {isLesSelected && (
+                                          <Check size={11} color="#ffffff" strokeWidth={3} />
+                                        )}
+                                      </Pressable>
+
+                                      {/* Icon & Title */}
+                                      <View className="flex-row items-center gap-2 flex-1 pr-2">
+                                        {lesson.contentType === 'VIDEO' ? (
+                                          <Video size={14} color="#38bdf8" />
+                                        ) : (
+                                          <FileText size={14} color="#94a3b8" />
+                                        )}
+                                        <View className="flex-1">
+                                          <AppText
+                                            className="text-xs font-semibold text-slate-200"
+                                            numberOfLines={1}
+                                          >
+                                            {lesson.title || lesson.titleEn || `Lesson ${lesIdx + 1}`}
+                                          </AppText>
+                                          {lesson.durationMinutes ? (
+                                            <AppText className="text-[10px] text-slate-400">
+                                              {lesson.durationMinutes} min
+                                            </AppText>
+                                          ) : null}
+                                        </View>
+                                      </View>
+
+                                      {/* Lesson Download Button */}
+                                      <Pressable
+                                        onPress={() =>
+                                          handleDownloadSingleLesson(lesson.id, mod.id)
+                                        }
+                                        className="p-1 px-2 rounded-md bg-slate-800 border border-slate-700 active:bg-slate-700"
+                                      >
+                                        <Download size={12} color="#38bdf8" />
+                                      </Pressable>
+                                    </View>
+
+                                    {/* Sub-lessons (if any) */}
+                                    {hasSubLessons && (
+                                      <View className="pl-6 gap-1.5">
+                                        {lesson.subLessons!.map((subLesson, subIdx) => {
+                                          const isSubSelected = selectedSubLessonIds.has(subLesson.id);
+
+                                          return (
+                                            <View
+                                              key={subLesson.id}
+                                              className="flex-row items-center justify-between p-1.5 px-2 rounded-md bg-slate-800/30 border border-slate-800/60"
+                                            >
+                                              <Pressable
+                                                onPress={() => toggleSubLessonSelection(subLesson.id)}
+                                                className={`h-3.5 w-3.5 rounded border items-center justify-center mr-2 ${
+                                                  isSubSelected
+                                                    ? 'bg-brand-600 border-brand-500'
+                                                    : 'bg-slate-900 border-slate-600'
+                                                }`}
+                                              >
+                                                {isSubSelected && (
+                                                  <Check size={9} color="#fff" strokeWidth={3} />
+                                                )}
+                                              </Pressable>
+
+                                              <View className="flex-row items-center gap-1.5 flex-1 pr-2">
+                                                <CornerDownRight size={12} color="#64748b" />
+                                                <AppText
+                                                  className="text-[11px] text-slate-300 flex-1"
+                                                  numberOfLines={1}
+                                                >
+                                                  {subLesson.title ||
+                                                    subLesson.titleEn ||
+                                                    `Sub-lesson ${subIdx + 1}`}
+                                                </AppText>
+                                              </View>
+
+                                              <Pressable
+                                                onPress={() =>
+                                                  handleDownloadSingleSubLesson(subLesson.id, mod.id)
+                                                }
+                                                className="p-1 px-1.5 rounded bg-slate-800 active:bg-slate-700"
+                                              >
+                                                <Download size={11} color="#38bdf8" />
+                                              </Pressable>
+                                            </View>
+                                          );
+                                        })}
+                                      </View>
+                                    )}
+
+                                    {/* Lesson-level Quizzes (if any) */}
+                                    {hasAssessments && (
+                                      <View className="pl-6 gap-1">
+                                        {lesson.assessments!.map((quiz) => {
+                                          const isQuizSelected = selectedAssessmentIds.has(quiz.id);
+
+                                          return (
+                                            <View
+                                              key={quiz.id}
+                                              className="flex-row items-center justify-between p-1.5 px-2 rounded-md bg-indigo-950/30 border border-indigo-900/40"
+                                            >
+                                              <Pressable
+                                                onPress={() => toggleAssessmentSelection(quiz.id)}
+                                                className={`h-3.5 w-3.5 rounded border items-center justify-center mr-2 ${
+                                                  isQuizSelected
+                                                    ? 'bg-brand-600 border-brand-500'
+                                                    : 'bg-slate-900 border-slate-600'
+                                                }`}
+                                              >
+                                                {isQuizSelected && (
+                                                  <Check size={9} color="#fff" strokeWidth={3} />
+                                                )}
+                                              </Pressable>
+
+                                              <View className="flex-row items-center gap-1.5 flex-1 pr-2">
+                                                <HelpCircle size={12} color="#a855f7" />
+                                                <AppText
+                                                  className="text-[11px] font-medium text-indigo-200 flex-1"
+                                                  numberOfLines={1}
+                                                >
+                                                  {quiz.title || quiz.titleEn || 'Quiz'}
+                                                </AppText>
+                                              </View>
+
+                                              <Pressable
+                                                onPress={() =>
+                                                  handleDownloadSingleAssessment(quiz.id, mod.id)
+                                                }
+                                                className="p-1 px-1.5 rounded bg-slate-800 active:bg-slate-700"
+                                              >
+                                                <Download size={11} color="#c084fc" />
+                                              </Pressable>
+                                            </View>
+                                          );
+                                        })}
+                                      </View>
+                                    )}
+                                  </View>
+                                );
+                              })}
+
+                              {/* Module-level Quizzes (if any) */}
+                              {mod.assessments.map((modQuiz) => {
+                                const isQuizSelected = selectedAssessmentIds.has(modQuiz.id);
+
+                                return (
+                                  <View
+                                    key={modQuiz.id}
+                                    className="flex-row items-center justify-between p-2 rounded-lg bg-indigo-950/40 border border-indigo-800/40"
+                                  >
+                                    <Pressable
+                                      onPress={() => toggleAssessmentSelection(modQuiz.id)}
+                                      className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                                        isQuizSelected
+                                          ? 'bg-brand-600 border-brand-500'
+                                          : 'bg-slate-900 border-slate-600'
+                                      }`}
+                                    >
+                                      {isQuizSelected && (
+                                        <Check size={11} color="#ffffff" strokeWidth={3} />
+                                      )}
+                                    </Pressable>
+
+                                    <View className="flex-row items-center gap-2 flex-1 pr-2">
+                                      <Award size={14} color="#a855f7" />
+                                      <AppText
+                                        className="text-xs font-semibold text-indigo-200 flex-1"
+                                        numberOfLines={1}
+                                      >
+                                        {modQuiz.title || modQuiz.titleEn || 'Module Assessment'}
+                                      </AppText>
+                                    </View>
+
+                                    <Pressable
+                                      onPress={() =>
+                                        handleDownloadSingleAssessment(modQuiz.id, mod.id)
+                                      }
+                                      className="p-1 px-2 rounded-md bg-slate-800 border border-slate-700 active:bg-slate-700"
+                                    >
+                                      <Download size={12} color="#c084fc" />
+                                    </Pressable>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* Course-level Final Assessments (ONLY if unlocked) */}
+                  {unlockedCourseAssessments.length > 0 && (
+                    <View className="gap-2 pt-1">
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                        Course Assessments
+                      </AppText>
+                      {unlockedCourseAssessments.map((ca) => {
+                        const isSelected = selectedAssessmentIds.has(ca.id);
+
+                        return (
+                          <View
+                            key={ca.id}
+                            className="flex-row items-center justify-between p-2.5 rounded-xl border border-amber-500/30 bg-amber-950/20"
+                          >
+                            <Pressable
+                              onPress={() => toggleAssessmentSelection(ca.id)}
+                              className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                                isSelected
+                                  ? 'bg-brand-600 border-brand-500'
+                                  : 'bg-slate-900 border-slate-600'
+                              }`}
+                            >
+                              {isSelected && <Check size={11} color="#ffffff" strokeWidth={3} />}
+                            </Pressable>
+
+                            <View className="flex-row items-center gap-2 flex-1 pr-2">
+                              <Award size={16} color="#f59e0b" />
+                              <AppText
+                                className="text-xs font-bold text-amber-200 flex-1"
+                                numberOfLines={1}
+                              >
+                                {ca.title || ca.titleEn || 'Final Assessment'}
+                              </AppText>
+                            </View>
+
+                            <Pressable
+                              onPress={() => handleDownloadSingleAssessment(ca.id)}
+                              className="flex-row items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 border border-amber-600/40 active:bg-amber-900"
+                            >
+                              <Download size={12} color="#f59e0b" />
+                              <AppText className="text-[11px] font-semibold text-amber-300">
+                                Download
+                              </AppText>
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+        </View>
+      )}
     </Card>
   );
 }

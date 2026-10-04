@@ -97,6 +97,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="downloads"
+        options={{
+          title: t('screens.downloads', { defaultValue: 'Downloads' }),
+          tabBarIcon: ({ color, size }) => (
+            <DownloadCloud color={color} size={size} strokeWidth={2.2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="live-sessions"
         options={{
           title: t('tabs.liveSessions'),

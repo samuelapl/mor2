@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { BookOpen, ChevronRight, HardDrive } from 'lucide-react-native';
+import { BookOpen, ChevronRight, DownloadCloud, HardDrive } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
@@ -50,22 +50,24 @@ export default function MyCoursesScreen() {
             />
             <Card
               onPress={() => router.push('/downloads')}
-              className="flex-row items-center justify-between border-brand-500/25 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/25 p-3.5"
+              className="flex-row items-center justify-between border border-sky-500/40 bg-sky-950/40 dark:bg-slate-900 dark:border-sky-500/50 p-4 rounded-2xl shadow-sm"
             >
-              <View className="flex-row items-center gap-3">
-                <View className="h-9 w-9 items-center justify-center rounded-xl bg-brand-600/10 dark:bg-brand-600/20">
-                  <HardDrive size={18} color={palette.brand600} />
+              <View className="flex-row items-center gap-3.5 flex-1">
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-400/30">
+                  <DownloadCloud size={22} color="#38bdf8" strokeWidth={2.2} />
                 </View>
-                <View>
-                  <AppText className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                <View className="flex-1">
+                  <AppText className="text-sm font-bold text-white tracking-wide">
                     {t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
                   </AppText>
-                  <AppText variant="caption">
+                  <AppText className="text-xs font-semibold text-sky-200 dark:text-sky-300 mt-0.5">
                     {t('offline.bannerSubtitle', { defaultValue: 'View saved courses, lessons & recordings' })}
                   </AppText>
                 </View>
               </View>
-              <ChevronRight size={16} color={colors.textMuted} />
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+                <ChevronRight size={18} color="#38bdf8" />
+              </View>
             </Card>
           </View>
         }

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { BookOpen, CirclePlay, Compass, Trophy } from 'lucide-react-native';
+import { BookOpen, ChevronRight, CirclePlay, Compass, DownloadCloud, Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -81,6 +81,29 @@ export default function HomeScreen() {
           label={t('home.completed')}
         />
       </View>
+
+      {/* Offline Learning & Downloads Quick Access */}
+      <Card
+        onPress={() => router.push('/(tabs)/downloads' as any)}
+        className="flex-row items-center justify-between border border-sky-500/40 bg-sky-950/40 dark:bg-slate-900 dark:border-sky-500/50 p-4 rounded-2xl shadow-sm"
+      >
+        <View className="flex-row items-center gap-3.5 flex-1">
+          <View className="h-11 w-11 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-400/30">
+            <DownloadCloud size={22} color="#38bdf8" strokeWidth={2.2} />
+          </View>
+          <View className="flex-1">
+            <AppText className="text-sm font-bold text-white tracking-wide">
+              {t('screens.downloads', { defaultValue: 'Offline Learning & Downloads' })}
+            </AppText>
+            <AppText className="text-xs font-semibold text-sky-200 dark:text-sky-300 mt-0.5">
+              {t('offline.bannerSubtitle', { defaultValue: 'View saved courses, lessons & recordings' })}
+            </AppText>
+          </View>
+        </View>
+        <View className="h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+          <ChevronRight size={18} color="#38bdf8" />
+        </View>
+      </Card>
 
       {nextSession ? (
         <View className="gap-2">
