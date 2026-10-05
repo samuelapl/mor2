@@ -145,9 +145,52 @@ export default function LessonScreen() {
 
   const next = completed ? findNextLesson(progress.data) : null;
   const nextIsOther = next && next.lessonId !== lessonId ? next : null;
+  const moduleAssessment = lookup?.module?.assessment ?? null;
   const courseDone =
     completed && !nextIsOther && (progress.data?.courseCompletion.contentCompleted ?? false);
   const finalAssessment = progress.data?.courseCompletion.finalAssessment ?? null;
+
+  const quizTitle = quiz
+    ? localized(quiz, 'title') || quiz.titleEn || t('classroom.quiz')
+    : '';
+  const quizButtonTitle = t('classroom.takeSpecificQuiz', {
+    defaultValue: `Take ${quizTitle}`,
+    title: quizTitle,
+  });
+
+  const moduleAssessmentTitle = moduleAssessment
+    ? localized(moduleAssessment, 'title') || moduleAssessment.titleEn || t('classroom.quiz')
+    : '';
+  const moduleAssessmentButtonTitle = t('classroom.takeSpecificQuiz', {
+    defaultValue: `Take ${moduleAssessmentTitle}`,
+    title: moduleAssessmentTitle,
+  });
+
+  const finalAssessmentTitle = finalAssessment
+    ? localized(finalAssessment, 'title') ||
+      finalAssessment.titleEn ||
+      t('classroom.finalAssessment')
+    : '';
+  const finalAssessmentButtonTitle = t('classroom.takeSpecificQuiz', {
+    defaultValue: `Take ${finalAssessmentTitle}`,
+    title: finalAssessmentTitle,
+  });
+
+  const isVideoAttachment = (att: {
+    fileType?: string | null;
+    fileName?: string | null;
+    fileUrl: string;
+  }) => {
+    if (att.fileType?.toLowerCase().startsWith('video/')) return true;
+    const nameOrUrl = (att.fileName || att.fileUrl || '').toLowerCase();
+    if (/\.(mp4|mov|webm|mkv|avi|m4v|3gp|flv)$/i.test(nameOrUrl)) return true;
+    if (data?.resourceUrl && att.fileUrl === data.resourceUrl) return true;
+    return false;
+  };
+
+  const downloadableAttachments = (data?.attachments ?? []).filter(
+    (file) => !isVideoAttachment(file),
+  );
 
   // The React Compiler memoizes these; no manual useCallback needed.
   const markComplete = (lastPosition?: number) => {
@@ -292,10 +335,10 @@ export default function LessonScreen() {
 
           {body ? <LessonBody content={body} /> : null}
 
-          {data.attachments.length > 0 ? (
+          {downloadableAttachments.length > 0 ? (
             <View className="gap-2">
               <AppText variant="heading">{t('classroom.attachments')}</AppText>
-              {data.attachments.map((file) => (
+              {downloadableAttachments.map((file) => (
                 <FileRow
                   key={file.id}
                   url={file.fileUrl}
@@ -360,9 +403,16 @@ export default function LessonScreen() {
                     onPress={() => replaceWithLesson(nextIsOther.lessonId)}
                     fullWidth
                   />
+                ) : moduleAssessment && !moduleAssessment.passed ? (
+                  <Button
+                    title={moduleAssessmentButtonTitle}
+                    icon={<ClipboardCheck size={18} color="#fff" />}
+                    onPress={() => openQuiz(moduleAssessment.id)}
+                    fullWidth
+                  />
                 ) : courseDone && finalAssessment && !finalAssessment.passed ? (
                   <Button
-                    title={t('classroom.finalAssessmentCta')}
+                    title={finalAssessmentButtonTitle}
                     icon={<ClipboardCheck size={18} color="#fff" />}
                     onPress={() => openQuiz(finalAssessment.id)}
                     fullWidth
@@ -381,7 +431,7 @@ export default function LessonScreen() {
             ) : quiz && !quiz.passed ? (
               <>
                 <Button
-                  title={t('classroom.takeQuiz')}
+                  title={quizButtonTitle}
                   icon={<ClipboardCheck size={18} color="#fff" />}
                   disabled={!quizOpen}
                   onPress={() => openQuiz(quiz.id)}

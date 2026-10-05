@@ -197,7 +197,9 @@
     "readyJourneySubtitle": "Enroll today to gain immediate access to coursework, interactive modules, and official certification.",
     "ministryFallback": "Ministry of Revenues",
     "audienceFallback": "All Staff & Officers",
-    "noPrerequisites": "None required — open to all qualified staff"
+    "noPrerequisites": "None required — open to all qualified staff",
+    "courseDetails": "Course Overview & Details",
+    "dropReasonPlaceholder": "Optional reason for dropping..."
   },
   "home": {
     "greeting": "Hello, {{name}}",
@@ -236,6 +238,8 @@
     "nextLesson": "Next lesson",
     "backToCourse": "Back to course",
     "takeQuiz": "Take the lesson quiz",
+    "takeSpecificQuiz": "Take {{title}}",
+    "finalAssessment": "Final assessment",
     "quizCompletesLesson": "Passing the quiz completes this lesson.",
     "timeRemaining": "Keep studying — {{time}} left",
     "timeDone": "Study time complete",
