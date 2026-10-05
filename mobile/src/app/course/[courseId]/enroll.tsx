@@ -134,7 +134,7 @@ export default function EnrollScreen() {
 
       <FormMessage message={formError} />
       <Button
-        title={t('courses.confirmEnroll')}
+        title={effectiveMode === 'inPerson' ? t('courses.reserveSeat') : t('courses.enrollOnline')}
         onPress={submit}
         disabled={!canSubmit}
         loading={enroll.isPending}

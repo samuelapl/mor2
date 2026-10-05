@@ -36,7 +36,9 @@ export interface ApiCourse {
   category: string | null;
   department: string | null;
   targetAudience: string | null;
+  deliveryMethod?: string | null;
   deliveryMode: CourseDeliveryMode;
+  hasOnlineSessions?: boolean;
   language: string | null;
   prerequisites: string | null;
   estimatedHours: number | null;

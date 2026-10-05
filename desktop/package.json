@@ -24,30 +24,26 @@
   "build": {
     "appId": "et.gov.mor.lms",
     "productName": "MoR LMS",
-
     "directories": {
       "output": "out"
     },
-     "afterPack": "./afterPack.js",
-
+    "afterPack": "./afterPack.js",
     "files": [
       "**/*"
     ],
-
     "extraResources": [
-  {
-    "from": "../frontend/.next/standalone",
-    "to": "standalone",
-    "filter": [
-      "**/*"
-    ]
-  },
-  {
-    "from": "runtime/node.exe",
-    "to": "node.exe"
-  }
-],
-
+      {
+        "from": "../frontend/.next/standalone",
+        "to": "standalone",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "runtime/node.exe",
+        "to": "node.exe"
+      }
+    ],
     "win": {
       "target": {
         "target": "nsis",
@@ -57,14 +53,13 @@
       },
       "icon": "assets/mor-lms.ico"
     },
-
     "nsis": {
-  "oneClick": false,
-  "allowToChangeInstallationDirectory": true,
-  "shortcutName": "MoR LMS",
-  "runAfterFinish": false,
-  "artifactName": "MoR-LMS-Setup.exe",
-  "include": "installer.nsh"
-}
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "MoR LMS",
+      "runAfterFinish": false,
+      "artifactName": "MoR-LMS-Setup.exe",
+      "include": "installer.nsh"
+    }
   }
 }

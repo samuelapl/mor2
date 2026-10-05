@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Menu } = require("electron");const { spawn } = require("child_process");
+const { app, BrowserWindow, Menu } = require("electron");
+const { spawn } = require("child_process");
 const path = require("path");
 const http = require("http");
 
@@ -41,10 +42,13 @@ function startNextServer() {
     standalonePath = path.join(
       process.resourcesPath,
       "standalone",
-      "server.js"
+      "server.js",
     );
   } else {
-    nodePath = "C:\\Program Files\\nodejs\\node.exe";
+    nodePath =
+      process.platform === "win32"
+        ? "C:\\Program Files\\nodejs\\node.exe"
+        : "node";
 
     standalonePath = path.join(
       __dirname,
@@ -52,7 +56,7 @@ function startNextServer() {
       "frontend",
       ".next",
       "standalone",
-      "server.js"
+      "server.js",
     );
   }
 
@@ -95,9 +99,7 @@ function startNextServer() {
   });
 
   nextServer.on("exit", (code, signal) => {
-    console.log(
-      `Next.js process exited. code=${code}, signal=${signal}`
-    );
+    console.log(`Next.js process exited. code=${code}, signal=${signal}`);
   });
 }
 

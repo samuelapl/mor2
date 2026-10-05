@@ -183,7 +183,21 @@
     "quiz": "Quiz",
     "certificateReady": "Certificate available",
     "downloadAvailableContent": "Download Available Content",
-    "downloadAvailableHint": "Download currently unlocked lessons, media, and quizzes to study offline. Locked lessons unlock progressively as you complete coursework."
+    "downloadAvailableHint": "Download currently unlocked lessons, media, and quizzes to study offline. Locked lessons unlock progressively as you complete coursework.",
+    "enrollOnline": "Enroll in Online Course",
+    "reserveSeat": "Reserve Seat",
+    "enrollInCourse": "Enroll in Course",
+    "otherDetails": "Other details",
+    "departmentMinistry": "Department / Ministry",
+    "targetAudienceLabel": "Target Audience",
+    "deliveryMethodLabel": "Delivery Method",
+    "primaryLanguageLabel": "Primary Language",
+    "prerequisitesBackground": "Prerequisites & Recommended Background",
+    "readyJourneyTitle": "Ready to start your learning journey?",
+    "readyJourneySubtitle": "Enroll today to gain immediate access to coursework, interactive modules, and official certification.",
+    "ministryFallback": "Ministry of Revenues",
+    "audienceFallback": "All Staff & Officers",
+    "noPrerequisites": "None required — open to all qualified staff"
   },
   "home": {
     "greeting": "Hello, {{name}}",

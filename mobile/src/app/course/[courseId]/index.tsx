@@ -1,8 +1,26 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { ArrowRight, Award, CalendarDays, Clock, MapPin } from 'lucide-react-native';
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Compass,
+  Globe,
+  GraduationCap,
+  Info,
+  Layers,
+  MapPin,
+  Monitor,
+  Target,
+  Users,
+} from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Alert } from '@/core/utils/alert';
 import {
@@ -63,6 +81,7 @@ export default function CourseScreen() {
   const dropError = useFormError(drop.error);
   const [dropOpen, setDropOpen] = useState(false);
   const [dropReason, setDropReason] = useState('');
+  const [otherDetailsOpen, setOtherDetailsOpen] = useState(false);
 
   const refresh = () => {
     void course.refetch();
@@ -94,6 +113,22 @@ export default function CourseScreen() {
   const next = findNextLesson(progress.data);
   const objectives = localized(data, 'objectives');
   const description = localized(data, 'description');
+
+  const enrollButtonTitle =
+    status === 'DROPPED'
+      ? t('courses.enrollAgain')
+      : data.deliveryMode === 'IN_PERSON_ONLY'
+        ? t('courses.reserveSeat')
+        : data.deliveryMode === 'ONLINE_ONLY'
+          ? t('courses.enrollOnline')
+          : t('courses.enrollInCourse');
+
+  const enrollButtonIcon =
+    data.deliveryMode === 'IN_PERSON_ONLY' ? (
+      <MapPin size={18} color="#fff" />
+    ) : (
+      <ArrowRight size={18} color="#fff" />
+    );
 
   const openLesson = (lessonId: string) =>
     router.push({
@@ -231,7 +266,8 @@ export default function CourseScreen() {
               ) : null}
               <FormMessage message={enrollError} />
               <Button
-                title={status === 'DROPPED' ? t('courses.enrollAgain') : t('courses.enroll')}
+                title={enrollButtonTitle}
+                icon={enrollButtonIcon}
                 onPress={startEnroll}
                 loading={enroll.isPending}
                 fullWidth
@@ -242,23 +278,25 @@ export default function CourseScreen() {
             </View>
           )}
 
-          {/* Offline Learning download manager */}
-          <OfflineDownloadCard
-            courseId={courseId}
-            enrolled={enrolled}
-            courseDetail={data}
-            progress={progress.data}
-          />
+          {/* Offline Learning download manager (enrolled only) */}
+          {enrolled ? (
+            <OfflineDownloadCard
+              courseId={courseId}
+              enrolled={enrolled}
+              courseDetail={data}
+              progress={progress.data}
+            />
+          ) : null}
 
           {/* In-person seat */}
           {enrolled &&
           enrollment.data?.deliveryMode === 'IN_PERSON_ONLY' &&
           enrollment.data.venue ? (
-            <Card className="gap-2.5 p-4 border border-slate-800 bg-slate-900/90">
+            <Card className="gap-2.5 p-4 border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 shadow-2xs">
               <AppText variant="label">{t('courses.yourSeat')}</AppText>
               <View className="flex-row items-center gap-2">
                 <MapPin size={16} color={colors.primary} />
-                <AppText className="flex-1 text-sm text-slate-300">
+                <AppText className="flex-1 text-sm text-slate-700 dark:text-slate-300">
                   {enrollment.data.venue.name}
                   {enrollment.data.venue.building
                     ? ` · ${enrollment.data.venue.building}`
@@ -285,35 +323,29 @@ export default function CourseScreen() {
           {/* About this course */}
           {description ? (
             <View className="gap-2 pt-2">
-              <AppText className="text-lg font-bold text-white tracking-wide">
-                {t('courses.about')}
-              </AppText>
-              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
+              <View className="flex-row items-center gap-2">
+                <BookOpen size={18} color={colors.primary} />
+                <AppText className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
+                  {t('courses.about')}
+                </AppText>
+              </View>
+              <AppText className="text-[15px] leading-6 text-slate-700 dark:text-slate-300 font-normal">
                 {description}
               </AppText>
             </View>
           ) : null}
 
-          {/* What you'll learn / Objectives */}
+          {/* What you will learn / Objectives */}
           {objectives ? (
             <View className="gap-2 pt-2">
-              <AppText className="text-lg font-bold text-white tracking-wide">
-                {t('courses.objectives')}
-              </AppText>
-              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
+              <View className="flex-row items-center gap-2">
+                <Target size={18} color="#10b981" />
+                <AppText className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
+                  {t('courses.objectives')}
+                </AppText>
+              </View>
+              <AppText className="text-[15px] leading-6 text-slate-700 dark:text-slate-300 font-normal">
                 {objectives}
-              </AppText>
-            </View>
-          ) : null}
-
-          {/* Prerequisites */}
-          {data.prerequisites ? (
-            <View className="gap-2 pt-2">
-              <AppText className="text-lg font-bold text-white tracking-wide">
-                {t('courses.prerequisites')}
-              </AppText>
-              <AppText className="text-[15px] leading-6 text-slate-300 font-normal">
-                {data.prerequisites}
               </AppText>
             </View>
           ) : null}
@@ -321,14 +353,17 @@ export default function CourseScreen() {
           {/* Trainers */}
           {data.trainers.length > 0 ? (
             <View className="gap-3 pt-2">
-              <AppText className="text-lg font-bold text-white tracking-wide">
-                {t('courses.trainers')}
-              </AppText>
+              <View className="flex-row items-center gap-2">
+                <Users size={18} color="#0ea5e9" />
+                <AppText className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
+                  {t('courses.trainers')}
+                </AppText>
+              </View>
               <View className="gap-2">
                 {data.trainers.map(({ user }) => (
                   <View
                     key={user.id}
-                    className="flex-row items-center gap-3.5 rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+                    className="flex-row items-center gap-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 shadow-2xs"
                   >
                     <Avatar
                       uri={user.avatarUrl}
@@ -337,11 +372,11 @@ export default function CourseScreen() {
                       size={40}
                     />
                     <View className="flex-1">
-                      <AppText className="text-[15px] font-semibold text-white">
+                      <AppText className="text-[15px] font-semibold text-slate-900 dark:text-white">
                         {user.firstName} {user.lastName}
                       </AppText>
                       {user.email ? (
-                        <AppText className="text-xs text-slate-400">{user.email}</AppText>
+                        <AppText className="text-xs text-slate-500 dark:text-slate-400">{user.email}</AppText>
                       ) : null}
                     </View>
                   </View>
@@ -350,15 +385,151 @@ export default function CourseScreen() {
             </View>
           ) : null}
 
-          {/* Syllabus */}
+          {/* Other Details (Expandable) */}
           <View className="pt-2">
-            <CourseSyllabus
-              course={data}
-              progress={enrolled ? progress.data : undefined}
-              onOpenLesson={openLesson}
-              onOpenAssessment={openAssessment}
-            />
+            <Card className="p-0 overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-2xs">
+              <Pressable
+                onPress={() => setOtherDetailsOpen((prev) => !prev)}
+                className="flex-row items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-800/60"
+                accessibilityRole="button"
+                accessibilityLabel={t('courses.otherDetails')}
+                accessibilityState={{ expanded: otherDetailsOpen }}
+              >
+                <View className="flex-row items-center gap-2.5">
+                  <View className="h-8 w-8 rounded-full bg-amber-500/10 items-center justify-center">
+                    <Info size={18} color="#f59e0b" />
+                  </View>
+                  <AppText className="text-base font-bold text-slate-900 dark:text-white">
+                    {t('courses.otherDetails')}
+                  </AppText>
+                </View>
+                {otherDetailsOpen ? (
+                  <ChevronUp size={18} color={colors.textMuted} />
+                ) : (
+                  <ChevronDown size={18} color={colors.textMuted} />
+                )}
+              </Pressable>
+
+              {otherDetailsOpen ? (
+                <View className="px-4 pb-4 pt-1 gap-3.5 border-t border-slate-100 dark:border-slate-800/80">
+                  {/* Department / Ministry */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <Building2 size={14} color={colors.textMuted} />
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('courses.departmentMinistry')}
+                      </AppText>
+                    </View>
+                    <AppText className="text-sm font-semibold text-slate-800 dark:text-slate-200 pl-5">
+                      {data.department || t('courses.ministryFallback')}
+                    </AppText>
+                  </View>
+
+                  {/* Target Audience */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <Users size={14} color={colors.textMuted} />
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('courses.targetAudienceLabel')}
+                      </AppText>
+                    </View>
+                    <AppText className="text-sm font-semibold text-slate-800 dark:text-slate-200 pl-5">
+                      {data.targetAudience || t('courses.audienceFallback')}
+                    </AppText>
+                  </View>
+
+                  {/* Delivery Method */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <Monitor size={14} color={colors.textMuted} />
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('courses.deliveryMethodLabel')}
+                      </AppText>
+                    </View>
+                    <AppText className="text-sm font-semibold text-slate-800 dark:text-slate-200 pl-5 capitalize">
+                      {data.deliveryMethod
+                        ? data.deliveryMethod.replace(/_/g, ' ')
+                        : data.deliveryMode === 'ONLINE_ONLY'
+                          ? '100% Online Self-Paced Learning'
+                          : data.deliveryMode === 'IN_PERSON_ONLY'
+                            ? 'In-Person Classroom Practicum'
+                            : 'Blended: Self-Paced & Live Sessions'}
+                    </AppText>
+                  </View>
+
+                  {/* Primary Language */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <Globe size={14} color={colors.textMuted} />
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('courses.primaryLanguageLabel')}
+                      </AppText>
+                    </View>
+                    <AppText className="text-sm font-semibold text-slate-800 dark:text-slate-200 pl-5">
+                      {data.language || 'English / Amharic'}
+                    </AppText>
+                  </View>
+
+                  {/* Prerequisites & Recommended Background */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <GraduationCap size={14} color={colors.textMuted} />
+                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('courses.prerequisitesBackground')}
+                      </AppText>
+                    </View>
+                    <AppText className="text-sm font-normal leading-relaxed text-slate-700 dark:text-slate-300 pl-5">
+                      {data.prerequisites || t('courses.noPrerequisites')}
+                    </AppText>
+                  </View>
+                </View>
+              ) : null}
+            </Card>
           </View>
+
+          {/* Syllabus — available only after enrollment */}
+          {enrolled ? (
+            <View className="pt-2">
+              <View className="flex-row items-center gap-2 mb-3">
+                <Layers size={18} color={colors.primary} />
+                <AppText className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
+                  {t('courses.syllabus')}
+                </AppText>
+              </View>
+              <CourseSyllabus
+                course={data}
+                progress={progress.data}
+                onOpenLesson={openLesson}
+                onOpenAssessment={openAssessment}
+              />
+            </View>
+          ) : null}
+
+          {/* Bottom Pre-Enrollment CTA Banner */}
+          {!enrolled || status === 'DROPPED' ? (
+            <Card className="gap-3.5 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/50 p-5 dark:border-indigo-900/60 dark:bg-slate-900 shadow-sm mt-3">
+              <View className="flex-row items-start gap-3">
+                <View className="h-10 w-10 rounded-xl bg-indigo-600/10 dark:bg-indigo-500/20 items-center justify-center shrink-0">
+                  <Compass size={22} color={colors.primary} />
+                </View>
+                <View className="flex-1 gap-1">
+                  <AppText className="text-base font-bold text-slate-900 dark:text-white">
+                    {t('courses.readyJourneyTitle')}
+                  </AppText>
+                  <AppText className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                    {t('courses.readyJourneySubtitle')}
+                  </AppText>
+                </View>
+              </View>
+              <Button
+                title={enrollButtonTitle}
+                icon={enrollButtonIcon}
+                onPress={startEnroll}
+                loading={enroll.isPending}
+                fullWidth
+              />
+            </Card>
+          ) : null}
 
           {enrolled && status === 'ACTIVE' && enrollment.data ? (
             <Button title={t('courses.drop')} variant="ghost" onPress={() => setDropOpen(true)} />
