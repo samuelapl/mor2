@@ -72,6 +72,12 @@ model User {
   passwordResets          PasswordReset[]
   questionBankQuestions   QuestionBankQuestion[]
 
+  newsCreated             News[]         @relation("NewsCreatedBy")
+  newsUpdated             News[]         @relation("NewsUpdatedBy")
+  newsReviewed            News[]         @relation("NewsReviewedBy")
+  newsReactions           NewsReaction[]
+  newsComments            NewsComment[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at") // soft delete
@@ -1016,4 +1022,115 @@ model LookupCategory {
 
   @@unique([type, value])
   @@map("lookup_categories")
+}
+
+// ──────────────────────────────────────────────────────────
+// News — public Ministry news (press releases, announcements).
+// news.manage writes drafts; news.publish reviews and publishes.
+// ──────────────────────────────────────────────────────────
+
+enum NewsStatus {
+  DRAFT
+  PENDING_REVIEW
+  REJECTED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NewsCategory {
+  PRESS_RELEASE
+  ANNOUNCEMENT
+  EVENT
+  NOTICE
+}
+
+enum NewsReactionType {
+  LIKE
+  DISLIKE
+}
+
+model News {
+  id              String       @id @default(uuid())
+  slug            String       @unique
+  headline        String
+  summary         String? // card excerpt; generated from content when empty
+  content         String       @db.Text
+  coverImageUrl   String?      @map("cover_image_url") // required before submit
+  category        NewsCategory @default(PRESS_RELEASE)
+  source          String       @default("የገቢዎች ሚኒስቴር")
+  eventDate       DateTime?    @map("event_date")
+  status          NewsStatus   @default(DRAFT)
+  isFeatured      Boolean      @default(false) @map("is_featured")
+  allowComments   Boolean      @default(true) @map("allow_comments")
+  rejectionReason String?      @map("rejection_reason")
+  publishedAt     DateTime?    @map("published_at") // set on first publish only
+  shareCount      Int          @default(0) @map("share_count")
+  viewCount       Int          @default(0) @map("view_count")
+
+  createdById  String    @map("created_by_id")
+  updatedById  String?   @map("updated_by_id")
+  reviewedById String?   @map("reviewed_by_id")
+  reviewedAt   DateTime? @map("reviewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at") // soft delete
+
+  createdBy  User  @relation("NewsCreatedBy", fields: [createdById], references: [id])
+  updatedBy  User? @relation("NewsUpdatedBy", fields: [updatedById], references: [id])
+  reviewedBy User? @relation("NewsReviewedBy", fields: [reviewedById], references: [id])
+
+  images    NewsImage[]
+  reactions NewsReaction[]
+  comments  NewsComment[]
+
+  @@index([status, publishedAt])
+  @@index([isFeatured])
+  @@map("news")
+}
+
+model NewsImage {
+  id        String   @id @default(uuid())
+  newsId    String   @map("news_id")
+  url       String
+  caption   String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@index([newsId])
+  @@map("news_images")
+}
+
+model NewsReaction {
+  newsId    String           @map("news_id")
+  userId    String           @map("user_id")
+  type      NewsReactionType
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([newsId, userId]) // one reaction per user per post
+  @@index([newsId, type])
+  @@map("news_reactions")
+}
+
+model NewsComment {
+  id         String    @id @default(uuid())
+  newsId     String    @map("news_id")
+  userId     String    @map("user_id")
+  content    String    @db.Text
+  isHidden   Boolean   @default(false) @map("is_hidden")
+  hiddenById String?   @map("hidden_by_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([newsId, createdAt])
+  @@map("news_comments")
 }

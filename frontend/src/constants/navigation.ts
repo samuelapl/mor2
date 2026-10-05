@@ -15,6 +15,8 @@ import {
   LayoutDashboard,
   Lock,
   MessageSquareQuote,
+  Newspaper,
+  PenSquare,
   Presentation,
   ScrollText,
   Settings,
@@ -389,6 +391,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/learner/certificates': ['certificate.view'],
   '/learner/progress': ['progress.view', 'progress.mark_own'],
   '/training-admin/feedback': ['feedback.manage', 'feedback.view'],
+  '/news-management': ['news.manage', 'news.publish'],
 };
 
 /**
@@ -571,6 +574,18 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     href: '/system-admin/categories',
     icon: Tags,
     permission: 'category.manage',
+  },
+  {
+    label: 'News Management',
+    href: '/news-management',
+    icon: PenSquare,
+    permission: PERMISSION_GATED_PATHS['/news-management'],
+  },
+  // No permission: every signed-in user gets a link to the public news page.
+  {
+    label: 'News',
+    href: '/news',
+    icon: Newspaper,
   },
 ];
 

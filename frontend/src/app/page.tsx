@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -25,16 +24,15 @@ import {
   BarChart3,
   Wifi,
   CheckCircle2,
-  Menu,
-  X,
 } from 'lucide-react';
 
 import { fetchLandingStats } from '@/lib/api/dashboard';
 import type { ApiLandingStats as LandingStats } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import PublicHeader from '@/components/layout/PublicHeader';
+import PublicFooter from '@/components/layout/PublicFooter';
+import { LatestNewsSection } from '@/components/features/news/LatestNewsSection';
 
 // Dynamic Institutional Curriculum Explorer
 function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
@@ -244,7 +242,6 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [stats, setStats] = useState<LandingStats | null>(null);
   const [activeRoleIndex, setActiveRoleIndex] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -261,29 +258,6 @@ export default function LandingPage() {
       cancelled = true;
     };
   }, []);
-
-  const navLinks = [
-    {
-      label: tBilingual('Platform Overview', 'አጠቃላይ እይታ'),
-      href: '#capabilities',
-    },
-    {
-      label: tBilingual('Role Workspaces', 'የስራ ድርሻ ቦታዎች'),
-      href: '#roles',
-    },
-    {
-      label: tBilingual('Workflow', 'የስራ ሂደት'),
-      href: '#how-it-works',
-    },
-    {
-      label: tBilingual('Desktop App', 'የዴስክቶፕ መተግበሪያ'),
-      href: '#desktop',
-    },
-    {
-      label: tBilingual('FAQ', 'ተደጋጋሚ ጥያቄዎች'),
-      href: '#faq',
-    },
-  ];
 
   const enterpriseFeatures = [
     {
@@ -552,118 +526,7 @@ export default function LandingPage() {
       {/* Background Subtle Pattern */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(#0284c7_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] dark:opacity-[0.05]" />
 
-      {/* INSTITUTIONAL STATUS BANNER */}
-      <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 via-white to-amber-50/50 px-4 py-2 text-center text-xs font-medium text-sky-950 dark:border-slate-800 dark:from-slate-950 dark:via-sky-950/20 dark:to-slate-950 dark:text-sky-300">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
-          <Landmark className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-          <span>
-            {tBilingual(
-              'Federal Democratic Republic of Ethiopia • Ministry of Revenues Enterprise LMS',
-              'የኢትዮጵያ ፌዴራላዊ ዴሞክራሲያዊ ሪፐብሊክ • የገቢዎች ሚኒስቴር የስልጠና ማዕከል',
-            )}
-          </span>
-        </div>
-      </div>
-
-      {/* TOPBAR NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/90">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Brand Identity - Clean logo without circle frame */}
-          <Link href="/" className="flex items-center gap-3">
-            <Image
-              src="/logo.jpg"
-              alt="Ministry of Revenues"
-              width={42}
-              height={42}
-              className="h-10 w-10 object-contain"
-              priority
-            />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-display text-base font-bold tracking-tight text-slate-950 dark:text-white">
-                  MoR LMS
-                </span>
-                <span className="rounded bg-amber-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-amber-900 border border-amber-300/50 dark:bg-amber-950 dark:text-amber-300">
-                  GOV
-                </span>
-              </div>
-              <p className="text-[10px] font-medium text-sky-800 dark:text-sky-400">
-                {tBilingual('Ministry of Revenues', 'የገቢዎች ሚኒስቴር')}
-              </p>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-8 lg:flex">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-xs font-semibold uppercase tracking-wider text-slate-600 transition hover:text-sky-700 dark:text-slate-400 dark:hover:text-sky-400"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          {/* Controls & Actions */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <LanguageToggle />
-            <ThemeToggle isAmharic={lang === 'am'} />
-
-            <Link
-              href="/login"
-              className="rounded-xl border border-slate-300/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {tBilingual('Sign In', 'ግባ')}
-            </Link>
-
-            <Link
-              href="/login"
-              className="hidden rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-600/20 transition hover:from-sky-500 hover:to-blue-600 active:scale-95 sm:inline-flex"
-            >
-              {tBilingual('Get Started', 'ስርዓቱን ጀምር')}
-            </Link>
-
-            {/* Mobile menu trigger */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden dark:border-slate-800 dark:text-slate-300"
-              aria-label="Toggle navigation menu"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
-            <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="pt-2">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full rounded-xl bg-sky-600 py-2.5 text-center text-xs font-semibold text-white shadow-md"
-                >
-                  {tBilingual('Get Started', 'ስርዓቱን ጀምር')}
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
+      <PublicHeader />
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28">
@@ -1158,6 +1021,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <LatestNewsSection />
+
       {/* FAQ SECTION */}
       <section id="faq" className="scroll-mt-16 border-t border-slate-200 bg-slate-50/50 px-4 py-20 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
@@ -1212,56 +1077,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER - Clean logo without circle frame */}
-      <footer className="border-t border-slate-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/logo.jpg"
-                alt="Ministry of Revenues"
-                width={38}
-                height={38}
-                className="h-9 w-9 object-contain"
-              />
-              <div>
-                <p className="font-display text-sm font-bold text-slate-950 dark:text-white">
-                  MoR LMS
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {tBilingual(
-                    'Ministry of Revenues • Ethiopia',
-                    'የገቢዎች ሚኒስቴር • ኢትዮጵያ',
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
-              <a href="#capabilities" className="hover:text-sky-700 dark:hover:text-sky-400">
-                {tBilingual('Capabilities', 'ችሎታዎች')}
-              </a>
-              <a href="#roles" className="hover:text-sky-700 dark:hover:text-sky-400">
-                {tBilingual('Roles', 'የስራ ድርሻዎች')}
-              </a>
-              <a href="#how-it-works" className="hover:text-sky-700 dark:hover:text-sky-400">
-                {tBilingual('Workflow', 'የስራ ሂደት')}
-              </a>
-              <a href="#desktop" className="hover:text-sky-700 dark:hover:text-sky-400">
-                {tBilingual('Windows Client', 'የዴስክቶፕ መተግበሪያ')}
-              </a>
-              <Link href="/login" className="hover:text-sky-700 dark:hover:text-sky-400">
-                {tBilingual('Sign In', 'መግቢያ')}
-              </Link>
-            </div>
-
-            <p className="text-[11px] text-slate-400">
-              © {new Date().getFullYear()}{' '}
-              {tBilingual('Ministry of Revenues. All rights reserved.', 'የገቢዎች ሚኒስቴር። መብቱ በህግ የተጠበቀ ነው።')}
-            </p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </main>
   );
 }

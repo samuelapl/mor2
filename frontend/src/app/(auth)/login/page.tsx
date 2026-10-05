@@ -39,7 +39,11 @@ export default function LoginPage() {
       const result = await login(email, password);
       if (result.ok) {
         toast.success('Welcome back! Signing you in…');
-        router.push(getRoleHomePath(result.role, result.user?.permissions));
+        // ?redirect=/news/... brings readers back to the page that asked them to sign in.
+        // Only same-site paths are honoured, so the parameter cannot send users elsewhere.
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        const safeRedirect = redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
+        router.push(safeRedirect ?? getRoleHomePath(result.role, result.user?.permissions));
       } else if (result.passwordChangeRequired) {
         // Admin-created account: a code was emailed, finish on the first-login page.
         router.push('/first-login');

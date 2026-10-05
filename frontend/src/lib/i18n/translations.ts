@@ -69,6 +69,8 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'System Settings': { en: 'System Settings', am: 'የስርዓት ቅንብሮች' },
   'Audit Logs': { en: 'Audit Logs', am: 'የኦዲት መዝገብ' },
   Categories: { en: 'Categories', am: 'ምድቦች' },
+  News: { en: 'News', am: 'ዜናዎች' },
+  'News Management': { en: 'News Management', am: 'የዜና አስተዳደር' },
   'Course Feedback': { en: 'Course Feedback', am: 'የኮርስ ግብረ-መልስ' },
   Feedback: { en: 'Feedback', am: 'ግብረ-መልስ' },
   Navigation: { en: 'Navigation', am: 'አቅጣጫ መጠቆሚያ' },

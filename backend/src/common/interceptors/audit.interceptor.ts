@@ -8,6 +8,9 @@ import type { AuthenticatedUser } from '@common/interfaces';
 const SKIP_PATHS = ['health', 'audit'];
 // attendance `*:id/override` is audited inside the service (with oldValues)
 const SKIP_OVERRIDES = true;
+// High-volume engagement counters on public news (anonymous views/shares, reaction
+// toggles) — not admin actions, and they would flood the audit log.
+const SKIP_PATTERNS = [/^news\/[^/]+\/(view|share|reaction)$/];
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -43,7 +46,8 @@ export class AuditInterceptor implements NestInterceptor {
     const shouldSkip =
       !isMutation ||
       SKIP_PATHS.some((p) => rawPath === p || rawPath.startsWith(`${p}/`)) ||
-      (SKIP_OVERRIDES && rawPath.endsWith('/override'));
+      (SKIP_OVERRIDES && rawPath.endsWith('/override')) ||
+      SKIP_PATTERNS.some((re) => re.test(rawPath));
 
     if (shouldSkip) {
       return next.handle();

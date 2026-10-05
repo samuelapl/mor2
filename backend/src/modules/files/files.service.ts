@@ -6,7 +6,13 @@ import { PrismaService } from '@config/prisma.service';
 import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMITS } from '@config/constants';
 
 export type FilePurpose =
-  'avatar' | 'attachment' | 'certificate' | 'scorm' | 'cover' | 'certificate_template';
+  | 'avatar'
+  | 'attachment'
+  | 'certificate'
+  | 'scorm'
+  | 'cover'
+  | 'certificate_template'
+  | 'news_image';
 
 const PURPOSE_PATHS: Record<FilePurpose, string> = {
   avatar: 'avatars',
@@ -15,7 +21,12 @@ const PURPOSE_PATHS: Record<FilePurpose, string> = {
   scorm: 'scorm',
   cover: 'covers',
   certificate_template: 'certificate-templates',
+  news_image: 'news',
 };
+
+// News images end up in link previews (Telegram, Facebook), which do not render SVG;
+// SVG can also carry scripts, so it is excluded here unlike other image purposes.
+const NEWS_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 @Injectable()
 export class FilesService implements OnModuleInit {
@@ -277,6 +288,33 @@ export class FilesService implements OnModuleInit {
     return { message: 'File removed successfully' };
   }
 
+  /** Stores a news cover or gallery image under `news/{newsId}/` and returns its public URL. */
+  async uploadNewsImage(file: Express.Multer.File, newsId: string) {
+    this.validateFile(file, 'news_image');
+
+    const ext = (file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = `${PURPOSE_PATHS.news_image}/${newsId}/${uuid()}.${ext}`;
+
+    await this.minio.putObject(this.bucket, key, file.buffer, file.size, {
+      'Content-Type': file.mimetype,
+      'X-Original-Name': file.originalname,
+    });
+
+    const objectUrl = new URL(
+      `http://${this.configService.get<string>('MINIO_ENDPOINT') || 'localhost'}:${
+        this.configService.get<string>('MINIO_PORT') || '9000'
+      }/${this.bucket}/${key}`,
+    );
+
+    return { url: objectUrl.toString() };
+  }
+
+  /** Deletes the object behind a public URL produced by this service; unknown URLs are ignored. */
+  async removeByUrl(url: string | null | undefined) {
+    const key = url?.split(`${this.bucket}/`)[1];
+    if (key) await this.removeObjectIfExists(key);
+  }
+
   private async removeObjectIfExists(key: string) {
     try {
       const exists = await this.minio.statObject(this.bucket, key);
@@ -308,6 +346,8 @@ export class FilesService implements OnModuleInit {
       allowedForPurpose = allowed.images;
     } else if (purpose === 'certificate_template') {
       allowedForPurpose = allowed.images;
+    } else if (purpose === 'news_image') {
+      allowedForPurpose = NEWS_IMAGE_MIME_TYPES;
     } else {
       allowedForPurpose = [
         ...allowed.documents,

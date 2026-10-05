@@ -1062,3 +1062,110 @@ export interface ApiRoleWithPermissions {
   isSystem: boolean;
   permissionCodes: string[];
 }
+
+/* -------------------------------------------------------------------------- */
+/*  News                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export type NewsStatus = 'DRAFT' | 'PENDING_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED';
+export type NewsCategory = 'PRESS_RELEASE' | 'ANNOUNCEMENT' | 'EVENT' | 'NOTICE';
+export type NewsReactionType = 'LIKE' | 'DISLIKE';
+
+export interface ApiNewsImage {
+  id: string;
+  url: string;
+  caption: string | null;
+  sortOrder: number;
+}
+
+/** Public card. headline/summary/content are shown exactly as written (Amharic or English). */
+export interface ApiNewsCard {
+  id: string;
+  slug: string;
+  headline: string;
+  summary: string | null;
+  coverImageUrl: string | null;
+  category: NewsCategory;
+  source: string;
+  eventDate: string | null;
+  publishedAt: string | null;
+  isFeatured: boolean;
+  allowComments: boolean;
+  likeCount: number;
+  commentCount: number;
+  myReaction: NewsReactionType | null;
+}
+
+export interface ApiNewsDetail extends ApiNewsCard {
+  content: string;
+  images: ApiNewsImage[];
+}
+
+export interface ApiNewsPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+/** Admin view: every column plus engagement stats (incl. dislikes). `content`/`images` only on the single-post endpoint. */
+export interface ApiAdminNews {
+  id: string;
+  slug: string;
+  headline: string;
+  summary: string | null;
+  content?: string;
+  coverImageUrl: string | null;
+  category: NewsCategory;
+  source: string;
+  eventDate: string | null;
+  status: NewsStatus;
+  isFeatured: boolean;
+  allowComments: boolean;
+  rejectionReason: string | null;
+  publishedAt: string | null;
+  shareCount: number;
+  viewCount: number;
+  createdById: string;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: ApiNewsPerson;
+  updatedBy?: ApiNewsPerson | null;
+  reviewedBy?: ApiNewsPerson | null;
+  images?: ApiNewsImage[];
+  likeCount: number;
+  dislikeCount: number;
+  commentCount: number;
+}
+
+export interface NewsInput {
+  headline: string;
+  summary?: string | null;
+  content: string;
+  category?: NewsCategory;
+  source?: string;
+  eventDate?: string | null;
+  allowComments?: boolean;
+}
+
+export interface ApiNewsComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: { name: string; avatarUrl: string | null };
+  isMine: boolean;
+}
+
+export interface ApiAdminNewsComment {
+  id: string;
+  newsId: string;
+  content: string;
+  isHidden: boolean;
+  createdAt: string;
+  user: ApiNewsPerson & { email: string; avatarUrl: string | null };
+}
+
+export interface ApiNewsReactionState {
+  likeCount: number;
+  myReaction: NewsReactionType | null;
+}

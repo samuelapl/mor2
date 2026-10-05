@@ -2,6 +2,7 @@ export const ROLES_KEY = 'roles';
 export const PERMISSIONS_KEY = 'permissions';
 export const CURRENT_USER_KEY = 'currentUser';
 export const IS_PUBLIC_KEY = 'isPublic';
+export const IS_OPTIONAL_AUTH_KEY = 'isOptionalAuth';
 
 export const BCRYPT_ROUNDS = 12;
 
@@ -18,6 +19,7 @@ export const FILE_SIZE_LIMITS = {
   certificate: 10 * 1024 * 1024, // 10 MB
   cover: 5 * 1024 * 1024, // 5 MB
   certificate_template: 10 * 1024 * 1024, // 10 MB
+  news_image: 5 * 1024 * 1024, // 5 MB
 } as const;
 
 export const ALLOWED_MIME_TYPES = {

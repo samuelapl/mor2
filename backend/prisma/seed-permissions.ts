@@ -390,6 +390,22 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'Manage dynamic categories (course categories, levels, question types)',
   },
+
+  // News (public Ministry news)
+  {
+    code: 'news.manage',
+    resource: 'news',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Create and edit news drafts, submit them for review',
+  },
+  {
+    code: 'news.publish',
+    resource: 'news',
+    action: 'publish',
+    scope: 'ALL',
+    description: 'Review, publish, unpublish, feature and delete news; moderate comments',
+  },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).

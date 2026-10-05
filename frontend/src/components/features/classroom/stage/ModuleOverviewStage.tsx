@@ -38,6 +38,7 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="indigo" className="text-xs font-semibold">
             Module {moduleIndex + 1} Overview
+            
           </Badge>
           {isModuleComplete ? (
             <Badge variant="green" dot className="text-xs">
@@ -93,11 +94,8 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
             </div>
           </div>
         </div>
-
-       
       </div>
 
-      {/* Module Description & Overview */}
       {hasDescription ? (
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-slate-900">
