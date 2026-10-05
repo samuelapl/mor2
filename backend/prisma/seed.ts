@@ -55,6 +55,7 @@ interface AssessmentSeed {
   descriptionAm?: string;
   passingScore: number;
   timeLimitMinutes: number;
+  weight?: number;
   questions: QuestionSeed[];
 }
 
@@ -107,6 +108,7 @@ interface CourseSeed {
   level: CourseLevel;
   status: CourseStatus;
   deliveryMode?: CourseDeliveryMode;
+  hasOnlineSessions?: boolean;
   estimatedHours: number;
   category: string;
   department: string;
@@ -117,6 +119,21 @@ interface CourseSeed {
   approvalComments?: string;
   modules: ModuleSeed[];
   finalAssessment: AssessmentSeed;
+}
+
+function normalizeAssessmentQuestions(assessment: AssessmentSeed): QuestionSeed[] {
+  const weight = assessment.weight ?? 0;
+  const questions = assessment.questions;
+  if (!questions || questions.length === 0) return [];
+  if (weight <= 0) return questions;
+
+  const basePoints = Math.floor(weight / questions.length);
+  const remainder = weight % questions.length;
+
+  return questions.map((q, idx) => ({
+    ...q,
+    points: basePoints + (idx < remainder ? 1 : 0),
+  }));
 }
 
 function mcq(id: string, question: string, options: string[], correctAnswer: number, category: string, points = 20): QuestionSeed {
@@ -177,10 +194,11 @@ const courseSeeds: CourseSeed[] = [
         order: 0,
         attachment: pdf('Module 1 - Formulas & Validation Reference Guide.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Formulas & Validation',
+          title: 'Module 1 Assessment',
           description: 'Checks understanding of lookup formulas and data validation before moving to PivotTables.',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('excel-m1-q1', 'Which function looks up a value in the leftmost column of a table and returns a value in the same row from a specified column?', ['VLOOKUP', 'CONCATENATE', 'SUMIF', 'TRIM'], 0, 'Lookup Functions'),
             mcq('excel-m1-q2', 'What is the main advantage of INDEX-MATCH over VLOOKUP?', ['It can look up values to the left of the lookup column', 'It only works with text values', 'It cannot be used with tables', 'It is slower on small datasets'], 0, 'Lookup Functions'),
@@ -207,9 +225,10 @@ Revenue offices maintain taxpayer registers, payment logs, and branch summaries 
 Always lock the table array with absolute references (\`$A$2:$D$500\`) before copying a lookup formula down a column, otherwise the range shifts and produces wrong results.`,
             attachment: pdf('Lesson 1.1 - VLOOKUP & INDEX-MATCH Worksheet.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Lookup Formulas',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('excel-m1-l1-q1', 'In VLOOKUP, setting range_lookup to FALSE forces which behavior?', ['Approximate match only', 'Exact match only', 'Case-insensitive match', 'Ignores blank cells'], 1, 'VLOOKUP'),
                 mcq('excel-m1-l1-q2', 'Which formula combination can look up a value to the LEFT of the lookup column?', ['VLOOKUP alone', 'SUMIF alone', 'INDEX combined with MATCH', 'COUNTA alone'], 2, 'INDEX-MATCH'),
@@ -236,7 +255,7 @@ You have two worksheets: "Payments" (TIN, Amount, Date) and "Registry" (TIN, Tax
 A reconciled payments report with zero unresolved TIN mismatches, ready for the attached reference PDF's sign-off checklist.`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Cross-Reference Lab Data Pack.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.1.1 Check: Cross-Referencing Lab',
+                  title: 'Sub-Lesson 1.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -268,9 +287,10 @@ Revenue worksheets are only as reliable as the data typed into them. Data Valida
 Use *Data > Data Validation > Circle Invalid Data* to visually flag rows that already violate a rule you just applied to a legacy worksheet, before you rely on it for reporting.`,
             attachment: pdf('Lesson 1.2 - Data Validation Rules Cheat Sheet.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Data Validation',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('excel-m1-l2-q1', 'Which Data Validation type restricts entry to a predefined dropdown of values?', ['Whole Number', 'List', 'Text Length', 'Decimal'], 1, 'Data Validation'),
                 mcq('excel-m1-l2-q2', 'A custom formula rule `=LEN(A2)=10` would be used to enforce what?', ['A 10-digit TIN length', 'A maximum of 10 rows', 'A 10% tax rate', 'A 10-character branch name'], 0, 'Custom Rules'),
@@ -295,7 +315,7 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
 4. Test by entering 9 digits, letters, and 10 digits to verify that invalid entries are rejected.`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Data Validation Practice Workbook.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.2.1 Check: Validation Lab',
+                  title: 'Sub-Lesson 1.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -318,9 +338,10 @@ Configure a template spreadsheet that forces entry clerks to pick from 10 approv
         order: 1,
         attachment: pdf('Module 2 - PivotTable & Dashboard Reference Guide.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: PivotTables & Dashboards',
+          title: 'Module 2 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('excel-m2-q1', 'What is the primary purpose of a PivotTable?', ['Encrypting a workbook', 'Summarizing and aggregating large datasets interactively', 'Spell-checking text', 'Printing multiple sheets at once'], 1, 'PivotTables'),
             mcq('excel-m2-q2', 'Which PivotTable feature lets a user interactively filter results by clicking buttons for each category?', ['Slicer', 'Freeze Panes', 'Macro Recorder', 'Watch Window'], 0, 'PivotTables'),
@@ -359,9 +380,10 @@ When source data changes, right-click the PivotTable and choose "Refresh" — th
 - **Timelines**: let analysts slide across fiscal quarters or months without typing date filters.`,
             attachment: pdf('Lesson 2.1 - PivotTable Architecture Guide.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: PivotTable Architecture',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('excel-m2-l1-q1', 'Why should an official Excel Table (Ctrl+T) be used as a PivotTable data source?', ['It compresses file size by 90%', 'The PivotTable range automatically expands as new rows are added', 'It prevents anyone from editing the cells', 'It forces uppercase text'], 1, 'PivotTable Setup'),
                 mcq('excel-m2-l1-q2', 'What happens if a source data column has no header text?', ['Excel automatically numbers it', 'The PivotTable cannot be created until the header is added', 'The column is permanently deleted', 'It becomes a row label'], 1, 'Data Hygiene'),
@@ -389,7 +411,7 @@ Starting from the PivotTable built in the previous lesson, add interactivity so 
 An interactive one-page dashboard where clicking "Addis Ababa Branch" and dragging the timeline instantly recalculates every linked PivotTable.`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Slicer & Timeline Lab Pack.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.1.1 Check: Slicers & Timelines',
+                  title: 'Sub-Lesson 2.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -424,9 +446,10 @@ A well-designed dashboard lets a director understand collection performance in s
 Keep dashboards to a single printable page — link charts directly to the PivotTable so the entire dashboard refreshes with one click.`,
             attachment: pdf('Lesson 2.2 - Dashboard Design Reference.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Dashboard Design',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('excel-m2-l2-q1', 'Which Conditional Formatting type shades cells along a red-to-green gradient based on value?', ['Color Scale', 'Data Bar', 'Icon Set', 'Top/Bottom Rule'], 0, 'Conditional Formatting'),
                 mcq('excel-m2-l2-q2', 'A Combo Chart showing actual revenue columns against a target line is best for what purpose?', ['Hiding underperformance', 'Showing the gap between actual results and a target at a glance', 'Encrypting the chart', 'Removing outliers automatically'], 1, 'Charts'),
@@ -450,7 +473,7 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
 5. Protect the sheet to lock layout while allowing Slicer interactions.`,
                 attachment: pdf('Sub-Lesson 2.2.1 - One-Page Dashboard Template.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.2.1 Check: Directorate Dashboard Lab',
+                  title: 'Sub-Lesson 2.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -468,9 +491,10 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: Advanced Excel Certification',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 30,
+      weight: 30,
       questions: [
         mcq('excel-fn-q1', 'Which combination is generally preferred for large, frequently restructured worksheets?', ['VLOOKUP with hardcoded column numbers', 'INDEX-MATCH', 'Manual copy-paste', 'Ctrl+F search'], 1, 'Formulas'),
         mcq('excel-fn-q2', 'PivotTables are best suited for which task?', ['Summarizing large datasets by category', 'Writing plain text notes', 'Sending email', 'Compressing files'], 0, 'PivotTables'),
@@ -511,10 +535,11 @@ Create the official MoR Revenue Directorate Monthly One-Pager:
         order: 0,
         attachment: pdf('Module 1 - Audit Planning & Risk Profiling Guide.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Audit Planning',
+          title: 'Module 1 Assessment',
           description: 'Evaluates knowledge of audit case selection criteria and statutory notification rules.',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq(
               'audit-m1-q1',
@@ -567,9 +592,10 @@ Tax administrations operate with finite resources and cannot audit every registe
 - **ESR Inactivity**: Category A and B taxpayers reporting zero or negligible transactions through Electronic Sales Registers despite high inventory turns.`,
             attachment: pdf('Lesson 1.1 - Risk-Based Selection Models.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Risk Case Selection',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq(
                   'audit-l11-q1',
@@ -599,9 +625,10 @@ Federal Tax Administration Proclamation No. 983/2016 establishes clear procedura
 3. **Record Keeping Mandate**: Category A taxpayers must retain commercial books of accounts and source vouchers for a statutory period of 10 years.`,
             attachment: pdf('Lesson 1.2 - Taxpayer Rights & Statutory Notices.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Statutory Notices',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq(
                   'audit-l12-q1',
@@ -630,10 +657,11 @@ Federal Tax Administration Proclamation No. 983/2016 establishes clear procedura
         order: 1,
         attachment: pdf('Module 2 - Books Examination & Audit Reporting Manual.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: Books Examination',
+          title: 'Module 2 Assessment',
           description: 'Tests ability to identify accounting discrepancies and structure tax assessment findings.',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq(
               'audit-m2-q1',
@@ -684,9 +712,10 @@ A cornerstone of indirect verification is the Bank Deposit Reconciliation:
 - Unexplained positive variances represent prima facie evidence of suppressed taxable revenue.`,
             attachment: pdf('Lesson 2.1 - Bank Reconciliation Techniques.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: Forensic Reconciliation',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq(
                   'audit-l21-q1',
@@ -717,9 +746,10 @@ Every audit adjustment must be legally anchored:
 - **Right of Objection**: Inform the taxpayer of their statutory right to file a written objection within 30 days to the Tax Appeal & Review Directorate.`,
             attachment: pdf('Lesson 2.2 - Assessment Notice Templates.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Assessment Findings',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq(
                   'audit-l22-q1',
@@ -741,11 +771,12 @@ Every audit adjustment must be legally anchored:
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: Tax Audit Certification',
+      title: 'Final Assessment',
       description:
         'Comprehensive evaluation covering audit planning, forensic reconciliation, legal evidence standards, and assessment notice drafting.',
       passingScore: 75,
       timeLimitMinutes: 30,
+      weight: 30,
       questions: [
         mcq(
           'audit-fn-q1',
@@ -813,9 +844,10 @@ Every audit adjustment must be legally anchored:
         order: 0,
         attachment: pdf('Module 1 - Charter & Stakeholder Toolkit.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Initiation & Stakeholders',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('proj-m1-q1', 'What is the primary purpose of a Project Charter?', ['To formally authorize the project and define its scope, objectives, and sponsor', 'To record daily attendance', 'To list office supplies needed', 'To replace the project budget'], 0, 'Initiation'),
             mcq('proj-m1-q2', 'In a RACI matrix, what does the "A" stand for?', ['Approved', 'Accountable', 'Active', 'Assigned'], 1, 'RACI'),
@@ -844,9 +876,10 @@ Most public-sector project failures trace back to an undocumented or ambiguous s
 A charter for a district tax-office renovation should explicitly state whether IT infrastructure upgrades are in scope — ambiguity here is the single most common cause of budget overruns in facility projects.`,
             attachment: pdf('Lesson 1.1 - Charter Template & Example.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Charter Fundamentals',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('proj-m1-l1-q1', 'What does the "M" in SMART objectives stand for?', ['Motivated', 'Measurable', 'Managed', 'Mandatory'], 1, 'Objectives'),
                 mcq('proj-m1-l1-q2', 'Explicitly stating what is out of scope in a charter primarily prevents what?', ['Scope creep', 'Employee turnover', 'Tax evasion', 'Server downtime'], 0, 'Scope'),
@@ -874,7 +907,7 @@ Your district tax office needs renovation: a new public service counter, accessi
 A completed one-page charter using the attached template, ready for sponsor sign-off.`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Renovation Charter Lab Template.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.1.1 Check: Charter Drafting Lab',
+                  title: 'Sub-Lesson 1.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -907,9 +940,10 @@ Map each stakeholder on two axes:
 For every major task, assign exactly one **Accountable** owner, one or more **Responsible** doers, and note who is **Consulted** (two-way input) versus merely **Informed** (one-way update). Ambiguity between Responsible and Accountable is the most common cause of dropped tasks in multi-directorate projects.`,
             attachment: pdf('Lesson 1.2 - Stakeholder & RACI Worksheet.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Stakeholders & RACI',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('proj-m1-l2-q1', 'A stakeholder with High Power and Low Interest should be managed how?', ['Manage closely', 'Keep satisfied', 'Keep informed', 'Ignore entirely'], 1, 'Stakeholder Analysis'),
                 mcq('proj-m1-l2-q2', 'In RACI, what distinguishes "Consulted" from "Informed"?', ['Consulted implies two-way input; Informed is a one-way update', 'They mean the same thing', 'Informed people can veto decisions', 'Consulted means no communication at all'], 0, 'RACI'),
@@ -933,7 +967,7 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
 3. Verify that each row has exactly one "A".`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Stakeholder Mapping Exercise.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.2.1 Check: Stakeholder Mapping Lab',
+                  title: 'Sub-Lesson 1.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -956,9 +990,10 @@ Map 8 stakeholders for a new digital tax-filing rollout: Branch Manager, IT Supp
         order: 1,
         attachment: pdf('Module 2 - Scheduling & Budgeting Toolkit.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: Scheduling & Budgeting',
+          title: 'Module 2 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('proj-m2-q1', 'What is a Work Breakdown Structure (WBS)?', ['A hierarchical decomposition of the total scope into work packages', 'A list of employee vacation days', 'A single-page budget summary', 'A vendor contract template'], 0, 'WBS'),
             mcq('proj-m2-q2', 'The Critical Path in a schedule is defined as what?', ['The sequence of dependent tasks that determines the shortest overall project duration', 'The most expensive task only', 'A list of optional tasks', 'The tasks assigned to the newest team member'], 0, 'Scheduling'),
@@ -985,9 +1020,10 @@ A Work Breakdown Structure (WBS) breaks the total project scope into progressive
 In a multi-phase office rollout, "Network cabling" must finish before "IT equipment installation" can start — this dependency likely sits on the critical path, so it deserves the closest monitoring.`,
             attachment: pdf('Lesson 2.1 - WBS & Critical Path Guide.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: WBS & Critical Path',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('proj-m2-l1-q1', 'The "100% Rule" in a WBS means what?', ['The sum of child items equals 100% of the parent scope', 'The project must be 100% complete before starting', 'Only 100% of staff can be assigned', 'The budget must be spent 100% in month one'], 0, 'WBS'),
                 mcq('proj-m2-l1-q2', 'What is "float" (or slack) in scheduling?', ['The amount a non-critical task can be delayed without affecting the project finish date', 'A type of budget overrun', 'A stakeholder role', 'A risk category'], 0, 'Scheduling'),
@@ -1015,7 +1051,7 @@ Your project has three phases: (1) Procurement of equipment — 20 days, (2) Net
 A Gantt chart clearly showing the 45-day critical path and any parallel, non-critical activities.`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Gantt Chart Lab Data.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.1.1 Check: Gantt Chart Lab',
+                  title: 'Sub-Lesson 2.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1048,9 +1084,10 @@ Before spending begins, lock a **Budget Baseline** — the approved, time-phased
 If EV is far below both PV and AC, the project is simultaneously late and over budget — the clearest signal for an escalation to the sponsor before the gap widens further.`,
             attachment: pdf('Lesson 2.2 - EVM Formula Reference.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Earned Value & Variance',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('proj-m2-l2-q1', 'A negative Cost Variance (CV) means what?', ['The project is under budget', 'The project is over budget', 'The project is ahead of schedule', 'The project has zero risk'], 1, 'Earned Value'),
                 mcq('proj-m2-l2-q2', 'Schedule Variance (SV) is calculated as what?', ['EV − PV', 'AC − PV', 'PV − AC', 'EV × AC'], 0, 'Earned Value'),
@@ -1079,7 +1116,7 @@ Analyze a 7-activity network for an IT deployment:
 2. Determine the Critical Path and the Float of Activity C.`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Critical Path Network Lab.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.2.1 Check: Network Calculation Lab',
+                  title: 'Sub-Lesson 2.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1097,9 +1134,10 @@ Analyze a 7-activity network for an IT deployment:
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: Project Management Certification',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 35,
+      weight: 30,
       questions: [
         mcq('proj-fn-q1', 'What document formally authorizes a project and names its sponsor?', ['Project Charter', 'Meeting agenda', 'Expense report', 'Training manual'], 0, 'Initiation'),
         mcq('proj-fn-q2', 'A Work Breakdown Structure (WBS) primarily helps a project manager do what?', ['Decompose project scope into manageable, assignable work packages', 'Calculate employee salaries', 'Approve vendor invoices', 'Design a logo'], 0, 'Scheduling'),
@@ -1139,9 +1177,10 @@ Analyze a 7-activity network for an IT deployment:
         order: 0,
         attachment: pdf('Module 1 - Front-Office Standards Handbook.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Front-Office Conduct',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('cserv-m1-q1', 'What is the recommended first step when a taxpayer approaches the service window?', ['Ask for their TIN before anything else', 'Greet them warmly and make eye contact', 'Continue the previous task first', 'Direct them to another window immediately'], 1, 'Greeting Protocols'),
             mcq('cserv-m1-q2', 'When de-escalating a frustrated taxpayer, which technique is most appropriate first?', ['Raise your voice to match theirs', 'Actively listen and acknowledge their frustration before responding', 'Immediately transfer the call', 'Argue the point of policy'], 1, 'De-escalation'),
@@ -1170,9 +1209,10 @@ Taxpayers form an impression of the entire institution within the first seconds 
 - Rotate staff breaks so the number of open windows never drops during peak hours (typically 9:00–11:00 AM).`,
             attachment: pdf('Lesson 1.1 - Greeting & Queue Protocol Guide.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Greeting & Queue Management',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cserv-m1-l1-q1', 'What primarily drives taxpayer frustration while waiting in a queue?', ['The wait itself only', 'Uncertainty about wait time and position', 'The color of the waiting room', 'The time of day only'], 1, 'Queue Management'),
                 mcq('cserv-m1-l1-q2', 'What is recommended instead of assuming a taxpayer need?', ['Asking an open question like "How can I help you today?"', 'Guessing based on appearance', 'Skipping the greeting', 'Directing them without asking'], 0, 'Greeting Protocols'),
@@ -1199,7 +1239,7 @@ Practice three role-play scenarios with a colleague: (1) a taxpayer who has been
 A short written reflection noting one phrase to keep using and one to avoid, based on the debrief.`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Role-Play Scenario Cards.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.1.1 Check: Role-Play Lab',
+                  title: 'Sub-Lesson 1.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1231,9 +1271,10 @@ A complaint is an opportunity to correct a process failure before it affects mor
 Escalate immediately if the taxpayer requests a supervisor, if the issue involves a policy exception, or if de-escalation attempts have failed twice — do not let an interaction continue indefinitely without bringing in a supervisor.`,
             attachment: pdf('Lesson 1.2 - Complaint Handling Procedure.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Complaint Handling',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cserv-m1-l2-q1', 'What is the first step in the complaint-handling sequence?', ['Record the complaint', 'Acknowledge the taxpayer frustration explicitly', 'Escalate immediately', 'Ignore and move to the next taxpayer'], 1, 'Complaint Handling'),
                 mcq('cserv-m1-l2-q2', 'Why should complaints be recorded even after resolution?', ['To punish the officer', 'So patterns can be identified by management', 'It is legally irrelevant', 'To delay the taxpayer further'], 1, 'Complaint Handling'),
@@ -1255,7 +1296,7 @@ A business taxpayer demands to see the branch manager immediately after being as
 3. Submit a formal penalty waiver review request under system outage protocol.`,
                 attachment: pdf('Sub-Lesson 1.2.1 - LEAP De-escalation Lab.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.2.1 Check: Conflict Resolution Lab',
+                  title: 'Sub-Lesson 1.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1278,9 +1319,10 @@ A business taxpayer demands to see the branch manager immediately after being as
         order: 1,
         attachment: pdf('Module 2 - Multi-Channel Service Playbook.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: Multi-Channel Service & SLAs',
+          title: 'Module 2 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('cserv-m2-q1', 'What does SLA stand for in a customer service context?', ['Service-Level Agreement', 'Staff Leave Application', 'System Login Access', 'Service Legal Advisory'], 0, 'SLA'),
             mcq('cserv-m2-q2', 'When answering the phone, what should an officer state within the first few seconds?', ['Nothing, wait for the caller to speak', 'Their name, directorate, and a greeting', 'The office closing time only', 'A joke to lighten the mood'], 1, 'Phone Etiquette'),
@@ -1312,9 +1354,10 @@ Taxpayers expect the same professionalism whether they walk in, call, email, or 
 - Assign a roaming officer during peak hours to assist taxpayers unfamiliar with the touchscreen interface.`,
             attachment: pdf('Lesson 2.1 - Multi-Channel Etiquette Guide.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: Multi-Channel Etiquette',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cserv-m2-l1-q1', 'Within how many rings should a service phone call be answered?', ['10 rings', '3 rings', '1 ring only', 'It does not matter'], 1, 'Phone Etiquette'),
                 mcq('cserv-m2-l1-q2', 'Before discussing account-specific details on a call, what must be confirmed?', ['The caller identity', 'The weather', 'The office address', 'Nothing'], 0, 'Phone Etiquette'),
@@ -1341,7 +1384,7 @@ Draft three standardized email templates: (1) acknowledging receipt of a general
 Three finalized templates saved to the shared response-template folder for team-wide reuse.`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Email Template Lab Pack.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.1.1 Check: Email Template Lab',
+                  title: 'Sub-Lesson 2.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1372,9 +1415,10 @@ Service quality that is not measured cannot be improved. Three metrics keep fron
 Review SLA and CSAT trends monthly with the team — a single missed target is noise, but a declining trend over three consecutive months signals a process problem that needs a root-cause review, not just individual coaching.`,
             attachment: pdf('Lesson 2.2 - Service Metrics Handbook.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Service Metrics',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cserv-m2-l2-q1', 'What does an SLA define?', ['A defined service commitment, e.g. a completion time target', 'A staff vacation schedule', 'A tax rate', 'An office floor plan'], 0, 'SLA'),
                 mcq('cserv-m2-l2-q2', 'CSAT is typically measured using what?', ['A short post-interaction survey score', 'Server response time logs', 'Tax audit results', 'Employee headcount'], 0, 'CSAT'),
@@ -1396,7 +1440,7 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
 3. Formulate an operational action plan to remedy bottlenecks.`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Service Metrics Calculation Sheet.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.2.1 Check: Metrics Calculation Lab',
+                  title: 'Sub-Lesson 2.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1414,9 +1458,10 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: Citizen Service Excellence Certification',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 25,
+      weight: 30,
       questions: [
         mcq('cserv-fn-q1', 'What is the primary purpose of a standardized greeting protocol?', ['To slow down service', 'To create a consistent, positive first impression regardless of who is on duty', 'To reduce staff headcount', 'To replace the queue system'], 1, 'Front-Office Conduct'),
         mcq('cserv-fn-q2', 'The LEAP technique is used for what purpose?', ['De-escalating frustrated taxpayers', 'Calculating tax penalties', 'Scheduling staff shifts', 'Formatting reports'], 0, 'De-escalation'),
@@ -1456,9 +1501,10 @@ You are provided with 500 service logs from the Bole sub-city tax branch across 
         order: 0,
         attachment: pdf('Module 1 - Cyber Threat Intelligence & Phishing Manual.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Phishing & Threat Landscape',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('cyber-m1-q1', 'What is spear-phishing?', ['A random bulk email sent to millions', 'A highly tailored, deceptive email targeting specific individuals within an organization', 'A firewall configuration rule', 'An antivirus update mechanism'], 1, 'Social Engineering'),
             mcq('cyber-m1-q2', 'What should you do before clicking on a link in an unexpected email from an external sender?', ['Click it immediately to see where it leads', 'Hover over the link to verify the actual destination URL', 'Forward it to all colleagues', 'Reply asking if it is a virus'], 1, 'Email Safety'),
@@ -1483,9 +1529,10 @@ Over 85% of public-sector data breaches begin with a phishing email. Attackers e
 4. **Generic Greetings**: "Dear Customer" or "Dear Employee" when claiming to be an internal communication.`,
             attachment: pdf('Lesson 1.1 - Phishing Detection Guidelines.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Phishing Detection',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cyber-m1-l1-q1', 'Which domain is the genuine official email domain for the Ministry?', ['@mor.gov.et', '@mor-support.com', '@ethiopia-tax-gov.org', '@mor.et.portal.net'], 0, 'Domain Verification'),
                 mcq('cyber-m1-l1-q2', 'Why do attackers create artificial urgency in phishing messages?', ['To help users resolve problems faster', 'To bypass rational critical thinking and pressure the victim into immediate compliance', 'Because their servers have short battery life', 'It is required by cybersecurity law'], 1, 'Social Engineering'),
@@ -1507,7 +1554,7 @@ Examine 3 simulated email headers captured in our mail security gateway:
 3. Classify each message as either Authentic, Phishing, or Spam.`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Header Analysis Lab Pack.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.1.1 Check: Email Header Analysis Lab',
+                  title: 'Sub-Lesson 1.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1535,9 +1582,10 @@ Compromised passwords are the root cause of credential stuffing and unauthorized
 - **MFA Enforcement**: always approve MFA prompts only when initiated by yourself; beware of "MFA Fatigue" spam attacks.`,
             attachment: pdf('Lesson 1.2 - Password & MFA Security Policy.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Passwords & MFA',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cyber-m1-l2-q1', 'What is the recommended minimum character length for ministry passphrases under INSA guidelines?', ['6 characters', '8 characters', '14 characters', '30 characters'], 2, 'Password Policy'),
                 mcq('cyber-m1-l2-q2', 'What is "MFA Fatigue"?', ['Tiredness from typing long passwords', 'An attacker repeatedly triggering push notifications until the victim accidentally approves one', 'A phone battery dying', 'A server timeout'], 1, 'MFA Attacks'),
@@ -1559,7 +1607,7 @@ Enroll your Ministry Active Directory account into Microsoft Authenticator and r
 3. Test number matching verification to block automated push fatigue attacks.`,
                 attachment: pdf('Sub-Lesson 1.2.1 - MFA Configuration Guide.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.2.1 Check: MFA Configuration Lab',
+                  title: 'Sub-Lesson 1.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1582,9 +1630,10 @@ Enroll your Ministry Active Directory account into Microsoft Authenticator and r
         order: 1,
         attachment: pdf('Module 2 - Information Security Governance Guide.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: Data Classification & Incident Response',
+          title: 'Module 2 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('cyber-m2-q1', 'Which data tier includes individual taxpayer income statements, bank records, and TIN documents?', ['Public', 'Confidential / Restricted', 'Unclassified', 'Marketing'], 1, 'Data Classification'),
             mcq('cyber-m2-q2', 'What keyboard shortcut instantly locks a Windows PC when stepping away from your desk?', ['Windows Key + L', 'Ctrl + Alt + Delete + Enter', 'Alt + F4', 'Ctrl + Shift + W'], 0, 'Workstation Hygiene'),
@@ -1612,9 +1661,10 @@ Under Ethiopian tax law, unauthorized disclosure of taxpayer financial records c
 Never email spreadsheets containing unencrypted Confidential PII to external email addresses (e.g. Gmail, Yahoo). Always use encrypted ministry channels.`,
             attachment: pdf('Lesson 2.1 - Confidential Data Classification Matrix.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: Confidential Data Handling',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cyber-m2-l1-q1', 'What does PII stand for in information security?', ['Personally Identifiable Information', 'Public Internet Interface', 'Private International Protocol', 'Protected Industrial Index'], 0, 'Terminology'),
                 mcq('cyber-m2-l1-q2', 'Is it permissible to transfer taxpayer audit files to a personal USB flash drive to work from home?', ['Yes, anytime', 'No, USB mass storage without ICT encryption clearance is strictly prohibited', 'Only on Fridays', 'Only if the file is small'], 1, 'Removable Media Policy'),
@@ -1636,7 +1686,7 @@ You are asked to prepare a public statistical case summary based on an actual ta
 3. Sanitize metadata before publishing.`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Data Redaction Practice Files.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.1.1 Check: Data Redaction Lab',
+                  title: 'Sub-Lesson 2.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1664,9 +1714,10 @@ The first 60 minutes of a ransomware or credential breach dictate whether an inf
 3. **Preserve the Scene**: take a photo of any ransomware ransom note on screen. Do not attempt to pay ransom or download unofficial decryption tools.`,
             attachment: pdf('Lesson 2.2 - Incident Escalation SOP.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Incident Response',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('cyber-m2-l2-q1', 'What is the very first physical action when noticing a ransomware screen locking your workstation?', ['Unplug the network cable and turn off Wi-Fi immediately', 'Restart the PC 10 times', 'Format your hard drive', 'Send a WhatsApp message to everyone'], 0, 'Containment'),
                 mcq('cyber-m2-l2-q2', 'Why should an infected computer NOT be turned off or unplugged from power during an active investigation?', ['Because the screen is pretty', 'Powering off erases volatile memory (RAM) where active malware decryption keys and forensic clues exist', 'It ruins the power strip', 'It cancels the antivirus license'], 1, 'Digital Forensics'),
@@ -1688,7 +1739,7 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
 3. Submit the ticket to the simulated SOC incident portal.`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Incident Simulation Playbook.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.2.1 Check: Incident Simulation Lab',
+                  title: 'Sub-Lesson 2.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1706,9 +1757,10 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: Cybersecurity Certification',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 30,
+      weight: 30,
       questions: [
         mcq('cyber-fn-q1', 'What is the primary indicator of a phishing email?', ['Urgent pressure to click links or download attachments, often with mismatched sender domains', 'Professional signature block with correct phone numbers', 'Email sent during regular office hours', 'Plain text format'], 0, 'Threat Identification'),
         mcq('cyber-fn-q2', 'Under INSA guidelines, what is the best practice for workstation security when leaving your desk?', ['Lock the workstation immediately using Windows Key + L', 'Leave programs open so they stay fast', 'Turn off the monitor only', 'Ask a stranger to watch your screen'], 0, 'Physical Hygiene'),
@@ -1747,9 +1799,10 @@ A simulated workstation begins displaying unexpected encrypted file extensions (
         order: 0,
         attachment: pdf('Module 1 - M_o_R Governance Architecture.pdf'),
         assessment: {
-          title: 'Module 1 Knowledge Check: Governance & Architecture',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('mor-m1-q1', 'According to M_o_R principles, what is the fundamental definition of risk?', ['Only negative catastrophic occurrences', 'An uncertain event or set of events that, should it occur, will have an effect on the achievement of objectives', 'A planned investment loss', 'Any financial audit error'], 1, 'Risk Definition'),
             mcq('mor-m1-q2', 'Which line of defense in the Three Lines model owns day-to-day risk management in operational branches?', ['First Line of Defense (Operational Management)', 'Second Line of Defense (Risk & Compliance Directorate)', 'Third Line of Defense (Internal Audit)', 'External Parliamentary Audit'], 0, 'Three Lines of Defense'),
@@ -1779,9 +1832,10 @@ Revenue authorities operate in high-uncertainty environments: changing economic 
 - **Continual Improvement**: Lessons learned from past non-compliance and audit failures directly shape future controls.`,
             attachment: pdf('Lesson 1.1 - Risk Principles & Frameworks.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check: Risk Principles',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('mor-m1-l1-q1', 'Which of the four M_o_R perspectives focuses on day-to-day tax collection operations?', ['Strategic Perspective', 'Operational Perspective', 'Program Perspective', 'Parliamentary Perspective'], 1, 'Perspectives'),
                 mcq('mor-m1-l1-q2', 'What is the relationship between risk management and organizational decision-making?', ['Risk management exists in isolation from decisions', 'Risk assessment should directly inform and precede major decisions', 'Decisions are made first, then risks are fabricated', 'Risk management replaces all management decisions'], 1, 'Governance'),
@@ -1806,7 +1860,7 @@ You are assisting the Risk Directorate in defining the Risk Appetite Statement a
 Formulate a 1-page Risk Appetite Framework establishing specific threshold triggers and escalation criteria for each category.`,
                 attachment: pdf('Sub-Lesson 1.1.1 - Risk Appetite Workshop Template.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.1.1 Check: Risk Appetite Lab',
+                  title: 'Sub-Lesson 1.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1834,9 +1888,10 @@ Risk management cannot succeed if the same team executing transactions is also t
 - **Line 3 - Internal Audit**: Fully independent assurance reporting directly to the Audit Committee. They verify whether Line 1 and Line 2 controls are operating effectively.`,
             attachment: pdf('Lesson 1.2 - Three Lines of Defense in Tax Administration.pdf'),
             assessment: {
-              title: 'Lesson 1.2 Check: Three Lines of Defense',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('mor-m1-l2-q1', 'Who makes up the Third Line of Defense?', ['Frontline cashiers', 'Independent Internal Audit', 'External marketing consultants', 'Social media moderators'], 1, 'Three Lines'),
                 mcq('mor-m1-l2-q2', 'What is the primary role of the Second Line of Defense (Risk Directorate)?', ['To execute daily tax assessments', 'To provide oversight, governance frameworks, and independent challenge to operations', 'To repair computer keyboards', 'To approve employee annual leave'], 1, 'Second Line Duties'),
@@ -1864,7 +1919,7 @@ Given 6 identified operational risks in a regional customs and tax branch:
 Assign a designated **Risk Owner** and **Action Owner** for each risk in accordance with the Three Lines model, and define mandatory reporting frequencies.`,
                 attachment: pdf('Sub-Lesson 1.2.1 - Branch Risk Delegation Matrix.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 1.2.1 Check: Risk Ownership Lab',
+                  title: 'Sub-Lesson 1.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1887,9 +1942,10 @@ Assign a designated **Risk Owner** and **Action Owner** for each risk in accorda
         order: 1,
         attachment: pdf('Module 2 - Risk Register & Assessment Standards.pdf'),
         assessment: {
-          title: 'Module 2 Knowledge Check: Assessment & Registers',
+          title: 'Module 2 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 15,
           questions: [
             mcq('mor-m2-q1', 'What is "Inherent Risk"?', ['The risk remaining after controls are applied', 'The exposure arising from risk before taking into account any mitigating controls', 'A risk that is completely impossible', 'A mathematical constant'], 1, 'Risk Terminology'),
             mcq('mor-m2-q2', 'What is "Residual Risk"?', ['The risk that remains after risk responses and controls have been implemented', 'The starting risk level', 'Risk that only affects customers', 'A risk that has already occurred'], 0, 'Residual Risk'),
@@ -1914,9 +1970,10 @@ Vague statements like "this might be a big problem" cannot be prioritized. Struc
 - **Risk Tiers**: Low (1-6, Green), Medium (8-12, Amber), High (15-25, Red).`,
             attachment: pdf('Lesson 2.1 - Qualitative Scoring & Impact Criteria.pdf'),
             assessment: {
-              title: 'Lesson 2.1 Check: Risk Scoring',
+              title: 'Lesson 2.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('mor-m2-l1-q1', 'If an event has a Probability rating of 4 and an Impact rating of 4, what is the combined Risk Score?', ['8', '16 (High Risk Tier)', '0', '44'], 1, 'Scoring Math'),
                 mcq('mor-m2-l1-q2', 'What criteria should define "Catastrophic Impact" in a regional revenue authority?', ['Minor delay in a weekly staff meeting', 'Major revenue loss, complete IT system failure, or severe legal breach', 'Running out of paper clips', 'A rainy morning'], 1, 'Impact Criteria'),
@@ -1943,7 +2000,7 @@ Plot 5 identified tax compliance risks onto a 5x5 matrix:
 Construct the colored heat map and identify which 2 risks require immediate Board-level escalation.`,
                 attachment: pdf('Sub-Lesson 2.1.1 - Heat Map Template & Exercise.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.1.1 Check: Heat Map Lab',
+                  title: 'Sub-Lesson 2.1.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -1974,9 +2031,10 @@ Identifying a risk without an actionable treatment plan is useless. M_o_R define
 - **Accept**: Consciously retain the risk if the cost of mitigation exceeds potential loss.`,
             attachment: pdf('Lesson 2.2 - Risk Treatment & Contingency Manual.pdf'),
             assessment: {
-              title: 'Lesson 2.2 Check: Risk Treatments',
+              title: 'Lesson 2.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 mcq('mor-m2-l2-q1', 'Which risk response involves purchasing an insurance policy?', ['Transfer', 'Avoid', 'Accept', 'Share'], 0, 'Response Types'),
                 mcq('mor-m2-l2-q2', 'Installing automated secondary data replication across two separate datacenters is an example of what response?', ['Reduce (Mitigate)', 'Ignore', 'Accept', 'Cancel project'], 0, 'Risk Reduction'),
@@ -1999,7 +2057,7 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
 4. Calculate the anticipated reduction from Inherent Risk Score (20) to Residual Risk Score (6).`,
                 attachment: pdf('Sub-Lesson 2.2.1 - Tax Compliance Mitigation Plan.pdf'),
                 assessment: {
-                  title: 'Sub-Lesson 2.2.1 Check: Treatment Formulation Lab',
+                  title: 'Sub-Lesson 2.2.1 Assessment',
                   passingScore: 70,
                   timeLimitMinutes: 8,
                   questions: [
@@ -2017,9 +2075,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       },
     ],
     finalAssessment: {
-      title: 'Final Comprehensive Assessment: M_o_R Foundation Certification',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 35,
+      weight: 30,
       questions: [
         mcq('mor-fn-q1', 'What is the primary objective of Management of Risk (M_o_R)?', ['To eliminate all business activities that carry any uncertainty', 'To support informed decision making and enhance organizational resilience through systematic risk management', 'To create bureaucratic paperwork', 'To guarantee 100% tax collection without fail'], 1, 'M_o_R Core'),
         mcq('mor-fn-q2', 'In the Three Lines model, who has direct operational ownership of risk controls?', ['The frontline operational management (Line 1)', 'External consultants', 'The news media', 'The Board Audit Committee only'], 0, 'Governance Model'),
@@ -2057,9 +2116,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         order: 0,
         attachment: pdf('INSP101-Module1-Guide.pdf'),
         assessment: {
-          title: 'Module 1 Verification Check',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 30,
           questions: [
             mcq('insp-m1-q1', 'What is the primary action before opening a sealed transit container?', ['Verify seal serial numbers against the customs manifest', 'Break seal immediately without documentation', 'Leave seal intact without inspection', 'Ask driver to cut seal'], 0, 'Inspection SOP'),
             tf('insp-m1-q2', 'Physical examination reports must be signed by both customs inspector and taxpayer representative.', 0, 'SOP Compliance'),
@@ -2074,9 +2134,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
             content: 'Comprehensive guide to container seal integrity and physical verification.',
             attachment: pdf('INSP101-L1-Seals.pdf'),
             assessment: {
-              title: 'Lesson 1.1 Check',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 20,
               questions: [
                 tf('insp-l1-q1', 'High-security mechanical bolt seals comply with ISO 17712 standards.', 0, 'Seal Standards'),
               ],
@@ -2086,9 +2147,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
       },
     ],
     finalAssessment: {
-      title: 'Final Practical Inspection Certification Exam',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 30,
+      weight: 50,
       questions: [
         mcq('insp-fn-q1', 'Which document establishes the legal basis for customs cargo re-examination?', ['Customs Proclamation & Physical Inspection Directive', 'Commercial Sales Invoice only', 'Transport Waybill', 'Warehouse Gate Pass'], 0, 'Legal Standards'),
         tf('insp-fn-q2', 'Discrepancies found during physical examination must be referred immediately to valuation dispute units.', 0, 'Valuation Protocols'),
@@ -2123,9 +2185,10 @@ You are assigned to draft a comprehensive Risk Treatment Action Plan for the ris
         order: 0,
         attachment: pdf('TAX101-Module1-Guide.pdf'),
         assessment: {
-          title: 'Module 1 Architecture Check',
+          title: 'Module 1 Assessment',
           passingScore: 70,
           timeLimitMinutes: 15,
+          weight: 20,
           questions: [
             mcq('tax-m1-q1', 'What is the standard Value Added Tax (VAT) rate in Ethiopia?', ['15%', '10%', '5%', '20%'], 0, 'Tax Rates'),
             tf('tax-m1-q2', 'Employment income is categorized under Schedule A of the Federal Income Tax Proclamation.', 0, 'Schedules'),
@@ -2165,9 +2228,10 @@ Strict statutory sanctions apply under Chapter 14 of Proclamation No. 983/2016:
               pdf('TAX101-L1-LegalFramework-Manual.pdf'),
             ],
             assessment: {
-              title: 'Lesson 1.1 Check',
+              title: 'Lesson 1.1 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 10,
               questions: [
                 tf('tax-l1-q1', 'Tax withholding agents must remit collected withholdings within 30 days of the subsequent month.', 0, 'Remittance Deadlines'),
                 mcq('tax-l1-q2', 'What is the standard withholding rate on local supplies of goods exceeding 10,000 ETB?', ['2%', '5%', '10%', '15%'], 0, 'Withholding Rates'),
@@ -2211,9 +2275,10 @@ Under the Ministry's digital transformation mandate, Category A and B taxpayers 
               pdf('TAX101-L2-VAT-and-EFiling-Guide.pdf'),
             ],
             assessment: {
-              title: 'Lesson 1.2 Check',
+              title: 'Lesson 1.2 Assessment',
               passingScore: 70,
               timeLimitMinutes: 10,
+              weight: 20,
               questions: [
                 mcq('tax-l2-q1', 'What is the mandatory annual turnover threshold for VAT registration in Ethiopia?', ['1,000,000 ETB', '500,000 ETB', '2,000,000 ETB', '100,000 ETB'], 0, 'VAT Thresholds'),
                 tf('tax-l2-q2', 'Zero-rated suppliers are legally entitled to reclaim input VAT paid on their business purchases.', 0, 'Input VAT Reclaim'),
@@ -2225,9 +2290,10 @@ Under the Ministry's digital transformation mandate, Category A and B taxpayers 
       },
     ],
     finalAssessment: {
-      title: 'Final Tax Fundamentals Online Certification Exam',
+      title: 'Final Assessment',
       passingScore: 75,
       timeLimitMinutes: 30,
+      weight: 50,
       questions: [
         mcq('tax-fn-q1', 'Which proclamation governs the Federal Tax Administration in Ethiopia?', ['Proclamation No. 983/2016', 'Proclamation No. 286/2002', 'Commercial Code 1960', 'Customs Regulation 2010'], 0, 'Federal Legislation'),
         tf('tax-fn-q2', 'E-filing via the Ministry portal is mandatory for Category A taxpayers.', 0, 'Digital Compliance'),
@@ -2450,11 +2516,7 @@ async function main() {
             userId: ownerId,
           },
         },
-        trainers: {
-          create: {
-            userId: trainerId,
-          },
-        },
+        trainers: c.deliveryMode === CourseDeliveryMode.ONLINE_ONLY && !c.hasOnlineSessions ? undefined : { create: { userId: trainerId } },
       },
     });
 
@@ -2535,6 +2597,7 @@ async function main() {
       }
 
       // Module Assessment
+      const modQuestions = normalizeAssessmentQuestions(mod.assessment);
       await prisma.assessment.create({
         data: {
           courseId: course.id,
@@ -2542,16 +2605,17 @@ async function main() {
           type: AssessmentType.MODULE_ASSESSMENT,
           titleEn: mod.assessment.title,
           titleAm: mod.assessment.title,
-          descriptionEn: mod.assessment.description || '',
-          descriptionAm: mod.assessment.description || '',
+          descriptionEn: mod.assessment.description || "",
+          descriptionAm: mod.assessment.description || "",
           passingScore: mod.assessment.passingScore,
+          weight: mod.assessment.weight ?? 0,
           timeLimitMinutes: mod.assessment.timeLimitMinutes,
-          questions: mod.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
+          questions: modQuestions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
         },
       });
 
       // Record questions into Question Bank
-      for (const q of mod.assessment.questions.map(correctAnswerFirst)) {
+      for (const q of modQuestions.map(correctAnswerFirst)) {
         await prisma.questionBankQuestion.create({
           data: {
             courseId: course.id,
@@ -2601,6 +2665,7 @@ async function main() {
         }
 
         // Lesson Assessment
+        const lesQuestions = normalizeAssessmentQuestions(les.assessment);
         await prisma.assessment.create({
           data: {
             courseId: course.id,
@@ -2610,12 +2675,13 @@ async function main() {
             titleEn: les.assessment.title,
             titleAm: les.assessment.title,
             passingScore: les.assessment.passingScore,
+            weight: les.assessment.weight ?? 0,
             timeLimitMinutes: les.assessment.timeLimitMinutes,
-            questions: les.assessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
+            questions: lesQuestions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
           },
         });
 
-        for (const q of les.assessment.questions.map(correctAnswerFirst)) {
+        for (const q of lesQuestions.map(correctAnswerFirst)) {
           await prisma.questionBankQuestion.create({
             data: {
               courseId: course.id,
@@ -2670,6 +2736,7 @@ async function main() {
     }
 
     // Final Assessment for Course
+    const finalQuestions = normalizeAssessmentQuestions(c.finalAssessment);
     await prisma.assessment.create({
       data: {
         courseId: course.id,
@@ -2677,12 +2744,13 @@ async function main() {
         titleEn: c.finalAssessment.title,
         titleAm: c.finalAssessment.title,
         passingScore: c.finalAssessment.passingScore,
+        weight: c.finalAssessment.weight ?? 0,
         timeLimitMinutes: c.finalAssessment.timeLimitMinutes,
-        questions: c.finalAssessment.questions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
+        questions: finalQuestions.map(correctAnswerFirst) as unknown as Prisma.InputJsonValue,
       },
     });
 
-    for (const q of c.finalAssessment.questions.map(correctAnswerFirst)) {
+    for (const q of finalQuestions.map(correctAnswerFirst)) {
       await prisma.questionBankQuestion.create({
         data: {
           courseId: course.id,

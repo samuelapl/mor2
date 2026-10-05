@@ -51,6 +51,7 @@ export interface ModuleProgress {
 
 export interface CourseProgress {
   courseId: string;
+  progressionMode?: 'LOCKED' | 'OPEN';
   stats: {
     totalModules: number;
     totalLessons: number;

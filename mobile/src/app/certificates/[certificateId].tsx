@@ -206,18 +206,39 @@ export default function CertificateScreen() {
             </View>
           </View>
 
+          {/* Landscape viewing hint */}
+          <View className="border-b border-slate-800/80 bg-slate-900/90 px-4 py-2">
+            <AppText className="text-center text-xs text-slate-400">
+              {t('certificates.landscapeHint', {
+                defaultValue: 'Official A4 landscape document · Pan horizontally & vertically to inspect',
+              })}
+            </AppText>
+          </View>
+
           {/* Scrollable High-Res Authentic Certificate Document */}
           <ScrollView
             className="flex-1"
-            contentContainerStyle={{ padding: 16, paddingBottom: 40, alignItems: 'center' }}
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ minWidth: '100%', alignItems: 'center' }}
             maximumZoomScale={3}
             minimumZoomScale={1}
           >
-            <CertificateDocumentView
-              certificate={c}
-              learnerName={learnerFullName}
-              isLandscape
-            />
+            <ScrollView
+              contentContainerStyle={{
+                padding: 16,
+                paddingBottom: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              showsVerticalScrollIndicator={true}
+            >
+              <CertificateDocumentView
+                certificate={c}
+                learnerName={learnerFullName}
+                isLandscape
+              />
+            </ScrollView>
           </ScrollView>
         </View>
       </Modal>

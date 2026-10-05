@@ -1,4 +1,5 @@
 import {
+  Award,
   ChevronDown,
   ChevronRight,
   CircleCheck,
@@ -19,6 +20,7 @@ import type {
   ProgressAssessment,
   SubLessonProgress,
 } from '@/features/progress';
+import type { ApiCertificate } from '@/features/certificates';
 
 import type {
   ApiAssessmentSummary,
@@ -34,6 +36,8 @@ export interface CourseSyllabusProps {
   progress?: CourseProgress;
   onOpenLesson: (lessonId: string) => void;
   onOpenAssessment: (assessmentId: string) => void;
+  onOpenCertificate?: () => void;
+  certificate?: ApiCertificate | null;
 }
 
 const byOrder = <T extends { order: number }>(items: T[]) =>
@@ -49,12 +53,22 @@ export function CourseSyllabus({
   progress,
   onOpenLesson,
   onOpenAssessment,
+  onOpenCertificate,
+  certificate,
 }: CourseSyllabusProps) {
   const { t } = useTranslation();
   const finalAssessment = course.assessments[0];
   const finalProgress = progress?.courseCompletion.finalAssessment ?? null;
 
+  const contentCompleted = progress?.courseCompletion.contentCompleted ?? false;
+  const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
+  const isCertificateUnlocked =
+    course.enrolled &&
+    (progress?.courseCompletion.certificateEligible ??
+      (contentCompleted && (!finalAssessment || finalPassed)));
+
   const moduleProgress = new Map(progress?.modules.map((m) => [m.moduleId, m]));
+  const isOpenProgression = progress?.progressionMode === 'OPEN';
   const lessonProgress = new Map<string, LessonProgress | SubLessonProgress>();
   progress?.modules.forEach((m) =>
     m.lessons.forEach((l) => {
@@ -74,6 +88,7 @@ export function CourseSyllabus({
           progress={moduleProgress.get(module.id)}
           lessonProgress={lessonProgress}
           enrolled={course.enrolled}
+          isOpenProgression={isOpenProgression}
           onOpenLesson={onOpenLesson}
           onOpenAssessment={onOpenAssessment}
         />
@@ -90,6 +105,15 @@ export function CourseSyllabus({
           onPress={() => onOpenAssessment(finalAssessment.id)}
         />
       ) : null}
+
+      {/* Course Certificate of Completion (always placed below final assessment, matching web) */}
+      {course.enrolled ? (
+        <CertificateSyllabusRow
+          unlocked={isCertificateUnlocked}
+          hasCertificate={Boolean(certificate)}
+          onPress={() => onOpenCertificate?.()}
+        />
+      ) : null}
     </View>
   );
 }
@@ -100,6 +124,7 @@ interface ModuleSectionProps {
   progress?: CourseProgress['modules'][number];
   lessonProgress: Map<string, LessonProgress | SubLessonProgress>;
   enrolled: boolean;
+  isOpenProgression?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onOpenAssessment: (assessmentId: string) => void;
 }
@@ -110,6 +135,7 @@ function ModuleSection({
   progress,
   lessonProgress,
   enrolled,
+  isOpenProgression = false,
   onOpenLesson,
   onOpenAssessment,
 }: ModuleSectionProps) {
@@ -119,6 +145,10 @@ function ModuleSection({
   const unlocked = progress?.unlocked ?? module.unlocked;
   const [open, setOpen] = useState(unlocked && !(progress?.moduleCompleted ?? false));
   const moduleQuiz = module.assessments[0];
+  const totalLessons = progress?.totalLessons ?? module.lessons.length;
+  const completedLessons = progress?.completedLessons ?? 0;
+  const allLessonsDone = totalLessons > 0 && completedLessons >= totalLessons;
+  const isModuleQuizUnlocked = enrolled && (isOpenProgression ? true : unlocked && allLessonsDone);
 
   return (
     <Card className="overflow-hidden p-0">
@@ -182,6 +212,7 @@ function ModuleSection({
               lesson={lesson}
               lessonProgress={lessonProgress}
               enrolled={enrolled}
+              isOpenProgression={isOpenProgression}
               onOpenLesson={onOpenLesson}
               onOpenAssessment={onOpenAssessment}
             />
@@ -193,7 +224,7 @@ function ModuleSection({
                 label={localized(moduleQuiz, 'title') || t('courses.quiz')}
                 assessment={moduleQuiz}
                 progress={progress?.assessment ?? null}
-                unlocked={enrolled && unlocked}
+                unlocked={isModuleQuizUnlocked}
                 onPress={() => onOpenAssessment(moduleQuiz.id)}
               />
             </View>
@@ -208,7 +239,9 @@ interface LessonRowsProps {
   lesson: ApiCourseLesson;
   lessonProgress: Map<string, LessonProgress | SubLessonProgress>;
   enrolled: boolean;
+  isOpenProgression?: boolean;
   depth?: number;
+  parentCompleted?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onOpenAssessment: (assessmentId: string) => void;
 }
@@ -217,7 +250,9 @@ function LessonRows({
   lesson,
   lessonProgress,
   enrolled,
+  isOpenProgression = false,
   depth = 0,
+  parentCompleted = true,
   onOpenLesson,
   onOpenAssessment,
 }: LessonRowsProps) {
@@ -225,10 +260,20 @@ function LessonRows({
   const localized = useLocalized();
   const colors = useThemeColors();
   const p = lessonProgress.get(lesson.id);
-  const unlocked = enrolled && (p?.unlocked ?? lesson.unlocked);
+  const rawUnlocked = enrolled && (p?.unlocked ?? lesson.unlocked);
+  const unlocked = isOpenProgression
+    ? enrolled
+    : depth > 0
+      ? Boolean(parentCompleted && rawUnlocked)
+      : rawUnlocked;
   const completed = p?.completed ?? false;
   const lessonQuiz = lesson.assessments?.[0];
   const quizProgress = p && 'assessment' in p ? (p.assessment as ProgressAssessment | null) : null;
+  const allSubsDone =
+    (lesson.subLessons?.length ?? 0) === 0 ||
+    (lesson.subLessons ?? []).every((s) => lessonProgress.get(s.id)?.completed);
+  const isLessonQuizUnlocked =
+    enrolled && (isOpenProgression ? true : unlocked && completed && allSubsDone);
 
   return (
     <>
@@ -264,17 +309,25 @@ function LessonRows({
         {!unlocked ? <LockBadge /> : null}
       </Pressable>
 
-      {byOrder(lesson.subLessons ?? []).map((sub) => (
-        <LessonRows
-          key={sub.id}
-          lesson={sub}
-          lessonProgress={lessonProgress}
-          enrolled={enrolled}
-          depth={depth + 1}
-          onOpenLesson={onOpenLesson}
-          onOpenAssessment={onOpenAssessment}
-        />
-      ))}
+      {byOrder(lesson.subLessons ?? []).map((sub, sIdx, allSubs) => {
+        const prevSubsDone = allSubs
+          .slice(0, sIdx)
+          .every((prevSub) => lessonProgress.get(prevSub.id)?.completed);
+        const canUnlockSub = completed && (sIdx === 0 || prevSubsDone);
+        return (
+          <LessonRows
+            key={sub.id}
+            lesson={sub}
+            lessonProgress={lessonProgress}
+            enrolled={enrolled}
+            isOpenProgression={isOpenProgression}
+            depth={depth + 1}
+            parentCompleted={canUnlockSub}
+            onOpenLesson={onOpenLesson}
+            onOpenAssessment={onOpenAssessment}
+          />
+        );
+      })}
 
       {lessonQuiz ? (
         <View style={{ paddingLeft: 8 + (depth + 1) * 20 }} className="pb-2 pr-2">
@@ -283,7 +336,7 @@ function LessonRows({
             label={localized(lessonQuiz, 'title') || t('courses.quiz')}
             assessment={lessonQuiz}
             progress={quizProgress}
-            unlocked={unlocked}
+            unlocked={isLessonQuizUnlocked}
             onPress={() => onOpenAssessment(lessonQuiz.id)}
           />
         </View>
@@ -338,6 +391,63 @@ function AssessmentRow({
       </View>
       {progress?.passed ? <Badge label={t('courses.assessmentPassed')} tone="success" /> : null}
       {!unlocked ? <LockBadge /> : null}
+    </Pressable>
+  );
+}
+
+interface CertificateSyllabusRowProps {
+  unlocked: boolean;
+  hasCertificate: boolean;
+  onPress: () => void;
+}
+
+function CertificateSyllabusRow({
+  unlocked,
+  hasCertificate,
+  onPress,
+}: CertificateSyllabusRowProps) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !unlocked }}
+      disabled={!unlocked}
+      onPress={onPress}
+      className={cn(
+        'flex-row items-center gap-3 rounded-xl border border-dashed border-amber-300/80 bg-amber-50/70 p-3.5 active:opacity-80 dark:border-amber-700/60 dark:bg-amber-950/20',
+        !unlocked && 'opacity-60',
+      )}
+    >
+      <View className="h-9 w-9 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
+        <Award size={20} color={colors.warning} />
+      </View>
+      <View className="flex-1">
+        <AppText className="text-sm font-bold text-slate-900 dark:text-white">
+          {t('certificates.ofCompletion', { defaultValue: 'Certificate of Completion' })}
+        </AppText>
+        <AppText variant="caption" className="text-slate-500 dark:text-slate-400">
+          {hasCertificate
+            ? t('certificates.issuedSubtitle', {
+                defaultValue: 'Official credential issued · Tap to view & download',
+              })
+            : unlocked
+              ? t('certificates.unlockedSubtitle', {
+                  defaultValue: 'Requirements met · Tap to complete survey & claim',
+                })
+              : t('certificates.lockedSubtitle', {
+                  defaultValue: 'Locked · Complete coursework & final assessment',
+                })}
+        </AppText>
+      </View>
+      {hasCertificate ? (
+        <Badge label={t('certificates.claimed', { defaultValue: 'Claimed' })} tone="success" />
+      ) : unlocked ? (
+        <Badge label={t('certificates.available', { defaultValue: 'Available' })} tone="brand" />
+      ) : (
+        <LockBadge />
+      )}
     </Pressable>
   );
 }

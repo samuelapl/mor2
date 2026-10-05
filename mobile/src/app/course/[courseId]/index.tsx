@@ -40,7 +40,12 @@ import {
 } from '@/components/ui';
 import { useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
-import { FormMessage, useFormError } from '@/features/auth';
+import { FormMessage, useFormError, useSessionStore } from '@/features/auth';
+import {
+  CourseFeedbackModal,
+  hasSkippedFeedback,
+  hasSubmittedFeedback,
+} from '@/features/feedback';
 import {
   CourseSyllabus,
   CourseThumbnail,
@@ -81,6 +86,8 @@ export default function CourseScreen() {
   const drop = useDropEnrollment();
   const enrollError = useFormError(enroll.error);
   const dropError = useFormError(drop.error);
+  const user = useSessionStore((s) => s.user);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [dropReason, setDropReason] = useState('');
   const [otherDetailsOpen, setOtherDetailsOpen] = useState(false);
@@ -141,15 +148,7 @@ export default function CourseScreen() {
   const openAssessment = (assessmentId: string) =>
     router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId } });
 
-  // Certificates are usually auto-issued; claiming returns the existing one or null (spec §9.2).
-  const openCertificate = () => {
-    if (certificate.data) {
-      router.push({
-        pathname: '/certificates/[certificateId]',
-        params: { certificateId: certificate.data.id },
-      });
-      return;
-    }
+  const claimCertificateNow = () => {
     claim.mutate(courseId, {
       onSuccess: (issued) => {
         if (issued) {
@@ -164,6 +163,29 @@ export default function CourseScreen() {
       },
       onError: () => Alert.alert(t('certificates.claim'), t('common.somethingWrong')),
     });
+  };
+
+  const handleCertificatePress = async () => {
+    if (certificate.data) {
+      router.push({
+        pathname: '/certificates/[certificateId]',
+        params: { certificateId: certificate.data.id },
+      });
+      return;
+    }
+
+    // Check if user has already submitted or skipped feedback
+    const [submitted, skipped] = await Promise.all([
+      hasSubmittedFeedback(courseId, user?.id),
+      hasSkippedFeedback(courseId, user?.id),
+    ]);
+
+    if (!submitted && !skipped) {
+      setFeedbackModalOpen(true);
+      return;
+    }
+
+    claimCertificateNow();
   };
 
   const startEnroll = () => {
@@ -267,7 +289,7 @@ export default function CourseScreen() {
                   title={certificate.data ? t('certificates.view') : t('certificates.claim')}
                   icon={<Award size={18} color="#fff" />}
                   loading={claim.isPending}
-                  onPress={openCertificate}
+                  onPress={handleCertificatePress}
                   fullWidth
                 />
               ) : next?.lessonId || data.modules?.[0]?.lessons?.[0]?.id ? (
@@ -528,6 +550,8 @@ export default function CourseScreen() {
                 progress={progress.data}
                 onOpenLesson={openLesson}
                 onOpenAssessment={openAssessment}
+                onOpenCertificate={handleCertificatePress}
+                certificate={certificate.data}
               />
             </View>
           ) : null}
@@ -750,6 +774,23 @@ export default function CourseScreen() {
           <FormMessage message={dropError} />
         </View>
       </ConfirmDialog>
+
+      {/* Course Evaluation Survey Modal (before claiming certificate) */}
+      <CourseFeedbackModal
+        visible={feedbackModalOpen}
+        courseId={courseId}
+        courseTitle={localized(data, 'title')}
+        userId={user?.id}
+        onClose={() => setFeedbackModalOpen(false)}
+        onFeedbackSubmitted={() => {
+          setFeedbackModalOpen(false);
+          claimCertificateNow();
+        }}
+        onSkip={() => {
+          setFeedbackModalOpen(false);
+          claimCertificateNow();
+        }}
+      />
     </>
   );
 }

@@ -463,7 +463,7 @@ export default function DownloadsScreen() {
                                 </View>
                               </View>
                               <Badge
-                                label="Take Quiz"
+                                label={t('classroom.takeQuiz', { defaultValue: 'Take assessment' })}
                                 tone="brand"
                               />
                             </Pressable>

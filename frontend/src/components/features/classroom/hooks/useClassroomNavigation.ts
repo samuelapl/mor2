@@ -128,7 +128,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
 
         // 2. Sub-Lesson Items (if any)
         if (lesson.subLessons && lesson.subLessons.length > 0) {
-          lesson.subLessons.forEach((sub, subIndex) => {
+          const sortedSubs = [...lesson.subLessons].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+          sortedSubs.forEach((sub, subIndex) => {
             const subTitleLower = (sub.title || '').trim().toLowerCase();
             if (
               subTitleLower === 'lesson assessment' ||
@@ -138,9 +139,15 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
             }
 
             const subProg = lessonProg?.subLessons?.find((s) => s.lessonId === sub.id);
+            const prevSubsDone = sortedSubs.slice(0, subIndex).every((prevSub) => {
+              const prevProg = lessonProg?.subLessons?.find((s) => s.lessonId === prevSub.id);
+              return prevProg?.completed ?? false;
+            });
             const subUnlocked = isOpenProgression
               ? true
-              : lessonUnlocked && (subProg?.unlocked ?? subIndex === 0);
+              : lessonUnlocked &&
+                lessonCompleted &&
+                (subProg?.unlocked ?? (subIndex === 0 || prevSubsDone));
             const subCompleted = subProg?.completed ?? false;
 
             items.push({
@@ -168,7 +175,9 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
           const subLessonsAllDone = hasSubLessons
             ? (lessonProg?.subLessons?.every((s) => s.completed) ?? false)
             : true;
-          const quizUnlocked = isOpenProgression ? true : lessonUnlocked && subLessonsAllDone;
+          const quizUnlocked = isOpenProgression
+            ? true
+            : lessonUnlocked && lessonCompleted && subLessonsAllDone;
           const quizCompleted = lessonAssessment.passed;
 
           items.push({

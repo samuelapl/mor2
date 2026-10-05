@@ -350,7 +350,6 @@ export default function QuizScreen() {
                 title={t('quiz.submit')}
                 className="flex-1"
                 loading={submit.isPending}
-                disabled={!online}
                 onPress={confirmSubmit}
               />
             )}
@@ -430,7 +429,7 @@ export default function QuizScreen() {
           }
           onPress={begin}
           loading={start.isPending}
-          disabled={!online || data.questions.length === 0}
+          disabled={data.questions.length === 0}
           fullWidth
         />
         {data.timeLimitMinutes ? (

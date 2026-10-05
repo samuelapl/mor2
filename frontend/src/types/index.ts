@@ -69,6 +69,7 @@ export interface UploadedResource {
 
 export interface Lesson {
   id: string;
+  order?: number;
   title: string;
   content?: string;
   durationMin: number;

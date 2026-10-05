@@ -64,6 +64,8 @@ export function computeSequentialUnlocks(
     }
 
     if (l.subLessons && l.subLessons.length > 0) {
+      const parentDone = lessonCompletions.has(l.id);
+      if (!parentDone) return false;
       const allSubsDone = l.subLessons.every((s) => lessonCompletions.has(s.id));
       if (!allSubsDone) return false;
       if (l.hasAssessment) {
@@ -107,6 +109,7 @@ export function computeSequentialUnlocks(
 
       if (lesson.subLessons && lesson.subLessons.length > 0) {
         const sortedSubs = [...lesson.subLessons].sort((a, b) => a.order - b.order);
+        const parentDone = lessonCompletions.has(lesson.id);
         for (let sIdx = 0; sIdx < sortedSubs.length; sIdx++) {
           const sub = sortedSubs[sIdx]!;
           const previousSubsDone = sortedSubs
@@ -114,7 +117,8 @@ export function computeSequentialUnlocks(
             .every((s) => lessonCompletions.has(s.id));
           const isSubUnlocked =
             isLessonUnlocked &&
-            (sIdx === 0 || previousSubsDone || lessonCompletions.has(lesson.id));
+            parentDone &&
+            (sIdx === 0 ? true : previousSubsDone);
           lessonUnlocked.set(sub.id, isSubUnlocked);
         }
       }

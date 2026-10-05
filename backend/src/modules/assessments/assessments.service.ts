@@ -457,6 +457,11 @@ export class AssessmentsService {
     },
     userId: string,
   ) {
+    const progressionMode = await this.policyService.getProgressionMode();
+    if (progressionMode === 'OPEN') {
+      return;
+    }
+
     const { moduleUnlocked, lessonUnlocked } = await this.progressService.getUnlockState(
       userId,
       assessment.courseId,
@@ -468,12 +473,55 @@ export class AssessmentsService {
           'This module is still locked. Complete the preceding modules first.',
         );
       }
+      const moduleLessons = await this.prisma.lesson.findMany({
+        where: { moduleId: assessment.moduleId, deletedAt: null },
+        select: { id: true },
+      });
+      if (moduleLessons.length > 0) {
+        const completions = await this.prisma.lessonCompletion.findMany({
+          where: {
+            userId,
+            lessonId: { in: moduleLessons.map((l) => l.id) },
+            completed: true,
+          },
+          select: { lessonId: true },
+        });
+        const completedSet = new Set(completions.map((c) => c.lessonId));
+        const uncompleted = moduleLessons.filter((l) => !completedSet.has(l.id));
+        if (uncompleted.length > 0) {
+          throw new ForbiddenException(
+            'Complete all lessons in this module before taking the module assessment.',
+          );
+        }
+      }
     }
 
     if (assessment.type === AssessmentType.LESSON_ASSESSMENT && assessment.lessonId) {
       if (!(lessonUnlocked.get(assessment.lessonId) ?? false)) {
         throw new ForbiddenException(
           'This lesson is still locked. Complete the preceding lessons first.',
+        );
+      }
+      const lessonAndSubs = await this.prisma.lesson.findMany({
+        where: {
+          OR: [{ id: assessment.lessonId }, { parentId: assessment.lessonId }],
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      const completions = await this.prisma.lessonCompletion.findMany({
+        where: {
+          userId,
+          lessonId: { in: lessonAndSubs.map((l) => l.id) },
+          completed: true,
+        },
+        select: { lessonId: true },
+      });
+      const completedSet = new Set(completions.map((c) => c.lessonId));
+      const uncompleted = lessonAndSubs.filter((l) => !completedSet.has(l.id));
+      if (uncompleted.length > 0) {
+        throw new ForbiddenException(
+          'Complete the lesson content before taking the lesson assessment.',
         );
       }
     }
