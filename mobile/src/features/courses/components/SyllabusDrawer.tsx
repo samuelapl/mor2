@@ -117,6 +117,7 @@ export function SyllabusDrawer({ visible, onClose, ...syllabus }: SyllabusDrawer
               onOpenCertificate={close(syllabus.onOpenCertificate)}
               onOpenCourseOverview={close(syllabus.onOpenCourseOverview)}
               onOpenModuleOverview={close(syllabus.onOpenModuleOverview)}
+              onOpenLiveSessions={close(syllabus.onOpenLiveSessions)}
             />
           </ScrollView>
         </Animated.View>

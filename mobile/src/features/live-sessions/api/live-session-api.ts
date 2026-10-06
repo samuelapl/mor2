@@ -13,6 +13,7 @@ import type {
   HeartbeatResult,
   JoinUrlResult,
   LiveKitTokenResult,
+  MySessionQuizResults,
 } from '../types/live-session.types';
 
 export const sessionKeys = {
@@ -20,6 +21,7 @@ export const sessionKeys = {
   detail: (id: string) => ['live-sessions', 'detail', id] as const,
   myAttendance: ['attendance', 'me'] as const,
   visibility: (id: string) => ['attendance', 'visibility', id] as const,
+  quizResults: (id: string) => ['live-sessions', 'quiz-results', id] as const,
 };
 
 export const liveSessionApi = {
@@ -44,6 +46,8 @@ export const liveSessionApi = {
       correctAnswer?: string;
     },
   ) => api.post(endpoints.liveSessions.quizResponse(id), dto),
+  quizResultsMe: (id: string) =>
+    api.get<MySessionQuizResults>(endpoints.liveSessions.quizResultsMe(id)),
 };
 
 /** SCHEDULED + LIVE sessions visible to the learner, soonest first (spec §8.1). */
@@ -107,5 +111,14 @@ export function useCheckIn() {
           : {},
       ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.myAttendance }),
+  });
+}
+
+/** The learner's own answers and scores for a session's live quizzes (after it is completed). */
+export function useMySessionQuizResults(sessionId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: sessionKeys.quizResults(sessionId ?? ''),
+    queryFn: () => liveSessionApi.quizResultsMe(sessionId!),
+    enabled: Boolean(sessionId) && enabled,
   });
 }

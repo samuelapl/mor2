@@ -52,7 +52,7 @@ import {
   useSelfEnroll,
 } from '@/features/courses';
 import { useCertificateForCourse, useClaimCertificate } from '@/features/certificates';
-import { findNextLesson, useCourseProgress } from '@/features/progress';
+import { CourseGradeSummary, findNextLesson, useCourseProgress } from '@/features/progress';
 import { downloadManager, OfflineDownloadCard } from '@/features/offline';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import type { ApiCourseDetail } from '@/features/courses/types/course.types';
@@ -159,6 +159,8 @@ export default function CourseScreen() {
     router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId, courseId } });
   const openCourseOverview = () =>
     router.push({ pathname: '/course/[courseId]/overview', params: { courseId } });
+  const openLiveSessions = () =>
+    router.push({ pathname: '/course/[courseId]/live-sessions', params: { courseId } });
   const openModuleOverview = (moduleId: string) =>
     router.push({
       pathname: '/course/[courseId]/module/[moduleId]',
@@ -387,6 +389,14 @@ export default function CourseScreen() {
               courseDetail={data}
               progress={progress.data}
             />
+          ) : null}
+
+          {/* Course grade & what the certificate still waits for (online courses) */}
+          {enrolled &&
+          status !== 'DROPPED' &&
+          data.deliveryMode !== 'IN_PERSON_ONLY' &&
+          progress.data ? (
+            <CourseGradeSummary progress={progress.data} />
           ) : null}
 
           {/* In-person seat */}
@@ -635,6 +645,7 @@ export default function CourseScreen() {
           onOpenCertificate={handleCertificatePress}
           onOpenCourseOverview={openCourseOverview}
           onOpenModuleOverview={openModuleOverview}
+          onOpenLiveSessions={openLiveSessions}
           certificate={certificate.data}
         />
       ) : null}

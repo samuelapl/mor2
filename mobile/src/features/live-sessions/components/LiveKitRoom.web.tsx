@@ -14,23 +14,20 @@ type RoomWindow = Window & {
   eltms?: { setMic: (on: boolean) => void; setCam: (on: boolean) => void; leave: () => void };
 };
 
-/** Web build of LiveKitRoom: the same room page in an iframe (the browser asks for mic/camera). */
-export function LiveKitRoom({
-  wsUrl,
-  token,
-  onConnected,
-  onDisconnected,
-  onError,
-}: LiveKitRoomProps) {
+/**
+ * Web build of LiveKitRoom (dev preview only — learners on a computer use the web app):
+ * the same room page in an iframe with mic, camera and leave.
+ */
+export function LiveKitRoom({ wsUrl, token, onConnected, onLeave }: LiveKitRoomProps) {
   const { t } = useTranslation();
   const frame = useRef<HTMLIFrameElement>(null);
   const [mic, setMic] = useState(false);
   const [cam, setCam] = useState(false);
   const [participants, setParticipants] = useState(1);
-  const handlers = useRef({ onConnected, onDisconnected, onError });
+  const handlers = useRef({ onConnected, onLeave });
   useEffect(() => {
-    handlers.current = { onConnected, onDisconnected, onError };
-  }, [onConnected, onDisconnected, onError]);
+    handlers.current = { onConnected, onLeave };
+  }, [onConnected, onLeave]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -47,12 +44,12 @@ export function LiveKitRoom({
         message?: string;
       };
       if (message.type === 'connected') handlers.current.onConnected();
-      else if (message.type === 'disconnected') handlers.current.onDisconnected();
+      else if (message.type === 'disconnected') handlers.current.onLeave();
       else if (message.type === 'participants' && message.count) setParticipants(message.count);
       else if (message.type === 'media') {
         if (message.mic !== undefined) setMic(message.mic);
         if (message.cam !== undefined) setCam(message.cam);
-      } else if (message.type === 'error') handlers.current.onError(message.message ?? 'Error');
+      } else if (message.type === 'error') console.warn('[LiveKitRoom]', message.message);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -65,7 +62,12 @@ export function LiveKitRoom({
       <iframe
         ref={frame}
         title="live session"
-        srcDoc={buildLiveKitRoomHtml(wsUrl, token)}
+        srcDoc={buildLiveKitRoomHtml({
+          wsUrl,
+          token,
+          youLabel: t('liveRoom.you'),
+          devNetworkFix: false,
+        })}
         allow="camera; microphone; autoplay; fullscreen"
         style={{ flex: 1, width: '100%', border: 0, background: palette.slate900 }}
       />

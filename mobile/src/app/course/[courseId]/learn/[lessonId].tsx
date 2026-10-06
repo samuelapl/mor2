@@ -323,6 +323,9 @@ export default function LessonScreen() {
           onOpenCourseOverview={() =>
             router.push({ pathname: '/course/[courseId]/overview', params: { courseId } })
           }
+          onOpenLiveSessions={() =>
+            router.push({ pathname: '/course/[courseId]/live-sessions', params: { courseId } })
+          }
           onOpenModuleOverview={(moduleId) =>
             router.push({
               pathname: '/course/[courseId]/module/[moduleId]',

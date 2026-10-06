@@ -91,3 +91,56 @@ export interface CheckInBody {
   latitude?: number;
   longitude?: number;
 }
+
+/* ----------------------- Session quiz results (GET live-sessions/:id/quiz-results/me) ---------- */
+
+export interface SessionQuizQuestion {
+  id: string;
+  type: string;
+  /** May contain HTML. */
+  question: string;
+  options: string[];
+  correctAnswer: string | null;
+  points: number;
+}
+
+export interface SessionQuizGroup {
+  /** Prepared quiz id, or `other` for questions broadcast outside a prepared quiz. */
+  id: string;
+  title: string;
+  graded: boolean;
+  weight: number | null;
+  passingScore: number | null;
+  questions: SessionQuizQuestion[];
+}
+
+export interface LearnerQuizAnswer {
+  questionId: string;
+  /** What the learner picked, as text; null when not answered. */
+  answer: string | null;
+  isCorrect: boolean | null;
+  answeredAt: string | null;
+}
+
+export interface LearnerQuizResult {
+  quizId: string;
+  answered: number;
+  correct: number;
+  earnedPoints: number;
+  totalPoints: number;
+  scorePercent: number;
+  /** What went into the course grade when the session was completed (graded quizzes). */
+  recorded: { score: number; passed: boolean } | null;
+  answers: LearnerQuizAnswer[];
+}
+
+export interface MySessionQuizResults {
+  sessionId: string;
+  title: string;
+  status: string;
+  completed: boolean;
+  /** False until the session is COMPLETED — results only exist after it is graded. */
+  available: boolean;
+  quizzes: SessionQuizGroup[];
+  learners: { userId: string; name: string; quizzes: LearnerQuizResult[] }[];
+}

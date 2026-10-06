@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   Layers,
   Trophy,
+  Video,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +47,8 @@ export interface CourseSyllabusProps {
   onOpenModuleOverview?: (moduleId: string) => void;
   /** Lesson currently open in the player — highlighted, and its module starts expanded. */
   activeLessonId?: string;
+  /** Opens the course's live sessions (shown when the course has any). */
+  onOpenLiveSessions?: () => void;
 }
 
 const byOrder = <T extends { order: number }>(items: T[]) =>
@@ -66,6 +69,7 @@ export function CourseSyllabus({
   onOpenCourseOverview,
   onOpenModuleOverview,
   activeLessonId,
+  onOpenLiveSessions,
 }: CourseSyllabusProps) {
   const { t } = useTranslation();
   const finalAssessment = course.assessments[0];
@@ -117,6 +121,10 @@ export function CourseSyllabus({
           activeLessonId={activeLessonId}
         />
       ))}
+
+      {course.enrolled && onOpenLiveSessions && (progress?.liveSessions?.length ?? 0) > 0 ? (
+        <LiveSessionsRow sessions={progress!.liveSessions!} onPress={onOpenLiveSessions} />
+      ) : null}
 
       {finalAssessment ? (
         <AssessmentRow
@@ -452,6 +460,41 @@ function OverviewRow({ variant, title, subtitle, disabled = false, onPress }: Ov
         {subtitle ? <AppText variant="caption">{subtitle}</AppText> : null}
       </View>
       <ChevronRight size={18} color={colors.primary} />
+    </Pressable>
+  );
+}
+
+function LiveSessionsRow({
+  sessions,
+  onPress,
+}: {
+  sessions: NonNullable<CourseProgress['liveSessions']>;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  const live = sessions.some((s) => s.status === 'LIVE');
+  const held = sessions.filter((s) => s.status === 'COMPLETED').length;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 active:opacity-80 dark:border-sky-900 dark:bg-sky-950/30"
+    >
+      <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/50">
+        <Video size={19} color="#0284c7" />
+      </View>
+      <View className="flex-1">
+        <AppText className="text-sm font-bold text-slate-900 dark:text-white">
+          {t('courseSessions.title')}
+        </AppText>
+        <AppText variant="caption">
+          {t('courseSessions.heldOf', { held, total: sessions.length })}
+        </AppText>
+      </View>
+      {live ? <Badge label={t('courseSessions.liveNow')} tone="live" /> : null}
+      <ChevronRight size={18} color={colors.textMuted} />
     </Pressable>
   );
 }

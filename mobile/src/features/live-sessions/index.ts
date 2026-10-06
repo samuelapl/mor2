@@ -8,10 +8,13 @@ export {
   useAttendanceVisibility,
   useCheckIn,
   useMyAttendance,
+  useMySessionQuizResults,
   useSession,
   useUpcomingSessions,
 } from './api/live-session-api';
 export { LiveKitRoom } from './components/LiveKitRoom';
+export { SessionQuizResults } from './components/SessionQuizResults';
+export { registerLiveQuizSync } from './sync/live-quiz-sync';
 export { SessionCard } from './components/SessionCard';
 export { useMeetingHeartbeat } from './hooks/useMeetingHeartbeat';
 export { useMeetingStore } from './store/meeting-store';

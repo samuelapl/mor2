@@ -30,7 +30,7 @@ import {
   useSessionStore,
   type SessionPayload,
 } from '@/features/auth';
-import { useMeetingHeartbeat } from '@/features/live-sessions';
+import { registerLiveQuizSync, useMeetingHeartbeat } from '@/features/live-sessions';
 import { registerProgressSync } from '@/features/progress';
 
 void SplashScreen.preventAutoHideAsync();
@@ -38,6 +38,7 @@ void SplashScreen.preventAutoHideAsync();
 // Offline handlers for lesson time and playhead must exist before the first queue flush.
 initTheme();
 registerProgressSync();
+registerLiveQuizSync();
 
 configureApiClient({
   getLocale: getCurrentLocale,
@@ -127,6 +128,10 @@ export default function RootLayout() {
                 <Stack.Screen
                   name="course/[courseId]/module/[moduleId]"
                   options={{ title: t('overview.moduleTitle') }}
+                />
+                <Stack.Screen
+                  name="course/[courseId]/live-sessions"
+                  options={{ title: t('courseSessions.title') }}
                 />
                 <Stack.Screen
                   name="quiz/[assessmentId]/index"

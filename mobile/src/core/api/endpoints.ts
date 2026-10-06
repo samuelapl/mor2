@@ -81,6 +81,7 @@ export const endpoints = {
     joinUrl: (sessionId: string) => `live-sessions/${id(sessionId)}/join-url`,
     livekitToken: (sessionId: string) => `live-sessions/${id(sessionId)}/livekit-token`,
     quizResponse: (sessionId: string) => `live-sessions/${id(sessionId)}/quiz-response`,
+    quizResultsMe: (sessionId: string) => `live-sessions/${id(sessionId)}/quiz-results/me`,
   },
   attendance: {
     mine: 'attendance/me',

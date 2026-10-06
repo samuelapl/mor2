@@ -66,5 +66,45 @@ export interface CourseProgress {
     finalAssessmentPassed: boolean;
     certificateEligible: boolean;
     finalAssessment: ProgressAssessment | null;
+    allAssessmentsPassed?: boolean;
+    /** Weighted course grade (0–100), session quizzes included. */
+    totalCourseGrade?: number;
+    passingScorePercent?: number;
+    gradeSatisfied?: boolean;
+    /** Session quizzes still waiting for their session; the certificate waits for them. */
+    sessionsPending?: number;
+    assessmentBreakdown?: AssessmentBreakdownItem[];
   };
+  /** The course's online sessions (planned ones too, before they're scheduled). */
+  liveSessions?: LearnerSession[];
+}
+
+export interface AssessmentBreakdownItem {
+  id: string;
+  titleEn: string;
+  titleAm: string;
+  passingScore: number;
+  passed: boolean;
+  weight?: number;
+  bestScore?: number;
+  earnedPoints?: number;
+  /** False when never submitted; it counts as 0 in the course grade. */
+  attempted?: boolean;
+  /** SESSION_ASSESSMENT quizzes run live in a session and are graded when it ends. */
+  type?: string;
+  retakeAvailable?: boolean;
+}
+
+export interface LearnerSession {
+  /** Session plan id, or the session id for unplanned sessions. */
+  id: string;
+  sessionId: string | null;
+  titleEn: string;
+  scheduledAt: string | null;
+  durationMinutes: number | null;
+  platform: string | null;
+  trainerName: string | null;
+  status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
+  attended: boolean;
+  planned: boolean;
 }

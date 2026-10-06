@@ -40,6 +40,7 @@ import {
   isInPerson,
   isJoinable,
   liveSessionApi,
+  SessionQuizResults,
   useAttendanceVisibility,
   useMeetingStore,
   useMyAttendance,
@@ -353,8 +354,15 @@ export default function SessionScreen() {
           </View>
         ) : null}
 
+        {/* Live quiz results — graded once the session is completed */}
+        {data.status === 'COMPLETED' && !isInPerson(data) ? (
+          <Card>
+            <SessionQuizResults sessionId={data.id} />
+          </Card>
+        ) : null}
+
         {data.recordingUrl && data.status === 'COMPLETED' ? (
-          <Card className="gap-3 border-brand-200 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/20">
+          <Card className="dark:bg-brand-950/20 gap-3 border-brand-200 bg-brand-50/50 dark:border-brand-900/60">
             <View className="flex-row items-center gap-2">
               <PlayCircle size={20} color={colors.primary} />
               <AppText className="font-semibold text-slate-900 dark:text-slate-50">
@@ -367,7 +375,8 @@ export default function SessionScreen() {
                     defaultValue: 'Downloaded for offline viewing on your device.',
                   })
                 : t('sessions.recordingOnlineHint', {
-                    defaultValue: 'Watch online or download to view without an internet connection.',
+                    defaultValue:
+                      'Watch online or download to view without an internet connection.',
                   })}
             </AppText>
             <View className="gap-2">
