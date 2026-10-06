@@ -35,7 +35,6 @@ function sanitizeLessonContentType(type?: any): LessonContentType {
   return LessonContentType.DOCUMENT;
 }
 
-
 @Injectable()
 export class CurriculumService {
   constructor(

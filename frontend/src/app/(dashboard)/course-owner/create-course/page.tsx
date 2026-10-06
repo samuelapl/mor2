@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FilePenLine, PackageOpen } from 'lucide-react';
+import { FilePenLine, PackageOpen } from 'lucide-react';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import PageShell from '@/components/shared/PageShell';
 import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
+import { ScormUpload } from '@/components/features/courses/ScormUpload';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
@@ -86,7 +87,7 @@ export default function CreateCoursePage() {
         </div>
       </WorkspaceDetailOverlay>
 
-      {/* SCORM placeholder */}
+      {/* SCORM upload */}
       <WorkspaceDetailOverlay
         open={mode === 'scorm'}
         onClose={() => setMode(null)}
@@ -96,27 +97,13 @@ export default function CreateCoursePage() {
           'የተዘጋጀ የ SCORM ጥቅል እንደ ኮርስ ያስመጡ።',
         )}
       >
-        <div className="w-full rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-soft">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-            <PackageOpen className="h-7 w-7" />
-          </div>
-          <h2 className="mt-4 font-display text-lg font-bold text-slate-900">
-            {tBilingual('SCORM upload — coming soon', 'የ SCORM ጭነት — በቅርቡ ይጠብቁ')}
-          </h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-            {tBilingual(
-              "Uploading and importing SCORM packages isn't wired up yet. For now, build your course manually.",
-              'የ SCORM ጥቅሎችን መጫን እና ማስመጣት ገና አልተጠናቀቀም። ለአሁን ኮርስዎን በእጅ ይገንቡ።',
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={() => setMode(null)}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {tBilingual('Back', 'ተመለስ')}
-          </button>
+        <div className="w-full">
+          <ScormUpload
+            onDone={(courseId) =>
+              courseId ? router.push(`/courses/${courseId}?edit=1`) : router.push('/courses')
+            }
+            onCancel={() => setMode(null)}
+          />
         </div>
       </WorkspaceDetailOverlay>
     </>

@@ -11,4 +11,3 @@ import { InPersonSessionsModule } from '@modules/live-sessions/in-person/in-pers
   exports: [VenuesService],
 })
 export class VenuesModule {}
-

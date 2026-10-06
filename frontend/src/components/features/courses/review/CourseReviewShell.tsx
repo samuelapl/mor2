@@ -32,7 +32,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const { tBilingual } = useTranslation();
   const { canAny } = usePermissions();
 
-  const { ready, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
+  const { ready, detailLoaded, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
   const actions = useCourseActions(course, { onDeleted: () => router.push('/courses') });
 
   const [editing, setEditing] = useState(false);
@@ -40,6 +40,19 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const [reasonDialog, setReasonDialog] = useState<'reject' | 'returnToDraft' | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | null>(null);
+
+  // `?edit=1` opens the creator straight away (e.g. right after a SCORM import).
+  // Waits for detailLoaded so the wizard's initial state includes modules/lessons.
+  const [editParamHandled, setEditParamHandled] = useState(false);
+  useEffect(() => {
+    if (editParamHandled || !detailLoaded || !course) return;
+    setEditParamHandled(true);
+    if (new URLSearchParams(window.location.search).get('edit') === '1') {
+      setEditing(true);
+      const { pathname, hash } = window.location;
+      window.history.replaceState(null, '', `${pathname}${hash}`);
+    }
+  }, [editParamHandled, detailLoaded, course]);
 
   const order = useMemo(() => (course ? buildNodeOrder(course, assessments) : []), [course, assessments]);
   const issues = useMemo(() => (course ? buildIssueMap(course, assessments) : {}), [course, assessments]);

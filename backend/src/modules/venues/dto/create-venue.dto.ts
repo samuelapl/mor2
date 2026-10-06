@@ -22,7 +22,10 @@ export class CreateVenueDto {
   @Min(1)
   capacity!: number;
 
-  @ApiPropertyOptional({ example: ['Projector', '30 Desktop PCs', 'Ministry Intranet'], type: [String] })
+  @ApiPropertyOptional({
+    example: ['Projector', '30 Desktop PCs', 'Ministry Intranet'],
+    type: [String],
+  })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
@@ -33,4 +36,3 @@ export class CreateVenueDto {
   @IsOptional()
   isActive?: boolean;
 }
-

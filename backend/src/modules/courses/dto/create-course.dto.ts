@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CourseDeliveryMode, CourseLevel } from '@prisma/client';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUrl, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MinLength,
+} from 'class-validator';
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'CS101' })
@@ -48,7 +57,10 @@ export class CreateCourseDto {
   @IsEnum(CourseDeliveryMode)
   deliveryMode?: CourseDeliveryMode;
 
-  @ApiPropertyOptional({ example: true, description: 'Course includes planned online sessions (Online Self-Paced only).' })
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Course includes planned online sessions (Online Self-Paced only).',
+  })
   @IsOptional()
   @IsBoolean()
   hasOnlineSessions?: boolean;

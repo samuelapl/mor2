@@ -20,6 +20,7 @@ interface OfflineStoreState {
   startDownload: (courseId: string, options?: DownloadCourseOptions) => Promise<void>;
   cancelDownload: (courseId: string) => void;
   removeDownload: (courseId: string) => Promise<void>;
+  removeModuleDownload: (courseId: string, moduleId: string) => Promise<void>;
   isDownloaded: (courseId: string) => boolean;
   getProgress: (courseId: string) => CourseDownloadProgress | undefined;
 }
@@ -114,6 +115,11 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
         downloadedCourses: state.downloadedCourses.filter((c) => c.id !== courseId),
       };
     });
+  },
+
+  removeModuleDownload: async (courseId: string, moduleId: string) => {
+    await downloadManager.deleteDownloadedModule(courseId, moduleId);
+    await get().refresh();
   },
 
   isDownloaded: (courseId: string) => {

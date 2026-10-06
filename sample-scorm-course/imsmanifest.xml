@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="MOCK-TAX101-SCORM" version="1.0"
+          xmlns="http://www.imsglobal.org/xsd/imscp_v1p1"
+          xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_v1p2"
+          xmlns:adlseq="http://www.adlnet.org/xsd/adlseq_v1p2"
+          xmlns:adlact="http://www.adlnet.org/xsd/adlact_v1p2"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.imsglobal.org/xsd/imscp_v1p1 imscp_rootv1p1.xsd
+                              http://www.adlnet.org/xsd/adlcp_v1p2 adlcp_rootv1p2.xsd
+                              http://www.adlnet.org/xsd/adlseq_v1p2 adlseq_rootv1p2.xsd
+                              http://www.adlnet.org/xsd/adlact_v1p2 adlact_rootv1p2.xsd">
+
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+  </metadata>
+
+  <organizations default="ORG-TAX101">
+    <organization identifier="ORG-TAX101" adlseq:objectivesGlobalized="false">
+      <title>Ethiopian Tax Fundamentals - Sample Course</title>
+
+      <!-- Module 1 (top-level item) -->
+      <item identifier="ITEM-MOD1" identifierref="RES-MOD1" isvisible="true">
+        <title>Module 1: Introduction to Ethiopian Tax</title>
+
+        <!-- Lesson 1.1 -->
+        <item identifier="ITEM-LESSON-1-1" identifierref="RES-LESSON-1-1" isvisible="true">
+          <title>1.1 Overview of the Ethiopian Tax System</title>
+        </item>
+
+        <!-- Lesson 1.2 -->
+        <item identifier="ITEM-LESSON-1-2" identifierref="RES-LESSON-1-2" isvisible="true">
+          <title>1.2 Types of Taxes in Ethiopia</title>
+        </item>
+
+      </item>
+    </organization>
+  </organizations>
+
+  <resources>
+    <resource identifier="RES-MOD1" type="webcontent" adlcp:scormtype="sco" href="index.html">
+      <file href="index.html"/>
+    </resource>
+    <resource identifier="RES-LESSON-1-1" type="webcontent" adlcp:scormtype="sco" href="content/lesson1.html">
+      <file href="content/lesson1.html"/>
+    </resource>
+    <resource identifier="RES-LESSON-1-2" type="webcontent" adlcp:scormtype="sco" href="content/lesson2.html">
+      <file href="content/lesson2.html"/>
+    </resource>
+  </resources>
+
+</manifest>

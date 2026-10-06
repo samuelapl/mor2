@@ -15,7 +15,7 @@ import {
 import { PrismaService } from '@config/prisma.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
-import { deriveAttachmentFileKey } from '@common/utils';
+import { deriveAttachmentFileKey, isTimeSatisfied, requiredSeconds } from '@common/utils';
 import type { CurriculumAttachmentDto } from '@modules/curriculum/dto/module/create-module.dto';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
@@ -229,7 +229,11 @@ export class AssessmentsService {
         where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
       });
       const created = await tx.assessment.create({
-        data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, defaultPassMark),
+        data: this.dataFor(
+          dto,
+          { courseId, type: AssessmentType.FINAL_ASSESSMENT },
+          defaultPassMark,
+        ),
       });
       await this.linkAttachments(tx, created.id, courseId, dto.attachments);
     });
@@ -240,7 +244,11 @@ export class AssessmentsService {
   /** Course-level (final) assessment — kept for backward compatibility with the current frontend. */
   async create(courseId: string, dto: CreateAssessmentDto) {
     const created = await this.prisma.assessment.create({
-      data: this.dataFor(dto, { courseId, type: AssessmentType.FINAL_ASSESSMENT }, await this.policyService.getPassingScorePercent()),
+      data: this.dataFor(
+        dto,
+        { courseId, type: AssessmentType.FINAL_ASSESSMENT },
+        await this.policyService.getPassingScorePercent(),
+      ),
     });
     return this.withAttachments(created.id, courseId, dto.attachments);
   }
@@ -337,7 +345,11 @@ export class AssessmentsService {
     }
   }
 
-  private async withAttachments(id: string, courseId: string, attachments: CurriculumAttachmentDto[] | undefined) {
+  private async withAttachments(
+    id: string,
+    courseId: string,
+    attachments: CurriculumAttachmentDto[] | undefined,
+  ) {
     await this.prisma.$transaction((tx) => this.linkAttachments(tx, id, courseId, attachments));
     return this.prisma.assessment.findUniqueOrThrow({ where: { id }, include: assessmentInclude });
   }
@@ -502,27 +514,49 @@ export class AssessmentsService {
           'This lesson is still locked. Complete the preceding lessons first.',
         );
       }
-      const lessonAndSubs = await this.prisma.lesson.findMany({
-        where: {
-          OR: [{ id: assessment.lessonId }, { parentId: assessment.lessonId }],
-          deletedAt: null,
-        },
+      // If this lesson has sub-lessons, all sub-lessons must be completed before taking the assessment
+      const subLessons = await this.prisma.lesson.findMany({
+        where: { parentId: assessment.lessonId, deletedAt: null },
         select: { id: true },
       });
-      const completions = await this.prisma.lessonCompletion.findMany({
-        where: {
-          userId,
-          lessonId: { in: lessonAndSubs.map((l) => l.id) },
-          completed: true,
-        },
-        select: { lessonId: true },
+      if (subLessons.length > 0) {
+        const completions = await this.prisma.lessonCompletion.findMany({
+          where: {
+            userId,
+            lessonId: { in: subLessons.map((l) => l.id) },
+            completed: true,
+          },
+          select: { lessonId: true },
+        });
+        const completedSet = new Set(completions.map((c) => c.lessonId));
+        const uncompleted = subLessons.filter((l) => !completedSet.has(l.id));
+        if (uncompleted.length > 0) {
+          throw new ForbiddenException(
+            'Complete all sub-lessons before taking the lesson assessment.',
+          );
+        }
+      }
+
+      // Check required study time on the lesson
+      const targetLesson = await this.prisma.lesson.findUnique({
+        where: { id: assessment.lessonId },
+        select: { durationMinutes: true },
       });
-      const completedSet = new Set(completions.map((c) => c.lessonId));
-      const uncompleted = lessonAndSubs.filter((l) => !completedSet.has(l.id));
-      if (uncompleted.length > 0) {
-        throw new ForbiddenException(
-          'Complete the lesson content before taking the lesson assessment.',
-        );
+      const ratio = await this.policyService.getTimeRatio();
+      const required = requiredSeconds(targetLesson?.durationMinutes, ratio);
+      if (required > 0) {
+        const completion = await this.prisma.lessonCompletion.findUnique({
+          where: { userId_lessonId: { userId, lessonId: assessment.lessonId } },
+          select: { timeSpentSeconds: true },
+        });
+        const spent = completion?.timeSpentSeconds ?? 0;
+        if (!isTimeSatisfied(spent, targetLesson?.durationMinutes, ratio)) {
+          throw new ForbiddenException({
+            reason: 'TIME_NOT_MET',
+            message: 'Complete the required study time before taking the lesson assessment.',
+            remainingSeconds: Math.max(0, required - spent),
+          });
+        }
       }
     }
   }
@@ -684,7 +718,9 @@ export class AssessmentsService {
     // fills in for an assessment without one (same rule as ProgressService), and gates
     // the weighted course grade for certification.
     const effectivePassMark =
-      assessment.passingScore > 0 ? assessment.passingScore : await this.policyService.getPassingScorePercent();
+      assessment.passingScore > 0
+        ? assessment.passingScore
+        : await this.policyService.getPassingScorePercent();
     const { score, passed, correctCount } = computeResult(
       gradedAnswers,
       questions.length,

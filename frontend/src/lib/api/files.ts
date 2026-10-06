@@ -1,4 +1,5 @@
 import { getAccessToken } from './client';
+import type { ScormPreview } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
@@ -65,6 +66,19 @@ export async function uploadCertificateTemplate(file: File): Promise<{ backgroun
   const text = await postFormText('files/certificate-template', form);
   const parsed = JSON.parse(text) as { data?: { backgroundUrl?: string } };
   return { backgroundUrl: parsed?.data?.backgroundUrl ?? '' };
+}
+
+/** Uploads a SCORM ZIP, stores it in MinIO, parses imsmanifest.xml, and returns a course preview. */
+export async function uploadScormPreview(file: File): Promise<ScormPreview> {
+  const form = new FormData();
+  form.append('file', file);
+  const text = await postFormText('files/scorm/preview', form);
+  const parsed = JSON.parse(text) as { data?: ScormPreview };
+  const data = parsed?.data ?? (parsed as unknown as ScormPreview);
+  if (!data?.course || !data?.curriculum) {
+    throw new Error('Invalid SCORM preview response from server');
+  }
+  return data;
 }
 
 async function postForm(

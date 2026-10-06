@@ -51,7 +51,9 @@ export class UsersController {
 
   @Get('trainers')
   @Permissions('course.assign_trainer', 'live_session.manage_all', 'live_session.manage_own')
-  @ApiOperation({ summary: 'List active trainers (trainer-assignment and session scheduling pickers)' })
+  @ApiOperation({
+    summary: 'List active trainers (trainer-assignment and session scheduling pickers)',
+  })
   async findTrainers() {
     return this.usersService.findAll({ role: RoleName.TRAINER, limit: 100 });
   }

@@ -149,7 +149,6 @@ export class AuthService {
     return this.createSession(user);
   }
 
-
   private async createSession(user: UserWithRoles) {
     await this.prisma.user.update({
       where: { id: user.id },
@@ -173,7 +172,6 @@ export class AuthService {
   }
 
   async refresh(dto: RefreshTokenDto) {
-    
     const tokenHash = hashToken(dto.refreshToken);
 
     const stored = await this.prisma.refreshToken.findUnique({

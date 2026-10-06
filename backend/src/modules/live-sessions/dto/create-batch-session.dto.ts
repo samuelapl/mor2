@@ -65,4 +65,3 @@ export class CreateBatchSessionDto {
   @Type(() => VenueSessionItemDto)
   venueSessions!: VenueSessionItemDto[];
 }
-

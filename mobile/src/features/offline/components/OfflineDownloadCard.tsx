@@ -74,6 +74,7 @@ export function OfflineDownloadCard({
   const startDownload = useOfflineStore((s) => s.startDownload);
   const cancelDownload = useOfflineStore((s) => s.cancelDownload);
   const removeDownload = useOfflineStore((s) => s.removeDownload);
+  const removeModuleDownload = useOfflineStore((s) => s.removeModuleDownload);
 
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
@@ -214,6 +215,7 @@ export function OfflineDownloadCard({
 
   // Ids already stored on the phone, reloaded after every download of this course.
   const downloadedAt = downloadedCourses.find((c) => c.id === courseId)?.downloadedAt;
+  const currentDownloadStatus = downloads[courseId]?.status;
   const [storedIds, setStoredIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     let mounted = true;
@@ -221,12 +223,17 @@ export function OfflineDownloadCard({
       offlineDb.getLessonsForCourse(courseId),
       offlineDb.getAssessmentsForCourse(courseId),
     ]).then(([lessons, assessments]) => {
-      if (mounted) setStoredIds(new Set([...lessons, ...assessments].map((item) => item.id)));
+      if (mounted) {
+        const validLessons = lessons.filter(
+          (l) => l.contentType !== 'VIDEO' || Boolean(l.localMediaUri),
+        );
+        setStoredIds(new Set([...validLessons, ...assessments].map((item) => item.id)));
+      }
     });
     return () => {
       mounted = false;
     };
-  }, [courseId, downloadedAt]);
+  }, [courseId, downloadedAt, currentDownloadStatus]);
 
   // Everything "Download all" fetches (the final assessment is online-only, so not counted).
   const downloadableIds = useMemo(
@@ -273,6 +280,25 @@ export function OfflineDownloadCard({
     });
   };
 
+  const getModuleDownloadStatus = useCallback(
+    (mod: (typeof unlockedModules)[number]): 'complete' | 'partial' | 'none' => {
+      const allItemIds: string[] = [];
+      mod.lessons.forEach((l) => {
+        allItemIds.push(l.id);
+        l.subLessons?.forEach((sub) => allItemIds.push(sub.id));
+        l.assessments?.forEach((a) => allItemIds.push(a.id));
+      });
+      mod.assessments.forEach((a) => allItemIds.push(a.id));
+
+      if (allItemIds.length === 0) return 'none';
+      const downloadedCount = allItemIds.filter((id) => storedIds.has(id)).length;
+      if (downloadedCount === allItemIds.length) return 'complete';
+      if (downloadedCount > 0) return 'partial';
+      return 'none';
+    },
+    [storedIds],
+  );
+
   // Toggle selection for module (and automatically all its unlocked lessons, sub-lessons & quizzes)
   const toggleModuleSelection = (mod: (typeof unlockedModules)[number]) => {
     const isSelected = selectedModuleIds.has(mod.id);
@@ -290,13 +316,34 @@ export function OfflineDownloadCard({
       });
       mod.assessments?.forEach((a) => nextAssessments.delete(a.id));
     } else {
-      nextModules.add(mod.id);
+      let hasUnstored = false;
       mod.lessons.forEach((l) => {
-        nextLessons.add(l.id);
-        l.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
-        l.assessments?.forEach((a) => nextAssessments.add(a.id));
+        if (!storedIds.has(l.id)) {
+          nextLessons.add(l.id);
+          hasUnstored = true;
+        }
+        l.subLessons?.forEach((sub) => {
+          if (!storedIds.has(sub.id)) {
+            nextSubLessons.add(sub.id);
+            hasUnstored = true;
+          }
+        });
+        l.assessments?.forEach((a) => {
+          if (!storedIds.has(a.id)) {
+            nextAssessments.add(a.id);
+            hasUnstored = true;
+          }
+        });
       });
-      mod.assessments?.forEach((a) => nextAssessments.add(a.id));
+      mod.assessments?.forEach((a) => {
+        if (!storedIds.has(a.id)) {
+          nextAssessments.add(a.id);
+          hasUnstored = true;
+        }
+      });
+      if (hasUnstored) {
+        nextModules.add(mod.id);
+      }
     }
 
     setSelectedModuleIds(nextModules);
@@ -307,6 +354,7 @@ export function OfflineDownloadCard({
 
   // Toggle lesson selection
   const toggleLessonSelection = (lesson: ApiCourseLesson) => {
+    if (storedIds.has(lesson.id)) return;
     const nextLessons = new Set(selectedLessonIds);
     const nextSubLessons = new Set(selectedSubLessonIds);
     const nextAssessments = new Set(selectedAssessmentIds);
@@ -317,8 +365,12 @@ export function OfflineDownloadCard({
       lesson.assessments?.forEach((a) => nextAssessments.delete(a.id));
     } else {
       nextLessons.add(lesson.id);
-      lesson.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
-      lesson.assessments?.forEach((a) => nextAssessments.add(a.id));
+      lesson.subLessons?.forEach((sub) => {
+        if (!storedIds.has(sub.id)) nextSubLessons.add(sub.id);
+      });
+      lesson.assessments?.forEach((a) => {
+        if (!storedIds.has(a.id)) nextAssessments.add(a.id);
+      });
     }
 
     setSelectedLessonIds(nextLessons);
@@ -328,6 +380,7 @@ export function OfflineDownloadCard({
 
   // Toggle sub-lesson selection
   const toggleSubLessonSelection = (subId: string) => {
+    if (storedIds.has(subId)) return;
     const next = new Set(selectedSubLessonIds);
     if (next.has(subId)) next.delete(subId);
     else next.add(subId);
@@ -336,6 +389,7 @@ export function OfflineDownloadCard({
 
   // Toggle assessment selection
   const toggleAssessmentSelection = (aId: string) => {
+    if (storedIds.has(aId)) return;
     const next = new Set(selectedAssessmentIds);
     if (next.has(aId)) next.delete(aId);
     else next.add(aId);
@@ -350,15 +404,40 @@ export function OfflineDownloadCard({
     const nextAssessments = new Set<string>();
 
     unlockedModules.forEach((m) => {
-      nextModules.add(m.id);
+      let modHasUnstored = false;
       m.lessons.forEach((l) => {
-        nextLessons.add(l.id);
-        l.subLessons?.forEach((sub) => nextSubLessons.add(sub.id));
-        l.assessments?.forEach((a) => nextAssessments.add(a.id));
+        if (!storedIds.has(l.id)) {
+          nextLessons.add(l.id);
+          modHasUnstored = true;
+        }
+        l.subLessons?.forEach((sub) => {
+          if (!storedIds.has(sub.id)) {
+            nextSubLessons.add(sub.id);
+            modHasUnstored = true;
+          }
+        });
+        l.assessments?.forEach((a) => {
+          if (!storedIds.has(a.id)) {
+            nextAssessments.add(a.id);
+            modHasUnstored = true;
+          }
+        });
       });
-      m.assessments?.forEach((a) => nextAssessments.add(a.id));
+      m.assessments?.forEach((a) => {
+        if (!storedIds.has(a.id)) {
+          nextAssessments.add(a.id);
+          modHasUnstored = true;
+        }
+      });
+      if (modHasUnstored) {
+        nextModules.add(m.id);
+      }
     });
-    unlockedCourseAssessments.forEach((a) => nextAssessments.add(a.id));
+    unlockedCourseAssessments.forEach((a) => {
+      if (!storedIds.has(a.id)) {
+        nextAssessments.add(a.id);
+      }
+    });
 
     setSelectedModuleIds(nextModules);
     setSelectedLessonIds(nextLessons);
@@ -446,12 +525,22 @@ export function OfflineDownloadCard({
   };
 
   const handleDownloadSingleModule = (mod: (typeof unlockedModules)[number]) => {
-    const modLessonIds = mod.lessons.map((l) => l.id);
-    const modSubLessonIds = mod.lessons.flatMap((l) => l.subLessons?.map((s) => s.id) ?? []);
+    const modLessonIds = mod.lessons.map((l) => l.id).filter((id) => !storedIds.has(id));
+    const modSubLessonIds = mod.lessons
+      .flatMap((l) => l.subLessons?.map((s) => s.id) ?? [])
+      .filter((id) => !storedIds.has(id));
     const modAssessmentIds = [
       ...(mod.assessments?.map((a) => a.id) ?? []),
       ...mod.lessons.flatMap((l) => l.assessments?.map((a) => a.id) ?? []),
-    ];
+    ].filter((id) => !storedIds.has(id));
+
+    if (
+      modLessonIds.length === 0 &&
+      modSubLessonIds.length === 0 &&
+      modAssessmentIds.length === 0
+    ) {
+      return;
+    }
 
     executeDownload({
       moduleIds: [mod.id],
@@ -461,18 +550,22 @@ export function OfflineDownloadCard({
     });
   };
 
-  const handleDownloadSingleLesson = (lessonId: string, moduleId: string) => {
-    executeDownload({ lessonIds: [lessonId], moduleIds: [moduleId] });
+  const handleDownloadSingleLesson = (lessonId: string) => {
+    if (storedIds.has(lessonId)) return;
+    executeDownload({ lessonIds: [lessonId] });
   };
 
-  const handleDownloadSingleSubLesson = (subLessonId: string, moduleId: string) => {
-    executeDownload({ subLessonIds: [subLessonId], moduleIds: [moduleId] });
+  const handleDownloadSingleSubLesson = (subLessonId: string) => {
+    if (storedIds.has(subLessonId)) return;
+    executeDownload({
+      subLessonIds: [subLessonId],
+    });
   };
 
-  const handleDownloadSingleAssessment = (assessmentId: string, moduleId?: string | null) => {
+  const handleDownloadSingleAssessment = (assessmentId: string) => {
+    if (storedIds.has(assessmentId)) return;
     executeDownload({
       assessmentIds: [assessmentId],
-      moduleIds: moduleId ? [moduleId] : [],
     });
   };
 
@@ -488,6 +581,30 @@ export function OfflineDownloadCard({
           text: t('common.delete', { defaultValue: 'Delete' }),
           style: 'destructive',
           onPress: () => void removeDownload(courseId),
+        },
+      ],
+    );
+  };
+
+  const handleRemoveSingleModule = (mod: (typeof unlockedModules)[number]) => {
+    Alert.alert(
+      t('courses.removeModuleTitle', { defaultValue: 'Remove Module' }),
+      t('courses.removeModuleConfirm', {
+        defaultValue: 'Delete downloaded content for {{module}} from your device?',
+        module: mod.title || mod.titleEn || 'this module',
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete', { defaultValue: 'Delete' }),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeModuleDownload(courseId, mod.id);
+            } catch (err: any) {
+              Alert.alert(t('common.somethingWrong'), err?.message);
+            }
+          },
         },
       ],
     );
@@ -769,6 +886,7 @@ export function OfflineDownloadCard({
                     {unlockedModules.map((mod, modIdx) => {
                       const isModSelected = selectedModuleIds.has(mod.id);
                       const isModExpanded = expandedModuleIds.has(mod.id);
+                      const modStatus = getModuleDownloadStatus(mod);
                       const lessonCount = mod.lessons.length;
                       const quizCount = mod.assessments.length;
 
@@ -780,16 +898,24 @@ export function OfflineDownloadCard({
                           {/* Module Header Row */}
                           <View className="flex-row items-center justify-between gap-2 bg-slate-800/80 p-3">
                             {/* Checkbox */}
-                            <Pressable
-                              onPress={() => toggleModuleSelection(mod)}
-                              className={`h-5 w-5 items-center justify-center rounded-md border ${
-                                isModSelected
-                                  ? 'border-brand-500 bg-brand-600'
-                                  : 'border-slate-600 bg-slate-900'
-                              }`}
-                            >
-                              {isModSelected && <Check size={13} color="#ffffff" strokeWidth={3} />}
-                            </Pressable>
+                            {modStatus === 'complete' ? (
+                              <View className="h-5 w-5 items-center justify-center rounded-md border border-emerald-500/40 bg-emerald-950/40">
+                                <Check size={13} color="#10b981" strokeWidth={3} />
+                              </View>
+                            ) : (
+                              <Pressable
+                                onPress={() => toggleModuleSelection(mod)}
+                                className={`h-5 w-5 items-center justify-center rounded-md border ${
+                                  isModSelected
+                                    ? 'border-brand-500 bg-brand-600'
+                                    : 'border-slate-600 bg-slate-900'
+                                }`}
+                              >
+                                {isModSelected && (
+                                  <Check size={13} color="#ffffff" strokeWidth={3} />
+                                )}
+                              </Pressable>
+                            )}
 
                             {/* Title & Badge */}
                             <Pressable
@@ -811,16 +937,39 @@ export function OfflineDownloadCard({
                               </View>
                             </Pressable>
 
-                            {/* Single Module Download Button */}
-                            <Pressable
-                              onPress={() => handleDownloadSingleModule(mod)}
-                              className="flex-row items-center gap-1 rounded-lg border border-sky-600/40 bg-sky-950/80 px-2.5 py-1 active:bg-sky-900"
-                            >
-                              <Download size={12} color="#38bdf8" />
-                              <AppText className="text-[11px] font-semibold text-sky-300">
-                                Download
-                              </AppText>
-                            </Pressable>
+                            {/* Single Module Download / Downloaded Status */}
+                            {modStatus === 'complete' ? (
+                              <View className="flex-row items-center gap-1.5">
+                                <View className="flex-row items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2 py-1">
+                                  <CheckCircle2 size={12} color="#10b981" />
+                                  <AppText className="text-[11px] font-semibold text-emerald-300">
+                                    {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                  </AppText>
+                                </View>
+                                <Pressable
+                                  onPress={() => handleRemoveSingleModule(mod)}
+                                  className="h-7 w-7 items-center justify-center rounded-lg border border-red-800/40 bg-red-950/40 active:bg-red-900/50"
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`Delete module ${mod.title}`}
+                                >
+                                  <Trash2 size={13} color={palette.danger} />
+                                </Pressable>
+                              </View>
+                            ) : (
+                              <Pressable
+                                onPress={() => handleDownloadSingleModule(mod)}
+                                className="flex-row items-center gap-1 rounded-lg border border-sky-600/40 bg-sky-950/80 px-2.5 py-1 active:bg-sky-900"
+                              >
+                                <Download size={12} color="#38bdf8" />
+                                <AppText className="text-[11px] font-semibold text-sky-300">
+                                  {modStatus === 'partial'
+                                    ? t('offline.downloadRemainingShort', {
+                                        defaultValue: 'Download Rest',
+                                      })
+                                    : t('common.download', { defaultValue: 'Download' })}
+                                </AppText>
+                              </Pressable>
+                            )}
 
                             {/* Expand Chevron */}
                             <Pressable onPress={() => toggleModuleExpanded(mod.id)} className="p-1">
@@ -838,6 +987,7 @@ export function OfflineDownloadCard({
                               {/* Lessons in Module */}
                               {mod.lessons.map((lesson, lesIdx) => {
                                 const isLesSelected = selectedLessonIds.has(lesson.id);
+                                const isLessonDownloaded = storedIds.has(lesson.id);
                                 const hasSubLessons = (lesson.subLessons?.length ?? 0) > 0;
                                 const hasAssessments = (lesson.assessments?.length ?? 0) > 0;
 
@@ -846,18 +996,24 @@ export function OfflineDownloadCard({
                                     {/* Lesson Item Row */}
                                     <View className="flex-row items-center justify-between rounded-lg border border-slate-800 bg-slate-800/40 p-2">
                                       {/* Checkbox */}
-                                      <Pressable
-                                        onPress={() => toggleLessonSelection(lesson)}
-                                        className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
-                                          isLesSelected
-                                            ? 'border-brand-500 bg-brand-600'
-                                            : 'border-slate-600 bg-slate-900'
-                                        }`}
-                                      >
-                                        {isLesSelected && (
-                                          <Check size={11} color="#ffffff" strokeWidth={3} />
-                                        )}
-                                      </Pressable>
+                                      {isLessonDownloaded ? (
+                                        <View className="mr-2 h-4 w-4 items-center justify-center rounded border border-emerald-500/40 bg-emerald-950/40">
+                                          <Check size={11} color="#10b981" strokeWidth={3} />
+                                        </View>
+                                      ) : (
+                                        <Pressable
+                                          onPress={() => toggleLessonSelection(lesson)}
+                                          className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
+                                            isLesSelected
+                                              ? 'border-brand-500 bg-brand-600'
+                                              : 'border-slate-600 bg-slate-900'
+                                          }`}
+                                        >
+                                          {isLesSelected && (
+                                            <Check size={11} color="#ffffff" strokeWidth={3} />
+                                          )}
+                                        </Pressable>
+                                      )}
 
                                       {/* Icon & Title */}
                                       <View className="flex-1 flex-row items-center gap-2 pr-2">
@@ -883,15 +1039,22 @@ export function OfflineDownloadCard({
                                         </View>
                                       </View>
 
-                                      {/* Lesson Download Button */}
-                                      <Pressable
-                                        onPress={() =>
-                                          handleDownloadSingleLesson(lesson.id, mod.id)
-                                        }
-                                        className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
-                                      >
-                                        <Download size={12} color="#38bdf8" />
-                                      </Pressable>
+                                      {/* Lesson Download / Downloaded Badge */}
+                                      {isLessonDownloaded ? (
+                                        <View className="flex-row items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-950/40 px-2 py-1">
+                                          <CheckCircle2 size={11} color="#10b981" />
+                                          <AppText className="text-[10px] font-semibold text-emerald-300">
+                                            {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                          </AppText>
+                                        </View>
+                                      ) : (
+                                        <Pressable
+                                          onPress={() => handleDownloadSingleLesson(lesson.id)}
+                                          className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
+                                        >
+                                          <Download size={12} color="#38bdf8" />
+                                        </Pressable>
+                                      )}
                                     </View>
 
                                     {/* Sub-lessons (if any) */}
@@ -901,26 +1064,33 @@ export function OfflineDownloadCard({
                                           const isSubSelected = selectedSubLessonIds.has(
                                             subLesson.id,
                                           );
+                                          const isSubDownloaded = storedIds.has(subLesson.id);
 
                                           return (
                                             <View
                                               key={subLesson.id}
                                               className="flex-row items-center justify-between rounded-md border border-slate-800/60 bg-slate-800/30 p-1.5 px-2"
                                             >
-                                              <Pressable
-                                                onPress={() =>
-                                                  toggleSubLessonSelection(subLesson.id)
-                                                }
-                                                className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
-                                                  isSubSelected
-                                                    ? 'border-brand-500 bg-brand-600'
-                                                    : 'border-slate-600 bg-slate-900'
-                                                }`}
-                                              >
-                                                {isSubSelected && (
-                                                  <Check size={9} color="#fff" strokeWidth={3} />
-                                                )}
-                                              </Pressable>
+                                              {isSubDownloaded ? (
+                                                <View className="mr-2 h-3.5 w-3.5 items-center justify-center rounded border border-emerald-500/40 bg-emerald-950/40">
+                                                  <Check size={9} color="#10b981" strokeWidth={3} />
+                                                </View>
+                                              ) : (
+                                                <Pressable
+                                                  onPress={() =>
+                                                    toggleSubLessonSelection(subLesson.id)
+                                                  }
+                                                  className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
+                                                    isSubSelected
+                                                      ? 'border-brand-500 bg-brand-600'
+                                                      : 'border-slate-600 bg-slate-900'
+                                                  }`}
+                                                >
+                                                  {isSubSelected && (
+                                                    <Check size={9} color="#fff" strokeWidth={3} />
+                                                  )}
+                                                </Pressable>
+                                              )}
 
                                               <View className="flex-1 flex-row items-center gap-1.5 pr-2">
                                                 <CornerDownRight size={12} color="#64748b" />
@@ -934,17 +1104,23 @@ export function OfflineDownloadCard({
                                                 </AppText>
                                               </View>
 
-                                              <Pressable
-                                                onPress={() =>
-                                                  handleDownloadSingleSubLesson(
-                                                    subLesson.id,
-                                                    mod.id,
-                                                  )
-                                                }
-                                                className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
-                                              >
-                                                <Download size={11} color="#38bdf8" />
-                                              </Pressable>
+                                              {isSubDownloaded ? (
+                                                <View className="flex-row items-center gap-1 rounded border border-emerald-500/30 bg-emerald-950/40 px-1.5 py-0.5">
+                                                  <CheckCircle2 size={10} color="#10b981" />
+                                                  <AppText className="text-[9px] font-semibold text-emerald-300">
+                                                    {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                                  </AppText>
+                                                </View>
+                                              ) : (
+                                                <Pressable
+                                                  onPress={() =>
+                                                    handleDownloadSingleSubLesson(subLesson.id)
+                                                  }
+                                                  className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
+                                                >
+                                                  <Download size={11} color="#38bdf8" />
+                                                </Pressable>
+                                              )}
                                             </View>
                                           );
                                         })}
@@ -956,24 +1132,31 @@ export function OfflineDownloadCard({
                                       <View className="gap-1 pl-6">
                                         {lesson.assessments!.map((quiz) => {
                                           const isQuizSelected = selectedAssessmentIds.has(quiz.id);
+                                          const isQuizDownloaded = storedIds.has(quiz.id);
 
                                           return (
                                             <View
                                               key={quiz.id}
                                               className="flex-row items-center justify-between rounded-md border border-indigo-900/40 bg-indigo-950/30 p-1.5 px-2"
                                             >
-                                              <Pressable
-                                                onPress={() => toggleAssessmentSelection(quiz.id)}
-                                                className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
-                                                  isQuizSelected
-                                                    ? 'border-brand-500 bg-brand-600'
-                                                    : 'border-slate-600 bg-slate-900'
-                                                }`}
-                                              >
-                                                {isQuizSelected && (
-                                                  <Check size={9} color="#fff" strokeWidth={3} />
-                                                )}
-                                              </Pressable>
+                                              {isQuizDownloaded ? (
+                                                <View className="mr-2 h-3.5 w-3.5 items-center justify-center rounded border border-emerald-500/40 bg-emerald-950/40">
+                                                  <Check size={9} color="#10b981" strokeWidth={3} />
+                                                </View>
+                                              ) : (
+                                                <Pressable
+                                                  onPress={() => toggleAssessmentSelection(quiz.id)}
+                                                  className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
+                                                    isQuizSelected
+                                                      ? 'border-brand-500 bg-brand-600'
+                                                      : 'border-slate-600 bg-slate-900'
+                                                  }`}
+                                                >
+                                                  {isQuizSelected && (
+                                                    <Check size={9} color="#fff" strokeWidth={3} />
+                                                  )}
+                                                </Pressable>
+                                              )}
 
                                               <View className="flex-1 flex-row items-center gap-1.5 pr-2">
                                                 <HelpCircle size={12} color="#a855f7" />
@@ -985,14 +1168,23 @@ export function OfflineDownloadCard({
                                                 </AppText>
                                               </View>
 
-                                              <Pressable
-                                                onPress={() =>
-                                                  handleDownloadSingleAssessment(quiz.id, mod.id)
-                                                }
-                                                className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
-                                              >
-                                                <Download size={11} color="#c084fc" />
-                                              </Pressable>
+                                              {isQuizDownloaded ? (
+                                                <View className="flex-row items-center gap-1 rounded border border-emerald-500/30 bg-emerald-950/40 px-1.5 py-0.5">
+                                                  <CheckCircle2 size={10} color="#10b981" />
+                                                  <AppText className="text-[9px] font-semibold text-emerald-300">
+                                                    {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                                  </AppText>
+                                                </View>
+                                              ) : (
+                                                <Pressable
+                                                  onPress={() =>
+                                                    handleDownloadSingleAssessment(quiz.id)
+                                                  }
+                                                  className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
+                                                >
+                                                  <Download size={11} color="#c084fc" />
+                                                </Pressable>
+                                              )}
                                             </View>
                                           );
                                         })}
@@ -1005,24 +1197,31 @@ export function OfflineDownloadCard({
                               {/* Module-level Quizzes (if any) */}
                               {mod.assessments.map((modQuiz) => {
                                 const isQuizSelected = selectedAssessmentIds.has(modQuiz.id);
+                                const isModQuizDownloaded = storedIds.has(modQuiz.id);
 
                                 return (
                                   <View
                                     key={modQuiz.id}
                                     className="flex-row items-center justify-between rounded-lg border border-indigo-800/40 bg-indigo-950/40 p-2"
                                   >
-                                    <Pressable
-                                      onPress={() => toggleAssessmentSelection(modQuiz.id)}
-                                      className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
-                                        isQuizSelected
-                                          ? 'border-brand-500 bg-brand-600'
-                                          : 'border-slate-600 bg-slate-900'
-                                      }`}
-                                    >
-                                      {isQuizSelected && (
-                                        <Check size={11} color="#ffffff" strokeWidth={3} />
-                                      )}
-                                    </Pressable>
+                                    {isModQuizDownloaded ? (
+                                      <View className="mr-2 h-4 w-4 items-center justify-center rounded border border-emerald-500/40 bg-emerald-950/40">
+                                        <Check size={11} color="#10b981" strokeWidth={3} />
+                                      </View>
+                                    ) : (
+                                      <Pressable
+                                        onPress={() => toggleAssessmentSelection(modQuiz.id)}
+                                        className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
+                                          isQuizSelected
+                                            ? 'border-brand-500 bg-brand-600'
+                                            : 'border-slate-600 bg-slate-900'
+                                        }`}
+                                      >
+                                        {isQuizSelected && (
+                                          <Check size={11} color="#ffffff" strokeWidth={3} />
+                                        )}
+                                      </Pressable>
+                                    )}
 
                                     <View className="flex-1 flex-row items-center gap-2 pr-2">
                                       <Award size={14} color="#a855f7" />
@@ -1034,14 +1233,23 @@ export function OfflineDownloadCard({
                                       </AppText>
                                     </View>
 
-                                    <Pressable
-                                      onPress={() =>
-                                        handleDownloadSingleAssessment(modQuiz.id, mod.id)
-                                      }
-                                      className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
-                                    >
-                                      <Download size={12} color="#c084fc" />
-                                    </Pressable>
+                                    {isModQuizDownloaded ? (
+                                      <View className="flex-row items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-950/40 px-2 py-1">
+                                        <CheckCircle2 size={11} color="#10b981" />
+                                        <AppText className="text-[10px] font-semibold text-emerald-300">
+                                          {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                        </AppText>
+                                      </View>
+                                    ) : (
+                                      <Pressable
+                                        onPress={() =>
+                                          handleDownloadSingleAssessment(modQuiz.id)
+                                        }
+                                        className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
+                                      >
+                                        <Download size={12} color="#c084fc" />
+                                      </Pressable>
+                                    )}
                                   </View>
                                 );
                               })}
@@ -1060,22 +1268,29 @@ export function OfflineDownloadCard({
                       </AppText>
                       {unlockedCourseAssessments.map((ca) => {
                         const isSelected = selectedAssessmentIds.has(ca.id);
+                        const isCourseQuizDownloaded = storedIds.has(ca.id);
 
                         return (
                           <View
                             key={ca.id}
                             className="flex-row items-center justify-between rounded-xl border border-amber-500/30 bg-amber-950/20 p-2.5"
                           >
-                            <Pressable
-                              onPress={() => toggleAssessmentSelection(ca.id)}
-                              className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
-                                isSelected
-                                  ? 'border-brand-500 bg-brand-600'
-                                  : 'border-slate-600 bg-slate-900'
-                              }`}
-                            >
-                              {isSelected && <Check size={11} color="#ffffff" strokeWidth={3} />}
-                            </Pressable>
+                            {isCourseQuizDownloaded ? (
+                              <View className="mr-2 h-4 w-4 items-center justify-center rounded border border-emerald-500/40 bg-emerald-950/40">
+                                <Check size={11} color="#10b981" strokeWidth={3} />
+                              </View>
+                            ) : (
+                              <Pressable
+                                onPress={() => toggleAssessmentSelection(ca.id)}
+                                className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
+                                  isSelected
+                                    ? 'border-brand-500 bg-brand-600'
+                                    : 'border-slate-600 bg-slate-900'
+                                }`}
+                              >
+                                {isSelected && <Check size={11} color="#ffffff" strokeWidth={3} />}
+                              </Pressable>
+                            )}
 
                             <View className="flex-1 flex-row items-center gap-2 pr-2">
                               <Award size={16} color="#f59e0b" />
@@ -1087,15 +1302,24 @@ export function OfflineDownloadCard({
                               </AppText>
                             </View>
 
-                            <Pressable
-                              onPress={() => handleDownloadSingleAssessment(ca.id)}
-                              className="flex-row items-center gap-1 rounded-lg border border-amber-600/40 bg-amber-950/60 px-2.5 py-1 active:bg-amber-900"
-                            >
-                              <Download size={12} color="#f59e0b" />
-                              <AppText className="text-[11px] font-semibold text-amber-300">
-                                Download
-                              </AppText>
-                            </Pressable>
+                            {isCourseQuizDownloaded ? (
+                              <View className="flex-row items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1">
+                                <CheckCircle2 size={12} color="#10b981" />
+                                <AppText className="text-[11px] font-semibold text-emerald-300">
+                                  {t('offline.downloaded', { defaultValue: 'Downloaded' })}
+                                </AppText>
+                              </View>
+                            ) : (
+                              <Pressable
+                                onPress={() => handleDownloadSingleAssessment(ca.id)}
+                                className="flex-row items-center gap-1 rounded-lg border border-amber-600/40 bg-amber-950/60 px-2.5 py-1 active:bg-amber-900"
+                              >
+                                <Download size={12} color="#f59e0b" />
+                                <AppText className="text-[11px] font-semibold text-amber-300">
+                                  Download
+                                </AppText>
+                              </Pressable>
+                            )}
                           </View>
                         );
                       })}

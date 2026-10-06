@@ -74,7 +74,10 @@ describe('CoursesService.visibilityWhere', () => {
     });
 
     it('allows user with course.view.all permission to see all courses', async () => {
-      const user = { ...buildUser([RoleName.TRAINER]), permissions: ['course.view.all', 'course.view.assigned'] };
+      const user = {
+        ...buildUser([RoleName.TRAINER]),
+        permissions: ['course.view.all', 'course.view.assigned'],
+      };
       expect(await visibilityWhere(user)).toEqual({});
     });
 

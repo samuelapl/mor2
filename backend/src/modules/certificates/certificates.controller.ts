@@ -122,7 +122,9 @@ export class CertificatesController {
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @ApiBearerAuth()
   @Permissions('CERTIFICATE_MANAGE', 'certificate.manage')
-  @ApiOperation({ summary: 'Get certificate metrics and analytics report for management dashboard' })
+  @ApiOperation({
+    summary: 'Get certificate metrics and analytics report for management dashboard',
+  })
   async stats() {
     return this.certificatesService.getCertificateStats();
   }
@@ -144,7 +146,9 @@ export class CertificatesController {
   @Get(':id/download')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get a signed download URL for the certificate PDF with optional language' })
+  @ApiOperation({
+    summary: 'Get a signed download URL for the certificate PDF with optional language',
+  })
   @ApiParam({ name: 'id', type: String })
   @ApiQuery({ name: 'lang', required: false, type: String })
   async download(

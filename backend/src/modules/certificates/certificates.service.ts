@@ -74,12 +74,7 @@ export class CertificatesService {
    * List all issued certificates with search, status filtering, and pagination.
    * Guarded by CERTIFICATE_MANAGE.
    */
-  async findAll(query: {
-    search?: string;
-    status?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async findAll(query: { search?: string; status?: string; page?: number; limit?: number }) {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
@@ -403,7 +398,11 @@ export class CertificatesService {
    * Download certificate PDF with language choice (en vs am) and audit tracking.
    * Always renders using the authoritative generation engine with exact template fidelity.
    */
-  async downloadPdf(id: string, lang = 'en', userId?: string): Promise<{ downloadUrl: string | null }> {
+  async downloadPdf(
+    id: string,
+    lang = 'en',
+    userId?: string,
+  ): Promise<{ downloadUrl: string | null }> {
     const cert = await this.findById(id);
 
     let pdfKey: string | null = null;
@@ -451,7 +450,11 @@ export class CertificatesService {
   /**
    * Get raw PDF buffer for direct authenticated binary streaming.
    */
-  async getPdfBuffer(id: string, lang = 'en', userId?: string): Promise<{ buffer: Buffer; filename: string }> {
+  async getPdfBuffer(
+    id: string,
+    lang = 'en',
+    userId?: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
     await this.downloadPdf(id, lang, userId);
     const cert = await this.findById(id);
     const filename = `${cert.certificateNumber || 'certificate'}_${lang}.pdf`;
@@ -616,12 +619,21 @@ export class CertificatesService {
           type: true,
           weight: true,
           passingScore: true,
-          attempts: { where: { userId, submittedAt: { not: null } }, select: { score: true, passed: true } },
+          attempts: {
+            where: { userId, submittedAt: { not: null } },
+            select: { score: true, passed: true },
+          },
           sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
-    ).map((a) => ({ ...a, closed: a.type === 'SESSION_ASSESSMENT' ? isSessionQuizClosed(a) : undefined }));
-    const grade = computeCourseGrade(assessments, await this.policyService.getPassingScorePercent());
+    ).map((a) => ({
+      ...a,
+      closed: a.type === 'SESSION_ASSESSMENT' ? isSessionQuizClosed(a) : undefined,
+    }));
+    const grade = computeCourseGrade(
+      assessments,
+      await this.policyService.getPassingScorePercent(),
+    );
     // Includes: no session quiz still waiting for its session.
     if (!grade.certificateReady) return null;
 
@@ -657,7 +669,12 @@ export class CertificatesService {
       const regularFontPath = this.resolveAssetPath('assets', 'fonts', 'ebrima.ttf');
       const boldFontPath = this.resolveAssetPath('assets', 'fonts', 'ebrimabd.ttf');
 
-      if (regularFontPath && boldFontPath && fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
+      if (
+        regularFontPath &&
+        boldFontPath &&
+        fs.existsSync(regularFontPath) &&
+        fs.existsSync(boldFontPath)
+      ) {
         const regularBytes = fs.readFileSync(regularFontPath);
         const boldBytes = fs.readFileSync(boldFontPath);
         regularFont = await pdfDoc.embedFont(regularBytes);
@@ -783,10 +800,15 @@ export class CertificatesService {
     const courseDescriptionField = fieldsMap.get('courseDescription');
     const footerNoteField = fieldsMap.get('footerNote');
 
-    const titleText = (titleField?.text && ctx.lang !== 'am') ? titleField.text : i18n.title;
-    const preambleText = (preambleField?.text && ctx.lang !== 'am') ? preambleField.text : i18n.preamble;
-    const completionText = (completionTextField?.text && ctx.lang !== 'am') ? completionTextField.text : i18n.completion;
-    const descriptionText = (courseDescriptionField?.text && ctx.lang !== 'am') ? courseDescriptionField.text : i18n.description;
+    const titleText = titleField?.text && ctx.lang !== 'am' ? titleField.text : i18n.title;
+    const preambleText =
+      preambleField?.text && ctx.lang !== 'am' ? preambleField.text : i18n.preamble;
+    const completionText =
+      completionTextField?.text && ctx.lang !== 'am' ? completionTextField.text : i18n.completion;
+    const descriptionText =
+      courseDescriptionField?.text && ctx.lang !== 'am'
+        ? courseDescriptionField.text
+        : i18n.description;
 
     const courseHoursText = ctx.courseHours ? `${ctx.courseHours}` : `30 ${i18n.hoursSuffix}`;
     const formattedDate = ctx.issuedAt.toLocaleDateString(ctx.lang === 'am' ? 'am-ET' : 'en-GB');
@@ -876,13 +898,14 @@ export class CertificatesService {
 
     // 4. Assets & Positionable Elements (using exact top-left % coordinates mapped to PDF points)
     // (a) Company Logo / Header Brand
-    const logoField = fieldsMap.get('companyLogo') || fieldsMap.get('logo') || {
-      x: 50,
-      y: 8,
-      text: 'Ministry of Revenues',
-      title: 'ETIMS Academy',
-      visible: true,
-    };
+    const logoField = fieldsMap.get('companyLogo') ||
+      fieldsMap.get('logo') || {
+        x: 50,
+        y: 8,
+        text: 'Ministry of Revenues',
+        title: 'ETIMS Academy',
+        visible: true,
+      };
     if (logoField.visible !== false) {
       const logoX = (logoField.x / 100) * width;
       const logoY = height - (logoField.y / 100) * height;
@@ -993,7 +1016,11 @@ export class CertificatesService {
     if (hoursField.visible !== false) {
       const hoursX = (hoursField.x / 100) * width;
       const hoursY = height - (hoursField.y / 100) * height;
-      const cleanHours = ctx.courseHours ? String(ctx.courseHours).replace(/\s*hours?\s*/gi, '').trim() : '30';
+      const cleanHours = ctx.courseHours
+        ? String(ctx.courseHours)
+            .replace(/\s*hours?\s*/gi, '')
+            .trim()
+        : '30';
       const hoursLabel = `${hoursField.text || i18n.hoursPrefix} ${cleanHours} ${i18n.hoursSuffix}`;
       page.drawText(hoursLabel, {
         x: hoursX - fontBold.widthOfTextAtSize(hoursLabel, 11) / 2,
@@ -1040,7 +1067,8 @@ export class CertificatesService {
 
     // (g) Signatures: render all configured signatures (signature1, signature2, etc.)
     const sigFields = fields.filter(
-      (f: any) => f.key === 'signature' || f.key?.startsWith('signature') || f.key?.startsWith('sig_'),
+      (f: any) =>
+        f.key === 'signature' || f.key?.startsWith('signature') || f.key?.startsWith('sig_'),
     );
     const resolvedSigs =
       sigFields.length > 0
@@ -1081,21 +1109,13 @@ export class CertificatesService {
           }
         } catch {}
       } else {
-        this.drawSignature(
-          page,
-          font,
-          fontBold,
-          sigX,
-          sigY,
-          sig.text,
-          sig.title,
-          sig.width || 120,
-        );
+        this.drawSignature(page, font, fontBold, sigX, sigY, sig.text, sig.title, sig.width || 120);
       }
     }
 
     // (h) Platform Footer Note
-    const footerText = footerNoteField?.text || i18n.footer(ctx.certificateNumber, ctx.verificationCode);
+    const footerText =
+      footerNoteField?.text || i18n.footer(ctx.certificateNumber, ctx.verificationCode);
     if (footerNoteField?.visible !== false && footerText) {
       const footerY = 24; // ~96%
       const footerSize = 8.5;

@@ -167,7 +167,9 @@ export class CoursesService {
       objectives,
       objectivesEn: objectives,
       objectivesAm: course.objectivesAm ?? objectives,
-      modules: course.modules ? course.modules.map((m: any) => this.formatModuleCompat(m)) : undefined,
+      modules: course.modules
+        ? course.modules.map((m: any) => this.formatModuleCompat(m))
+        : undefined,
     };
   }
 
@@ -208,7 +210,8 @@ export class CoursesService {
       select: { status: true },
     });
     if (enrollment && course.status === CourseStatus.PUBLISHED) return;
-    const canBrowse = permissions.size > 0 ? permissions.has('course.browse') : roles.has(RoleName.LEARNER);
+    const canBrowse =
+      permissions.size > 0 ? permissions.has('course.browse') : roles.has(RoleName.LEARNER);
     if (canBrowse && course.status === CourseStatus.PUBLISHED) return;
 
     throw new ForbiddenException('You do not have access to this course');
@@ -350,9 +353,25 @@ export class CoursesService {
             assessments: {
               where: { type: 'SESSION_ASSESSMENT' },
               orderBy: { createdAt: 'asc' },
-              select: { id: true, titleEn: true, weight: true, passingScore: true, timeLimitMinutes: true },
+              select: {
+                id: true,
+                titleEn: true,
+                weight: true,
+                passingScore: true,
+                timeLimitMinutes: true,
+              },
             },
-            liveSession: { select: { id: true, scheduledAt: true, status: true, trainerId: true, platform: true, durationMinutes: true, deletedAt: true } },
+            liveSession: {
+              select: {
+                id: true,
+                scheduledAt: true,
+                status: true,
+                trainerId: true,
+                platform: true,
+                durationMinutes: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -432,7 +451,10 @@ export class CoursesService {
           })),
         }));
         const formattedModules = modules.map((m: any) => this.formatModuleCompat(m));
-        return { modules: formattedModules, lessons: formattedModules.flatMap((m: any) => m.lessons) };
+        return {
+          modules: formattedModules,
+          lessons: formattedModules.flatMap((m: any) => m.lessons),
+        };
       }
 
       if (course.modules && course.modules.length > 0) {
@@ -470,7 +492,10 @@ export class CoursesService {
         });
 
         const formattedModules = modules.map((m: any) => this.formatModuleCompat(m));
-        return { modules: formattedModules, lessons: formattedModules.flatMap((m: any) => m.lessons) };
+        return {
+          modules: formattedModules,
+          lessons: formattedModules.flatMap((m: any) => m.lessons),
+        };
       }
     }
 
@@ -497,6 +522,14 @@ export class CoursesService {
     });
     if (existing && !existing.deletedAt) {
       throw new ForbiddenException(`Course code '${dto.code}' already exists`);
+    }
+    if (existing && existing.deletedAt) {
+      // The unique index on `code` counts soft-deleted rows too, so free the
+      // code up by renaming the deleted record before creating the new one.
+      await this.prisma.course.update({
+        where: { id: existing.id },
+        data: { code: `${existing.code}-DEL-${existing.id.slice(0, 8)}` },
+      });
     }
     const deliveryMode = dto.deliveryMode ?? DEFAULT_DELIVERY_MODE;
     assertDeliveryModeAllowed(deliveryMode);
@@ -744,7 +777,8 @@ export class CoursesService {
     });
     const problems: string[] = [];
     for (const plan of plans) {
-      if (!plan.liveSession || plan.liveSession.deletedAt) problems.push(`"${plan.titleEn}" is not scheduled yet`);
+      if (!plan.liveSession || plan.liveSession.deletedAt)
+        problems.push(`"${plan.titleEn}" is not scheduled yet`);
       for (const quiz of plan.assessments) {
         if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
           problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
@@ -813,7 +847,6 @@ export class CoursesService {
       data: { status: CourseStatus.APPROVED },
     });
   }
-
 
   private assertOwnerCanActOnDraftOnly(actorRoles: string[], course: { status: CourseStatus }) {
     const isOwnerOnly =

@@ -116,9 +116,7 @@ export function computeSequentialUnlocks(
             .slice(0, sIdx)
             .every((s) => lessonCompletions.has(s.id));
           const isSubUnlocked =
-            isLessonUnlocked &&
-            parentDone &&
-            (sIdx === 0 ? true : previousSubsDone);
+            isLessonUnlocked && parentDone && (sIdx === 0 ? true : previousSubsDone);
           lessonUnlocked.set(sub.id, isSubUnlocked);
         }
       }

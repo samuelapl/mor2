@@ -75,11 +75,11 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={spinnerColor} />
       ) : (
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center justify-center gap-2">
           {icon}
           <AppText
             className={cn(
-              'font-semibold',
+              'font-semibold text-center',
               size === 'sm' ? 'text-sm' : 'text-base',
               textByVariant[variant],
             )}

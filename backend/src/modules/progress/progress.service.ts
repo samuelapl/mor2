@@ -70,7 +70,12 @@ export class ProgressService {
    * weighted course grade is below the certificate requirement. Sent once per distinct
    * grade, so retaking and improving (or staying put) never spams them.
    */
-  private async notifyCertificateGradeNotMet(userId: string, courseId: string, grade: number, required: number) {
+  private async notifyCertificateGradeNotMet(
+    userId: string,
+    courseId: string,
+    grade: number,
+    required: number,
+  ) {
     try {
       const last = await this.prisma.notification.findFirst({
         where: {
@@ -82,7 +87,10 @@ export class ProgressService {
       });
       if ((last?.metadata as { grade?: number } | null)?.grade === grade) return;
 
-      const course = await this.prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
+      const course = await this.prisma.course.findUnique({
+        where: { id: courseId },
+        select: { title: true },
+      });
       const title = course?.title ?? 'this course';
       await this.notificationsService.send(
         userId,
@@ -161,7 +169,10 @@ export class ProgressService {
           sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
-    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
+    ).map((a) => ({
+      ...a,
+      closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined,
+    }));
 
     const [globalPassingScore, retakeCooldownMinutes] = await Promise.all([
       this.policyService.getPassingScorePercent(),
@@ -186,7 +197,8 @@ export class ProgressService {
         maxAttempts: a.maxAttempts,
         // Session quizzes run live once; they cannot be retaken from the classroom.
         retakeAvailable:
-          a.type !== 'SESSION_ASSESSMENT' && (a.attempts.length < a.maxAttempts || retakeCooldownMinutes > 0),
+          a.type !== 'SESSION_ASSESSMENT' &&
+          (a.attempts.length < a.maxAttempts || retakeCooldownMinutes > 0),
       };
     });
     const assessmentInfoMap = new Map<string, AttachedAssessmentInfo>();
@@ -417,7 +429,8 @@ export class ProgressService {
 
     const byId = new Map(sessions.map((s) => [s.id, s]));
     const planned = plans.map((p): LearnerSessionInfo => {
-      const live = p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
+      const live =
+        p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
       return live
         ? toInfo(live, p.id)
         : {
@@ -552,17 +565,15 @@ export class ProgressService {
     },
   ) {
     const ratio = await this.policyService.getTimeRatio();
-    const subLessons = lesson.subLessons ?? [];
-    const targetIds = [lesson.id, ...subLessons.map((s) => s.id)];
+    const hasSubLessons = (lesson.subLessons ?? []).length > 0;
+    const targetIds = [lesson.id];
 
     const rows = await this.prisma.lessonCompletion.findMany({
       where: { userId, lessonId: { in: targetIds } },
       select: { timeSpentSeconds: true },
     });
     const spent = sumLessonTime(rows);
-    const required = lesson.durationMinutes
-      ? requiredSeconds(lesson.durationMinutes, ratio)
-      : subLessons.reduce((sum, s) => sum + requiredSeconds(s.durationMinutes, ratio), 0);
+    const required = requiredSeconds(lesson.durationMinutes, ratio);
 
     if (spent < required) {
       throw new ForbiddenException({
@@ -572,23 +583,27 @@ export class ProgressService {
       });
     }
 
-    const assessments = await this.prisma.assessment.findMany({
-      where: {
-        lessonId: lesson.id,
-        type: AssessmentType.LESSON_ASSESSMENT,
-      },
-      select: { id: true },
-    });
-
-    for (const assessment of assessments) {
-      const passed = await this.prisma.assessmentAttempt.findFirst({
-        where: { assessmentId: assessment.id, userId, passed: true },
+    // For lessons WITH sub-lessons, the assessment sits at the end of all sub-lessons
+    // and gates subsequent units/modules, not the initial parent reading lesson.
+    if (!hasSubLessons) {
+      const assessments = await this.prisma.assessment.findMany({
+        where: {
+          lessonId: lesson.id,
+          type: AssessmentType.LESSON_ASSESSMENT,
+        },
+        select: { id: true },
       });
-      if (!passed) {
-        throw new ForbiddenException({
-          reason: 'ASSESSMENT_NOT_PASSED',
-          message: 'You must pass the assessment for this activity before continuing.',
+
+      for (const assessment of assessments) {
+        const passed = await this.prisma.assessmentAttempt.findFirst({
+          where: { assessmentId: assessment.id, userId, passed: true },
         });
+        if (!passed) {
+          throw new ForbiddenException({
+            reason: 'ASSESSMENT_NOT_PASSED',
+            message: 'You must pass the assessment for this activity before continuing.',
+          });
+        }
       }
     }
   }
@@ -680,30 +695,6 @@ export class ProgressService {
         lastAccessed: new Date(),
       },
     });
-
-    // If this is a parent lesson with sub-lessons, cascade completion status to all its sub-lessons
-    const childSubLessons = await this.prisma.lesson.findMany({
-      where: { parentId: lesson.id, deletedAt: null },
-      select: { id: true },
-    });
-    if (childSubLessons.length > 0) {
-      for (const sub of childSubLessons) {
-        await this.prisma.lessonCompletion.upsert({
-          where: { userId_lessonId: { userId, lessonId: sub.id } },
-          update: {
-            completed: dto.completed,
-            completedAt: dto.completed ? new Date() : null,
-            lastAccessed: new Date(),
-          },
-          create: {
-            userId,
-            lessonId: sub.id,
-            completed: dto.completed,
-            completedAt: dto.completed ? new Date() : null,
-          },
-        });
-      }
-    }
 
     // If this was a sub-lesson, auto-complete/incomplete parent lesson
     if (lesson.parentId) {
@@ -867,14 +858,25 @@ export class ProgressService {
           sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
-    ).map((a) => ({ ...a, closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined }));
+    ).map((a) => ({
+      ...a,
+      closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined,
+    }));
 
-    const grade = computeCourseGrade(assessments, await this.policyService.getPassingScorePercent());
+    const grade = computeCourseGrade(
+      assessments,
+      await this.policyService.getPassingScorePercent(),
+    );
     if (!grade.allAssessmentsPassed) return; // every assessment must pass on its own mark
     if (grade.sessionsPending > 0) return; // a session quiz is still to come; judge the grade after it
     if (!grade.gradeSatisfied) {
       // Content done and every assessment passed, but the weighted grade is short.
-      await this.notifyCertificateGradeNotMet(userId, courseId, grade.totalCourseGrade, grade.requiredGrade);
+      await this.notifyCertificateGradeNotMet(
+        userId,
+        courseId,
+        grade.totalCourseGrade,
+        grade.requiredGrade,
+      );
       return;
     }
 

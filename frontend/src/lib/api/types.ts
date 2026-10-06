@@ -1169,3 +1169,58 @@ export interface ApiNewsReactionState {
   likeCount: number;
   myReaction: NewsReactionType | null;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  SCORM                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export interface ScormFileRef {
+  url: string;
+  key: string;
+  name: string;
+  size: number;
+}
+
+export interface ScormPreviewLesson {
+  title: string;
+  content?: string;
+  contentType: 'SCORM';
+  durationMinutes?: number;
+  order: number;
+  resourceUrl?: string;
+  subLessons: ScormPreviewLesson[];
+}
+
+export interface ScormPreviewModule {
+  title: string;
+  description?: string;
+  order: number;
+  lessons: ScormPreviewLesson[];
+}
+
+export interface ScormPreview {
+  scormFile: ScormFileRef;
+  package: {
+    title: string;
+    description: string;
+    identifier: string;
+    schema: string;
+    schemaVersion: string;
+    organizationCount: number;
+    resourceCount: number;
+  };
+  course: {
+    title: string;
+    description: string;
+    objectives: string;
+    code: string;
+  };
+  curriculum: {
+    modules: ScormPreviewModule[];
+  };
+  stats: {
+    moduleCount: number;
+    lessonCount: number;
+    subLessonCount: number;
+  };
+}

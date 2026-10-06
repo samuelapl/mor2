@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { EnrollmentStatus, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 
@@ -69,10 +74,18 @@ export class InPersonSessionsService {
     await db.$queryRaw`SELECT id FROM venues WHERE id = ${venueId} FOR UPDATE`;
     const venue = await this.getVenueOrFail(venueId, db);
     if (!venue.isActive) {
-      throw new BadRequestException(`Venue "${venue.name}" (${venue.branch}) is inactive and cannot be scheduled`);
+      throw new BadRequestException(
+        `Venue "${venue.name}" (${venue.branch}) is inactive and cannot be scheduled`,
+      );
     }
 
-    const conflict = await this.findVenueConflict(venueId, scheduledAt, durationMinutes, excludeSessionId, db);
+    const conflict = await this.findVenueConflict(
+      venueId,
+      scheduledAt,
+      durationMinutes,
+      excludeSessionId,
+      db,
+    );
     if (conflict) {
       throw new ConflictException(
         `Venue "${venue.name}" (${venue.branch}) is already booked at that time by ` +

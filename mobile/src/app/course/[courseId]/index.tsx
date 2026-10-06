@@ -52,7 +52,7 @@ import {
   useSelfEnroll,
 } from '@/features/courses';
 import { useCertificateForCourse, useClaimCertificate } from '@/features/certificates';
-import { CourseGradeSummary, findNextLesson, useCourseProgress } from '@/features/progress';
+import { findNextLesson, useCourseProgress } from '@/features/progress';
 import { downloadManager, OfflineDownloadCard } from '@/features/offline';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import type { ApiCourseDetail } from '@/features/courses/types/course.types';
@@ -234,17 +234,22 @@ export default function CourseScreen() {
       <Stack.Screen
         options={{
           title: data.code,
+          headerTitle: () => (
+            <Pressable
+              onPress={() => setInfoSheetOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('courses.courseDetails')}
+              className="flex-row items-center gap-1.5 active:opacity-70"
+            >
+              <Info size={18} color={colors.primary} />
+              <AppText className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {data.code}
+              </AppText>
+            </Pressable>
+          ),
           headerRight: () =>
             enrolled && status !== 'DROPPED' ? (
               <View className="flex-row items-center">
-                <Pressable
-                  onPress={() => setInfoSheetOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('courses.about')}
-                  className="rounded-full p-2 active:bg-slate-100 dark:active:bg-slate-800"
-                >
-                  <Info size={22} color={colors.primary} />
-                </Pressable>
                 <Pressable
                   onPress={() => setSyllabusOpen(true)}
                   accessibilityRole="button"
@@ -391,13 +396,6 @@ export default function CourseScreen() {
             />
           ) : null}
 
-          {/* Course grade & what the certificate still waits for (online courses) */}
-          {enrolled &&
-          status !== 'DROPPED' &&
-          data.deliveryMode !== 'IN_PERSON_ONLY' &&
-          progress.data ? (
-            <CourseGradeSummary progress={progress.data} />
-          ) : null}
 
           {/* In-person seat */}
           {enrolled &&

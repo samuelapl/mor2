@@ -1,17 +1,23 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { CircleCheck, ClipboardCheck, Clock, Info, ListTree, Pause } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { ArrowUp, Clock, Info, ListTree, Pause } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
 
 import { Alert } from '@/core/utils/alert';
+import { cn } from '@/core/utils/cn';
 import {
   AppText,
   Badge,
   Button,
   Card,
   ErrorState,
-  LockBadge,
   ProgressBar,
   Screen,
   Skeleton,
@@ -21,11 +27,16 @@ import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatClock } from '@/core/utils/formatters';
-import { ClassroomStage, FileRow, LessonBody, useLesson } from '@/features/classroom';
-import { ContentTypeIcon, SyllabusDrawer } from '@/features/courses';
+import {
+  ClassroomStage,
+  FileRow,
+  LessonBody,
+  fileNameFromUrl,
+  useLesson,
+} from '@/features/classroom';
+import { SyllabusDrawer } from '@/features/courses';
 import {
   findLessonProgress,
-  findNextLesson,
   requiredSeconds,
   useCompleteLesson,
   useCourseProgress,
@@ -33,14 +44,24 @@ import {
   useLessonHeartbeat,
   usePlayhead,
 } from '@/features/progress';
-import { offlineDb, useCourseWithOffline, useOfflineQuizAttempt } from '@/features/offline';
+import { offlineDb, useCourseWithOffline } from '@/features/offline';
 import { syncQueue } from '@/core/sync/sync-queue';
 import type { ApiLesson } from '@/features/classroom/types/lesson.types';
 
+interface NavItem {
+  type: 'LESSON' | 'SUB_LESSON' | 'ASSESSMENT';
+  id: string;
+  lessonId?: string;
+  assessmentId?: string;
+  title: string;
+  titleEn?: string;
+  titleAm?: string;
+  passed?: boolean;
+}
+
 /**
  * Classroom player (architecture §6.5–§6.6, spec §5.1, §6.2–§6.4).
- * The server decides locks and completion; this screen counts study time, keeps the playhead
- * and asks the server to complete the lesson when its rules are met.
+ * Linear flow: Lesson -> Sub-lesson(s) -> Lesson Assessment -> Next Lesson.
  */
 export default function LessonScreen() {
   const { t } = useTranslation();
@@ -60,6 +81,22 @@ export default function LessonScreen() {
   const [syllabusOpen, setSyllabusOpen] = useState(false);
   const [locallyCompleted, setLocallyCompleted] = useState(false);
 
+  const scrollRef = useRef<ScrollView | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+
+  // Auto-scroll to top and reset selected video whenever navigating between topics
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+    setShowScrollTop(false);
+    setSelectedVideoUrl(null);
+  }, [lessonId]);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(y > 250);
+  };
+
   useEffect(() => {
     if (!lesson.data || !online) {
       void (async () => {
@@ -67,6 +104,7 @@ export default function LessonScreen() {
         if (offL) {
           const atts = await offlineDb.getAttachmentsForLesson(lessonId);
           const subLessons = await offlineDb.getLessonsForModule(offL.moduleId);
+          const parentLesson = offL.parentId ? await offlineDb.getLesson(offL.parentId) : null;
           setOfflineData({
             id: offL.id,
             moduleId: offL.moduleId,
@@ -88,7 +126,24 @@ export default function LessonScreen() {
               fileType: a.fileType,
               sizeBytes: a.sizeBytes,
             })),
-            parent: null,
+            parent: parentLesson
+              ? {
+                  id: parentLesson.id,
+                  title: parentLesson.title,
+                  titleEn: parentLesson.title,
+                  titleAm: parentLesson.titleAm ?? undefined,
+                  moduleId: parentLesson.moduleId,
+                  parentId: parentLesson.parentId ?? null,
+                  order: parentLesson.sortOrder,
+                  contentType: parentLesson.contentType as any,
+                  durationMinutes: parentLesson.durationMinutes ?? null,
+                  content: parentLesson.content ?? null,
+                  contentEn: parentLesson.content ?? null,
+                  contentAm: parentLesson.contentAm ?? undefined,
+                  resourceUrl: parentLesson.localMediaUri || parentLesson.resourceUrl || null,
+                  attachments: [],
+                }
+              : null,
             subLessons: subLessons
               .filter((s) => s.parentId === offL.id)
               .map((s) => ({
@@ -113,85 +168,174 @@ export default function LessonScreen() {
     }
   }, [lesson.data, online, lessonId, courseId]);
 
+  const data = lesson.data ?? offlineData;
   const lookup = findLessonProgress(progress.data, lessonId);
   const entry = lookup?.entry;
-  const quiz = lookup?.lesson?.assessment ?? null;
-  const quizAttempt = useOfflineQuizAttempt(quiz?.id);
-  const quizAwaitingSync = quizAttempt.data?.syncStatus === 'PENDING';
-  const data = lesson.data ?? offlineData;
-  const subLessons = [...(data?.subLessons ?? [])].sort((a, b) => a.order - b.order);
-  const hasSubLessons = subLessons.length > 0;
   const completed = entry?.completed ?? completion.data?.completed ?? locallyCompleted ?? false;
 
-  const isYoutube = Boolean(data?.resourceUrl && /youtu\.?be/.test(data.resourceUrl));
-  const isPlayable =
-    Boolean(data?.resourceUrl) &&
-    (data?.contentType === 'VIDEO' || data?.contentType === 'AUDIO') &&
-    !isYoutube;
-  const [playing, setPlaying] = useState(false);
+  // Linear learning sequence: Parent Lesson -> Sub-lesson(s) -> Lesson Assessment -> Next Lesson
+  const navNodes = useMemo<NavItem[]>(() => {
+    const nodes: NavItem[] = [];
 
-  const heartbeat = useLessonHeartbeat({
-    courseId,
-    lessonId,
-    serverSeconds: entry?.timeSpentSeconds ?? 0,
-    // Media lessons count only while playing; reading lessons while on screen.
-    active: isPlayable ? playing : true,
-    enabled: Boolean(data) && !completed,
-  });
-  const playhead = usePlayhead(lessonId, completed);
+    if (progress.data?.modules) {
+      const sortedMods = [...progress.data.modules].sort((a, b) => a.order - b.order);
+      for (const mod of sortedMods) {
+        const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
+        for (const les of sortedLessons) {
+          // 1. Parent lesson
+          nodes.push({
+            type: 'LESSON',
+            id: les.lessonId,
+            lessonId: les.lessonId,
+            title: les.title ?? les.titleEn,
+            titleEn: les.titleEn,
+            titleAm: les.titleAm,
+          });
 
-  // Server value when known; offline, the same rule the server uses.
-  const required = entry?.requiredSeconds ?? requiredSeconds(data?.durationMinutes);
-  const satisfied =
-    completed || (entry?.timeSatisfied ?? false) || heartbeat.liveSeconds >= required;
-  const remaining = Math.max(0, required - heartbeat.liveSeconds);
-  const subLessonsDone =
-    !hasSubLessons || (lookup?.lesson?.subLessons.every((s) => s.completed) ?? false);
-  const quizOpen = satisfied && subLessonsDone;
+          // 2. Sub-lessons (if any)
+          if (les.subLessons && les.subLessons.length > 0) {
+            const sortedSubs = [...les.subLessons].sort((a, b) => a.order - b.order);
+            for (const sub of sortedSubs) {
+              nodes.push({
+                type: 'SUB_LESSON',
+                id: sub.lessonId,
+                lessonId: sub.lessonId,
+                title: sub.title ?? sub.titleEn,
+                titleEn: sub.titleEn,
+                titleAm: sub.titleAm,
+              });
+            }
+          }
 
-  // Why the quiz / complete button is still grey, in words the learner can act on.
-  const lockedHint = !satisfied
-    ? isPlayable && !playing
-      ? t(
-          data?.contentType === 'AUDIO'
-            ? 'classroom.playAudioToUnlock'
-            : 'classroom.playVideoToUnlock',
-        )
-      : t('classroom.keepStudyingToUnlock', { time: formatClock(remaining) })
-    : !subLessonsDone
-      ? t('classroom.finishTopicsToUnlock')
-      : null;
+          // 3. Lesson assessment: sits naturally after all sub-lessons of this lesson
+          if (les.assessment) {
+            nodes.push({
+              type: 'ASSESSMENT',
+              id: les.assessment.id,
+              assessmentId: les.assessment.id,
+              title: les.assessment.title ?? les.assessment.titleEn ?? 'Assessment',
+              titleEn: les.assessment.titleEn,
+              titleAm: les.assessment.titleAm,
+              passed: les.assessment.passed,
+            });
+          }
+        }
 
-  const next = completed ? findNextLesson(progress.data) : null;
-  const nextIsOther = next && next.lessonId !== lessonId ? next : null;
-  const moduleAssessment = lookup?.module?.assessment ?? null;
-  const courseDone =
-    completed && !nextIsOther && (progress.data?.courseCompletion.contentCompleted ?? false);
-  const finalAssessment = progress.data?.courseCompletion.finalAssessment ?? null;
+        // 4. Module assessment (if any)
+        if (mod.assessment) {
+          nodes.push({
+            type: 'ASSESSMENT',
+            id: mod.assessment.id,
+            assessmentId: mod.assessment.id,
+            title: mod.assessment.title ?? mod.assessment.titleEn ?? 'Module Assessment',
+            titleEn: mod.assessment.titleEn,
+            titleAm: mod.assessment.titleAm,
+            passed: mod.assessment.passed,
+          });
+        }
+      }
 
-  const quizTitle = quiz ? localized(quiz, 'title') || quiz.titleEn || t('classroom.quiz') : '';
-  const quizButtonTitle = t('classroom.takeSpecificQuiz', {
-    defaultValue: `Take ${quizTitle}`,
-    title: quizTitle,
-  });
+      // 5. Final assessment (if any)
+      if (progress.data.courseCompletion?.finalAssessment) {
+        const fa = progress.data.courseCompletion.finalAssessment;
+        nodes.push({
+          type: 'ASSESSMENT',
+          id: fa.id,
+          assessmentId: fa.id,
+          title: fa.title ?? fa.titleEn ?? 'Final Assessment',
+          titleEn: fa.titleEn,
+          titleAm: fa.titleAm,
+          passed: fa.passed,
+        });
+      }
+    } else if (courseData?.modules) {
+      const sortedMods = [...courseData.modules].sort((a, b) => a.order - b.order);
+      for (const mod of sortedMods) {
+        const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
+        for (const les of sortedLessons) {
+          nodes.push({
+            type: 'LESSON',
+            id: les.id,
+            lessonId: les.id,
+            title: les.title ?? les.titleEn ?? '',
+            titleEn: les.titleEn,
+            titleAm: les.titleAm,
+          });
 
-  const moduleAssessmentTitle = moduleAssessment
-    ? localized(moduleAssessment, 'title') || moduleAssessment.titleEn || t('classroom.quiz')
-    : '';
-  const moduleAssessmentButtonTitle = t('classroom.takeSpecificQuiz', {
-    defaultValue: `Take ${moduleAssessmentTitle}`,
-    title: moduleAssessmentTitle,
-  });
+          if (les.subLessons && les.subLessons.length > 0) {
+            const sortedSubs = [...les.subLessons].sort((a, b) => a.order - b.order);
+            for (const sub of sortedSubs) {
+              nodes.push({
+                type: 'SUB_LESSON',
+                id: sub.id,
+                lessonId: sub.id,
+                title: sub.title ?? sub.titleEn ?? '',
+                titleEn: sub.titleEn,
+                titleAm: sub.titleAm,
+              });
+            }
+          }
 
-  const finalAssessmentTitle = finalAssessment
-    ? localized(finalAssessment, 'title') ||
-      finalAssessment.titleEn ||
-      t('classroom.finalAssessment')
-    : '';
-  const finalAssessmentButtonTitle = t('classroom.takeSpecificQuiz', {
-    defaultValue: `Take ${finalAssessmentTitle}`,
-    title: finalAssessmentTitle,
-  });
+          if (les.assessments && les.assessments.length > 0) {
+            const ass = les.assessments[0]!;
+            nodes.push({
+              type: 'ASSESSMENT',
+              id: ass.id,
+              assessmentId: ass.id,
+              title: ass.title ?? ass.titleEn ?? 'Assessment',
+              titleEn: ass.titleEn,
+              titleAm: ass.titleAm,
+              passed: false,
+            });
+          }
+        }
+
+        if (mod.assessments && mod.assessments.length > 0) {
+          const ass = mod.assessments[0]!;
+          nodes.push({
+            type: 'ASSESSMENT',
+            id: ass.id,
+            assessmentId: ass.id,
+            title: ass.title ?? ass.titleEn ?? 'Module Assessment',
+            titleEn: ass.titleEn,
+            titleAm: ass.titleAm,
+            passed: false,
+          });
+        }
+      }
+
+      if (courseData.assessments && courseData.assessments.length > 0) {
+        const fa = courseData.assessments[0]!;
+        nodes.push({
+          type: 'ASSESSMENT',
+          id: fa.id,
+          assessmentId: fa.id,
+          title: fa.title ?? fa.titleEn ?? 'Final Assessment',
+          titleEn: fa.titleEn,
+          titleAm: fa.titleAm,
+          passed: false,
+        });
+      }
+    }
+
+    return nodes;
+  }, [progress.data, courseData]);
+
+  const currentIndex = navNodes.findIndex(
+    (n) => (n.type === 'LESSON' || n.type === 'SUB_LESSON') && n.lessonId === lessonId,
+  );
+
+  // Previous node: latest previous lesson or sub-lesson in the flow
+  const prevNode = useMemo(() => {
+    if (currentIndex <= 0) return null;
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      const node = navNodes[i];
+      if (node && (node.type === 'LESSON' || node.type === 'SUB_LESSON') && node.lessonId) {
+        return node;
+      }
+    }
+    return null;
+  }, [currentIndex, navNodes]);
 
   const isVideoAttachment = (att: {
     fileType?: string | null;
@@ -205,11 +349,87 @@ export default function LessonScreen() {
     return false;
   };
 
-  const downloadableAttachments = (data?.attachments ?? []).filter(
-    (file) => !isVideoAttachment(file),
+  const videoAttachments = useMemo(
+    () => (data?.attachments ?? []).filter(isVideoAttachment),
+    [data?.attachments],
   );
 
-  // The React Compiler memoizes these; no manual useCallback needed.
+  // File attachments stay at the bottom; non-video resource files also go here
+  const downloadableAttachments = useMemo(() => {
+    const files = (data?.attachments ?? []).filter((f) => !isVideoAttachment(f));
+    if (
+      data?.resourceUrl &&
+      (data.contentType === 'DOCUMENT' || data.contentType === 'PRESENTATION') &&
+      !files.some((f) => f.fileUrl === data.resourceUrl)
+    ) {
+      files.unshift({
+        id: 'lesson-resource-doc',
+        fileName: fileNameFromUrl(data.resourceUrl, data.title ?? data.titleEn ?? 'Document'),
+        fileUrl: data.resourceUrl,
+        fileType: 'application/pdf',
+        sizeBytes: 0,
+      });
+    }
+    return files;
+  }, [data]);
+
+  // Video media player stage: only video attachments & video resourceUrls are placed at the top
+  const effectiveLesson = useMemo(() => {
+    if (!data) return null;
+    const primaryVideoUrl =
+      selectedVideoUrl ||
+      (data.contentType === 'VIDEO' ? data.resourceUrl : null) ||
+      videoAttachments[0]?.fileUrl ||
+      null;
+
+    if (primaryVideoUrl) {
+      return {
+        ...data,
+        contentType: 'VIDEO' as const,
+        resourceUrl: primaryVideoUrl,
+      };
+    }
+
+    if (['AUDIO', 'INTERACTIVE', 'SCORM', 'EXTERNAL_LINK'].includes(data.contentType)) {
+      return data;
+    }
+
+    return null;
+  }, [data, selectedVideoUrl, videoAttachments]);
+
+  const isYoutube = Boolean(
+    effectiveLesson?.resourceUrl && /youtu\.?be/.test(effectiveLesson.resourceUrl),
+  );
+  const isPlayable =
+    Boolean(effectiveLesson?.resourceUrl) &&
+    (effectiveLesson?.contentType === 'VIDEO' || effectiveLesson?.contentType === 'AUDIO') &&
+    !isYoutube;
+  const [playing, setPlaying] = useState(false);
+
+  const heartbeat = useLessonHeartbeat({
+    courseId,
+    lessonId,
+    serverSeconds: entry?.timeSpentSeconds ?? 0,
+    active: isPlayable ? playing : true,
+    enabled: Boolean(data) && !completed,
+  });
+  const playhead = usePlayhead(lessonId, completed);
+
+  const required = entry?.requiredSeconds ?? requiredSeconds(data?.durationMinutes);
+  const satisfied =
+    completed || (entry?.timeSatisfied ?? false) || heartbeat.liveSeconds >= required;
+  const remaining = Math.max(0, required - heartbeat.liveSeconds);
+
+  const lockedHint = !satisfied
+    ? isPlayable && !playing
+      ? t(
+          effectiveLesson?.contentType === 'AUDIO'
+            ? 'classroom.playAudioToUnlock'
+            : 'classroom.playVideoToUnlock',
+        )
+      : t('classroom.keepStudyingToUnlock', { time: formatClock(remaining) })
+    : null;
+
   const markComplete = (lastPosition?: number) => {
     if (!online) {
       setLocallyCompleted(true);
@@ -248,8 +468,107 @@ export default function LessonScreen() {
   };
 
   const onEnded = () => {
-    // Finishing a video auto-completes it when nothing else is required (architecture §6.6).
-    if (!completed && !quiz && !hasSubLessons && satisfied) markComplete(0);
+    if (!completed && satisfied) markComplete(0);
+  };
+
+  const replaceWithLesson = (id: string) =>
+    router.replace({
+      pathname: '/course/[courseId]/learn/[lessonId]',
+      params: { courseId, lessonId: id },
+    });
+  const openQuiz = (assessmentId: string) =>
+    router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId, courseId } });
+
+  const handlePrevious = () => {
+    if (prevNode?.lessonId) {
+      replaceWithLesson(prevNode.lessonId);
+    } else {
+      router.back();
+    }
+  };
+
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleNext = async () => {
+    // If study-time requirement is not satisfied, alert the user
+    if (!satisfied) {
+      Alert.alert(
+        t('classroom.topicIncomplete', { defaultValue: 'Topic Incomplete' }),
+        lockedHint ||
+          t('classroom.finishTopicToUnlock', {
+            defaultValue: 'Please finish studying this topic to unlock the content.',
+          }),
+      );
+      return;
+    }
+
+    setIsNavigating(true);
+    try {
+      // Mark current topic/lesson completed on server and wait for success before navigating
+      if (!completed) {
+        if (!online) {
+          setLocallyCompleted(true);
+          await offlineDb.updateLessonProgress(lessonId, { isCompleted: true });
+          syncQueue.enqueue('LESSON_COMPLETE', { lessonId }, `complete-${lessonId}`);
+        } else {
+          await complete.mutateAsync({ lessonId });
+          await progress.refetch();
+        }
+      }
+
+      // Advance forward in syllabus order: Sub-lesson -> Assessment -> Next Lesson
+      for (let i = currentIndex + 1; i < navNodes.length; i++) {
+        const node = navNodes[i]!;
+        if (node.type === 'ASSESSMENT') {
+          if (!node.passed) {
+            openQuiz(node.assessmentId!);
+            return;
+          }
+          // If this assessment is already passed, proceed to next lesson
+          continue;
+        }
+
+        if (node.lessonId) {
+          replaceWithLesson(node.lessonId);
+          return;
+        }
+      }
+
+      // End of syllabus
+      Alert.alert(
+        t('classroom.completed', { defaultValue: 'Course Completed' }),
+        t('classroom.courseDone', {
+          defaultValue: 'You have completed all content in this course!',
+        }),
+        [
+          {
+            text: t('classroom.backToCourse', { defaultValue: 'Back to course' }),
+            onPress: () => router.back(),
+          },
+        ],
+      );
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const message =
+          error.reason === 'TIME_NOT_MET'
+            ? t('classroom.reasons.timeNotMet', {
+                time: formatClock(error.remainingSeconds ?? 0),
+              })
+            : error.reason === 'ASSESSMENT_NOT_PASSED' || error.reason === 'ASSESSMENT_REQUIRED'
+              ? t('classroom.reasons.assessmentRequired')
+              : error.reason === 'LOCKED'
+                ? t('classroom.reasons.locked')
+                : error.localizedMessage(locale);
+        Alert.alert(t('classroom.markComplete'), message);
+        if (error.reason === 'LOCKED' || error.reason === 'TIME_NOT_MET') {
+          void progress.refetch();
+        }
+      } else {
+        Alert.alert(t('common.error'), (error as any)?.message || 'Failed to complete lesson');
+      }
+    } finally {
+      setIsNavigating(false);
+    }
   };
 
   if (lesson.isPending && !data) {
@@ -269,19 +588,6 @@ export default function LessonScreen() {
       </Screen>
     );
   }
-
-  const openLesson = (id: string) =>
-    router.push({
-      pathname: '/course/[courseId]/learn/[lessonId]',
-      params: { courseId, lessonId: id },
-    });
-  const replaceWithLesson = (id: string) =>
-    router.replace({
-      pathname: '/course/[courseId]/learn/[lessonId]',
-      params: { courseId, lessonId: id },
-    });
-  const openQuiz = (assessmentId: string) =>
-    router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId, courseId } });
 
   const startAt = playhead.resumePosition(
     completion.data?.lastPosition ?? lookup?.lesson?.lastPosition ?? 0,
@@ -334,219 +640,158 @@ export default function LessonScreen() {
           }
         />
       ) : null}
-      <Screen
-        contentClassName="gap-4 p-0 pb-8"
-        onRefresh={() => void progress.refetch()}
-        refreshing={progress.isRefetching}
-      >
-        <ClassroomStage
-          lesson={data}
-          startAt={startAt}
-          onPlayingChange={setPlaying}
-          onPosition={playhead.onPosition}
-          onPause={playhead.commit}
-          onEnded={onEnded}
-          onExternalTime={heartbeat.addSeconds}
-        />
 
-        <View className="gap-4 px-4">
-          <View className="gap-2">
-            <View className="flex-row flex-wrap items-center gap-2">
-              <Badge label={t(`classroom.contentType.${data.contentType}`)} tone="brand" />
-              {data.durationMinutes ? (
-                <Badge label={t('courses.minutes', { count: data.durationMinutes })} />
-              ) : null}
-              {completed ? <Badge label={t('classroom.completed')} tone="success" /> : null}
-            </View>
-            {data.parent ? (
-              <AppText variant="caption">
-                {t('classroom.partOf', { title: localized(data.parent, 'title') })}
-              </AppText>
-            ) : null}
-            <AppText variant="title">{localized(data, 'title')}</AppText>
-          </View>
-
-          {/* Study-time requirement (spec §6.4) */}
-          {!completed && required > 0 ? (
-            <Card className="gap-2">
-              <View className="flex-row items-center gap-2">
-                {isPlayable && !playing && !satisfied ? (
-                  <Pause size={16} color={colors.textMuted} />
-                ) : (
-                  <Clock size={16} color={satisfied ? colors.success : colors.primary} />
-                )}
-                <AppText variant="label" className="flex-1">
-                  {satisfied
-                    ? t('classroom.timeDone')
-                    : isPlayable && !playing
-                      ? t('classroom.pausedHint')
-                      : t('classroom.timeRemaining', { time: formatClock(remaining) })}
-                </AppText>
-                <AppText variant="caption">
-                  {formatClock(Math.min(heartbeat.liveSeconds, required))} / {formatClock(required)}
-                </AppText>
-              </View>
-              <ProgressBar
-                percent={(Math.min(heartbeat.liveSeconds, required) / required) * 100}
-                tone={satisfied ? 'success' : 'brand'}
-              />
-            </Card>
+      <View className="flex-1 relative">
+        <Screen
+          scrollViewRef={scrollRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentClassName="gap-4 p-0 pb-12"
+          onRefresh={() => void progress.refetch()}
+          refreshing={progress.isRefetching}
+        >
+          {effectiveLesson ? (
+            <ClassroomStage
+              lesson={effectiveLesson}
+              startAt={startAt}
+              onPlayingChange={setPlaying}
+              onPosition={playhead.onPosition}
+              onPause={playhead.commit}
+              onEnded={onEnded}
+              onExternalTime={heartbeat.addSeconds}
+            />
           ) : null}
 
-          {body ? <LessonBody content={body} /> : null}
-
-          {downloadableAttachments.length > 0 ? (
-            <View className="gap-2">
-              <AppText variant="heading">{t('classroom.attachments')}</AppText>
-              {downloadableAttachments.map((file) => (
-                <FileRow
-                  key={file.id}
-                  url={file.fileUrl}
-                  fileName={file.fileName}
-                  mimeType={file.fileType}
-                  sizeBytes={file.sizeBytes}
-                />
-              ))}
-            </View>
-          ) : null}
-
-          {/* Topics (sub-lessons) — the parent completes when all of them are done */}
-          {hasSubLessons ? (
-            <Card className="gap-1 p-2">
-              <AppText variant="heading" className="px-2 pt-2">
-                {t('classroom.subLessons')}
-              </AppText>
-              {subLessons.map((sub) => {
-                const p = lookup?.lesson?.subLessons.find((s) => s.lessonId === sub.id);
-                const unlocked = p?.unlocked ?? false;
+          {/* Multiple video switcher if more than 1 video attachment exists */}
+          {videoAttachments.length > 1 ? (
+            <View className="flex-row flex-wrap gap-2 px-4 pt-1">
+              {videoAttachments.map((v, i) => {
+                const currentVideo =
+                  selectedVideoUrl ||
+                  (data.contentType === 'VIDEO' ? data.resourceUrl : null) ||
+                  videoAttachments[0]?.fileUrl;
+                const isSelected = currentVideo === v.fileUrl;
                 return (
-                  <Button
-                    key={sub.id}
-                    variant="ghost"
-                    className="h-auto justify-start py-3"
-                    disabled={!unlocked}
-                    onPress={() => openLesson(sub.id)}
-                    title={localized(sub, 'title')}
-                    icon={
-                      p?.completed ? (
-                        <CircleCheck size={18} color={colors.success} />
-                      ) : unlocked ? (
-                        <ContentTypeIcon type={sub.contentType} color={colors.primary} />
-                      ) : (
-                        <LockBadge />
-                      )
-                    }
-                  />
+                  <Pressable
+                    key={v.id || v.fileUrl}
+                    onPress={() => setSelectedVideoUrl(v.fileUrl)}
+                    className={cn(
+                      'rounded-full px-3 py-1 border',
+                      isSelected
+                        ? 'bg-brand-600 border-brand-600'
+                        : 'bg-white border-slate-300 dark:bg-slate-800 dark:border-slate-700',
+                    )}
+                  >
+                    <AppText
+                      variant="caption"
+                      className={
+                        isSelected
+                          ? 'text-white font-semibold'
+                          : 'text-slate-700 dark:text-slate-300'
+                      }
+                    >
+                      {v.fileName || `${t('classroom.video', { defaultValue: 'Video' })} ${i + 1}`}
+                    </AppText>
+                  </Pressable>
                 );
               })}
-              {!completed ? (
-                <AppText variant="caption" className="px-2 pb-2">
-                  {t('classroom.completeSubLessons')}
-                </AppText>
-              ) : null}
-            </Card>
+            </View>
           ) : null}
 
-          {/* Primary action */}
-          <View className="gap-3 pt-2">
-            {completed ? (
-              <>
-                <View className="flex-row items-center justify-center gap-2">
-                  <CircleCheck size={20} color={colors.success} />
-                  <AppText className="font-semibold text-green-700 dark:text-green-400">
-                    {t('classroom.completed')}
+          <View className="gap-4 px-4">
+            <View className="gap-2">
+              <View className="flex-row flex-wrap items-center gap-2">
+                <Badge label={t(`classroom.contentType.${data.contentType}`)} tone="brand" />
+                {data.durationMinutes ? (
+                  <Badge label={t('courses.minutes', { count: data.durationMinutes })} />
+                ) : null}
+                {completed ? <Badge label={t('classroom.completed')} tone="success" /> : null}
+              </View>
+              {data.parent ? (
+                <AppText variant="caption">
+                  {t('classroom.partOf', { title: localized(data.parent, 'title') })}
+                </AppText>
+              ) : null}
+              <AppText variant="title">{localized(data, 'title')}</AppText>
+            </View>
+
+            {/* Study-time requirement (spec §6.4) */}
+            {!completed && required > 0 ? (
+              <Card className="gap-2">
+                <View className="flex-row items-center gap-2">
+                  {isPlayable && !playing && !satisfied ? (
+                    <Pause size={16} color={colors.textMuted} />
+                  ) : (
+                    <Clock size={16} color={satisfied ? colors.success : colors.primary} />
+                  )}
+                  <AppText variant="label" className="flex-1">
+                    {satisfied
+                      ? t('classroom.timeDone')
+                      : isPlayable && !playing
+                        ? t('classroom.pausedHint')
+                        : t('classroom.timeRemaining', { time: formatClock(remaining) })}
+                  </AppText>
+                  <AppText variant="caption">
+                    {formatClock(Math.min(heartbeat.liveSeconds, required))} / {formatClock(required)}
                   </AppText>
                 </View>
-                {nextIsOther ? (
-                  <Button
-                    title={t('classroom.nextLesson')}
-                    onPress={() => replaceWithLesson(nextIsOther.lessonId)}
-                    fullWidth
-                  />
-                ) : moduleAssessment && !moduleAssessment.passed ? (
-                  <Button
-                    title={moduleAssessmentButtonTitle}
-                    icon={<ClipboardCheck size={18} color="#fff" />}
-                    onPress={() => openQuiz(moduleAssessment.id)}
-                    fullWidth
-                  />
-                ) : courseDone && finalAssessment && !finalAssessment.passed ? (
-                  <Button
-                    title={finalAssessmentButtonTitle}
-                    icon={<ClipboardCheck size={18} color="#fff" />}
-                    onPress={() => openQuiz(finalAssessment.id)}
-                    fullWidth
-                  />
-                ) : courseDone ? (
-                  <AppText variant="muted" className="text-center">
-                    {t('classroom.courseDone')}
-                  </AppText>
-                ) : null}
-                <Button
-                  title={t('classroom.backToCourse')}
-                  variant="ghost"
-                  onPress={() => router.back()}
+                <ProgressBar
+                  percent={(Math.min(heartbeat.liveSeconds, required) / required) * 100}
+                  tone={satisfied ? 'success' : 'brand'}
                 />
-              </>
-            ) : quiz && !quiz.passed ? (
-              <>
-                <Button
-                  title={quizAwaitingSync ? t('quiz.awaitingSyncTitle') : quizButtonTitle}
-                  icon={
-                    <ClipboardCheck size={18} color={quizAwaitingSync ? colors.text : '#fff'} />
-                  }
-                  disabled={!quizOpen}
-                  variant={quizAwaitingSync ? 'outline' : 'primary'}
-                  onPress={() => openQuiz(quiz.id)}
-                  fullWidth
-                />
-                {!quizOpen && !quizAwaitingSync && lockedHint ? (
-                  <LockedHint text={lockedHint} />
-                ) : null}
-                <AppText variant="caption" className="text-center">
-                  {quizAwaitingSync
-                    ? t('quiz.awaitingSyncShort')
-                    : !online
-                      ? t('classroom.offlineQuizAvailable', {
-                          defaultValue: 'Quiz available offline · Syncs automatically on reconnect',
-                        })
-                      : t('classroom.quizCompletesLesson')}
-                </AppText>
-              </>
-            ) : hasSubLessons ? null : (
-              <>
-                <Button
-                  title={t('classroom.markComplete')}
-                  disabled={!satisfied}
-                  loading={complete.isPending}
-                  onPress={() => markComplete()}
-                  fullWidth
-                />
-                {!satisfied && lockedHint ? <LockedHint text={lockedHint} /> : null}
-                {!online ? (
-                  <AppText variant="caption" className="text-center">
-                    {t('classroom.offlineCompleteHint', {
-                      defaultValue: 'Offline mode · Progress saved locally and syncs automatically',
-                    })}
-                  </AppText>
-                ) : null}
-              </>
-            )}
-          </View>
-        </View>
-      </Screen>
-    </>
-  );
-}
+              </Card>
+            ) : null}
 
-function LockedHint({ text }: { text: string }) {
-  const colors = useThemeColors();
-  return (
-    <View className="flex-row items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 dark:bg-amber-950/40">
-      <Info size={16} color={colors.warning} />
-      <AppText className="flex-shrink text-sm font-medium text-amber-800 dark:text-amber-200">
-        {text}
-      </AppText>
-    </View>
+            {body ? <LessonBody content={body} /> : null}
+
+            {/* Downloadable file attachments at the bottom */}
+            {downloadableAttachments.length > 0 ? (
+              <View className="gap-2 pt-2">
+                <AppText variant="heading">{t('classroom.attachments')}</AppText>
+                {downloadableAttachments.map((file) => (
+                  <FileRow
+                    key={file.id}
+                    url={file.fileUrl}
+                    fileName={file.fileName}
+                    mimeType={file.fileType}
+                    sizeBytes={file.sizeBytes}
+                  />
+                ))}
+              </View>
+            ) : null}
+
+            {/* Bottom navigation bar: Previous and Next ONLY */}
+            <View className="flex-row items-center gap-3 pt-3">
+              <Button
+                title={t('common.previous', { defaultValue: 'Previous' })}
+                variant="outline"
+                className="flex-1"
+                onPress={handlePrevious}
+                disabled={!prevNode}
+              />
+              <Button
+                title={t('common.next', { defaultValue: 'Next' })}
+                variant="primary"
+                className="flex-1"
+                loading={isNavigating || complete.isPending}
+                onPress={handleNext}
+              />
+            </View>
+          </View>
+        </Screen>
+
+        {/* Floating scroll to top button */}
+        {showScrollTop ? (
+          <Pressable
+            onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+            className="absolute bottom-6 right-5 z-50 h-11 w-11 items-center justify-center rounded-full bg-brand-600 shadow-md elevation-5 active:bg-brand-700"
+            accessibilityRole="button"
+            accessibilityLabel={t('classroom.scrollToTop', { defaultValue: 'Scroll to top' })}
+          >
+            <ArrowUp size={20} color="#ffffff" />
+          </Pressable>
+        ) : null}
+      </View>
+    </>
   );
 }

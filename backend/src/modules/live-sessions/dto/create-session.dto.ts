@@ -13,7 +13,10 @@ import {
 import { SessionPlatform, SessionType } from '@prisma/client';
 
 export class CreateSessionDto {
-  @ApiPropertyOptional({ description: 'Schedule a session planned with the course (pre-fills its title, description and weighted quizzes)' })
+  @ApiPropertyOptional({
+    description:
+      'Schedule a session planned with the course (pre-fills its title, description and weighted quizzes)',
+  })
   @IsOptional()
   @IsString()
   sessionPlanId?: string;
@@ -48,7 +51,9 @@ export class CreateSessionDto {
   @IsString()
   descriptionAm?: string;
 
-  @ApiPropertyOptional({ description: 'Learning objectives of the session (separate from the description)' })
+  @ApiPropertyOptional({
+    description: 'Learning objectives of the session (separate from the description)',
+  })
   @IsOptional()
   @IsString()
   objectivesEn?: string;

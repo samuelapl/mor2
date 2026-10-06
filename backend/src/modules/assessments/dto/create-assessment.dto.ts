@@ -78,13 +78,19 @@ export class CreateAssessmentDto {
   @IsString()
   descriptionAm?: string;
 
-  @ApiPropertyOptional({ example: 50, description: 'Passing score percentage (defaults to global policy)' })
+  @ApiPropertyOptional({
+    example: 50,
+    description: 'Passing score percentage (defaults to global policy)',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
   passingScore?: number;
 
-  @ApiPropertyOptional({ example: 20, description: 'Weight % contribution to final course grade (0-100)' })
+  @ApiPropertyOptional({
+    example: 20,
+    description: 'Weight % contribution to final course grade (0-100)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -127,7 +133,8 @@ export class CreateAssessmentDto {
 
   @ApiPropertyOptional({
     type: [CurriculumAttachmentDto],
-    description: 'Reference files shown with the assessment. Omit to keep the current files; [] removes them.',
+    description:
+      'Reference files shown with the assessment. Omit to keep the current files; [] removes them.',
   })
   @IsOptional()
   @IsArray()

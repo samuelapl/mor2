@@ -80,8 +80,14 @@ export class EnrollmentsService {
       if (course.deliveryMode === CourseDeliveryMode.ONLINE_ONLY) {
         throw new BadRequestException('This course is only available in online mode');
       }
-      if (!dto.sessionId && !dto.venueId && course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
-        throw new BadRequestException('Please select an in-person training session to reserve your seat');
+      if (
+        !dto.sessionId &&
+        !dto.venueId &&
+        course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY
+      ) {
+        throw new BadRequestException(
+          'Please select an in-person training session to reserve your seat',
+        );
       }
     } else if (course.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
       throw new BadRequestException('This course requires in-person classroom attendance');
@@ -138,12 +144,7 @@ export class EnrollmentsService {
         return saved;
       });
 
-      await this.notifyEnrollment(
-        userId,
-        dto.courseId,
-        course.title,
-        !!existing,
-      );
+      await this.notifyEnrollment(userId, dto.courseId, course.title, !!existing);
 
       return enrollment;
     } catch (err) {

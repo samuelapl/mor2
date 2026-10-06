@@ -16,7 +16,13 @@ import { SessionQuizGradingService } from './session-quiz-grading.service';
 import { SessionQuizResultsService } from './session-quiz-results.service';
 
 @Module({
-  imports: [AttendanceModule, InPersonSessionsModule, PermissionsModule, SessionPlansModule, ProgressModule],
+  imports: [
+    AttendanceModule,
+    InPersonSessionsModule,
+    PermissionsModule,
+    SessionPlansModule,
+    ProgressModule,
+  ],
   controllers: [LiveSessionsController],
   providers: [
     LiveSessionsService,

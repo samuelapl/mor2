@@ -7,4 +7,4 @@ export { ClassroomStage } from './components/ClassroomStage';
 export { FileRow } from './components/FileRow';
 export { LessonBody } from './components/LessonBody';
 export type * from './types/lesson.types';
-export { downloadAndOpen } from './utils/open-file';
+export { downloadAndOpen, fileNameFromUrl } from './utils/open-file';

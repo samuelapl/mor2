@@ -13,6 +13,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { CourseCard } from '@/components/features/courses/CourseCard';
 import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
+import { ScormUpload } from '@/components/features/courses/ScormUpload';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
@@ -278,24 +279,17 @@ export default function CoursesPage() {
             />
           )}
 
-          {/* ── Step 2b: SCORM placeholder ── */}
+          {/* ── Step 2b: SCORM upload ── */}
           {creationMode === 'scorm' && (
-            <div className="w-full rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-soft">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                <PackageOpen className="h-7 w-7" />
-              </div>
-              <h2 className="mt-4 font-display text-lg font-bold text-slate-900">SCORM upload — coming soon</h2>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-                Uploading and importing SCORM packages isn&apos;t wired up yet. For now, build your course manually.
-              </p>
-              <button
-                type="button"
-                onClick={() => setCreationMode(null)}
-                className="mt-6 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-              >
-                ← Back to options
-              </button>
-            </div>
+            <ScormUpload
+              onDone={(courseId) => {
+                setCreateOpen(false);
+                setCreationMode(null);
+                toast.success('Course created from SCORM package!');
+                if (courseId) router.push(`/courses/${courseId}?edit=1`);
+              }}
+              onCancel={() => setCreationMode(null)}
+            />
           )}
         </div>
       </WorkspaceDetailOverlay>

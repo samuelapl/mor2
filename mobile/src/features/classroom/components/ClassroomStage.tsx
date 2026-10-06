@@ -8,10 +8,8 @@ import { resolveMediaUrl } from '@/core/media/resolveMediaUrl';
 import { palette } from '@/core/theme/colors';
 
 import type { ApiLessonSubLesson } from '../types/lesson.types';
-import { fileNameFromUrl } from '../utils/open-file';
 import { toYoutubeEmbed } from '../utils/rich-content';
 import { AudioStage } from './AudioStage';
-import { FileRow } from './FileRow';
 import { VideoStage, type MediaStageProps } from './VideoStage';
 import { WebContentStage } from './WebContentStage';
 
@@ -62,14 +60,6 @@ export function ClassroomStage({ lesson, onExternalTime, ...media }: ClassroomSt
     case 'DOCUMENT':
     case 'PRESENTATION':
     default:
-      return (
-        <View className="gap-2">
-          <AppText variant="label">{t('classroom.lessonFile')}</AppText>
-          <FileRow
-            url={lesson.resourceUrl!}
-            fileName={fileNameFromUrl(lesson.resourceUrl!, lesson.title ?? lesson.titleEn ?? '')}
-          />
-        </View>
-      );
+      return null;
   }
 }

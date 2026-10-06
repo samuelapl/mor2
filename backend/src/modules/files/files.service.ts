@@ -244,7 +244,8 @@ export class FilesService implements OnModuleInit {
   async getPresignedUrl(key: string, expiresIn = 3600, downloadFilename?: string) {
     const respHeaders: Record<string, string> = {};
     if (downloadFilename) {
-      respHeaders['response-content-disposition'] = `attachment; filename="${downloadFilename.replace(/["\r\n]/g, '')}"`;
+      respHeaders['response-content-disposition'] =
+        `attachment; filename="${downloadFilename.replace(/["\r\n]/g, '')}"`;
     }
     return this.minio.presignedGetObject(
       this.bucket,

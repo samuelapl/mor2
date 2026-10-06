@@ -62,8 +62,16 @@ export function useCourseReview(courseId: string) {
 
   // The store is loaded once at sign-in; re-fetch this course so scheduling, trainer and
   // quiz changes made elsewhere since then show up here.
+  const [detailLoaded, setDetailLoaded] = useState(false);
   useEffect(() => {
-    if (ready && courseId) void refreshCourse(courseId);
+    if (!ready || !courseId) return;
+    let cancelled = false;
+    void refreshCourse(courseId).finally(() => {
+      if (!cancelled) setDetailLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [ready, courseId, refreshCourse]);
 
   const [assessments, setAssessments] = useState<AssessmentsByScope>(EMPTY_SCOPE);
@@ -112,6 +120,7 @@ export function useCourseReview(courseId: string) {
 
   return {
     ready,
+    detailLoaded,
     course,
     assessments,
     assessmentsLoading,

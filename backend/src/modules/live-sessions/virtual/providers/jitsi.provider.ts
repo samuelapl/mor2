@@ -5,10 +5,16 @@ import { JoinableSession, JoinParticipant, JoinUrlProvider } from './video-provi
 @Injectable()
 export class JitsiProvider implements JoinUrlProvider {
   supports(_session: JoinableSession, externalUrl: string): boolean {
-    return Boolean(externalUrl) && (externalUrl.includes('meet.jit.si') || externalUrl.includes('jitsi'));
+    return (
+      Boolean(externalUrl) && (externalUrl.includes('meet.jit.si') || externalUrl.includes('jitsi'))
+    );
   }
 
-  buildJoinUrl(_session: JoinableSession, externalUrl: string, participant: JoinParticipant): string {
+  buildJoinUrl(
+    _session: JoinableSession,
+    externalUrl: string,
+    participant: JoinParticipant,
+  ): string {
     const baseUrl = externalUrl.split('#')[0];
     // prejoinConfig.enabled=false disables the pre-join page; requireDisplayName=false
     // prevents the login prompt from blocking guest entry; enableWelcomePage=false prevents welcome page

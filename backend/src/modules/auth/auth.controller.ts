@@ -37,7 +37,6 @@ export class AuthController {
       'For admin-created accounts that must set their own password, returns ' +
       '{ passwordChangeRequired, challengeToken, email } instead of tokens and emails a code.',
   })
-
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }

@@ -108,8 +108,11 @@ class OfflineDownloadManager {
       const allLessons: ApiCourseLesson[] = [];
       for (const m of courseDetail.modules ?? []) {
         for (const l of m.lessons ?? []) {
+          l.moduleId = l.moduleId || m.id;
           allLessons.push(l);
           for (const sub of l.subLessons ?? []) {
+            sub.moduleId = sub.moduleId || m.id;
+            sub.parentId = sub.parentId || l.id;
             allLessons.push(sub);
           }
         }
@@ -158,17 +161,27 @@ class OfflineDownloadManager {
         (options?.assessmentIds && options.assessmentIds.length > 0),
       );
 
+      const hasSpecificLessonFilter = Boolean(
+        (options?.lessonIds && options.lessonIds.length > 0) ||
+        (options?.subLessonIds && options.subLessonIds.length > 0),
+      );
+
       const isLessonSelected = (lesson: ApiCourseLesson) => {
         if (!hasSpecificFilter) return true;
         if (options?.lessonIds?.includes(lesson.id)) return true;
         if (options?.subLessonIds?.includes(lesson.id)) return true;
-        if (options?.moduleIds?.includes(lesson.moduleId)) return true;
+        if (!hasSpecificLessonFilter && options?.moduleIds?.includes(lesson.moduleId)) return true;
         return false;
       };
+
+      const hasSpecificAssessmentFilter = Boolean(
+        options?.assessmentIds && options.assessmentIds.length > 0,
+      );
 
       const isAssessmentSelected = (aId: string, modId?: string | null, lesId?: string | null) => {
         if (!hasSpecificFilter) return true;
         if (options?.assessmentIds?.includes(aId)) return true;
+        if (hasSpecificAssessmentFilter) return false;
         if (modId && options?.moduleIds?.includes(modId)) return true;
         if (lesId && options?.lessonIds?.includes(lesId)) return true;
         return false;
@@ -184,6 +197,7 @@ class OfflineDownloadManager {
       // 3. Fetch assessments for this course (UNLOCKED ONLY)
       notify({ percent: 15, currentStep: 'Fetching quizzes & assessments…' });
       const assessmentIds = new Set<string>();
+      const assessmentModuleMap = new Map<string, string>();
 
       if (courseDetail.assessments) {
         for (const a of courseDetail.assessments) {
@@ -194,12 +208,14 @@ class OfflineDownloadManager {
       }
       for (const m of courseDetail.modules ?? []) {
         for (const a of m.assessments ?? []) {
+          assessmentModuleMap.set(a.id, m.id);
           if (isAssessmentSelected(a.id, m.id) && isAssessmentUnlockedInCourse(a.id, m.id)) {
             assessmentIds.add(a.id);
           }
         }
         for (const l of m.lessons ?? []) {
           for (const a of l.assessments ?? []) {
+            assessmentModuleMap.set(a.id, m.id);
             if (
               isAssessmentSelected(a.id, m.id, l.id) &&
               isAssessmentUnlockedInCourse(a.id, m.id, l.id)
@@ -209,6 +225,7 @@ class OfflineDownloadManager {
           }
           for (const sub of l.subLessons ?? []) {
             for (const a of sub.assessments ?? []) {
+              assessmentModuleMap.set(a.id, m.id);
               if (
                 isAssessmentSelected(a.id, m.id, sub.id) &&
                 isAssessmentUnlockedInCourse(a.id, m.id, sub.id)
@@ -235,7 +252,7 @@ class OfflineDownloadManager {
       const mergedAssessments: OfflineAssessment[] = fetchedAssessments.map((a) => ({
         id: a.id,
         courseId,
-        moduleId: a.moduleId,
+        moduleId: a.moduleId || assessmentModuleMap.get(a.id) || null,
         lessonId: a.lessonId,
         type: a.type,
         title: a.title ?? a.titleEn ?? 'Quiz',
@@ -247,7 +264,10 @@ class OfflineDownloadManager {
       }));
       for (const prevA of existingAssessments) {
         if (!mergedAssessments.some((a) => a.id === prevA.id)) {
-          mergedAssessments.push(prevA);
+          mergedAssessments.push({
+            ...prevA,
+            moduleId: prevA.moduleId || assessmentModuleMap.get(prevA.id) || null,
+          });
         }
       }
 
@@ -301,11 +321,25 @@ class OfflineDownloadManager {
         if (abortController.signal.aborted) throw new Error('Download cancelled');
 
         const prevLesson = existingLessonMap.get(lesson.id);
+        const hasValidPrevLesson =
+          Boolean(prevLesson) &&
+          (lesson.contentType !== 'VIDEO' || Boolean(prevLesson?.localMediaUri));
         const isEligible = isLessonUnlockedInCourse(lesson);
         const shouldDownload = isEligible && isLessonSelected(lesson);
 
-        // Never save locked content into offline storage
-        if (!isEligible && !prevLesson) {
+        // Never save locked content.
+        // If content is not selected for download and was not previously downloaded, skip it.
+        if (!shouldDownload && !hasValidPrevLesson) {
+          continue;
+        }
+
+        // If not selected for download this time but was previously downloaded, preserve existing record.
+        if (!shouldDownload && prevLesson) {
+          offlineLessonsToSave.push({
+            ...prevLesson,
+            moduleId: prevLesson.moduleId || lesson.moduleId,
+            parentId: prevLesson.parentId ?? lesson.parentId ?? null,
+          });
           continue;
         }
 
@@ -423,18 +457,79 @@ class OfflineDownloadManager {
         version: 1,
       };
 
-      const offlineModules: OfflineModule[] = (courseDetail.modules ?? []).map((m) => ({
-        id: m.id,
-        courseId,
-        title: m.title ?? m.titleEn ?? '',
-        titleAm: m.titleAm ?? null,
-        description: m.description ?? m.descriptionEn ?? null,
-        descriptionAm: m.descriptionAm ?? null,
-        objectives: m.objectives ?? m.objectivesEn ?? null,
-        objectivesAm: m.objectivesAm ?? null,
-        sortOrder: m.order,
-        durationMinutes: m.durationMinutes,
-      }));
+      // Get existing modules to preserve or prune
+      const existingModules = await offlineDb.getModulesForCourse(courseId);
+
+      const savedLessonModuleIds = new Set(
+        offlineLessonsToSave.map((l) => l.moduleId).filter(Boolean),
+      );
+      const savedAssessmentModuleIds = new Set(
+        mergedAssessments.map((a) => a.moduleId).filter(Boolean),
+      );
+
+      // Only save modules that actually have downloaded lessons or assessments
+      let offlineModules: OfflineModule[] = (courseDetail.modules ?? [])
+        .filter((m) => savedLessonModuleIds.has(m.id) || savedAssessmentModuleIds.has(m.id))
+        .map((m) => ({
+          id: m.id,
+          courseId,
+          title: m.title ?? m.titleEn ?? '',
+          titleAm: m.titleAm ?? null,
+          description: m.description ?? m.descriptionEn ?? null,
+          descriptionAm: m.descriptionAm ?? null,
+          objectives: m.objectives ?? m.objectivesEn ?? null,
+          objectivesAm: m.objectivesAm ?? null,
+          sortOrder: m.order,
+          durationMinutes: m.durationMinutes,
+        }));
+
+      // Fallback: If any lessons or assessments exist, ensure matching module(s) exist
+      if (
+        offlineModules.length === 0 &&
+        (offlineLessonsToSave.length > 0 || mergedAssessments.length > 0)
+      ) {
+        const firstModule = (courseDetail.modules ?? [])[0];
+        if (firstModule) {
+          offlineModules = [
+            {
+              id: firstModule.id,
+              courseId,
+              title: firstModule.title ?? firstModule.titleEn ?? '',
+              titleAm: firstModule.titleAm ?? null,
+              description: firstModule.description ?? null,
+              descriptionAm: firstModule.descriptionAm ?? null,
+              objectives: firstModule.objectives ?? null,
+              objectivesAm: firstModule.objectivesAm ?? null,
+              sortOrder: firstModule.order,
+              durationMinutes: firstModule.durationMinutes,
+            },
+          ];
+        }
+      }
+
+      // Prune any old/stale lessons for this course that are no longer part of offlineLessonsToSave
+      const savedLessonIds = new Set(offlineLessonsToSave.map((l) => l.id));
+      for (const oldLesson of existingLessons) {
+        if (!savedLessonIds.has(oldLesson.id)) {
+          await offlineDb.deleteLesson(oldLesson.id);
+        }
+      }
+
+      // Prune any old modules that no longer have any lessons or assessments
+      const activeModuleIds = new Set(offlineModules.map((m) => m.id));
+      for (const oldMod of existingModules) {
+        if (!activeModuleIds.has(oldMod.id)) {
+          await offlineDb.deleteModule(oldMod.id);
+        }
+      }
+
+      // Prune any old assessments that are no longer part of mergedAssessments
+      const savedAssessmentIds = new Set(mergedAssessments.map((a) => a.id));
+      for (const oldA of existingAssessments) {
+        if (!savedAssessmentIds.has(oldA.id)) {
+          await offlineDb.deleteAssessment(oldA.id);
+        }
+      }
 
       await offlineDb.saveCourse(offlineCourse);
       await offlineDb.saveModules(offlineModules);
@@ -492,6 +587,68 @@ class OfflineDownloadManager {
   }
 
   /**
+   * Deletes a single downloaded module and its lessons, media, attachments, and assessments.
+   */
+  async deleteDownloadedModule(courseId: string, moduleId: string): Promise<void> {
+    try {
+      const lessons = await offlineDb.getLessonsForModule(moduleId);
+      for (const l of lessons) {
+        if (l.localMediaUri) {
+          try {
+            const f = new File(l.localMediaUri);
+            if (f.exists) f.delete();
+          } catch (e) {
+            console.warn('[OfflineDownloadManager] Error deleting media file:', e);
+          }
+        }
+        const attachments = await offlineDb.getAttachmentsForLesson(l.id);
+        for (const att of attachments) {
+          if (att.localFileUri) {
+            try {
+              const af = new File(att.localFileUri);
+              if (af.exists) af.delete();
+            } catch (e) {
+              console.warn('[OfflineDownloadManager] Error deleting attachment file:', e);
+            }
+          }
+        }
+        await offlineDb.deleteLesson(l.id);
+      }
+
+      await offlineDb.deleteAssessmentsForModule(moduleId);
+      await offlineDb.deleteModule(moduleId);
+
+      // Check if any modules or lessons remain for this course
+      const remainingModules = await offlineDb.getModulesForCourse(courseId);
+      const remainingLessons = await offlineDb.getLessonsForCourse(courseId);
+      if (remainingModules.length === 0 && remainingLessons.length === 0) {
+        await this.deleteDownloadedCourse(courseId);
+      } else {
+        const course = await offlineDb.getCourse(courseId);
+        if (course) {
+          let newSize = 0;
+          for (const rl of remainingLessons) {
+            if (rl.localMediaUri) {
+              try {
+                const mf = new File(rl.localMediaUri);
+                if (mf.exists && mf.size) newSize += mf.size;
+              } catch {}
+            }
+            const ratts = await offlineDb.getAttachmentsForLesson(rl.id);
+            for (const ratt of ratts) {
+              newSize += ratt.sizeBytes || 0;
+            }
+          }
+          await offlineDb.saveCourse({ ...course, sizeBytes: newSize });
+        }
+      }
+    } catch (err) {
+      console.error('[OfflineDownloadManager] Failed to delete module:', err);
+      throw err;
+    }
+  }
+
+  /**
    * Checks whether a course is stored locally.
    */
   async isCourseDownloaded(courseId: string): Promise<boolean> {
@@ -519,44 +676,64 @@ class OfflineDownloadManager {
 
     const moduleDetails: ApiCourseModule[] = [];
 
+    const parentLessonIds = new Set(lessons.filter((l) => !l.parentId).map((l) => l.id));
     for (const m of modules) {
-      const moduleLessons = lessons.filter((l) => l.moduleId === m.id && !l.parentId);
+      const moduleLessons = lessons.filter(
+        (l) => l.moduleId === m.id && (!l.parentId || !parentLessonIds.has(l.parentId)),
+      );
+      const moduleAssessments = assessments.filter((a) => a.moduleId === m.id);
+
+      if (moduleLessons.length === 0 && moduleAssessments.length === 0) {
+        continue;
+      }
+
       const builtLessons: ApiCourseLesson[] = [];
 
       for (const l of moduleLessons) {
-        const subLessons: ApiCourseLesson[] = lessons
-          .filter((sub) => sub.parentId === l.id)
-          .map((sub) => ({
-            id: sub.id,
-            moduleId: m.id,
-            parentId: l.id,
-            order: sub.sortOrder,
-            title: sub.title,
-            titleEn: sub.title,
-            titleAm: sub.titleAm ?? undefined,
-            contentType: sub.contentType as any,
-            durationMinutes: sub.durationMinutes ?? null,
-            content: sub.content ?? null,
-            contentEn: sub.content ?? null,
-            contentAm: sub.contentAm ?? undefined,
-            resourceUrl: sub.localMediaUri || sub.resourceUrl || null,
-            unlocked: sub.unlocked === 1,
-            attachments: [],
-            assessments: assessments
-              .filter((a) => a.lessonId === sub.id)
-              .map((a) => ({
-                id: a.id,
-                title: a.title,
-                passingScore: a.passingScore,
-                timeLimitMinutes: a.timeLimitMinutes ?? null,
-              })),
-          }));
+        const subLessons: ApiCourseLesson[] = await Promise.all(
+          lessons
+            .filter((sub) => sub.parentId === l.id)
+            .map(async (sub) => {
+              const subAtts = await offlineDb.getAttachmentsForLesson(sub.id);
+              return {
+                id: sub.id,
+                moduleId: m.id,
+                parentId: l.id,
+                order: sub.sortOrder,
+                title: sub.title,
+                titleEn: sub.title,
+                titleAm: sub.titleAm ?? undefined,
+                contentType: sub.contentType as any,
+                durationMinutes: sub.durationMinutes ?? null,
+                content: sub.content ?? null,
+                contentEn: sub.content ?? null,
+                contentAm: sub.contentAm ?? undefined,
+                resourceUrl: sub.localMediaUri || sub.resourceUrl || null,
+                unlocked: sub.unlocked === 1,
+                attachments: subAtts.map((att) => ({
+                  id: att.id,
+                  fileName: att.fileName,
+                  fileUrl: att.localFileUri || att.fileUrl,
+                  fileType: att.fileType,
+                  sizeBytes: att.sizeBytes,
+                })),
+                assessments: assessments
+                  .filter((a) => a.lessonId === sub.id)
+                  .map((a) => ({
+                    id: a.id,
+                    title: a.title,
+                    passingScore: a.passingScore,
+                    timeLimitMinutes: a.timeLimitMinutes ?? null,
+                  })),
+              };
+            }),
+        );
 
         const lessonAttachments = await offlineDb.getAttachmentsForLesson(l.id);
         builtLessons.push({
           id: l.id,
           moduleId: m.id,
-          parentId: null,
+          parentId: l.parentId || null,
           order: l.sortOrder,
           title: l.title,
           titleEn: l.title,

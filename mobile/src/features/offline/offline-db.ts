@@ -336,6 +336,12 @@ class OfflineDatabaseManager {
     );
   }
 
+  async deleteModule(moduleId: string): Promise<void> {
+    await this.init();
+    const db = this.getDb();
+    await db.runAsync('DELETE FROM offline_modules WHERE id = ?;', moduleId);
+  }
+
   // ── Lessons ──────────────────────────────────────────────
   async saveLessons(lessons: OfflineLesson[]): Promise<void> {
     await this.init();
@@ -391,6 +397,13 @@ class OfflineDatabaseManager {
       'SELECT * FROM offline_lessons WHERE courseId = ? ORDER BY sortOrder ASC;',
       courseId,
     );
+  }
+
+  async deleteLesson(lessonId: string): Promise<void> {
+    await this.init();
+    const db = this.getDb();
+    await db.runAsync('DELETE FROM offline_lessons WHERE id = ?;', lessonId);
+    await db.runAsync('DELETE FROM offline_attachments WHERE lessonId = ?;', lessonId);
   }
 
   async updateLessonProgress(
@@ -492,6 +505,18 @@ class OfflineDatabaseManager {
       'SELECT * FROM offline_assessments WHERE courseId = ?;',
       courseId,
     );
+  }
+
+  async deleteAssessment(id: string): Promise<void> {
+    await this.init();
+    const db = this.getDb();
+    await db.runAsync('DELETE FROM offline_assessments WHERE id = ?;', id);
+  }
+
+  async deleteAssessmentsForModule(moduleId: string): Promise<void> {
+    await this.init();
+    const db = this.getDb();
+    await db.runAsync('DELETE FROM offline_assessments WHERE moduleId = ?;', moduleId);
   }
 
   // ── Quiz Attempts ────────────────────────────────────────

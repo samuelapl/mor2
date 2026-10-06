@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -22,6 +23,7 @@ import {
 import { RoleName } from '@prisma/client';
 import { FilesService, FilePurpose } from './files.service';
 import { CoursesService } from '@modules/courses/courses.service';
+import { ScormService } from '@modules/courses/scorm.service';
 import { CurrentUser, Permissions, Roles } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -36,6 +38,7 @@ export class FilesController {
     private readonly filesService: FilesService,
     @Inject(forwardRef(() => CoursesService))
     private readonly coursesService: CoursesService,
+    private readonly scormService: ScormService,
   ) {}
 
   @Post('upload')
@@ -71,6 +74,40 @@ export class FilesController {
       moduleId: body.moduleId,
       lessonId: body.lessonId,
       courseId: body.courseId,
+    });
+  }
+
+  @Post('scorm/preview')
+  @Roles(RoleName.COURSE_OWNER, RoleName.TRAINER, RoleName.TRAINING_ADMIN, RoleName.SYSTEM_ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary:
+      'Upload a SCORM ZIP, store it, and return a parsed preview (course details + curriculum) matching the manual creation flow',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: 'SCORM package (.zip)' },
+      },
+      required: ['file'],
+    },
+  })
+  async previewScorm(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('SCORM package file is required');
+    }
+
+    // 1. Store the ZIP in MinIO (purpose: scorm → scorm/ path, application/zip validation)
+    const record = await this.filesService.upload(file, 'scorm');
+
+    // 2. Parse the manifest and build a preview matching CreateCourseBody + ReplaceModulesDto
+    return this.scormService.buildPreview(file.buffer, {
+      url: record.fileUrl,
+      key: record.fileKey,
+      name: record.fileName,
+      size: record.sizeBytes,
     });
   }
 
@@ -112,7 +149,10 @@ export class FilesController {
     @Param('courseId') courseId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    await this.coursesService.assertCanEditDraft(courseId, user, ['course.update.own', 'course.update.all']);
+    await this.coursesService.assertCanEditDraft(courseId, user, [
+      'course.update.own',
+      'course.update.all',
+    ]);
     return this.filesService.uploadCover(file, courseId);
   }
 

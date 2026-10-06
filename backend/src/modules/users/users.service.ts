@@ -293,11 +293,7 @@ export class UsersService {
     const normalized = raw.toUpperCase().replace(/\s+/g, '_');
     const found = await this.prisma.role.findFirst({
       where: {
-        OR: [
-          { name: normalized },
-          { name: raw },
-          { name: { equals: raw, mode: 'insensitive' } },
-        ],
+        OR: [{ name: normalized }, { name: raw }, { name: { equals: raw, mode: 'insensitive' } }],
       },
     });
     if (!found) {

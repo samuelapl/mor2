@@ -14,9 +14,14 @@ describe('AssessmentsService progression & final assessment gating', () => {
       },
       lessonCompletion: {
         findMany: jest.fn(),
+        findUnique: jest.fn(),
       },
       assessment: {
         findMany: jest.fn(),
+      },
+      lesson: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findUnique: jest.fn(),
       },
     };
 
@@ -24,12 +29,17 @@ describe('AssessmentsService progression & final assessment gating', () => {
       getUnlockState: jest.fn(),
     };
 
+    const policyServiceMock = {
+      getProgressionMode: jest.fn().mockResolvedValue('LOCKED'),
+      getTimeRatio: jest.fn().mockResolvedValue(0.5),
+    };
+
     service = new AssessmentsService(
       prismaMock,
       {} as any,
       {} as any,
       progressServiceMock,
-      {} as any,
+      policyServiceMock as any,
     );
   });
 
@@ -47,13 +57,11 @@ describe('AssessmentsService progression & final assessment gating', () => {
       ]);
 
       // Only les-1 is completed
-      prismaMock.lessonCompletion.findMany.mockResolvedValue([
-        { lessonId: 'les-1' },
-      ]);
+      prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
 
-      await expect(
-        (service as any).assertFinalEligible('course-1', 'user-1'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect((service as any).assertFinalEligible('course-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
 
       try {
         await (service as any).assertFinalEligible('course-1', 'user-1');
@@ -75,18 +83,16 @@ describe('AssessmentsService progression & final assessment gating', () => {
         },
       ]);
 
-      prismaMock.lessonCompletion.findMany.mockResolvedValue([
-        { lessonId: 'les-1' },
-      ]);
+      prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
 
       // Module assessment exists but has 0 passed attempts
       prismaMock.assessment.findMany.mockResolvedValue([
         { id: 'mod-quiz-1', titleEn: 'Module 1 Quiz', attempts: [] },
       ]);
 
-      await expect(
-        (service as any).assertFinalEligible('course-1', 'user-1'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect((service as any).assertFinalEligible('course-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
 
       try {
         await (service as any).assertFinalEligible('course-1', 'user-1');
@@ -108,9 +114,7 @@ describe('AssessmentsService progression & final assessment gating', () => {
         },
       ]);
 
-      prismaMock.lessonCompletion.findMany.mockResolvedValue([
-        { lessonId: 'les-1' },
-      ]);
+      prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
 
       prismaMock.assessment.findMany.mockResolvedValue([
         { id: 'mod-quiz-1', titleEn: 'Module 1 Quiz', attempts: [{ passed: true }] },
@@ -160,6 +164,48 @@ describe('AssessmentsService progression & final assessment gating', () => {
         ),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it('allows taking lesson assessment when lesson is unlocked and time requirement is met (without requiring lesson itself to already be marked completed)', async () => {
+      progressServiceMock.getUnlockState.mockResolvedValue({
+        moduleUnlocked: new Map([['mod-1', true]]),
+        lessonUnlocked: new Map([['les-1', true]]),
+      });
+      prismaMock.lesson.findUnique.mockResolvedValue({ durationMinutes: 10 });
+      prismaMock.lessonCompletion.findUnique.mockResolvedValue({ timeSpentSeconds: 300 });
+
+      await expect(
+        (service as any).assertTargetUnlocked(
+          {
+            type: AssessmentType.LESSON_ASSESSMENT,
+            courseId: 'course-1',
+            moduleId: 'mod-1',
+            lessonId: 'les-1',
+          },
+          'user-1',
+        ),
+      ).resolves.toBeUndefined();
+    });
+
+    it('blocks lesson assessment when study time requirement is not yet met', async () => {
+      progressServiceMock.getUnlockState.mockResolvedValue({
+        moduleUnlocked: new Map([['mod-1', true]]),
+        lessonUnlocked: new Map([['les-1', true]]),
+      });
+      // 20 minutes with 0.5 ratio = 600s required, only 100s spent
+      prismaMock.lesson.findUnique.mockResolvedValue({ durationMinutes: 20 });
+      prismaMock.lessonCompletion.findUnique.mockResolvedValue({ timeSpentSeconds: 0 });
+
+      await expect(
+        (service as any).assertTargetUnlocked(
+          {
+            type: AssessmentType.LESSON_ASSESSMENT,
+            courseId: 'course-1',
+            moduleId: 'mod-1',
+            lessonId: 'les-1',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 });
-

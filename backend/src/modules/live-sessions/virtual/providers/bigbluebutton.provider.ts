@@ -78,10 +78,16 @@ export class BigBlueButtonProvider implements JoinUrlProvider {
 
   /** BigBlueButton sessions are recognised by a `bbb-` meeting id or a BBB server link. */
   supports(session: JoinableSession, externalUrl: string): boolean {
-    return Boolean(session.meetingId?.startsWith('bbb-')) || externalUrl.includes('/bigbluebutton/');
+    return (
+      Boolean(session.meetingId?.startsWith('bbb-')) || externalUrl.includes('/bigbluebutton/')
+    );
   }
 
-  buildJoinUrl(session: JoinableSession, _externalUrl: string, participant: JoinParticipant): string {
+  buildJoinUrl(
+    session: JoinableSession,
+    _externalUrl: string,
+    participant: JoinParticipant,
+  ): string {
     return this.generateJoinUrl({
       meetingId: session.meetingId || `bbb-${session.id}`,
       fullName: participant.displayName,

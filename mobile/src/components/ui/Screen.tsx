@@ -1,5 +1,13 @@
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from 'react-native';
+import type { ReactNode, RefObject } from 'react';
+import {
+  KeyboardAvoidingView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { cn } from '@/core/utils/cn';
@@ -16,6 +24,9 @@ export interface ScreenProps {
   edges?: Edge[];
   className?: string;
   contentClassName?: string;
+  scrollViewRef?: RefObject<ScrollView | null>;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
 }
 
 /** Standard screen container: safe area, background, offline banner, optional pull-to-refresh. */
@@ -27,6 +38,9 @@ export function Screen({
   edges = ['bottom'],
   className,
   contentClassName,
+  scrollViewRef,
+  onScroll,
+  scrollEventThrottle = 16,
 }: ScreenProps) {
   return (
     <SafeAreaView edges={edges} className={cn('flex-1 bg-slate-50 dark:bg-slate-900', className)}>
@@ -37,6 +51,9 @@ export function Screen({
           className="flex-1"
         >
           <ScrollView
+            ref={scrollViewRef as any}
+            onScroll={onScroll}
+            scrollEventThrottle={scrollEventThrottle}
             contentContainerClassName={cn('gap-4 p-4', contentClassName)}
             keyboardShouldPersistTaps="handled"
             refreshControl={

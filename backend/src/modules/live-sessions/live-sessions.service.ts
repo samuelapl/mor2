@@ -109,12 +109,16 @@ export class LiveSessionsService {
         select: { id: true },
       });
       if (!assigned) {
-        throw new ForbiddenException('You can only schedule sessions for courses you are assigned to');
+        throw new ForbiddenException(
+          'You can only schedule sessions for courses you are assigned to',
+        );
       }
       dto = { ...dto, trainerId: user.id };
     }
 
-    const plan = dto.sessionPlanId ? await this.assertPlanSchedulable(courseId, dto.sessionPlanId) : null;
+    const plan = dto.sessionPlanId
+      ? await this.assertPlanSchedulable(courseId, dto.sessionPlanId)
+      : null;
 
     const isVenueSession = isInPersonSession(dto);
     const session = await this.prisma.$transaction(async (tx) => {
@@ -473,7 +477,12 @@ export class LiveSessionsService {
     const existing = await this.findById(id);
 
     if (existing.sessionPlanId) {
-      await this.sessionPlans.removePlan(existing.courseId, existing.sessionPlanId, { rebalance }, id);
+      await this.sessionPlans.removePlan(
+        existing.courseId,
+        existing.sessionPlanId,
+        { rebalance },
+        id,
+      );
       return { ...existing, deletedAt: new Date() };
     }
 
@@ -539,9 +548,15 @@ export class LiveSessionsService {
         assessments: { where: { type: 'SESSION_ASSESSMENT' }, orderBy: { createdAt: 'asc' } },
       },
     });
-    if (!plan || plan.courseId !== courseId) throw new NotFoundException('Planned session not found for this course');
-    if (plan.course.status !== CourseStatus.APPROVED && plan.course.status !== CourseStatus.PUBLISHED) {
-      throw new BadRequestException('Planned sessions can be scheduled once the course is approved');
+    if (!plan || plan.courseId !== courseId)
+      throw new NotFoundException('Planned session not found for this course');
+    if (
+      plan.course.status !== CourseStatus.APPROVED &&
+      plan.course.status !== CourseStatus.PUBLISHED
+    ) {
+      throw new BadRequestException(
+        'Planned sessions can be scheduled once the course is approved',
+      );
     }
     if (plan.liveSession && !plan.liveSession.deletedAt) {
       throw new BadRequestException('This planned session is already scheduled');

@@ -51,7 +51,11 @@ export class CertificateTemplatesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a certificate template' })
   @ApiParam({ name: 'id', type: String })
-  update(@Param('id') id: string, @Body() dto: UpdateCertificateTemplateDto, @CurrentUser() user: AuthenticatedUser) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCertificateTemplateDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.certificateTemplatesService.update(id, dto, user.id);
   }
 
@@ -97,4 +101,3 @@ export class CertificateTemplatesController {
     return this.certificateTemplatesService.remove(id, user.id);
   }
 }
-

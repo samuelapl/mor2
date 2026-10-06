@@ -279,13 +279,17 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
 
     it('does not repeat the grade-not-met notification for the same grade', async () => {
       policyServiceMock.getPassingScorePercent.mockResolvedValue(60);
-      prismaMock.curriculumModule.findMany.mockResolvedValue([{ id: 'mod-1', lessons: [{ id: 'les-1' }] }]);
+      prismaMock.curriculumModule.findMany.mockResolvedValue([
+        { id: 'mod-1', lessons: [{ id: 'les-1' }] },
+      ]);
       prismaMock.lessonCompletion.count.mockResolvedValue(1);
       prismaMock.assessment.findMany.mockResolvedValue([
         { id: 'quiz-1', weight: 80, passingScore: 50, attempts: [{ score: 52, passed: true }] },
         { id: 'quiz-2', weight: 20, passingScore: 50, attempts: [{ score: 65, passed: true }] },
       ]);
-      prismaMock.notification.findFirst.mockResolvedValue({ metadata: { courseId: 'course-1', grade: 55 } });
+      prismaMock.notification.findFirst.mockResolvedValue({
+        metadata: { courseId: 'course-1', grade: 55 },
+      });
 
       await progressService.maybeCompleteCourse('user-1', 'course-1');
 
@@ -293,7 +297,9 @@ describe('Assessment Weighting & Global Pass Mark Evaluation', () => {
     });
 
     it('does not send the grade notification while an assessment is still failed', async () => {
-      prismaMock.curriculumModule.findMany.mockResolvedValue([{ id: 'mod-1', lessons: [{ id: 'les-1' }] }]);
+      prismaMock.curriculumModule.findMany.mockResolvedValue([
+        { id: 'mod-1', lessons: [{ id: 'les-1' }] },
+      ]);
       prismaMock.lessonCompletion.count.mockResolvedValue(1);
       prismaMock.assessment.findMany.mockResolvedValue([
         { id: 'quiz-1', weight: 100, passingScore: 70, attempts: [{ score: 40, passed: false }] },
