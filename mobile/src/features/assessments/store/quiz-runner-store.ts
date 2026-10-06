@@ -13,6 +13,8 @@ interface QuizRunnerState {
   attemptId: string | null;
   /** Epoch ms; null for untimed quizzes. */
   deadline: number | null;
+  /** Epoch ms the attempt began on this device (used for offline attempts). */
+  startedAt: number | null;
   questionOrder: string[];
   answers: Record<string, AnswerValue>;
   index: number;
@@ -35,6 +37,7 @@ export const useQuizRunnerStore = create<QuizRunnerState>((set, get) => ({
   assessmentId: null,
   attemptId: null,
   deadline: null,
+  startedAt: null,
   questionOrder: [],
   answers: {},
   index: 0,
@@ -45,6 +48,7 @@ export const useQuizRunnerStore = create<QuizRunnerState>((set, get) => ({
       assessmentId,
       attemptId,
       deadline,
+      startedAt: Date.now(),
       questionOrder,
       answers: readJson<Record<string, AnswerValue>>(sessionStorage, answersKey(attemptId)) ?? {},
       index: 0,
@@ -65,7 +69,7 @@ export const useQuizRunnerStore = create<QuizRunnerState>((set, get) => ({
   finish: (result) => {
     const { attemptId } = get();
     if (attemptId) sessionStorage.remove(answersKey(attemptId));
-    set({ lastResult: result, attemptId: null, deadline: null });
+    set({ lastResult: result, attemptId: null, deadline: null, startedAt: null });
   },
 
   reset: () =>
@@ -73,6 +77,7 @@ export const useQuizRunnerStore = create<QuizRunnerState>((set, get) => ({
       assessmentId: null,
       attemptId: null,
       deadline: null,
+      startedAt: null,
       questionOrder: [],
       answers: {},
       index: 0,

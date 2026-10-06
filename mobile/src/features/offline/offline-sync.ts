@@ -1,14 +1,25 @@
 import { api } from '@/core/api/client';
 import { endpoints } from '@/core/api/endpoints';
+import { ApiError } from '@/core/api/errors';
+import { queryClient } from '@/core/api/query-client';
 import { syncQueue } from '@/core/sync/sync-queue';
+import { Alert } from '@/core/utils/alert';
+import { getCurrentLocale, i18n } from '@/core/i18n';
+import type {
+  GradedResult,
+  StartedAttempt,
+  SubmitAnswer,
+} from '@/features/assessments/types/assessment.types';
+import { MAX_HEARTBEAT_SECONDS, progressApi } from '@/features/progress/api/progress-api';
 
-import { offlineDb, type OfflineQuizAttempt } from './offline-db';
+import { offlineAttemptKeys } from './hooks/useOfflineQuizAttempt';
+import { offlineDb } from './offline-db';
 import { useOfflineStore } from './offline-store';
 
 interface QuizSubmitPayload {
   attemptId: string;
   assessmentId: string;
-  answers: Array<{ questionId: string; selectedOption: number | string }>;
+  answers: SubmitAnswer[];
 }
 
 interface HeartbeatPayload {
@@ -22,7 +33,19 @@ interface LessonCompletePayload {
   lastPosition?: number;
 }
 
+export const QUIZ_SUBMIT = 'QUIZ_SUBMIT';
+
 let handlersRegistered = false;
+
+/** Refreshes everything a graded attempt can change (attempts, progress, unlocks, certificate). */
+function invalidateAfterGrading(assessmentId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['assessments', 'attempts', assessmentId] });
+  void queryClient.invalidateQueries({ queryKey: ['progress'] });
+  void queryClient.invalidateQueries({ queryKey: ['courses', 'detail'] });
+  void queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+  void queryClient.invalidateQueries({ queryKey: ['certificates'] });
+  void queryClient.invalidateQueries({ queryKey: offlineAttemptKeys.all });
+}
 
 /**
  * Registers durable queue handlers for offline quiz submissions, lesson completions,
@@ -32,34 +55,58 @@ export function registerOfflineSyncHandlers(): void {
   if (handlersRegistered) return;
   handlersRegistered = true;
 
-  // 1. Offline Quiz Attempt Submissions
-  syncQueue.register<QuizSubmitPayload>('QUIZ_SUBMIT', {
+  // 1. Offline quiz attempts. The device cannot grade (answers are never downloaded), so the
+  // server does it now: /start runs the same eligibility + attempt-limit checks as online,
+  // then /submit grades the answers given offline.
+  syncQueue.register<QuizSubmitPayload>(QUIZ_SUBMIT, {
     send: async (payload) => {
       try {
-        await api.post(endpoints.assessments.submit(payload.assessmentId), {
-          answers: payload.answers,
+        await api.post<StartedAttempt>(endpoints.assessments.start(payload.assessmentId));
+        const result = await api.post<GradedResult>(
+          endpoints.assessments.submit(payload.assessmentId),
+          { answers: payload.answers },
+        );
+        await offlineDb.markQuizAttemptSynced(payload.attemptId, {
+          score: result.score,
+          passed: result.passed,
+          resultJson: JSON.stringify(result),
         });
-        await offlineDb.updateQuizAttemptStatus(payload.attemptId, 'SYNCED');
-      } catch (err: any) {
-        // If the server rejects permanently (e.g. max attempts reached), mark as FAILED
-        if (err?.status && err.status >= 400 && err.status < 500) {
-          await offlineDb.updateQuizAttemptStatus(
+        invalidateAfterGrading(payload.assessmentId);
+        Alert.alert(
+          i18n.t('quiz.syncedTitle'),
+          i18n.t(result.passed ? 'quiz.syncedPassed' : 'quiz.syncedFailed', {
+            score: result.score,
+          }),
+        );
+      } catch (err) {
+        // Permanent rejection (max attempts, cooldown, not eligible): keep the reason so the
+        // learner sees why, and let them try again.
+        if (
+          err instanceof ApiError &&
+          !err.isNetworkError &&
+          err.status >= 400 &&
+          err.status < 500
+        ) {
+          await offlineDb.markQuizAttemptFailed(
             payload.attemptId,
-            'FAILED',
-            err?.message || 'Server rejected attempt',
+            err.localizedMessage(getCurrentLocale()),
           );
+          invalidateAfterGrading(payload.assessmentId);
         }
         throw err;
       }
     },
   });
 
-  // 2. Offline Progress Heartbeats
+  // 2. Offline time spent (legacy SQLite queue). The backend caps one heartbeat at 300 s.
   syncQueue.register<HeartbeatPayload>('PROGRESS_HEARTBEAT', {
-    send: async (payload) => {
-      await api.post(endpoints.progress.time(payload.lessonId), {
-        seconds: payload.seconds,
-      });
+    send: async ({ lessonId, seconds }) => {
+      let remaining = Math.floor(seconds);
+      while (remaining > 0) {
+        const chunk = Math.min(remaining, MAX_HEARTBEAT_SECONDS);
+        await progressApi.addTime(lessonId, chunk);
+        remaining -= chunk;
+      }
     },
     merge: (queued, incoming) => ({
       ...queued,
@@ -67,14 +114,19 @@ export function registerOfflineSyncHandlers(): void {
     }),
   });
 
-  // 3. Offline Lesson Completions
+  // 3. Offline lesson completions — the server re-checks time and assessment rules.
   syncQueue.register<LessonCompletePayload>('LESSON_COMPLETE', {
-    send: async (payload) => {
-      await api.post(endpoints.progress.complete(payload.lessonId), {
-        lastPosition: payload.lastPosition ?? 0,
-      });
+    send: async ({ lessonId, lastPosition }) => {
+      await progressApi.complete(lessonId, { completed: true, lastPosition: lastPosition ?? 0 });
+      void queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
   });
+}
+
+/** Queues an offline quiz attempt for grading. Safe to call repeatedly for the same attempt. */
+export function enqueueQuizAttempt(payload: QuizSubmitPayload): void {
+  registerOfflineSyncHandlers();
+  syncQueue.enqueue<QuizSubmitPayload>(QUIZ_SUBMIT, payload, `quiz-${payload.attemptId}`);
 }
 
 /**
@@ -87,16 +139,11 @@ export async function flushOfflineQueue(): Promise<void> {
   const pendingAttempts = await offlineDb.getPendingQuizAttempts();
   for (const attempt of pendingAttempts) {
     try {
-      const answers = JSON.parse(attempt.answersJson);
-      syncQueue.enqueue<QuizSubmitPayload>(
-        'QUIZ_SUBMIT',
-        {
-          attemptId: attempt.id,
-          assessmentId: attempt.assessmentId,
-          answers,
-        },
-        `quiz-${attempt.id}`,
-      );
+      enqueueQuizAttempt({
+        attemptId: attempt.id,
+        assessmentId: attempt.assessmentId,
+        answers: JSON.parse(attempt.answersJson),
+      });
     } catch (e) {
       console.warn(`[offline-sync] Could not parse answers for attempt ${attempt.id}:`, e);
     }

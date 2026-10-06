@@ -2,7 +2,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { Award, Download, Eye, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Button, Card, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { ApiError } from '@/core/api/errors';
@@ -31,6 +32,8 @@ export default function CertificateScreen() {
 
   const [downloading, setDownloading] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+  const window = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   if (certificate.isPending) {
     return (
@@ -43,10 +46,7 @@ export default function CertificateScreen() {
   if (certificate.isError || !certificate.data) {
     return (
       <Screen>
-        <ErrorState
-          error={certificate.error}
-          onRetry={() => void certificate.refetch()}
-        />
+        <ErrorState error={certificate.error} onRetry={() => void certificate.refetch()} />
       </Screen>
     );
   }
@@ -93,6 +93,13 @@ export default function CertificateScreen() {
     }
   };
 
+  // Rotated 90°: the page's width runs along the screen height, its height along the width.
+  const viewerHeaderHeight = 120 + insets.top;
+  const landscapeWidth = Math.min(
+    window.height - viewerHeaderHeight - insets.bottom - 24,
+    ((window.width - 24) * 842) / 595,
+  );
+
   const handleOpenView = () => {
     setViewModalVisible(true);
   };
@@ -101,13 +108,19 @@ export default function CertificateScreen() {
     <Screen>
       {/* Course & Certificate Header Summary */}
       <Card className="items-center gap-3 border-amber-200 py-6 dark:border-amber-900/60">
-        <View className="h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700">
+        <View className="h-16 w-16 items-center justify-center rounded-full border border-amber-300 bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40">
           <Award size={34} color={palette.warning} />
         </View>
-        <AppText variant="caption" className="text-amber-600 dark:text-amber-400 font-semibold tracking-wider uppercase">
+        <AppText
+          variant="caption"
+          className="font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400"
+        >
           {t('certificates.ofCompletion', { defaultValue: 'Official Certificate of Completion' })}
         </AppText>
-        <AppText variant="title" className="text-center font-bold text-slate-900 dark:text-white px-2">
+        <AppText
+          variant="title"
+          className="px-2 text-center font-bold text-slate-900 dark:text-white"
+        >
           {localized(c.course, 'title')}
         </AppText>
         <AppText variant="muted" className="font-medium">
@@ -117,18 +130,35 @@ export default function CertificateScreen() {
 
       {/* In-App Interactive Certificate Preview */}
       <View className="my-1">
-        <CertificateDocumentView certificate={c} learnerName={learnerFullName} />
+        <View className="overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
+          <CertificateDocumentView certificate={c} width={window.width - 34} lang={locale} />
+        </View>
       </View>
 
       {/* Certificate Authenticity & Metadata Card */}
       <Card className="gap-3">
-        <Info label={t('certificates.recipient', { defaultValue: 'Recipient' })} value={learnerFullName} />
-        <Info label={t('certificates.number', { defaultValue: 'Certificate Number' })} value={c.certificateNumber} />
-        <Info label={t('certificates.issued', { defaultValue: 'Issued Date' })} value={formatDate(c.issuedAt, locale)} />
+        <Info
+          label={t('certificates.recipient', { defaultValue: 'Recipient' })}
+          value={learnerFullName}
+        />
+        <Info
+          label={t('certificates.number', { defaultValue: 'Certificate Number' })}
+          value={c.certificateNumber}
+        />
+        <Info
+          label={t('certificates.issued', { defaultValue: 'Issued Date' })}
+          value={formatDate(c.issuedAt, locale)}
+        />
         {c.expiresAt ? (
-          <Info label={t('certificates.expires', { defaultValue: 'Expiration Date' })} value={formatDate(c.expiresAt, locale)} />
+          <Info
+            label={t('certificates.expires', { defaultValue: 'Expiration Date' })}
+            value={formatDate(c.expiresAt, locale)}
+          />
         ) : null}
-        <Info label={t('certificates.verificationCode', { defaultValue: 'Verification Code' })} value={c.verificationCode} />
+        <Info
+          label={t('certificates.verificationCode', { defaultValue: 'Verification Code' })}
+          value={c.verificationCode}
+        />
       </Card>
 
       {/* Exactly TWO Action Buttons: [View] and [Download] */}
@@ -158,7 +188,7 @@ export default function CertificateScreen() {
         </View>
       </View>
 
-      <AppText variant="caption" className="text-center text-slate-400 mt-1">
+      <AppText variant="caption" className="mt-1 text-center text-slate-400">
         {online
           ? t('certificates.verifyHint', {
               defaultValue: 'Official credential issued by MoR Tele ETIMS Training Academy.',
@@ -180,7 +210,7 @@ export default function CertificateScreen() {
         <View className="flex-1 bg-slate-950">
           {/* Top Modal Navigation Bar */}
           <View className="flex-row items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 pt-12">
-            <View className="flex-row items-center gap-2 flex-1 pr-2">
+            <View className="flex-1 flex-row items-center gap-2 pr-2">
               <Award size={20} color={palette.warning} />
               <AppText className="text-base font-bold text-white" numberOfLines={1}>
                 {t('certificates.modalTitle', { defaultValue: 'Certificate of Completion' })}
@@ -210,36 +240,23 @@ export default function CertificateScreen() {
           <View className="border-b border-slate-800/80 bg-slate-900/90 px-4 py-2">
             <AppText className="text-center text-xs text-slate-400">
               {t('certificates.landscapeHint', {
-                defaultValue: 'Official A4 landscape document · Pan horizontally & vertically to inspect',
+                defaultValue: 'Same layout as the downloaded PDF · Turn your phone to read it',
               })}
             </AppText>
           </View>
 
-          {/* Scrollable High-Res Authentic Certificate Document */}
-          <ScrollView
-            className="flex-1"
-            horizontal
-            showsHorizontalScrollIndicator={true}
-            contentContainerStyle={{ minWidth: '100%', alignItems: 'center' }}
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-          >
-            <ScrollView
-              contentContainerStyle={{
-                padding: 16,
-                paddingBottom: 48,
-                alignItems: 'center',
-                justifyContent: 'center',
+          {/* Full page, turned to landscape so the A4 page fills the phone screen */}
+          <View className="flex-1 items-center justify-center">
+            <View
+              style={{
+                width: landscapeWidth,
+                height: (landscapeWidth * 595) / 842,
+                transform: [{ rotate: '90deg' }],
               }}
-              showsVerticalScrollIndicator={true}
             >
-              <CertificateDocumentView
-                certificate={c}
-                learnerName={learnerFullName}
-                isLandscape
-              />
-            </ScrollView>
-          </ScrollView>
+              <CertificateDocumentView certificate={c} width={landscapeWidth} lang={locale} />
+            </View>
+          </View>
         </View>
       </Modal>
     </Screen>

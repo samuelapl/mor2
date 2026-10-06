@@ -57,8 +57,9 @@ export const syncQueue = {
       ? items.find((item) => item.type === type && item.coalesceKey === coalesceKey)
       : undefined;
 
-    if (existing && handler?.merge) {
-      existing.payload = handler.merge(existing.payload as P, payload);
+    if (existing) {
+      // Same coalesceKey: merge when the handler knows how, otherwise the newest payload wins.
+      existing.payload = handler?.merge ? handler.merge(existing.payload as P, payload) : payload;
     } else {
       items.push({ id: newId(), type, coalesceKey, payload, createdAt: Date.now(), attempts: 0 });
     }

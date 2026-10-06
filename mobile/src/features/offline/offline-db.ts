@@ -8,6 +8,8 @@ export interface OfflineCourse {
   titleAm?: string | null;
   description?: string | null;
   descriptionAm?: string | null;
+  objectives?: string | null;
+  objectivesAm?: string | null;
   level: string;
   deliveryMode: string;
   thumbnailUrl?: string | null;
@@ -24,6 +26,8 @@ export interface OfflineModule {
   titleAm?: string | null;
   description?: string | null;
   descriptionAm?: string | null;
+  objectives?: string | null;
+  objectivesAm?: string | null;
   sortOrder: number;
   durationMinutes?: number | null;
 }
@@ -82,9 +86,12 @@ export interface OfflineQuizAttempt {
   submittedAt: number;
   score: number;
   passed: number; // 0 or 1
+  /** PENDING → waiting for a connection; SYNCED → graded by the server; FAILED → rejected. */
   syncStatus: 'PENDING' | 'SYNCED' | 'FAILED';
   syncError?: string | null;
   attemptNumber: number;
+  /** Server GradedResult (JSON) once synced, so the learner can review it later. */
+  resultJson?: string | null;
 }
 
 export interface OfflineProgressQueueItem {
@@ -227,6 +234,22 @@ class OfflineDatabaseManager {
       CREATE INDEX IF NOT EXISTS idx_queue_status ON offline_progress_queue(syncStatus);
     `);
 
+    // Columns added after the first release; ALTER fails harmlessly when they already exist.
+    const addedColumns = [
+      'ALTER TABLE offline_courses ADD COLUMN objectives TEXT;',
+      'ALTER TABLE offline_courses ADD COLUMN objectivesAm TEXT;',
+      'ALTER TABLE offline_modules ADD COLUMN objectives TEXT;',
+      'ALTER TABLE offline_modules ADD COLUMN objectivesAm TEXT;',
+      'ALTER TABLE offline_quiz_attempts ADD COLUMN resultJson TEXT;',
+    ];
+    for (const sql of addedColumns) {
+      try {
+        await db.execAsync(sql);
+      } catch {
+        // column already exists
+      }
+    }
+
     this.initialized = true;
   }
 
@@ -236,15 +259,17 @@ class OfflineDatabaseManager {
     const db = this.getDb();
     await db.runAsync(
       `INSERT OR REPLACE INTO offline_courses (
-        id, code, title, titleAm, description, descriptionAm, level,
+        id, code, title, titleAm, description, descriptionAm, objectives, objectivesAm, level,
         deliveryMode, thumbnailUrl, localThumbnailUri, downloadedAt, sizeBytes, version
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       course.id,
       course.code,
       course.title,
       course.titleAm ?? null,
       course.description ?? null,
       course.descriptionAm ?? null,
+      course.objectives ?? null,
+      course.objectivesAm ?? null,
       course.level,
       course.deliveryMode,
       course.thumbnailUrl ?? null,
@@ -258,10 +283,7 @@ class OfflineDatabaseManager {
   async getCourse(courseId: string): Promise<OfflineCourse | null> {
     await this.init();
     const db = this.getDb();
-    return db.getFirstAsync<OfflineCourse>(
-      'SELECT * FROM offline_courses WHERE id = ?;',
-      courseId,
-    );
+    return db.getFirstAsync<OfflineCourse>('SELECT * FROM offline_courses WHERE id = ?;', courseId);
   }
 
   async getAllCourses(): Promise<OfflineCourse[]> {
@@ -288,14 +310,17 @@ class OfflineDatabaseManager {
     for (const m of modules) {
       await db.runAsync(
         `INSERT OR REPLACE INTO offline_modules (
-          id, courseId, title, titleAm, description, descriptionAm, sortOrder, durationMinutes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+          id, courseId, title, titleAm, description, descriptionAm, objectives, objectivesAm,
+          sortOrder, durationMinutes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         m.id,
         m.courseId,
         m.title,
         m.titleAm ?? null,
         m.description ?? null,
         m.descriptionAm ?? null,
+        m.objectives ?? null,
+        m.objectivesAm ?? null,
         m.sortOrder,
         m.durationMinutes ?? null,
       );
@@ -347,10 +372,7 @@ class OfflineDatabaseManager {
   async getLesson(lessonId: string): Promise<OfflineLesson | null> {
     await this.init();
     const db = this.getDb();
-    return db.getFirstAsync<OfflineLesson>(
-      'SELECT * FROM offline_lessons WHERE id = ?;',
-      lessonId,
-    );
+    return db.getFirstAsync<OfflineLesson>('SELECT * FROM offline_lessons WHERE id = ?;', lessonId);
   }
 
   async getLessonsForModule(moduleId: string): Promise<OfflineLesson[]> {
@@ -479,8 +501,8 @@ class OfflineDatabaseManager {
     await db.runAsync(
       `INSERT OR REPLACE INTO offline_quiz_attempts (
         id, assessmentId, courseId, answersJson, startedAt, submittedAt,
-        score, passed, syncStatus, syncError, attemptNumber
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        score, passed, syncStatus, syncError, attemptNumber, resultJson
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       attempt.id,
       attempt.assessmentId,
       attempt.courseId,
@@ -492,6 +514,7 @@ class OfflineDatabaseManager {
       attempt.syncStatus,
       attempt.syncError ?? null,
       attempt.attemptNumber,
+      attempt.resultJson ?? null,
     );
   }
 
@@ -503,17 +526,37 @@ class OfflineDatabaseManager {
     );
   }
 
-  async updateQuizAttemptStatus(
+  /** Most recent offline attempt for an assessment (any sync status). */
+  async getLatestQuizAttempt(assessmentId: string): Promise<OfflineQuizAttempt | null> {
+    await this.init();
+    const db = this.getDb();
+    return db.getFirstAsync<OfflineQuizAttempt>(
+      'SELECT * FROM offline_quiz_attempts WHERE assessmentId = ? ORDER BY submittedAt DESC LIMIT 1;',
+      assessmentId,
+    );
+  }
+
+  async markQuizAttemptSynced(
     id: string,
-    status: 'SYNCED' | 'FAILED',
-    error?: string,
+    result: { score: number; passed: boolean; resultJson: string },
   ): Promise<void> {
     await this.init();
     const db = this.getDb();
     await db.runAsync(
-      'UPDATE offline_quiz_attempts SET syncStatus = ?, syncError = ? WHERE id = ?;',
-      status,
-      error ?? null,
+      "UPDATE offline_quiz_attempts SET syncStatus = 'SYNCED', syncError = NULL, score = ?, passed = ?, resultJson = ? WHERE id = ?;",
+      result.score,
+      result.passed ? 1 : 0,
+      result.resultJson,
+      id,
+    );
+  }
+
+  async markQuizAttemptFailed(id: string, error: string): Promise<void> {
+    await this.init();
+    const db = this.getDb();
+    await db.runAsync(
+      "UPDATE offline_quiz_attempts SET syncStatus = 'FAILED', syncError = ? WHERE id = ?;",
+      error,
       id,
     );
   }

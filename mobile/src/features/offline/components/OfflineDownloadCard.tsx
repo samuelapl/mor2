@@ -26,7 +26,11 @@ import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import { palette, useThemeColors } from '@/core/theme/colors';
 import { Alert } from '@/core/utils/alert';
 import { formatFileSize } from '@/core/utils/formatters';
-import type { ApiCourseDetail, ApiCourseLesson, ApiCourseModule } from '../../courses/types/course.types';
+import type {
+  ApiCourseDetail,
+  ApiCourseLesson,
+  ApiCourseModule,
+} from '../../courses/types/course.types';
 import { useCourse } from '../../courses';
 import {
   useCourseProgress,
@@ -163,14 +167,10 @@ export function OfflineDownloadCard({
             subLessons: (lesson.subLessons ?? []).filter((sub) =>
               isSubLessonUnlocked(sub, lesson, mod),
             ),
-            assessments: isLessonAssessmentUnlocked(lesson, mod)
-              ? (lesson.assessments ?? [])
-              : [],
+            assessments: isLessonAssessmentUnlocked(lesson, mod) ? (lesson.assessments ?? []) : [],
           }));
 
-        const filteredAssessments = isModuleAssessmentUnlocked(mod)
-          ? (mod.assessments ?? [])
-          : [];
+        const filteredAssessments = isModuleAssessmentUnlocked(mod) ? (mod.assessments ?? []) : [];
 
         return {
           ...mod,
@@ -211,6 +211,37 @@ export function OfflineDownloadCard({
   useEffect(() => {
     void init();
   }, [init]);
+
+  // Ids already stored on the phone, reloaded after every download of this course.
+  const downloadedAt = downloadedCourses.find((c) => c.id === courseId)?.downloadedAt;
+  const [storedIds, setStoredIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let mounted = true;
+    void Promise.all([
+      offlineDb.getLessonsForCourse(courseId),
+      offlineDb.getAssessmentsForCourse(courseId),
+    ]).then(([lessons, assessments]) => {
+      if (mounted) setStoredIds(new Set([...lessons, ...assessments].map((item) => item.id)));
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [courseId, downloadedAt]);
+
+  // Everything "Download all" fetches (the final assessment is online-only, so not counted).
+  const downloadableIds = useMemo(
+    () =>
+      unlockedModules.flatMap((m) => [
+        ...(m.assessments ?? []).map((a) => a.id),
+        ...m.lessons.flatMap((l) => [
+          l.id,
+          ...(l.subLessons ?? []).map((sub) => sub.id),
+          ...(l.assessments ?? []).map((a) => a.id),
+        ]),
+      ]),
+    [unlockedModules],
+  );
+  const missingCount = downloadableIds.filter((id) => !storedIds.has(id)).length;
 
   useEffect(() => {
     let mounted = true;
@@ -465,7 +496,7 @@ export function OfflineDownloadCard({
   // State: Syncing
   if (isSyncing || (online && pendingSyncCount > 0 && isDownloaded)) {
     return (
-      <Card className="gap-3 border border-sky-500/40 bg-sky-950/30 dark:bg-slate-900 p-4 rounded-2xl">
+      <Card className="gap-3 rounded-2xl border border-sky-500/40 bg-sky-950/30 p-4 dark:bg-slate-900">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2.5">
             <ActivityIndicator size="small" color="#38bdf8" />
@@ -475,7 +506,7 @@ export function OfflineDownloadCard({
           </View>
           <Badge label="Syncing" tone="brand" />
         </View>
-        <AppText className="text-xs text-slate-300 leading-5">
+        <AppText className="text-xs leading-5 text-slate-300">
           {t('courses.syncingDescription', {
             defaultValue:
               'Uploading recorded offline quiz attempts and study time to the server for verification.',
@@ -488,18 +519,19 @@ export function OfflineDownloadCard({
   // State: Downloading with Progress
   if (isDownloading) {
     return (
-      <Card className="gap-3.5 border border-sky-500/50 bg-slate-900/95 p-4 rounded-2xl shadow-sm">
+      <Card className="gap-3.5 rounded-2xl border border-sky-500/50 bg-slate-900/95 p-4 shadow-sm">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2.5">
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-400/30">
+            <View className="h-9 w-9 items-center justify-center rounded-xl border border-sky-400/30 bg-sky-500/20">
               <DownloadCloud size={18} color="#38bdf8" />
             </View>
             <View>
-              <AppText className="text-sm font-bold text-white tracking-wide">
+              <AppText className="text-sm font-bold tracking-wide text-white">
                 {t('courses.downloading', { defaultValue: 'Downloading Offline Content' })}
               </AppText>
-              <AppText className="text-xs text-sky-200 font-medium">
-                {progress.currentStep || t('courses.downloadingMedia', { defaultValue: 'Saving media & quizzes…' })}
+              <AppText className="text-xs font-medium text-sky-200">
+                {progress.currentStep ||
+                  t('courses.downloadingMedia', { defaultValue: 'Saving media & quizzes…' })}
               </AppText>
             </View>
           </View>
@@ -509,7 +541,7 @@ export function OfflineDownloadCard({
         <ProgressBar percent={progress.percent} tone="brand" />
 
         <View className="flex-row items-center justify-between pt-1">
-          <AppText className="flex-1 text-xs text-slate-300 font-medium">
+          <AppText className="flex-1 text-xs font-medium text-slate-300">
             {progress.totalBytes > 0
               ? `${formatFileSize(progress.downloadedBytes)} / ${formatFileSize(progress.totalBytes)}`
               : `${Math.round(progress.percent)}% completed`}
@@ -528,17 +560,18 @@ export function OfflineDownloadCard({
   // State: Error
   if (isError) {
     return (
-      <Card className="gap-3 border border-red-500/50 bg-red-950/25 dark:bg-slate-900 p-4 rounded-2xl">
+      <Card className="gap-3 rounded-2xl border border-red-500/50 bg-red-950/25 p-4 dark:bg-slate-900">
         <View className="flex-row items-center gap-2.5">
-          <View className="h-9 w-9 rounded-xl bg-red-500/20 items-center justify-center border border-red-400/30">
+          <View className="h-9 w-9 items-center justify-center rounded-xl border border-red-400/30 bg-red-500/20">
             <AlertCircle size={18} color={palette.danger} />
           </View>
           <View className="flex-1">
             <AppText className="text-sm font-bold text-red-200">
               {t('courses.downloadFailed', { defaultValue: 'Download Failed' })}
             </AppText>
-            <AppText className="text-xs text-slate-300 mt-0.5">
-              {progress?.error || t('courses.downloadFailedHint', { defaultValue: 'Check connection and retry.' })}
+            <AppText className="mt-0.5 text-xs text-slate-300">
+              {progress?.error ||
+                t('courses.downloadFailedHint', { defaultValue: 'Check connection and retry.' })}
             </AppText>
           </View>
         </View>
@@ -562,15 +595,15 @@ export function OfflineDownloadCard({
 
   // Main UI: Enterprise Course Download Card with Granular Selection
   return (
-    <Card className="gap-3.5 border border-slate-800 bg-slate-900/90 dark:bg-slate-900/95 p-4 rounded-2xl shadow-sm">
+    <Card className="gap-3.5 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-sm dark:bg-slate-900/95">
       {/* Card Header & Status */}
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-row items-center gap-3 flex-1">
+        <View className="flex-1 flex-row items-center gap-3">
           <View
             className={`h-10 w-10 items-center justify-center rounded-xl border ${
               isDownloaded
-                ? 'bg-emerald-500/20 border-emerald-400/30'
-                : 'bg-sky-500/20 border-sky-400/30'
+                ? 'border-emerald-400/30 bg-emerald-500/20'
+                : 'border-sky-400/30 bg-sky-500/20'
             }`}
           >
             {isDownloaded ? (
@@ -581,7 +614,7 @@ export function OfflineDownloadCard({
           </View>
           <View className="flex-1">
             <View className="flex-row items-center gap-2">
-              <AppText className="text-sm font-bold text-white tracking-wide">
+              <AppText className="text-sm font-bold tracking-wide text-white">
                 {isDownloaded
                   ? t('courses.availableOffline', { defaultValue: 'Available Offline' })
                   : t('courses.offlineLearning', { defaultValue: 'Offline Learning' })}
@@ -590,7 +623,7 @@ export function OfflineDownloadCard({
                 <Badge label={formatFileSize(downloadedCourse.sizeBytes)} tone="neutral" />
               ) : null}
             </View>
-            <AppText className="text-xs font-medium text-slate-300 mt-0.5 leading-4">
+            <AppText className="mt-0.5 text-xs font-medium leading-4 text-slate-300">
               {t('courses.offlineHint', {
                 defaultValue: 'Download lessons, documents & quizzes for offline study',
               })}
@@ -601,7 +634,7 @@ export function OfflineDownloadCard({
         {/* Quick Link to My Downloads page */}
         <Pressable
           onPress={() => router.push('/(tabs)/downloads' as any)}
-          className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 active:bg-slate-700"
+          className="flex-row items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 active:bg-slate-700"
           accessibilityRole="button"
           accessibilityLabel="Open Downloads"
         >
@@ -615,19 +648,35 @@ export function OfflineDownloadCard({
       {/* Primary Action Buttons Row */}
       <View className="flex-row items-center gap-2 pt-1">
         <View className="flex-1">
-          <Button
-            title={t('offline.downloadAll', { defaultValue: 'Download All' })}
-            variant="primary"
-            icon={<Download size={16} color="#ffffff" strokeWidth={2.2} />}
-            onPress={handleDownloadAll}
-            fullWidth
-          />
+          {isDownloaded && downloadableIds.length > 0 && missingCount === 0 ? (
+            <View
+              accessibilityRole="text"
+              className="h-12 flex-row items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15"
+            >
+              <CheckCircle2 size={16} color="#10b981" />
+              <AppText className="text-sm font-bold text-emerald-300">
+                {t('offline.downloaded')}
+              </AppText>
+            </View>
+          ) : (
+            <Button
+              title={
+                isDownloaded && missingCount > 0
+                  ? t('offline.downloadRemaining', { count: missingCount })
+                  : t('offline.downloadAll', { defaultValue: 'Download All' })
+              }
+              variant="primary"
+              icon={<Download size={16} color="#ffffff" strokeWidth={2.2} />}
+              onPress={handleDownloadAll}
+              fullWidth
+            />
+          )}
         </View>
 
         {isDownloaded && (
           <Pressable
             onPress={handleRemove}
-            className="flex-row items-center gap-1.5 px-3 py-2.5 rounded-xl bg-red-950/40 border border-red-800/40 active:bg-red-900/50"
+            className="flex-row items-center gap-1.5 rounded-xl border border-red-800/40 bg-red-950/40 px-3 py-2.5 active:bg-red-900/50"
             accessibilityRole="button"
             accessibilityLabel="Delete downloads"
           >
@@ -641,12 +690,12 @@ export function OfflineDownloadCard({
 
       {/* Granular Selection Accordion Header */}
       {courseDetail?.modules && courseDetail.modules.length > 0 && (
-        <View className="border-t border-slate-800/80 pt-3 gap-2.5">
+        <View className="gap-2.5 border-t border-slate-800/80 pt-3">
           <Pressable
             onPress={() => setIsSelectorOpen((prev) => !prev)}
-            className="flex-row items-center justify-between p-2 rounded-xl bg-slate-800/60 active:bg-slate-800"
+            className="flex-row items-center justify-between rounded-xl bg-slate-800/60 p-2 active:bg-slate-800"
           >
-            <View className="flex-row items-center gap-2 flex-1">
+            <View className="flex-1 flex-row items-center gap-2">
               <Download size={15} color="#38bdf8" />
               <AppText className="text-xs font-bold text-slate-200">
                 {t('offline.selectSpecificContent', {
@@ -671,9 +720,9 @@ export function OfflineDownloadCard({
             <View className="gap-3 pt-1">
               {/* Batch Actions Bar */}
               {totalUnlockedItemsCount === 0 ? (
-                <View className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 items-center gap-2">
+                <View className="items-center gap-2 rounded-xl border border-slate-800 bg-slate-800/40 p-4">
                   <Lock size={20} color="#94a3b8" />
-                  <AppText className="text-xs text-slate-300 text-center">
+                  <AppText className="text-center text-xs text-slate-300">
                     {t('offline.noUnlockedContentBody', {
                       defaultValue:
                         'No unlocked content available for download yet. Complete earlier lessons to unlock and download material.',
@@ -686,16 +735,20 @@ export function OfflineDownloadCard({
                     <View className="flex-row items-center gap-2">
                       <Pressable
                         onPress={selectAll}
-                        className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-800/40 active:bg-sky-900/60"
+                        className="rounded-lg border border-sky-800/40 bg-sky-950/60 px-2.5 py-1 active:bg-sky-900/60"
                       >
-                        <AppText className="text-[11px] font-semibold text-sky-300">Select All</AppText>
+                        <AppText className="text-[11px] font-semibold text-sky-300">
+                          Select All
+                        </AppText>
                       </Pressable>
                       {totalSelectedCount > 0 && (
                         <Pressable
                           onPress={clearSelection}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 active:bg-slate-700"
+                          className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 active:bg-slate-700"
                         >
-                          <AppText className="text-[11px] font-medium text-slate-300">Clear</AppText>
+                          <AppText className="text-[11px] font-medium text-slate-300">
+                            Clear
+                          </AppText>
                         </Pressable>
                       )}
                     </View>
@@ -722,17 +775,17 @@ export function OfflineDownloadCard({
                       return (
                         <View
                           key={mod.id}
-                          className="rounded-xl border border-slate-800 bg-slate-800/40 overflow-hidden"
+                          className="overflow-hidden rounded-xl border border-slate-800 bg-slate-800/40"
                         >
                           {/* Module Header Row */}
-                          <View className="flex-row items-center justify-between p-3 gap-2 bg-slate-800/80">
+                          <View className="flex-row items-center justify-between gap-2 bg-slate-800/80 p-3">
                             {/* Checkbox */}
                             <Pressable
                               onPress={() => toggleModuleSelection(mod)}
-                              className={`h-5 w-5 rounded-md border items-center justify-center ${
+                              className={`h-5 w-5 items-center justify-center rounded-md border ${
                                 isModSelected
-                                  ? 'bg-brand-600 border-brand-500'
-                                  : 'bg-slate-900 border-slate-600'
+                                  ? 'border-brand-500 bg-brand-600'
+                                  : 'border-slate-600 bg-slate-900'
                               }`}
                             >
                               {isModSelected && <Check size={13} color="#ffffff" strokeWidth={3} />}
@@ -746,7 +799,7 @@ export function OfflineDownloadCard({
                               <AppText className="text-xs font-bold text-white" numberOfLines={1}>
                                 {mod.title || mod.titleEn || `Module ${modIdx + 1}`}
                               </AppText>
-                              <View className="flex-row items-center gap-2 mt-0.5">
+                              <View className="mt-0.5 flex-row items-center gap-2">
                                 <AppText className="text-[10px] text-slate-400">
                                   {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
                                 </AppText>
@@ -761,7 +814,7 @@ export function OfflineDownloadCard({
                             {/* Single Module Download Button */}
                             <Pressable
                               onPress={() => handleDownloadSingleModule(mod)}
-                              className="flex-row items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-950/80 border border-sky-600/40 active:bg-sky-900"
+                              className="flex-row items-center gap-1 rounded-lg border border-sky-600/40 bg-sky-950/80 px-2.5 py-1 active:bg-sky-900"
                             >
                               <Download size={12} color="#38bdf8" />
                               <AppText className="text-[11px] font-semibold text-sky-300">
@@ -770,10 +823,7 @@ export function OfflineDownloadCard({
                             </Pressable>
 
                             {/* Expand Chevron */}
-                            <Pressable
-                              onPress={() => toggleModuleExpanded(mod.id)}
-                              className="p-1"
-                            >
+                            <Pressable onPress={() => toggleModuleExpanded(mod.id)} className="p-1">
                               {isModExpanded ? (
                                 <ChevronDown size={16} color="#94a3b8" />
                               ) : (
@@ -784,7 +834,7 @@ export function OfflineDownloadCard({
 
                           {/* Expanded Module Details: Lessons, Sub-lessons & Quizzes */}
                           {isModExpanded && (
-                            <View className="p-2.5 gap-2 border-t border-slate-800 bg-slate-900/60">
+                            <View className="gap-2 border-t border-slate-800 bg-slate-900/60 p-2.5">
                               {/* Lessons in Module */}
                               {mod.lessons.map((lesson, lesIdx) => {
                                 const isLesSelected = selectedLessonIds.has(lesson.id);
@@ -794,14 +844,14 @@ export function OfflineDownloadCard({
                                 return (
                                   <View key={lesson.id} className="gap-1.5">
                                     {/* Lesson Item Row */}
-                                    <View className="flex-row items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+                                    <View className="flex-row items-center justify-between rounded-lg border border-slate-800 bg-slate-800/40 p-2">
                                       {/* Checkbox */}
                                       <Pressable
                                         onPress={() => toggleLessonSelection(lesson)}
-                                        className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                                        className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
                                           isLesSelected
-                                            ? 'bg-brand-600 border-brand-500'
-                                            : 'bg-slate-900 border-slate-600'
+                                            ? 'border-brand-500 bg-brand-600'
+                                            : 'border-slate-600 bg-slate-900'
                                         }`}
                                       >
                                         {isLesSelected && (
@@ -810,7 +860,7 @@ export function OfflineDownloadCard({
                                       </Pressable>
 
                                       {/* Icon & Title */}
-                                      <View className="flex-row items-center gap-2 flex-1 pr-2">
+                                      <View className="flex-1 flex-row items-center gap-2 pr-2">
                                         {lesson.contentType === 'VIDEO' ? (
                                           <Video size={14} color="#38bdf8" />
                                         ) : (
@@ -821,7 +871,9 @@ export function OfflineDownloadCard({
                                             className="text-xs font-semibold text-slate-200"
                                             numberOfLines={1}
                                           >
-                                            {lesson.title || lesson.titleEn || `Lesson ${lesIdx + 1}`}
+                                            {lesson.title ||
+                                              lesson.titleEn ||
+                                              `Lesson ${lesIdx + 1}`}
                                           </AppText>
                                           {lesson.durationMinutes ? (
                                             <AppText className="text-[10px] text-slate-400">
@@ -836,7 +888,7 @@ export function OfflineDownloadCard({
                                         onPress={() =>
                                           handleDownloadSingleLesson(lesson.id, mod.id)
                                         }
-                                        className="p-1 px-2 rounded-md bg-slate-800 border border-slate-700 active:bg-slate-700"
+                                        className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
                                       >
                                         <Download size={12} color="#38bdf8" />
                                       </Pressable>
@@ -844,21 +896,25 @@ export function OfflineDownloadCard({
 
                                     {/* Sub-lessons (if any) */}
                                     {hasSubLessons && (
-                                      <View className="pl-6 gap-1.5">
+                                      <View className="gap-1.5 pl-6">
                                         {lesson.subLessons!.map((subLesson, subIdx) => {
-                                          const isSubSelected = selectedSubLessonIds.has(subLesson.id);
+                                          const isSubSelected = selectedSubLessonIds.has(
+                                            subLesson.id,
+                                          );
 
                                           return (
                                             <View
                                               key={subLesson.id}
-                                              className="flex-row items-center justify-between p-1.5 px-2 rounded-md bg-slate-800/30 border border-slate-800/60"
+                                              className="flex-row items-center justify-between rounded-md border border-slate-800/60 bg-slate-800/30 p-1.5 px-2"
                                             >
                                               <Pressable
-                                                onPress={() => toggleSubLessonSelection(subLesson.id)}
-                                                className={`h-3.5 w-3.5 rounded border items-center justify-center mr-2 ${
+                                                onPress={() =>
+                                                  toggleSubLessonSelection(subLesson.id)
+                                                }
+                                                className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
                                                   isSubSelected
-                                                    ? 'bg-brand-600 border-brand-500'
-                                                    : 'bg-slate-900 border-slate-600'
+                                                    ? 'border-brand-500 bg-brand-600'
+                                                    : 'border-slate-600 bg-slate-900'
                                                 }`}
                                               >
                                                 {isSubSelected && (
@@ -866,10 +922,10 @@ export function OfflineDownloadCard({
                                                 )}
                                               </Pressable>
 
-                                              <View className="flex-row items-center gap-1.5 flex-1 pr-2">
+                                              <View className="flex-1 flex-row items-center gap-1.5 pr-2">
                                                 <CornerDownRight size={12} color="#64748b" />
                                                 <AppText
-                                                  className="text-[11px] text-slate-300 flex-1"
+                                                  className="flex-1 text-[11px] text-slate-300"
                                                   numberOfLines={1}
                                                 >
                                                   {subLesson.title ||
@@ -880,9 +936,12 @@ export function OfflineDownloadCard({
 
                                               <Pressable
                                                 onPress={() =>
-                                                  handleDownloadSingleSubLesson(subLesson.id, mod.id)
+                                                  handleDownloadSingleSubLesson(
+                                                    subLesson.id,
+                                                    mod.id,
+                                                  )
                                                 }
-                                                className="p-1 px-1.5 rounded bg-slate-800 active:bg-slate-700"
+                                                className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
                                               >
                                                 <Download size={11} color="#38bdf8" />
                                               </Pressable>
@@ -894,21 +953,21 @@ export function OfflineDownloadCard({
 
                                     {/* Lesson-level Quizzes (if any) */}
                                     {hasAssessments && (
-                                      <View className="pl-6 gap-1">
+                                      <View className="gap-1 pl-6">
                                         {lesson.assessments!.map((quiz) => {
                                           const isQuizSelected = selectedAssessmentIds.has(quiz.id);
 
                                           return (
                                             <View
                                               key={quiz.id}
-                                              className="flex-row items-center justify-between p-1.5 px-2 rounded-md bg-indigo-950/30 border border-indigo-900/40"
+                                              className="flex-row items-center justify-between rounded-md border border-indigo-900/40 bg-indigo-950/30 p-1.5 px-2"
                                             >
                                               <Pressable
                                                 onPress={() => toggleAssessmentSelection(quiz.id)}
-                                                className={`h-3.5 w-3.5 rounded border items-center justify-center mr-2 ${
+                                                className={`mr-2 h-3.5 w-3.5 items-center justify-center rounded border ${
                                                   isQuizSelected
-                                                    ? 'bg-brand-600 border-brand-500'
-                                                    : 'bg-slate-900 border-slate-600'
+                                                    ? 'border-brand-500 bg-brand-600'
+                                                    : 'border-slate-600 bg-slate-900'
                                                 }`}
                                               >
                                                 {isQuizSelected && (
@@ -916,10 +975,10 @@ export function OfflineDownloadCard({
                                                 )}
                                               </Pressable>
 
-                                              <View className="flex-row items-center gap-1.5 flex-1 pr-2">
+                                              <View className="flex-1 flex-row items-center gap-1.5 pr-2">
                                                 <HelpCircle size={12} color="#a855f7" />
                                                 <AppText
-                                                  className="text-[11px] font-medium text-indigo-200 flex-1"
+                                                  className="flex-1 text-[11px] font-medium text-indigo-200"
                                                   numberOfLines={1}
                                                 >
                                                   {quiz.title || quiz.titleEn || 'Quiz'}
@@ -930,7 +989,7 @@ export function OfflineDownloadCard({
                                                 onPress={() =>
                                                   handleDownloadSingleAssessment(quiz.id, mod.id)
                                                 }
-                                                className="p-1 px-1.5 rounded bg-slate-800 active:bg-slate-700"
+                                                className="rounded bg-slate-800 p-1 px-1.5 active:bg-slate-700"
                                               >
                                                 <Download size={11} color="#c084fc" />
                                               </Pressable>
@@ -950,14 +1009,14 @@ export function OfflineDownloadCard({
                                 return (
                                   <View
                                     key={modQuiz.id}
-                                    className="flex-row items-center justify-between p-2 rounded-lg bg-indigo-950/40 border border-indigo-800/40"
+                                    className="flex-row items-center justify-between rounded-lg border border-indigo-800/40 bg-indigo-950/40 p-2"
                                   >
                                     <Pressable
                                       onPress={() => toggleAssessmentSelection(modQuiz.id)}
-                                      className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                                      className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
                                         isQuizSelected
-                                          ? 'bg-brand-600 border-brand-500'
-                                          : 'bg-slate-900 border-slate-600'
+                                          ? 'border-brand-500 bg-brand-600'
+                                          : 'border-slate-600 bg-slate-900'
                                       }`}
                                     >
                                       {isQuizSelected && (
@@ -965,10 +1024,10 @@ export function OfflineDownloadCard({
                                       )}
                                     </Pressable>
 
-                                    <View className="flex-row items-center gap-2 flex-1 pr-2">
+                                    <View className="flex-1 flex-row items-center gap-2 pr-2">
                                       <Award size={14} color="#a855f7" />
                                       <AppText
-                                        className="text-xs font-semibold text-indigo-200 flex-1"
+                                        className="flex-1 text-xs font-semibold text-indigo-200"
                                         numberOfLines={1}
                                       >
                                         {modQuiz.title || modQuiz.titleEn || 'Module Assessment'}
@@ -979,7 +1038,7 @@ export function OfflineDownloadCard({
                                       onPress={() =>
                                         handleDownloadSingleAssessment(modQuiz.id, mod.id)
                                       }
-                                      className="p-1 px-2 rounded-md bg-slate-800 border border-slate-700 active:bg-slate-700"
+                                      className="rounded-md border border-slate-700 bg-slate-800 p-1 px-2 active:bg-slate-700"
                                     >
                                       <Download size={12} color="#c084fc" />
                                     </Pressable>
@@ -996,7 +1055,7 @@ export function OfflineDownloadCard({
                   {/* Course-level Final Assessments (ONLY if unlocked) */}
                   {unlockedCourseAssessments.length > 0 && (
                     <View className="gap-2 pt-1">
-                      <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                      <AppText className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                         Course Assessments
                       </AppText>
                       {unlockedCourseAssessments.map((ca) => {
@@ -1005,23 +1064,23 @@ export function OfflineDownloadCard({
                         return (
                           <View
                             key={ca.id}
-                            className="flex-row items-center justify-between p-2.5 rounded-xl border border-amber-500/30 bg-amber-950/20"
+                            className="flex-row items-center justify-between rounded-xl border border-amber-500/30 bg-amber-950/20 p-2.5"
                           >
                             <Pressable
                               onPress={() => toggleAssessmentSelection(ca.id)}
-                              className={`h-4 w-4 rounded border items-center justify-center mr-2 ${
+                              className={`mr-2 h-4 w-4 items-center justify-center rounded border ${
                                 isSelected
-                                  ? 'bg-brand-600 border-brand-500'
-                                  : 'bg-slate-900 border-slate-600'
+                                  ? 'border-brand-500 bg-brand-600'
+                                  : 'border-slate-600 bg-slate-900'
                               }`}
                             >
                               {isSelected && <Check size={11} color="#ffffff" strokeWidth={3} />}
                             </Pressable>
 
-                            <View className="flex-row items-center gap-2 flex-1 pr-2">
+                            <View className="flex-1 flex-row items-center gap-2 pr-2">
                               <Award size={16} color="#f59e0b" />
                               <AppText
-                                className="text-xs font-bold text-amber-200 flex-1"
+                                className="flex-1 text-xs font-bold text-amber-200"
                                 numberOfLines={1}
                               >
                                 {ca.title || ca.titleEn || 'Final Assessment'}
@@ -1030,7 +1089,7 @@ export function OfflineDownloadCard({
 
                             <Pressable
                               onPress={() => handleDownloadSingleAssessment(ca.id)}
-                              className="flex-row items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 border border-amber-600/40 active:bg-amber-900"
+                              className="flex-row items-center gap-1 rounded-lg border border-amber-600/40 bg-amber-950/60 px-2.5 py-1 active:bg-amber-900"
                             >
                               <Download size={12} color="#f59e0b" />
                               <AppText className="text-[11px] font-semibold text-amber-300">

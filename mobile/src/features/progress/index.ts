@@ -23,3 +23,4 @@ export {
   type LessonProgressLookup,
 } from './utils/find-lesson-progress';
 export { findNextLesson, type NextLesson } from './utils/next-lesson';
+export { requiredSeconds } from './utils/required-seconds';

@@ -13,7 +13,8 @@ import {
   Globe,
   GraduationCap,
   Info,
-  Layers,
+  ListTree,
+  LogOut,
   MapPin,
   Monitor,
   Target,
@@ -41,14 +42,10 @@ import {
 import { useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { FormMessage, useFormError, useSessionStore } from '@/features/auth';
+import { CourseFeedbackModal, hasSkippedFeedback, hasSubmittedFeedback } from '@/features/feedback';
 import {
-  CourseFeedbackModal,
-  hasSkippedFeedback,
-  hasSubmittedFeedback,
-} from '@/features/feedback';
-import {
-  CourseSyllabus,
   CourseThumbnail,
+  SyllabusDrawer,
   useCourse,
   useDropEnrollment,
   useEnrollmentForCourse,
@@ -80,6 +77,18 @@ export default function CourseScreen() {
     }
   }, [course.data, online, courseId]);
 
+  // Progression switched to LOCKED: drop any downloaded content. Pending
+  // quiz/progress sync items live outside the course tables and are kept.
+  const progressionMode = progress.data?.progressionMode;
+  useEffect(() => {
+    if (!online || !progressionMode || progressionMode === 'OPEN') return;
+    void downloadManager.isCourseDownloaded(courseId).then(async (downloaded) => {
+      if (!downloaded) return;
+      await downloadManager.deleteDownloadedCourse(courseId);
+      setOfflineData(null);
+    });
+  }, [online, progressionMode, courseId]);
+
   const certificate = useCertificateForCourse(courseId);
   const claim = useClaimCertificate();
   const enroll = useSelfEnroll();
@@ -92,6 +101,7 @@ export default function CourseScreen() {
   const [dropReason, setDropReason] = useState('');
   const [otherDetailsOpen, setOtherDetailsOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
+  const [syllabusOpen, setSyllabusOpen] = useState(false);
 
   const refresh = () => {
     void course.refetch();
@@ -146,7 +156,14 @@ export default function CourseScreen() {
       params: { courseId, lessonId },
     });
   const openAssessment = (assessmentId: string) =>
-    router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId } });
+    router.push({ pathname: '/quiz/[assessmentId]', params: { assessmentId, courseId } });
+  const openCourseOverview = () =>
+    router.push({ pathname: '/course/[courseId]/overview', params: { courseId } });
+  const openModuleOverview = (moduleId: string) =>
+    router.push({
+      pathname: '/course/[courseId]/module/[moduleId]',
+      params: { courseId, moduleId },
+    });
 
   const claimCertificateNow = () => {
     claim.mutate(courseId, {
@@ -217,14 +234,34 @@ export default function CourseScreen() {
           title: data.code,
           headerRight: () =>
             enrolled && status !== 'DROPPED' ? (
-              <Pressable
-                onPress={() => setInfoSheetOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel={t('courses.about')}
-                className="mr-1 rounded-full p-2 active:bg-slate-100 dark:active:bg-slate-800"
-              >
-                <Info size={22} color={colors.primary} />
-              </Pressable>
+              <View className="flex-row items-center">
+                <Pressable
+                  onPress={() => setInfoSheetOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('courses.about')}
+                  className="rounded-full p-2 active:bg-slate-100 dark:active:bg-slate-800"
+                >
+                  <Info size={22} color={colors.primary} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setSyllabusOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('courses.syllabus')}
+                  className="rounded-full p-2 active:bg-slate-100 dark:active:bg-slate-800"
+                >
+                  <ListTree size={22} color={colors.primary} />
+                </Pressable>
+                {status === 'ACTIVE' && enrollment.data ? (
+                  <Pressable
+                    onPress={() => setDropOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('courses.drop')}
+                    className="mr-1 rounded-full p-2 active:bg-red-50 dark:active:bg-red-950/40"
+                  >
+                    <LogOut size={21} color={colors.danger} />
+                  </Pressable>
+                ) : null}
+              </View>
             ) : null,
         }}
       />
@@ -300,6 +337,28 @@ export default function CourseScreen() {
                   fullWidth
                 />
               ) : null}
+              <View className="flex-row gap-2.5">
+                <Pressable
+                  onPress={openCourseOverview}
+                  accessibilityRole="button"
+                  className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 active:bg-white/20"
+                >
+                  <BookOpen size={16} color="#e2e8f0" />
+                  <AppText className="text-sm font-semibold text-slate-200">
+                    {t('overview.short')}
+                  </AppText>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSyllabusOpen(true)}
+                  accessibilityRole="button"
+                  className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 active:bg-white/20"
+                >
+                  <ListTree size={16} color="#e2e8f0" />
+                  <AppText className="text-sm font-semibold text-slate-200">
+                    {t('courses.courseContent')}
+                  </AppText>
+                </Pressable>
+              </View>
             </Card>
           ) : (
             <View className="gap-2.5">
@@ -320,8 +379,8 @@ export default function CourseScreen() {
             </View>
           )}
 
-          {/* Offline Learning download manager (enrolled only) */}
-          {enrolled ? (
+          {/* Offline Learning download manager (enrolled, OPEN progression only) */}
+          {enrolled && progress.data?.progressionMode === 'OPEN' ? (
             <OfflineDownloadCard
               courseId={courseId}
               enrolled={enrolled}
@@ -536,26 +595,6 @@ export default function CourseScreen() {
             </>
           ) : null}
 
-          {/* Syllabus — available only after enrollment */}
-          {enrolled ? (
-            <View className="pt-2">
-              <View className="mb-3 flex-row items-center gap-2">
-                <Layers size={18} color={colors.primary} />
-                <AppText className="text-lg font-bold tracking-wide text-slate-900 dark:text-white">
-                  {t('courses.syllabus')}
-                </AppText>
-              </View>
-              <CourseSyllabus
-                course={data}
-                progress={progress.data}
-                onOpenLesson={openLesson}
-                onOpenAssessment={openAssessment}
-                onOpenCertificate={handleCertificatePress}
-                certificate={certificate.data}
-              />
-            </View>
-          ) : null}
-
           {/* Bottom Pre-Enrollment CTA Banner */}
           {!enrolled || status === 'DROPPED' ? (
             <Card className="mt-3 gap-3.5 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/50 p-5 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900">
@@ -581,12 +620,24 @@ export default function CourseScreen() {
               />
             </Card>
           ) : null}
-
-          {enrolled && status === 'ACTIVE' && enrollment.data ? (
-            <Button title={t('courses.drop')} variant="ghost" onPress={() => setDropOpen(true)} />
-          ) : null}
         </View>
       </Screen>
+
+      {/* Syllabus drawer (header button) */}
+      {enrolled ? (
+        <SyllabusDrawer
+          visible={syllabusOpen}
+          onClose={() => setSyllabusOpen(false)}
+          course={data}
+          progress={progress.data}
+          onOpenLesson={openLesson}
+          onOpenAssessment={openAssessment}
+          onOpenCertificate={handleCertificatePress}
+          onOpenCourseOverview={openCourseOverview}
+          onOpenModuleOverview={openModuleOverview}
+          certificate={certificate.data}
+        />
+      ) : null}
 
       {/* Info Modal Sheet for Enrolled Learners */}
       <ModalSheet

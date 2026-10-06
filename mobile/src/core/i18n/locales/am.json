@@ -20,7 +20,8 @@
     "signOut": "ውጣ",
     "optional": "አማራጭ",
     "required": "ይህ መስክ ያስፈልጋል",
-    "sending": "በመላክ ላይ…"
+    "sending": "በመላክ ላይ…",
+    "close": "ዝጋ"
   },
   "tabs": {
     "home": "መነሻ",
@@ -199,7 +200,8 @@
     "quiz": "ፈተና",
     "certificateReady": "ምስክር ወረቀት ዝግጁ ነው",
     "downloadAvailableContent": "ያሉትን ይዘቶች ያውርዱ",
-    "downloadAvailableHint": "ከመስመር ውጭ ለመማር አሁን የተከፈቱ ትምህርቶችን፣ ሚዲያዎችን እና ፈተናዎችን ያውርዱ። የተቆለፉ ትምህርቶች ስልጠናውን ሲያጠናቅቁ በቅደም ተከተል ይከፈታሉ።"
+    "downloadAvailableHint": "ከመስመር ውጭ ለመማር አሁን የተከፈቱ ትምህርቶችን፣ ሚዲያዎችን እና ፈተናዎችን ያውርዱ። የተቆለፉ ትምህርቶች ስልጠናውን ሲያጠናቅቁ በቅደም ተከተል ይከፈታሉ።",
+    "courseContent": "የኮርስ ይዘት"
   },
   "home": {
     "greeting": "ሰላም፣ {{name}}",
@@ -254,7 +256,11 @@
       "timeNotMet": "መጀመሪያ በዚህ ትምህርት ላይ ተጨማሪ {{time}} ያሳልፉ።",
       "assessmentRequired": "መጀመሪያ የዚህን ትምህርት ፈተና ያልፉ።",
       "locked": "ይህ ትምህርት አሁንም ተቆልፏል። መጀመሪያ የቀደሙትን ትምህርቶች ያጠናቅቁ።"
-    }
+    },
+    "playVideoToUnlock": "ፈተናውን ለመክፈት ቪዲዮውን ያጫውቱ",
+    "playAudioToUnlock": "ፈተናውን ለመክፈት ድምጹን ያጫውቱ",
+    "keepStudyingToUnlock": "ማጥናትዎን ይቀጥሉ — በ{{time}} ይከፈታል",
+    "finishTopicsToUnlock": "ፈተናውን ለመክፈት በዚህ ትምህርት ያሉትን ሁሉንም ርዕሶች ያጠናቅቁ"
   },
   "quiz": {
     "questionOf": "ጥያቄ {{number}} ከ{{total}}",
@@ -291,7 +297,21 @@
     "correctCount": "ከ{{total}} {{correct}} ትክክል",
     "passMark": "የማለፊያ ነጥብ {{score}}%",
     "passedHint": "እድገትዎ ተዘምኗል።",
-    "review": "ግምገማ"
+    "review": "ግምገማ",
+    "syncedTitle": "ከመስመር ውጭ የተሰራው ፈተና ታርሟል",
+    "syncedPassed": "{{score}}% አስመዝግበው አልፈዋል። እድገትዎ ተዘምኗል።",
+    "syncedFailed": "{{score}}% አስመዝግበዋል፣ ከማለፊያ ነጥብ በታች ነው። ፈተናውን ከፍተው ይገምግሙና እንደገና ይሞክሩ።",
+    "offlineOnePending": "የመጨረሻ ሙከራዎ ለማመሳሰል እየጠበቀ ነው። እንደገና ከመሞከርዎ በፊት ውጤትዎን ለማግኘት ከኢንተርኔት ጋር ይገናኙ።",
+    "offlineNoAttempts": "ለዚህ ምዘና የቀረ ሙከራ የለም።",
+    "offlineHint": "ከመስመር ውጭ ነዎት። ይህን ፈተና አሁን መውሰድ ይችላሉ — እንደተገናኙ ወዲያውኑ ይታረማል።",
+    "awaitingSyncTitle": "ገብቷል · ለማመሳሰል በመጠበቅ ላይ",
+    "awaitingSyncBody": "መልሶችዎ በዚህ ስልክ ላይ ተቀምጠዋል። ወደ መስመር ሲመለሱ በራስ-ሰር ይታረማሉ።",
+    "awaitingSyncOnline": "ወደ መስመር ተመልሰዋል። መልሶችዎ እየታረሙ ነው።",
+    "awaitingSyncShort": "ውጤቱ ከሚቀጥለው ማመሳሰል በኋላ ይታያል",
+    "syncNow": "አሁን አመሳስል",
+    "syncRejectedTitle": "ከመስመር ውጭ የተደረገው ሙከራ ሊታረም አልቻለም",
+    "offlineGradedTitle": "ከመስመር ውጭ የተደረገ ሙከራ ውጤት",
+    "answeredOf": "{{total}} ጥያቄዎች ገብተዋል"
   },
   "sessions": {
     "participants": "{{count}} በክፍሉ",
@@ -414,5 +434,57 @@
     "unread": "ያልተነበቡ",
     "noneUnread": "ሁሉንም አንብበዋል",
     "none": "እስካሁን ማሳወቂያ የለም"
+  },
+  "overview": {
+    "short": "አጠቃላይ እይታ",
+    "courseTitle": "የኮርስ አጠቃላይ እይታ",
+    "moduleTitle": "የሞጁል አጠቃላይ እይታ",
+    "courseEyebrow": "የኮርስ መግቢያ",
+    "curriculum": "ሥርዓተ ትምህርት",
+    "modulesTopics": "{{modules}} ሞጁሎች · {{topics}} ርዕሶች",
+    "estimatedTime": "የሚገመት ጊዜ",
+    "selfPaced": "በራስ ፍጥነት",
+    "assessment": "ምዘና",
+    "passingScore": "ለማለፍ {{score}}%",
+    "gradedChecks": "የሚታረሙ ፈተናዎች",
+    "yourProgress": "የእርስዎ እድገት",
+    "percentComplete": "{{percent}}% ተጠናቋል",
+    "courseDescription": "ስለዚህ ኮርስ",
+    "courseObjectives": "የመማር ዓላማዎች",
+    "courseObjectivesIntro": "ይህን ስልጠና ሲያጠናቅቁ የሚከተሉትን ማድረግ ይችላሉ፦",
+    "prerequisites": "ቅድመ ሁኔታዎች",
+    "targetAudience": "የታለመ ተሳታፊ",
+    "continueLessons": "ወደ ትምህርቶች ቀጥል",
+    "beginFirstModule": "የመጀመሪያውን ሞጁል ጀምር",
+    "moduleEyebrow": "ሞጁል {{number}}",
+    "moduleCompleted": "ተጠናቋል",
+    "inProgress": "በሂደት ላይ · {{done}}/{{total}}",
+    "available": "ዝግጁ",
+    "moduleHeading": "ሞጁል {{number}}፦ {{title}}",
+    "moduleHint": "ከመጀመርዎ በፊት አጠቃላይ እይታውን እና የመማር ዓላማዎቹን ይገምግሙ።",
+    "lessonsTopics": "ትምህርቶች",
+    "lessonsWithTopics": "{{lessons}} ትምህርቶች · {{topics}} ርዕሶች",
+    "moduleDuration": "የቆይታ ጊዜ",
+    "progress": "እድገት",
+    "doneOf": "ከ{{total}} {{done}} ተጠናቋል",
+    "moduleDescription": "የሞጁል አጠቃላይ እይታ",
+    "moduleObjectives": "የሞጁል ዓላማዎች",
+    "moduleObjectivesIntro": "በዚህ ሞጁል መጨረሻ የሚከተሉትን መረዳትና መተግበር መቻል አለብዎት፦",
+    "beginModuleLessons": "የሞጁሉን ትምህርቶች ጀምር",
+    "courseRowTitle": "የኮርስ አጠቃላይ እይታ እና ዓላማዎች",
+    "courseRowSubtitle": "መግቢያ እና ሥርዓተ ትምህርት",
+    "moduleRowTitle": "የሞጁል አጠቃላይ እይታ እና ዓላማዎች"
+  },
+  "offline": {
+    "downloaded": "ወርዷል",
+    "downloadRemaining": "የቀሩትን አውርድ ({{count}})",
+    "passed": "አልፈዋል",
+    "notPassed": "አላለፉም",
+    "waitingSync": "ለማመሳሰል በመጠበቅ ላይ",
+    "documents": "ሰነዶች",
+    "studyOffline": "ከመስመር ውጭ አጥና",
+    "removeTitle": "የወረደውን አስወግድ",
+    "lessonsSize": "{{count}} ትምህርቶች · {{size}}",
+    "availableToDownload": "ለማውረድ ዝግጁ"
   }
 }

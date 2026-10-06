@@ -14,7 +14,8 @@ export {
 export { useDropEnrollment, useSelfEnroll } from './api/course-mutations';
 export { ContentTypeIcon } from './components/ContentTypeIcon';
 export { CourseCard } from './components/CourseCard';
-export { CourseSyllabus } from './components/CourseSyllabus';
+export { CourseSyllabus, type CourseSyllabusProps } from './components/CourseSyllabus';
+export { SyllabusDrawer } from './components/SyllabusDrawer';
 export { CourseThumbnail } from './components/CourseThumbnail';
 export { LevelFilter } from './components/LevelFilter';
 export type * from './types/course.types';

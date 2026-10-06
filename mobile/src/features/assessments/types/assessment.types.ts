@@ -70,6 +70,8 @@ export interface GradedResult {
   correctCount: number;
   totalQuestions: number;
   review: ReviewItem[];
+  /** Taken offline and not graded yet — the server grades it on the next sync. */
+  pendingSync?: boolean;
 }
 
 /** GET /assessments/:id/attempts (spec §7.5). */

@@ -1,5 +1,13 @@
 import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
-import { ChevronLeft, ChevronRight, ClipboardCheck } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  CloudOff,
+  CloudUpload,
+  RefreshCw,
+  TriangleAlert,
+} from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -25,8 +33,15 @@ import {
   type GradedResult,
   type SubmitAnswer,
 } from '@/features/assessments';
-import { offlineDb } from '@/features/offline';
-import { syncQueue } from '@/core/sync/sync-queue';
+import {
+  enqueueQuizAttempt,
+  flushOfflineQueue,
+  offlineAttemptKeys,
+  offlineDb,
+  useOfflineQuizAttempt,
+  type OfflineQuizAttempt,
+} from '@/features/offline';
+import { queryClient } from '@/core/api/query-client';
 
 /**
  * Quiz runner (architecture §6.7, spec §7.2–§7.5).
@@ -50,6 +65,9 @@ export default function QuizScreen() {
   const submit = useSubmitAttempt(assessmentId, courseId ?? assessment.data?.courseId);
 
   const [offlineAssessment, setOfflineAssessment] = useState<ApiAssessment | null>(null);
+  const localAttempt = useOfflineQuizAttempt(assessmentId);
+  const awaitingSync = localAttempt.data?.syncStatus === 'PENDING';
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!assessment.data || !online) {
@@ -127,48 +145,38 @@ export default function QuizScreen() {
     }));
 
     if (!online) {
+      // The phone can't grade (answers are never downloaded): save the attempt and let the
+      // server grade it on the next sync.
       const attemptId = runner.attemptId || `offline-${Date.now()}`;
-      void offlineDb.saveQuizAttempt({
-        id: attemptId,
-        assessmentId,
-        courseId: courseId ?? currentAssessment?.courseId ?? '',
-        answersJson: JSON.stringify(payload),
-        startedAt: Date.now() - 60000,
-        submittedAt: Date.now(),
-        score: 0,
-        passed: 1, // Recorded offline; server is final authority
-        syncStatus: 'PENDING',
-        attemptNumber: 1,
-      });
-
-      syncQueue.enqueue(
-        'QUIZ_SUBMIT',
-        {
-          attemptId,
+      const startedAt = runner.startedAt ?? Date.now();
+      void offlineDb
+        .saveQuizAttempt({
+          id: attemptId,
           assessmentId,
-          answers: payload,
-        },
-        `quiz-${attemptId}`,
-      );
+          courseId: courseId || currentAssessment?.courseId || '',
+          answersJson: JSON.stringify(payload),
+          startedAt,
+          submittedAt: Date.now(),
+          score: 0,
+          passed: 0,
+          syncStatus: 'PENDING',
+          attemptNumber: (attempts.data?.filter((a) => a.submittedAt).length ?? 0) + 1,
+        })
+        .then(() => {
+          enqueueQuizAttempt({ attemptId, assessmentId, answers: payload });
+          void queryClient.invalidateQueries({ queryKey: offlineAttemptKeys.latest(assessmentId) });
+        });
 
-      const offlineResult: GradedResult = {
+      useQuizRunnerStore.getState().finish({
         attemptId,
-        attemptNumber: 1,
+        attemptNumber: 0,
         score: 0,
-        passed: true,
-        correctCount: answeredCount,
+        passed: false,
+        correctCount: 0,
         totalQuestions: ordered.length,
-        review: ordered.map((q) => ({
-          questionId: q.id,
-          type: q.type,
-          question: q.question,
-          options: q.options,
-          selectedOption: answers[q.id],
-          isCorrect: true,
-        })),
-      };
-
-      useQuizRunnerStore.getState().finish(offlineResult);
+        review: [],
+        pendingSync: true,
+      });
       router.replace({
         pathname: '/quiz/[assessmentId]/result',
         params: { assessmentId, courseId: courseId ?? '' },
@@ -194,7 +202,19 @@ export default function QuizScreen() {
         );
       },
     });
-  }, [answeredCount, assessmentId, courseId, currentAssessment?.courseId, locale, online, ordered, runner.attemptId, submit, t]);
+  }, [
+    assessmentId,
+    attempts.data,
+    courseId,
+    currentAssessment?.courseId,
+    locale,
+    online,
+    ordered,
+    runner.attemptId,
+    runner.startedAt,
+    submit,
+    t,
+  ]);
 
   const confirmSubmit = () => {
     const unanswered = ordered.length - answeredCount;
@@ -212,6 +232,8 @@ export default function QuizScreen() {
     setStartError(null);
 
     if (!online) {
+      if (awaitingSync) return setStartError(t('quiz.offlineOnePending'));
+      if (attemptsLeft <= 0) return setStartError(t('quiz.offlineNoAttempts'));
       const ids = questions.map((q) => q.id);
       const offlineAttemptId = `offline-${Date.now()}`;
       runner.begin({
@@ -278,7 +300,8 @@ export default function QuizScreen() {
     null,
   );
   const passedBefore = submitted.some((a) => a.passed);
-  const attemptsLeft = Math.max(0, data.maxAttempts - submitted.length);
+  // An attempt waiting to sync will use up one of the attempts once graded.
+  const attemptsLeft = Math.max(0, data.maxAttempts - submitted.length - (awaitingSync ? 1 : 0));
 
   /* ------------------------------- Running -------------------------------- */
   if (running && current) {
@@ -403,6 +426,40 @@ export default function QuizScreen() {
           {best !== null ? <InfoRow label={t('quiz.bestScore')} value={`${best}%`} /> : null}
         </Card>
 
+        {localAttempt.data ? (
+          <OfflineAttemptCard
+            attempt={localAttempt.data}
+            online={online}
+            syncing={syncing}
+            onSync={async () => {
+              setSyncing(true);
+              try {
+                await flushOfflineQueue();
+              } finally {
+                setSyncing(false);
+                void localAttempt.refetch();
+                void attempts.refetch();
+              }
+            }}
+            onReview={(result) => {
+              useQuizRunnerStore.getState().finish(result);
+              router.push({
+                pathname: '/quiz/[assessmentId]/result',
+                params: { assessmentId, courseId: courseId ?? '' },
+              });
+            }}
+          />
+        ) : null}
+
+        {!online && !awaitingSync ? (
+          <View className="flex-row items-center gap-2.5 rounded-xl bg-slate-100 px-3 py-2.5 dark:bg-slate-800">
+            <CloudOff size={16} color={colors.textMuted} />
+            <AppText className="flex-1 text-xs text-slate-600 dark:text-slate-300">
+              {t('quiz.offlineHint')}
+            </AppText>
+          </View>
+        ) : null}
+
         {submitted.length > 0 ? (
           <Card className="gap-2">
             <AppText variant="label">{t('quiz.history')}</AppText>
@@ -429,7 +486,7 @@ export default function QuizScreen() {
           }
           onPress={begin}
           loading={start.isPending}
-          disabled={data.questions.length === 0}
+          disabled={data.questions.length === 0 || awaitingSync}
           fullWidth
         />
         {data.timeLimitMinutes ? (
@@ -439,6 +496,92 @@ export default function QuizScreen() {
         ) : null}
       </Screen>
     </>
+  );
+}
+
+interface OfflineAttemptCardProps {
+  attempt: OfflineQuizAttempt;
+  online: boolean;
+  syncing: boolean;
+  onSync: () => void;
+  onReview: (result: GradedResult) => void;
+}
+
+/** Status of the latest attempt taken offline: waiting to sync, graded, or rejected. */
+function OfflineAttemptCard({
+  attempt,
+  online,
+  syncing,
+  onSync,
+  onReview,
+}: OfflineAttemptCardProps) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  if (attempt.syncStatus === 'PENDING') {
+    return (
+      <Card className="gap-3 border border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30">
+        <View className="flex-row items-start gap-3">
+          <CloudUpload size={20} color={colors.warning} />
+          <View className="flex-1 gap-1">
+            <AppText className="font-semibold text-amber-900 dark:text-amber-200">
+              {t('quiz.awaitingSyncTitle')}
+            </AppText>
+            <AppText className="text-xs leading-5 text-amber-800 dark:text-amber-300">
+              {online ? t('quiz.awaitingSyncOnline') : t('quiz.awaitingSyncBody')}
+            </AppText>
+          </View>
+        </View>
+        {online ? (
+          <Button
+            title={t('quiz.syncNow')}
+            size="sm"
+            variant="outline"
+            loading={syncing}
+            icon={<RefreshCw size={16} color={colors.text} />}
+            onPress={onSync}
+          />
+        ) : null}
+      </Card>
+    );
+  }
+
+  if (attempt.syncStatus === 'FAILED') {
+    return (
+      <Card className="gap-1.5 border border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30">
+        <View className="flex-row items-center gap-2">
+          <TriangleAlert size={18} color={colors.danger} />
+          <AppText className="font-semibold text-red-800 dark:text-red-200">
+            {t('quiz.syncRejectedTitle')}
+          </AppText>
+        </View>
+        <AppText className="text-xs leading-5 text-red-700 dark:text-red-300">
+          {attempt.syncError || t('common.somethingWrong')}
+        </AppText>
+      </Card>
+    );
+  }
+
+  let result: GradedResult | null = null;
+  try {
+    result = attempt.resultJson ? (JSON.parse(attempt.resultJson) as GradedResult) : null;
+  } catch {
+    result = null;
+  }
+  if (!result) return null;
+  const graded = result;
+
+  return (
+    <Card className="flex-row items-center gap-3">
+      <View className="flex-1 gap-0.5">
+        <AppText variant="label">{t('quiz.offlineGradedTitle')}</AppText>
+        <AppText variant="caption">
+          {t('quiz.correctCount', { correct: graded.correctCount, total: graded.totalQuestions })}
+        </AppText>
+      </View>
+      <Badge label={`${graded.score}%`} tone={graded.passed ? 'success' : 'danger'} />
+      <Button title={t('quiz.review')} size="sm" variant="ghost" onPress={() => onReview(graded)} />
+    </Card>
   );
 }
 

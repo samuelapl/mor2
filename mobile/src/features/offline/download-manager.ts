@@ -98,6 +98,12 @@ class OfflineDownloadManager {
         // Ignored if offline or not enrolled
       }
 
+      // Offline learning is only supported for OPEN progression: under LOCKED,
+      // unlocks depend on server-graded assessments that can't run offline.
+      if (progressData?.progressionMode !== 'OPEN') {
+        throw new Error('Offline download is only available for open progression courses.');
+      }
+
       // Collect all lessons to check hierarchical unlock status
       const allLessons: ApiCourseLesson[] = [];
       for (const m of courseDetail.modules ?? []) {
@@ -131,10 +137,8 @@ class OfflineDownloadManager {
         modId?: string | null,
         lesId?: string | null,
       ): boolean => {
-        // Course final assessment: ONLY if content is completed
-        if (!modId && !lesId) {
-          return progressData ? progressData.courseCompletion?.contentCompleted === true : false;
-        }
+        // Course final assessment is online-only
+        if (!modId && !lesId) return false;
         if (modId) {
           const modProg = progressData?.modules?.find((m) => m.moduleId === modId);
           if (modProg && !modProg.unlocked) return false;
@@ -284,7 +288,9 @@ class OfflineDownloadManager {
       const targetLessons = allLessons.filter(
         (l) => isLessonUnlockedInCourse(l) && isLessonSelected(l),
       );
-      const totalMediaItems = targetLessons.filter((l) => isPlayableRemoteUrl(l.resourceUrl)).length;
+      const totalMediaItems = targetLessons.filter((l) =>
+        isPlayableRemoteUrl(l.resourceUrl),
+      ).length;
       let completedMedia = 0;
       let totalBytesAccumulated = 0;
 
@@ -406,6 +412,8 @@ class OfflineDownloadManager {
         titleAm: courseDetail.titleAm ?? null,
         description: courseDetail.description ?? courseDetail.descriptionEn ?? null,
         descriptionAm: courseDetail.descriptionAm ?? null,
+        objectives: courseDetail.objectives ?? courseDetail.objectivesEn ?? null,
+        objectivesAm: courseDetail.objectivesAm ?? null,
         level: courseDetail.level,
         deliveryMode: courseDetail.deliveryMode,
         thumbnailUrl: courseDetail.thumbnailUrl,
@@ -422,6 +430,8 @@ class OfflineDownloadManager {
         titleAm: m.titleAm ?? null,
         description: m.description ?? m.descriptionEn ?? null,
         descriptionAm: m.descriptionAm ?? null,
+        objectives: m.objectives ?? m.objectivesEn ?? null,
+        objectivesAm: m.objectivesAm ?? null,
         sortOrder: m.order,
         durationMinutes: m.durationMinutes,
       }));
@@ -586,9 +596,9 @@ class OfflineDownloadManager {
         description: m.description ?? null,
         descriptionEn: m.description ?? null,
         descriptionAm: m.descriptionAm ?? undefined,
-        objectives: null,
-        objectivesEn: null,
-        objectivesAm: undefined,
+        objectives: m.objectives ?? null,
+        objectivesEn: m.objectives ?? null,
+        objectivesAm: m.objectivesAm ?? undefined,
         durationMinutes: m.durationMinutes ?? null,
         passingScore: 70,
         unlocked: true,
@@ -614,9 +624,9 @@ class OfflineDownloadManager {
       description: c.description ?? null,
       descriptionEn: c.description ?? null,
       descriptionAm: c.descriptionAm ?? undefined,
-      objectives: null,
-      objectivesEn: null,
-      objectivesAm: undefined,
+      objectives: c.objectives ?? null,
+      objectivesEn: c.objectives ?? null,
+      objectivesAm: c.objectivesAm ?? undefined,
       category: null,
       department: null,
       targetAudience: null,

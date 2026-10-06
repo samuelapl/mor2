@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { PartyPopper, RotateCcw } from 'lucide-react-native';
+import { CloudUpload, PartyPopper, RotateCcw } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -31,6 +31,28 @@ export default function QuizResultScreen() {
     );
   }
 
+  if (result.pendingSync) {
+    return (
+      <Screen contentClassName="gap-4 p-4 pb-8">
+        <Card className="items-center gap-3 px-5 py-8">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+            <CloudUpload size={30} color={colors.warning} />
+          </View>
+          <AppText variant="title" className="text-center">
+            {t('quiz.awaitingSyncTitle')}
+          </AppText>
+          <AppText variant="muted" className="text-center leading-6">
+            {t('quiz.awaitingSyncBody')}
+          </AppText>
+          <AppText variant="caption">
+            {t('quiz.answeredOf', { total: result.totalQuestions })}
+          </AppText>
+        </Card>
+        <Button title={t('common.continue')} onPress={() => router.back()} fullWidth />
+      </Screen>
+    );
+  }
+
   const submitted = (attempts.data ?? []).filter((a) => a.submittedAt).length;
   const canRetry =
     !result.passed && assessment.data ? submitted < assessment.data.maxAttempts : false;
@@ -38,20 +60,6 @@ export default function QuizResultScreen() {
 
   return (
     <Screen contentClassName="gap-4 p-4 pb-8">
-      {result.attemptId.startsWith('offline-') ? (
-        <Card className="gap-2 border-brand-200 bg-brand-50/50 dark:border-brand-900/60 dark:bg-brand-950/20">
-          <AppText className="font-semibold text-brand-900 dark:text-brand-300">
-            {t('quiz.offlineSavedTitle', { defaultValue: 'Saved Offline' })}
-          </AppText>
-          <AppText variant="caption" className="text-slate-600 dark:text-slate-400">
-            {t('quiz.offlineSavedBody', {
-              defaultValue:
-                'Your answers are safely recorded on your device. The server will officially grade and finalize your attempt as soon as you reconnect.',
-            })}
-          </AppText>
-        </Card>
-      ) : null}
-
       <Card className="items-center gap-3 py-6">
         <ProgressRing percent={result.score} size={96} strokeWidth={8} />
         <View className="flex-row items-center gap-2">

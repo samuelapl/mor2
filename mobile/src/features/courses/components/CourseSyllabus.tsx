@@ -1,9 +1,11 @@
 import {
   Award,
+  BookOpen,
   ChevronDown,
   ChevronRight,
   CircleCheck,
   ClipboardCheck,
+  Layers,
   Trophy,
 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -38,6 +40,12 @@ export interface CourseSyllabusProps {
   onOpenAssessment: (assessmentId: string) => void;
   onOpenCertificate?: () => void;
   certificate?: ApiCertificate | null;
+  /** Opens the Course Overview & Objectives screen (enrolled only). */
+  onOpenCourseOverview?: () => void;
+  /** Opens a module's Overview & Objectives screen (enrolled only). */
+  onOpenModuleOverview?: (moduleId: string) => void;
+  /** Lesson currently open in the player — highlighted, and its module starts expanded. */
+  activeLessonId?: string;
 }
 
 const byOrder = <T extends { order: number }>(items: T[]) =>
@@ -55,6 +63,9 @@ export function CourseSyllabus({
   onOpenAssessment,
   onOpenCertificate,
   certificate,
+  onOpenCourseOverview,
+  onOpenModuleOverview,
+  activeLessonId,
 }: CourseSyllabusProps) {
   const { t } = useTranslation();
   const finalAssessment = course.assessments[0];
@@ -79,7 +90,14 @@ export function CourseSyllabus({
 
   return (
     <View className="gap-3">
-      <AppText variant="heading">{t('courses.syllabus')}</AppText>
+      {course.enrolled && onOpenCourseOverview ? (
+        <OverviewRow
+          variant="course"
+          title={t('overview.courseRowTitle')}
+          subtitle={t('overview.courseRowSubtitle')}
+          onPress={onOpenCourseOverview}
+        />
+      ) : null}
       {byOrder(course.modules).map((module, index) => (
         <ModuleSection
           key={module.id}
@@ -91,6 +109,12 @@ export function CourseSyllabus({
           isOpenProgression={isOpenProgression}
           onOpenLesson={onOpenLesson}
           onOpenAssessment={onOpenAssessment}
+          onOpenOverview={
+            course.enrolled && onOpenModuleOverview
+              ? () => onOpenModuleOverview(module.id)
+              : undefined
+          }
+          activeLessonId={activeLessonId}
         />
       ))}
 
@@ -127,7 +151,12 @@ interface ModuleSectionProps {
   isOpenProgression?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onOpenAssessment: (assessmentId: string) => void;
+  onOpenOverview?: () => void;
+  activeLessonId?: string;
 }
+
+const containsLesson = (lessons: ApiCourseLesson[], id: string | undefined): boolean =>
+  Boolean(id) && lessons.some((l) => l.id === id || containsLesson(l.subLessons ?? [], id));
 
 function ModuleSection({
   index,
@@ -138,12 +167,17 @@ function ModuleSection({
   isOpenProgression = false,
   onOpenLesson,
   onOpenAssessment,
+  onOpenOverview,
+  activeLessonId,
 }: ModuleSectionProps) {
   const { t } = useTranslation();
   const localized = useLocalized();
   const colors = useThemeColors();
   const unlocked = progress?.unlocked ?? module.unlocked;
-  const [open, setOpen] = useState(unlocked && !(progress?.moduleCompleted ?? false));
+  const [open, setOpen] = useState(
+    containsLesson(module.lessons, activeLessonId) ||
+      (!activeLessonId && unlocked && !(progress?.moduleCompleted ?? false)),
+  );
   const moduleQuiz = module.assessments[0];
   const totalLessons = progress?.totalLessons ?? module.lessons.length;
   const completedLessons = progress?.completedLessons ?? 0;
@@ -206,6 +240,16 @@ function ModuleSection({
 
       {open ? (
         <View className="border-t border-slate-100 dark:border-slate-700">
+          {onOpenOverview ? (
+            <View className="px-2 pt-2">
+              <OverviewRow
+                variant="module"
+                title={t('overview.moduleRowTitle')}
+                disabled={!unlocked}
+                onPress={onOpenOverview}
+              />
+            </View>
+          ) : null}
           {byOrder(module.lessons).map((lesson) => (
             <LessonRows
               key={lesson.id}
@@ -215,6 +259,7 @@ function ModuleSection({
               isOpenProgression={isOpenProgression}
               onOpenLesson={onOpenLesson}
               onOpenAssessment={onOpenAssessment}
+              activeLessonId={activeLessonId}
             />
           ))}
           {moduleQuiz ? (
@@ -244,6 +289,7 @@ interface LessonRowsProps {
   parentCompleted?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onOpenAssessment: (assessmentId: string) => void;
+  activeLessonId?: string;
 }
 
 function LessonRows({
@@ -255,6 +301,7 @@ function LessonRows({
   parentCompleted = true,
   onOpenLesson,
   onOpenAssessment,
+  activeLessonId,
 }: LessonRowsProps) {
   const { t } = useTranslation();
   const localized = useLocalized();
@@ -267,6 +314,7 @@ function LessonRows({
       ? Boolean(parentCompleted && rawUnlocked)
       : rawUnlocked;
   const completed = p?.completed ?? false;
+  const active = lesson.id === activeLessonId;
   const lessonQuiz = lesson.assessments?.[0];
   const quizProgress = p && 'assessment' in p ? (p.assessment as ProgressAssessment | null) : null;
   const allSubsDone =
@@ -285,9 +333,13 @@ function LessonRows({
         style={{ paddingLeft: 16 + depth * 20 }}
         className={cn(
           'flex-row items-center gap-3 py-3 pr-4 active:bg-slate-50 dark:active:bg-slate-700',
+          active && 'bg-brand-50 dark:bg-brand-900/40',
           !unlocked && 'opacity-60',
         )}
       >
+        {active ? (
+          <View className="absolute bottom-2 left-0 top-2 w-1 rounded-r-full bg-brand-600" />
+        ) : null}
         {completed ? (
           <CircleCheck size={18} color={colors.success} />
         ) : (
@@ -297,7 +349,13 @@ function LessonRows({
           />
         )}
         <View className="flex-1">
-          <AppText className="text-sm text-slate-800 dark:text-slate-100" numberOfLines={2}>
+          <AppText
+            className={cn(
+              'text-sm text-slate-800 dark:text-slate-100',
+              active && 'font-semibold text-brand-700 dark:text-brand-200',
+            )}
+            numberOfLines={2}
+          >
             {localized(lesson, 'title')}
           </AppText>
           {lesson.durationMinutes ? (
@@ -325,6 +383,7 @@ function LessonRows({
             parentCompleted={canUnlockSub}
             onOpenLesson={onOpenLesson}
             onOpenAssessment={onOpenAssessment}
+            activeLessonId={activeLessonId}
           />
         );
       })}
@@ -342,6 +401,58 @@ function LessonRows({
         </View>
       ) : null}
     </>
+  );
+}
+
+interface OverviewRowProps {
+  variant: 'course' | 'module';
+  title: string;
+  subtitle?: string;
+  disabled?: boolean;
+  onPress: () => void;
+}
+
+/** "Course / Module Overview & Objectives" entries (web classroom sidebar parity). */
+function OverviewRow({ variant, title, subtitle, disabled = false, onPress }: OverviewRowProps) {
+  const colors = useThemeColors();
+  const Icon = variant === 'course' ? BookOpen : Layers;
+
+  if (variant === 'module') {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        className={cn(
+          'flex-row items-center gap-3 rounded-xl px-2 py-2.5 active:bg-slate-50 dark:active:bg-slate-700',
+          disabled && 'opacity-60',
+        )}
+      >
+        <Icon size={18} color={colors.primary} />
+        <AppText className="flex-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+          {title}
+        </AppText>
+        <ChevronRight size={16} color={colors.textMuted} />
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-3.5 active:opacity-80 dark:border-brand-800 dark:bg-brand-900/30"
+    >
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
+        <Icon size={20} color="#fff" />
+      </View>
+      <View className="flex-1">
+        <AppText className="text-[15px] font-bold text-slate-900 dark:text-white">{title}</AppText>
+        {subtitle ? <AppText variant="caption">{subtitle}</AppText> : null}
+      </View>
+      <ChevronRight size={18} color={colors.primary} />
+    </Pressable>
   );
 }
 

@@ -1,8 +1,8 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { CircleCheck, ClipboardCheck, Clock, Pause } from 'lucide-react-native';
+import { CircleCheck, ClipboardCheck, Clock, Info, ListTree, Pause } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Alert } from '@/core/utils/alert';
 import {
@@ -22,17 +22,18 @@ import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatClock } from '@/core/utils/formatters';
 import { ClassroomStage, FileRow, LessonBody, useLesson } from '@/features/classroom';
-import { ContentTypeIcon } from '@/features/courses';
+import { ContentTypeIcon, SyllabusDrawer } from '@/features/courses';
 import {
   findLessonProgress,
   findNextLesson,
+  requiredSeconds,
   useCompleteLesson,
   useCourseProgress,
   useLessonCompletion,
   useLessonHeartbeat,
   usePlayhead,
 } from '@/features/progress';
-import { offlineDb } from '@/features/offline';
+import { offlineDb, useCourseWithOffline, useOfflineQuizAttempt } from '@/features/offline';
 import { syncQueue } from '@/core/sync/sync-queue';
 import type { ApiLesson } from '@/features/classroom/types/lesson.types';
 
@@ -55,6 +56,8 @@ export default function LessonScreen() {
   const complete = useCompleteLesson(courseId);
 
   const [offlineData, setOfflineData] = useState<ApiLesson | null>(null);
+  const { data: courseData } = useCourseWithOffline(courseId);
+  const [syllabusOpen, setSyllabusOpen] = useState(false);
   const [locallyCompleted, setLocallyCompleted] = useState(false);
 
   useEffect(() => {
@@ -113,6 +116,8 @@ export default function LessonScreen() {
   const lookup = findLessonProgress(progress.data, lessonId);
   const entry = lookup?.entry;
   const quiz = lookup?.lesson?.assessment ?? null;
+  const quizAttempt = useOfflineQuizAttempt(quiz?.id);
+  const quizAwaitingSync = quizAttempt.data?.syncStatus === 'PENDING';
   const data = lesson.data ?? offlineData;
   const subLessons = [...(data?.subLessons ?? [])].sort((a, b) => a.order - b.order);
   const hasSubLessons = subLessons.length > 0;
@@ -135,13 +140,27 @@ export default function LessonScreen() {
   });
   const playhead = usePlayhead(lessonId, completed);
 
-  const required = entry?.requiredSeconds ?? (data?.durationMinutes ? data.durationMinutes * 60 : 0);
+  // Server value when known; offline, the same rule the server uses.
+  const required = entry?.requiredSeconds ?? requiredSeconds(data?.durationMinutes);
   const satisfied =
     completed || (entry?.timeSatisfied ?? false) || heartbeat.liveSeconds >= required;
   const remaining = Math.max(0, required - heartbeat.liveSeconds);
   const subLessonsDone =
     !hasSubLessons || (lookup?.lesson?.subLessons.every((s) => s.completed) ?? false);
   const quizOpen = satisfied && subLessonsDone;
+
+  // Why the quiz / complete button is still grey, in words the learner can act on.
+  const lockedHint = !satisfied
+    ? isPlayable && !playing
+      ? t(
+          data?.contentType === 'AUDIO'
+            ? 'classroom.playAudioToUnlock'
+            : 'classroom.playVideoToUnlock',
+        )
+      : t('classroom.keepStudyingToUnlock', { time: formatClock(remaining) })
+    : !subLessonsDone
+      ? t('classroom.finishTopicsToUnlock')
+      : null;
 
   const next = completed ? findNextLesson(progress.data) : null;
   const nextIsOther = next && next.lessonId !== lessonId ? next : null;
@@ -150,9 +169,7 @@ export default function LessonScreen() {
     completed && !nextIsOther && (progress.data?.courseCompletion.contentCompleted ?? false);
   const finalAssessment = progress.data?.courseCompletion.finalAssessment ?? null;
 
-  const quizTitle = quiz
-    ? localized(quiz, 'title') || quiz.titleEn || t('classroom.quiz')
-    : '';
+  const quizTitle = quiz ? localized(quiz, 'title') || quiz.titleEn || t('classroom.quiz') : '';
   const quizButtonTitle = t('classroom.takeSpecificQuiz', {
     defaultValue: `Take ${quizTitle}`,
     title: quizTitle,
@@ -197,12 +214,12 @@ export default function LessonScreen() {
     if (!online) {
       setLocallyCompleted(true);
       void offlineDb.updateLessonProgress(lessonId, { isCompleted: true, lastPosition });
-      void offlineDb.enqueueProgress(courseId, lessonId, 'COMPLETION', { lastPosition });
       syncQueue.enqueue('LESSON_COMPLETE', { lessonId, lastPosition }, `complete-${lessonId}`);
       Alert.alert(
         t('classroom.completed'),
         t('classroom.offlineCompletedHint', {
-          defaultValue: 'Lesson completed offline! Your progress will sync automatically when back online.',
+          defaultValue:
+            'Lesson completed offline! Your progress will sync automatically when back online.',
         }),
       );
       return;
@@ -273,7 +290,47 @@ export default function LessonScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: localized(data, 'title') }} />
+      <Stack.Screen
+        options={{
+          title: localized(data, 'title'),
+          headerRight: () =>
+            courseData ? (
+              <Pressable
+                onPress={() => setSyllabusOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('courses.syllabus')}
+                className="mr-1 rounded-full p-2 active:bg-slate-100 dark:active:bg-slate-800"
+              >
+                <ListTree size={22} color={colors.primary} />
+              </Pressable>
+            ) : null,
+        }}
+      />
+      {courseData ? (
+        <SyllabusDrawer
+          visible={syllabusOpen}
+          onClose={() => setSyllabusOpen(false)}
+          course={courseData}
+          progress={progress.data}
+          activeLessonId={lessonId}
+          onOpenLesson={(id) => {
+            if (id !== lessonId) replaceWithLesson(id);
+          }}
+          onOpenAssessment={openQuiz}
+          onOpenCertificate={() =>
+            router.navigate({ pathname: '/course/[courseId]', params: { courseId } })
+          }
+          onOpenCourseOverview={() =>
+            router.push({ pathname: '/course/[courseId]/overview', params: { courseId } })
+          }
+          onOpenModuleOverview={(moduleId) =>
+            router.push({
+              pathname: '/course/[courseId]/module/[moduleId]',
+              params: { courseId, moduleId },
+            })
+          }
+        />
+      ) : null}
       <Screen
         contentClassName="gap-4 p-0 pb-8"
         onRefresh={() => void progress.refetch()}
@@ -431,18 +488,26 @@ export default function LessonScreen() {
             ) : quiz && !quiz.passed ? (
               <>
                 <Button
-                  title={quizButtonTitle}
-                  icon={<ClipboardCheck size={18} color="#fff" />}
+                  title={quizAwaitingSync ? t('quiz.awaitingSyncTitle') : quizButtonTitle}
+                  icon={
+                    <ClipboardCheck size={18} color={quizAwaitingSync ? colors.text : '#fff'} />
+                  }
                   disabled={!quizOpen}
+                  variant={quizAwaitingSync ? 'outline' : 'primary'}
                   onPress={() => openQuiz(quiz.id)}
                   fullWidth
                 />
+                {!quizOpen && !quizAwaitingSync && lockedHint ? (
+                  <LockedHint text={lockedHint} />
+                ) : null}
                 <AppText variant="caption" className="text-center">
-                  {!online
-                    ? t('classroom.offlineQuizAvailable', {
-                        defaultValue: 'Quiz available offline · Syncs automatically on reconnect',
-                      })
-                    : t('classroom.quizCompletesLesson')}
+                  {quizAwaitingSync
+                    ? t('quiz.awaitingSyncShort')
+                    : !online
+                      ? t('classroom.offlineQuizAvailable', {
+                          defaultValue: 'Quiz available offline · Syncs automatically on reconnect',
+                        })
+                      : t('classroom.quizCompletesLesson')}
                 </AppText>
               </>
             ) : hasSubLessons ? null : (
@@ -454,6 +519,7 @@ export default function LessonScreen() {
                   onPress={() => markComplete()}
                   fullWidth
                 />
+                {!satisfied && lockedHint ? <LockedHint text={lockedHint} /> : null}
                 {!online ? (
                   <AppText variant="caption" className="text-center">
                     {t('classroom.offlineCompleteHint', {
@@ -467,5 +533,17 @@ export default function LessonScreen() {
         </View>
       </Screen>
     </>
+  );
+}
+
+function LockedHint({ text }: { text: string }) {
+  const colors = useThemeColors();
+  return (
+    <View className="flex-row items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 dark:bg-amber-950/40">
+      <Info size={16} color={colors.warning} />
+      <AppText className="flex-shrink text-sm font-medium text-amber-800 dark:text-amber-200">
+        {text}
+      </AppText>
+    </View>
   );
 }

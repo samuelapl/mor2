@@ -20,7 +20,8 @@
     "signOut": "Sign out",
     "optional": "optional",
     "required": "This field is required",
-    "sending": "Sending…"
+    "sending": "Sending…",
+    "close": "Close"
   },
   "tabs": {
     "home": "Home",
@@ -199,7 +200,8 @@
     "audienceFallback": "All Staff & Officers",
     "noPrerequisites": "None required — open to all qualified staff",
     "courseDetails": "Course Overview & Details",
-    "dropReasonPlaceholder": "Optional reason for dropping..."
+    "dropReasonPlaceholder": "Optional reason for dropping...",
+    "courseContent": "Course content"
   },
   "home": {
     "greeting": "Hello, {{name}}",
@@ -254,7 +256,11 @@
       "timeNotMet": "Spend {{time}} more on this lesson first.",
       "assessmentRequired": "Pass this lesson's quiz first.",
       "locked": "This lesson is still locked. Complete the previous lessons first."
-    }
+    },
+    "playVideoToUnlock": "Play the video to unlock the quiz",
+    "playAudioToUnlock": "Play the audio to unlock the quiz",
+    "keepStudyingToUnlock": "Keep studying — unlocks in {{time}}",
+    "finishTopicsToUnlock": "Finish all topics in this lesson to unlock the quiz"
   },
   "quiz": {
     "questionOf": "Question {{number}} of {{total}}",
@@ -291,7 +297,21 @@
     "correctCount": "{{correct}} of {{total}} correct",
     "passMark": "pass mark {{score}}%",
     "passedHint": "Your progress has been updated.",
-    "review": "Review"
+    "review": "Review",
+    "syncedTitle": "Offline quiz graded",
+    "syncedPassed": "You scored {{score}}% and passed. Your progress has been updated.",
+    "syncedFailed": "You scored {{score}}%, below the pass mark. Open the quiz to review it and try again.",
+    "offlineOnePending": "Your last attempt is waiting to sync. Connect to the internet to get your result before trying again.",
+    "offlineNoAttempts": "No attempts left for this assessment.",
+    "offlineHint": "You're offline. You can take this quiz now — it will be graded as soon as you reconnect.",
+    "awaitingSyncTitle": "Submitted · waiting to sync",
+    "awaitingSyncBody": "Your answers are saved on this phone. They will be graded automatically when you are back online.",
+    "awaitingSyncOnline": "You're back online. Your answers are being graded.",
+    "awaitingSyncShort": "Result appears after your next sync",
+    "syncNow": "Sync now",
+    "syncRejectedTitle": "Offline attempt couldn't be graded",
+    "offlineGradedTitle": "Offline attempt result",
+    "answeredOf": "{{total}} questions submitted"
   },
   "sessions": {
     "participants": "{{count}} in room",
@@ -414,5 +434,57 @@
     "unread": "Unread",
     "noneUnread": "You're all caught up",
     "none": "No notifications yet"
+  },
+  "overview": {
+    "short": "Overview",
+    "courseTitle": "Course overview",
+    "moduleTitle": "Module overview",
+    "courseEyebrow": "Course orientation",
+    "curriculum": "Curriculum",
+    "modulesTopics": "{{modules}} modules · {{topics}} topics",
+    "estimatedTime": "Estimated time",
+    "selfPaced": "Self-paced",
+    "assessment": "Assessment",
+    "passingScore": "{{score}}% to pass",
+    "gradedChecks": "Graded checks",
+    "yourProgress": "Your progress",
+    "percentComplete": "{{percent}}% complete",
+    "courseDescription": "About this course",
+    "courseObjectives": "Learning objectives",
+    "courseObjectivesIntro": "By completing this training you will be able to:",
+    "prerequisites": "Prerequisites & requirements",
+    "targetAudience": "Target audience",
+    "continueLessons": "Continue to lessons",
+    "beginFirstModule": "Begin first module",
+    "moduleEyebrow": "Module {{number}}",
+    "moduleCompleted": "Completed",
+    "inProgress": "In progress · {{done}}/{{total}}",
+    "available": "Available",
+    "moduleHeading": "Module {{number}}: {{title}}",
+    "moduleHint": "Review the overview and learning objectives before you start.",
+    "lessonsTopics": "Lessons",
+    "lessonsWithTopics": "{{lessons}} lessons · {{topics}} topics",
+    "moduleDuration": "Duration",
+    "progress": "Progress",
+    "doneOf": "{{done}} of {{total}} done",
+    "moduleDescription": "Module overview",
+    "moduleObjectives": "Module objectives",
+    "moduleObjectivesIntro": "By the end of this module you should understand and be able to apply:",
+    "beginModuleLessons": "Begin module lessons",
+    "courseRowTitle": "Course Overview & Objectives",
+    "courseRowSubtitle": "Orientation & syllabus",
+    "moduleRowTitle": "Module Overview & Objectives"
+  },
+  "offline": {
+    "downloaded": "Downloaded",
+    "downloadRemaining": "Download remaining ({{count}})",
+    "passed": "Passed",
+    "notPassed": "Not passed",
+    "waitingSync": "Waiting to sync",
+    "documents": "Documents",
+    "studyOffline": "Study offline",
+    "removeTitle": "Remove download",
+    "lessonsSize": "{{count}} lessons · {{size}}",
+    "availableToDownload": "Available to download"
   }
 }

@@ -121,6 +121,14 @@ export default function RootLayout() {
                   options={{ title: t('screens.lesson') }}
                 />
                 <Stack.Screen
+                  name="course/[courseId]/overview"
+                  options={{ title: t('overview.courseTitle') }}
+                />
+                <Stack.Screen
+                  name="course/[courseId]/module/[moduleId]"
+                  options={{ title: t('overview.moduleTitle') }}
+                />
+                <Stack.Screen
                   name="quiz/[assessmentId]/index"
                   options={{ title: t('screens.quiz'), presentation: 'fullScreenModal' }}
                 />
