@@ -146,6 +146,11 @@ export async function archiveCourse(id: string): Promise<ApiCourseListItem> {
   return api<ApiCourseListItem>(`courses/${id}/archive`, { method: 'POST' });
 }
 
-export async function deleteCourse(id: string): Promise<void> {
-  await api<unknown>(`courses/${id}`, { method: 'DELETE' });
+export async function fetchCourseEnrollmentCount(id: string): Promise<number> {
+  const res = await api<{ count: number }>(`courses/${id}/enrollment-count`);
+  return res.count;
+}
+
+export async function deleteCourse(id: string): Promise<{ affectedLearners?: number }> {
+  return api<{ affectedLearners?: number }>(`courses/${id}`, { method: 'DELETE' });
 }

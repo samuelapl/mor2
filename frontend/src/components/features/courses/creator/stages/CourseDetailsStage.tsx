@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { isDeliveryModeEnabled } from '@/constants/delivery-modes';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { inputClass, labelClass } from '../../wizard-types';
-import { RichEditor } from '../../wizard-components';
+import { RichEditor, SmartTextarea } from '../../wizard-components';
 
 export interface CourseDetailsStageProps {
   title: string;
@@ -466,12 +466,11 @@ export function CourseDetailsStage({
 
         <div>
           <label className={labelClass}>{tBilingual('Prerequisites (Optional)', 'ቅድመ-ሁኔታዎች (አማራጭ)')}</label>
-          <textarea
+          <SmartTextarea
             value={prerequisites}
-            onChange={(e) => setPrerequisites(e.target.value)}
+            onChange={setPrerequisites}
             placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service"
             rows={2}
-            className={inputClass}
           />
         </div>
       </div>

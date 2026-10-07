@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Building2,
   CheckCircle,
@@ -37,6 +38,8 @@ import { VenueDetailModal } from '@/components/features/sessions/in-person/Venue
 import { isInPersonSession } from '@/lib/session-mode';
 
 export default function LearnerLiveSessionsPage() {
+  const searchParams = useSearchParams();
+  const targetSessionId = searchParams.get('sessionId') || searchParams.get('joinSessionId');
   const { lang, courses: allCourses, currentUser, userName } = useLms();
   const { tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';
@@ -61,7 +64,17 @@ export default function LearnerLiveSessionsPage() {
 
   const load = () => {
     fetchUpcomingSessions()
-      .then((res) => setSessions(res.data))
+      .then((res) => {
+        setSessions(res.data);
+        if (targetSessionId) {
+          const match = res.data.find(
+            (s) => s.id === targetSessionId || (s as any).sessionId === targetSessionId,
+          );
+          if (match) {
+            setActiveSession(match);
+          }
+        }
+      })
       .catch((err) =>
         setError(err instanceof ApiError ? err.message : 'Failed to load live sessions.'),
       );
@@ -69,7 +82,7 @@ export default function LearnerLiveSessionsPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [targetSessionId]);
 
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {

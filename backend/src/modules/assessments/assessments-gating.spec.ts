@@ -23,6 +23,12 @@ describe('AssessmentsService progression & final assessment gating', () => {
         findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn(),
       },
+      liveSession: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      attendance: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
 
     progressServiceMock = {
@@ -123,6 +129,35 @@ describe('AssessmentsService progression & final assessment gating', () => {
       await expect(
         (service as any).assertFinalEligible('course-1', 'user-1'),
       ).resolves.toBeUndefined();
+    });
+
+    it('throws ForbiddenException when live sessions exist but are not completed/attended', async () => {
+      prismaMock.curriculumModule.findMany.mockResolvedValue([
+        {
+          id: 'mod-1',
+          title: 'Module 1',
+          lessons: [{ id: 'les-1', title: 'Lesson 1', subLessons: [] }],
+        },
+      ]);
+      prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
+      prismaMock.assessment.findMany.mockResolvedValue([]);
+      prismaMock.liveSession.findMany.mockResolvedValue([
+        { id: 'sess-1', titleEn: 'Live Session 1', status: 'SCHEDULED' },
+      ]);
+      prismaMock.attendance.findMany.mockResolvedValue([]);
+
+      await expect((service as any).assertFinalEligible('course-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+
+      try {
+        await (service as any).assertFinalEligible('course-1', 'user-1');
+      } catch (err: any) {
+        expect(err.getResponse()).toMatchObject({
+          reason: 'LIVE_SESSIONS_INCOMPLETE',
+          incompleteCount: 1,
+        });
+      }
     });
   });
 

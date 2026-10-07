@@ -755,6 +755,21 @@ export function AssessmentEditorStage({
             </div>
           ))
         )}
+
+        {questions.length > 0 && (
+          <div className="pt-2 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={addQuestion}
+              className="gap-2 border-dashed border-2 border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 dark:text-indigo-300 w-full py-4 text-sm font-semibold rounded-2xl shadow-xs transition-all hover:scale-[1.005]"
+            >
+              <Plus className="h-5 w-5" />
+              {tBilingual('Add Another Question', 'ተጨማሪ ጥያቄ ጨምር')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -347,6 +347,11 @@ export class ProgressService {
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
     const { totalCourseGrade, allAssessmentsPassed, gradeSatisfied } = grade;
 
+    const learnerSessionsList = await this.learnerSessions(userId, courseId);
+    const allLiveSessionsAttended =
+      learnerSessionsList.length === 0 ||
+      learnerSessionsList.every((s) => s.status === 'COMPLETED' && s.attended);
+
     return {
       courseId,
       progressionMode,
@@ -376,13 +381,14 @@ export class ProgressService {
         certificateEligible:
           contentCompleted &&
           (!finalAssessmentRequired || finalAssessmentPassed) &&
-          grade.certificateReady,
+          grade.certificateReady &&
+          allLiveSessionsAttended,
         /** Session quizzes still waiting for their session; the certificate waits for them. */
         sessionsPending: grade.sessionsPending,
         finalAssessment,
         assessmentBreakdown: assessmentInfos,
       },
-      liveSessions: await this.learnerSessions(userId, courseId),
+      liveSessions: learnerSessionsList,
     };
   }
 

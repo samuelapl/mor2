@@ -70,6 +70,7 @@ export function CreatorSidebar({
 }: CreatorSidebarProps) {
   const { tBilingual } = useTranslation();
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+  const [collapsedLessons, setCollapsedLessons] = useState<Set<string>>(new Set());
 
   const toggleModuleCollapse = (moduleId: string) => {
     setCollapsedModules((prev) => {
@@ -79,6 +80,34 @@ export function CreatorSidebar({
       return next;
     });
   };
+
+  const toggleLessonCollapse = (lessonId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setCollapsedLessons((prev) => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId);
+      else next.add(lessonId);
+      return next;
+    });
+  };
+
+  // Auto-expand lesson dropdown if active node is inside this lesson
+  React.useEffect(() => {
+    if (
+      (activeNode.type === 'SUB_LESSON' || activeNode.type === 'LESSON_ASSESSMENT') &&
+      activeNode.lessonId
+    ) {
+      setCollapsedLessons((prev) => {
+        if (!prev.has(activeNode.lessonId!)) return prev;
+        const next = new Set(prev);
+        next.delete(activeNode.lessonId!);
+        return next;
+      });
+    }
+  }, [activeNode]);
 
   const getLessonIcon = (contentType?: string) => {
     switch (contentType) {
@@ -281,19 +310,29 @@ export function CreatorSidebar({
                         s.title.toLowerCase().includes('lesson assessment'),
                     );
 
+                    const hasSubLessons = subLessons.length > 0;
+                    const isLessonCollapsed = collapsedLessons.has(lesson.id);
+
                     return (
                       <div key={lesson.id} className="space-y-1">
                         {/* Parent Lesson Item */}
                         <div
                           role="button"
                           tabIndex={0}
-                          onClick={() =>
+                          onClick={() => {
                             onSelectNode({
                               type: 'LESSON',
                               moduleId: mod.id,
                               lessonId: lesson.id,
-                            })
-                          }
+                            });
+                            if (hasSubLessons && isLessonCollapsed) {
+                              setCollapsedLessons((prev) => {
+                                const next = new Set(prev);
+                                next.delete(lesson.id);
+                                return next;
+                              });
+                            }
+                          }}
                           className={cn(
                             'group flex items-center justify-between gap-2 p-2 rounded-xl text-xs transition cursor-pointer',
                             isLessonActive(lesson.id)
@@ -301,7 +340,30 @@ export function CreatorSidebar({
                               : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60',
                           )}
                         >
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            {hasSubLessons && (
+                              <button
+                                type="button"
+                                onClick={(e) => toggleLessonCollapse(lesson.id, e)}
+                                title={
+                                  isLessonCollapsed
+                                    ? tBilingual('Expand sub-lessons', 'ንዑስ ክፍሎችን ዘርጋ')
+                                    : tBilingual('Collapse sub-lessons', 'ንዑስ ክፍሎችን አጥፋ')
+                                }
+                                className={cn(
+                                  'p-0.5 rounded transition shrink-0',
+                                  isLessonActive(lesson.id)
+                                    ? 'text-white/80 hover:text-white hover:bg-white/20'
+                                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200/60',
+                                )}
+                              >
+                                {isLessonCollapsed ? (
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            )}
                             <Icon
                               className={cn(
                                 'h-3.5 w-3.5 shrink-0',
@@ -319,7 +381,20 @@ export function CreatorSidebar({
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {hasSubLessons && isLessonCollapsed && (
+                              <span
+                                className={cn(
+                                  'text-[10px] font-semibold px-1.5 py-0.5 rounded-full border',
+                                  isLessonActive(lesson.id)
+                                    ? 'bg-white/20 text-white border-white/30'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200',
+                                )}
+                                title={tBilingual(`${subLessons.length} sub-lessons`, `${subLessons.length} ንዑስ ክፍሎች`)}
+                              >
+                                {subLessons.length}
+                              </span>
+                            )}
                             {instructionalLessons.length > 1 && (
                               <button
                                 type="button"
@@ -340,53 +415,65 @@ export function CreatorSidebar({
                           </div>
                         </div>
 
-                        {/* Nested Sub-lessons */}
-                        {subLessons.map((sub, sIdx) => {
-                          const SubIcon = getLessonIcon(sub.contentType);
-                          return (
-                            <div
-                              key={sub.id}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() =>
-                                onSelectNode({
-                                  type: 'SUB_LESSON',
-                                  moduleId: mod.id,
-                                  lessonId: lesson.id,
-                                  subLessonId: sub.id,
-                                })
-                              }
-                              className={cn(
-                                'group flex items-center justify-between gap-2 ml-4 p-1.5 rounded-lg text-[11px] transition cursor-pointer',
-                                isSubLessonActive(sub.id)
-                                  ? 'bg-indigo-100/90 text-indigo-950 font-bold border border-indigo-200'
-                                  : 'bg-white/60 hover:bg-white text-slate-600 border border-slate-200/50',
-                              )}
+                        {/* Nested Sub-lessons Dropdown Container */}
+                        {hasSubLessons && !isLessonCollapsed && (
+                          <div className="ml-3 pl-3 border-l-2 border-indigo-200 dark:border-indigo-800 space-y-1 py-1 transition-all">
+                            {subLessons.map((sub, sIdx) => {
+                              const SubIcon = getLessonIcon(sub.contentType);
+                              return (
+                                <div
+                                  key={sub.id}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() =>
+                                    onSelectNode({
+                                      type: 'SUB_LESSON',
+                                      moduleId: mod.id,
+                                      lessonId: lesson.id,
+                                      subLessonId: sub.id,
+                                    })
+                                  }
+                                  className={cn(
+                                    'group flex items-center justify-between gap-2 p-1.5 rounded-lg text-[11px] transition cursor-pointer',
+                                    isSubLessonActive(sub.id)
+                                      ? 'bg-indigo-100/90 text-indigo-950 font-bold border border-indigo-200'
+                                      : 'bg-white/70 hover:bg-white text-slate-600 border border-slate-200/50 shadow-2xs',
+                                  )}
+                                >
+                                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+                                    <SubIcon className="h-3 w-3 text-slate-500 shrink-0" />
+                                    <span className="truncate">
+                                      {sub.title.trim() ||
+                                        tBilingual(
+                                          `Sub-lesson ${sIdx + 1}`,
+                                          `ንዑስ ትምህርት ${sIdx + 1}`,
+                                        )}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteSubLesson(mod.id, lesson.id, sub.id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 rounded transition"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => onAddSubLesson(mod.id, lesson.id)}
+                              className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 border border-dashed border-indigo-200 transition"
                             >
-                              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                <span className="h-1 w-1 rounded-full bg-slate-400" />
-                                <SubIcon className="h-3 w-3 text-slate-500 shrink-0" />
-                                <span className="truncate">
-                                  {sub.title.trim() ||
-                                    tBilingual(
-                                      `Sub-lesson ${sIdx + 1}`,
-                                      `ንዑስ ትምህርት ${sIdx + 1}`,
-                                    )}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteSubLesson(mod.id, lesson.id, sub.id);
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 rounded transition"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          );
-                        })}
+                              <Plus className="h-3 w-3" />
+                              <span>{tBilingual('Add Sub-topic', 'ንዑስ ትምህርት ጨምር')}</span>
+                            </button>
+                          </div>
+                        )}
 
                         {/* Lesson Assessment Checkpoint (if configured) */}
                         {hasLessonAssessment && (

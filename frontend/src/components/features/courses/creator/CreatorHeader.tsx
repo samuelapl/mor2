@@ -30,6 +30,7 @@ interface CreatorHeaderProps {
   code: string;
   deliveryMode: CourseDeliveryMode;
   saving: boolean;
+  onSaveChanges: () => void;
   onSaveDraft: () => void;
   onSubmitForApproval: () => void;
   onPreview: () => void;
@@ -49,6 +50,7 @@ export function CreatorHeader({
   code,
   deliveryMode,
   saving,
+  onSaveChanges,
   onSaveDraft,
   onSubmitForApproval,
   onPreview,
@@ -212,20 +214,34 @@ export function CreatorHeader({
           <span className="hidden lg:inline">{tBilingual('Preview as Learner', 'እንደ ተማሪ ይመልከቱ')}</span>
         </Button>
 
+        {/* Global Save Changes button */}
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onSaveChanges}
+          disabled={saving}
+          className="gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs shadow-indigo-600/20"
+          title={tBilingual('Save changes to this course immediately', 'የኮርሱን ለውጦች ወዲያውኑ ያስቀምጡ')}
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="h-3.5 w-3.5" />
+          )}
+          <span>{tBilingual('Save Changes', 'ለውጦችን አስቀምጥ')}</span>
+        </Button>
+
         <Button
           variant="outline"
           size="sm"
           onClick={onSaveDraft}
           disabled={saving}
           className="gap-1.5 text-xs font-medium"
+          title={tBilingual('Save as Draft and exit studio', 'እንደ ረቂቅ አስቀምጥ እና ውጣ')}
         >
-          {saving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Save className="h-3.5 w-3.5 text-slate-500" />
-          )}
+          <FileCheck className="h-3.5 w-3.5 text-slate-500" />
           <span className="hidden sm:inline">
-            {tBilingual('Save Draft', 'ረቂቅ አስቀምጥ')}
+            {tBilingual('Save as Draft', 'እንደ ረቂቅ አስቀምጥ')}
           </span>
         </Button>
 

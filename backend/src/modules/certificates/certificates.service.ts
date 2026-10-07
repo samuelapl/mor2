@@ -478,6 +478,28 @@ export class CertificatesService {
     if (existing)
       throw new ConflictException('Certificate already issued for this user and course');
 
+    const liveSessions = await this.prisma.liveSession.findMany({
+      where: { courseId, status: { in: ['COMPLETED', 'LIVE', 'SCHEDULED'] } },
+      select: { id: true },
+    });
+    if (course.hasOnlineSessions || liveSessions.length > 0) {
+      if (liveSessions.length === 0) {
+        throw new ConflictException('Scheduled online sessions must take place before issuing certificates.');
+      }
+      const attendances = await this.prisma.attendance.findMany({
+        where: {
+          sessionId: { in: liveSessions.map((s) => s.id) },
+          userId,
+          status: { in: ['PRESENT', 'LATE'] },
+        },
+        select: { sessionId: true },
+      });
+      const attendedSet = new Set(attendances.map((a) => a.sessionId));
+      if (!liveSessions.every((s) => attendedSet.has(s.id))) {
+        throw new ConflictException('Learner must attend all scheduled course sessions before certificate issuance.');
+      }
+    }
+
     const lastCertificate = await this.prisma.certificate.findFirst({
       orderBy: { certificateNumber: 'desc' },
     });
@@ -636,6 +658,36 @@ export class CertificatesService {
     );
     // Includes: no session quiz still waiting for its session.
     if (!grade.certificateReady) return null;
+
+    // Scheduled sessions attendance check:
+    const liveSessions = await this.prisma.liveSession.findMany({
+      where: { courseId, status: { in: ['COMPLETED', 'LIVE', 'SCHEDULED'] } },
+      select: { id: true, status: true },
+    });
+    const courseMeta = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { hasOnlineSessions: true },
+    });
+    if (courseMeta?.hasOnlineSessions || liveSessions.length > 0) {
+      if (liveSessions.length === 0) {
+        return null; // Required sessions have not occurred yet
+      }
+      if (!liveSessions.every((s) => s.status === 'COMPLETED')) {
+        return null; // All live sessions must be completed first
+      }
+      const attendances = await this.prisma.attendance.findMany({
+        where: {
+          sessionId: { in: liveSessions.map((s) => s.id) },
+          userId,
+          status: { in: ['PRESENT', 'LATE'] },
+        },
+        select: { sessionId: true },
+      });
+      const attendedSet = new Set(attendances.map((a) => a.sessionId));
+      if (!liveSessions.every((s) => attendedSet.has(s.id))) {
+        return null;
+      }
+    }
 
     return this.issue(userId, courseId);
   }

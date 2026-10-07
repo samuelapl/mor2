@@ -122,6 +122,7 @@ export function useCourseReview(courseId: string) {
     ready,
     detailLoaded,
     course,
+    refreshCourse: () => refreshCourse(courseId),
     assessments,
     assessmentsLoading,
     reloadAssessments,
