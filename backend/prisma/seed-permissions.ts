@@ -406,6 +406,22 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'Review, publish, unpublish, feature and delete news; moderate comments',
   },
+
+  // Tax & Customs Laws / Legal Repository
+  {
+    code: 'laws.view',
+    resource: 'laws',
+    action: 'view',
+    scope: 'ALL',
+    description: 'Browse, search, view and download tax and customs laws',
+  },
+  {
+    code: 'laws.manage',
+    resource: 'laws',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage legal document categories and upload/edit/delete tax and customs laws',
+  },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).
@@ -428,8 +444,14 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'student.view',
     'live_session.manage_own',
     'progress.view',
+    'laws.view',
   ],
-  [RoleName.CONTENT_APPROVER]: ['course.view.all', 'course.approve_reject'],
+  [RoleName.CONTENT_APPROVER]: [
+    'course.view.all',
+    'course.approve_reject',
+    'laws.view',
+    'laws.manage',
+  ],
   [RoleName.TRAINING_ADMIN]: [
     'course.create',
     'course.update.all',
@@ -463,6 +485,8 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'category.manage',
     'CERTIFICATE_MANAGE',
     'CERTIFICATE_TEMPLATE_MANAGE',
+    'laws.view',
+    'laws.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',
@@ -474,6 +498,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'student.view',
     'live_session.manage_own',
     'progress.view',
+    'laws.view',
   ],
   [RoleName.LEARNER]: [
     'course.browse',
@@ -483,6 +508,7 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'enrollment.self',
     'progress.mark_own',
     'certificate.view',
+    'laws.view',
   ],
   // System Admin is locked (superuser bypass in the guards) but is still seeded with
   // every permission so the admin UI and GET /admin/users/:id/permissions reflect reality.

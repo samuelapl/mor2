@@ -48,6 +48,7 @@
     "venue": "ቦታ",
     "certificates": "ምስክር ወረቀቶች",
     "certificate": "ምስክር ወረቀት",
+    "laws": "የታክስ እና የጉምሩክ ሕጎች",
     "notifications": "ማሳወቂያዎች",
     "editProfile": "መገለጫ ያስተካክሉ",
     "changePassword": "የይለፍ ቃል ይቀይሩ",
@@ -567,5 +568,26 @@
     "sessionsPendingTitle": "ሰርተፊኬቱ {{count}} የቀጥታ ክፍለ-ጊዜ ፈተና(ዎች) ይጠብቃል",
     "sessionsPendingBody": "ገና የሚካሄዱ፦ {{names}}። ውጤትዎ የሚጸናው እነዚህ ሲጠናቀቁ ነው።",
     "sessionsPendingGeneric": "ውጤትዎ የሚጸናው ሁሉም የቀጥታ ክፍለ-ጊዜዎች ሲካሄዱ ነው።"
+  },
+  "laws": {
+    "title": "የታክስ እና የጉምሩክ ሕጎች",
+    "subtitle": "የኢትዮጵያ ይፋዊ አዋጆች፣ ደንቦች እና መመሪያዎች",
+    "searchPlaceholder": "በርዕስ ወይም በሰነድ ቁጥር ይፈልጉ…",
+    "allCategories": "ሁሉም ምድቦች",
+    "selectCategory": "ምድብ ይምረጡ",
+    "categories": "ምድቦች",
+    "allTypes": "ሁሉም",
+    "taxLaws": "የታክስ ሕጎች",
+    "customsLaws": "የጉምሩክ ሕጎች",
+    "draftLaws": "ረቂቅ ሕጎች",
+    "otherDocs": "ሌሎች ሰነዶች",
+    "open": "ክፈት",
+    "download": "አውርድ",
+    "share": "አጋራ",
+    "noDocuments": "ምንም የሕግ ሰነዶች አልተገኙም",
+    "noDocumentsHint": "ምድቡን ወይም የፍለጋ ቃሉን ይቀይሩ።",
+    "documentNumber": "ቁ.",
+    "issuedYear": "ዓ.ም",
+    "offlineNotice": "ከመስመር ውጭ ነዎት። ከዚህ በፊት የተከፈቱ ሰነዶች ብቻ ሊገኙ ይችላሉ።"
   }
 }

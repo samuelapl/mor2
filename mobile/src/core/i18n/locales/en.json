@@ -48,6 +48,7 @@
     "venue": "Venue",
     "certificates": "Certificates",
     "certificate": "Certificate",
+    "laws": "Tax & Customs Laws",
     "notifications": "Notifications",
     "editProfile": "Edit profile",
     "changePassword": "Change password",
@@ -567,5 +568,26 @@
     "sessionsPendingTitle": "Certificate waits for {{count}} live session quiz(zes)",
     "sessionsPendingBody": "Still to be held: {{names}}. Your grade is final once they are done.",
     "sessionsPendingGeneric": "Your grade is final once every live session has been held."
+  },
+  "laws": {
+    "title": "Tax & Customs Laws",
+    "subtitle": "Ethiopian official proclamations, regulations, and directives",
+    "searchPlaceholder": "Search by title or document number…",
+    "allCategories": "All Categories",
+    "selectCategory": "Select Category",
+    "categories": "Categories",
+    "allTypes": "All",
+    "taxLaws": "Tax Laws",
+    "customsLaws": "Customs Laws",
+    "draftLaws": "Draft Laws",
+    "otherDocs": "Other Docs",
+    "open": "Open",
+    "download": "Download",
+    "share": "Share",
+    "noDocuments": "No legal documents found",
+    "noDocumentsHint": "Try switching the category or adjusting your search.",
+    "documentNumber": "No.",
+    "issuedYear": "Year",
+    "offlineNotice": "You're offline. Only previously opened documents may be available."
   }
 }
