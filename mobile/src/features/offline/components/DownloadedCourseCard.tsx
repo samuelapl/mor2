@@ -149,7 +149,8 @@ export function DownloadedCourseCard({
 
   // Ensure any module referenced by lessons or assessments exists in moduleMap
   for (const l of lessons) {
-    const mId = l.moduleId || (moduleMap.size > 0 ? Array.from(moduleMap.keys())[0]! : 'default-module');
+    const mId =
+      l.moduleId || (moduleMap.size > 0 ? Array.from(moduleMap.keys())[0]! : 'default-module');
     if (!moduleMap.has(mId)) {
       moduleMap.set(mId, {
         id: mId,
@@ -167,7 +168,8 @@ export function DownloadedCourseCard({
   }
 
   for (const a of assessments) {
-    const mId = a.moduleId || (moduleMap.size > 0 ? Array.from(moduleMap.keys())[0]! : 'default-module');
+    const mId =
+      a.moduleId || (moduleMap.size > 0 ? Array.from(moduleMap.keys())[0]! : 'default-module');
     if (!moduleMap.has(mId)) {
       moduleMap.set(mId, {
         id: mId,
@@ -211,8 +213,7 @@ export function DownloadedCourseCard({
       .sort((a, b) => a.sortOrder - b.sortOrder);
   const subsOf = (lessonId: string) =>
     lessons.filter((l) => l.parentId === lessonId).sort((a, b) => a.sortOrder - b.sortOrder);
-  const quizzesFor = (lessonId: string) =>
-    assessments.filter((a) => a.lessonId === lessonId);
+  const quizzesFor = (lessonId: string) => assessments.filter((a) => a.lessonId === lessonId);
   const moduleQuizzes = (moduleId: string) =>
     assessments.filter((a) => {
       const matchesModule =
@@ -270,12 +271,16 @@ export function DownloadedCourseCard({
                 offlineDb.getAssessmentsForCourse(course.id),
               ]);
               const remainingAttachments = (
-                await Promise.all(remainingLessons.map((l) => offlineDb.getAttachmentsForLesson(l.id)))
+                await Promise.all(
+                  remainingLessons.map((l) => offlineDb.getAttachmentsForLesson(l.id)),
+                )
               ).flat();
               const latest = await Promise.all(
                 remainingAssessments.map((a) => offlineDb.getLatestQuizAttempt(a.id)),
               );
-              const attempts = Object.fromEntries(remainingAssessments.map((a, i) => [a.id, latest[i]]));
+              const attempts = Object.fromEntries(
+                remainingAssessments.map((a, i) => [a.id, latest[i]]),
+              );
               setDetails({
                 modules: remainingModules,
                 lessons: remainingLessons,
