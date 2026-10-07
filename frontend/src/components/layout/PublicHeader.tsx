@@ -25,7 +25,7 @@ export default function PublicHeader() {
     { label: tBilingual('Role Workspaces', 'የስራ ድርሻ ቦታዎች'), href: '/#roles' },
     { label: tBilingual('Workflow', 'የስራ ሂደት'), href: '/#how-it-works' },
     { label: tBilingual('News', 'ዜና'), href: '/news' },
-    { label: tBilingual('Desktop App', 'የዴስክቶፕ መተግበሪያ'), href: '/#desktop' },
+    { label: tBilingual('Desktop App', 'የዴስክቶፕ መተግበሪያ'), href: '/#desktop', desktopAppOnly: true },
     { label: tBilingual('FAQ', 'ተደጋጋሚ ጥያቄዎች'), href: '/#faq' },
   ];
   const isActive = (href: string) => href === '/news' && pathname.startsWith('/news');
@@ -83,6 +83,7 @@ export default function PublicHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                {...(link.desktopAppOnly ? { 'data-desktop-app-only': 'true' } : {})}
                 className={cn(
                   'text-xs font-semibold uppercase tracking-wider transition hover:text-sky-700 dark:hover:text-sky-400',
                   isActive(link.href)
@@ -147,6 +148,7 @@ export default function PublicHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  {...(link.desktopAppOnly ? { 'data-desktop-app-only': 'true' } : {})}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-900',

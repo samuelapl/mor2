@@ -13,16 +13,12 @@ import {
   Download,
   GraduationCap,
   Monitor,
-  PlayCircle,
   Presentation,
   ShieldCheck,
   Landmark,
-  UsersRound,
-  Database,
   FileCheck2,
   LockKeyhole,
   BarChart3,
-  Wifi,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -89,11 +85,9 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
 
   return (
     <div className="relative mx-auto w-full max-w-6xl">
-      {/* Ministry Blue/Gold Ambient Glow */}
       <div className="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-gradient-to-tr from-sky-600/15 via-blue-700/10 to-amber-500/15 blur-3xl dark:from-sky-500/10 dark:via-blue-800/10 dark:to-amber-500/10" />
 
       <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-2xl shadow-sky-950/10 dark:border-slate-800 dark:bg-slate-900/95">
-        {/* Institutional Header Banner */}
         <div className="flex flex-wrap items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4.5 dark:border-slate-800 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-blue-700 text-white shadow-md shadow-sky-700/20">
@@ -127,7 +121,6 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
           </div>
         </div>
 
-        {/* Dynamic Filter Strip */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-3.5 dark:border-slate-800">
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
@@ -152,7 +145,6 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
           </span>
         </div>
 
-        {/* Interactive Course Rows */}
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {filtered.map((item) => (
             <div
@@ -213,7 +205,6 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
           ))}
         </div>
 
-        {/* Console Footnote */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" />
@@ -242,10 +233,30 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [stats, setStats] = useState<LandingStats | null>(null);
   const [activeRoleIndex, setActiveRoleIndex] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(
+      (window as any).electronAPI?.isDesktop ||
+      (window as any).isElectron ||
+      /electron/i.test(navigator.userAgent) ||
+      document.documentElement.getAttribute('data-is-desktop') === 'true' ||
+      document.documentElement.classList.contains('is-electron')
+    );
+  });
 
   useEffect(() => {
-    let cancelled = false;
+    // Detect whether page is running inside Electron desktop shell
+    if (
+      typeof window !== 'undefined' &&
+      ((window as any).electronAPI?.isDesktop ||
+        (window as any).isElectron ||
+        /electron/i.test(navigator.userAgent) ||
+        document.documentElement.getAttribute('data-is-desktop') === 'true')
+    ) {
+      setIsDesktop(true);
+    }
 
+    let cancelled = false;
     fetchLandingStats()
       .then((data) => {
         if (!cancelled && data) {
@@ -489,16 +500,6 @@ export default function LandingPage() {
     },
     {
       question: tBilingual(
-        'Is the MoR LMS accessible offline or via dedicated desktop software?',
-        'ስርዓቱ በዴስክቶፕ መተግበሪያ በኩል ይሰራል?',
-      ),
-      answer: tBilingual(
-        'Yes. In addition to responsive web access, a dedicated native Windows Desktop Application (.exe) is provided for secure training delivery in local tax branch computer centers and stable offline document indexing.',
-        'አዎ። በመደበኛ የኢንተርኔት ገጽ ከመጠቀም በተጨማሪ ለ Windows የተዘጋጀ ይፋዊ የዴስክቶፕ መተግበሪያ (.exe) አለ። ይህም በቅርንጫፍ መስሪያ ቤቶች ውስጥ አስተማማኝ እና ፈጣን ስልጠና ለመስጠት ይረዳል።',
-      ),
-    },
-    {
-      question: tBilingual(
         'How are digital certificates validated against tampering?',
         'የተሰጡ ሰርተፍኬቶች ትክክለኛነት እንዴት ይረጋገጣል?',
       ),
@@ -523,7 +524,6 @@ export default function LandingPage() {
 
   return (
     <main className="relative min-h-screen bg-slate-50 text-slate-700 antialiased selection:bg-sky-600 selection:text-white dark:bg-slate-950 dark:text-slate-300">
-      {/* Background Subtle Pattern */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(#0284c7_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] dark:opacity-[0.05]" />
 
       <PublicHeader />
@@ -532,7 +532,6 @@ export default function LandingPage() {
       <section className="relative overflow-hidden px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Top pill badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-sky-50 px-4 py-1.5 text-xs font-semibold text-sky-800 shadow-sm backdrop-blur dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
               <ShieldCheck className="h-4 w-4 text-amber-500" />
               <span>
@@ -543,7 +542,6 @@ export default function LandingPage() {
               </span>
             </div>
 
-            {/* Headline */}
             <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
               {tBilingual(
                 'Enterprise learning built for the ',
@@ -557,7 +555,6 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            {/* Sub-headline */}
             <p className="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-400 sm:text-lg">
               {tBilingual(
                 'A single standardized infrastructure bridging course authoring, multi-level editorial approvals, synchronous video training, and tamper-proof civil service certification across all directorates.',
@@ -565,7 +562,6 @@ export default function LandingPage() {
               )}
             </p>
 
-            {/* Action buttons */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/login"
@@ -583,7 +579,6 @@ export default function LandingPage() {
               </a>
             </div>
 
-            {/* Trust Badges */}
             <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 tBilingual('6 Strict RBAC Roles', '6 የተለዩ የስራ ድርሻዎች'),
@@ -602,7 +597,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* DYNAMIC CURRICULUM CONSOLE */}
           <div className="mt-16 sm:mt-20">
             <DynamicTrainingExplorer stats={stats} />
           </div>
@@ -718,7 +712,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Role selector tabs */}
           <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
             {roleWorkspaces.map((role, idx) => {
               const active = idx === activeRoleIndex;
@@ -741,7 +734,6 @@ export default function LandingPage() {
             })}
           </div>
 
-          {/* Active Role Detail Display Card */}
           <div className="mt-10 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
             <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
               <div className="p-8 sm:p-12">
@@ -783,7 +775,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Verified Duty Node View for Selected Role */}
               <div className="flex flex-col justify-center border-t border-slate-200 bg-slate-900 p-8 text-white lg:border-l lg:border-t-0 dark:border-slate-800">
                 <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 shadow-2xl">
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -883,79 +874,150 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* WINDOWS DESKTOP APP SECTION */}
-      <section id="desktop" className="scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-950 p-8 text-white shadow-2xl sm:p-12 lg:p-16">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
+      {/* WINDOWS DESKTOP APP SECTION - ONLY SHOWN ON WEB */}
+{!isDesktop && (
+  <section
+    id="desktop"
+    data-desktop-app-only="true"
+    className="scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8"
+  >
+    <div className="mx-auto max-w-6xl">
+      <div className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-950 p-8 text-white shadow-2xl sm:p-12 lg:p-16">
+        {/* Decorative Background */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
 
-            <div className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-300">
-                  <Monitor className="h-3.5 w-3.5" />
-                  <span>
-                    {tBilingual('Enterprise Client', 'የተቋም ዴስክቶፕ መተግበሪያ')}
-                  </span>
-                </div>
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          {/* LEFT SIDE */}
+          <div>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-300">
+              <Monitor className="h-3.5 w-3.5" />
 
-                <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              <span>
+                {tBilingual(
+                  "Enterprise Client",
+                  "የተቋም ዴስክቶፕ መተግበሪያ",
+                )}
+              </span>
+            </div>
+
+            {/* Heading */}
+            <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              {tBilingual(
+                "MoR LMS for Windows Workstations",
+                "የMoR LMS መተግበሪያ ለ Windows ኮምፒውተሮች",
+              )}
+            </h2>
+
+            {/* Description */}
+            <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
+              {tBilingual(
+                "Engineered for Ministry branch training facilities and designed to provide a reliable desktop learning experience. The Windows client can support offline learning, local content caching, and controlled examination environments.",
+                "በሚኒስቴሩ የቅርንጫፍ መስሪያ ቤቶች እና የስልጠና ክፍሎች ውስጥ ፈጣን፣ አስተማማኝ እና ቀላል የስልጠና ልምድ ለመስጠት የተዘጋጀ የWindows ዴስክቶፕ መተግበሪያ ነው።",
+              )}
+            </p>
+
+            {/* Features */}
+            <div className="mt-6 grid grid-cols-1 gap-3 text-xs text-slate-300 sm:grid-cols-2">
+              {/* Windows Compatibility */}
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+
+                <span>
                   {tBilingual(
-                    'MoR LMS for Windows Workstations',
-                    'የMoR LMS መተግበሪያ ለ Windows ኮምፒውተሮች',
+                    "Windows 10 / 11 64-bit",
+                    "ለ Windows 10 እና 11 64-bit",
                   )}
-                </h2>
-
-                <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
-                  {tBilingual(
-                    'Engineered for Ministry branch training facilities, and offline content synchronization. Install the native client for distraction-free examination modes and lower latency.',
-                    'በቅርንጫፍ መስሪያ ቤቶች እና በኮምፒውተር ማሰልጠኛ ክፍሎች ውስጥ ፈጣን እና አስተማማኝ ስልጠና ለመስጠት የተዘጋጀውን ይፋዊ የ Windows መተግበሪያ ይጠቀሙ።',
-                  )}
-                </p>
-
-                <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                    <span>{tBilingual('Windows 10 / 11 64-bit', 'ለ Windows 10 እና 11')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                    <span>{tBilingual('Secure Exam Kiosk Mode', 'አስተማማኝ የፈተና ሁኔታ')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                    <span>{tBilingual('Local Course Caching', 'ኮርሶችን አውርዶ የመያዝ አቅም')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                    <span>{tBilingual('Digitally Signed EXE', 'ደህንነቱ የተረጋገጠ ፋይል')}</span>
-                  </div>
-                </div>
+                </span>
               </div>
 
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur sm:p-8">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-lg">
-                  <Download className="h-8 w-8" />
-                </div>
-                <h4 className="mt-4 font-display text-lg font-bold text-white">
-                  MoR-LMS-Setup.exe
-                </h4>
-                <p className="mt-1 text-xs text-slate-400">
-                  {tBilingual('Version 2.4.0 • Standalone Installer', 'ስሪት 2.4.0 • የጭነት ፋይል')}
-                </p>
+              {/* Exam Mode */}
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
 
-                <a
-                  href="/downloads/MoR-LMS-Setup.exe"
-                  download
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs font-bold text-slate-950 shadow-md transition hover:bg-slate-100 active:scale-95"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>{tBilingual('Download for Windows', 'ለ Windows ያውርዱ')}</span>
-                </a>
+                <span>
+                  {tBilingual(
+                    "Secure Exam Kiosk Mode",
+                    "አስተማማኝ የፈተና ሁኔታ",
+                  )}
+                </span>
+              </div>
+
+              {/* Offline Cache */}
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+
+                <span>
+                  {tBilingual(
+                    "Local Course Caching",
+                    "ኮርሶችን አውርዶ በአካባቢው የመያዝ አቅም",
+                  )}
+                </span>
+              </div>
+
+              {/* Installer */}
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+
+                <span>
+                  {tBilingual(
+                    "Windows Installer",
+                    "የWindows መጫኛ ፋይል",
+                  )}
+                </span>
               </div>
             </div>
           </div>
+
+          {/* RIGHT SIDE - DOWNLOAD CARD */}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur sm:p-8">
+            {/* Download Icon */}
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-lg">
+              <Download className="h-8 w-8" />
+            </div>
+
+            {/* Installer Name */}
+            <h4 className="mt-4 font-display text-lg font-bold text-white">
+              MoR-LMS-Setup.exe
+            </h4>
+
+            {/* Version */}
+            <p className="mt-1 text-xs text-slate-400">
+              {tBilingual(
+                "Version 2.4.0 • Windows Installer",
+                "ስሪት 2.4.0 • የWindows መጫኛ ፋይል",
+              )}
+            </p>
+
+            {/* Download Button */}
+            <a
+              href="/downloads/MoR-LMS-Setup.exe"
+              download
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs font-bold text-slate-950 shadow-md transition hover:bg-slate-100 active:scale-95"
+            >
+              <Download className="h-4 w-4" />
+
+              <span>
+                {tBilingual(
+                  "Download for Windows",
+                  "ለ Windows ያውርዱ",
+                )}
+              </span>
+            </a>
+
+            {/* Additional Information */}
+            <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+              {tBilingual(
+                "Compatible with supported 64-bit Windows workstations.",
+                "ከሚደገፉ 64-bit Windows ኮምፒውተሮች ጋር ይሰራል።",
+              )}
+            </p>
+          </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </section>
+)}
 
       {/* INSTITUTIONAL SECURITY / GOVERNANCE */}
       <section className="px-4 py-16 sm:px-6 lg:px-8">

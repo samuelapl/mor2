@@ -43,7 +43,11 @@ export default function PublicFooter() {
             <Link href="/news" className="hover:text-sky-700 dark:hover:text-sky-400">
               {tBilingual('News', 'ዜና')}
             </Link>
-            <Link href="/#desktop" className="hover:text-sky-700 dark:hover:text-sky-400">
+            <Link
+              href="/#desktop"
+              data-desktop-app-only="true"
+              className="hover:text-sky-700 dark:hover:text-sky-400"
+            >
               {tBilingual('Windows Client', 'የዴስክቶፕ መተግበሪያ')}
             </Link>
             <Link href="/login" className="hover:text-sky-700 dark:hover:text-sky-400">

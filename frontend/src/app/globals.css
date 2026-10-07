@@ -204,3 +204,11 @@
     display: inline;
   }
 }
+
+/* Hide desktop app promotional elements when running inside Electron desktop shell */
+html[data-is-desktop="true"] #desktop,
+html.is-electron #desktop,
+html[data-is-desktop="true"] [data-desktop-app-only],
+html.is-electron [data-desktop-app-only] {
+  display: none !important;
+}

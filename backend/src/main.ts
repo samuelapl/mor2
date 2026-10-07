@@ -8,7 +8,6 @@ import { AppConfig } from './config/app.config';
 import { AllExceptionsFilter } from './common/filters';
 import { TransformInterceptor } from './common/interceptors';
 import { AppValidationPipe } from './common/pipes';
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
@@ -29,12 +28,23 @@ async function bootstrap() {
 
   // ── Security ──────────────────────────────────────
   app.use(helmet());
-  // FRONTEND_URL may list several origins, comma-separated (e.g. the web app and Expo web).
+  // FRONTEND_URL may list several origins, comma-separated (e.g. the web app, desktop app, and Expo web).
+  const configuredOrigins = AppConfig.frontendUrl
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: AppConfig.frontendUrl
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        configuredOrigins.includes(origin) ||
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     credentials: true,
   });
 
@@ -72,7 +82,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/v1/docs', app, document);
   }
 
-  await app.listen(AppConfig.port);
+  await app.listen(AppConfig.port, '0.0.0.0');
   console.log(`🚀 ${AppConfig.appName} running on http://localhost:${AppConfig.port}`);
   console.log(`📚 Swagger docs at http://localhost:${AppConfig.port}/api/v1/docs`);
 }
