@@ -1,13 +1,39 @@
-const { app, BrowserWindow, Menu } = require("electron");const { spawn } = require("child_process");
+const { app, BrowserWindow, Menu } = require("electron");
+const { spawn } = require("child_process");
 const path = require("path");
 const http = require("http");
+const net = require("net");
 
 let mainWindow;
 let nextServer;
+let activeServerUrl = "http://127.0.0.1:3005";
 
-const NEXT_PORT = 3000;
+// Check if a specific TCP port is free
+function isPortAvailable(port) {
+  return new Promise((resolve) => {
+    const tester = net.createServer();
+    tester.once("error", () => resolve(false));
+    tester.once("listening", () => {
+      tester.close(() => resolve(true));
+    });
+    tester.listen(port, "127.0.0.1");
+  });
+}
 
-function waitForServer(url, retries = 60) {
+// Find a free port starting from 3005 to avoid colliding with web dev server (3000) or backend (3001)
+async function findAvailablePort(startPort = 3005) {
+  let port = startPort;
+  while (port < 3200) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+    port++;
+  }
+  return startPort;
+}
+
+// Poll server until it responds to HTTP GET
+function waitForServer(url, retries = 90) {
   return new Promise((resolve, reject) => {
     const check = () => {
       const request = http.get(url, (response) => {
@@ -17,13 +43,12 @@ function waitForServer(url, retries = 60) {
 
       request.on("error", () => {
         if (retries <= 0) {
-          reject(new Error(`Server did not start: ${url}`));
+          reject(new Error(`Server did not respond in time: ${url}`));
           return;
         }
 
         retries--;
-
-        setTimeout(check, 500);
+        setTimeout(check, 350);
       });
     };
 
@@ -31,13 +56,12 @@ function waitForServer(url, retries = 60) {
   });
 }
 
-function startNextServer() {
+async function startNextServer() {
   let nodePath;
   let standalonePath;
 
   if (app.isPackaged) {
     nodePath = path.join(process.resourcesPath, "node.exe");
-
     standalonePath = path.join(
       process.resourcesPath,
       "standalone",
@@ -45,7 +69,6 @@ function startNextServer() {
     );
   } else {
     nodePath = "C:\\Program Files\\nodejs\\node.exe";
-
     standalonePath = path.join(
       __dirname,
       "..",
@@ -56,32 +79,27 @@ function startNextServer() {
     );
   }
 
+  // Assign a dedicated port (3005+) to prevent socket collision with web browser
+  const port = await findAvailablePort(3005);
+  activeServerUrl = `http://127.0.0.1:${port}`;
+
   console.log("Node:", nodePath);
   console.log("Next.js:", standalonePath);
+  console.log("Desktop Server URL:", activeServerUrl);
 
   nextServer = spawn(nodePath, [standalonePath], {
     cwd: path.dirname(standalonePath),
-
     env: {
       ...process.env,
       NODE_ENV: "production",
-      PORT: String(NEXT_PORT),
-      HOSTNAME: "localhost",
+      PORT: String(port),
+      HOSTNAME: "127.0.0.1",
     },
-
-    // IMPORTANT:
-    // Prevent the bundled Node.js process from opening
-    // a separate Windows console window.
     windowsHide: true,
-
-    // Do not inherit the terminal/console.
     stdio: ["ignore", "pipe", "pipe"],
-
     shell: false,
   });
 
-  // Keep Next.js logs available for debugging without
-  // creating a visible console window.
   nextServer.stdout.on("data", (data) => {
     console.log(`[Next.js] ${data.toString().trim()}`);
   });
@@ -95,30 +113,68 @@ function startNextServer() {
   });
 
   nextServer.on("exit", (code, signal) => {
-    console.log(
-      `Next.js process exited. code=${code}, signal=${signal}`
-    );
+    console.log(`Next.js process exited. code=${code}, signal=${signal}`);
   });
+
+  return activeServerUrl;
 }
 
 async function createWindow() {
-  startNextServer();
-
-  await waitForServer(`http://localhost:${NEXT_PORT}`);
+  const serverUrl = await startNextServer();
+  await waitForServer(serverUrl);
 
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1100,
     minHeight: 700,
-
+    show: false,
+    backgroundColor: "#ffffff",
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  await mainWindow.loadURL(`http://localhost:${NEXT_PORT}`);
+  // Reveal window only once page is ready to show (prevents white canvas flicker)
+  let shown = false;
+  mainWindow.once("ready-to-show", () => {
+    if (!shown) {
+      shown = true;
+      mainWindow.show();
+    }
+  });
+
+  // Fallback safety: make sure window displays within 3 seconds
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !shown) {
+      shown = true;
+      mainWindow.show();
+    }
+  }, 3000);
+
+  // Auto-recovery if load fails
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL) => {
+    console.warn(`[Electron] Page load failure: ${validatedURL} (${errorCode}: ${errorDescription})`);
+    if (errorCode !== -3) {
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(activeServerUrl);
+        }
+      }, 1000);
+    }
+  });
+
+  // Auto-recovery if render process crashes
+  mainWindow.webContents.on("render-process-gone", (event, details) => {
+    console.error("[Electron] Render process gone:", details);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.loadURL(activeServerUrl);
+    }
+  });
+
+  await mainWindow.loadURL(serverUrl);
 }
 
 app.whenReady().then(async () => {
@@ -136,20 +192,26 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on("window-all-closed", () => {
+function killNextServer() {
   if (nextServer) {
-    nextServer.kill();
+    try {
+      if (process.platform === "win32" && nextServer.pid) {
+        spawn("taskkill", ["/pid", String(nextServer.pid), "/T", "/F"], { windowsHide: true });
+      } else {
+        nextServer.kill();
+      }
+    } catch (e) {}
     nextServer = null;
   }
+}
 
+app.on("window-all-closed", () => {
+  killNextServer();
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
 app.on("before-quit", () => {
-  if (nextServer) {
-    nextServer.kill();
-    nextServer = null;
-  }
+  killNextServer();
 });

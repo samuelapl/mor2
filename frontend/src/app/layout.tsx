@@ -32,11 +32,26 @@ export const metadata: Metadata = {
   },
 };
 
+const desktopInitScript = `
+  (function() {
+    try {
+      var isDesk = Boolean(
+        (typeof navigator !== 'undefined' && /electron/i.test(navigator.userAgent)) ||
+        (typeof window !== 'undefined' && (window.electronAPI?.isDesktop || window.isElectron))
+      );
+      if (isDesk) {
+        document.documentElement.setAttribute('data-is-desktop', 'true');
+        document.documentElement.classList.add('is-electron');
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: `${themeInitScript}\n${desktopInitScript}` }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
