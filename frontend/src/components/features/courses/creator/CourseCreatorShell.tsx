@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import type { Course, CourseDeliveryMode, CourseLevel, Question, UploadedResource, Quiz } from '@/types';
 import { useLms } from '@/lib/lms-store';
 import { uploadAttachment } from '@/lib/api/files';
@@ -23,6 +23,7 @@ import { AssessmentEditorStage } from './stages/AssessmentEditorStage';
 import { ReviewSubmitStage } from './stages/ReviewSubmitStage';
 import { SessionPlanEditorStage } from './stages/SessionPlanEditorStage';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { ClassroomShell } from '@/components/features/classroom/ClassroomShell';
 
 function mapApiQuestions(apiQuestions: ApiAssessment['questions'] | undefined): Question[] {
   return ((apiQuestions ?? []) as any[]).map((q) => ({
@@ -922,6 +923,137 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftSnapshot, isDirty, canAutosave, saving, isUploading]);
 
+  // ── Emergency Draft Persistence & Recovery ──
+  const emergencyDraftKey = useMemo(
+    () => `mor_emergency_draft_${editingCourse?.id || savedCourseId || 'new'}`,
+    [editingCourse?.id, savedCourseId],
+  );
+
+  const saveToEmergencyStorage = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        emergencyDraftKey,
+        JSON.stringify({
+          title,
+          code,
+          category,
+          level,
+          deliveryMode,
+          description,
+          objectives,
+          department,
+          targetAudience,
+          prerequisites,
+          modules,
+          quizTitle,
+          passMark,
+          finalAssessmentWeight,
+          timeLimitMinutes,
+          attemptsAllowed,
+          questions,
+          hasOnlineSessions,
+          sessionPlans,
+          savedAt: new Date().toISOString(),
+        }),
+      );
+    } catch {}
+  }, [
+    emergencyDraftKey,
+    title,
+    code,
+    category,
+    level,
+    deliveryMode,
+    description,
+    objectives,
+    department,
+    targetAudience,
+    prerequisites,
+    modules,
+    quizTitle,
+    passMark,
+    finalAssessmentWeight,
+    timeLimitMinutes,
+    attemptsAllowed,
+    questions,
+    hasOnlineSessions,
+    sessionPlans,
+  ]);
+
+  useEffect(() => {
+    if (!title.trim() && !description.trim() && modules.length === 0) return;
+    saveToEmergencyStorage();
+  }, [saveToEmergencyStorage, title, description, modules]);
+
+  const [emergencyDraftToRestore, setEmergencyDraftToRestore] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(emergencyDraftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && (parsed.title || parsed.description || parsed.modules?.length)) {
+          setEmergencyDraftToRestore(parsed);
+        }
+      }
+    } catch {}
+  }, [emergencyDraftKey]);
+
+  const restoreEmergencyDraft = () => {
+    if (!emergencyDraftToRestore) return;
+    const d = emergencyDraftToRestore;
+    if (d.title) setTitle(d.title);
+    if (d.code && !editingCourse) setCode(d.code);
+    if (d.category) setCategory(d.category);
+    if (d.level) setLevel(d.level);
+    if (d.deliveryMode) setDeliveryMode(d.deliveryMode);
+    if (d.description) setDescription(d.description);
+    if (d.objectives) setObjectives(d.objectives);
+    if (d.department) setDepartment(d.department);
+    if (d.targetAudience) setTargetAudience(d.targetAudience);
+    if (d.prerequisites) setPrerequisites(d.prerequisites);
+    if (Array.isArray(d.modules) && d.modules.length > 0) setModules(d.modules);
+    if (d.quizTitle) setQuizTitle(d.quizTitle);
+    if (typeof d.passMark === 'number') setPassMark(d.passMark);
+    if (typeof d.finalAssessmentWeight === 'number') setFinalAssessmentWeight(d.finalAssessmentWeight);
+    if (typeof d.timeLimitMinutes === 'number') setTimeLimitMinutes(d.timeLimitMinutes);
+    if (typeof d.attemptsAllowed === 'number') setAttemptsAllowed(d.attemptsAllowed);
+    if (Array.isArray(d.questions) && d.questions.length > 0) setQuestions(d.questions);
+    if (typeof d.hasOnlineSessions === 'boolean') setHasOnlineSessions(d.hasOnlineSessions);
+    if (Array.isArray(d.sessionPlans) && d.sessionPlans.length > 0) setSessionPlans(d.sessionPlans);
+    setEmergencyDraftToRestore(null);
+    toast.success('Emergency auto-saved draft restored successfully!');
+  };
+
+  const discardEmergencyDraft = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(emergencyDraftKey);
+      } catch {}
+    }
+    setEmergencyDraftToRestore(null);
+  };
+
+  // ── Global Save Changes Handler ──
+  const handleSaveChanges = async () => {
+    setSaving(true);
+    try {
+      const courseId = await persistDraft();
+      lastSavedSnapshotRef.current = draftSnapshot;
+      setLastSavedAt(new Date());
+      setAutosaveError(null);
+      setAutosaveStatus('saved');
+      saveToEmergencyStorage();
+      toast.success('Course changes saved successfully!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Save Draft & Submit Handlers ──
   const handleSave = async (andSubmit = false) => {
     setSaving(true);
@@ -932,8 +1064,14 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       if (andSubmit) {
         const submitRes = await submitForApproval(courseId);
         if (!submitRes.ok) throw new Error(submitRes.message || 'Failed to submit course for approval.');
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem(emergencyDraftKey);
+          } catch {}
+        }
         toast.success('Course submitted for approval successfully!');
       } else {
+        saveToEmergencyStorage();
         toast.success('Course draft saved successfully!');
       }
 
@@ -944,6 +1082,96 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       setSaving(false);
     }
   };
+
+  // ── Preview As Learner State & Model ──
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const previewCourse: Course = useMemo(() => {
+    const quizPayload = buildQuizPayload();
+    return {
+      id: savedCourseId || editingCourse?.id || 'preview-course',
+      title: title.trim() || 'Untitled Course Preview',
+      code: code.trim().toUpperCase() || 'PREVIEW-101',
+      category,
+      level,
+      deliveryMode,
+      description,
+      objectives,
+      department,
+      targetAudience,
+      deliveryMethod,
+      language,
+      prerequisites,
+      cover: coverPreview || undefined,
+      status: 'PUBLISHED',
+      isPublished: true,
+      enrollmentCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      modules: modules.map((m, mIdx) => ({
+        id: m.id,
+        courseId: savedCourseId || 'preview-course',
+        title: m.title || `Module ${mIdx + 1}`,
+        description: m.description,
+        objectives: m.objectives,
+        order: mIdx + 1,
+        durationMinutes: m.durationMinutes || 60,
+        resources: m.resources || [],
+        lessons: m.lessons.map((l, lIdx) => ({
+          id: l.id,
+          moduleId: m.id,
+          title: l.title || `Lesson ${lIdx + 1}`,
+          content: l.content || '',
+          durationMin: l.durationMin || 15,
+          order: lIdx + 1,
+          contentType: (l.contentType as any) || 'DOCUMENT',
+          resourceUrl: l.resourceUrl || '',
+          required: l.required ?? true,
+          resources: l.resources || [],
+          subLessons: (l.subLessons ?? []).map((s, sIdx) => ({
+            id: s.id,
+            moduleId: m.id,
+            title: s.title || `Sub-topic ${sIdx + 1}`,
+            content: s.content || '',
+            durationMin: s.durationMin || 15,
+            order: sIdx + 1,
+            contentType: (s.contentType as any) || 'DOCUMENT',
+            resourceUrl: s.resourceUrl || '',
+            required: s.required ?? true,
+            resources: s.resources || [],
+          })),
+        })),
+      })),
+      quiz: quizPayload,
+      hasOnlineSessions: sessionsActive,
+      sessionPlans: sessionsActive ? sessionPlans : [],
+    } as any;
+  }, [
+    savedCourseId,
+    editingCourse?.id,
+    title,
+    code,
+    category,
+    level,
+    deliveryMode,
+    description,
+    objectives,
+    department,
+    targetAudience,
+    deliveryMethod,
+    language,
+    prerequisites,
+    coverPreview,
+    modules,
+    questions,
+    quizTitle,
+    passMark,
+    finalAssessmentWeight,
+    timeLimitMinutes,
+    attemptsAllowed,
+    sessionsActive,
+    sessionPlans,
+  ]);
 
   /** Leaving the studio flushes edits still waiting on the autosave timer. */
   const handleExit = async () => {
@@ -1279,9 +1507,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         code={code}
         deliveryMode={deliveryMode}
         saving={saving}
+        onSaveChanges={handleSaveChanges}
         onSaveDraft={() => handleSave(false)}
         onSubmitForApproval={() => handleSave(true)}
-        onPreview={() => setActiveNode({ type: 'REVIEW_SUBMIT' })}
+        onPreview={() => setIsPreviewMode(true)}
         onExit={handleExit}
         isEdit={isEdit}
         autosaveStatus={autosaveStatus}
@@ -1289,6 +1518,45 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         lastSavedAt={lastSavedAt}
         autosaveBlockedReason={!title.trim() || !code.trim() ? 'Add a title and course code to start autosaving' : codeError ? codeError : null}
       />
+
+      {/* Emergency Auto-Saved Draft Prompt Banner */}
+      {emergencyDraftToRestore && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 z-10 shrink-0 shadow-2xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-amber-900 font-bold shrink-0 text-[11px]">!</span>
+            <span>
+              <strong>Auto-saved course draft found</strong> from previous session ({emergencyDraftToRestore.savedAt ? new Date(emergencyDraftToRestore.savedAt).toLocaleTimeString() : 'recently'}). Would you like to restore your changes?
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={restoreEmergencyDraft}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-2xs transition"
+            >
+              Restore Draft
+            </button>
+            <button
+              type="button"
+              onClick={discardEmergencyDraft}
+              className="px-3 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg transition"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Learner Preview Mode Full Overlay */}
+      {isPreviewMode && (
+        <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col">
+          <ClassroomShell
+            previewCourse={previewCourse}
+            isPreview={true}
+            onExitPreview={() => setIsPreviewMode(false)}
+          />
+        </div>
+      )}
 
       {/* Main Studio Body: Sidebar + Editor Stage */}
       <div className="flex-1 flex overflow-hidden">

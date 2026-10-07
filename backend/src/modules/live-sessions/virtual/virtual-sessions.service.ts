@@ -44,6 +44,16 @@ export class VirtualSessionsService {
       ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
       : 'Guest';
     const isModerator = user ? (user.roles?.some((r) => STAFF_ROLES.includes(r)) ?? false) : false;
+    const isTrainerOrStaff = isModerator || (user && session.trainerId === user.id);
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+    const isTimeReached =
+      session.status === SessionStatus.LIVE ||
+      (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
+    if (!isTrainerOrStaff && !isTimeReached) {
+      throw new BadRequestException(
+        'You can join the live session 5 minutes before the scheduled start time.',
+      );
+    }
 
     let externalUrl = session.externalUrl?.trim() || '';
     if (externalUrl && !externalUrl.startsWith('http://') && !externalUrl.startsWith('https://')) {
@@ -68,6 +78,16 @@ export class VirtualSessionsService {
     const isStaff = user.roles?.some((r) => STAFF_ROLES.includes(r)) ?? false;
     const isSessionTrainer = session.trainerId === user.id;
     const isAuthorizedStaff = isStaff || isSessionTrainer;
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+    const isTimeReached =
+      session.status === SessionStatus.LIVE ||
+      (session.scheduledAt && Date.now() >= session.scheduledAt.getTime() - FIVE_MINUTES_MS);
+
+    if (!isAuthorizedStaff && !isTimeReached) {
+      throw new BadRequestException(
+        'You can join the live session 5 minutes before the scheduled start time.',
+      );
+    }
 
     if (session.status !== SessionStatus.SCHEDULED && session.status !== SessionStatus.LIVE) {
       if (isAuthorizedStaff) {

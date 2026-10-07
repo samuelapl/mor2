@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -113,7 +113,7 @@ export function RichEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: `prose prose-sm max-w-none px-4 py-3 text-slate-800 focus:outline-none`,
+        class: `rich-content prose prose-sm max-w-none px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none`,
         style: `min-height: ${minHeight}px`,
       },
     },
@@ -183,7 +183,7 @@ export function CompactRichEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none px-3 py-2 text-slate-800 focus:outline-none min-h-[48px]',
+        class: 'rich-content prose prose-sm max-w-none px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none min-h-[48px]',
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -565,6 +565,175 @@ export function MultiFileUploader({
       </div>
 
       {uploadError ? <p className="text-xs text-red-600 font-medium">{uploadError}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Handles Enter key on plain textarea elements to auto-continue:
+ * 1. Bullets (•, -, *, etc.)
+ * 2. Numbers (1., 2., etc.)
+ * 3. Clears prefix when Enter is pressed on an empty bullet line
+ */
+export function handleSmartListKeyDown(
+  e: React.KeyboardEvent<HTMLTextAreaElement>,
+  value: string,
+  onChange: (val: string) => void,
+) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    const textarea = e.currentTarget;
+    const { selectionStart, selectionEnd } = textarea;
+    const beforeCursor = value.substring(0, selectionStart);
+    const afterCursor = value.substring(selectionEnd);
+    const currentLine = beforeCursor.split('\n').pop() || '';
+
+    // Check for bullet list: •, -, *, etc.
+    const bulletMatch = currentLine.match(/^(\s*)([•\-\*])\s+/);
+    // Check for numbered list: 1., 2., etc.
+    const numberMatch = currentLine.match(/^(\s*)(\d+)\.\s+/);
+
+    if (bulletMatch) {
+      e.preventDefault();
+      const indent = bulletMatch[1];
+      const bulletChar = bulletMatch[2];
+      // If the current line is just the bullet itself (empty item), clear it
+      if (currentLine.trim() === bulletChar) {
+        const lineStart = selectionStart - currentLine.length;
+        const newValue = value.substring(0, lineStart) + afterCursor;
+        onChange(newValue);
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = lineStart;
+        });
+        return;
+      }
+      const insert = `\n${indent}${bulletChar} `;
+      const newValue = beforeCursor + insert + afterCursor;
+      onChange(newValue);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + insert.length;
+      });
+      return;
+    }
+
+    if (numberMatch) {
+      e.preventDefault();
+      const indent = numberMatch[1];
+      const currentNum = parseInt(numberMatch[2], 10);
+      // If current line is just the number item (e.g. "2."), clear it
+      if (currentLine.trim() === `${currentNum}.`) {
+        const lineStart = selectionStart - currentLine.length;
+        const newValue = value.substring(0, lineStart) + afterCursor;
+        onChange(newValue);
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = lineStart;
+        });
+        return;
+      }
+      const insert = `\n${indent}${currentNum + 1}. `;
+      const newValue = beforeCursor + insert + afterCursor;
+      onChange(newValue);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + insert.length;
+      });
+      return;
+    }
+  }
+}
+
+export function SmartTextarea({
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+  className,
+  id,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  rows?: number;
+  className?: string;
+  id?: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const insertPrefix = (type: 'bullet' | 'number') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const { selectionStart, selectionEnd } = textarea;
+    const before = value.substring(0, selectionStart);
+    const after = value.substring(selectionEnd);
+    const selected = value.substring(selectionStart, selectionEnd);
+
+    if (selected) {
+      const lines = selected.split('\n');
+      const formatted = lines
+        .map((line, idx) => {
+          const clean = line.replace(/^([•\-\*]|\d+\.)\s+/, '');
+          return type === 'bullet' ? `• ${clean}` : `${idx + 1}. ${clean}`;
+        })
+        .join('\n');
+      const nextVal = before + formatted + after;
+      onChange(nextVal);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.selectionStart = selectionStart;
+        textarea.selectionEnd = selectionStart + formatted.length;
+      });
+    } else {
+      const lineStart = before.lastIndexOf('\n') + 1;
+      const currentLine = before.substring(lineStart);
+      const prefix = type === 'bullet' ? '• ' : '1. ';
+      let nextVal: string;
+      let newCursor: number;
+      if (currentLine.startsWith('• ') || /^\d+\.\s+/.test(currentLine)) {
+        // Toggle off
+        const stripped = currentLine.replace(/^([•\-\*]|\d+\.)\s+/, '');
+        nextVal = value.substring(0, lineStart) + stripped + after;
+        newCursor = lineStart + stripped.length;
+      } else {
+        nextVal = value.substring(0, lineStart) + prefix + currentLine + after;
+        newCursor = selectionStart + prefix.length;
+      }
+      onChange(nextVal);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = newCursor;
+      });
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/10">
+      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50/80 border-b border-slate-100 text-xs text-slate-600">
+        <span className="text-[11px] font-medium text-slate-400 mr-1">Quick list:</span>
+        <button
+          type="button"
+          onClick={() => insertPrefix('bullet')}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-slate-200 text-slate-700 font-medium transition text-[11px]"
+          title="Add Bullet (•)"
+        >
+          <span>•</span> Bullet List
+        </button>
+        <button
+          type="button"
+          onClick={() => insertPrefix('number')}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-slate-200 text-slate-700 font-medium transition text-[11px]"
+          title="Add Numbered List (1.)"
+        >
+          <span>1.</span> Numbered List
+        </button>
+      </div>
+      <textarea
+        ref={textareaRef}
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => handleSmartListKeyDown(e, value, onChange)}
+        placeholder={placeholder}
+        rows={rows}
+        className={cn('w-full px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none resize-y', className)}
+      />
     </div>
   );
 }

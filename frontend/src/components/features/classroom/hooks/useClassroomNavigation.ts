@@ -28,19 +28,25 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
   // Build helper lookup maps for module and lesson progress
   const moduleProgressMap = useMemo(() => {
     const map = new Map<string, ApiProgressModule>();
-    if (!progress) return map;
+    if (!progress || !Array.isArray(progress.modules)) return map;
     for (const mod of progress.modules) {
-      map.set(mod.moduleId, mod);
+      if (mod?.moduleId) {
+        map.set(mod.moduleId, mod);
+      }
     }
     return map;
   }, [progress]);
 
   const lessonProgressMap = useMemo(() => {
     const map = new Map<string, ApiProgressLesson>();
-    if (!progress) return map;
+    if (!progress || !Array.isArray(progress.modules)) return map;
     for (const mod of progress.modules) {
-      for (const l of mod.lessons) {
-        map.set(l.lessonId, l);
+      if (Array.isArray(mod?.lessons)) {
+        for (const l of mod.lessons) {
+          if (l?.lessonId) {
+            map.set(l.lessonId, l);
+          }
+        }
       }
     }
     return map;
@@ -238,10 +244,14 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
     }
 
     // 5. Final Certification Assessment (if course has final assessment)
-    const finalAssessment = progress?.courseCompletion.finalAssessment;
+    const finalAssessment = progress?.courseCompletion?.finalAssessment;
+    const allLiveSessionsAttended =
+      liveSessions.length === 0 ||
+      liveSessions.every((s) => s.status === 'COMPLETED' && s.attended);
+
     if (finalAssessment) {
-      const contentCompleted = progress?.courseCompletion.contentCompleted ?? false;
-      const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
+      const contentCompleted = progress?.courseCompletion?.contentCompleted ?? false;
+      const finalPassed = progress?.courseCompletion?.finalAssessmentPassed ?? false;
 
       items.push({
         key: `quiz-${finalAssessment.id}`,
@@ -251,7 +261,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         moduleIndex: 9999,
         quizId: finalAssessment.id,
         quizKind: 'FINAL_ASSESSMENT',
-        unlocked: !isInPerson && contentCompleted,
+        unlocked: !isInPerson && contentCompleted && allLiveSessionsAttended,
         completed: finalPassed,
         assessment: finalAssessment,
         isInPersonLocked: isInPerson,
@@ -264,7 +274,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
     const isCompleted =
       !isInPerson &&
       (progress?.courseCompletion.certificateEligible ??
-        (contentCompleted && (!finalAssessment || finalPassed)));
+        (contentCompleted && (!finalAssessment || finalPassed) && allLiveSessionsAttended));
 
     items.push({
       key: 'course-certificate',

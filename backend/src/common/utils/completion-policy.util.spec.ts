@@ -11,9 +11,9 @@ describe('requiredSeconds', () => {
     expect(requiredSeconds(-5)).toBe(0);
   });
 
-  it('requires reduced duration in seconds for fast flow walkthrough', () => {
-    expect(requiredSeconds(10)).toBe(10); // capped at 10s
-    expect(requiredSeconds(1)).toBe(5); // <= 1 min returns 5s
+  it('calculates required duration in seconds based on ratio', () => {
+    expect(requiredSeconds(10, 0.5)).toBe(300);
+    expect(requiredSeconds(1, 0.5)).toBe(30);
   });
 });
 

@@ -457,6 +457,35 @@ export class AssessmentsService {
         incompleteAssessments: unpassedModuleQuizzes.map((a) => ({ id: a.id, title: a.titleEn })),
       });
     }
+
+    // Verify all scheduled live sessions are completed and attended if any exist
+    const liveSessions = await this.prisma.liveSession.findMany({
+      where: { courseId, deletedAt: null },
+      select: { id: true, titleEn: true, status: true },
+    });
+    if (liveSessions.length > 0) {
+      const attendances = await this.prisma.attendance.findMany({
+        where: {
+          sessionId: { in: liveSessions.map((s) => s.id) },
+          userId,
+          status: { in: ['PRESENT', 'LATE'] },
+        },
+        select: { sessionId: true },
+      });
+      const attendedSet = new Set(attendances.map((a) => a.sessionId));
+      const unattended = liveSessions.filter(
+        (s) => s.status !== 'COMPLETED' || !attendedSet.has(s.id),
+      );
+      if (unattended.length > 0) {
+        throw new ForbiddenException({
+          reason: 'LIVE_SESSIONS_INCOMPLETE',
+          message:
+            'You must attend all scheduled live sessions before taking the final assessment.',
+          incompleteCount: unattended.length,
+          incompleteSessions: unattended.map((s) => ({ id: s.id, title: s.titleEn })),
+        });
+      }
+    }
   }
 
   /** Non-final assessments may be taken once their target content is unlocked. */

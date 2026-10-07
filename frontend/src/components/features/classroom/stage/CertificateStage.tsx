@@ -306,8 +306,14 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           </div>
         </div>
 
-        {!isInPerson && (progress?.courseCompletion.sessionsPending ?? 0) > 0 && (
-          <PendingSessionsNotice sessions={(progress?.liveSessions ?? []).filter((s) => s.status !== 'COMPLETED')} />
+        {!isInPerson &&
+          ((progress?.courseCompletion.sessionsPending ?? 0) > 0 ||
+            (progress?.liveSessions ?? []).some((s) => s.status !== 'COMPLETED' || !s.attended)) && (
+          <PendingSessionsNotice
+            sessions={(progress?.liveSessions ?? []).filter(
+              (s) => s.status !== 'COMPLETED' || !s.attended,
+            )}
+          />
         )}
 
         {!isInPerson && progress && <CourseGradeSummary completion={progress.courseCompletion} />}
@@ -502,8 +508,8 @@ function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) 
       <div className="space-y-2">
         <p className="text-sm font-bold text-sky-900">
           {tBilingual(
-            `You have ${sessions.length} upcoming session${sessions.length === 1 ? '' : 's'}. Your certificate is issued after they have been held.`,
-            `${sessions.length} የሚመጡ ክፍለ-ጊዜ(ዎች) አሉዎት። ሰርተፊኬትዎ የሚሰጠው ከተካሄዱ በኋላ ነው።`,
+            `You have ${sessions.length} live session${sessions.length === 1 ? '' : 's'} remaining to attend. Your certificate is issued after all live sessions have been held and attended.`,
+            `የሚቀሩዎት ${sessions.length} የቀጥታ ክፍለ-ጊዜ(ዎች) አሉ። ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ተካሂደው ሲገኙባቸው ብቻ ነው።`,
           )}
         </p>
         <ul className="space-y-1 text-sm text-sky-900/90">

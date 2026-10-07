@@ -85,7 +85,7 @@ export function ClassroomFooter({
 
       {/* Next Button */}
       <div>
-        {nextItem ? (
+        {isCurrentQuizIncomplete ? null : nextItem ? (
           <Button
             type="button"
             size="sm"

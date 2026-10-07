@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ArrowLeft,
   BookOpenCheck,
@@ -68,6 +68,18 @@ export function QuizTakerModal({
   const [result, setResult] = useState<GradedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [passedNotified, setPassedNotified] = useState(false);
+  const congratsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      if (result.passed && onPassed) {
+        onPassed();
+      }
+      setTimeout(() => {
+        congratsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, [result, onPassed]);
 
   useEffect(() => {
     if (!open) return;
@@ -272,7 +284,7 @@ export function QuizTakerModal({
           // backend leaves the answer key out of a failed attempt's review anyway.
           const showCorrectAnswers = result.passed;
           return (
-            <div className="space-y-6">
+            <div ref={congratsRef} className="space-y-6 scroll-mt-6">
               <div className="flex flex-col items-center py-4 text-center">
                 <div
                   className={cn(
@@ -302,7 +314,16 @@ export function QuizTakerModal({
                 {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
                 <div className="mt-6 flex gap-2">
                   {result.passed ? (
-                    <Button onClick={onClose}>Continue</Button>
+                    <Button
+                      size="md"
+                      onClick={() => {
+                        onPassed?.();
+                        onClose();
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 shadow-md"
+                    >
+                      Continue
+                    </Button>
                   ) : (
                     <>
                       <Button variant="outline" onClick={() => void start()}>

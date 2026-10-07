@@ -134,6 +134,15 @@ export class CoursesController {
     return this.coursesService.archive(id, user);
   }
 
+  @Get(':id/enrollment-count')
+  @Permissions('course.delete', 'course.view.all', 'course.view.own')
+  @ApiOperation({ summary: 'Get active enrollment count for course deletion confirmation' })
+  @ApiParam({ name: 'id', type: String })
+  async getEnrollmentCount(@Param('id') id: string) {
+    const count = await this.coursesService.getEnrollmentCount(id);
+    return { count };
+  }
+
   @Delete(':id')
   @Permissions('course.delete')
   @ApiOperation({ summary: 'Soft delete a course (Course Owner: DRAFT only)' })

@@ -281,7 +281,7 @@ interface LmsContextValue {
   publishCourse: (courseId: string) => Promise<ActionResult>;
   unpublishCourse: (courseId: string) => Promise<ActionResult>;
   archiveCourse: (courseId: string) => Promise<ActionResult>;
-  deleteCourse: (courseId: string) => Promise<ActionResult>;
+  deleteCourse: (courseId: string) => Promise<ActionResult & { affectedLearners?: number }>;
   enrollLearners: (courseId: string, learnerIds: string[]) => Promise<ActionResult>;
   enrollSelf: (
     courseId: string,
@@ -1480,12 +1480,12 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteCourse = useCallback(
-    async (courseId: string): Promise<ActionResult> => {
+    async (courseId: string): Promise<ActionResult & { affectedLearners?: number }> => {
       const owner = currentUserRef.current;
       try {
-        await apiDeleteCourse(courseId);
+        const res = await apiDeleteCourse(courseId);
         await reloadData(owner);
-        return { ok: true };
+        return { ok: true, affectedLearners: res?.affectedLearners };
       } catch (err) {
         return {
           ok: false,

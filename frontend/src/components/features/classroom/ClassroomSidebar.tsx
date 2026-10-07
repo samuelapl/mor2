@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -82,13 +82,40 @@ export function ClassroomSidebar({
 
   const moduleProgressMap = useMemo(() => {
     const map = new Map<string, any>();
-    progress?.modules.forEach((m) => map.set(m.moduleId, m));
+    (progress?.modules || []).forEach((m) => map.set(m.moduleId, m));
     return map;
   }, [progress]);
 
   const activeKey = activeContent?.item.key;
   const courseOverviewItem = flatItems.find((i) => i.type === 'COURSE_OVERVIEW');
   const isCourseOverviewActive = activeKey === courseOverviewItem?.key;
+
+  // Track dropdown collapse/expand state for lessons with sub-lessons
+  const [expandedLessons, setExpandedLessons] = useState<Record<string, boolean>>({});
+
+  const toggleLesson = (lessonId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setExpandedLessons((prev) => ({ ...prev, [lessonId]: !prev[lessonId] }));
+  };
+
+  // Automatically expand lesson dropdown if the lesson or any of its sub-lessons is active
+  useEffect(() => {
+    if (!activeKey) return;
+    const toExpand: Record<string, boolean> = {};
+    course.modules.forEach((m) => {
+      m.lessons.forEach((l) => {
+        if (`lesson-${l.id}` === activeKey || (l.subLessons ?? []).some((s) => `sub-${s.id}` === activeKey)) {
+          toExpand[l.id] = true;
+        }
+      });
+    });
+    if (Object.keys(toExpand).length > 0) {
+      setExpandedLessons((prev) => ({ ...prev, ...toExpand }));
+    }
+  }, [activeKey, course]);
 
   if (!isOpen) return null;
 
@@ -269,6 +296,8 @@ export function ClassroomSidebar({
 
                     // Child sub-lessons
                     const subLessons = lesson.subLessons ?? [];
+                    const hasSubLessons = subLessons.length > 0;
+                    const isLessonExpanded = Boolean(expandedLessons[lesson.id]);
 
                     // Lesson Checkpoint Quiz flat item
                     const lessonQuizItem = flatItems.find(
@@ -278,26 +307,36 @@ export function ClassroomSidebar({
                     return (
                       <div key={lesson.id} className="space-y-1">
                         {/* Lesson Row */}
-                        <button
-                          type="button"
-                          onClick={() => lessonItem && isLessonUnlocked && onSelectItem(lessonItem)}
-                          disabled={!isLessonUnlocked}
+                        <div
                           className={cn(
-                            'w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium',
+                            'w-full flex items-center justify-between gap-1.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium group',
                             isLessonActive
-                              ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
+                              ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
                               : isLessonUnlocked
                                 ? 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xs'
                                 : 'text-slate-400 cursor-not-allowed',
                           )}
                         >
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {/* Main Lesson Select Action */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (lessonItem && isLessonUnlocked) {
+                                onSelectItem(lessonItem);
+                                if (hasSubLessons && !isLessonExpanded) {
+                                  toggleLesson(lesson.id);
+                                }
+                              }
+                            }}
+                            disabled={!isLessonUnlocked}
+                            className="flex items-center gap-2 min-w-0 flex-1 text-left"
+                          >
                             {renderContentIcon(lesson.contentType)}
                             <span className="truncate">
                               {tBilingual('Lesson', 'ትምህርት')} {mIdx + 1}.{lIdx + 1}:{' '}
                               {cleanLessonTitle(lesson.title)}
                             </span>
-                          </div>
+                          </button>
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             {lesson.durationMin ? (
@@ -305,21 +344,38 @@ export function ClassroomSidebar({
                                 {lesson.durationMin}m
                               </span>
                             ) : null}
+
                             {!isLessonUnlocked ? (
                               <Lock className="h-3 w-3 text-slate-400" />
                             ) : isLessonCompleted ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                             ) : isLessonActive ? (
-                              <CircleDot className="h-3.5 w-3.5 text-indigo-600" />
+                              <CircleDot className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                             ) : (
-                              <div className="h-2 w-2 rounded-full border border-slate-300" />
+                              <div className="h-2 w-2 rounded-full border border-slate-300 dark:border-slate-600" />
+                            )}
+
+                            {/* Dropdown Chevron for Lessons with Sub-lessons */}
+                            {hasSubLessons && (
+                              <button
+                                type="button"
+                                onClick={(e) => toggleLesson(lesson.id, e)}
+                                title={isLessonExpanded ? tBilingual('Collapse sub-lessons', 'ንዑስ ክፍሎችን አጥፋ') : tBilingual('Expand sub-lessons', 'ንዑስ ክፍሎችን ዘርጋ')}
+                                className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition"
+                              >
+                                {isLessonExpanded ? (
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                )}
+                              </button>
                             )}
                           </div>
-                        </button>
+                        </div>
 
-                        {/* Sub-lessons list (Indented) */}
-                        {subLessons.length > 0 && (
-                          <div className="pl-5 space-y-1 border-l border-indigo-100 ml-3.5">
+                        {/* Sub-lessons list (Indented Dropdown) */}
+                        {hasSubLessons && isLessonExpanded && (
+                          <div className="pl-5 space-y-1 border-l border-indigo-100 dark:border-indigo-900/50 ml-3.5 transition-all">
                             {subLessons.map((sub, sIdx) => {
                               const subKey = `sub-${sub.id}`;
                               const subItem = itemsByKey.get(subKey);
@@ -336,14 +392,14 @@ export function ClassroomSidebar({
                                   className={cn(
                                     'w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left transition text-[11px]',
                                     isSubActive
-                                      ? 'bg-indigo-50 text-indigo-900 font-semibold ring-1 ring-indigo-400/20'
+                                      ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-200 font-semibold ring-1 ring-indigo-400/20'
                                       : isSubUnlocked
                                         ? 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'
                                         : 'text-slate-400 cursor-not-allowed',
                                   )}
                                 >
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
+                                    <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
                                     <span className="truncate">{cleanSubTitle(sub.title)}</span>
                                   </div>
 
@@ -353,7 +409,7 @@ export function ClassroomSidebar({
                                     ) : isSubCompleted ? (
                                       <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                                     ) : isSubActive ? (
-                                      <CircleDot className="h-3 w-3 text-indigo-600" />
+                                      <CircleDot className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
                                     ) : null}
                                   </div>
                                 </button>
@@ -495,12 +551,27 @@ export function ClassroomSidebar({
                 if (isClickable) {
                   onSelectItem(finalItem);
                 } else {
-                  toast.warning(
-                    tBilingual(
-                      'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
-                      'ያልተጠናቀቁ ሞጁሎች ወይም ትምህርቶች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ቅድመ-ሁኔታዎች ያጠናቅቁ።',
-                    ),
-                  );
+                  const contentCompleted = progress?.courseCompletion?.contentCompleted ?? false;
+                  const liveSessions = progress?.liveSessions ?? [];
+                  const allLiveSessionsAttended =
+                    liveSessions.length === 0 ||
+                    liveSessions.every((s) => s.status === 'COMPLETED' && s.attended);
+
+                  if (contentCompleted && !allLiveSessionsAttended) {
+                    toast.warning(
+                      tBilingual(
+                        'You must attend all scheduled live sessions before taking the final assessment.',
+                        'የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የቀጥታ ክፍለ-ጊዜዎች መከታተል አለብዎት።',
+                      ),
+                    );
+                  } else {
+                    toast.warning(
+                      tBilingual(
+                        'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
+                        'ያልተጠናቀቁ ሞጁሎች ወይም ትምህርቶች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ቅድመ-ሁኔታዎች ያጠናቅቁ።',
+                      ),
+                    );
+                  }
                 }
               };
 

@@ -220,7 +220,7 @@ export class LiveSessionsController {
   }
 
   @Patch('live-sessions/:id')
-  @Permissions('live_session.manage_all')
+  @Permissions('live_session.manage_all', 'live_session.manage_own', 'course.assign_trainer')
   @ApiOperation({ summary: 'Update or reschedule a live session' })
   @ApiParam({ name: 'id', type: String })
   async update(@Param('id') id: string, @Body() dto: UpdateSessionDto) {

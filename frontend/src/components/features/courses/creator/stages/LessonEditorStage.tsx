@@ -15,6 +15,11 @@ import {
   Presentation,
   Trash2,
   Video,
+  Upload,
+  Loader2,
+  CheckCircle2,
+  Film,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -82,6 +87,27 @@ export function LessonEditorStage({
       s.contentType === 'QUIZ' ||
       s.title.toLowerCase().includes('lesson assessment'),
   );
+
+  const [videoTab, setVideoTab] = React.useState<'browse' | 'url'>('browse');
+  const [isVideoUploading, setIsVideoUploading] = React.useState(false);
+  const [videoUploadError, setVideoUploadError] = React.useState<string | null>(null);
+  const videoInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleVideoBrowse = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsVideoUploading(true);
+    setVideoUploadError(null);
+    try {
+      const res = await uploadAttachment(file, { purpose: 'lesson_video' });
+      onUpdateLesson({ resourceUrl: res.fileUrl });
+    } catch (err: any) {
+      setVideoUploadError(err.message || 'Failed to upload video');
+    } finally {
+      setIsVideoUploading(false);
+      if (videoInputRef.current) videoInputRef.current.value = '';
+    }
+  };
 
   const handleUpload = async (files: File | File[] | FileList) => {
     const fileList = Array.isArray(files) ? files : files instanceof File ? [files] : Array.from(files);
@@ -219,24 +245,175 @@ export function LessonEditorStage({
           </div>
         </div>
 
-        {/* Media Resource URL (if Video/Audio/Presentation) */}
-        {(lesson.contentType === 'VIDEO' ||
-          lesson.contentType === 'AUDIO' ||
-          lesson.contentType === 'PRESENTATION') && (
+        {/* Media Resource (Video / Audio / Presentation) */}
+        {lesson.contentType === 'VIDEO' && (
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/30 p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3 pb-2 border-b border-indigo-100">
+              <label className={labelClass + ' mb-0'}>
+                {tBilingual('Lesson Video Source', 'የቪዲዮ ትምህርት ምንጭ')}
+              </label>
+              <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setVideoTab('browse')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                    videoTab === 'browse'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                  )}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {tBilingual('Browse & Upload File', 'ፋይል ይጫኑ')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVideoTab('url')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                    videoTab === 'url'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                  )}
+                >
+                  <LinkIcon className="h-3.5 w-3.5" />
+                  {tBilingual('External / Embed URL', 'የድረ-ገጽ አድራሻ (URL)')}
+                </button>
+              </div>
+            </div>
+
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+              className="hidden"
+              onChange={handleVideoBrowse}
+            />
+
+            {videoUploadError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                {videoUploadError}
+              </div>
+            )}
+
+            {videoTab === 'browse' ? (
+              <div className="space-y-3">
+                {lesson.resourceUrl ? (
+                  <div className="space-y-3">
+                    <div className="overflow-hidden rounded-xl bg-black/90 shadow-md">
+                      <video
+                        src={lesson.resourceUrl}
+                        controls
+                        className="w-full max-h-72 object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs">
+                      <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 truncate max-w-md">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                        <span className="font-semibold truncate">{lesson.resourceUrl}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isVideoUploading}
+                          onClick={() => videoInputRef.current?.click()}
+                          className="h-7 text-xs gap-1 border-emerald-300 hover:bg-emerald-100/50"
+                        >
+                          <Upload className="h-3 w-3" />
+                          {isVideoUploading ? tBilingual('Uploading...', 'በመጫን ላይ...') : tBilingual('Replace Video', 'ቪዲዮውን ይቀይሩ')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onUpdateLesson({ resourceUrl: '' })}
+                          className="h-7 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          {tBilingual('Remove', 'አስወግድ')}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isVideoUploading}
+                    onClick={() => videoInputRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 bg-white dark:bg-slate-900 rounded-2xl transition-all cursor-pointer text-center group"
+                  >
+                    {isVideoUploading ? (
+                      <>
+                        <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            {tBilingual('Uploading video to storage...', 'ቪዲዮውን ወደ ማከማቻ በመጫን ላይ...')}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {tBilingual('Please wait while the file uploads.', 'እባክዎ ፋይሉ እስኪጠናቀቅ ይጠብቁ።')}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-3.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                          <Film className="h-8 w-8" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {tBilingual('Browse & Upload Video from Device', 'የቪዲዮ ፋይል ከመሳሪያዎ ይምረጡና ይጫኑ')}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            {tBilingual('Supports MP4, WebM, MOV, MKV (Stored in MinIO/S3)', 'MP4, WebM, MOV, MKV ፋይሎችን ይደግፋል')}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow hover:bg-indigo-700">
+                          <Upload className="h-3.5 w-3.5" />
+                          {tBilingual('Browse Computer', 'ፋይል ምረጥ')}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={lesson.resourceUrl || ''}
+                    onChange={(e) => onUpdateLesson({ resourceUrl: e.target.value })}
+                    placeholder="https://example.com/video.mp4 or YouTube / Vimeo link"
+                    className={inputClass}
+                  />
+                  <LinkIcon className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {tBilingual(
+                    'Direct MP4 streams, YouTube embed links, and Vimeo URLs are supported.',
+                    'ቀጥታ የ MP4 ሊንክ፣ የዩቲዩብ ወይም የቪሚዮ አድራሻ ማስገባት ይችላሉ።',
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(lesson.contentType === 'AUDIO' || lesson.contentType === 'PRESENTATION') && (
           <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-3">
             <label className={labelClass}>
-              {lesson.contentType === 'VIDEO'
-                ? tBilingual('Video Embed / Stream URL', 'የቪዲዮ አድራሻ (Stream / Embed URL)')
-                : lesson.contentType === 'AUDIO'
-                  ? tBilingual('Audio Stream URL', 'የድምጽ አድራሻ (Audio Stream URL)')
-                  : tBilingual('Slide Deck URL', 'የስላይድ አድራሻ (Slide Deck URL)')}
+              {lesson.contentType === 'AUDIO'
+                ? tBilingual('Audio Stream URL', 'የድምጽ አድራሻ (Audio Stream URL)')
+                : tBilingual('Slide Deck URL', 'የስላይድ አድራሻ (Slide Deck URL)')}
             </label>
             <div className="relative">
               <input
                 type="url"
                 value={lesson.resourceUrl || ''}
                 onChange={(e) => onUpdateLesson({ resourceUrl: e.target.value })}
-                placeholder="https://example.com/media.mp4 or YouTube / Vimeo link"
+                placeholder="https://example.com/media.mp3 or Slide link"
                 className={inputClass}
               />
               <LinkIcon className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />

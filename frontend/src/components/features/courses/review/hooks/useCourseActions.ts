@@ -143,7 +143,13 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
 
     remove: () =>
       withBusy(async () => {
-        const ok = notify(await deleteCourse(id), 'Course deleted successfully.');
+        const res = await deleteCourse(id);
+        const count = res?.affectedLearners ?? 0;
+        const msg =
+          count > 0
+            ? `Course deleted. Enrollment status for ${count} learner(s) was deleted automatically.`
+            : 'Course deleted successfully.';
+        const ok = notify(res, msg);
         if (ok) opts.onDeleted?.();
         return ok;
       }),

@@ -32,7 +32,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const { tBilingual } = useTranslation();
   const { canAny } = usePermissions();
 
-  const { ready, detailLoaded, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
+  const { ready, detailLoaded, course, refreshCourse, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
   const actions = useCourseActions(course, { onDeleted: () => router.push('/courses') });
 
   const [editing, setEditing] = useState(false);
@@ -174,6 +174,10 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             index={index}
             courseStatus={course.status}
             quizAssessments={assessments.all.filter((a) => plan.quizzes.some((q) => q.id === a.id))}
+            courseId={course.id}
+            canAssignTrainer={actions.can.assignTrainer}
+            trainerOptions={actions.trainerOptions}
+            onTrainerAssigned={() => void refreshCourse()}
           />
         );
       }
@@ -280,6 +284,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
       <ConfirmActionDialog
         action={confirmAction}
         courseTitle={course.title}
+        courseId={course.id}
         busy={actions.busy}
         onClose={() => setConfirmAction(null)}
         onConfirm={async (action) => {

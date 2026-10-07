@@ -47,9 +47,15 @@ function lessonIcon(contentType?: string) {
   }
 }
 
+function cleanLessonTitle(title: string): string {
+  if (!title) return '';
+  return title.replace(/^(Lesson\s*)?(\d+\.)*\d*\s*[:\-–]?\s*/i, '').trim() || title;
+}
+
 export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode, issues }: ReviewSidebarProps) {
   const { tBilingual } = useTranslation();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedLessons, setCollapsedLessons] = useState<Set<string>>(new Set());
 
   const toggle = (moduleId: string) =>
     setCollapsed((prev) => {
@@ -58,6 +64,32 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
       else next.add(moduleId);
       return next;
     });
+
+  const toggleLesson = (lessonId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setCollapsedLessons((prev) => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId);
+      else next.add(lessonId);
+      return next;
+    });
+  };
+
+  // Auto-expand lesson dropdown if selected node is inside this lesson
+  React.useEffect(() => {
+    if (selectedNode && 'lessonId' in selectedNode && selectedNode.lessonId) {
+      const lessonId = selectedNode.lessonId;
+      setCollapsedLessons((prev) => {
+        if (!prev.has(lessonId)) return prev;
+        const next = new Set(prev);
+        next.delete(lessonId);
+        return next;
+      });
+    }
+  }, [selectedNode]);
 
   const issueCount = Object.values(issues).reduce((n, list) => n + list.length, 0);
 
@@ -176,36 +208,69 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                   {m.lessons.map((l, lIdx) => {
                     const Icon = lessonIcon(l.contentType);
                     const lessonAssessment = assessments.byLesson[l.id];
+                    const subLessons = l.subLessons ?? [];
+                    const hasSubLessons = subLessons.length > 0;
+                    const isLessonCollapsed = collapsedLessons.has(l.id);
+
                     return (
                       <React.Fragment key={l.id}>
-                        {node(
-                          { type: 'LESSON', moduleId: m.id, lessonId: l.id },
-                          <>
-                            <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                            <span className="min-w-0 flex-1 truncate">
-                              {mIdx + 1}.{lIdx + 1} {l.title || tBilingual('Untitled lesson', 'ርዕስ የሌለው ትምህርት')}
-                            </span>
-                            {l.durationMin ? <span className="shrink-0 text-[10px] opacity-70">{l.durationMin}m</span> : null}
-                            {fileBadge(getItemAttachments(l).length)}
-                          </>,
-                          1.5,
-                        )}
-                        {(l.subLessons ?? []).map((s) => {
-                          const SubIcon = lessonIcon(s.contentType);
-                          return (
-                            <React.Fragment key={s.id}>
-                              {node(
-                                { type: 'SUB_LESSON', moduleId: m.id, lessonId: l.id, subLessonId: s.id },
-                                <>
-                                  <SubIcon className="h-3 w-3 shrink-0 opacity-70" />
-                                  <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                                  {fileBadge(getItemAttachments(s).length)}
-                                </>,
-                                3,
+                        <div className="flex items-center">
+                          {hasSubLessons && (
+                            <button
+                              type="button"
+                              onClick={(e) => toggleLesson(l.id, e)}
+                              className="flex h-5 w-4 shrink-0 items-center justify-center text-slate-400 hover:text-slate-700 ml-1.5"
+                              aria-label={isLessonCollapsed ? 'Expand sub-lessons' : 'Collapse sub-lessons'}
+                            >
+                              {isLessonCollapsed ? (
+                                <ChevronRight className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
                               )}
-                            </React.Fragment>
-                          );
-                        })}
+                            </button>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            {node(
+                              { type: 'LESSON', moduleId: m.id, lessonId: l.id },
+                              <>
+                                <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                                <span className="min-w-0 flex-1 truncate">
+                                  {mIdx + 1}.{lIdx + 1} {cleanLessonTitle(l.title) || tBilingual('Untitled lesson', 'ርዕስ የሌለው ትምህርት')}
+                                </span>
+                                {hasSubLessons && isLessonCollapsed && (
+                                  <span className="shrink-0 rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600">
+                                    {subLessons.length}
+                                  </span>
+                                )}
+                                {l.durationMin ? <span className="shrink-0 text-[10px] opacity-70">{l.durationMin}m</span> : null}
+                                {fileBadge(getItemAttachments(l).length)}
+                              </>,
+                              hasSubLessons ? 0.5 : 1.5,
+                            )}
+                          </div>
+                        </div>
+
+                        {hasSubLessons && !isLessonCollapsed && (
+                          <div className="border-l border-slate-200 ml-5 pl-2 space-y-0.5 my-0.5">
+                            {subLessons.map((s) => {
+                              const SubIcon = lessonIcon(s.contentType);
+                              return (
+                                <React.Fragment key={s.id}>
+                                  {node(
+                                    { type: 'SUB_LESSON', moduleId: m.id, lessonId: l.id, subLessonId: s.id },
+                                    <>
+                                      <SubIcon className="h-3 w-3 shrink-0 opacity-70" />
+                                      <span className="min-w-0 flex-1 truncate">{s.title}</span>
+                                      {fileBadge(getItemAttachments(s).length)}
+                                    </>,
+                                    1,
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        )}
+
                         {lessonAssessment &&
                           assessmentNode(
                             { type: 'LESSON_ASSESSMENT', moduleId: m.id, lessonId: l.id },
