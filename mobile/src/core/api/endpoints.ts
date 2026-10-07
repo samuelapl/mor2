@@ -114,4 +114,11 @@ export const endpoints = {
     markRead: (notificationId: string) => `notifications/${id(notificationId)}/read`,
     markAllRead: 'notifications/me/read-all',
   },
+
+  /* §11 Tax & Customs Laws --------------------------------------------------- */
+  laws: {
+    categories: 'laws/categories',
+    documents: 'laws/documents',
+    detail: (documentId: string) => `laws/documents/${id(documentId)}`,
+  },
 } as const;

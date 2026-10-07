@@ -29,6 +29,7 @@ import {
   UserCog,
   Video,
   Tags,
+  Scale,
 } from 'lucide-react';
 import type { Role } from '@/types';
 
@@ -69,6 +70,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: FileQuestion,
       permission: 'question_bank.manage',
     },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws',
+      icon: Scale,
+      permission: 'laws.view',
+    },
   ],
   content_approver: [
     { label: 'Dashboard', href: '/content-approver', icon: LayoutDashboard },
@@ -83,6 +90,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/system-admin/pending-course-approvals',
       icon: Hourglass,
       permission: 'course.approve_reject',
+    },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws-management',
+      icon: Scale,
+      permission: 'laws.manage',
     },
   ],
   training_admin: [
@@ -159,6 +172,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
         },
       ],
     },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws-management',
+      icon: Scale,
+      permission: 'laws.manage',
+    },
   ],
   trainer: [
     { label: 'Dashboard', href: '/trainer', icon: LayoutDashboard },
@@ -192,6 +211,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: FileQuestion,
       permission: 'question_bank.manage',
     },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws',
+      icon: Scale,
+      permission: 'laws.view',
+    },
   ],
   learner: [
     { label: 'Dashboard', href: '/learner', icon: LayoutDashboard },
@@ -224,6 +249,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       href: '/learner/progress',
       icon: BarChart3,
       permission: ['progress.view', 'progress.mark_own'],
+    },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws',
+      icon: Scale,
+      permission: 'laws.view',
     },
   ],
   system_admin: [
@@ -336,6 +367,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: Tags,
       permission: 'category.manage',
     },
+    {
+      label: 'Tax & Customs Laws',
+      href: '/laws-management',
+      icon: Scale,
+      permission: 'laws.manage',
+    },
   ],
 };
 
@@ -392,6 +429,8 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/learner/progress': ['progress.view', 'progress.mark_own'],
   '/training-admin/feedback': ['feedback.manage', 'feedback.view'],
   '/news-management': ['news.manage', 'news.publish'],
+  '/laws-management': ['laws.manage'],
+  '/laws': ['laws.view', 'laws.manage'],
 };
 
 /**
@@ -580,6 +619,24 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     href: '/news-management',
     icon: PenSquare,
     permission: PERMISSION_GATED_PATHS['/news-management'],
+  },
+  {
+    label: 'Tax & Customs Laws',
+    href: '/laws-management',
+    icon: Scale,
+    permission: PERMISSION_GATED_PATHS['/laws-management'],
+  },
+  // No permission: every signed-in user gets a link to the public news page.
+  {
+    label: 'News',
+    href: '/news',
+    icon: Newspaper,
+  },
+  {
+    label: 'Tax & Customs Laws',
+    href: '/laws',
+    icon: Scale,
+    permission: PERMISSION_GATED_PATHS['/laws'],
   },
 ];
 

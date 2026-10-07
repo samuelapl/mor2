@@ -78,10 +78,7 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
     },
   ];
 
-  const filtered =
-    selectedCategory === 'all'
-      ? courses
-      : courses.filter((c) => c.category === selectedCategory);
+  const filtered = selectedCategory === 'all' ? courses : courses.filter((c) => c.category === selectedCategory);
 
   return (
     <div className="relative mx-auto w-full max-w-6xl">
@@ -140,9 +137,7 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
             ))}
           </div>
 
-          <span className="text-[11px] font-medium text-slate-400">
-            {tBilingual('Directive 2026 Compatible', 'በ2018/2026 መመሪያ መሰረት የተዘጋጀ')}
-          </span>
+          <span className="text-[11px] font-medium text-slate-400">{tBilingual('Directive 2026 Compatible', 'በ2018/2026 መመሪያ መሰረት የተዘጋጀ')}</span>
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -153,9 +148,7 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
             >
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-sky-700 dark:text-sky-400">
-                    {item.code}
-                  </span>
+                  <span className="font-mono text-xs font-bold text-sky-700 dark:text-sky-400">{item.code}</span>
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     {item.badge}
                   </span>
@@ -174,20 +167,14 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
               <div className="flex items-center gap-6 sm:justify-end">
                 <div className="w-36">
                   <div className="mb-1 flex justify-between text-[11px]">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {tBilingual('Completion', 'ማጠናቀቂያ')}
-                    </span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">
-                      {item.progress}%
-                    </span>
+                    <span className="text-slate-500 dark:text-slate-400">{tBilingual('Completion', 'ማጠናቀቂያ')}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">{item.progress}%</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-700',
-                        item.progress === 100
-                          ? 'bg-amber-500'
-                          : 'bg-gradient-to-r from-sky-500 to-blue-600',
+                        item.progress === 100 ? 'bg-amber-500' : 'bg-gradient-to-r from-sky-500 to-blue-600',
                       )}
                       style={{ width: `${item.progress}%` }}
                     />
@@ -216,10 +203,7 @@ function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
             </span>
           </div>
 
-          <Link
-            href="/login"
-            className="font-semibold text-sky-700 hover:underline dark:text-sky-400"
-          >
+          <Link href="/login" className="font-semibold text-sky-700 hover:underline dark:text-sky-400">
             {tBilingual('Access all staff curricula →', 'ሁሉንም የስልጠና ዝርዝሮች ይመልከቱ →')}
           </Link>
         </div>
@@ -240,7 +224,7 @@ export default function LandingPage() {
       (window as any).isElectron ||
       /electron/i.test(navigator.userAgent) ||
       document.documentElement.getAttribute('data-is-desktop') === 'true' ||
-      document.documentElement.classList.contains('is-electron')
+      document.documentElement.classList.contains('is-electron'),
     );
   });
 
@@ -326,10 +310,7 @@ export default function LandingPage() {
       id: 'owner',
       title: tBilingual('Course Owner', 'የኮርስ ባለቤት'),
       badge: tBilingual('Curriculum Authoring', 'ስርአተ-ትምህርት ዝግጅት'),
-      headline: tBilingual(
-        'Curate, structure, and stage authoritative revenue training modules.',
-        'የገቢዎች ዘርፍ የስልጠና ሞጁሎችን ያዘጋጁ እና ያደራጁ።',
-      ),
+      headline: tBilingual('Curate, structure, and stage authoritative revenue training modules.', 'የገቢዎች ዘርፍ የስልጠና ሞጁሎችን ያዘጋጁ እና ያደራጁ።'),
       description: tBilingual(
         'Course owners construct interactive syllabus outlines, embed SCORM/video assets, define multiple-choice or scenario evaluations, and forward finalized drafts to quality approvers.',
         'የኮርስ ባለቤቶች የትምህርት እቅዶችን ያዘጋጃሉ፤ ቪዲዮዎችን እና ሰነዶችን ያካትታሉ፤ ፈተናዎችን በማዘጋጀት ለግምገማ ያቀርባሉ።',
@@ -421,10 +402,7 @@ export default function LandingPage() {
       id: 'sysadmin',
       title: tBilingual('System Administrator', 'የስርዓት አስተዳዳሪ'),
       badge: tBilingual('Platform Governance', 'የስርዓት አስተዳደር እና ቁጥጥር'),
-      headline: tBilingual(
-        'Enterprise directory sync, system telemetry, and audit readiness.',
-        'የተጠቃሚዎች ማዕከላዊ አስተዳደር፣ የቴክኒክ ክትትል እና የደህንነት ኦዲት።',
-      ),
+      headline: tBilingual('Enterprise directory sync, system telemetry, and audit readiness.', 'የተጠቃሚዎች ማዕከላዊ አስተዳደር፣ የቴክኒክ ክትትል እና የደህንነት ኦዲት።'),
       description: tBilingual(
         'System administrators manage Active Directory/LDAP single sign-on integration, assign hierarchical permission roles, audit critical system mutations, and supervise operational uptime.',
         'የተጠቃሚዎችን ፈቃድ ያስተካክላሉ፤ የመረጃ ደህንነትን ይቆጣጠራሉ፤ የስርዓቱን ቀጣይነት ያለው አገልግሎት ያረጋግጣሉ።',
@@ -489,30 +467,21 @@ export default function LandingPage() {
       ),
     },
     {
-      question: tBilingual(
-        'How does the multi-tier role authorization model operate?',
-        'የስራ ድርሻ ፈቃድ አሰጣጥ (RBAC) እንዴት ነው የሚሰራው?',
-      ),
+      question: tBilingual('How does the multi-tier role authorization model operate?', 'የስራ ድርሻ ፈቃድ አሰጣጥ (RBAC) እንዴት ነው የሚሰራው?'),
       answer: tBilingual(
         'Access is governed by the Principle of Least Privilege across 6 distinct profiles: Course Owners, Content Approvers, Training Administrators, Trainers, Learners, and System Administrators. Each user authenticates directly into a personalized workspace tailored precisely to their administrative jurisdiction.',
         'ስርዓቱ በ6 የተከፋፈሉ የስራ ድርሻዎች የተገነባ ነው፦ የኮርስ ባለቤት፣ ይዘት አጽዳቂ፣ የስልጠና አስተዳዳሪ፣ አሰልጣኝ፣ ተማሪ እና የስርዓት አስተዳዳሪ። እያንዳንዱ ተጠቃሚ በተመደበለት ኃላፊነት ልክ የተዘጋጀ የስራ ገጽ ያገኛል።',
       ),
     },
     {
-      question: tBilingual(
-        'How are digital certificates validated against tampering?',
-        'የተሰጡ ሰርተፍኬቶች ትክክለኛነት እንዴት ይረጋገጣል?',
-      ),
+      question: tBilingual('How are digital certificates validated against tampering?', 'የተሰጡ ሰርተፍኬቶች ትክክለኛነት እንዴት ይረጋገጣል?'),
       answer: tBilingual(
         'Every awarded certificate contains a cryptographically stamped serial number and a public verification link. Third-party verifiers or internal HR teams can instantly check qualification authenticity without contacting platform technicians.',
         'እያንዳንዱ ሰርተፍኬት ልዩ የመለያ ቁጥር እና ፈጣን የQR ኮድ ማረጋገጫ የያዘ በመሆኑ ማንም ሰው ወይም የሰው ኃይል አስተዳደር ክፍል የሰነዱን ትክክለኛነት በቀላሉ ማረጋገጥ ይችላል።',
       ),
     },
     {
-      question: tBilingual(
-        'Is the platform fully available in Amharic and English?',
-        'መድረኩ በአማርኛ እና በእንግሊዝኛ ሙሉ በሙሉ ይሰራል?',
-      ),
+      question: tBilingual('Is the platform fully available in Amharic and English?', 'መድረኩ በአማርኛ እና በእንግሊዝኛ ሙሉ በሙሉ ይሰራል?'),
       answer: tBilingual(
         'Yes. The system is architected with bilingual localization across all user touchpoints — including navigation controls, administrative dashboards, data grids, and localized certificate typography.',
         'አዎ። መድረኩ በዳሽቦርዶች፣ በምናሌዎች፣ በኮርሶች እና በሰርተፍኬት ህትመት ላይ እንግሊዝኛን እና አማርኛን በእኩል ደረጃ ይደግፋል።',
@@ -534,24 +503,13 @@ export default function LandingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-sky-50 px-4 py-1.5 text-xs font-semibold text-sky-800 shadow-sm backdrop-blur dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
               <ShieldCheck className="h-4 w-4 text-amber-500" />
-              <span>
-                {tBilingual(
-                  'Unified National Tax & Customs Training Platform',
-                  'ሀገር አቀፍ የገቢዎች እና የጉምሩክ ስልጠና መድረክ',
-                )}
-              </span>
+              <span>{tBilingual('Unified National Tax & Customs Training Platform', 'ሀገር አቀፍ የገቢዎች እና የጉምሩክ ስልጠና መድረክ')}</span>
             </div>
 
             <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
-              {tBilingual(
-                'Enterprise learning built for the ',
-                'ለተቋማዊ ብቃት የተገነባ ዘመናዊ ',
-              )}
+              {tBilingual('Enterprise learning built for the ', 'ለተቋማዊ ብቃት የተገነባ ዘመናዊ ')}
               <span className="bg-gradient-to-r from-sky-600 via-blue-700 to-amber-500 bg-clip-text text-transparent dark:from-sky-400 dark:via-blue-400 dark:to-amber-400">
-                {tBilingual(
-                  'Ministry of Revenues',
-                  'የገቢዎች ሚኒስቴር የስልጠና ስርዓት',
-                )}
+                {tBilingual('Ministry of Revenues', 'የገቢዎች ሚኒስቴር የስልጠና ስርዓት')}
               </span>
             </h1>
 
@@ -629,15 +587,9 @@ export default function LandingPage() {
             },
           ].map((item) => (
             <div key={item.label} className="p-6 text-center lg:py-8">
-              <p className="font-display text-3xl font-extrabold tracking-tight text-sky-700 dark:text-sky-400 sm:text-4xl">
-                {item.value}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-slate-900 dark:text-slate-200 sm:text-sm">
-                {item.label}
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {item.desc}
-              </p>
+              <p className="font-display text-3xl font-extrabold tracking-tight text-sky-700 dark:text-sky-400 sm:text-4xl">{item.value}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-900 dark:text-slate-200 sm:text-sm">{item.label}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -651,10 +603,7 @@ export default function LandingPage() {
               {tBilingual('Enterprise Architecture', 'የስርዓቱ ዋና ዋና ክፍሎች')}
             </p>
             <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {tBilingual(
-                'Built for institutional governance and scale',
-                'ለተቋማዊ ግልጽነትና ቀጣይነት የተገነባ',
-              )}
+              {tBilingual('Built for institutional governance and scale', 'ለተቋማዊ ግልጽነትና ቀጣይነት የተገነባ')}
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
               {tBilingual(
@@ -675,12 +624,8 @@ export default function LandingPage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600 transition group-hover:bg-sky-600 group-hover:text-white dark:bg-sky-950/50 dark:text-sky-400">
                     <Icon className="h-6 w-6" />
                   </div>
-                  <h3 className="mt-5 font-display text-base font-bold text-slate-950 dark:text-white">
-                    {feat.title}
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
-                    {feat.description}
-                  </p>
+                  <h3 className="mt-5 font-display text-base font-bold text-slate-950 dark:text-white">{feat.title}</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{feat.description}</p>
                 </div>
               );
             })}
@@ -699,10 +644,7 @@ export default function LandingPage() {
               {tBilingual('Role Separation', 'የስራ ድርሻ ክፍፍል')}
             </span>
             <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {tBilingual(
-                'Six tailored workspaces in harmony',
-                'ስድስት የተለያዩ የስራ ክፍሎች በአንድ ላይ ሲሰሩ',
-              )}
+              {tBilingual('Six tailored workspaces in harmony', 'ስድስት የተለያዩ የስራ ክፍሎች በአንድ ላይ ሲሰሩ')}
             </h2>
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
               {tBilingual(
@@ -746,9 +688,7 @@ export default function LandingPage() {
                   {currentRole.headline}
                 </h3>
 
-                <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
-                  {currentRole.description}
-                </p>
+                <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">{currentRole.description}</p>
 
                 <div className="mt-8 border-t border-slate-100 pt-6 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">
@@ -765,10 +705,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="mt-8">
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400"
-                  >
+                  <Link href="/login" className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400">
                     <span>{tBilingual(`Access ${currentRole.title} Console`, `ወደ ${currentRole.title} መቆጣጠሪያ ይግቡ`)}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
@@ -780,41 +717,29 @@ export default function LandingPage() {
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div className="flex items-center gap-2">
                       <currentRole.icon className="h-4 w-4 text-sky-400" />
-                      <span className="font-mono text-xs font-semibold text-slate-200">
-                        {currentRole.title} Console
-                      </span>
+                      <span className="font-mono text-xs font-semibold text-slate-200">{currentRole.title} Console</span>
                     </div>
-                    <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                      AUTHENTICATED
-                    </span>
+                    <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">AUTHENTICATED</span>
                   </div>
 
                   <div className="mt-4 space-y-3">
                     <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                        {tBilingual('Active Duty Queue', 'የስራ ሂደት ዝርዝር')}
-                      </p>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400">{tBilingual('Active Duty Queue', 'የስራ ሂደት ዝርዝር')}</p>
                       <p className="mt-1 text-xs font-medium text-slate-200">
                         {tBilingual('Direct access to assigned directorate tasks', 'የተመደቡ የስራ ኃላፊነቶች ቀጥታ መዳረሻ')}
                       </p>
                     </div>
 
                     <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                        {tBilingual('Directorate Node', 'የዳይሬክቶሬት ክፍል')}
-                      </p>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400">{tBilingual('Directorate Node', 'የዳይሬክቶሬት ክፍል')}</p>
                       <p className="mt-1 text-xs font-medium text-slate-200">
                         {tBilingual('Federal Headquarters • Tax & Customs Audit', 'ዋናው መስሪያ ቤት • ታክስ እና ጉምሩክ')}
                       </p>
                     </div>
 
                     <div className="rounded-lg border border-sky-500/30 bg-sky-950/30 p-3">
-                      <p className="text-[10px] font-semibold text-sky-300">
-                        {tBilingual('Security Token Validated', 'የደህንነት ፈቃድ ተረጋግጧል')}
-                      </p>
-                      <p className="mt-0.5 text-[10px] text-slate-400">
-                        MoR Internal PKI Session Active
-                      </p>
+                      <p className="text-[10px] font-semibold text-sky-300">{tBilingual('Security Token Validated', 'የደህንነት ፈቃድ ተረጋግጧል')}</p>
+                      <p className="mt-0.5 text-[10px] text-slate-400">MoR Internal PKI Session Active</p>
                     </div>
                   </div>
                 </div>
@@ -832,10 +757,7 @@ export default function LandingPage() {
               {tBilingual('Standard Operating Procedure', 'የአሰራር ሂደት ደረጃዎች')}
             </span>
             <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {tBilingual(
-                'From curriculum drafting to verified diploma',
-                'ከኮርስ ዝግጅት እስከ ተረጋገጠ ሰርተፍኬት',
-              )}
+              {tBilingual('From curriculum drafting to verified diploma', 'ከኮርስ ዝግጅት እስከ ተረጋገጠ ሰርተፍኬት')}
             </h2>
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
               {tBilingual(
@@ -857,16 +779,10 @@ export default function LandingPage() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-600 text-white shadow-md shadow-sky-600/20">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <span className="font-mono text-2xl font-black text-slate-300 dark:text-slate-700">
-                      {step.num}
-                    </span>
+                    <span className="font-mono text-2xl font-black text-slate-300 dark:text-slate-700">{step.num}</span>
                   </div>
-                  <h3 className="mt-6 font-display text-base font-bold text-slate-950 dark:text-white">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
-                    {step.description}
-                  </p>
+                  <h3 className="mt-6 font-display text-base font-bold text-slate-950 dark:text-white">{step.title}</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{step.description}</p>
                 </div>
               );
             })}
@@ -875,149 +791,102 @@ export default function LandingPage() {
       </section>
 
       {/* WINDOWS DESKTOP APP SECTION - ONLY SHOWN ON WEB */}
-{!isDesktop && (
-  <section
-    id="desktop"
-    data-desktop-app-only="true"
-    className="scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8"
-  >
-    <div className="mx-auto max-w-6xl">
-      <div className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-950 p-8 text-white shadow-2xl sm:p-12 lg:p-16">
-        {/* Decorative Background */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
+      {!isDesktop && (
+        <section id="desktop" data-desktop-app-only="true" className="scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-950 p-8 text-white shadow-2xl sm:p-12 lg:p-16">
+              {/* Decorative Background */}
+              <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
 
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          {/* LEFT SIDE */}
-          <div>
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-300">
-              <Monitor className="h-3.5 w-3.5" />
+              <div className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+                {/* LEFT SIDE */}
+                <div>
+                  {/* Badge */}
+                  <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-300">
+                    <Monitor className="h-3.5 w-3.5" />
 
-              <span>
-                {tBilingual(
-                  "Enterprise Client",
-                  "የተቋም ዴስክቶፕ መተግበሪያ",
-                )}
-              </span>
-            </div>
+                    <span>{tBilingual('Enterprise Client', 'የተቋም ዴስክቶፕ መተግበሪያ')}</span>
+                  </div>
 
-            {/* Heading */}
-            <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              {tBilingual(
-                "MoR LMS for Windows Workstations",
-                "የMoR LMS መተግበሪያ ለ Windows ኮምፒውተሮች",
-              )}
-            </h2>
+                  {/* Heading */}
+                  <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                    {tBilingual('MoR LMS for Windows Workstations', 'የMoR LMS መተግበሪያ ለ Windows ኮምፒውተሮች')}
+                  </h2>
 
-            {/* Description */}
-            <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
-              {tBilingual(
-                "Engineered for Ministry branch training facilities and designed to provide a reliable desktop learning experience. The Windows client can support offline learning, local content caching, and controlled examination environments.",
-                "በሚኒስቴሩ የቅርንጫፍ መስሪያ ቤቶች እና የስልጠና ክፍሎች ውስጥ ፈጣን፣ አስተማማኝ እና ቀላል የስልጠና ልምድ ለመስጠት የተዘጋጀ የWindows ዴስክቶፕ መተግበሪያ ነው።",
-              )}
-            </p>
+                  {/* Description */}
+                  <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
+                    {tBilingual(
+                      'Engineered for Ministry branch training facilities and designed to provide a reliable desktop learning experience. The Windows client can support offline learning, local content caching, and controlled examination environments.',
+                      'በሚኒስቴሩ የቅርንጫፍ መስሪያ ቤቶች እና የስልጠና ክፍሎች ውስጥ ፈጣን፣ አስተማማኝ እና ቀላል የስልጠና ልምድ ለመስጠት የተዘጋጀ የWindows ዴስክቶፕ መተግበሪያ ነው።',
+                    )}
+                  </p>
 
-            {/* Features */}
-            <div className="mt-6 grid grid-cols-1 gap-3 text-xs text-slate-300 sm:grid-cols-2">
-              {/* Windows Compatibility */}
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+                  {/* Features */}
+                  <div className="mt-6 grid grid-cols-1 gap-3 text-xs text-slate-300 sm:grid-cols-2">
+                    {/* Windows Compatibility */}
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
 
-                <span>
-                  {tBilingual(
-                    "Windows 10 / 11 64-bit",
-                    "ለ Windows 10 እና 11 64-bit",
-                  )}
-                </span>
-              </div>
+                      <span>{tBilingual('Windows 10 / 11 64-bit', 'ለ Windows 10 እና 11 64-bit')}</span>
+                    </div>
 
-              {/* Exam Mode */}
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+                    {/* Exam Mode */}
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
 
-                <span>
-                  {tBilingual(
-                    "Secure Exam Kiosk Mode",
-                    "አስተማማኝ የፈተና ሁኔታ",
-                  )}
-                </span>
-              </div>
+                      <span>{tBilingual('Secure Exam Kiosk Mode', 'አስተማማኝ የፈተና ሁኔታ')}</span>
+                    </div>
 
-              {/* Offline Cache */}
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+                    {/* Offline Cache */}
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
 
-                <span>
-                  {tBilingual(
-                    "Local Course Caching",
-                    "ኮርሶችን አውርዶ በአካባቢው የመያዝ አቅም",
-                  )}
-                </span>
-              </div>
+                      <span>{tBilingual('Local Course Caching', 'ኮርሶችን አውርዶ በአካባቢው የመያዝ አቅም')}</span>
+                    </div>
 
-              {/* Installer */}
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+                    {/* Installer */}
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
 
-                <span>
-                  {tBilingual(
-                    "Windows Installer",
-                    "የWindows መጫኛ ፋይል",
-                  )}
-                </span>
+                      <span>{tBilingual('Windows Installer', 'የWindows መጫኛ ፋይል')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE - DOWNLOAD CARD */}
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur sm:p-8">
+                  {/* Download Icon */}
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-lg">
+                    <Download className="h-8 w-8" />
+                  </div>
+
+                  {/* Installer Name */}
+                  <h4 className="mt-4 font-display text-lg font-bold text-white">MoR-LMS-Setup.exe</h4>
+
+                  {/* Version */}
+                  <p className="mt-1 text-xs text-slate-400">{tBilingual('Version 2.4.0 • Windows Installer', 'ስሪት 2.4.0 • የWindows መጫኛ ፋይል')}</p>
+
+                  {/* Download Button */}
+                  <a
+                    href="/downloads/MoR-LMS-Setup.exe"
+                    download
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs font-bold text-slate-950 shadow-md transition hover:bg-slate-100 active:scale-95"
+                  >
+                    <Download className="h-4 w-4" />
+
+                    <span>{tBilingual('Download for Windows', 'ለ Windows ያውርዱ')}</span>
+                  </a>
+
+                  {/* Additional Information */}
+                  <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+                    {tBilingual('Compatible with supported 64-bit Windows workstations.', 'ከሚደገፉ 64-bit Windows ኮምፒውተሮች ጋር ይሰራል።')}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* RIGHT SIDE - DOWNLOAD CARD */}
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur sm:p-8">
-            {/* Download Icon */}
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-lg">
-              <Download className="h-8 w-8" />
-            </div>
-
-            {/* Installer Name */}
-            <h4 className="mt-4 font-display text-lg font-bold text-white">
-              MoR-LMS-Setup.exe
-            </h4>
-
-            {/* Version */}
-            <p className="mt-1 text-xs text-slate-400">
-              {tBilingual(
-                "Version 2.4.0 • Windows Installer",
-                "ስሪት 2.4.0 • የWindows መጫኛ ፋይል",
-              )}
-            </p>
-
-            {/* Download Button */}
-            <a
-              href="/downloads/MoR-LMS-Setup.exe"
-              download
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs font-bold text-slate-950 shadow-md transition hover:bg-slate-100 active:scale-95"
-            >
-              <Download className="h-4 w-4" />
-
-              <span>
-                {tBilingual(
-                  "Download for Windows",
-                  "ለ Windows ያውርዱ",
-                )}
-              </span>
-            </a>
-
-            {/* Additional Information */}
-            <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
-              {tBilingual(
-                "Compatible with supported 64-bit Windows workstations.",
-                "ከሚደገፉ 64-bit Windows ኮምፒውተሮች ጋር ይሰራል።",
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-)}
+        </section>
+      )}
 
       {/* INSTITUTIONAL SECURITY / GOVERNANCE */}
       <section className="px-4 py-16 sm:px-6 lg:px-8">
@@ -1029,10 +898,7 @@ export default function LandingPage() {
                   <LockKeyhole className="h-6 w-6" />
                 </div>
                 <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
-                  {tBilingual(
-                    'Enterprise Compliance & Data Sovereignty',
-                    'የተቋም ደህንነት፣ ህጋዊነት እና የመረጃ ባለቤትነት',
-                  )}
+                  {tBilingual('Enterprise Compliance & Data Sovereignty', 'የተቋም ደህንነት፣ ህጋዊነት እና የመረጃ ባለቤትነት')}
                 </h2>
                 <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                   {tBilingual(
@@ -1071,7 +937,10 @@ export default function LandingPage() {
                     { label: tBilingual('Identity Access', 'የመግቢያ ፈቃድ'), value: 'Granular RBAC' },
                     { label: tBilingual('Hosting Environment', 'የማስተናገጃ ሁኔታ'), value: 'MoR Private Data Center' },
                   ].map((row) => (
-                    <div key={row.label} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900">
+                    <div
+                      key={row.label}
+                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900"
+                    >
                       <span className="text-slate-600 dark:text-slate-400">{row.label}</span>
                       <span className="font-mono font-semibold text-sky-700 dark:text-sky-400">{row.value}</span>
                     </div>
@@ -1086,7 +955,10 @@ export default function LandingPage() {
       <LatestNewsSection />
 
       {/* FAQ SECTION */}
-      <section id="faq" className="scroll-mt-16 border-t border-slate-200 bg-slate-50/50 px-4 py-20 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6 lg:px-8">
+      <section
+        id="faq"
+        className="scroll-mt-16 border-t border-slate-200 bg-slate-50/50 px-4 py-20 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6 lg:px-8"
+      >
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
@@ -1127,11 +999,7 @@ export default function LandingPage() {
                     />
                   </button>
 
-                  {open && (
-                    <div className="px-5 pb-5 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
-                      {faq.answer}
-                    </div>
-                  )}
+                  {open && <div className="px-5 pb-5 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{faq.answer}</div>}
                 </div>
               );
             })}

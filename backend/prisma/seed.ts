@@ -18,6 +18,7 @@ import {
 } from '@prisma/client';
 import { seedPermissions } from './seed-permissions';
 import { seedTemplates } from './seed-templates';
+import { seedLaws } from './seed-laws';
 
 import { correctAnswerFirst } from './correct-answer-first';
 
@@ -2413,6 +2414,9 @@ async function main() {
 
   // 3a. Seed Certificate Templates
   await seedTemplates(prisma);
+
+  // 3a2. Seed Tax & Customs Laws Categories and Documents
+  await seedLaws();
 
   // 3b. Seed Ministry Branch Venues
   console.log('🏢 Seeding Ministry Branch Venues...');

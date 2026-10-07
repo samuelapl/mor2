@@ -1,12 +1,15 @@
 import { router, Tabs } from 'expo-router';
-import { Bell, BookOpen, Compass, DownloadCloud, Home, User, Video } from 'lucide-react-native';
+import { Bell, BookOpen, Compass, DownloadCloud, Home, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
+import { AppDrawer, HeaderDrawerButton } from '@/components/drawer';
+import { HeaderLanguageToggle } from '@/components/LanguageToggle';
 import { HeaderThemeToggle } from '@/components/ThemeToggle';
 import { AppText } from '@/components/ui';
 import { useThemeColors } from '@/core/theme/colors';
 import { useUnreadCount } from '@/features/notifications';
+import { useChangeLanguage } from '@/features/profile';
 
 /** Header Downloads / Offline Learning button (YouTube-style quick access). */
 function DownloadsButton() {
@@ -38,7 +41,7 @@ function NotificationBell() {
       onPress={() => router.push('/notifications')}
       className="p-1"
     >
-      <Bell size={22} color={colors.text} />
+      <Bell size={21} color={colors.text} />
       {unread > 0 ? (
         <View className="absolute -right-1 -top-0.5 min-w-[18px] items-center rounded-full bg-red-600 px-1">
           <AppText className="text-[10px] font-bold text-white">
@@ -51,8 +54,10 @@ function NotificationBell() {
 }
 
 function HeaderRight() {
+  const language = useChangeLanguage();
   return (
-    <View className="mr-4 flex-row items-center gap-3">
+    <View className="mr-3 flex-row items-center gap-2.5">
+      <HeaderLanguageToggle onChange={language.change} disabled={language.isPending} />
       <DownloadsButton />
       <HeaderThemeToggle />
       <NotificationBell />
@@ -65,60 +70,61 @@ export default function TabsLayout() {
   const colors = useThemeColors();
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        headerRight: () => <HeaderRight />,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textMuted,
+          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
+          headerLeft: () => <HeaderDrawerButton />,
+          headerRight: () => <HeaderRight />,
         }}
-      />
-      <Tabs.Screen
-        name="my-courses"
-        options={{
-          title: t('tabs.myCourses'),
-          tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="catalog"
-        options={{
-          title: t('tabs.catalog'),
-          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="downloads"
-        options={{
-          title: t('screens.downloads', { defaultValue: 'Downloads' }),
-          tabBarIcon: ({ color, size }) => (
-            <DownloadCloud color={color} size={size} strokeWidth={2.2} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="live-sessions"
-        options={{
-          title: t('tabs.liveSessions'),
-          tabBarIcon: ({ color, size }) => <Video color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t('tabs.profile'),
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: t('tabs.home'),
+            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="my-courses"
+          options={{
+            title: t('tabs.myCourses'),
+            tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="catalog"
+          options={{
+            title: t('tabs.catalog'),
+            tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="live-sessions"
+          options={{
+            title: t('tabs.liveSessions'),
+            tabBarIcon: ({ color, size }) => <Video color={color} size={size} />,
+          }}
+        />
+        {/* Removed from bottom navigation bar */}
+        <Tabs.Screen
+          name="downloads"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            href: null,
+          }}
+        />
+      </Tabs>
+      <AppDrawer />
+    </>
   );
 }

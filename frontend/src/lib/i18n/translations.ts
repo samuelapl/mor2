@@ -79,6 +79,7 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'Log out': { en: 'Log out', am: 'ውጣ' },
   'Switch role / Sign out': { en: 'Log out', am: 'ውጣ' },
   'Learning Management System': { en: 'Learning Management System', am: 'የትምህርት አስተዳደር ሥርዓት' },
+  'Tax & Customs Laws': { en: 'Tax & Customs Laws', am: 'የታክስ እና የጉምሩክ ሕጎች' },
 };
 
 export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {

@@ -163,6 +163,14 @@ export default function RootLayout() {
                   options={{ title: t('screens.certificate') }}
                 />
                 <Stack.Screen
+                  name="downloads/index"
+                  options={{ title: t('screens.downloads', { defaultValue: 'Downloads' }) }}
+                />
+                <Stack.Screen
+                  name="laws/index"
+                  options={{ title: t('screens.laws', { defaultValue: 'Tax & Customs Laws' }) }}
+                />
+                <Stack.Screen
                   name="notifications"
                   options={{ title: t('screens.notifications') }}
                 />

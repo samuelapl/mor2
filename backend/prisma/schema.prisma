@@ -78,6 +78,8 @@ model User {
   newsReactions           NewsReaction[]
   newsComments            NewsComment[]
 
+  legalDocumentsCreated   LegalDocument[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at") // soft delete
@@ -1133,4 +1135,76 @@ model NewsComment {
 
   @@index([newsId, createdAt])
   @@map("news_comments")
+}
+
+// ── Tax & Customs Laws / Legal Repository ───────────────────
+
+enum LawDomain {
+  TAX_LAW          // የታክስ ሕጎች
+  CUSTOMS_LAW      // የጉምሩክ ሕጎች
+  DRAFT_LAW        // ረቂቅ ሕጎች
+  OTHER_DOCUMENTS  // ሌሎች ሰነዶች
+}
+
+enum LawInstrumentType {
+  PROCLAMATION     // አዋጅ
+  REGULATION       // ደንብ
+  DIRECTIVE        // መመሪያ
+  CIRCULAR         // ሰርኩላር
+  OTHER            // ሌሎች
+}
+
+enum LawStatus {
+  IN_FORCE         // በሥራ ላይ ያለ
+  REPEALED         // የተሻረ
+  AMENDED          // የተሻሻለ
+  DRAFT            // ረቂቅ
+}
+
+model LawCategory {
+  id              String            @id @default(uuid())
+  domain          LawDomain         @map("domain")
+  instrumentType  LawInstrumentType @map("instrument_type")
+  nameEn          String            @map("name_en")
+  nameAm          String?           @map("name_am")
+  description     String?           @db.Text
+  order           Int               @default(0)
+
+  documents       LegalDocument[]
+
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([domain, instrumentType])
+  @@map("law_categories")
+}
+
+model LegalDocument {
+  id              String         @id @default(uuid())
+  categoryId      String         @map("category_id")
+  category        LawCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  documentNumber  String         @map("document_number") // e.g. "33/1984" or "979/2016"
+  titleEn         String         @map("title_en")
+  titleAm         String?        @map("title_am")
+  descriptionEn   String?        @map("description_en") @db.Text
+  descriptionAm   String?        @map("description_am") @db.Text
+  status          LawStatus      @default(IN_FORCE) @map("status")
+  yearIssued      Int?           @map("year_issued")
+
+  coverImageUrl   String?        @map("cover_image_url") // Negarit Gazeta cover thumbnail preview
+  pdfUrl          String         @map("pdf_url")         // The attached PDF file
+  fileName        String         @map("file_name")
+  fileSize        Int?           @map("file_size")
+
+  createdById     String         @map("created_by_id")
+  createdBy       User           @relation(fields: [createdById], references: [id])
+
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  @@index([categoryId, status])
+  @@index([createdById])
+  @@map("legal_documents")
 }
