@@ -581,12 +581,6 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     icon: PenSquare,
     permission: PERMISSION_GATED_PATHS['/news-management'],
   },
-  // No permission: every signed-in user gets a link to the public news page.
-  {
-    label: 'News',
-    href: '/news',
-    icon: Newspaper,
-  },
 ];
 
 export function navItemsForRole(role: Role): NavItem[] {

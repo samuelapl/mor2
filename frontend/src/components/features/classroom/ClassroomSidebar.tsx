@@ -545,33 +545,56 @@ export function ClassroomSidebar({
           ? (() => {
               const finalItem = flatItems.find((i) => i.quizKind === 'FINAL_ASSESSMENT')!;
               const isActive = activeKey === finalItem.key;
-              const isClickable = finalItem.unlocked || finalItem.isInPersonLocked;
 
               const handleFinalClick = () => {
-                if (isClickable) {
-                  onSelectItem(finalItem);
-                } else {
+                onSelectItem(finalItem);
+
+                if (!finalItem.unlocked && !finalItem.isInPersonLocked) {
                   const contentCompleted = progress?.courseCompletion?.contentCompleted ?? false;
+                  const completedLessons = progress?.stats?.completedLessons ?? 0;
+                  const totalLessons = progress?.stats?.totalLessons ?? 0;
                   const liveSessions = progress?.liveSessions ?? [];
                   const allLiveSessionsAttended =
                     liveSessions.length === 0 ||
                     liveSessions.every((s) => s.status === 'COMPLETED' && s.attended);
+                  const allAssessmentsPassed = progress?.courseCompletion?.allAssessmentsPassed ?? true;
 
-                  if (contentCompleted && !allLiveSessionsAttended) {
+                  if (!contentCompleted && totalLessons > 0 && completedLessons < totalLessons) {
+                    toast.warning(
+                      tBilingual(
+                        `Please complete all course lessons (${completedLessons}/${totalLessons} completed) before taking the final assessment.`,
+                        `የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የትምህርት ክፍሎች (${completedLessons}/${totalLessons}) ያጠናቅቁ።`,
+                      ),
+                    );
+                  } else if (contentCompleted && !allLiveSessionsAttended) {
                     toast.warning(
                       tBilingual(
                         'You must attend all scheduled live sessions before taking the final assessment.',
                         'የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የቀጥታ ክፍለ-ጊዜዎች መከታተል አለብዎት።',
                       ),
                     );
+                  } else if (!allAssessmentsPassed) {
+                    toast.warning(
+                      tBilingual(
+                        'Please pass all prerequisite module assessments before taking the final assessment.',
+                        'የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የሞጁል ፈተናዎች ማለፍ አለብዎት።',
+                      ),
+                    );
                   } else {
                     toast.warning(
                       tBilingual(
-                        'You have uncompleted modules or lessons. Complete all prerequisite content before taking the final assessment.',
-                        'ያልተጠናቀቁ ሞጁሎች ወይም ትምህርቶች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ቅድመ-ሁኔታዎች ያጠናቅቁ።',
+                        'You have uncompleted prerequisites. Complete all preceding content before taking the final assessment.',
+                        'ያልተጠናቀቁ ቅድመ-ሁኔታዎች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ይዘቶች ያጠናቅቁ።',
                       ),
                     );
                   }
+                } else if (finalItem.isInPersonLocked) {
+                  toast.info(
+                    tBilingual(
+                      'This final assessment is administered in-person at the training venue.',
+                      'ይህ የመጨረሻ ፈተና በስልጠናው ቦታ በአካል ይሰጣል።',
+                    ),
+                  );
                 }
               };
 

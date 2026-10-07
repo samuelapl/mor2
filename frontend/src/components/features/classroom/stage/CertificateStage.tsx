@@ -315,36 +315,6 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
             )}
           />
         )}
-
-        {!isInPerson && progress && <CourseGradeSummary completion={progress.courseCompletion} />}
-
-        {/* Certificate Watermark Preview */}
-        <div className="relative rounded-2xl border border-slate-200 bg-slate-50/50 p-6 overflow-hidden shadow-2xs">
-          <div className="absolute inset-0 bg-slate-900/5 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6 text-center">
-            <div className="rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-800 shadow-md flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-amber-500" />
-              {tBilingual('Official Certificate Sample Preview', 'ይፋዊ የሰርተፊኬት ቅድመ-ዕይታ')}
-            </div>
-            <p className="text-xs text-slate-600 mt-2 max-w-sm">
-              {tBilingual(
-                'Your name, official digital signature, QR verification key, and course ID will be minted automatically once complete.',
-                'ስምዎ፣ ይፋዊ ዲጂታል ፊርማ፣ የQR ማረጋገጫ ቁልፍ እና የኮርስ መለያ ኮርሱን ሲያጠናቅቁ በራስ-ሰር ይዘጋጃሉ።',
-              )}
-            </p>
-          </div>
-
-          <div className="filter blur-[1.5px] opacity-70 pointer-events-none select-none">
-            <CertificateRenderer
-              template={template}
-              studentName={recipientName}
-              courseTitle={course.title}
-              completionDate={issueDateFormatted}
-              certificateNumber="ETIMS-XXXX-XXXX-XXXX"
-              verificationCode="SAMPLE-CODE"
-              durationHours={estimatedHours}
-            />
-          </div>
-        </div>
       </div>
     );
   }

@@ -429,7 +429,12 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'live_session.manage_own',
     'progress.view',
   ],
-  [RoleName.CONTENT_APPROVER]: ['course.view.all', 'course.approve_reject'],
+  [RoleName.CONTENT_APPROVER]: [
+    'course.view.all',
+    'course.approve_reject',
+    'news.manage',
+    'news.publish',
+  ],
   [RoleName.TRAINING_ADMIN]: [
     'course.create',
     'course.update.all',
@@ -463,6 +468,8 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'category.manage',
     'CERTIFICATE_MANAGE',
     'CERTIFICATE_TEMPLATE_MANAGE',
+    'news.manage',
+    'news.publish',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',
@@ -590,4 +597,14 @@ export async function seedPermissions(prisma: PrismaClient) {
   }
 
   console.log('  ✓ Permission registry + matrix seeded');
+}
+
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  seedPermissions(prisma)
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(() => prisma.$disconnect());
 }
