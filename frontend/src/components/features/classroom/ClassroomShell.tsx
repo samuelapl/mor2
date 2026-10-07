@@ -1,12 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, Loader2 } from 'lucide-react';
 import type { Course } from '@/types';
 import type { ApiCourseProgress } from '@/lib/api/types';
 import { fetchCourseDetail } from '@/lib/api/courses';
 import { fetchCourseProgress, markLessonComplete } from '@/lib/api/progress';
 import { courseFromDetail } from '@/lib/api/transform';
+import { Button } from '@/components/ui/Button';
 import { QuizTakerModal } from '@/components/features/quiz/QuizTakerModal';
 import { ClassroomHeader } from './ClassroomHeader';
 import { ClassroomSidebar } from './ClassroomSidebar';
@@ -16,10 +17,13 @@ import { useClassroomNavigation } from './hooks/useClassroomNavigation';
 import { useClassroomHeartbeat } from './hooks/useClassroomHeartbeat';
 
 interface ClassroomShellProps {
-  courseId: string;
+  courseId?: string;
+  previewCourse?: Course;
+  isPreview?: boolean;
+  onExitPreview?: () => void;
 }
 
-export function ClassroomShell({ courseId }: ClassroomShellProps) {
+export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPreview }: ClassroomShellProps) {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [progress, setProgress] = useState<ApiCourseProgress | null>(null);
@@ -29,6 +33,78 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
 
   // Fetch course and progress in parallel
   const loadData = useCallback(async () => {
+    if (isPreview && previewCourse) {
+      setCourse(previewCourse);
+      const mockModules = (previewCourse.modules || []).map((m: any, mIdx: number) => ({
+        moduleId: m.id,
+        titleEn: m.title || `Module ${mIdx + 1}`,
+        titleAm: m.titleAm || m.title || `Module ${mIdx + 1}`,
+        order: m.order ?? mIdx + 1,
+        unlocked: true,
+        totalLessons: m.lessons?.length || 0,
+        completedLessons: 0,
+        moduleCompleted: false,
+        progressPercent: 0,
+        timeSpentSeconds: 0,
+        requiredSeconds: 0,
+        timeSatisfied: true,
+        lessons: (m.lessons || []).map((l: any, lIdx: number) => ({
+          lessonId: l.id,
+          titleEn: l.title || `Lesson ${lIdx + 1}`,
+          titleAm: l.titleAm || l.title || `Lesson ${lIdx + 1}`,
+          order: l.order ?? lIdx + 1,
+          completed: false,
+          unlocked: true,
+          timeSpentSeconds: 0,
+          requiredSeconds: 0,
+          timeSatisfied: true,
+          subLessons: (l.subLessons || []).map((sl: any, slIdx: number) => ({
+            lessonId: sl.id,
+            titleEn: sl.title || `Sub-topic ${slIdx + 1}`,
+            titleAm: sl.titleAm || sl.title || `Sub-topic ${slIdx + 1}`,
+            order: sl.order ?? slIdx + 1,
+            completed: false,
+            unlocked: true,
+            timeSpentSeconds: 0,
+            requiredSeconds: 0,
+            timeSatisfied: true,
+          })),
+        })),
+      }));
+
+      setProgress({
+        courseId: previewCourse.id || 'preview',
+        progressionMode: 'OPEN',
+        stats: {
+          totalModules: previewCourse.modules?.length || 0,
+          totalLessons: previewCourse.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0,
+          completedLessons: 0,
+          overallPercent: 0,
+        },
+        modules: mockModules,
+        courseCompletion: {
+          contentCompleted: false,
+          finalAssessmentRequired: false,
+          finalAssessmentPassed: false,
+          certificateEligible: false,
+          finalAssessment: null,
+        },
+        liveSessions: (previewCourse.sessionPlans || []).map((sp: any, idx: number) => ({
+          id: sp.id || `session-${idx}`,
+          sessionId: sp.id || `session-${idx}`,
+          titleEn: sp.title || `Session ${idx + 1}`,
+          scheduledAt: sp.scheduledAt || null,
+          durationMinutes: sp.durationMinutes || 60,
+          platform: sp.platform || 'LIVEKIT',
+          trainerName: sp.trainerName || 'Assigned Course Trainer',
+          status: 'SCHEDULED',
+          attended: false,
+          planned: true,
+        })),
+      } as any);
+      setLoading(false);
+      return;
+    }
     if (!courseId) return;
     try {
       const [detail, prog] = await Promise.all([
@@ -43,7 +119,7 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, isPreview, previewCourse]);
 
   useEffect(() => {
     void loadData();
@@ -97,6 +173,10 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
 
   // Complete current lesson / sub-lesson and advance
   const handleCompleteAndNext = async () => {
+    if (isPreview) {
+      if (nextItem) navigateTo(nextItem);
+      return;
+    }
     if (!activeItemId || isOverview) {
       if (nextItem) navigateTo(nextItem);
       return;
@@ -152,6 +232,26 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
+      {isPreview && (
+        <div className="bg-amber-500 text-white px-4 py-2.5 flex items-center justify-between text-xs font-semibold shadow-md z-50 shrink-0">
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4 shrink-0 text-white" />
+            <span>Learner Preview Mode — Experience your course as an enrolled student. No grades or progress are recorded.</span>
+          </div>
+          {onExitPreview && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onExitPreview}
+              className="h-7 text-xs bg-white text-amber-950 hover:bg-amber-100 font-bold border-0 shadow-xs gap-1.5"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Return to Editor
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* 1. Focus Header */}
       <ClassroomHeader
         course={course}
@@ -209,18 +309,20 @@ export function ClassroomShell({ courseId }: ClassroomShellProps) {
         </main>
       </div>
 
-      {/* 3. Sticky Navigation Footer */}
-      <ClassroomFooter
-        previousItem={previousItem}
-        nextItem={nextItem}
-        onNavigate={navigateTo}
-        onCompleteAndNext={handleCompleteAndNext}
-        currentItem={activeContent?.item}
-        requiredSeconds={requiredSeconds}
-        spentSeconds={spentSeconds}
-        timeSatisfied={timeSatisfied}
-        completing={completing}
-      />
+      {/* 3. Sticky Navigation Footer (hidden during active assessment to keep focus and prevent blurred button) */}
+      {!activeQuizModalId && (
+        <ClassroomFooter
+          previousItem={previousItem}
+          nextItem={nextItem}
+          onNavigate={navigateTo}
+          onCompleteAndNext={handleCompleteAndNext}
+          currentItem={activeContent?.item}
+          requiredSeconds={requiredSeconds}
+          spentSeconds={spentSeconds}
+          timeSatisfied={timeSatisfied}
+          completing={completing}
+        />
+      )}
     </div>
   );
 }

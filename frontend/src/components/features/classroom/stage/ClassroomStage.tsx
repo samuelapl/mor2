@@ -87,6 +87,7 @@ export function ClassroomStage({
         unlocked={item.unlocked}
         isInPersonLocked={item.isInPersonLocked}
         onStartQuiz={() => onTakeQuiz(assessment?.id || item.quizId || '')}
+        onNavigateNext={onNavigateNext}
       />
     );
   }

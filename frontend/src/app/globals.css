@@ -127,15 +127,20 @@
     @apply mb-2.5;
   }
 
-  .rich-content ul {
+  .rich-content ul,
+  .prose ul {
     @apply mb-2.5 list-disc space-y-1 pl-5;
+    list-style-type: disc !important;
   }
 
-  .rich-content ol {
+  .rich-content ol,
+  .prose ol {
     @apply mb-2.5 list-decimal space-y-1 pl-5;
+    list-style-type: decimal !important;
   }
 
-  .rich-content li > p {
+  .rich-content li > p,
+  .prose li > p {
     @apply mb-0;
   }
 

@@ -414,7 +414,7 @@ export class LiveSessionsService {
           tx,
         );
       }
-      return tx.liveSession.update({
+      const updated = await tx.liveSession.update({
         where: { id },
         data: {
           titleAm: dto.titleAm,
@@ -447,6 +447,30 @@ export class LiveSessionsService {
           },
         },
       });
+
+      if (dto.trainerId) {
+        await tx.trainerAssignment.upsert({
+          where: { courseId_userId: { courseId: existing.courseId, userId: dto.trainerId } },
+          create: { courseId: existing.courseId, userId: dto.trainerId },
+          update: {},
+        });
+      } else if (dto.trainerId === null && existing.trainerId) {
+        const otherSessions = await tx.liveSession.count({
+          where: {
+            courseId: existing.courseId,
+            id: { not: id },
+            trainerId: existing.trainerId,
+            deletedAt: null,
+          },
+        });
+        if (otherSessions === 0) {
+          await tx.trainerAssignment.deleteMany({
+            where: { courseId: existing.courseId, userId: existing.trainerId },
+          });
+        }
+      }
+
+      return updated;
     });
   }
 

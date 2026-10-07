@@ -10,6 +10,7 @@ import {
   Lock,
   RotateCcw,
   GraduationCap,
+  ArrowRight,
 } from 'lucide-react';
 import type { ApiAttachedAssessment } from '@/lib/api/types';
 import { Badge } from '@/components/ui/Badge';
@@ -22,6 +23,7 @@ interface QuizStageProps {
   unlocked: boolean;
   isInPersonLocked?: boolean;
   onStartQuiz: () => void;
+  onNavigateNext?: () => void;
 }
 
 export function QuizStage({
@@ -31,6 +33,7 @@ export function QuizStage({
   unlocked,
   isInPersonLocked,
   onStartQuiz,
+  onNavigateNext,
 }: QuizStageProps) {
   if (!assessment) {
     return (
@@ -192,6 +195,8 @@ export function QuizStage({
                 ? `You passed this assessment. You can review your questions or retake to practice further.`
                 : unlocked
                   ? `Test your knowledge with multiple choice and scenario questions to demonstrate your mastery.`
+                  : isFinal
+                  ? `Complete preceding lessons, pass module assessments, and attend all scheduled live sessions to unlock this final assessment.`
                   : `Complete preceding lessons and required study time to unlock this assessment.`}
             </p>
           </div>
@@ -233,6 +238,18 @@ export function QuizStage({
 
         {/* Action Button */}
         <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+          {isPassed && onNavigateNext && (
+            <Button
+              type="button"
+              size="md"
+              onClick={onNavigateNext}
+              className="w-full sm:w-auto font-bold shadow-md bg-emerald-600 text-white hover:bg-emerald-700 px-6 gap-2"
+            >
+              <span>Continue to Next Topic</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+
           <Button
             type="button"
             size="md"
@@ -240,7 +257,7 @@ export function QuizStage({
             onClick={onStartQuiz}
             className={`w-full sm:w-auto font-semibold shadow-sm ${
               isPassed
-                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >

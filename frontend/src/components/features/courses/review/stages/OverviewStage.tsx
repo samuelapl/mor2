@@ -170,63 +170,6 @@ export function OverviewStage({
           missing={tBilingual('⚠ No learning objectives specified.', '⚠ የመማሪያ ዓላማዎች አልተገለጹም።')}
           tone="blue"
         />
-
-        {canAssignTrainer && (
-          <div className="space-y-3 border-t border-slate-100 pt-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{tBilingual('Trainer Assignment', 'የአሰልጣኝ ምደባ')}</p>
-            <div className="space-y-3 rounded-xl border border-slate-200/90 bg-slate-50/50 p-4">
-              {trainers.length > 0 ? (
-                trainers.map((trainerId) => (
-                  <div
-                    key={trainerId}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs shadow-2xs"
-                  >
-                    <span className="flex items-center gap-2 font-semibold text-slate-800">
-                      <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                      {userName(trainerId)}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => onRemoveTrainer(trainerId)}
-                      className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                      aria-label="Remove trainer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs italic text-slate-500">
-                  {tBilingual(
-                    'No trainer assigned yet. Course publication requires at least one trainer.',
-                    'እስካሁን ምንም አሰልጣኝ አልተመደበም። ኮርሱን ለማተም ቢያንስ አንድ አሰልጣኝ ያስፈልጋል።',
-                  )}
-                </p>
-              )}
-              <label className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4 shrink-0 text-slate-400" />
-                <select
-                  value=""
-                  disabled={busy || trainerOptions.length === 0}
-                  onChange={(event) => event.target.value && onAssignTrainer(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-700 shadow-xs outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-                >
-                  <option value="">
-                    {trainerOptions.length ? tBilingual('Assign a trainer…', 'አሰልጣኝ ይምረጡ…') : tBilingual('No trainers available', 'ምንም አሰልጣኞች የሉም')}
-                  </option>
-                  {trainerOptions
-                    .filter((t) => !trainers.includes(t.id))
-                    .map((trainer) => (
-                      <option key={trainer.id} value={trainer.id}>
-                        {trainer.name} ({trainer.email})
-                      </option>
-                    ))}
-                </select>
-              </label>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* Course-level files (module/lesson files are listed with their curriculum item) */}

@@ -874,6 +874,16 @@ export class CoursesService {
     });
   }
 
+  async getEnrollmentCount(id: string): Promise<number> {
+    await this.findById(id);
+    return this.prisma.enrollment.count({
+      where: {
+        courseId: id,
+        status: { not: EnrollmentStatus.DROPPED },
+      },
+    });
+  }
+
   async softDelete(id: string, user: AuthenticatedUser) {
     await this.assertCanWrite(id, user);
     const course = await this.findById(id);
@@ -884,10 +894,36 @@ export class CoursesService {
       throw new ForbiddenException('Cannot delete a published course. Archive it instead.');
     }
 
-    return this.prisma.course.update({
+    const affectedLearners = await this.prisma.enrollment.count({
+      where: {
+        courseId: id,
+        status: { not: EnrollmentStatus.DROPPED },
+      },
+    });
+
+    // Automatically delete/cancel active learner enrollments for this course
+    if (affectedLearners > 0) {
+      await this.prisma.enrollment.updateMany({
+        where: {
+          courseId: id,
+        },
+        data: {
+          status: EnrollmentStatus.DROPPED,
+          droppedAt: new Date(),
+          droppedReason: 'Course deleted by administrator/creator',
+        },
+      });
+    }
+
+    const updated = await this.prisma.course.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    return {
+      ...updated,
+      affectedLearners,
+    };
   }
 
   async assignTrainer(courseId: string, userId: string) {
