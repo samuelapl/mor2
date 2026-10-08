@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Lock, Trash2 } from 'lucide-react';
+import { Edit2, Lock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import { deleteOwnNewsComment, fetchNewsComments, postNewsComment } from '@/lib/api/news';
+import {
+  deleteOwnNewsComment,
+  fetchNewsComments,
+  postNewsComment,
+  updateOwnNewsComment,
+} from '@/lib/api/news';
 import type { ApiNewsComment } from '@/lib/api/types';
 import { useLms } from '@/lib/lms-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -28,6 +33,9 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
   const [draft, setDraft] = useState('');
   const [posting, setPosting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(
     async (nextPage: number) => {
@@ -69,12 +77,46 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
     }
   };
 
+  const startEdit = (c: ApiNewsComment) => {
+    setEditingId(c.id);
+    setEditDraft(c.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft('');
+  };
+
+  const saveEdit = async (commentId: string) => {
+    const content = editDraft.trim();
+    if (!content || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      const updated = await updateOwnNewsComment(newsId, commentId, content);
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, content: updated.content } : c)),
+      );
+      toast.success(tBilingual('Comment updated successfully', 'አስተያየትዎ በተሳካ ሁኔታ ተሻሽሏል'));
+      setEditingId(null);
+      setEditDraft('');
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : tBilingual('Could not update comment', 'አስተያየቱን ማሻሻል አልተቻለም'),
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
       await deleteOwnNewsComment(newsId, deletingId);
       setComments((prev) => prev.filter((c) => c.id !== deletingId));
       setTotal((n) => Math.max(0, n - 1));
+      toast.success(tBilingual('Comment deleted successfully', 'አስተያየቱ በተሳካ ሁኔታ ተሰርዟል'));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : tBilingual('Could not delete the comment', 'አስተያየቱን መሰረዝ አልተቻለም'));
     } finally {
@@ -137,23 +179,71 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                 <span className="text-sm font-semibold text-slate-900 dark:text-white">{c.author.name}</span>
                 <span className="text-xs text-slate-400">{formatNewsDate(c.createdAt, lang)}</span>
                 {c.isMine && (
-                  <button
-                    type="button"
-                    onClick={() => setDeletingId(c.id)}
-                    className="ml-auto rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                    aria-label={tBilingual('Delete comment', 'አስተያየት ሰርዝ')}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(c)}
+                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                      title={tBilingual('Edit comment', 'አስተያየት አርትዕ')}
+                      aria-label={tBilingual('Edit comment', 'አስተያየት አርትዕ')}
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeletingId(c.id)}
+                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                      title={tBilingual('Delete comment', 'አስተያየት ሰርዝ')}
+                      aria-label={tBilingual('Delete comment', 'አስተያየት ሰርዝ')}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
-              {/* Plain text only — never rendered as HTML. */}
-              <p
-                lang={newsTextLang(c.content)}
-                className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-slate-700 dark:text-slate-300"
-              >
-                {c.content}
-              </p>
+              {editingId === c.id ? (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    value={editDraft}
+                    onChange={(e) => setEditDraft(e.target.value.slice(0, MAX_LENGTH))}
+                    rows={3}
+                    className="w-full resize-y rounded-xl border border-indigo-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-700 dark:bg-slate-900 dark:text-slate-200"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs tabular-nums text-slate-400">
+                      {editDraft.length}/{MAX_LENGTH}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={cancelEdit}
+                        disabled={savingEdit}
+                      >
+                        {tBilingual('Cancel', 'ተወው')}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => saveEdit(c.id)}
+                        isLoading={savingEdit}
+                        disabled={!editDraft.trim() || editDraft.trim() === c.content}
+                      >
+                        {tBilingual('Save changes', 'ለውጦችን መዝግብ')}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Plain text only — never rendered as HTML. */
+                <p
+                  lang={newsTextLang(c.content)}
+                  className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                >
+                  {c.content}
+                </p>
+              )}
             </div>
           </li>
         ))}

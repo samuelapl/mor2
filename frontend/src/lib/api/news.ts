@@ -67,6 +67,17 @@ export async function postNewsComment(id: string, content: string): Promise<ApiN
   return api<ApiNewsComment>(`news/${id}/comments`, { method: 'POST', body: { content } });
 }
 
+export async function updateOwnNewsComment(
+  id: string,
+  commentId: string,
+  content: string,
+): Promise<ApiNewsComment> {
+  return api<ApiNewsComment>(`news/${id}/comments/${commentId}`, {
+    method: 'PATCH',
+    body: { content },
+  });
+}
+
 export async function deleteOwnNewsComment(id: string, commentId: string): Promise<void> {
   await api(`news/${id}/comments/${commentId}`, { method: 'DELETE' });
 }
