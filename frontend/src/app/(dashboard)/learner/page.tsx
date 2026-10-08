@@ -29,7 +29,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { DonutChart, ProgressRing } from '@/components/ui/charts';
+import { ProgressRing } from '@/components/ui/charts';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';

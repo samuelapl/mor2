@@ -25,7 +25,7 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
-import { DonutChart, BarChart } from '@/components/ui/charts';
+import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 export default function TrainingAdminDashboardPage() {
   const { courses } = useLms();
@@ -211,11 +211,12 @@ export default function TrainingAdminDashboardPage() {
                 {isAmharic ? `ጠቅላላ ${totalCourses}` : `Total ${totalCourses}`}
               </Badge>
             </div>
-            <div className="mt-6 flex justify-center">
-              <DonutChart
-                segments={coursePipelineSegments}
-                centerLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
-                centerValue={totalCourses}
+            <div className="mt-6">
+              <VerticalBarChart
+                items={coursePipelineSegments}
+                totalValue={totalCourses}
+                unitLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
+                emptyText={isAmharic ? 'ምንም ኮርሶች አልተገኙም' : 'No courses found in database'}
               />
             </div>
           </div>
@@ -231,7 +232,7 @@ export default function TrainingAdminDashboardPage() {
           </div>
         </div>
 
-        {/* Live Training Sessions Donut Chart */}
+        {/* Live Training Sessions Vertical Bar Chart */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -252,11 +253,12 @@ export default function TrainingAdminDashboardPage() {
                 </Button>
               </Link>
             </div>
-            <div className="mt-6 flex justify-center">
-              <DonutChart
-                segments={sessionSegments}
-                centerLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
-                centerValue={sessions.length}
+            <div className="mt-6">
+              <VerticalBarChart
+                items={sessionSegments}
+                totalValue={sessions.length}
+                unitLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
+                emptyText={isAmharic ? 'ምንም ስልጠናዎች አልተገኙም' : 'No sessions scheduled in database'}
               />
             </div>
           </div>
