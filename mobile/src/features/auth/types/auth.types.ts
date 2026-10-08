@@ -30,6 +30,8 @@ export interface ApiUser {
   mustChangePassword: boolean;
   primaryVenueId: string | null;
   primaryVenue?: ApiVenueSummary | null;
+  /** Whether in-app notifications are also emailed (absent on older servers = on). */
+  emailNotifications?: boolean;
   lastLogin: string | null;
   createdAt: string;
   updatedAt: string;
@@ -52,10 +54,25 @@ export interface FirstLoginChallenge {
   email: string;
 }
 
-export type LoginResponse = SessionPayload | FirstLoginChallenge;
+/**
+ * Returned by register, and by login for a self-registered account that has not verified its
+ * email yet. A code has been emailed; POST /auth/verify-email activates and signs in.
+ */
+export interface EmailVerificationRequired {
+  emailVerificationRequired: true;
+  /** Masked, display only. */
+  email: string;
+  devCode?: string;
+}
+
+export type LoginResponse = SessionPayload | FirstLoginChallenge | EmailVerificationRequired;
 
 export function isFirstLoginChallenge(res: LoginResponse): res is FirstLoginChallenge {
   return 'passwordChangeRequired' in res && res.passwordChangeRequired === true;
+}
+
+export function isEmailVerificationRequired(res: LoginResponse): res is EmailVerificationRequired {
+  return 'emailVerificationRequired' in res && res.emailVerificationRequired === true;
 }
 
 export interface MessageResponse {
@@ -80,7 +97,7 @@ export interface RegisterBody {
   locale?: Locale;
 }
 
-export interface RegisterResponse {
+export interface RegisterResponse extends EmailVerificationRequired {
   message: string;
   user: Pick<ApiUser, 'id' | 'firstName' | 'lastName' | 'email' | 'registrationStatus'>;
 }

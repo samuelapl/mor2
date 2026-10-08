@@ -33,7 +33,6 @@
   "screens": {
     "login": "Sign in",
     "register": "Create account",
-    "pendingApproval": "Awaiting approval",
     "forgotPassword": "Forgot password",
     "verifyResetCode": "Verify code",
     "resetPassword": "Reset password",
@@ -52,7 +51,8 @@
     "notifications": "Notifications",
     "editProfile": "Edit profile",
     "changePassword": "Change password",
-    "uiGallery": "UI gallery"
+    "uiGallery": "UI gallery",
+    "verifyEmail": "Verify your email"
   },
   "dev": {
     "healthCheck": "Check backend connection",
@@ -76,9 +76,7 @@
     "phone": "Phone number",
     "tin": "TIN",
     "preferredLanguage": "Preferred language",
-    "registerSubtitle": "Register as a learner. An administrator will review your request.",
-    "pendingTitle": "Registration submitted",
-    "pendingBody": "An administrator must approve your account before you can sign in. Try signing in again once you've been approved.",
+    "registerSubtitle": "Register as a learner. We will email you a code to verify your address.",
     "backToLogin": "Back to sign in",
     "forgotSubtitle": "Enter your account email and we'll send you a 6-digit code.",
     "sendCode": "Send code",
@@ -102,7 +100,9 @@
       "codeInvalid": "Enter the 6-digit code",
       "notLearner": "This app is for learners. Please use the web portal with this account.",
       "sessionMissing": "Your sign-in session expired. Please sign in again."
-    }
+    },
+    "verifyEmailHint": "Enter it to activate your account.",
+    "verifyAndSignIn": "Verify and sign in"
   },
   "profile": {
     "language": "Language",
@@ -123,7 +123,9 @@
     "uploadFailed": "Could not upload the photo.",
     "theme": "Theme",
     "themeLight": "Light",
-    "themeDark": "Dark"
+    "themeDark": "Dark",
+    "emailNotifications": "Email notifications",
+    "emailNotificationsFailed": "Could not update email notifications."
   },
   "courses": {
     "searchPlaceholder": "Search by title or code",

@@ -151,5 +151,14 @@ export function CourseStatusBadge({ status }: { status: string }) {
 }
 
 export function UserStatusBadge({ status }: { status: string }) {
+  const { isAmharic } = useTranslation();
+  // A pending user is a self-registration that has not verified its email yet.
+  if (status.toLowerCase() === 'pending') {
+    return (
+      <Badge variant="amber" dot>
+        {isAmharic ? 'ኢሜይል ያልተረጋገጠ' : 'Email not verified'}
+      </Badge>
+    );
+  }
   return <CourseStatusBadge status={status} />;
 }

@@ -643,6 +643,8 @@ export class NewsService {
         { en: 'New announcement', am: 'አዲስ ማስታወቂያ' },
         { en: news.headline, am: news.headline },
         { newsId: news.id, slug: news.slug },
+        // Goes to every learner: too many emails for the mail provider's daily quota.
+        { email: false },
       );
     })().catch((err) =>
       this.logger.error(`Failed to send news notifications for ${news.id}: ${err.message}`),

@@ -11,18 +11,28 @@ interface AuthFlowState {
   /** First-login flow (spec §2.6). */
   challengeToken: string | null;
   maskedEmail: string;
+  /** Email verification after self-registration: the address as entered. */
+  verifyEmail: string;
   setResetEmail: (email: string) => void;
   setResetCode: (code: string) => void;
   setChallenge: (challengeToken: string, maskedEmail: string) => void;
+  setVerifyEmail: (email: string) => void;
   reset: () => void;
 }
 
-const initial = { resetEmail: '', resetCode: '', challengeToken: null, maskedEmail: '' };
+const initial = {
+  resetEmail: '',
+  resetCode: '',
+  challengeToken: null,
+  maskedEmail: '',
+  verifyEmail: '',
+};
 
 export const useAuthFlowStore = create<AuthFlowState>((set) => ({
   ...initial,
   setResetEmail: (resetEmail) => set({ resetEmail }),
   setResetCode: (resetCode) => set({ resetCode }),
   setChallenge: (challengeToken, maskedEmail) => set({ challengeToken, maskedEmail }),
+  setVerifyEmail: (verifyEmail) => set({ verifyEmail }),
   reset: () => set(initial),
 }));

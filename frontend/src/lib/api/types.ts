@@ -57,7 +57,15 @@ export interface ApiFirstLoginChallenge {
   devCode?: string;
 }
 
-export interface ApiAuthRegisterResponse {
+/** Returned by register, and by login for an account that has not verified its email. */
+export interface ApiEmailVerificationRequired {
+  emailVerificationRequired: true;
+  /** Masked, e.g. "ab•••@mor.gov.et". */
+  email: string;
+  devCode?: string;
+}
+
+export interface ApiAuthRegisterResponse extends ApiEmailVerificationRequired {
   message: string;
   user: { id: string; firstName: string; lastName: string; email: string };
 }
@@ -93,6 +101,8 @@ export interface ApiUser {
   roles: ApiUserRole[];
   primaryVenueId?: string | null;
   primaryVenue?: ApiVenue | null;
+  /** Whether in-app notifications are also emailed. */
+  emailNotifications?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -973,6 +983,7 @@ export interface UpdateMyProfileBody {
   tin?: string;
   locale?: 'en' | 'am';
   avatarUrl?: string;
+  emailNotifications?: boolean;
 }
 
 export interface ChangeMyPasswordBody {

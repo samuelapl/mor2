@@ -12,6 +12,7 @@ export interface UpdateProfileBody {
   tin?: string;
   avatarUrl?: string;
   primaryVenueId?: string;
+  emailNotifications?: boolean;
 }
 
 export interface ChangePasswordBody {

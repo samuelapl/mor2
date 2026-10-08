@@ -51,14 +51,6 @@ export async function fetchTrainers(): Promise<ApiPaginated<ApiUser>> {
   return api<ApiPaginated<ApiUser>>('users/trainers');
 }
 
-export async function approveRegistration(
-  userId: string,
-): Promise<{ message: string; user: ApiUser }> {
-  return api<{ message: string; user: ApiUser }>(`users/${userId}/approve-registration`, {
-    method: 'POST',
-  });
-}
-
 export async function rejectRegistration(
   userId: string,
   reason?: string,

@@ -610,10 +610,51 @@ export class CoursesService {
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PENDING_APPROVAL);
     await assertCourseWeightsTotal(this.prisma, id, 'exact');
 
-    return this.prisma.course.update({
+    const updated = await this.prisma.course.update({
       where: { id },
       data: { status: CourseStatus.PENDING_APPROVAL },
     });
+
+    try {
+      const reviewerIds = (await this.courseReviewerIds()).filter((uid) => uid !== user.id);
+      await this.notificationsService.sendToMany(
+        reviewerIds,
+        NotificationType.COURSE_SUBMITTED,
+        { en: 'Course awaiting approval', am: 'ኮርስ ማጽደቅ ይጠብቃል' },
+        {
+          en: `"${course.title}" was submitted for approval.`,
+          am: `"${course.title}" ለማጽደቅ ቀርቧል።`,
+        },
+        { courseId: id },
+      );
+    } catch {
+      // notification failure is non-fatal
+    }
+
+    return updated;
+  }
+
+  /**
+   * Active users who can approve or reject courses. Permissions are configured per role, so
+   * this follows the role-permission table rather than a fixed role. System admins can do
+   * everything and are left out to keep this to the people who actually review.
+   */
+  private async courseReviewerIds(): Promise<string[]> {
+    let roles: RoleName[] = [RoleName.CONTENT_APPROVER];
+    if (this.permissionsService) {
+      const candidates = Object.values(RoleName).filter((r) => r !== RoleName.SYSTEM_ADMIN);
+      const codes = await Promise.all(
+        candidates.map((r) => this.permissionsService!.getPermissionCodesForRole(r)),
+      );
+      roles = candidates.filter((_, i) => codes[i].includes('course.approve_reject'));
+    }
+    if (roles.length === 0) return [];
+
+    const reviewers = await this.prisma.user.findMany({
+      where: { isActive: true, deletedAt: null, roles: { some: { role: { in: roles } } } },
+      select: { id: true },
+    });
+    return reviewers.map((r) => r.id);
   }
 
   async review(id: string, dto: ReviewCourseDto, approverId: string) {

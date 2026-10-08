@@ -23,3 +23,23 @@ export function isInPersonEnrollment(enrollment: {
     (Boolean(enrollment.venueId) && enrollment.deliveryMode !== CourseDeliveryMode.ONLINE_ONLY)
   );
 }
+
+/**
+ * Whether an enrollment entitles the learner to a session — the per-row form of
+ * `LiveSessionsService.enrolledSessionsWhere`; keep the two in step.
+ */
+export function enrollmentCoversSession(
+  enrollment: {
+    deliveryMode?: CourseDeliveryMode | string | null;
+    venueId?: string | null;
+    sessionId?: string | null;
+  },
+  session: { id: string; sessionType?: SessionType | string | null; venueId?: string | null },
+): boolean {
+  if (!isInPersonEnrollment(enrollment)) {
+    return session.sessionType === SessionType.VIRTUAL && !session.venueId;
+  }
+  if (enrollment.sessionId) return enrollment.sessionId === session.id;
+  if (enrollment.venueId) return session.venueId === enrollment.venueId;
+  return session.sessionType === SessionType.IN_PERSON;
+}

@@ -3,11 +3,11 @@
 import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
   Building2,
-  CheckCircle2,
   CreditCard,
   Loader2,
   Lock,
@@ -28,6 +28,7 @@ const inputClass =
 const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { register, ready } = useLms();
   const { tBilingual, lang } = useTranslation();
   const [firstName, setFirstName] = useState('');
@@ -40,7 +41,6 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const validate = (): string | null => {
     if (!firstName.trim() || !lastName.trim()) return 'First name and last name are required.';
@@ -60,6 +60,7 @@ export default function RegisterPage() {
       return;
     }
     setError(null);
+    setSubmitting(true);
     try {
       const result = await register({
         firstName,
@@ -77,8 +78,12 @@ export default function RegisterPage() {
         setSubmitting(false);
         return;
       }
-      toast.success('Registration submitted! Awaiting administrator approval.');
-      setSubmitted(true);
+      toast.success(
+        tBilingual('Account created. Check your email for a code.', 'መለያ ተፈጥሯል። ኮዱን በኢሜይልዎ ይመልከቱ።'),
+      );
+      const params = new URLSearchParams({ email: result.email });
+      if (result.devCode) params.set('dev', result.devCode);
+      router.push(`/verify-email?${params.toString()}`);
     } catch {
       setError('An unexpected error occurred. Please try again.');
       toast.error('An unexpected error occurred. Please try again.');
@@ -126,42 +131,13 @@ export default function RegisterPage() {
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
               {tBilingual(
-                'Create a learner account. Your registration requires administrator approval before you can sign in.',
-                'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ምዝገባዎ በአስተዳዳሪ መጽደቅ አለበት።',
-              )}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-              {tBilingual(
-                'Your account is currently awaiting approval — future public guardrails prohibit access until it is granted.',
-                'መለያዎ በአሁኑ ጊዜ ይሁንታን በመጠባበቅ ላይ ነው — ፍቃድ እስኪሰጥ ድረስ መግባት አይፈቀድም።',
+                'Create a learner account. We will email you a code to verify your address before you sign in.',
+                'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ኢሜይልዎን ለማረጋገጥ ኮድ እንልክልዎታለን።',
               )}
             </p>
           </div>
 
-          {submitted ? (
-            <div className="mt-7 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-900/20 p-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <h2 className="mt-3 font-display text-lg font-bold text-slate-900 dark:text-emerald-50">
-                {tBilingual('Registration submitted', 'ምዝገባው ተልኳል')}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-emerald-100/70">
-                {tBilingual(
-                  'Your request has been sent to the learning administration team. Once an administrator approves your account you will be able to sign in and start learning.',
-                  'ጥያቄዎ ወደ ስልጠና አስተዳደር ቡድን ተልኳል። አስተዳዳሪ መለያዎን እንዳፀደቀ መግባትና መማር መጀመር ይችላሉ።',
-                )}
-              </p>
-              <Link
-                href="/login"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110"
-              >
-                {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          ) : (
-            <>
+          <>
               <form onSubmit={handleSubmit} className="mt-7 space-y-4" noValidate>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -377,8 +353,7 @@ export default function RegisterPage() {
                   {tBilingual('Sign in', 'ግባ')}
                 </Link>
               </p>
-            </>
-          )}
+          </>
         </div>
       </div>
     </main>

@@ -270,12 +270,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: UserPlus,
       children: [
         {
-          label: 'Approve Registration',
-          href: '/system-admin/pending-registrations',
-          icon: UserPlus,
-          permission: 'user.manage',
-        },
-        {
           label: 'User Registration',
           href: '/system-admin/register-actor',
           icon: UserCog,
@@ -405,7 +399,6 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/trainer/create-quiz': ['quiz.create'],
   '/content-approver/pending-approvals': ['course.approve_reject'],
   '/content-approver/approved-courses': ['course.approve_reject', 'course.view.all'],
-  '/system-admin/pending-registrations': ['user.manage'],
   '/system-admin/register-actor': ['user.manage'],
   '/system-admin/bulk-register': ['user.manage'],
   '/system-admin/pending-course-approvals': ['course.approve_reject'],
@@ -558,12 +551,6 @@ export const DYNAMIC_CAPABILITY_NAV_ITEMS: NavItem[] = [
     label: 'Registration',
     icon: UserPlus,
     children: [
-      {
-        label: 'Approve Registration',
-        href: '/system-admin/pending-registrations',
-        icon: UserPlus,
-        permission: 'user.manage',
-      },
       {
         label: 'User Registration',
         href: '/system-admin/register-actor',

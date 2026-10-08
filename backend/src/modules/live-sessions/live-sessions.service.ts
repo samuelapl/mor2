@@ -31,6 +31,7 @@ import { SessionPlansService } from '@modules/session-plans/session-plans.servic
 import type { RemoveSessionPlanDto } from '@modules/session-plans/dto';
 import { assertCanRunSession } from './session-access';
 import { SessionQuizGradingService } from './session-quiz-grading.service';
+import { SessionRemindersService } from './session-reminders.service';
 
 /**
  * Which sessions a user may list:
@@ -52,6 +53,7 @@ export class LiveSessionsService {
     private readonly permissions: PermissionsService,
     private readonly sessionPlans: SessionPlansService,
     private readonly sessionQuizGrading: SessionQuizGradingService,
+    private readonly reminders: SessionRemindersService,
   ) {}
 
   private async sessionVisibility(user: AuthenticatedUser): Promise<SessionVisibility> {
@@ -67,7 +69,8 @@ export class LiveSessionsService {
   /**
    * Sessions a learner's enrollments entitle them to see. In-person enrollments see only their
    * booked session (or, without a booking, in-person sessions at their venue); online
-   * enrollments see only virtual sessions.
+   * enrollments see only virtual sessions. `enrollmentCoversSession` is the per-row form of
+   * this; keep the two in step.
    */
   private async enrolledSessionsWhere(userId: string): Promise<Prisma.LiveSessionWhereInput> {
     const enrollments = await this.prisma.enrollment.findMany({
@@ -236,6 +239,8 @@ export class LiveSessionsService {
       // notification failure should not block session creation
     }
 
+    await this.reminders.schedule(session.id);
+
     return session;
   }
 
@@ -290,6 +295,8 @@ export class LiveSessionsService {
       }
       return created;
     });
+
+    await this.reminders.scheduleMany(createdSessions.map((s) => s.id));
 
     return {
       message: `Successfully scheduled ${createdSessions.length} in-person classroom session(s).`,
@@ -391,6 +398,10 @@ export class LiveSessionsService {
     const before = (await this.findById(id)).status;
     const updated = await this.updateSession(id, dto);
     await this.gradeIfJustCompleted(id, before, dto.status);
+    // A new start time or a session put back on SCHEDULED needs reminders for that time.
+    if (dto.scheduledAt !== undefined || dto.status === SessionStatus.SCHEDULED) {
+      await this.reminders.schedule(id);
+    }
     return updated;
   }
 

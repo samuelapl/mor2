@@ -42,9 +42,16 @@ model User {
   tin       String?
   avatarUrl String?  @map("avatar_url")
   locale    String   @default("en") // en | am
+  /// Opt-out for emails that mirror in-app notifications. Account/security emails ignore it.
+  emailNotifications Boolean @default(true) @map("email_notifications")
   isActive  Boolean  @default(true) @map("is_active")
   lastLogin DateTime? @map("last_login")
+  /// PENDING = self-registered and waiting to verify the email; verifying sets APPROVED.
+  /// REJECTED only exists on accounts from the retired admin-approval flow.
   registrationStatus ApprovalStatus @default(APPROVED) @map("registration_status")
+  /// When the user proved they own `email` (verification code, first-login code or password
+  /// reset code). Null = never proven.
+  emailVerifiedAt DateTime? @map("email_verified_at")
   // Set when an admin chose the password (bulk import, actor registration, admin reset);
   // the user must set their own via an emailed code before any session is issued.
   mustChangePassword Boolean @default(false) @map("must_change_password")
@@ -184,6 +191,7 @@ model RolePermission {
 enum PasswordResetPurpose {
   RESET       // self-service "forgot password"
   FIRST_LOGIN // forced change for admin-created accounts
+  EMAIL_VERIFY // self-registration email verification
 }
 
 model PasswordReset {
@@ -934,6 +942,7 @@ enum NotificationType {
   ENROLLMENT_APPROVED
   ENROLLMENT_REJECTED
   COURSE_PUBLISHED
+  COURSE_SUBMITTED
   COURSE_APPROVED
   COURSE_REJECTED
   ASSESSMENT_GRADED

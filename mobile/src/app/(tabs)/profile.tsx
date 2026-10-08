@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Award, Bell, Camera, KeyRound, LogOut, Moon, Pencil, Sun } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 
 import { DevPanel } from '@/components/dev/DevPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -14,7 +14,7 @@ import { useAppTheme } from '@/core/theme/theme-store';
 import { Alert } from '@/core/utils/alert';
 import { formatDate } from '@/core/utils/formatters';
 import { useLogout, useSessionStore } from '@/features/auth';
-import { useChangeLanguage, useMe, useUploadAvatar } from '@/features/profile';
+import { useChangeLanguage, useMe, useUpdateProfile, useUploadAvatar } from '@/features/profile';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -25,6 +25,7 @@ export default function ProfileScreen() {
   const me = useMe();
   const language = useChangeLanguage();
   const avatar = useUploadAvatar();
+  const updateProfile = useUpdateProfile();
   const logout = useLogout();
 
   const confirmLogout = () =>
@@ -32,6 +33,15 @@ export default function ProfileScreen() {
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('common.signOut'), style: 'destructive', onPress: () => logout.mutate() },
     ]);
+
+  const toggleEmailNotifications = (emailNotifications: boolean) =>
+    updateProfile.mutate(
+      { emailNotifications },
+      {
+        onError: () =>
+          Alert.alert(t('profile.emailNotifications'), t('profile.emailNotificationsFailed')),
+      },
+    );
 
   const changePhoto = () =>
     avatar.mutate(undefined, {
@@ -92,6 +102,20 @@ export default function ProfileScreen() {
         <View className="flex-row items-center justify-between">
           <AppText variant="label">{t('profile.language')}</AppText>
           <LanguageToggle onChange={language.change} disabled={language.isPending} />
+        </View>
+
+        <View className="h-px bg-slate-200 dark:bg-slate-700/60" />
+
+        <View className="flex-row items-center justify-between">
+          <AppText variant="label">{t('profile.emailNotifications')}</AppText>
+          <Switch
+            value={user?.emailNotifications ?? true}
+            onValueChange={toggleEmailNotifications}
+            disabled={!user || updateProfile.isPending}
+            trackColor={{ false: colors.track, true: colors.primary }}
+            thumbColor={palette.white}
+            accessibilityLabel={t('profile.emailNotifications')}
+          />
         </View>
       </Card>
 

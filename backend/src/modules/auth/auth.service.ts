@@ -15,7 +15,8 @@ import { PrismaService } from '@config/prisma.service';
 import { JwtPayload } from '@common/interfaces';
 import { BCRYPT_ROUNDS } from '@config/constants';
 import { passwordIssues } from '@common/utils';
-import { MailService } from '@modules/mail/mail.service';
+import { EmailQueue } from '@modules/mail/email.queue';
+import { toEmailLocale } from '@modules/mail/email.types';
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import {
   RegisterDto,
@@ -25,6 +26,7 @@ import {
   VerifyResetCodeDto,
   FirstLoginVerifyCodeDto,
   FirstLoginCompleteDto,
+  VerifyEmailDto,
 } from './dto';
 
 const PASSWORD_RESET_CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -32,7 +34,8 @@ const PASSWORD_RESET_MAX_ATTEMPTS = 5;
 
 const FIRST_LOGIN_PURPOSE = 'first_login';
 const FIRST_LOGIN_CHALLENGE_TTL = '15m';
-const FIRST_LOGIN_RESEND_COOLDOWN_MS = 60 * 1000;
+/** Minimum gap between two emailed codes of the same purpose for one user. */
+const CODE_RESEND_COOLDOWN_MS = 60 * 1000;
 
 type UserWithRoles = Prisma.UserGetPayload<{ include: { roles: true } }>;
 
@@ -69,7 +72,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly mailService: MailService,
+    private readonly emailQueue: EmailQueue,
     private readonly permissionsService: PermissionsService,
   ) {}
 
@@ -89,7 +92,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-    // Public signups are created as PENDING and activated by a System Admin.
+    // Public signups stay PENDING until the user verifies their email with the emailed code.
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -106,13 +109,103 @@ export class AuthService {
           },
         },
       },
-      select: { id: true, firstName: true, lastName: true, email: true, registrationStatus: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        locale: true,
+        registrationStatus: true,
+      },
     });
 
+    const code = await this.sendVerificationCode(user);
+    const { locale: _locale, ...publicUser } = user;
+
     return {
-      message: 'Registration submitted for approval',
-      user,
+      message: 'Registration received. Enter the code we emailed you to verify your email.',
+      emailVerificationRequired: true as const,
+      email: maskEmail(user.email),
+      user: publicUser,
+      devCode: this.devCode(code),
     };
+  }
+
+  /**
+   * Checks the emailed verification code, activates the account and signs the user in.
+   * Accounts rejected under the retired admin-approval flow stay blocked.
+   */
+  async verifyEmail(dto: VerifyEmailDto) {
+    // Same exact-match lookup as register and login, which store and find the email as typed.
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    // Generic message — do not reveal whether the email exists.
+    if (!user || user.registrationStatus !== 'PENDING') {
+      throw new BadRequestException('Invalid or expired code.');
+    }
+    if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
+
+    await this.consumeCode(user.id, PasswordResetPurpose.EMAIL_VERIFY, dto.code);
+
+    const [, verified] = await this.prisma.$transaction([
+      this.prisma.passwordReset.updateMany({
+        where: { userId: user.id, purpose: PasswordResetPurpose.EMAIL_VERIFY, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date(), registrationStatus: 'APPROVED' },
+        include: { roles: true },
+      }),
+    ]);
+
+    return this.createSession(verified);
+  }
+
+  /**
+   * Emails a new verification code. Always returns the same message (anti-enumeration);
+   * within the resend cooldown no new code is sent.
+   */
+  async resendVerification(email: string) {
+    const generic = 'If that account still needs verification, a new code has been sent.';
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.registrationStatus !== 'PENDING' || !user.isActive) {
+      return { message: generic };
+    }
+    if ((await this.codeCooldownMs(user.id, PasswordResetPurpose.EMAIL_VERIFY)) > 0) {
+      return { message: generic };
+    }
+
+    const code = await this.sendVerificationCode(user);
+    return { message: generic, devCode: this.devCode(code) };
+  }
+
+  private async sendVerificationCode(user: {
+    id: string;
+    email: string;
+    locale: string;
+  }): Promise<string> {
+    const code = await this.issueCode(user.id, PasswordResetPurpose.EMAIL_VERIFY);
+    await this.emailQueue.emailVerificationCode(user.email, code, toEmailLocale(user.locale));
+    return code;
+  }
+
+  /** Milliseconds until a new `purpose` code may be sent (0 = now). */
+  private async codeCooldownMs(userId: string, purpose: PasswordResetPurpose): Promise<number> {
+    const latest = await this.prisma.passwordReset.findFirst({
+      where: { userId, purpose },
+      orderBy: { createdAt: 'desc' },
+    });
+    return latest
+      ? Math.max(0, latest.createdAt.getTime() + CODE_RESEND_COOLDOWN_MS - Date.now())
+      : 0;
+  }
+
+  /** In development without SMTP, codes are returned in the response so flows stay testable. */
+  private devCode(code: string): string | undefined {
+    const isDev =
+      this.configService.get<string>('NODE_ENV') === 'development' ||
+      this.configService.get<string>('APP_ENV') === 'development';
+    return isDev && !this.emailQueue.isDeliveryConfigured ? code : undefined;
   }
 
   async login(dto: LoginDto) {
@@ -121,12 +214,10 @@ export class AuthService {
       include: { roles: true },
     });
 
-    if (!user) {
+    // Check the password before anything account-specific, so a wrong password never
+    // reveals whether the account exists or what state it is in.
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (user.registrationStatus === 'PENDING') {
-      throw new UnauthorizedException('Your registration is awaiting administrator approval');
     }
 
     if (user.registrationStatus === 'REJECTED') {
@@ -137,9 +228,8 @@ export class AuthService {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (user.registrationStatus === 'PENDING') {
+      return this.startEmailVerification(user);
     }
 
     if (user.mustChangePassword) {
@@ -238,11 +328,7 @@ export class AuthService {
 
     const code = await this.issueCode(user.id, PasswordResetPurpose.RESET);
 
-    try {
-      await this.mailService.sendPasswordResetCode(user.email, code);
-    } catch (err) {
-      this.logger.error(`Failed to send password reset code to ${user.email}: ${err}`);
-    }
+    await this.emailQueue.passwordResetCode(user.email, code, toEmailLocale(user.locale));
 
     return { message: 'If that email exists, a code has been sent.' };
   }
@@ -287,13 +373,22 @@ export class AuthService {
       }),
       this.prisma.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword, mustChangePassword: false },
+        // The reset code was emailed, so this also proves the address — and activates an
+        // account that never finished email verification.
+        data: {
+          password: hashedPassword,
+          mustChangePassword: false,
+          emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+          ...(user.registrationStatus === 'PENDING' ? { registrationStatus: 'APPROVED' } : {}),
+        },
       }),
       this.prisma.refreshToken.updateMany({
         where: { userId: user.id, revokedAt: null },
         data: { revokedAt: new Date() },
       }),
     ]);
+
+    await this.emailQueue.passwordChanged(user.email, toEmailLocale(user.locale));
 
     return { message: 'Password reset successfully. You can now sign in.' };
   }
@@ -304,7 +399,7 @@ export class AuthService {
    * the caller knew the temporary password; the code proves they own the email.
    */
   private async startFirstLogin(user: UserWithRoles) {
-    const code = await this.sendFirstLoginCode(user.id, user.email);
+    const code = await this.sendFirstLoginCode(user);
 
     const payload: FirstLoginChallengePayload = { sub: user.id, purpose: FIRST_LOGIN_PURPOSE };
     const challengeToken = await this.jwtService.signAsync(payload, {
@@ -312,43 +407,47 @@ export class AuthService {
       expiresIn: FIRST_LOGIN_CHALLENGE_TTL,
     });
 
-    const isDev =
-      this.configService.get<string>('NODE_ENV') === 'development' ||
-      this.configService.get<string>('APP_ENV') === 'development';
-
     return {
       passwordChangeRequired: true as const,
       challengeToken,
       email: maskEmail(user.email),
-      devCode: isDev && !this.mailService.isConfigured ? code : undefined,
+      devCode: this.devCode(code),
+    };
+  }
+
+  /**
+   * Called from `login` for an unverified self-registered account with the right password:
+   * emails a code (unless one was sent within the cooldown) instead of issuing a session.
+   */
+  private async startEmailVerification(user: UserWithRoles) {
+    const code =
+      (await this.codeCooldownMs(user.id, PasswordResetPurpose.EMAIL_VERIFY)) > 0
+        ? undefined
+        : await this.sendVerificationCode(user);
+
+    return {
+      emailVerificationRequired: true as const,
+      email: maskEmail(user.email),
+      devCode: code ? this.devCode(code) : undefined,
     };
   }
 
   async resendFirstLoginCode(challengeToken: string) {
     const user = await this.verifyFirstLoginChallenge(challengeToken);
 
-    const latest = await this.prisma.passwordReset.findFirst({
-      where: { userId: user.id, purpose: PasswordResetPurpose.FIRST_LOGIN },
-      orderBy: { createdAt: 'desc' },
-    });
-    const waitMs = latest
-      ? latest.createdAt.getTime() + FIRST_LOGIN_RESEND_COOLDOWN_MS - Date.now()
-      : 0;
+    const waitMs = await this.codeCooldownMs(user.id, PasswordResetPurpose.FIRST_LOGIN);
     if (waitMs > 0) {
       throw new BadRequestException(
         `Please wait ${Math.ceil(waitMs / 1000)} seconds before requesting a new code.`,
       );
     }
 
-    const code = await this.sendFirstLoginCode(user.id, user.email);
-    const isDev =
-      this.configService.get<string>('NODE_ENV') === 'development' ||
-      this.configService.get<string>('APP_ENV') === 'development';
+    const code = await this.sendFirstLoginCode(user);
 
     return {
       message: 'A new code has been sent.',
       email: maskEmail(user.email),
-      devCode: isDev && !this.mailService.isConfigured ? code : undefined,
+      devCode: this.devCode(code),
     };
   }
 
@@ -388,7 +487,12 @@ export class AuthService {
       }),
       this.prisma.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword, mustChangePassword: false },
+        // The first-login code was emailed, so finishing this step proves the address.
+        data: {
+          password: hashedPassword,
+          mustChangePassword: false,
+          emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+        },
         include: { roles: true },
       }),
       this.prisma.refreshToken.updateMany({
@@ -436,13 +540,13 @@ export class AuthService {
     return user;
   }
 
-  private async sendFirstLoginCode(userId: string, email: string): Promise<string> {
-    const code = await this.issueCode(userId, PasswordResetPurpose.FIRST_LOGIN);
-    try {
-      await this.mailService.sendFirstLoginCode(email, code);
-    } catch (err) {
-      this.logger.error(`Failed to send first-login code to ${email}: ${err}`);
-    }
+  private async sendFirstLoginCode(user: {
+    id: string;
+    email: string;
+    locale: string;
+  }): Promise<string> {
+    const code = await this.issueCode(user.id, PasswordResetPurpose.FIRST_LOGIN);
+    await this.emailQueue.firstLoginCode(user.email, code, toEmailLocale(user.locale));
     return code;
   }
 

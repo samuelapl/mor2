@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ApprovalStatus, NotificationType, Prisma, RoleName } from '@prisma/client';
+import { ApprovalStatus, Prisma, RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@config/prisma.service';
 import {
@@ -25,15 +25,14 @@ import {
   CreateActorDto,
 } from './dto';
 import { BCRYPT_ROUNDS } from '@config/constants';
-import { NotificationsService } from '@modules/notifications/notifications.service';
-import { MailService } from '@modules/mail/mail.service';
+import { EmailQueue } from '@modules/mail/email.queue';
+import { toEmailLocale } from '@modules/mail/email.types';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsService: NotificationsService,
-    private readonly mailService: MailService,
+    private readonly emailQueue: EmailQueue,
   ) {}
 
   async findAll(query: PaginationQuery & { role?: RoleName; registrationStatus?: ApprovalStatus }) {
@@ -110,6 +109,8 @@ export class UsersService {
       where: { id },
       data: { password: hashedPassword },
     });
+
+    await this.emailQueue.passwordChanged(user.email, toEmailLocale(user.locale));
 
     return { message: 'Password changed successfully' };
   }
@@ -364,95 +365,6 @@ export class UsersService {
     });
 
     return { message: `Role ${role} removed from user` };
-  }
-
-  async approveRegistration(userId: string) {
-    const user = await this.findById(userId);
-
-    if (user.registrationStatus === 'REJECTED') {
-      throw new ForbiddenException('Cannot approve a rejected registration');
-    }
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { registrationStatus: ApprovalStatus.APPROVED, isActive: true },
-    });
-
-    const updated = await this.findById(userId);
-
-    try {
-      await this.notificationsService.send(
-        userId,
-        NotificationType.REGISTRATION_APPROVED,
-        {
-          en: 'Registration approved',
-          am: 'ምዝገባ ጸድቋል',
-        },
-        {
-          en: 'Your registration has been approved. You can now sign in and start learning.',
-          am: 'ምዝገባዎ ተጸድቋል። አሁን መግባት እና መማር ይችላሉ።',
-        },
-        { registrationStatus: 'APPROVED' },
-      );
-    } catch {
-      // non-fatal
-    }
-
-    try {
-      await this.mailService.sendRegistrationApproved(user.email);
-    } catch {
-      // non-fatal
-    }
-
-    return { message: 'Registration approved', user: this.sanitizeUser(updated) };
-  }
-
-  async rejectRegistration(userId: string, reason?: string) {
-    const user = await this.findById(userId);
-
-    if (user.registrationStatus === 'REJECTED') {
-      throw new ForbiddenException('Registration is already rejected');
-    }
-
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: { registrationStatus: ApprovalStatus.REJECTED, isActive: true },
-      }),
-      // Revoke any existing sessions so the account cannot keep using stale tokens.
-      this.prisma.refreshToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
-
-    try {
-      await this.notificationsService.send(
-        userId,
-        NotificationType.REGISTRATION_REJECTED,
-        {
-          en: 'Registration rejected',
-          am: 'ምዝገባ ውድቅ ሆኗል',
-        },
-        {
-          en: reason || 'Your registration was rejected. Contact an administrator.',
-          am: reason || 'ምዝገባዎ ውድቅ ሆኗል። እባክዎ አስተዳዳሪን ያግኙ።',
-        },
-        { registrationStatus: 'REJECTED', reason },
-      );
-    } catch {
-      // non-fatal
-    }
-
-    try {
-      await this.mailService.sendRegistrationRejected(user.email, reason);
-    } catch {
-      // non-fatal
-    }
-
-    const updated = await this.findById(userId);
-
-    return { message: 'Registration rejected', user: this.sanitizeUser(updated) };
   }
 
   async deactivate(id: string) {

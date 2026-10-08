@@ -47,6 +47,11 @@ export default function LoginPage() {
       } else if (result.passwordChangeRequired) {
         // Admin-created account: a code was emailed, finish on the first-login page.
         router.push('/first-login');
+      } else if (result.emailVerificationRequired) {
+        // Self-registered account that never verified its email: a code was emailed.
+        const params = new URLSearchParams({ email: email.trim() });
+        if (result.devCode) params.set('dev', result.devCode);
+        router.push(`/verify-email?${params.toString()}`);
       } else {
         setError(result.message);
         toast.error(result.message || 'Invalid credentials.');

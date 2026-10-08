@@ -220,5 +220,11 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
 
 export type LoginResult =
   | { ok: true; role: Role; user?: User }
-  | { ok: false; message: string; passwordChangeRequired?: true; devCode?: string };
+  | {
+      ok: false;
+      message: string;
+      passwordChangeRequired?: true;
+      emailVerificationRequired?: true;
+      devCode?: string;
+    };
 

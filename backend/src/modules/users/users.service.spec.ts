@@ -49,7 +49,7 @@ describe('UsersService.bulkCreate', () => {
         findMany: jest.fn().mockResolvedValue(Object.values(RoleName).map((name) => ({ name }))),
       },
     };
-    service = new UsersService(prisma, {} as any, {} as any);
+    service = new UsersService(prisma, {} as any);
   });
 
   const admin = buildUser([RoleName.SYSTEM_ADMIN]);
@@ -167,7 +167,7 @@ describe('UsersService.softDelete', () => {
       refreshToken: { updateMany: jest.fn(async () => ({ count: 1 })) },
       $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
     };
-    service = new UsersService(prisma, {} as any, {} as any);
+    service = new UsersService(prisma, {} as any);
   });
 
   it('frees the email, deactivates and revokes sessions', async () => {

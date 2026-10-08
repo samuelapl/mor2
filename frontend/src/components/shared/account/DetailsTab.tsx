@@ -37,7 +37,7 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
 
   const statusOf = (user: ApiUser): { label: string; variant: BadgeVariant } => {
     if (user.registrationStatus === 'PENDING') {
-      return { label: tBilingual('Pending approval', 'ማጽደቅ የሚጠብቅ'), variant: 'amber' };
+      return { label: tBilingual('Email not verified', 'ኢሜይል ያልተረጋገጠ'), variant: 'amber' };
     }
     if (user.registrationStatus === 'REJECTED') {
       return { label: tBilingual('Rejected', 'ውድቅ የተደረገ'), variant: 'red' };

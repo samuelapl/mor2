@@ -15,6 +15,7 @@ import {
   FormMessage,
   isValidEmail,
   passwordIssueKey,
+  useAuthFlowStore,
   useFormError,
   type RegisterBody,
 } from '@/features/auth';
@@ -46,7 +47,10 @@ export default function RegisterScreen() {
 
   const register = useMutation({
     mutationFn: (body: RegisterBody) => authApi.register(body),
-    onSuccess: () => router.replace('/pending-approval'),
+    onSuccess: (_res, body) => {
+      useAuthFlowStore.getState().setVerifyEmail(body.email);
+      router.replace('/verify-email');
+    },
   });
   const formError = useFormError(register.error);
 

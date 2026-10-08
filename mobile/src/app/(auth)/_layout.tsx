@@ -8,8 +8,8 @@ export default function AuthLayout() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ title: t('screens.register') }} />
       <Stack.Screen
-        name="pending-approval"
-        options={{ title: t('screens.pendingApproval'), headerBackVisible: false }}
+        name="verify-email"
+        options={{ title: t('screens.verifyEmail'), headerBackVisible: false }}
       />
       <Stack.Screen name="forgot-password" options={{ title: t('screens.forgotPassword') }} />
       <Stack.Screen name="verify-reset-code" options={{ title: t('screens.verifyResetCode') }} />

@@ -14,6 +14,8 @@ import { SessionPlansModule } from '@modules/session-plans/session-plans.module'
 import { ProgressModule } from '@modules/progress/progress.module';
 import { SessionQuizGradingService } from './session-quiz-grading.service';
 import { SessionQuizResultsService } from './session-quiz-results.service';
+import { SessionRemindersService } from './session-reminders.service';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -22,12 +24,14 @@ import { SessionQuizResultsService } from './session-quiz-results.service';
     PermissionsModule,
     SessionPlansModule,
     ProgressModule,
+    NotificationsModule,
   ],
   controllers: [LiveSessionsController],
   providers: [
     LiveSessionsService,
     SessionQuizGradingService,
     SessionQuizResultsService,
+    SessionRemindersService,
     VirtualSessionsService,
     BigBlueButtonProvider,
     JitsiProvider,

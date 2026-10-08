@@ -28,6 +28,7 @@ import {
   type AuthResult,
   refresh as apiRefresh,
   register as apiRegister,
+  verifyEmail as apiVerifyEmail,
 } from '@/lib/api/auth';
 import {
   fetchCourseDetail,
@@ -50,7 +51,6 @@ import {
   selfEnroll,
 } from '@/lib/api/enrollments';
 import {
-  approveRegistration,
   assignRole,
   bulkCreateUsers,
   changeMyPassword,
@@ -59,7 +59,6 @@ import {
   fetchUsers,
   reactivateUser as apiReactivateUser,
   deleteUser as apiDeleteUser,
-  rejectRegistration,
   removeRole,
   updateMyProfile,
 } from '@/lib/api/users';
@@ -215,8 +214,13 @@ interface LmsContextValue {
     newPassword: string;
     confirmPassword: string;
   }) => Promise<LoginResult>;
+  /** Verifies a self-registered account with its emailed code and signs it in. */
+  verifyEmail: (email: string, code: string) => Promise<LoginResult>;
   logout: () => void;
-  register: (input: RegisterInput) => Promise<ActionResult>;
+  /** Creates the account; the user then verifies their email before signing in. */
+  register: (
+    input: RegisterInput,
+  ) => Promise<{ ok: true; email: string; devCode?: string } | { ok: false; message: string }>;
   courseById: (courseId: string) => Course | undefined;
   /** Re-fetches one course (e.g. after its sessions changed) and replaces it in the store. */
   refreshCourse: (courseId: string) => Promise<void>;
@@ -294,8 +298,6 @@ interface LmsContextValue {
   myEnrollments: ApiEnrollment[];
   getEnrollmentForCourse: (courseId: string) => ApiEnrollment | undefined;
   changeUserRole: (userId: string, role: Role) => Promise<ActionResult>;
-  approveRegistrationRequest: (userId: string) => Promise<ActionResult>;
-  rejectRegistrationRequest: (userId: string, reason?: string) => Promise<ActionResult>;
   deactivateUser: (userId: string) => Promise<ActionResult>;
   reactivateUser: (userId: string) => Promise<ActionResult>;
   deleteUser: (userId: string) => Promise<ActionResult>;
@@ -838,11 +840,33 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             devCode: res.devCode,
           };
         }
+        if ('emailVerificationRequired' in res) {
+          return {
+            ok: false,
+            emailVerificationRequired: true,
+            message: 'Please verify your email. We sent a code to your inbox.',
+            devCode: res.devCode,
+          };
+        }
         return await enterSession(res);
       } catch (err) {
         return {
           ok: false,
           message: errorMessage(err, 'Unable to sign in. Please try again.'),
+        };
+      }
+    },
+    [enterSession],
+  );
+
+  const verifyEmail = useCallback(
+    async (email: string, code: string): Promise<LoginResult> => {
+      try {
+        return await enterSession(await apiVerifyEmail(email, code));
+      } catch (err) {
+        return {
+          ok: false,
+          message: errorMessage(err, 'Could not verify your email. Please try again.'),
         };
       }
     },
@@ -893,8 +917,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     clearSession();
   }, [clearSession]);
 
-  const register = useCallback(
-    async (input: RegisterInput): Promise<ActionResult> => {
+  const register: LmsContextValue['register'] = useCallback(
+    async (input) => {
       const firstName = input.firstName.trim();
       const lastName = input.lastName.trim();
       const email = input.email.trim().toLowerCase();
@@ -914,7 +938,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        await apiRegister({
+        const res = await apiRegister({
           firstName,
           lastName,
           email,
@@ -922,9 +946,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           password: input.password,
           tin: tin || undefined,
         });
-        // Public registrations require administrator approval before the
-        // account can be used, so we deliberately do NOT create a session.
-        return { ok: true };
+        // No session yet: the account is activated by verifying the emailed code.
+        return { ok: true, email, devCode: res.devCode };
       } catch (err) {
         return {
           ok: false,
@@ -1606,52 +1629,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
-  const approveRegistrationRequest = useCallback(
-    async (userId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return {
-          ok: false,
-          message: 'Only system administrators can manage registrations.',
-        };
-      }
-      try {
-        await approveRegistration(userId);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to approve registration.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const rejectRegistrationRequest = useCallback(
-    async (userId: string, reason?: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return {
-          ok: false,
-          message: 'Only system administrators can manage registrations.',
-        };
-      }
-      try {
-        await rejectRegistration(userId, reason);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to reject registration.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
   const deactivateUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
       const admin = currentUserRef.current;
@@ -1838,6 +1815,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       setLang,
       login,
       completeFirstLogin,
+      verifyEmail,
       logout,
       register,
       courseById,
@@ -1863,8 +1841,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       myEnrollments,
       getEnrollmentForCourse,
       changeUserRole,
-      approveRegistrationRequest,
-      rejectRegistrationRequest,
       deactivateUser,
       reactivateUser,
       deleteUser,
@@ -1887,6 +1863,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       currentUser,
       login,
       completeFirstLogin,
+      verifyEmail,
       logout,
       register,
       courseById,
@@ -1910,8 +1887,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       enrollLearners,
       enrollSelf,
       changeUserRole,
-      approveRegistrationRequest,
-      rejectRegistrationRequest,
       deactivateUser,
       reactivateUser,
       deleteUser,

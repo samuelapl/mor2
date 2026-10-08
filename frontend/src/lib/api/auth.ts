@@ -1,7 +1,12 @@
 import { api } from './client';
 import { storeTokens, clearTokens, getStoredRefreshToken } from './tokens';
 import { userFromAuth } from './transform';
-import type { ApiAuthRegisterResponse, ApiAuthResponse, ApiFirstLoginChallenge } from './types';
+import type {
+  ApiAuthRegisterResponse,
+  ApiAuthResponse,
+  ApiEmailVerificationRequired,
+  ApiFirstLoginChallenge,
+} from './types';
 import type { User } from '@/types';
 
 export interface AuthResult {
@@ -13,6 +18,8 @@ export interface AuthResult {
 export interface RegisterResult {
   message: string;
   user: { id: string; firstName: string; lastName: string; email: string };
+  /** Only in development without SMTP. */
+  devCode?: string;
 }
 
 export interface FirstLoginChallenge {
@@ -31,18 +38,44 @@ function startSession(res: ApiAuthResponse): AuthResult {
   };
 }
 
-/** Resolves to a session, or to a first-login challenge when the password must be changed. */
+/**
+ * Resolves to a session, to a first-login challenge when the password must be changed, or to
+ * a verification request when a self-registered account has not verified its email yet.
+ */
 export async function login(
   email: string,
   password: string,
-): Promise<AuthResult | FirstLoginChallenge> {
-  const res = await api<ApiAuthResponse | ApiFirstLoginChallenge>('auth/login', {
+): Promise<AuthResult | FirstLoginChallenge | ApiEmailVerificationRequired> {
+  const res = await api<ApiAuthResponse | ApiFirstLoginChallenge | ApiEmailVerificationRequired>(
+    'auth/login',
+    {
+      method: 'POST',
+      body: { email, password },
+      skipAuthRetry: true,
+    },
+  );
+  if ('passwordChangeRequired' in res || 'emailVerificationRequired' in res) return res;
+  return startSession(res);
+}
+
+/** Verifies a new account with its emailed code; the backend signs it in on success. */
+export async function verifyEmail(email: string, code: string): Promise<AuthResult> {
+  const res = await api<ApiAuthResponse>('auth/verify-email', {
     method: 'POST',
-    body: { email, password },
+    body: { email, code },
     skipAuthRetry: true,
   });
-  if ('passwordChangeRequired' in res) return res;
   return startSession(res);
+}
+
+export async function resendVerification(
+  email: string,
+): Promise<{ message: string; devCode?: string }> {
+  return api<{ message: string; devCode?: string }>('auth/resend-verification', {
+    method: 'POST',
+    body: { email },
+    skipAuthRetry: true,
+  });
 }
 
 export async function resendFirstLoginCode(
@@ -162,7 +195,7 @@ export async function register(payload: {
     body: payload,
     skipAuthRetry: true,
   });
-  return { message: res.message, user: res.user };
+  return { message: res.message, user: res.user, devCode: res.devCode };
 }
 
 export async function refresh(): Promise<AuthResult> {

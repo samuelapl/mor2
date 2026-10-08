@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Building2, CheckCircle2, ShieldCheck, ShieldOff, XCircle } from 'lucide-react';
+import { Building2, ShieldCheck, ShieldOff } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Badge, UserStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -31,8 +31,6 @@ interface UserDetailModalProps {
   user: User | null;
   onClose: () => void;
   onChangeRole: (userId: string, role: Role) => void;
-  onApprove: (userId: string) => void;
-  onReject: (userId: string) => void;
   onSuspend: (userId: string) => void;
   onReactivate: (userId: string) => void;
   isLoading?: boolean;
@@ -43,8 +41,6 @@ export function UserDetailModal({
   user,
   onClose,
   onChangeRole,
-  onApprove,
-  onReject,
   onSuspend,
   onReactivate,
   isLoading = false,
@@ -137,27 +133,7 @@ export function UserDetailModal({
 
           {canManage ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-              {user.status === 'pending' ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="success"
-                    isLoading={isLoading}
-                    disabled={isLoading}
-                    onClick={() => onApprove(user.id)}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    disabled={isLoading}
-                    onClick={() => onReject(user.id)}
-                  >
-                    <XCircle className="h-3.5 w-3.5" /> Reject
-                  </Button>
-                </>
-              ) : user.status === 'suspended' ? (
+              {user.status === 'suspended' ? (
                 <Button
                   size="sm"
                   variant="success"
