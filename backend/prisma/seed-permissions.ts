@@ -451,10 +451,6 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'course.approve_reject',
     'laws.view',
     'laws.manage',
-  ],
-  [RoleName.CONTENT_APPROVER]: [
-    'course.view.all',
-    'course.approve_reject',
     'news.manage',
     'news.publish',
   ],
