@@ -35,6 +35,8 @@ interface ClassroomSidebarProps {
   onToggleModule: (moduleId: string) => void;
   onSelectItem: (item: ClassroomFlatItem) => void;
   isOpen: boolean;
+  /** Phones: closes the drawer (backdrop tap). */
+  onClose?: () => void;
 }
 
 function renderContentIcon(type?: string, className = 'h-3.5 w-3.5') {
@@ -70,6 +72,7 @@ export function ClassroomSidebar({
   onToggleModule,
   onSelectItem,
   isOpen,
+  onClose,
 }: ClassroomSidebarProps) {
   const { tBilingual } = useTranslation();
 
@@ -120,7 +123,14 @@ export function ClassroomSidebar({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-80 sm:w-88 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden select-none">
+    <>
+    {/* Phones: the curriculum overlays the lesson as a drawer. */}
+    <div
+      aria-hidden="true"
+      onClick={onClose}
+      className="absolute inset-0 z-30 bg-slate-900/40 animate-fade-in md:hidden"
+    />
+    <aside className="absolute inset-y-0 left-0 z-40 w-[85vw] max-w-sm shadow-2xl animate-slide-in-left md:static md:z-auto md:w-80 md:shadow-none md:animate-none shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden select-none">
       {/* Sidebar Header */}
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 shrink-0">
         <div className="flex items-center justify-between">
@@ -737,5 +747,6 @@ export function ClassroomSidebar({
         })()}
       </div>
     </aside>
+    </>
   );
 }

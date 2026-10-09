@@ -42,7 +42,7 @@ export default function PageShell({ role, title, description, actions, children 
   };
 
   return (
-    <div className="w-full animate-fade-in px-6 py-8 lg:px-10">
+    <div className="w-full animate-fade-in px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           {role ? (
@@ -53,7 +53,7 @@ export default function PageShell({ role, title, description, actions, children 
               </p>
             </div>
           ) : null}
-          <h1 className="mt-4 font-display text-[28px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mt-4 font-display text-2xl font-bold sm:text-[28px] leading-tight tracking-tight text-slate-900 dark:text-white">
             {renderText(title)}
           </h1>
           {description ? (

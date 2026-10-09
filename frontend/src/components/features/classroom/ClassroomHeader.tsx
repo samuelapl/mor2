@@ -29,9 +29,9 @@ export function ClassroomHeader({
   const isCompleted = progress?.courseCompletion.certificateEligible ?? false;
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 px-4 sm:px-6 backdrop-blur shadow-2xs transition-colors duration-200">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 px-3 sm:px-6 backdrop-blur shadow-2xs transition-colors duration-200">
       {/* Left: Back button & Course Identity */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Link
           href="/learner/my-courses"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0"
@@ -41,14 +41,15 @@ export function ClassroomHeader({
           <span className="hidden sm:inline">{tBilingual('My Courses', 'የእኔ ኮርሶች')}</span>
         </Link>
 
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
+        <div className="hidden sm:block h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
         <button
           type="button"
           onClick={onToggleSidebar}
           className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0"
           title={sidebarOpen ? 'Collapse curriculum sidebar' : 'Expand curriculum sidebar'}
-          aria-label="Toggle sidebar"
+          aria-label={tBilingual('Course contents', 'የኮርስ ይዘት')}
+          aria-expanded={sidebarOpen}
         >
           {sidebarOpen ? (
             <PanelLeftClose className="h-4 w-4" />
@@ -72,6 +73,10 @@ export function ClassroomHeader({
 
       {/* Right: Progress bar & Completion Pill & LanguageToggle */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Phones: just the number; the bar and status pill need more room. */}
+        <span className="sm:hidden font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+          {overallPercent}%
+        </span>
         <div className="hidden sm:flex flex-col items-end gap-1 min-w-[140px] mr-1">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>{tBilingual('Progress:', 'እድገት:')}</span>
@@ -83,17 +88,20 @@ export function ClassroomHeader({
         </div>
 
         {isCompleted ? (
-          <Badge variant="green" dot className="text-xs mr-2">
+          <Badge variant="green" dot className="hidden sm:inline-flex text-xs mr-2">
             {tBilingual('Course Passed', 'ኮርሱ ተጠናቋል')}
           </Badge>
         ) : (
-          <Badge variant="blue" dot className="text-xs mr-2">
+          <Badge variant="blue" dot className="hidden sm:inline-flex text-xs mr-2">
             {tBilingual('In Progress', 'በመካሄድ ላይ')}
           </Badge>
         )}
 
-        <LanguageToggle />
-        <ThemeToggle isAmharic={lang === 'am'} />
+        <LanguageToggle compact className="sm:hidden" />
+        <LanguageToggle className="hidden sm:inline-block" />
+        <div className="hidden sm:block">
+          <ThemeToggle isAmharic={lang === 'am'} />
+        </div>
       </div>
     </header>
   );

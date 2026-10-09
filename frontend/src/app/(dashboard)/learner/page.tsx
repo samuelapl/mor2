@@ -14,7 +14,6 @@ import {
   Laptop,
   MapPin,
   PlayCircle,
-  GraduationCap,
   Video,
 } from 'lucide-react';
 import { fetchUpcomingSessions } from '@/lib/api/monitoring';
@@ -24,7 +23,6 @@ import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import { StatCard } from '@/components/ui/StatCard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -117,27 +115,24 @@ export default function LearnerDashboardPage() {
   return (
     <PageShell
       role="learner"
-      title={lang === 'en' ? 'Learner Dashboard' : 'የተማሪ ዳሽቦርድ'}
+      // The greeting is the heading; "Learner Dashboard" is already clear from the menu.
+      title={
+        currentUser?.firstName || currentUser?.name
+          ? lang === 'am'
+            ? `እንኳን ደህና መጡ፣ ${currentUser.firstName || currentUser.name}!`
+            : `Welcome back, ${currentUser.firstName || currentUser.name}!`
+          : lang === 'am'
+            ? 'ወደ መማሪያ ማዕከልዎ እንኳን ደህና መጡ'
+            : 'Welcome to your learning hub'
+      }
       description={
         lang === 'en'
           ? 'Track your learning journey, resume active courses, and participate in scheduled live sessions.'
           : 'የመማር ሂደትዎን ይከታተሉ እና የቀጥታ ስልጠናዎችን ይቀላቀሉ።'
       }
     >
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <GraduationCap className="h-4 w-4 text-amber-500" />
-          <span>
-            {currentUser?.firstName || currentUser?.name
-              ? `Welcome back, ${currentUser.firstName || currentUser.name}!`
-              : 'Welcome to your LMS Learning Hub'}
-          </span>
-        </div>
-        <LanguageToggle />
-      </div>
-
-      {/* KPI Stat Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Stat Cards: 2×2 on phones and tablets, one row on desktop */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={BookOpen}
           label={tr(lang, 'myCourses')}

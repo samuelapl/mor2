@@ -2,6 +2,7 @@
 
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 
 export interface FilterOption {
   value: string;
@@ -23,6 +24,11 @@ interface FilterBarProps {
   selects?: FilterSelect[];
   onClear: () => void;
   hasActiveFilters: boolean;
+  /**
+   * Phones: search and the select(s) share one row, labels are visually hidden and
+   * "Clear filters" shrinks to an icon. Only suits one select.
+   */
+  compact?: boolean;
 }
 
 const inputClass =
@@ -35,15 +41,23 @@ export function FilterBar({
   selects = [],
   onClear,
   hasActiveFilters,
+  compact = false,
 }: FilterBarProps) {
+  const labelClass = cn(
+    'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400',
+    compact && 'sr-only sm:not-sr-only',
+  );
+
   return (
     <div className="mb-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-4 shadow-soft ring-super-soft">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+      <div
+        className={cn(
+          'flex gap-3',
+          compact ? 'flex-row items-end gap-2 sm:gap-3' : 'flex-col lg:flex-row lg:items-end',
+        )}
+      >
         <div className="min-w-0 flex-1">
-          <label
-            htmlFor="list-search"
-            className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400"
-          >
+          <label htmlFor="list-search" className={labelClass}>
             Search
           </label>
           <div className="relative">
@@ -58,11 +72,8 @@ export function FilterBar({
           </div>
         </div>
         {selects.map((select) => (
-          <div key={select.id} className="w-full sm:w-44">
-            <label
-              htmlFor={select.id}
-              className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400"
-            >
+          <div key={select.id} className={cn(compact ? 'w-[8.5rem] shrink-0' : 'w-full', 'sm:w-44')}>
+            <label htmlFor={select.id} className={labelClass}>
               {select.label}
             </label>
             <select
@@ -79,9 +90,18 @@ export function FilterBar({
             </select>
           </div>
         ))}
-        <Button type="button" variant="outline" onClick={onClear} disabled={!hasActiveFilters}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClear}
+          disabled={!hasActiveFilters}
+          aria-label="Clear filters"
+          title="Clear filters"
+          // Phones: only shown once there is something to clear, to leave the search room.
+          className={cn(compact && 'shrink-0 px-3 sm:px-5', compact && !hasActiveFilters && 'hidden sm:inline-flex')}
+        >
           <X className="h-4 w-4" />
-          Clear filters
+          <span className={cn(compact && 'hidden sm:inline')}>Clear filters</span>
         </Button>
       </div>
     </div>

@@ -9,7 +9,6 @@ import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Badge } from '@/components/ui/Badge';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { CourseCard } from '@/components/features/courses/CourseCard';
@@ -150,8 +149,6 @@ export default function LearnerCoursesPage() {
             <span>{tBilingual('In-Person Classroom', 'በአካል የሚሰጥ ስልጠና')} ({inPersonCount})</span>
           </button>
         </div>
-
-        <LanguageToggle />
       </div>
 
       <FilterBar

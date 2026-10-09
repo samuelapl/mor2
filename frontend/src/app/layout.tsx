@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Poppins, Inter } from 'next/font/google';
 import AppProviders from '@/components/providers/AppProviders';
@@ -18,6 +18,13 @@ const inter = Inter({
   variable: '--font-inter',
   display: 'swap',
 });
+
+// viewport-fit=cover lets fixed bars use env(safe-area-inset-*) around the iPhone home indicator.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: {

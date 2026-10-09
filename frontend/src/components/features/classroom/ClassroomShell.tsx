@@ -15,6 +15,7 @@ import { ClassroomFooter } from './ClassroomFooter';
 import { ClassroomStage } from './stage/ClassroomStage';
 import { useClassroomNavigation } from './hooks/useClassroomNavigation';
 import { useClassroomHeartbeat } from './hooks/useClassroomHeartbeat';
+import { MOBILE_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 
 interface ClassroomShellProps {
   courseId?: string;
@@ -28,6 +29,11 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
   const [course, setCourse] = useState<Course | null>(null);
   const [progress, setProgress] = useState<ApiCourseProgress | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Phones: the curriculum is a drawer over the lesson, so start with it closed.
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
   const [activeQuizModalId, setActiveQuizModalId] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
 
@@ -274,8 +280,10 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
               setActiveQuizModalId(null);
             }
             navigateTo(item);
+            if (isMobile) setSidebarOpen(false);
           }}
           isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         {/* Stage Content Canvas */}

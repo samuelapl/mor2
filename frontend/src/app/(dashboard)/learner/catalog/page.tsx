@@ -8,7 +8,6 @@ import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Button } from '@/components/ui/Button';
 import { CourseCard } from '@/components/features/courses/CourseCard';
 import { CatalogCourseModal } from '@/components/features/courses/CatalogCourseModal';
@@ -65,9 +64,6 @@ export default function LearnerCatalogPage() {
       title={tBilingual('Available Courses', 'የሚገኙ ኮርሶች')}
       description={tBilingual('Published courses you can enroll in.', 'ሊመዘገቡባቸው የሚችሉ የታተሙ ኮርሶች።')}
     >
-      <div className="mb-4 flex justify-end">
-        <LanguageToggle />
-      </div>
       <FilterBar
         search={search}
         onSearchChange={setSearch}
@@ -89,6 +85,7 @@ export default function LearnerCatalogPage() {
           setCategory('all');
         }}
         hasActiveFilters={search !== '' || category !== 'all'}
+        compact
       />
 
       {available.length === 0 ? (

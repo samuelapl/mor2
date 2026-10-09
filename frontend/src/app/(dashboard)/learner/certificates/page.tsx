@@ -6,7 +6,6 @@ import type { ApiCertificate } from '@/lib/api/types';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import { CertificateCard } from '@/components/features/cert/CertificateCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
@@ -120,7 +119,6 @@ export default function CertificatesPage() {
             <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
             <span className="hidden sm:inline">{tBilingual('Refresh', 'አድስ')}</span>
           </button>
-          <LanguageToggle />
         </div>
       </div>
 

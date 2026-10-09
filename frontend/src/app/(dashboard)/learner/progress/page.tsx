@@ -9,7 +9,6 @@ import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Table, Td } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -50,10 +49,6 @@ export default function ProgressPage() {
         'በሁሉም የተመዘገቡባቸው ኮርሶች የማጠናቀቂያ ሂደትዎ።',
       )}
     >
-      <div className="mb-6 flex justify-end">
-        <LanguageToggle />
-      </div>
-
       {loading && rows.length === 0 ? (
         <div className="space-y-3">
           <CardSkeleton count={4} />
@@ -78,9 +73,10 @@ export default function ProgressPage() {
                   onClick={() =>
                     setExpanded((prev) => ({ ...prev, [course.id]: !prev[course.id] }))
                   }
-                  className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50/60"
+                  // Phones: title + chevron, then the bar, then status + action. One row from `sm`.
+                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 text-left transition-colors hover:bg-slate-50/60 sm:flex-nowrap sm:px-5"
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className="order-1 min-w-0 flex-1 sm:order-none">
                     <p className="truncate font-medium text-slate-900">{course.title}</p>
                     <p className="text-[11px] text-slate-400">
                       {data
@@ -88,7 +84,7 @@ export default function ProgressPage() {
                         : course.code}
                     </p>
                   </div>
-                  <div className="w-40">
+                  <div className="order-3 w-full sm:order-none sm:w-40">
                     <div className="flex items-center gap-3">
                       <ProgressBar value={percent} className="flex-1" />
                       <span className="w-10 text-right text-xs font-medium text-slate-600">
@@ -96,17 +92,17 @@ export default function ProgressPage() {
                       </span>
                     </div>
                   </div>
-                  <Badge variant={done ? 'green' : 'blue'}>
+                  <Badge variant={done ? 'green' : 'blue'} className="order-4 sm:order-none">
                     {done ? tr(lang, 'completed') : tr(lang, 'inProgress')}
                   </Badge>
                   <Button
                     size="sm"
                     variant="outline"
-                    className={
-                      done
-                        ? 'border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400'
-                        : ''
-                    }
+                    className={cn(
+                      'order-5 ml-auto sm:order-none sm:ml-0',
+                      done &&
+                        'border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400',
+                    )}
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(`/learner/courses/${course.id}/learn`);
@@ -126,7 +122,7 @@ export default function ProgressPage() {
                   </Button>
                   <ChevronDown
                     className={cn(
-                      'h-4 w-4 shrink-0 text-slate-400 transition-transform',
+                      'order-2 h-4 w-4 shrink-0 text-slate-400 transition-transform sm:order-none',
                       open ? 'rotate-180' : '',
                     )}
                   />
@@ -135,8 +131,8 @@ export default function ProgressPage() {
                   <div className="space-y-4 border-t border-slate-100 px-5 py-4">
                     {data.modules.map((mod) => (
                       <div key={mod.moduleId}>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-slate-700">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="min-w-0 text-sm font-semibold text-slate-700">
                             {mod.unlocked === false ? (
                               <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" />
                             ) : null}
@@ -163,16 +159,6 @@ export default function ProgressPage() {
                                 </span>
                               </Td>
                               <Td>
-                                {lesson.completed ? (
-                                  <Badge variant="green">Completed</Badge>
-                                ) : lesson.unlocked === false ? (
-                                  <Badge variant="slate">
-                                    <Lock className="h-3 w-3" />
-                                    Locked
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline">Not started</Badge>
-                                )}
                                 <Badge
                                   variant={
                                     lesson.completed
