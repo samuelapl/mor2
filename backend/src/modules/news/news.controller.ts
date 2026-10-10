@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -119,6 +120,18 @@ export class NewsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.engagementService.addComment(user.id, id, dto.content);
+  }
+
+  @Patch(':id/comments/:commentId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit your own comment' })
+  updateComment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() dto: CreateNewsCommentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.engagementService.updateOwnComment(user.id, id, commentId, dto.content);
   }
 
   @Delete(':id/comments/:commentId')

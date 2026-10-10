@@ -5,21 +5,19 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Award,
-  BadgeCheck,
   BookOpen,
   CalendarRange,
-  Check,
   ChevronDown,
   Download,
   GraduationCap,
   Monitor,
-  Presentation,
   ShieldCheck,
-  Landmark,
   FileCheck2,
-  LockKeyhole,
   BarChart3,
   CheckCircle2,
+  UserPlus,
+  Users,
+  Video,
 } from 'lucide-react';
 
 import { fetchLandingStats } from '@/lib/api/dashboard';
@@ -28,195 +26,11 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PublicHeader from '@/components/layout/PublicHeader';
 import PublicFooter from '@/components/layout/PublicFooter';
-import { LatestNewsSection } from '@/components/features/news/LatestNewsSection';
-
-// Dynamic Institutional Curriculum Explorer
-function DynamicTrainingExplorer({ stats }: { stats: LandingStats | null }) {
-  const { tBilingual } = useTranslation();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
-  const categories = [
-    { id: 'all', name: tBilingual('All Tracks', 'ሁሉም ዘርፎች') },
-    { id: 'customs', name: tBilingual('Customs & ASYCUDA', 'ጉምሩክ እና አሲኩዳ') },
-    { id: 'audit', name: tBilingual('Tax Audit & Investigation', 'ታክስ ኦዲት እና ምርመራ') },
-    { id: 'compliance', name: tBilingual('Ethics & Legal Compliance', 'ስነ-ምግባር እና ህግ') },
-  ];
-
-  const courses = [
-    {
-      id: 'c1',
-      code: 'MoR-CUST-301',
-      title: tBilingual('Customs Tariff & HS Classification Framework', 'የጉምሩክ ታሪፍ እና የዕቃዎች ምደባ መመሪያ'),
-      directorate: tBilingual('Customs Operations Directorate', 'የጉምሩክ ስራዎች ዳይሬክቶሬት'),
-      category: 'customs',
-      duration: '40 Hours',
-      level: tBilingual('Advanced', 'ከፍተኛ'),
-      progress: 92,
-      badge: 'ASYCUDA World',
-    },
-    {
-      id: 'c2',
-      code: 'MoR-AUD-204',
-      title: tBilingual('Comprehensive Tax Audit & Fraud Risk Identification', 'የተሟላ የታክስ ኦዲት እና የታክስ ስወራ ስጋት ቅኝት'),
-      directorate: tBilingual('Domestic Revenue Audit Directorate', 'የሀገር ውስጥ ገቢ ኦዲት ዳይሬክቶሬት'),
-      category: 'audit',
-      duration: '32 Hours',
-      level: tBilingual('Intermediate', 'መካከለኛ'),
-      progress: 78,
-      badge: 'Risk Engine',
-    },
-    {
-      id: 'c3',
-      code: 'MoR-ETH-101',
-      title: tBilingual('Public Service Ethics, Integrity & Anti-Corruption', 'የመንግስት ሰራተኞች ስነ-ምግባር እና ፀረ-ሙስና አሰራር'),
-      directorate: tBilingual('Ethics & Compliance Directorate', 'የስነ-ምግባር እና ክትትል ዳይሬክቶሬት'),
-      category: 'compliance',
-      duration: '16 Hours',
-      level: tBilingual('Mandatory', 'የግዴታ'),
-      progress: 100,
-      badge: 'Proclamation 1097',
-    },
-  ];
-
-  const filtered = selectedCategory === 'all' ? courses : courses.filter((c) => c.category === selectedCategory);
-
-  return (
-    <div className="relative mx-auto w-full max-w-6xl">
-      <div className="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-gradient-to-tr from-sky-600/15 via-blue-700/10 to-amber-500/15 blur-3xl dark:from-sky-500/10 dark:via-blue-800/10 dark:to-amber-500/10" />
-
-      <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-2xl shadow-sky-950/10 dark:border-slate-800 dark:bg-slate-900/95">
-        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4.5 dark:border-slate-800 dark:bg-slate-950/60">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-blue-700 text-white shadow-md shadow-sky-700/20">
-              <Landmark className="h-5 w-5 text-amber-300" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-sm font-bold text-slate-950 dark:text-white">
-                  {tBilingual('National Revenue Curriculum Console', 'የብሔራዊ ገቢዎች ስልጠና መቆጣጠሪያ')}
-                </h3>
-                <span className="rounded-md border border-amber-500/30 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-                  MoR GovCloud
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {tBilingual(
-                  'Unified syllabus repository for customs, taxation, and legal enforcement',
-                  'ለጉምሩክ፣ ታክስ እና ህግ ማስከበር የተዘጋጀ የተዋሃደ ስርአተ-ትምህርት',
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-3 sm:mt-0">
-            <div className="flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 dark:border-sky-900/60 dark:bg-sky-950/50">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-semibold text-sky-800 dark:text-sky-300">
-                {stats?.courses ? `${stats.courses} Active Courses` : 'Dynamic Network'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-3.5 dark:border-slate-800">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-xs font-semibold transition',
-                  selectedCategory === cat.id
-                    ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                )}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-
-          <span className="text-[11px] font-medium text-slate-400">{tBilingual('Directive 2026 Compatible', 'በ2018/2026 መመሪያ መሰረት የተዘጋጀ')}</span>
-        </div>
-
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className="group flex flex-col justify-between gap-4 p-5 transition hover:bg-sky-50/40 sm:flex-row sm:items-center sm:px-6 dark:hover:bg-slate-800/40"
-            >
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-sky-700 dark:text-sky-400">{item.code}</span>
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {item.badge}
-                  </span>
-                  <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                    {item.level}
-                  </span>
-                </div>
-                <h4 className="font-display text-sm font-bold text-slate-900 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-400">
-                  {item.title}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {item.directorate} • {item.duration}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-6 sm:justify-end">
-                <div className="w-36">
-                  <div className="mb-1 flex justify-between text-[11px]">
-                    <span className="text-slate-500 dark:text-slate-400">{tBilingual('Completion', 'ማጠናቀቂያ')}</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{item.progress}%</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div
-                      className={cn(
-                        'h-full rounded-full transition-all duration-700',
-                        item.progress === 100 ? 'bg-amber-500' : 'bg-gradient-to-r from-sky-500 to-blue-600',
-                      )}
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                <Link
-                  href="/login"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:border-sky-500 hover:bg-sky-600 hover:text-white dark:border-slate-700 dark:hover:bg-sky-500"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-            <span>
-              {tBilingual(
-                'Accredited through the Ethiopian Civil Service Commission & MoR HR Division',
-                'በኢትዮጵያ ሲቪል ሰርቪስ ኮሚሽን እና በገቢዎች የሰው ኃይል ልማት እውቅና የተሰጠው',
-              )}
-            </span>
-          </div>
-
-          <Link href="/login" className="font-semibold text-sky-700 hover:underline dark:text-sky-400">
-            {tBilingual('Access all staff curricula →', 'ሁሉንም የስልጠና ዝርዝሮች ይመልከቱ →')}
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function LandingPage() {
-  const { tBilingual, lang } = useTranslation();
+  const { tBilingual } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [stats, setStats] = useState<LandingStats | null>(null);
-  const [activeRoleIndex, setActiveRoleIndex] = useState(0);
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') return false;
     return Boolean(
@@ -275,7 +89,7 @@ export default function LandingPage() {
       icon: CalendarRange,
       title: tBilingual('Synchronous & Virtual Classroom', 'የቀጥታ ስልጠና እና መርሃ-ግብር'),
       description: tBilingual(
-        'Host scheduled webinars with automated biometric/credentialed attendance tracking, interactive slides, and branch-wide broadcast capabilities.',
+        'Host scheduled webinars with automated attendance tracking, interactive slides, and branch-wide broadcast capabilities.',
         'ስልጠናዎችን በጊዜ ሰሌዳ ያቅዱ፤ ተሳትፎን በስርዓቱ በኩል በራስ-ሰር ይከታተሉ፤ የቀጥታ ትምህርቶችንም ያካሂዱ።',
       ),
     },
@@ -305,153 +119,57 @@ export default function LandingPage() {
     },
   ];
 
-  const roleWorkspaces = [
+  // Step-by-step Learner Flow from Signup to Certificate
+  const learnerFlowSteps = [
     {
-      id: 'owner',
-      title: tBilingual('Course Owner', 'የኮርስ ባለቤት'),
-      badge: tBilingual('Curriculum Authoring', 'ስርአተ-ትምህርት ዝግጅት'),
-      headline: tBilingual('Curate, structure, and stage authoritative revenue training modules.', 'የገቢዎች ዘርፍ የስልጠና ሞጁሎችን ያዘጋጁ እና ያደራጁ።'),
+      step: '01',
+      icon: UserPlus,
+      title: tBilingual('Sign Up & Account Setup', 'ምዝገባ እና መለያ ማዋቀር'),
       description: tBilingual(
-        'Course owners construct interactive syllabus outlines, embed SCORM/video assets, define multiple-choice or scenario evaluations, and forward finalized drafts to quality approvers.',
-        'የኮርስ ባለቤቶች የትምህርት እቅዶችን ያዘጋጃሉ፤ ቪዲዮዎችን እና ሰነዶችን ያካትታሉ፤ ፈተናዎችን በማዘጋጀት ለግምገማ ያቀርባሉ።',
+        'Register using your Ministry credentials or official email. Set up your profile with your designated branch, directorate, and job title.',
+        'በይፋዊ የሚኒስቴሩ መረጃ ወይም ኢሜይል ይመዝገቡ፤ ቅርንጫፍዎን፣ ዳይሬክቶሬትዎን እና የስራ መደብዎን በማስገባት የግል መለያዎን ያዘጋጁ።',
       ),
+      tag: tBilingual('Instant Activation', 'ፈጣን ምዝገባ'),
+    },
+    {
+      step: '02',
       icon: BookOpen,
-      highlights: [
-        tBilingual('Drag-and-drop module hierarchy', 'ቀላል የሞጁል አደረጃጀት'),
-        tBilingual('Rich assessment builder with passing scores', 'የፈተና እና ውጤት ማስተካከያ'),
-        tBilingual('Draft state isolation & review queues', 'የረቂቅ እና ግምገማ ዝርዝር'),
-      ],
+      title: tBilingual('Explore & Enroll in Courses', 'ኮርሶችን መርጦ መመዝገብ'),
+      description: tBilingual(
+        'Browse the institutional catalog covering customs tariffs, ASYCUDA, tax audit techniques, and ethics. Enroll in self-paced or assigned cohort courses.',
+        'የጉምሩክ ታሪፍ፣ አሲኩዳ፣ የታክስ ኦዲት እና ስነ-ምግባር የስልጠና ዘርፎችን በማሰስ በፍላጎትዎ ወይም በተመደቡበት ቡድን ይመዝገቡ።',
+      ),
+      tag: tBilingual('Tax & Customs Tracks', 'የስልጠና ዘርፎች'),
     },
     {
-      id: 'approver',
-      title: tBilingual('Content Approver', 'ይዘት አጽዳቂ'),
-      badge: tBilingual('Compliance & Verification', 'ህጋዊነት እና ጥራት ቁጥጥር'),
-      headline: tBilingual(
-        'Maintain regulatory precision, legal validity, and MoR training standards.',
-        'የስልጠና ይዘቱን ህጋዊነት፣ ጥራት እና የተቋም መመሪያዎችን ያረጋግጡ።',
-      ),
+      step: '03',
+      icon: Video,
+      title: tBilingual('Interactive Learning & Live Sessions', 'ትምህርት እና የቀጥታ ስልጠናዎች'),
       description: tBilingual(
-        'Content approvers inspect proposed courses against Ministry regulations and tax proclamation amendments. Courses can be rejected with structured editorial feedback or approved for catalog deployment.',
-        'ኮርሶች በቅርብ የወጡ የግብር አዋጆችን እና የተቋሙን መመሪያዎች ማሟላታቸውን ገምግመው አስተያየት በመስጠት ያጸድቃሉ ወይም እንዲስተካከሉ ይመልሳሉ።',
+        'Complete multimedia modules at your own pace and participate in interactive trainer-led webinars with automated attendance tracking.',
+        'ትምህርቶችን በራስዎ ፍጥነት ያጠናቅቁ፤ በአሰልጣኞች በሚመሩ የቀጥታ ክፍለ-ጊዜዎች ይሳተፉ፤ ተሳትፎዎም በስርዓቱ በራስ-ሰር ይመዘገባል።',
       ),
-      icon: BadgeCheck,
-      highlights: [
-        tBilingual('Side-by-side revision audit', 'የይዘት ማነጻጸሪያ እና ግምገማ'),
-        tBilingual('Actionable correction annotations', 'የማስተካከያ ማስታወሻ መስጫ'),
-        tBilingual('Sign-off digital audit log', 'ህጋዊ የይሁንታ ማረጋገጫ'),
-      ],
+      tag: tBilingual('Synchronous & On-Demand', 'ቀጥታ እና ራስ-አገዝ'),
     },
     {
-      id: 'admin',
-      title: tBilingual('Training Admin', 'የስልጠና አስተዳዳሪ'),
-      badge: tBilingual('Logistics & Enrollment', 'የስልጠና መርሃ-ግብር እና ምዝገባ'),
-      headline: tBilingual(
-        'Coordinate national cohorts, branch scheduling, and institutional quotas.',
-        'የሰራተኞችን የስልጠና ምደባ፣ መርሃ-ግብር እና የቅርንጫፍ ኮታዎችን ያስተዳድሩ።',
-      ),
+      step: '04',
+      icon: FileCheck2,
+      title: tBilingual('Assessments & Knowledge Checks', 'ምዘና እና ማጠቃለያ ፈተናዎች'),
       description: tBilingual(
-        'Training admins map active curricula into live semester sessions, target specific staff directorates, monitor room or bandwidth capacities, and track enterprise participation trends.',
-        'ስልጠናዎችን በወቅቱ ካላንደር ይመድባሉ፤ ለተወሰኑ ዳይሬክቶሬቶች ስልጠና ያሰራጫሉ፤ የመሳተፊያ አቅምን ይቆጣጠራሉ።',
+        'Reinforce understanding through module quizzes and complete the final comprehensive assessment to meet the required passing mark.',
+        'የሞጁል ፈተናዎችን እና አጠቃላይ ማጠቃለያ ፈተናውን በመውሰድ ለኮርሱ የተቀመጠውን የማለፊያ መስፈርት ነጥብ ያሟሉ።',
       ),
-      icon: CalendarRange,
-      highlights: [
-        tBilingual('Batch staff enrollment by department', 'በየክፍሉ በቡድን የመመዝገቢያ ዘዴ'),
-        tBilingual('Session calendar & reminder automation', 'የቀን መቁጠሪያ እና የማስታወሻ መልእክቶች'),
-        tBilingual('Directorate completion quotas', 'የዳይሬክቶሬቶች የማጠናቀቂያ ኮታ'),
-      ],
+      tag: tBilingual('Competency Evaluated', 'ብቃት ማረጋገጫ'),
     },
     {
-      id: 'trainer',
-      title: tBilingual('Trainer / Instructor', 'አሰልጣኝ / መምህር'),
-      badge: tBilingual('Classroom Facilitation', 'የቀጥታ ስልጠና መምሪያ'),
-      headline: tBilingual(
-        'Lead interactive live sessions, grade assignments, and mentor staff cohorts.',
-        'የቀጥታ ስልጠናዎችን ይመሩ፣ የተግባር ስራዎችን ይመዝኑ እና ሰልጣኞችን ያግዙ።',
-      ),
-      description: tBilingual(
-        'Trainers conduct virtual seminars, initiate dynamic Q&As, verify attendance records in real time, and deliver rapid evaluations on submitted case studies.',
-        'አሰልጣኞች የቀጥታ ስልጠናዎችን ያካሂዳሉ፤ ጥያቄ እና መልሶችን ይመራሉ፤ የተሰጡ የተግባር ስራዎችን እና ፈተናዎችን ያርማሉ።',
-      ),
-      icon: Presentation,
-      highlights: [
-        tBilingual('Live session console with presence sync', 'የቀጥታ ስብሰባ እና የተሳትፎ መቆጣጠሪያ'),
-        tBilingual('Direct learner grading & rubric feedback', 'የፈተና ውጤት እና ማብራሪያ መስጫ'),
-        tBilingual('Live poll & knowledge pulse checks', 'የፈጣን ግንዛቤ መፈተሻ ጥያቄዎች'),
-      ],
-    },
-    {
-      id: 'learner',
-      title: tBilingual('MoR Staff / Learner', 'የገቢዎች ሰራተኛ / ሰልጣኝ'),
-      badge: tBilingual('Continuous Upskilling', 'የሙያ ማሻሻያ'),
-      headline: tBilingual(
-        'Personalized workspace for career development and statutory accreditation.',
-        'ለሙያዊ እድገት እና ለተቋማዊ እውቅና የተዘጋጀ የተማሪዎች መድረክ።',
-      ),
-      description: tBilingual(
-        'Ministry employees track required compliance coursework, participate in webinars, access offline study materials, and download their verified qualification credentials.',
-        'ሰራተኞች የተመደቡላቸውን ኮርሶች ይወስዳሉ፤ በቀጥታ ስልጠናዎች ይሳተፋሉ፤ ትምህርቱን ሲያጠናቅቁም እውቅና ያለው ሰርተፍኬት ያገኛሉ።',
-      ),
-      icon: GraduationCap,
-      highlights: [
-        tBilingual('Self-paced progress bookmarking', 'የትምህርት ሂደትን በቀላሉ የመቀጠያ ዘዴ'),
-        tBilingual('Interactive self-assessment quizzes', 'የራስን ግንዛቤ መፈተሻ ፈተናዎች'),
-        tBilingual('Downloadable tamper-proof diploma', 'ሊወርድ የሚችል የታመነ ሰርተፍኬት'),
-      ],
-    },
-    {
-      id: 'sysadmin',
-      title: tBilingual('System Administrator', 'የስርዓት አስተዳዳሪ'),
-      badge: tBilingual('Platform Governance', 'የስርዓት አስተዳደር እና ቁጥጥር'),
-      headline: tBilingual('Enterprise directory sync, system telemetry, and audit readiness.', 'የተጠቃሚዎች ማዕከላዊ አስተዳደር፣ የቴክኒክ ክትትል እና የደህንነት ኦዲት።'),
-      description: tBilingual(
-        'System administrators manage Active Directory/LDAP single sign-on integration, assign hierarchical permission roles, audit critical system mutations, and supervise operational uptime.',
-        'የተጠቃሚዎችን ፈቃድ ያስተካክላሉ፤ የመረጃ ደህንነትን ይቆጣጠራሉ፤ የስርዓቱን ቀጣይነት ያለው አገልግሎት ያረጋግጣሉ።',
-      ),
-      icon: ShieldCheck,
-      highlights: [
-        tBilingual('Institutional RBAC enforcement', 'የስራ ድርሻ ፈቃድ መቆጣጠሪያ'),
-        tBilingual('Comprehensive system access logs', 'ዝርዝር የተጠቃሚዎች እንቅስቃሴ መዝገብ'),
-        tBilingual('Database retention & backup controls', 'የመረጃ ቋት ጥበቃ እና መጠባበቂያ'),
-      ],
-    },
-  ];
-
-  const workflowSteps = [
-    {
-      num: '01',
-      title: tBilingual('Curriculum Authoring', 'የስልጠና ይዘት ማዘጋጀት'),
-      description: tBilingual(
-        'Subject matter experts and Course Owners structure modules, lessons, and diagnostic assessments.',
-        'የዘርፉ ባለሙያዎች እና የኮርስ አዘጋጆች ሞጁሎችን፣ ትምህርቶችን እና የሙከራ ፈተናዎችን ያዘጋጃሉ።',
-      ),
-      icon: BookOpen,
-    },
-    {
-      num: '02',
-      title: tBilingual('Regulatory Review', 'ህጋዊ ግምገማና ማጽደቅ'),
-      description: tBilingual(
-        'Directorate approvers evaluate accuracy, aligning material with modern tax laws and directives.',
-        'አጽዳቂዎች የትምህርቱን ትክክለኛነት ከወቅታዊ የታክስ አዋጆች እና መመሪያዎች ጋር አገናዝበው ያረጋግጣሉ።',
-      ),
-      icon: BadgeCheck,
-    },
-    {
-      num: '03',
-      title: tBilingual('Cohort Deployment', 'የመርሃ-ግብር ስርጭት'),
-      description: tBilingual(
-        'Admins publish verified courses, enroll target branches, and schedule live trainer-led sessions.',
-        'አስተዳዳሪዎች የጸደቁትን ኮርሶች ለቅርንጫፎች ይመድባሉ፤ የቀጥታ ስልጠና መርሃ-ግብርም ያወጣሉ።',
-      ),
-      icon: CalendarRange,
-    },
-    {
-      num: '04',
-      title: tBilingual('Accreditation & Audit', 'ፈተና እና ሰርተፍኬት'),
-      description: tBilingual(
-        'Staff complete milestones, verify comprehension through quizzes, and earn verifiable credentials.',
-        'ሰራተኞች ስልጠናውን አጠናቀው ፈተናዎችን በማለፍ እውቅና ያለው ዲጂታል ሰርተፍኬት ያገኛሉ።',
-      ),
+      step: '05',
       icon: Award,
+      title: tBilingual('Earn Verifiable Certificate', 'የተረጋገጠ ሰርተፍኬት ማግኘት'),
+      description: tBilingual(
+        'Upon meeting all completion and attendance gates, instantly unlock and download your digitally signed certificate with verifiable QR authenticity.',
+        'ሁሉንም የትምህርት እና የተሳትፎ መስፈርቶች ሲያሟሉ በልዩ የመለያ ቁጥር እና በQR ኮድ የሚረጋገጥ ይፋዊ ዲጂታል ሰርተፍኬት ወዲያውኑ ይውሰዱ።',
+      ),
+      tag: tBilingual('Tamper-Proof QR', 'የተረጋገጠ ዲፕሎማ'),
     },
   ];
 
@@ -467,29 +185,27 @@ export default function LandingPage() {
       ),
     },
     {
-      question: tBilingual('How does the multi-tier role authorization model operate?', 'የስራ ድርሻ ፈቃድ አሰጣጥ (RBAC) እንዴት ነው የሚሰራው?'),
+      question: tBilingual('How does a learner earn and verify their certificate?', 'ተማሪ ሰርተፍኬት እንዴት ያገኛል፤ ትክክለኛነቱስ እንዴት ይረጋገጣል?'),
       answer: tBilingual(
-        'Access is governed by the Principle of Least Privilege across 6 distinct profiles: Course Owners, Content Approvers, Training Administrators, Trainers, Learners, and System Administrators. Each user authenticates directly into a personalized workspace tailored precisely to their administrative jurisdiction.',
-        'ስርዓቱ በ6 የተከፋፈሉ የስራ ድርሻዎች የተገነባ ነው፦ የኮርስ ባለቤት፣ ይዘት አጽዳቂ፣ የስልጠና አስተዳዳሪ፣ አሰልጣኝ፣ ተማሪ እና የስርዓት አስተዳዳሪ። እያንዳንዱ ተጠቃሚ በተመደበለት ኃላፊነት ልክ የተዘጋጀ የስራ ገጽ ያገኛል።',
+        'Learners must complete all lessons, satisfy live session attendance requirements, and score above the policy pass mark on assessments. Every awarded certificate contains a cryptographically stamped serial number and a public QR verification link for instant validation.',
+        'ተማሪዎች ሁሉንም ትምህርቶች ማጠናቀቅ፣ በቀጥታ ክፍለ-ጊዜዎች በቂ ቆይታ ማድረግ እና በፈተናዎች ላይ የማለፊያ ነጥብ ማግኘት አለባቸው። እያንዳንዱ ሰርተፍኬት በልዩ መለያ ቁጥር እና በQR ኮድ ማረጋገጫ የተደገፈ ነው።',
       ),
     },
     {
-      question: tBilingual('How are digital certificates validated against tampering?', 'የተሰጡ ሰርተፍኬቶች ትክክለኛነት እንዴት ይረጋገጣል?'),
+      question: tBilingual('Can I attend live sessions from any branch or remotely?', 'የቀጥታ ስልጠናዎችን ከማንኛውም ቅርንጫፍ ወይም በርቀት መከታተል ይቻላል?'),
       answer: tBilingual(
-        'Every awarded certificate contains a cryptographically stamped serial number and a public verification link. Third-party verifiers or internal HR teams can instantly check qualification authenticity without contacting platform technicians.',
-        'እያንዳንዱ ሰርተፍኬት ልዩ የመለያ ቁጥር እና ፈጣን የQR ኮድ ማረጋገጫ የያዘ በመሆኑ ማንም ሰው ወይም የሰው ኃይል አስተዳደር ክፍል የሰነዱን ትክክለኛነት በቀላሉ ማረጋገጥ ይችላል።',
+        'Yes. Synchronous live sessions run on modern web and desktop clients. Attendance is monitored automatically based on your active stay duration so you receive attendance credit regardless of where you participate.',
+        'አዎ። የቀጥታ ስልጠናዎች በድረ-ገጽ እና በኮምፒውተር መተግበሪያ በቀላሉ ይሰራሉ። ተሳትፎዎ በቆይታዎ መጠን በራስ-ሰር ስለሚመዘገብ ከየትኛውም ቅርንጫፍ መሳተፍ ይችላሉ።',
       ),
     },
     {
       question: tBilingual('Is the platform fully available in Amharic and English?', 'መድረኩ በአማርኛ እና በእንግሊዝኛ ሙሉ በሙሉ ይሰራል?'),
       answer: tBilingual(
-        'Yes. The system is architected with bilingual localization across all user touchpoints — including navigation controls, administrative dashboards, data grids, and localized certificate typography.',
+        'Yes. The system is architected with bilingual localization across all user touchpoints — including navigation controls, administrative dashboards, learning modules, and localized certificate typography.',
         'አዎ። መድረኩ በዳሽቦርዶች፣ በምናሌዎች፣ በኮርሶች እና በሰርተፍኬት ህትመት ላይ እንግሊዝኛን እና አማርኛን በእኩል ደረጃ ይደግፋል።',
       ),
     },
   ];
-
-  const currentRole = roleWorkspaces[activeRoleIndex];
 
   return (
     <main className="relative min-h-screen bg-slate-50 text-slate-700 antialiased selection:bg-sky-600 selection:text-white dark:bg-slate-950 dark:text-slate-300">
@@ -498,7 +214,7 @@ export default function LandingPage() {
       <PublicHeader />
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28">
+      <section className="relative overflow-hidden px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-20 lg:px-8 lg:pb-12">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-sky-50 px-4 py-1.5 text-xs font-semibold text-sky-800 shadow-sm backdrop-blur dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
@@ -507,7 +223,7 @@ export default function LandingPage() {
             </div>
 
             <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
-              {tBilingual('Enterprise learning built for the ', 'ለተቋማዊ ብቃት የተገነባ ዘመናዊ ')}
+              {tBilingual('Learning Management System for', 'የስልጠና ማስተዳደሪያ ስርዓት')}{' '}
               <span className="bg-gradient-to-r from-sky-600 via-blue-700 to-amber-500 bg-clip-text text-transparent dark:from-sky-400 dark:via-blue-400 dark:to-amber-400">
                 {tBilingual('Ministry of Revenues', 'የገቢዎች ሚኒስቴር የስልጠና ስርዓት')}
               </span>
@@ -530,73 +246,87 @@ export default function LandingPage() {
               </Link>
 
               <a
-                href="#roles"
+                href="#learner-flow"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300/90 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                {tBilingual('Explore Workspaces', 'የስራ ድርሻዎችን ይመልከቱ')}
+                {tBilingual('How It Works', 'የመማር ሂደቱን ይመልከቱ')}
               </a>
             </div>
+          </div>
 
-            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                tBilingual('6 Strict RBAC Roles', '6 የተለዩ የስራ ድርሻዎች'),
-                tBilingual('Proclamation Aligned', 'ከአዋጆች ጋር የተጣጣመ'),
-                tBilingual('Audited Completion Logs', 'የተረጋገጠ የኦዲት መዝገብ'),
-                tBilingual('Amharic & English', 'በአማርኛ እና እንግሊዝኛ'),
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/60 px-3 py-2 text-xs font-medium text-slate-600 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300"
-                >
-                  <Check className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                  <span className="truncate">{item}</span>
+          {/* REAL-TIME IMPACT METRICS CARDS */}
+          <div className="mt-12 w-full">
+            <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4 lg:gap-8 xl:gap-10">
+                {/* 1. Accredited Courses */}
+                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm transition hover:-translate-y-1 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-800 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 group-hover:scale-110 transition-transform">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-sky-700 dark:text-sky-400 sm:text-4xl">
+                    {stats?.courses ? `${stats.courses}+` : '7+'}
+                  </div>
+                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                    {tBilingual('Accredited Courses', 'የተዘጋጁ ኮርሶች')}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {tBilingual('Tax, Customs & Policy', 'ታክስ፣ ጉምሩክ እና ህግጋት')}
+                  </div>
                 </div>
-              ))}
+
+                {/* 2. Active MoR Personnel */}
+                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-emerald-800 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 sm:text-4xl">
+                    {stats?.staff ? `${stats.staff}+` : '22+'}
+                  </div>
+                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                    {tBilingual('Active MoR Personnel', 'ንቁ ሰራተኞች')}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {tBilingual('Across all regional branches', 'በሁሉም ቅርንጫፎች')}
+                  </div>
+                </div>
+
+                {/* 3. Live Sessions Completed */}
+                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-violet-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-violet-800 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 group-hover:scale-110 transition-transform">
+                    <Video className="h-5 w-5" />
+                  </div>
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-violet-600 dark:text-violet-400 sm:text-4xl">
+                    {stats?.sessions ? `${stats.sessions}+` : '17+'}
+                  </div>
+                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                    {tBilingual('Live Sessions Completed', 'የተካሄዱ የቀጥታ ስልጠናዎች')}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {tBilingual('Trainer-led interactive', 'በአሰልጣኞች የተመሩ')}
+                  </div>
+                </div>
+
+                {/* 4. Verifiable Credentials */}
+                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-amber-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-amber-800 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 group-hover:scale-110 transition-transform">
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 sm:text-4xl">
+                    {stats?.certificates ? `${stats.certificates}+` : '1+'}
+                  </div>
+                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                    {tBilingual('Verifiable Credentials', 'የተሰጡ ሰርተፍኬቶች')}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {tBilingual('QR authenticated', 'በQR የተረጋገጡ')}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="mt-16 sm:mt-20">
-            <DynamicTrainingExplorer stats={stats} />
-          </div>
-        </div>
-      </section>
-
-      {/* METRICS STRIP */}
-      <section className="border-y border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 lg:grid-cols-4">
-          {[
-            {
-              value: stats ? `${stats.courses}+` : '60+',
-              label: tBilingual('Accredited Courses', 'የተዘጋጁ ኮርሶች'),
-              desc: tBilingual('Tax, Customs & Policy', 'ታክስ፣ ጉምሩክ እና ህግጋት'),
-            },
-            {
-              value: stats ? `${stats.staff}+` : '3,500+',
-              label: tBilingual('Active MoR Personnel', 'ንቁ ሰራተኞች'),
-              desc: tBilingual('Across all regional branches', 'በሁሉም ቅርንጫፎች'),
-            },
-            {
-              value: stats ? `${stats.sessions}+` : '120+',
-              label: tBilingual('Live Sessions Completed', 'የተካሄዱ የቀጥታ ስልጠናዎች'),
-              desc: tBilingual('Trainer-led interactive', 'በአሰልጣኞች የተመሩ'),
-            },
-            {
-              value: stats ? `${stats.certificates}+` : '2,100+',
-              label: tBilingual('Verifiable Credentials', 'የተሰጡ ሰርተፍኬቶች'),
-              desc: tBilingual('QR authenticated', 'በQR የተረጋገጡ'),
-            },
-          ].map((item) => (
-            <div key={item.label} className="p-6 text-center lg:py-8">
-              <p className="font-display text-3xl font-extrabold tracking-tight text-sky-700 dark:text-sky-400 sm:text-4xl">{item.value}</p>
-              <p className="mt-1 text-xs font-semibold text-slate-900 dark:text-slate-200 sm:text-sm">{item.label}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        </section>
 
       {/* PLATFORM CAPABILITIES */}
-      <section id="capabilities" className="scroll-mt-16 px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <section id="capabilities" className="scroll-mt-16 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 sm:pb-20 lg:px-8 lg:pt-10 lg:pb-24">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
@@ -633,159 +363,104 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* INTERACTIVE ROLE SHOWCASE */}
+      {/* LEARNER JOURNEY: STEP-BY-STEP FLOW FROM SIGNUP TO CERTIFICATE */}
       <section
-        id="roles"
-        className="scroll-mt-16 border-y border-slate-200 bg-slate-100/60 px-4 py-20 dark:border-slate-800 dark:bg-slate-900/40 sm:px-6 lg:px-8 lg:py-28"
+        id="learner-flow"
+        className="scroll-mt-16 bg-slate-100/60 px-4 py-20 dark:bg-slate-900/40 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
-              {tBilingual('Role Separation', 'የስራ ድርሻ ክፍፍል')}
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {tBilingual('Six tailored workspaces in harmony', 'ስድስት የተለያዩ የስራ ክፍሎች በአንድ ላይ ሲሰሩ')}
-            </h2>
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-              {tBilingual(
-                'Select any role below to examine its dedicated controls, approval gates, and administrative views.',
-                'የእያንዳንዱን የስራ ድርሻ ኃላፊነት እና መሳሪያዎች ለመመልከት ከታች ካሉት ሚናዎች አንዱን ይምረጡ።',
-              )}
-            </p>
-          </div>
-
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-            {roleWorkspaces.map((role, idx) => {
-              const active = idx === activeRoleIndex;
-              return (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => setActiveRoleIndex(idx)}
-                  className={cn(
-                    'flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition',
-                    active
-                      ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800',
-                  )}
-                >
-                  <role.icon className="h-4 w-4" />
-                  <span>{role.title}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-10 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
-            <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="p-8 sm:p-12">
-                <div className="inline-flex items-center gap-2 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                  <currentRole.icon className="h-3.5 w-3.5" />
-                  {currentRole.badge}
-                </div>
-
-                <h3 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
-                  {currentRole.headline}
-                </h3>
-
-                <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">{currentRole.description}</p>
-
-                <div className="mt-8 border-t border-slate-100 pt-6 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">
-                    {tBilingual('Core Operational Capabilities', 'ዋና ዋና ተግባራት')}
-                  </h4>
-                  <ul className="mt-4 space-y-3">
-                    {currentRole.highlights.map((highlight) => (
-                      <li key={highlight} className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 className="h-4 w-4 text-sky-600 shrink-0 dark:text-sky-400" />
-                        <span>{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mt-8">
-                  <Link href="/login" className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400">
-                    <span>{tBilingual(`Access ${currentRole.title} Console`, `ወደ ${currentRole.title} መቆጣጠሪያ ይግቡ`)}</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-center border-t border-slate-200 bg-slate-900 p-8 text-white lg:border-l lg:border-t-0 dark:border-slate-800">
-                <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 shadow-2xl">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                    <div className="flex items-center gap-2">
-                      <currentRole.icon className="h-4 w-4 text-sky-400" />
-                      <span className="font-mono text-xs font-semibold text-slate-200">{currentRole.title} Console</span>
-                    </div>
-                    <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">AUTHENTICATED</span>
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400">{tBilingual('Active Duty Queue', 'የስራ ሂደት ዝርዝር')}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-200">
-                        {tBilingual('Direct access to assigned directorate tasks', 'የተመደቡ የስራ ኃላፊነቶች ቀጥታ መዳረሻ')}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400">{tBilingual('Directorate Node', 'የዳይሬክቶሬት ክፍል')}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-200">
-                        {tBilingual('Federal Headquarters • Tax & Customs Audit', 'ዋናው መስሪያ ቤት • ታክስ እና ጉምሩክ')}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border border-sky-500/30 bg-sky-950/30 p-3">
-                      <p className="text-[10px] font-semibold text-sky-300">{tBilingual('Security Token Validated', 'የደህንነት ፈቃድ ተረጋግጧል')}</p>
-                      <p className="mt-0.5 text-[10px] text-slate-400">MoR Internal PKI Session Active</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1 text-xs font-semibold text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
+              <GraduationCap className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+              <span>{tBilingual('Learner Journey', 'የተማሪው የጉዞ ሂደት')}</span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* STRUCTURED WORKFLOW */}
-      <section id="how-it-works" className="scroll-mt-16 px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
-              {tBilingual('Standard Operating Procedure', 'የአሰራር ሂደት ደረጃዎች')}
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {tBilingual('From curriculum drafting to verified diploma', 'ከኮርስ ዝግጅት እስከ ተረጋገጠ ሰርተፍኬት')}
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+              {tBilingual('From Signup to Verified Certification', 'ከመመዝገብ እስከ ተረጋገጠ የምስክር ወረቀት')}
             </h2>
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+            <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
               {tBilingual(
-                'A four-stage lifecycle designed around civil service governance, accountability, and pedagogical excellence.',
-                'የስልጠና ጥራትን እና ተቋማዊ ተጠያቂነትን የሚያረጋግጡ አራት ወሳኝ የስራ ሂደቶች።',
+                'A seamless 5-step pathway for Ministry personnel to develop expertise, attend live interactive sessions, and earn recognized credentials.',
+                'የገቢዎች ሚኒስቴር ሰራተኞች አቅማቸውን እንዲገነቡ፣ በቀጥታ ስልጠናዎች እንዲሳተፉ እና እውቅና ያለው ሰርተፍኬት እንዲያገኙ የተዘጋጀ 5 ወሳኝ ደረጃዎች ያሉት ግልጽ ሂደት።',
               )}
             </p>
           </div>
 
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {workflowSteps.map((step) => {
-              const Icon = step.icon;
+          {/* 5-Step Process Grid */}
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {learnerFlowSteps.map((item, idx) => {
+              const Icon = item.icon;
               return (
                 <div
-                  key={step.num}
-                  className="relative rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60"
+                  key={item.step}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-800"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-600 text-white shadow-md shadow-sky-600/20">
-                      <Icon className="h-6 w-6" />
+                  <div>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-sm shadow-sky-600/20">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="font-mono text-2xl font-black text-slate-300 dark:text-slate-700">
+                        {item.step}
+                      </span>
                     </div>
-                    <span className="font-mono text-2xl font-black text-slate-300 dark:text-slate-700">{step.num}</span>
+
+                    <div className="mt-4 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">
+                      {item.tag}
+                    </div>
+
+                    <h3 className="mt-2.5 font-display text-sm font-bold text-slate-950 dark:text-white">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                      {item.description}
+                    </p>
                   </div>
-                  <h3 className="mt-6 font-display text-base font-bold text-slate-950 dark:text-white">{step.title}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{step.description}</p>
+
+                  <div className="mt-6 flex items-center gap-1.5 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>
+                      {idx === 4
+                        ? tBilingual('Accreditation Complete', 'ስልጠናው ተጠናቋል')
+                        : tBilingual(`Phase ${idx + 1} Milestone`, `ደረጃ ${idx + 1} ሂደት`)}
+                    </span>
+                  </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* Action Callout */}
+          <div className="mt-12 overflow-hidden rounded-3xl border border-sky-200 bg-gradient-to-r from-sky-600 via-blue-700 to-sky-800 p-8 text-white shadow-xl dark:border-sky-900 sm:p-10">
+            <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
+              <div className="space-y-2 text-center sm:text-left">
+                <h3 className="font-display text-xl font-bold sm:text-2xl">
+                  {tBilingual('Ready to advance your tax & customs competencies?', 'የታክስ እና የጉምሩክ ሙያዊ አቅምዎን ለማሳደግ ዝግጁ ነዎት?')}
+                </h3>
+                <p className="text-xs text-sky-100 sm:text-sm">
+                  {tBilingual(
+                    'Join thousands of Ministry of Revenues personnel upskilling across regional branches nationwide.',
+                    'በመላ አገሪቱ ከሚገኙ በሺዎች ከሚቆጠሩ የገቢዎች ሚኒስቴር ባልደረቦች ጋር አብረው ይማሩ።',
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-bold text-sky-700 shadow-md transition hover:bg-sky-50 active:scale-[0.98]"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>{tBilingual('Create Account', 'መለያ ይፍጠሩ')}</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/20 active:scale-[0.98]"
+                >
+                  <span>{tBilingual('Sign In to Platform', 'ወደ ስርዓቱ ይግቡ')}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -888,76 +563,10 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* INSTITUTIONAL SECURITY / GOVERNANCE */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
-            <div className="grid lg:grid-cols-2">
-              <div className="p-8 sm:p-12 lg:p-16">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
-                  <LockKeyhole className="h-6 w-6" />
-                </div>
-                <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
-                  {tBilingual('Enterprise Compliance & Data Sovereignty', 'የተቋም ደህንነት፣ ህጋዊነት እና የመረጃ ባለቤትነት')}
-                </h2>
-                <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                  {tBilingual(
-                    'Built to adhere strictly to Ethiopian Federal Data Privacy laws, Ministry operational frameworks, and internal audit policies.',
-                    'የስርዓቱ የመረጃ አያያዝ እና ጥበቃ የፌዴራል የመረጃ ደህንነት መመሪያዎችን እና የገቢዎች ሚኒስቴርን የአሰራር ደንቦች ሙሉ በሙሉ ያሟላል።',
-                  )}
-                </p>
-
-                <div className="mt-8 space-y-4">
-                  {[
-                    {
-                      title: tBilingual('Immutable Audit Logs', 'የማይፋቁ የኦዲት መዝገቦች'),
-                      desc: tBilingual('Every grade modification and sign-off is logged indefinitely.', 'ሁሉም የውጤት እና የይዘት ለውጦች በቋሚነት ይመዘገባሉ።'),
-                    },
-                    {
-                      title: tBilingual('Role Separation of Duties', 'የስራ ድርሻ ክፍፍል'),
-                      desc: tBilingual('Creators cannot approve their own educational submissions.', 'አዘጋጆች ያዘጋጁትን ይዘት ራሳቸው ማጽደቅ አይችሉም።'),
-                    },
-                  ].map((p) => (
-                    <div key={p.title} className="flex gap-3">
-                      <ShieldCheck className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-bold text-slate-900 dark:text-white">{p.title}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{p.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-center border-t border-slate-200 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-950/50 sm:p-12">
-                <div className="space-y-4">
-                  {[
-                    { label: tBilingual('Database Encryption', 'የመረጃ ቋት ምስጠራ'), value: 'AES-256 bit' },
-                    { label: tBilingual('Transport Security', 'የመረጃ ልውውጥ ደህንነት'), value: 'TLS 1.3 Strict' },
-                    { label: tBilingual('Identity Access', 'የመግቢያ ፈቃድ'), value: 'Granular RBAC' },
-                    { label: tBilingual('Hosting Environment', 'የማስተናገጃ ሁኔታ'), value: 'MoR Private Data Center' },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900"
-                    >
-                      <span className="text-slate-600 dark:text-slate-400">{row.label}</span>
-                      <span className="font-mono font-semibold text-sky-700 dark:text-sky-400">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <LatestNewsSection />
-
       {/* FAQ SECTION */}
       <section
         id="faq"
-        className="scroll-mt-16 border-t border-slate-200 bg-slate-50/50 px-4 py-20 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6 lg:px-8"
+        className="scroll-mt-16 bg-slate-50/50 px-4 py-20 dark:bg-slate-900/30 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-3xl">
           <div className="text-center">

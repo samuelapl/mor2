@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CourseStatus,
   EnrollmentStatus,
@@ -54,6 +55,7 @@ export class LiveSessionsService {
     private readonly sessionPlans: SessionPlansService,
     private readonly sessionQuizGrading: SessionQuizGradingService,
     private readonly reminders: SessionRemindersService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private async sessionVisibility(user: AuthenticatedUser): Promise<SessionVisibility> {
@@ -402,6 +404,14 @@ export class LiveSessionsService {
     if (dto.scheduledAt !== undefined || dto.status === SessionStatus.SCHEDULED) {
       await this.reminders.schedule(id);
     }
+    if (dto.status === SessionStatus.COMPLETED && before !== SessionStatus.COMPLETED) {
+      this.eventEmitter.emit('live_session.ended', {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        sessionPlanId: updated.sessionPlanId,
+        endedAt: updated.actualEndedAt ?? new Date(),
+      });
+    }
     return updated;
   }
 
@@ -498,9 +508,24 @@ export class LiveSessionsService {
 
     const updated = await this.prisma.liveSession.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(status === SessionStatus.COMPLETED && !existing.actualEndedAt
+          ? { actualEndedAt: new Date() }
+          : {}),
+      },
     });
     await this.gradeIfJustCompleted(id, existing.status, status);
+
+    if (status === SessionStatus.COMPLETED && existing.status !== SessionStatus.COMPLETED) {
+      this.eventEmitter.emit('live_session.ended', {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        sessionPlanId: updated.sessionPlanId,
+        endedAt: updated.actualEndedAt ?? new Date(),
+      });
+    }
+
     return updated;
   }
 

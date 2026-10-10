@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
 import { CourseCard } from '@/components/features/courses/CourseCard';
-import { DonutChart, BarChart } from '@/components/ui/charts';
+import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 export default function CourseOwnerDashboardPage() {
   const { courses } = useLms();
@@ -170,11 +170,11 @@ export default function CourseOwnerDashboardPage() {
               </Link>
             </div>
             <div className="mt-6">
-              <DonutChart
-                segments={courseStatusSegments}
-                centerLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
-                centerValue={owned.length}
-                emptyText={isAmharic ? 'ምንም የተዘጋጀ ኮርስ የለም' : 'No courses created'}
+              <VerticalBarChart
+                items={courseStatusSegments}
+                totalValue={owned.length}
+                unitLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
+                emptyText={isAmharic ? 'ምንም የተዘጋጀ ኮርስ የለም' : 'No courses created in database'}
               />
             </div>
           </div>

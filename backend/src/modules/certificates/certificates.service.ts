@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { NotificationType, Prisma } from '@prisma/client';
+import { NotificationType, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { CERTIFICATE_CONFIG } from '@config/constants';
 import { FilesService } from '@modules/files/files.service';
@@ -478,26 +478,9 @@ export class CertificatesService {
     if (existing)
       throw new ConflictException('Certificate already issued for this user and course');
 
-    const liveSessions = await this.prisma.liveSession.findMany({
-      where: { courseId, status: { in: ['COMPLETED', 'LIVE', 'SCHEDULED'] } },
-      select: { id: true },
-    });
-    if (course.hasOnlineSessions || liveSessions.length > 0) {
-      if (liveSessions.length === 0) {
-        throw new ConflictException('Scheduled online sessions must take place before issuing certificates.');
-      }
-      const attendances = await this.prisma.attendance.findMany({
-        where: {
-          sessionId: { in: liveSessions.map((s) => s.id) },
-          userId,
-          status: { in: ['PRESENT', 'LATE'] },
-        },
-        select: { sessionId: true },
-      });
-      const attendedSet = new Set(attendances.map((a) => a.sessionId));
-      if (!liveSessions.every((s) => attendedSet.has(s.id))) {
-        throw new ConflictException('Learner must attend all scheduled course sessions before certificate issuance.');
-      }
+    const attendedSessions = await this.hasAttendedRequiredLiveSessions(courseId, userId);
+    if (!attendedSessions) {
+      throw new ConflictException('Learner must attend all scheduled course sessions before certificate issuance.');
     }
 
     const lastCertificate = await this.prisma.certificate.findFirst({
@@ -660,36 +643,80 @@ export class CertificatesService {
     if (!grade.certificateReady) return null;
 
     // Scheduled sessions attendance check:
-    const liveSessions = await this.prisma.liveSession.findMany({
-      where: { courseId, status: { in: ['COMPLETED', 'LIVE', 'SCHEDULED'] } },
-      select: { id: true, status: true },
+    const attendedSessions = await this.hasAttendedRequiredLiveSessions(courseId, userId);
+    if (!attendedSessions) {
+      return null;
+    }
+
+    return this.issue(userId, courseId);
+  }
+
+  private async hasAttendedRequiredLiveSessions(courseId: string, userId: string): Promise<boolean> {
+    const plans = await this.prisma.courseSessionPlan.findMany({
+      where: { courseId },
+      select: { id: true },
     });
-    const courseMeta = await this.prisma.course.findUnique({
+
+    const course = await this.prisma.course.findUnique({
       where: { id: courseId },
       select: { hasOnlineSessions: true },
     });
-    if (courseMeta?.hasOnlineSessions || liveSessions.length > 0) {
-      if (liveSessions.length === 0) {
-        return null; // Required sessions have not occurred yet
-      }
-      if (!liveSessions.every((s) => s.status === 'COMPLETED')) {
-        return null; // All live sessions must be completed first
-      }
+
+    if (plans.length > 0) {
+      // Find all completed sessions for this course
+      const completedSessions = await this.prisma.liveSession.findMany({
+        where: { courseId, status: SessionStatus.COMPLETED, deletedAt: null },
+        select: { id: true, sessionPlanId: true, originalPlanId: true },
+      });
+
+      if (completedSessions.length === 0) return false;
+
       const attendances = await this.prisma.attendance.findMany({
         where: {
-          sessionId: { in: liveSessions.map((s) => s.id) },
+          sessionId: { in: completedSessions.map((s) => s.id) },
+          userId,
+          status: { in: ['PRESENT', 'LATE'] },
+        },
+        select: { sessionId: true },
+      });
+      const attendedSessionIds = new Set(attendances.map((a) => a.sessionId));
+
+      // Map attended sessions to plan IDs
+      const attendedPlanIds = new Set(
+        completedSessions
+          .filter((s) => attendedSessionIds.has(s.id))
+          .map((s) => s.originalPlanId ?? s.sessionPlanId)
+          .filter(Boolean),
+      );
+
+      // Learner must have attended every planned session at least once across any cycle
+      return plans.every((p) => attendedPlanIds.has(p.id));
+    }
+
+    // Fallback for courses without session plans
+    const allSessions = await this.prisma.liveSession.findMany({
+      where: { courseId, deletedAt: null },
+      select: { id: true, status: true },
+    });
+
+    if (course?.hasOnlineSessions || allSessions.length > 0) {
+      if (allSessions.length === 0) return false;
+      const completedSessions = allSessions.filter((s) => s.status === SessionStatus.COMPLETED);
+      if (completedSessions.length === 0) return false;
+
+      const attendances = await this.prisma.attendance.findMany({
+        where: {
+          sessionId: { in: completedSessions.map((s) => s.id) },
           userId,
           status: { in: ['PRESENT', 'LATE'] },
         },
         select: { sessionId: true },
       });
       const attendedSet = new Set(attendances.map((a) => a.sessionId));
-      if (!liveSessions.every((s) => attendedSet.has(s.id))) {
-        return null;
-      }
+      return completedSessions.every((s) => attendedSet.has(s.id));
     }
 
-    return this.issue(userId, courseId);
+    return true;
   }
 
   /* ------------------------------------------------------------------ */

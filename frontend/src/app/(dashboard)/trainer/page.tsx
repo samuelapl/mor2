@@ -34,7 +34,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Table, Td } from '@/components/ui/Table';
 import { CourseCard } from '@/components/features/courses/CourseCard';
-import { DonutChart, BarChart } from '@/components/ui/charts';
+import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
 import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQuizReadinessGate';
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
@@ -290,11 +290,11 @@ export default function TrainerDashboardPage() {
               </Link>
             </div>
             <div className="mt-6">
-              <DonutChart
-                segments={sessionStatusSegments}
-                centerLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
-                centerValue={allSessions.length}
-                emptyText={isAmharic ? 'ምንም ስልጠና አልተፈጠረም' : 'No sessions created'}
+              <VerticalBarChart
+                items={sessionStatusSegments}
+                totalValue={allSessions.length}
+                unitLabel={isAmharic ? 'ክፍለ-ጊዜዎች' : 'Sessions'}
+                emptyText={isAmharic ? 'ምንም ስልጠና አልተፈጠረም' : 'No sessions created in database'}
               />
             </div>
           </div>
@@ -638,12 +638,15 @@ export default function TrainerDashboardPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Visual Donut breakdown for selected course */}
-            <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-4">
-              <DonutChart
-                segments={learnerStatusSegments}
-                centerLabel={isAmharic ? 'ሰልጣኞች' : 'Students'}
-                centerValue={learners.length}
+            <div className="rounded-2xl border border-slate-200/80 bg-white dark:bg-slate-900 p-4">
+              <h5 className="font-display text-xs font-bold text-slate-900 dark:text-white mb-2">
+                {isAmharic ? 'የሰልጣኞች ሁኔታ ስርጭት' : 'Learner Progress Distribution'}
+              </h5>
+              <VerticalBarChart
+                items={learnerStatusSegments}
+                totalValue={learners.length}
+                unitLabel={isAmharic ? 'ሰልጣኞች' : 'Students'}
+                emptyText={isAmharic ? 'ምንም ሰልጣኞች አልተገኙም' : 'No students found in database'}
               />
             </div>
 

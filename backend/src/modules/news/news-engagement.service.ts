@@ -86,6 +86,23 @@ export class NewsEngagementService {
     return this.toPublicComment(comment, userId);
   }
 
+  async updateOwnComment(userId: string, newsId: string, commentId: string, content: string) {
+    const comment = await this.prisma.newsComment.findFirst({
+      where: { id: commentId, newsId, deletedAt: null },
+    });
+    if (!comment) throw new NotFoundException('Comment not found');
+    if (comment.userId !== userId) {
+      throw new ForbiddenException('You can only edit your own comments');
+    }
+
+    const updated = await this.prisma.newsComment.update({
+      where: { id: commentId },
+      data: { content },
+      include: { user: { select: COMMENT_AUTHOR_SELECT } },
+    });
+    return this.toPublicComment(updated, userId);
+  }
+
   async deleteOwnComment(userId: string, newsId: string, commentId: string) {
     const comment = await this.prisma.newsComment.findFirst({
       where: { id: commentId, newsId, deletedAt: null },

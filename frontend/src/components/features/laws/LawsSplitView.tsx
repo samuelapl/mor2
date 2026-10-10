@@ -104,12 +104,12 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         instrumentType: selectedInstrument === 'ALL' ? undefined : selectedInstrument,
       });
       setCategories(data);
-      // Retain active selection or select the first category
+      // Retain active selection if it exists in data, or stay null for All Categories
       if (data.length > 0) {
         setSelectedCategory((prev) => {
-          if (!prev) return data[0];
+          if (!prev) return null;
           const found = data.find((c) => c.id === prev.id);
-          return found || data[0];
+          return found || null;
         });
       } else {
         setSelectedCategory(null);
@@ -127,16 +127,12 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
 
   // 2. Fetch Documents for active Category & Filters
   const loadDocuments = useCallback(async () => {
-    if (!selectedCategory) {
-      setDocuments([]);
-      setTotalDocs(0);
-      return;
-    }
-
     try {
       setIsLoadingDocs(true);
       const res = await fetchLegalDocuments({
-        categoryId: selectedCategory.id,
+        categoryId: selectedCategory?.id,
+        domain: selectedDomain,
+        instrumentType: selectedInstrument === 'ALL' ? undefined : selectedInstrument,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
         search: searchQuery.trim() || undefined,
         limit: 100,
@@ -148,7 +144,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
     } finally {
       setIsLoadingDocs(false);
     }
-  }, [selectedCategory, statusFilter, searchQuery]);
+  }, [selectedCategory, selectedDomain, selectedInstrument, statusFilter, searchQuery]);
 
   useEffect(() => {
     loadDocuments();
@@ -327,314 +323,265 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         </nav>
       </div>
 
-      {/* ── LEVEL 2: INSTRUMENT PILLS + SEARCH + STATUS FILTER ──────────────── */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
-        {/* Instrument Type Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-          <button
-            type="button"
-            onClick={() => setSelectedInstrument('ALL')}
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
-              selectedInstrument === 'ALL'
-                ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
-            )}
-          >
-            {tBilingual('All Types', 'ሁሉም አይነቶች')}
-          </button>
-          {LAW_INSTRUMENT_TYPES.map((inst) => {
-            const active = selectedInstrument === inst.key;
-            return (
-              <button
-                key={inst.key}
-                type="button"
-                onClick={() => setSelectedInstrument(inst.key)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
-                  active
-                    ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
-                )}
-              >
-                {lang === 'am' ? inst.labelAm : inst.labelEn}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search & Status Filters */}
-        <div className="flex items-center gap-2">
-          {/* Search Bar */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={tBilingual('Search title, number...', 'በርዕስ ወይም ቁጥር ፈልግ...')}
-              className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Status Dropdown */}
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as LawStatus | 'ALL')}
-              className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      {/* ── LEVEL 2: INSTRUMENT PILLS + SEARCH + STATUS FILTER & CATEGORIES ── */}
+      <div className="flex flex-col gap-3.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+        {/* Row 1: Instrument Type Pills (left) & Search / Status (right) */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Instrument Type Pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSelectedInstrument('ALL')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
+                selectedInstrument === 'ALL'
+                  ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
+              )}
             >
-              <option value="ALL">{tBilingual('All Statuses', 'ሁሉም ሁኔታዎች')}</option>
-              {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
-                <option key={st} value={st}>
-                  {lang === 'am' ? LAW_STATUS_CONFIG[st].labelAm : LAW_STATUS_CONFIG[st].labelEn}
-                </option>
-              ))}
-            </select>
+              {tBilingual('All Types', 'ሁሉም አይነቶች')}
+            </button>
+            {LAW_INSTRUMENT_TYPES.map((inst) => {
+              const active = selectedInstrument === inst.key;
+              return (
+                <button
+                  key={inst.key}
+                  type="button"
+                  onClick={() => setSelectedInstrument(inst.key)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
+                    active
+                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
+                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
+                  )}
+                >
+                  {lang === 'am' ? inst.labelAm : inst.labelEn}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
 
-      {/* ── MASTER-DETAIL SPLIT-VIEW (REFERENCE SCREENSHOT LAYOUT) ────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: DYNAMIC CATEGORIES (MASTER LIST) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-          {/* Categories Header */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-indigo-600" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                {tBilingual('Categories', 'ምድቦች')}
-              </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                {categories.length}
-              </span>
+          {/* Search & Status Filters */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={tBilingual('Search title, number...', 'በርዕስ ወይም ቁጥር ፈልግ...')}
+                className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+              />
             </div>
 
-            {isAdmin && (
+            {/* Status Dropdown */}
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as LawStatus | 'ALL')}
+                className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
+              >
+                <option value="ALL">{tBilingual('All Statuses', 'ሁሉም ሁኔታዎች')}</option>
+                {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
+                  <option key={st} value={st}>
+                    {lang === 'am' ? LAW_STATUS_CONFIG[st].labelAm : LAW_STATUS_CONFIG[st].labelEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Category Dropdown Selector Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-400 shrink-0">
+              <FolderOpen className="w-4 h-4" />
+            </div>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap shrink-0">
+                {tBilingual('Law Category:', 'የህግ ምድብ:')}
+              </span>
+              <div className="relative flex-1 max-w-xl">
+                <select
+                  value={selectedCategory?.id || 'ALL'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'ALL') {
+                      setSelectedCategory(null);
+                    } else {
+                      const found = categories.find((c) => c.id === val);
+                      if (found) setSelectedCategory(found);
+                    }
+                  }}
+                  className="w-full text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer truncate shadow-2xs"
+                >
+                  <option value="ALL">
+                    {tBilingual('All Categories', 'ሁሉም ምድቦች')} ({categories.reduce((acc, c) => acc + (c._count?.documents ?? 0), 0)} {tBilingual('documents', 'ሰነዶች')})
+                  </option>
+                  {categories.map((cat) => {
+                    const label = lang === 'am' ? cat.nameAm || cat.nameEn : cat.nameEn || cat.nameAm;
+                    return (
+                      <option key={cat.id} value={cat.id}>
+                        {label} ({cat._count?.documents ?? 0} {tBilingual('documents', 'ሰነዶች')})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin category management buttons */}
+          {isAdmin && (
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              {selectedCategory && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCategory(selectedCategory);
+                      setIsCategoryModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs"
+                    title={tBilingual('Edit current category', 'የአሁኑን ምድብ አርትዕ')}
+                  >
+                    <Edit2 className="w-3 h-3 text-indigo-600" />
+                    <span>{tBilingual('Edit', 'አርትዕ')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingCategory(selectedCategory)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors shadow-2xs"
+                    title={tBilingual('Delete current category', 'የአሁኑን ምድብ ሰርዝ')}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>{tBilingual('Delete', 'ሰርዝ')}</span>
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   setEditingCategory(null);
                   setIsCategoryModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 p-1 rounded hover:bg-indigo-50 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors shadow-2xs"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{tBilingual('Add', 'አክል')}</span>
+                <Plus className="w-3 h-3" />
+                <span>{tBilingual('Add Category', 'አዲስ ምድብ')}</span>
               </button>
-            )}
-          </div>
-
-          {/* Categories List */}
-          <div className="p-2 divide-y divide-slate-100 dark:divide-slate-800/60 max-h-[600px] overflow-y-auto">
-            {isLoadingCategories ? (
-              <div className="p-8 flex flex-col items-center justify-center gap-2 text-slate-400">
-                <Spinner className="size-6 text-indigo-600" />
-                <span className="text-xs">{tBilingual('Loading categories...', 'ምድቦች በመጫን ላይ...')}</span>
-              </div>
-            ) : categories.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-500">
-                <p>{tBilingual('No categories under this section.', 'በዚህ ዘርፍ ስር ምንም ምድቦች አልተገኙም።')}</p>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCategory(null);
-                      setIsCategoryModalOpen(true);
-                    }}
-                    className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{tBilingual('Create First Category', 'የመጀመሪያውን ምድብ ፍጠር')}</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              categories.map((cat) => {
-                const isSelected = selectedCategory?.id === cat.id;
-                const docCount = cat._count?.documents ?? 0;
-                return (
-                  <div
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={cn(
-                      'group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all text-left',
-                      isSelected
-                        ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 shadow-xs'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent',
-                    )}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <p
-                        className={cn(
-                          'text-sm font-bold truncate',
-                          lang === 'am' && 'font-serif',
-                          isSelected
-                            ? 'text-indigo-950 dark:text-indigo-200'
-                            : 'text-slate-900 dark:text-white',
-                        )}
-                      >
-                        {lang === 'am'
-                          ? cat.nameAm || cat.nameEn
-                          : cat.nameEn || cat.nameAm}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold',
-                          isSelected
-                            ? 'bg-indigo-200/80 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-200'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-                        )}
-                      >
-                        {docCount}
-                      </span>
-
-                      {/* Admin inline edit/delete */}
-                      {isAdmin && (
-                        <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingCategory(cat);
-                              setIsCategoryModalOpen(true);
-                            }}
-                            title={tBilingual('Edit category', 'ምድብ አርትዕ')}
-                            className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingCategory(cat);
-                            }}
-                            title={tBilingual('Delete category', 'ምድብ ሰርዝ')}
-                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: DOCUMENT SHOWCASE (DETAIL STAGE) */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          {selectedCategory ? (
-            <>
-              {/* Category Header Banner */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
-                      {(() => {
-                        const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedCategory.instrumentType);
-                        return inst ? (lang === 'am' ? inst.labelAm : inst.labelEn) : selectedCategory.instrumentType;
-                      })()}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {totalDocs} {tBilingual('document(s) found', 'ሰነዶች ተገኝተዋል')}
-                    </span>
-                  </div>
-                  <h2
-                    className={cn(
-                      'text-lg font-bold text-slate-900 dark:text-white truncate mt-0.5',
-                      lang === 'am' && 'font-serif',
-                    )}
-                  >
-                    {lang === 'am'
-                      ? selectedCategory.nameAm || selectedCategory.nameEn
-                      : selectedCategory.nameEn || selectedCategory.nameAm}
-                  </h2>
-                </div>
-
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingDocument(null);
-                      setIsDocumentModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{tBilingual('Add Document', 'ሰነድ አክል')}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Documents List */}
-              {isLoadingDocs ? (
-                <div className="p-12 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-400">
-                  <Spinner className="size-8 text-indigo-600" />
-                  <span className="text-sm">{tBilingual('Loading documents...', 'ሰነዶች በመጫን ላይ...')}</span>
-                </div>
-              ) : documents.length === 0 ? (
-                <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                    {tBilingual('No legal documents uploaded yet', 'እስካሁን ምንም የሕግ ሰነዶች አልተጫኑም')}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-                    {tBilingual(
-                      'No decrees match the current category and filters. Try adjusting your search term or status.',
-                      'በዚህ ምድብ ወይም ፍለጋ ስር ምንም ሰነድ የለም። የፍለጋ ቃሉን ወይም ሁኔታውን ይቀይሩ።',
-                    )}
-                  </p>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingDocument(null);
-                        setIsDocumentModalOpen(true);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all active:scale-95"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{tBilingual('Upload First Document', 'የመጀመሪያውን ሰነድ ጫን')}</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <NegaritGazetaCard
-                      key={doc.id}
-                      document={doc}
-                      isAdmin={isAdmin}
-                      onOpenPdf={(d) => setPdfModalDoc(d)}
-                      onEdit={(d) => {
-                        setEditingDocument(d);
-                        setIsDocumentModalOpen(true);
-                      }}
-                      onDelete={(d) => setDeletingDocument(d)}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-              <FolderOpen className="w-10 h-10 mx-auto text-slate-400 mb-2" />
-              <p className="text-sm text-slate-500">
-                {tBilingual('Please select a category from the left column', 'እባክዎ ከግራ በኩል ምድብ ይምረጡ')}
-              </p>
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── DOCUMENTS SHOWCASE (FULL WIDTH PROFESSIONAL LAYOUT) ────────── */}
+      <div className="flex flex-col gap-4">
+        {/* Category Header Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                {(() => {
+                  if (!selectedCategory) {
+                    const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedInstrument);
+                    return inst ? (lang === 'am' ? inst.labelAm : inst.labelEn) : tBilingual('All Categories', 'ሁሉም ምድቦች');
+                  }
+                  const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedCategory.instrumentType);
+                  return inst ? (lang === 'am' ? inst.labelAm : inst.labelEn) : selectedCategory.instrumentType;
+                })()}
+              </span>
+              <span className="text-xs text-slate-500">
+                {totalDocs} {tBilingual('document(s) found', 'ሰነዶች ተገኝተዋል')}
+              </span>
+            </div>
+            <h2
+              className={cn(
+                'text-lg font-bold text-slate-900 dark:text-white truncate mt-1',
+                lang === 'am' && 'font-serif',
+              )}
+            >
+              {selectedCategory
+                ? (lang === 'am'
+                    ? selectedCategory.nameAm || selectedCategory.nameEn
+                    : selectedCategory.nameEn || selectedCategory.nameAm)
+                : tBilingual('All Tax & Customs Laws & Decrees', 'ሁሉም የታክስና ጉምሩክ ሕጎችና ደንቦች')}
+            </h2>
+            {selectedCategory?.description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                {selectedCategory.description}
+              </p>
+            )}
+          </div>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingDocument(null);
+                setIsDocumentModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95 self-start sm:self-auto"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{tBilingual('Add Document', 'ሰነድ አክል')}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Documents List */}
+        {isLoadingDocs ? (
+          <div className="p-12 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-400">
+            <Spinner className="size-8 text-indigo-600" />
+            <span className="text-sm">{tBilingual('Loading documents...', 'ሰነዶች በመጫን ላይ...')}</span>
+          </div>
+        ) : documents.length === 0 ? (
+          <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-800 dark:text-white">
+              {tBilingual('No legal documents uploaded yet', 'እስካሁን ምንም የሕግ ሰነዶች አልተጫኑም')}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
+              {tBilingual(
+                'No decrees match the current category and filters. Try adjusting your search term or status.',
+                'በዚህ ምድብ ወይም ፍለጋ ስር ምንም ሰነድ የለም። የፍለጋ ቃሉን ወይም ሁኔታውን ይቀይሩ።',
+              )}
+            </p>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDocument(null);
+                  setIsDocumentModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{tBilingual('Upload First Document', 'የመጀመሪያውን ሰነድ ጫን')}</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {documents.map((doc) => (
+              <NegaritGazetaCard
+                key={doc.id}
+                document={doc}
+                isAdmin={isAdmin}
+                onOpenPdf={(d) => setPdfModalDoc(d)}
+                onEdit={(d) => {
+                  setEditingDocument(d);
+                  setIsDocumentModalOpen(true);
+                }}
+                onDelete={(d) => setDeletingDocument(d)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── PDF VIEWER MODAL ──────────────────────────────────────────────── */}
@@ -663,7 +610,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
           onClose={() => setIsDocumentModalOpen(false)}
           onSave={handleSaveDocument}
           categories={categories}
-          defaultCategoryId={selectedCategory?.id}
+          defaultCategoryId={selectedCategory?.id || categories[0]?.id}
           initialData={editingDocument}
         />
       )}

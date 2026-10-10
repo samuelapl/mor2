@@ -24,7 +24,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { DonutChart, BarChart } from '@/components/ui/charts';
+import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 const ROLE_COLORS: Record<string, string> = {
   SYSTEM_ADMIN: '#ef4444',
@@ -112,14 +112,27 @@ export default function SystemAdminDashboardPage() {
     },
   ];
 
-  // Donut chart: Users by Role
+  // Vertical Bar Chart: Users by Role (Fetched from database)
   const roleSegments = useMemo(() => {
-    if (!stats?.roles || stats.roles.length === 0) return [];
-    return stats.roles.map((r) => ({
-      label: roleLabels[r.role] || r.role,
-      value: r.count,
-      color: ROLE_COLORS[r.role] || '#64748b',
-      subLabel: r.role,
+    const roleCountMap = new Map<string, number>();
+    if (stats?.roles) {
+      for (const r of stats.roles) {
+        roleCountMap.set(r.role, r.count);
+      }
+    }
+    const allRoles = [
+      'SYSTEM_ADMIN',
+      'TRAINING_ADMIN',
+      'COURSE_OWNER',
+      'CONTENT_APPROVER',
+      'TRAINER',
+      'LEARNER',
+    ];
+    return allRoles.map((roleKey) => ({
+      label: roleLabels[roleKey] || roleKey,
+      value: roleCountMap.get(roleKey) ?? 0,
+      color: ROLE_COLORS[roleKey] || '#64748b',
+      subLabel: roleKey.replace('_', ' ').toLowerCase(),
     }));
   }, [stats?.roles, isAmharic]);
 
@@ -217,7 +230,7 @@ export default function SystemAdminDashboardPage() {
 
       {/* Graphical Insights: Charts */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        {/* User Role Distribution Donut Chart */}
+        {/* User Role Distribution Vertical Bar Chart */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -227,26 +240,27 @@ export default function SystemAdminDashboardPage() {
                 </h4>
                 <p className="text-xs text-slate-500">
                   {isAmharic
-                    ? 'በመድረኩ ውስጥ ያሉ መለያዎች ድልድል'
-                    : 'Allocation of platform accounts across access roles'}
+                    ? 'በመድረኩ ውስጥ ያሉ መለያዎች ድልድል (ከመረጃ ቋት በቀጥታ የተገኘ)'
+                    : 'Allocation of platform accounts across access roles (live database track)'}
                 </p>
               </div>
               <Badge variant="slate">
-                {isAmharic ? `ድምር: ${usersCount}` : `Total: ${usersCount}`}
+                {isAmharic ? `ጠቅላላ ተጠቃሚዎች: ${usersCount}` : `Total Users: ${usersCount}`}
               </Badge>
             </div>
-            <div className="mt-6 flex justify-center">
-              <DonutChart
-                segments={roleSegments}
-                centerLabel={isAmharic ? 'ተጠቃሚዎች' : 'Users'}
-                centerValue={usersCount}
+            <div className="mt-6">
+              <VerticalBarChart
+                items={roleSegments}
+                totalValue={usersCount}
+                unitLabel={isAmharic ? 'ተጠቃሚዎች' : 'Users'}
+                emptyText={isAmharic ? 'ምንም ተጠቃሚ አልተገኘም' : 'No users recorded in database'}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400 flex items-center justify-between">
-            <span>{isAmharic ? 'የሚናዎች ውቅር' : 'RBAC matrix configured'}</span>
+            <span>{isAmharic ? 'የመረጃ ቋት የቀጥታ መዝገብ' : 'Live database record'}</span>
             <span className="font-medium text-slate-600">
-              {roleSegments.length} {isAmharic ? 'ንቁ ሚናዎች' : 'active roles'}
+              {roleSegments.filter((r) => r.value > 0).length} {isAmharic ? 'ንቁ ሚናዎች በመረጃ ቋት' : 'active roles in DB'}
             </span>
           </div>
         </div>

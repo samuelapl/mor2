@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AttendanceStatus, CheckInMethod, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { AuditService } from '@modules/audit/audit.service';
@@ -10,6 +11,7 @@ export class AttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private async getSessionOrFail(sessionId: string) {
@@ -680,12 +682,19 @@ export class AttendanceService {
     if (!session || session.status === 'COMPLETED') return;
 
     if (session.status === 'LIVE') {
-      await this.prisma.liveSession.update({
+      const updated = await this.prisma.liveSession.update({
         where: { id: sessionId },
         data: {
           status: 'COMPLETED',
           actualEndedAt: new Date(),
         },
+      });
+
+      this.eventEmitter.emit('live_session.ended', {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        sessionPlanId: updated.sessionPlanId,
+        endedAt: updated.actualEndedAt ?? new Date(),
       });
     }
   }
