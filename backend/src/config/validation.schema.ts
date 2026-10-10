@@ -83,6 +83,14 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  APP_PUBLIC_URL: string;
+
+  @IsNumber()
+  @IsOptional()
+  MAIL_RATE_LIMIT_PER_SEC: number;
+
+  @IsString()
+  @IsOptional()
   LIVEKIT_URL: string;
 
   @IsString()

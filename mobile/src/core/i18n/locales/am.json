@@ -33,7 +33,6 @@
   "screens": {
     "login": "ግባ",
     "register": "መለያ ፍጠር",
-    "pendingApproval": "ፈቃድ በመጠባበቅ ላይ",
     "forgotPassword": "የይለፍ ቃል ረሱ",
     "verifyResetCode": "ኮድ ያረጋግጡ",
     "resetPassword": "የይለፍ ቃል ዳግም ያስጀምሩ",
@@ -52,7 +51,8 @@
     "notifications": "ማሳወቂያዎች",
     "editProfile": "መገለጫ ያስተካክሉ",
     "changePassword": "የይለፍ ቃል ይቀይሩ",
-    "uiGallery": "የUI ማሳያ"
+    "uiGallery": "የUI ማሳያ",
+    "verifyEmail": "ኢሜይልዎን ያረጋግጡ"
   },
   "dev": {
     "healthCheck": "የሰርቨር ግንኙነት ያረጋግጡ",
@@ -76,9 +76,7 @@
     "phone": "ስልክ ቁጥር",
     "tin": "የግብር ከፋይ መለያ ቁጥር (TIN)",
     "preferredLanguage": "የሚመርጡት ቋንቋ",
-    "registerSubtitle": "እንደ ተማሪ ይመዝገቡ። አስተዳዳሪ ጥያቄዎን ይገመግማል።",
-    "pendingTitle": "ምዝገባዎ ተልኳል",
-    "pendingBody": "ከመግባትዎ በፊት አስተዳዳሪ መለያዎን ማጽደቅ አለበት። ከጸደቀ በኋላ እንደገና ለመግባት ይሞክሩ።",
+    "registerSubtitle": "እንደ ተማሪ ይመዝገቡ። ኢሜይልዎን ለማረጋገጥ ኮድ እንልክልዎታለን።",
     "backToLogin": "ወደ መግቢያ ተመለስ",
     "forgotSubtitle": "የመለያዎን ኢሜይል ያስገቡ፤ ባለ 6 አሃዝ ኮድ እንልክልዎታለን።",
     "sendCode": "ኮድ ላክ",
@@ -102,7 +100,9 @@
       "codeInvalid": "ባለ 6 አሃዝ ኮዱን ያስገቡ",
       "notLearner": "ይህ መተግበሪያ ለተማሪዎች ነው። በዚህ መለያ የድር ፖርታሉን ይጠቀሙ።",
       "sessionMissing": "የመግቢያ ጊዜዎ አልፏል። እባክዎ እንደገና ይግቡ።"
-    }
+    },
+    "verifyEmailHint": "መለያዎን ለማንቃት ያስገቡት።",
+    "verifyAndSignIn": "አረጋግጥና ግባ"
   },
   "profile": {
     "language": "ቋንቋ",
@@ -123,7 +123,9 @@
     "uploadFailed": "ፎቶውን መጫን አልተቻለም።",
     "theme": "ገጽታ",
     "themeLight": "ብሩህ",
-    "themeDark": "ጨለማ"
+    "themeDark": "ጨለማ",
+    "emailNotifications": "የኢሜይል ማሳወቂያዎች",
+    "emailNotificationsFailed": "የኢሜይል ማሳወቂያዎችን ማዘመን አልተቻለም።"
   },
   "courses": {
     "searchPlaceholder": "በርዕስ ወይም በኮድ ይፈልጉ",

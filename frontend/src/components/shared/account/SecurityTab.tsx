@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { KeyRound } from 'lucide-react';
+import { useState, type FormEvent, type InputHTMLAttributes } from 'react';
+import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useLms } from '@/lib/lms-store';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
@@ -14,6 +14,30 @@ const inputClass =
 const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 
 const EMPTY_FORM = { currentPassword: '', newPassword: '', confirmPassword: '' };
+
+function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  const { tBilingual } = useTranslation();
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <input {...props} type={visible ? 'text' : 'password'} className={`${inputClass} pr-10`} />
+      <button
+        type="button"
+        onClick={() => setVisible((prev) => !prev)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
+        aria-label={
+          visible
+            ? tBilingual('Hide password', 'የይለፍ ቃል ደብቅ')
+            : tBilingual('Show password', 'የይለፍ ቃል አሳይ')
+        }
+        aria-pressed={visible}
+      >
+        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
 
 export default function SecurityTab() {
   const { changePassword } = useLms();
@@ -75,20 +99,16 @@ export default function SecurityTab() {
     <form onSubmit={handleSubmit} className="max-w-sm space-y-4">
       <div>
         <label className={labelClass}>{tBilingual('Current password', 'የአሁኑ የይለፍ ቃል')}</label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="current-password"
-          className={inputClass}
           value={form.currentPassword}
           onChange={(e) => setForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
         />
       </div>
       <div>
         <label className={labelClass}>{tBilingual('New password', 'አዲስ የይለፍ ቃል')}</label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
-          className={inputClass}
           value={form.newPassword}
           onChange={(e) => setForm((prev) => ({ ...prev, newPassword: e.target.value }))}
           placeholder={tBilingual(
@@ -101,10 +121,8 @@ export default function SecurityTab() {
         <label className={labelClass}>
           {tBilingual('Confirm new password', 'አዲሱን የይለፍ ቃል አረጋግጥ')}
         </label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
-          className={inputClass}
           value={form.confirmPassword}
           onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
         />

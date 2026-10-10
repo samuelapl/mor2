@@ -1,4 +1,5 @@
 import { deriveCategory } from '@/constants/course-categories';
+import { parseLessonBlocks } from '@/lib/course-draft-blocks';
 import type {
   ActionResult,
   Attachment,
@@ -221,6 +222,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     published: course.status === 'PUBLISHED',
     createdAt: course.createdAt,
     cover: course.thumbnailUrl ?? null,
+    estimatedHours: course.estimatedHours ?? null,
     enrolledLearnerIds: [],
     progress: {},
     modules: [],
@@ -258,6 +260,7 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
     trainerIds: (apiCourse.trainers ?? []).map((trainer) => trainer.userId),
     modules: (apiCourse.modules ?? []).map(moduleFromApi),
     attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
+    materialCount: apiCourse.materialCount,
     rejectionReason: latest.reason,
     lastRejectionReason: secondLatest?.reason,
     sessionPlans: (apiCourse.sessionPlans ?? []).map((p) => ({
@@ -349,8 +352,20 @@ export function moduleFromApi(mod: ApiModule): Module {
 }
 
 function lessonFromApi(lesson: ApiLesson): Lesson {
-  const attachments: UploadedResource[] = (lesson.attachments ?? []).map(uploadedResourceFromApi);
-  if (attachments.length === 0 && lesson.resourceUrl) {
+  const isMedia =
+    lesson.contentType === 'VIDEO' ||
+    lesson.contentType === 'AUDIO' ||
+    lesson.contentType === 'PRESENTATION';
+
+  const rawAttachments: UploadedResource[] = (lesson.attachments ?? []).map(uploadedResourceFromApi);
+  // Never let the primary media resourceUrl leak into the attachments list
+  const attachments: UploadedResource[] =
+    isMedia && lesson.resourceUrl
+      ? rawAttachments.filter((a) => a.url !== lesson.resourceUrl)
+      : rawAttachments;
+
+  // Only fallback to resourceUrl for DOCUMENT lessons if attachments is empty
+  if (attachments.length === 0 && lesson.resourceUrl && !isMedia) {
     attachments.push({
       id: 'legacy',
       name: lesson.fileName || lesson.resourceUrl.split('/').pop() || 'Resource',
@@ -359,22 +374,33 @@ function lessonFromApi(lesson: ApiLesson): Lesson {
     });
   }
 
+  const rawContent = lesson.content || lesson.contentEn || '';
+  const parsedBlocks = parseLessonBlocks({
+    content: rawContent,
+    contentType: lesson.contentType,
+    resourceUrl: lesson.resourceUrl,
+    fileName: lesson.fileName,
+    fileSize: lesson.fileSize,
+  });
+
   return {
     id: lesson.id,
     title: lesson.title || lesson.titleEn || '',
-    content: lesson.content || lesson.contentEn || '',
+    content: rawContent,
     durationMin: lesson.durationMinutes ?? 15,
     unlocked: lesson.unlocked,
     contentType: lesson.contentType,
-    resourceUrl: lesson.resourceUrl || (attachments[0]?.url ?? undefined),
-    fileName: lesson.fileName || (attachments[0]?.name ?? undefined),
-    fileSize: lesson.fileSize || (attachments[0]?.size ?? undefined),
+    resourceUrl: lesson.resourceUrl || (!isMedia ? attachments[0]?.url ?? undefined : undefined),
+    fileName: lesson.fileName || (!isMedia ? attachments[0]?.name ?? undefined : undefined),
+    fileSize: lesson.fileSize || (!isMedia ? attachments[0]?.size ?? undefined : undefined),
     resources: attachments,
     attachments,
     parentId: lesson.parentId ?? undefined,
     subLessons: (lesson.subLessons ?? []).map(lessonFromApi),
+    contentBlocks: parsedBlocks,
   };
 }
+
 
 /* -------------------------------------------------------------------------- */
 /*  Create / Update bodies                                                     */

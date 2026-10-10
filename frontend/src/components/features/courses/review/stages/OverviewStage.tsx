@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDuration, getCourseDurationMinutes } from '@/lib/duration';
 import { useMemo } from 'react';
 import { BookOpen, Paperclip, Pencil, Trash2, UserPlus, UserRound } from 'lucide-react';
 import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Badge';
@@ -47,31 +48,22 @@ export function OverviewStage({
     let lessons = 0;
     let subLessons = 0;
     let files = courseFiles.length;
-    let minutes = 0;
     for (const m of course.modules) {
       files += getItemAttachments(m).length;
       lessons += m.lessons.length;
-      let moduleMinutes = 0;
       for (const l of m.lessons) {
         files += getItemAttachments(l).length;
         subLessons += l.subLessons?.length ?? 0;
-        moduleMinutes += l.durationMin || 0;
-        for (const s of l.subLessons ?? []) {
-          files += getItemAttachments(s).length;
-          moduleMinutes += s.durationMin || 0;
-        }
+        for (const s of l.subLessons ?? []) files += getItemAttachments(s).length;
       }
-      minutes += m.durationMinutes || moduleMinutes || 60;
     }
+    const minutes = getCourseDurationMinutes(course);
     const questions = assessments.all.reduce((sum, a) => sum + (a.questions?.length || 0), 0);
     const weight = assessments.all.reduce((sum, a) => sum + (a.weight ?? 0), 0);
     return { lessons, subLessons, files, minutes, questions, weight };
-  }, [course.modules, courseFiles.length, assessments.all]);
+  }, [course, courseFiles.length, assessments.all]);
 
-  const duration =
-    stats.minutes >= 60
-      ? `${Math.floor(stats.minutes / 60)}${isAmharic ? 'ሰዓ ' : 'h '}${stats.minutes % 60}${isAmharic ? 'ደ' : 'm'}`
-      : `${stats.minutes} ${isAmharic ? 'ደቂቃ' : 'm'}`;
+  const duration = formatDuration(stats.minutes, isAmharic);
 
   const trainers = course.trainerIds?.length ? course.trainerIds : course.trainerId ? [course.trainerId] : [];
 
@@ -141,9 +133,12 @@ export function OverviewStage({
                   {tBilingual('Trainers:', 'አሰልጣኞች:')} {trainers.map(userName).join(', ')}
                 </Chip>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                  {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
-                </span>
+                // Only courses with online sessions need a trainer (see useCourseActions.requiresTrainer).
+                (course.sessionPlans?.length ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                    {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
+                  </span>
+                )
               )}
             </div>
 

@@ -57,7 +57,15 @@ export interface ApiFirstLoginChallenge {
   devCode?: string;
 }
 
-export interface ApiAuthRegisterResponse {
+/** Returned by register, and by login for an account that has not verified its email. */
+export interface ApiEmailVerificationRequired {
+  emailVerificationRequired: true;
+  /** Masked, e.g. "ab•••@mor.gov.et". */
+  email: string;
+  devCode?: string;
+}
+
+export interface ApiAuthRegisterResponse extends ApiEmailVerificationRequired {
   message: string;
   user: { id: string; firstName: string; lastName: string; email: string };
 }
@@ -93,6 +101,8 @@ export interface ApiUser {
   roles: ApiUserRole[];
   primaryVenueId?: string | null;
   primaryVenue?: ApiVenue | null;
+  /** Whether in-app notifications are also emailed. */
+  emailNotifications?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -178,6 +188,8 @@ export interface ApiCourseDetail extends ApiCourseListItem {
   approvals: ApiApproval[];
   attachments?: ApiAttachment[];
   sessionPlans?: ApiCourseSessionPlanRow[];
+  /** Files across the course, counted even when lesson files are hidden (learner not enrolled yet). */
+  materialCount?: number;
 }
 
 /** A planned online session as included in the course detail. */
@@ -973,6 +985,7 @@ export interface UpdateMyProfileBody {
   tin?: string;
   locale?: 'en' | 'am';
   avatarUrl?: string;
+  emailNotifications?: boolean;
 }
 
 export interface ChangeMyPasswordBody {

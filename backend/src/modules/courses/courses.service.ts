@@ -26,7 +26,7 @@ import { NotificationsService } from '@modules/notifications/notifications.servi
 import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
 import { assertDeliveryModeAllowed, DEFAULT_DELIVERY_MODE } from './delivery-modes';
-import { assertCourseWeightsTotal } from '@common/utils';
+import { assertAssessmentPointsMatchWeights, assertCourseWeightsTotal } from '@common/utils';
 import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto, ReturnToDraftDto } from './dto';
 
 const STAFF_ROLES: RoleName[] = [
@@ -410,6 +410,8 @@ export class CoursesService {
 
     return {
       ...course,
+      // Counted before attachUnlockState hides lesson files from learners who are not enrolled.
+      materialCount: countCourseMaterials(course),
       enrolled: isEnrolled,
       enrollmentStatus: enrollment?.status ?? null,
       enrolledAt: enrollment?.enrolledAt ?? null,
@@ -609,11 +611,53 @@ export class CoursesService {
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PENDING_APPROVAL);
     await assertCourseWeightsTotal(this.prisma, id, 'exact');
+    await assertAssessmentPointsMatchWeights(this.prisma, id);
 
-    return this.prisma.course.update({
+    const updated = await this.prisma.course.update({
       where: { id },
       data: { status: CourseStatus.PENDING_APPROVAL },
     });
+
+    try {
+      const reviewerIds = (await this.courseReviewerIds()).filter((uid) => uid !== user.id);
+      await this.notificationsService.sendToMany(
+        reviewerIds,
+        NotificationType.COURSE_SUBMITTED,
+        { en: 'Course awaiting approval', am: 'ኮርስ ማጽደቅ ይጠብቃል' },
+        {
+          en: `"${course.title}" was submitted for approval.`,
+          am: `"${course.title}" ለማጽደቅ ቀርቧል።`,
+        },
+        { courseId: id },
+      );
+    } catch {
+      // notification failure is non-fatal
+    }
+
+    return updated;
+  }
+
+  /**
+   * Active users who can approve or reject courses. Permissions are configured per role, so
+   * this follows the role-permission table rather than a fixed role. System admins can do
+   * everything and are left out to keep this to the people who actually review.
+   */
+  private async courseReviewerIds(): Promise<string[]> {
+    let roles: RoleName[] = [RoleName.CONTENT_APPROVER];
+    if (this.permissionsService) {
+      const candidates = Object.values(RoleName).filter((r) => r !== RoleName.SYSTEM_ADMIN);
+      const codes = await Promise.all(
+        candidates.map((r) => this.permissionsService!.getPermissionCodesForRole(r)),
+      );
+      roles = candidates.filter((_, i) => codes[i].includes('course.approve_reject'));
+    }
+    if (roles.length === 0) return [];
+
+    const reviewers = await this.prisma.user.findMany({
+      where: { isActive: true, deletedAt: null, roles: { some: { role: { in: roles } } } },
+      select: { id: true },
+    });
+    return reviewers.map((r) => r.id);
   }
 
   async review(id: string, dto: ReviewCourseDto, approverId: string) {
@@ -965,4 +1009,33 @@ export class CoursesService {
 
     return false;
   }
+}
+
+const MEDIA_CONTENT_TYPES = new Set(['VIDEO', 'AUDIO', 'PRESENTATION']);
+
+/**
+ * Downloadable files across the course, module and lesson levels, matching what the course page
+ * lists (frontend getItemAttachments): files are unique by URL, a lesson's main video/audio/slides
+ * is not a material, and a document lesson's own file counts when it has no attachments.
+ */
+function countCourseMaterials(course: any): number {
+  const countItem = (item: any) => {
+    const isMedia = MEDIA_CONTENT_TYPES.has(item.contentType);
+    const urls = new Set<string>();
+    for (const a of item.attachments ?? []) {
+      const url = a?.fileUrl ?? a?.url;
+      if (url && !(isMedia && url === item.resourceUrl)) urls.add(url);
+    }
+    if (urls.size === 0 && item.resourceUrl && !isMedia) return 1;
+    return urls.size;
+  };
+  let count = (course.attachments ?? []).length;
+  for (const m of course.modules ?? []) {
+    count += countItem(m);
+    for (const l of m.lessons ?? []) {
+      count += countItem(l);
+      for (const sub of l.subLessons ?? []) count += countItem(sub);
+    }
+  }
+  return count;
 }

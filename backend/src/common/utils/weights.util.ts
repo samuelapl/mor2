@@ -41,3 +41,29 @@ export async function assertCourseWeightsTotal(db: Db, courseId: string, mode: '
     throw new BadRequestException(`Assessment weights total ${total}%, which is more than 100%.`);
   }
 }
+
+/**
+ * Lesson, module and final assessments: question points must total the assessment's weight
+ * (one point per percent of the course grade), like session quizzes. A 0% (practice) assessment
+ * or one without questions has no required total. Session quizzes are checked separately, as
+ * their questions are prepared after approval. Mirrors the creator studio (creator/weights.ts).
+ */
+export async function assertAssessmentPointsMatchWeights(db: Db, courseId: string) {
+  const rows = await db.assessment.findMany({
+    where: { courseId, type: { not: AssessmentType.SESSION_ASSESSMENT } },
+    select: { titleEn: true, weight: true, questions: true },
+  });
+  const problems = rows.flatMap((r) => {
+    if (!r.weight || !Array.isArray(r.questions) || r.questions.length === 0) return [];
+    const total = (r.questions as Array<{ points?: unknown }>).reduce(
+      (sum, q) => sum + (typeof q?.points === 'number' ? q.points : 0),
+      0,
+    );
+    return total === r.weight ? [] : [`"${r.titleEn}" has ${total} points but weighs ${r.weight}%`];
+  });
+  if (problems.length > 0) {
+    throw new BadRequestException(
+      `Question points must total each assessment's weight: ${problems.join('; ')}.`,
+    );
+  }
+}

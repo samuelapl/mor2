@@ -24,6 +24,25 @@ export function isTimeSatisfied(
   return timeSpentSeconds >= requiredSeconds(durationMinutes, ratio);
 }
 
+/**
+ * Required seconds for a module. Study time on a lesson stops counting once that lesson's
+ * own requirement is reached, so when every lesson/sub-lesson has a duration the module can
+ * never collect more than the sum of their requirements. Capping at that sum keeps a module
+ * whose stored `durationMinutes` drifted above its lessons' total from staying locked forever.
+ */
+export function moduleRequiredSeconds(
+  moduleDurationMinutes: number | null | undefined,
+  lessonDurations: Array<number | null | undefined>,
+  ratio: number = DEFAULT_TIME_POLICY_RATIO,
+): number {
+  const moduleRequired = requiredSeconds(moduleDurationMinutes, ratio);
+  const allCapped =
+    lessonDurations.length > 0 && lessonDurations.every((d) => !!d && d > 0);
+  if (!allCapped) return moduleRequired;
+  const lessonsTotal = lessonDurations.reduce<number>((sum, d) => sum + requiredSeconds(d, ratio), 0);
+  return Math.min(moduleRequired, lessonsTotal);
+}
+
 export interface PolicyFailure {
   reason: 'TIME_NOT_MET' | 'ASSESSMENT_REQUIRED' | 'ASSESSMENT_NOT_PASSED' | 'LOCKED';
   message: string;

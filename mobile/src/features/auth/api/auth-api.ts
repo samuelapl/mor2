@@ -22,6 +22,12 @@ export const authApi = {
   register: (body: RegisterBody) =>
     api.post<RegisterResponse>(endpoints.auth.register, body, { skipAuth: true }),
 
+  verifyEmail: (email: string, code: string) =>
+    api.post<SessionPayload>(endpoints.auth.verifyEmail, { email, code }, { skipAuth: true }),
+
+  resendVerification: (email: string) =>
+    api.post<MessageResponse>(endpoints.auth.resendVerification, { email }, { skipAuth: true }),
+
   forgotPassword: (email: string) =>
     api.post<MessageResponse>(endpoints.auth.forgotPassword, { email }, { skipAuth: true }),
 

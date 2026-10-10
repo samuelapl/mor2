@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDuration, getCourseDurationMinutes } from '@/lib/duration';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
@@ -45,15 +47,6 @@ interface CatalogCourseModalProps {
   courseId: string;
 }
 
-function formatDuration(minutes: number): string {
-  if (!minutes || minutes <= 0) return 'Self-paced';
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
-  if (hours > 0) return `${hours} hr${hours > 1 ? 's' : ''}`;
-  return `${mins} min`;
-}
-
 function formatDate(value: string): string {
   try {
     return new Date(value).toLocaleDateString('en-US', {
@@ -89,6 +82,7 @@ function bookedSeatCount(session: ApiLiveSession) {
 }
 
 export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseModalProps) {
+  const { isAmharic } = useTranslation();
   const router = useRouter();
   const { courseById, currentUser, userName, enrollSelf } = useLms();
   const course = courseById(courseId);
@@ -189,24 +183,12 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     [course?.modules],
   );
 
-  const totalDurationMin = useMemo(() => {
-    if (!course?.modules) return 0;
-    return course.modules.reduce((sum, m) => {
-      const moduleDuration = m.durationMinutes || 0;
-      const lessonsDuration = (m.lessons || []).reduce((lSum, l) => {
-        const lessonDur = l.durationMin || 0;
-        const subLessonsDur = (l.subLessons || []).reduce(
-          (sSum, s) => sSum + (s.durationMin || 0),
-          0,
-        );
-        return lSum + lessonDur + subLessonsDur;
-      }, 0);
-      return sum + Math.max(moduleDuration, lessonsDuration);
-    }, 0);
-  }, [course?.modules]);
+  const totalDurationMin = useMemo(() => (course ? getCourseDurationMinutes(course) : 0), [course]);
 
   const totalAttachments = useMemo(() => {
     if (!course) return 0;
+    // Lesson files are hidden until the learner enrolls, so counting them here would come up short.
+    if (course.materialCount !== undefined) return course.materialCount;
     let count = (course.attachments || []).length;
     for (const mod of course.modules || []) {
       count += getItemAttachments(mod).length;
@@ -401,7 +383,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                 </div>
                 <div className="inline-flex items-center gap-1.5 text-slate-500">
                   <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{formatDuration(totalDurationMin)} est. completion</span>
+                  <span>{formatDuration(totalDurationMin, isAmharic)} est. completion</span>
                 </div>
               </div>
 
@@ -466,7 +448,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                 </span>
               </div>
               <p className="mt-1 text-lg font-bold text-slate-900">
-                {totalDurationMin > 0 ? `${totalDurationMin}m` : 'Self-paced'}
+                {formatDuration(totalDurationMin, isAmharic)}
               </p>
               <p className="text-[11px] text-slate-400">Study estimate</p>
             </div>

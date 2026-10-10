@@ -29,6 +29,7 @@ interface CreatorSidebarProps {
   courseTitle: string;
   finalAssessmentWeight?: number;
   finalQuestionCount?: number;
+  finalAssessmentTitle?: string;
   onAddModule: () => void;
   onAddLesson: (moduleId: string) => void;
   onAddSubLesson: (moduleId: string, lessonId: string) => void;
@@ -53,6 +54,7 @@ export function CreatorSidebar({
   courseTitle,
   finalAssessmentWeight = 60,
   finalQuestionCount = 0,
+  finalAssessmentTitle,
   onAddModule,
   onAddLesson,
   onAddSubLesson,
@@ -96,10 +98,7 @@ export function CreatorSidebar({
 
   // Auto-expand lesson dropdown if active node is inside this lesson
   React.useEffect(() => {
-    if (
-      (activeNode.type === 'SUB_LESSON' || activeNode.type === 'LESSON_ASSESSMENT') &&
-      activeNode.lessonId
-    ) {
+    if ((activeNode.type === 'SUB_LESSON' || activeNode.type === 'LESSON_ASSESSMENT') && activeNode.lessonId) {
       setCollapsedLessons((prev) => {
         if (!prev.has(activeNode.lessonId!)) return prev;
         const next = new Set(prev);
@@ -143,29 +142,22 @@ export function CreatorSidebar({
     next?.focus();
   };
 
-  const isModuleActive = (moduleId: string) =>
-    activeNode.type === 'MODULE' && activeNode.moduleId === moduleId;
+  const isModuleActive = (moduleId: string) => activeNode.type === 'MODULE' && activeNode.moduleId === moduleId;
 
-  const isLessonActive = (lessonId: string) =>
-    activeNode.type === 'LESSON' && activeNode.lessonId === lessonId;
+  const isLessonActive = (lessonId: string) => activeNode.type === 'LESSON' && activeNode.lessonId === lessonId;
 
-  const isSubLessonActive = (subId: string) =>
-    activeNode.type === 'SUB_LESSON' && activeNode.subLessonId === subId;
+  const isSubLessonActive = (subId: string) => activeNode.type === 'SUB_LESSON' && activeNode.subLessonId === subId;
 
-  const isModAssessmentActive = (moduleId: string) =>
-    activeNode.type === 'MODULE_ASSESSMENT' && activeNode.moduleId === moduleId;
+  const isModAssessmentActive = (moduleId: string) => activeNode.type === 'MODULE_ASSESSMENT' && activeNode.moduleId === moduleId;
 
-  const isLesAssessmentActive = (lessonId: string) =>
-    activeNode.type === 'LESSON_ASSESSMENT' && activeNode.lessonId === lessonId;
+  const isLesAssessmentActive = (lessonId: string) => activeNode.type === 'LESSON_ASSESSMENT' && activeNode.lessonId === lessonId;
 
   return (
     <aside className="w-80 lg:w-96 shrink-0 border-r border-slate-200 bg-slate-50/70 flex flex-col h-full overflow-hidden">
       {/* Sidebar Header / Structure Summary */}
       <div className="p-4 border-b border-slate-200/80 bg-white/80 shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {tBilingual('Course Structure', 'የኮርስ መዋቅር')}
-          </span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{tBilingual('Course Structure', 'የኮርስ መዋቅር')}</span>
           <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
             {modules.length} {tBilingual('Modules', 'ሞጁሎች')}
           </span>
@@ -189,23 +181,14 @@ export function CreatorSidebar({
           <div
             className={cn(
               'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-              activeNode.type === 'COURSE_DETAILS'
-                ? 'bg-white/20 text-white'
-                : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100',
+              activeNode.type === 'COURSE_DETAILS' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100',
             )}
           >
             <BookOpen className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold truncate">
-              {courseTitle.trim() || tBilingual('Course Overview & Details', 'የኮርስ አጠቃላይ እይታ እና ዝርዝሮች')}
-            </h4>
-            <p
-              className={cn(
-                'text-[11px] truncate',
-                activeNode.type === 'COURSE_DETAILS' ? 'text-indigo-100' : 'text-slate-500',
-              )}
-            >
+            <h4 className="text-xs font-bold truncate">{courseTitle.trim() || tBilingual('Course Overview & Details', 'የኮርስ አጠቃላይ እይታ እና ዝርዝሮች')}</h4>
+            <p className={cn('text-[11px] truncate', activeNode.type === 'COURSE_DETAILS' ? 'text-indigo-100' : 'text-slate-500')}>
               {tBilingual('General settings, goals & syllabus', 'አጠቃላይ ቅንብሮች፣ ግቦች እና ይዘት')}
             </p>
           </div>
@@ -215,23 +198,14 @@ export function CreatorSidebar({
         {modules.map((mod, modIdx) => {
           const isCollapsed = collapsedModules.has(mod.id);
           const hasModuleAssessment = mod.lessons.some(
-            (l) =>
-              l.contentType === 'ASSESSMENT' ||
-              l.contentType === 'QUIZ' ||
-              l.title.toLowerCase().includes('module assessment'),
+            (l) => l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ' || l.title.toLowerCase().includes('module assessment'),
           );
           const instructionalLessons = mod.lessons.filter(
-            (l) =>
-              l.contentType !== 'ASSESSMENT' &&
-              l.contentType !== 'QUIZ' &&
-              !l.title.toLowerCase().includes('module assessment'),
+            (l) => l.contentType !== 'ASSESSMENT' && l.contentType !== 'QUIZ' && !l.title.toLowerCase().includes('module assessment'),
           );
 
           return (
-            <div
-              key={mod.id}
-              className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs transition"
-            >
+            <div key={mod.id} className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs transition">
               {/* Module Header Bar */}
               <div
                 className={cn(
@@ -247,15 +221,8 @@ export function CreatorSidebar({
                   onClick={() => toggleModuleCollapse(mod.id)}
                   className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer select-none"
                 >
-                  <button
-                    type="button"
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded"
-                  >
-                    {isCollapsed ? (
-                      <ChevronRight className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
+                  <button type="button" className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                    {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
 
                   <div
@@ -268,9 +235,7 @@ export function CreatorSidebar({
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       {tBilingual(`Module ${modIdx + 1}`, `ሞጁል ${modIdx + 1}`)}
                     </span>
-                    <h4 className="text-xs font-bold truncate">
-                      {mod.title.trim() || tBilingual('Untitled Module', 'ርዕስ አልባ ሞጁል')}
-                    </h4>
+                    <h4 className="text-xs font-bold truncate">{mod.title.trim() || tBilingual('Untitled Module', 'ርዕስ አልባ ሞጁል')}</h4>
                   </div>
                 </div>
 
@@ -298,16 +263,10 @@ export function CreatorSidebar({
                   {instructionalLessons.map((lesson, lIdx) => {
                     const Icon = getLessonIcon(lesson.contentType);
                     const subLessons = (lesson.subLessons ?? []).filter(
-                      (s) =>
-                        s.contentType !== 'ASSESSMENT' &&
-                        s.contentType !== 'QUIZ' &&
-                        !s.title.toLowerCase().includes('lesson assessment'),
+                      (s) => s.contentType !== 'ASSESSMENT' && s.contentType !== 'QUIZ' && !s.title.toLowerCase().includes('lesson assessment'),
                     );
                     const hasLessonAssessment = (lesson.subLessons ?? []).some(
-                      (s) =>
-                        s.contentType === 'ASSESSMENT' ||
-                        s.contentType === 'QUIZ' ||
-                        s.title.toLowerCase().includes('lesson assessment'),
+                      (s) => s.contentType === 'ASSESSMENT' || s.contentType === 'QUIZ' || s.title.toLowerCase().includes('lesson assessment'),
                     );
 
                     const hasSubLessons = subLessons.length > 0;
@@ -357,28 +316,11 @@ export function CreatorSidebar({
                                     : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200/60',
                                 )}
                               >
-                                {isLessonCollapsed ? (
-                                  <ChevronRight className="h-3.5 w-3.5" />
-                                ) : (
-                                  <ChevronDown className="h-3.5 w-3.5" />
-                                )}
+                                {isLessonCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                               </button>
                             )}
-                            <Icon
-                              className={cn(
-                                'h-3.5 w-3.5 shrink-0',
-                                isLessonActive(lesson.id)
-                                  ? 'text-white'
-                                  : 'text-indigo-600',
-                              )}
-                            />
-                            <span className="truncate">
-                              {lesson.title.trim() ||
-                                tBilingual(
-                                  `Lesson ${lIdx + 1}`,
-                                  `ትምህርት ${lIdx + 1}`,
-                                )}
-                            </span>
+                            <Icon className={cn('h-3.5 w-3.5 shrink-0', isLessonActive(lesson.id) ? 'text-white' : 'text-indigo-600')} />
+                            <span className="truncate">{lesson.title.trim() || tBilingual(`Lesson ${lIdx + 1}`, `ትምህርት ${lIdx + 1}`)}</span>
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -404,9 +346,7 @@ export function CreatorSidebar({
                                 }}
                                 className={cn(
                                   'opacity-0 group-hover:opacity-100 p-0.5 rounded transition',
-                                  isLessonActive(lesson.id)
-                                    ? 'hover:text-rose-200'
-                                    : 'text-slate-400 hover:text-rose-600',
+                                  isLessonActive(lesson.id) ? 'hover:text-rose-200' : 'text-slate-400 hover:text-rose-600',
                                 )}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -444,11 +384,7 @@ export function CreatorSidebar({
                                     <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
                                     <SubIcon className="h-3 w-3 text-slate-500 shrink-0" />
                                     <span className="truncate">
-                                      {sub.title.trim() ||
-                                        tBilingual(
-                                          `Sub-lesson ${sIdx + 1}`,
-                                          `ንዑስ ትምህርት ${sIdx + 1}`,
-                                        )}
+                                      {sub.title.trim() || tBilingual(`Sub-lesson ${sIdx + 1}`, `ንዑስ ትምህርት ${sIdx + 1}`)}
                                     </span>
                                   </div>
                                   <button
@@ -496,12 +432,7 @@ export function CreatorSidebar({
                           >
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               <FileQuestion className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                              <span className="truncate font-semibold">
-                                {tBilingual(
-                                  'Lesson Assessment',
-                                  'የክፍለ-ትምህርት ምዘና',
-                                )}
-                              </span>
+                              <span className="truncate font-semibold">{tBilingual('Lesson Assessment', 'የክፍለ-ትምህርት ምዘና')}</span>
                             </div>
                             <button
                               type="button"
@@ -538,17 +469,8 @@ export function CreatorSidebar({
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Award
-                          className={cn(
-                            'h-4 w-4 shrink-0',
-                            isModAssessmentActive(mod.id)
-                              ? 'text-white'
-                              : 'text-emerald-600',
-                          )}
-                        />
-                        <span className="truncate font-bold">
-                          {tBilingual('Module Assessment', 'የሞጁል ምዘና')}
-                        </span>
+                        <Award className={cn('h-4 w-4 shrink-0', isModAssessmentActive(mod.id) ? 'text-white' : 'text-emerald-600')} />
+                        <span className="truncate font-bold">{tBilingual('Module Assessment', 'የሞጁል ምዘና')}</span>
                       </div>
                       <button
                         type="button"
@@ -558,9 +480,7 @@ export function CreatorSidebar({
                         }}
                         className={cn(
                           'opacity-0 group-hover:opacity-100 p-0.5 rounded transition',
-                          isModAssessmentActive(mod.id)
-                            ? 'hover:text-rose-200'
-                            : 'text-emerald-600 hover:text-rose-600',
+                          isModAssessmentActive(mod.id) ? 'hover:text-rose-200' : 'text-emerald-600 hover:text-rose-600',
                         )}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -630,12 +550,22 @@ export function CreatorSidebar({
                     active ? 'bg-indigo-600 font-semibold text-white' : 'text-slate-700 hover:bg-sky-50',
                   )}
                 >
-                  <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold', active ? 'bg-white/20' : 'bg-sky-50 text-sky-700')}>
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold',
+                      active ? 'bg-white/20' : 'bg-sky-50 text-sky-700',
+                    )}
+                  >
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
                   {plan.quizzes.length > 0 && (
-                    <span className={cn('shrink-0 rounded-full px-1.5 text-[10px] font-bold', active ? 'bg-white/20' : 'border border-indigo-200/60 bg-indigo-50 text-indigo-700')}>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-1.5 text-[10px] font-bold',
+                        active ? 'bg-white/20' : 'border border-indigo-200/60 bg-indigo-50 text-indigo-700',
+                      )}
+                    >
                       {plan.quizzes.length}Q · {weight}%
                     </span>
                   )}
@@ -646,7 +576,10 @@ export function CreatorSidebar({
                         e.stopPropagation();
                         onDeleteSessionPlan(plan.id);
                       }}
-                      className={cn('shrink-0 rounded p-0.5 opacity-0 transition group-hover:opacity-100', active ? 'hover:bg-white/20' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-600')}
+                      className={cn(
+                        'shrink-0 rounded p-0.5 opacity-0 transition group-hover:opacity-100',
+                        active ? 'hover:bg-white/20' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-600',
+                      )}
                       aria-label="Remove session"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -684,25 +617,16 @@ export function CreatorSidebar({
             <div
               className={cn(
                 'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-                activeNode.type === 'FINAL_ASSESSMENT'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-amber-50 text-amber-700 group-hover:bg-amber-100',
+                activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-700 group-hover:bg-amber-100',
               )}
             >
               <Award className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <h4 className="text-xs font-bold truncate">
-                {tBilingual('Final Assessment & Rules', 'የማጠቃለያ ፈተና እና ደንቦች')}
+                {finalAssessmentTitle?.trim() || tBilingual('Final Assessment', 'የማጠቃለያ ፈተና እና ደንቦች')}
               </h4>
-              <p
-                className={cn(
-                  'text-[11px] truncate',
-                  activeNode.type === 'FINAL_ASSESSMENT'
-                    ? 'text-indigo-100'
-                    : 'text-slate-500',
-                )}
-              >
+              <p className={cn('text-[11px] truncate', activeNode.type === 'FINAL_ASSESSMENT' ? 'text-indigo-100' : 'text-slate-500')}>
                 {finalQuestionCount} {tBilingual('questions', 'ጥያቄዎች')}
               </p>
             </div>
@@ -711,9 +635,7 @@ export function CreatorSidebar({
           <span
             className={cn(
               'text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0',
-              activeNode.type === 'FINAL_ASSESSMENT'
-                ? 'bg-white/20 text-white'
-                : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
+              activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
             )}
           >
             {finalAssessmentWeight}%
@@ -735,25 +657,14 @@ export function CreatorSidebar({
           <div
             className={cn(
               'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-              activeNode.type === 'REVIEW_SUBMIT'
-                ? 'bg-white/20 text-white'
-                : 'bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100',
+              activeNode.type === 'REVIEW_SUBMIT' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100',
             )}
           >
             <FileCheck className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold truncate">
-              {tBilingual('Review & Submit', 'ይገምግሙ እና ያቅርቡ')}
-            </h4>
-            <p
-              className={cn(
-                'text-[11px] truncate',
-                activeNode.type === 'REVIEW_SUBMIT'
-                  ? 'text-indigo-100'
-                  : 'text-slate-500',
-              )}
-            >
+            <h4 className="text-xs font-bold truncate">{tBilingual('Review & Submit', 'ይገምግሙ እና ያቅርቡ')}</h4>
+            <p className={cn('text-[11px] truncate', activeNode.type === 'REVIEW_SUBMIT' ? 'text-indigo-100' : 'text-slate-500')}>
               {tBilingual('Final check & submission', 'የመጨረሻ ማረጋገጫ እና ማቅረቢያ')}
             </p>
           </div>

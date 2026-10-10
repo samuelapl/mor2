@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Eye, Loader2 } from 'lucide-react';
 import type { Course } from '@/types';
 import type { ApiCourseProgress } from '@/lib/api/types';
@@ -15,6 +15,32 @@ import { ClassroomFooter } from './ClassroomFooter';
 import { ClassroomStage } from './stage/ClassroomStage';
 import { useClassroomNavigation } from './hooks/useClassroomNavigation';
 import { useClassroomHeartbeat } from './hooks/useClassroomHeartbeat';
+import { MOBILE_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
+
+/** Converts a studio draft question (text / correctIndex / answerText) into the shape the quiz taker grades. */
+function toPreviewQuestion(q: any, index: number) {
+  const type =
+    q.type === 'true_false' || q.type === 'TRUE_FALSE'
+      ? 'TRUE_FALSE'
+      : q.type === 'short_answer' || q.type === 'SHORT_ANSWER'
+        ? 'SHORT_ANSWER'
+        : 'MULTIPLE_CHOICE';
+  const options: string[] = type === 'SHORT_ANSWER' ? [] : q.options || [];
+  const correctAnswer =
+    type === 'SHORT_ANSWER'
+      ? (q.answerText ?? q.correctAnswer ?? '')
+      : q.correctIndex !== undefined
+        ? (options[q.correctIndex] ?? q.correctIndex)
+        : (q.correctAnswer ?? 0);
+  return {
+    id: q.id || `q-${index}`,
+    type,
+    question: q.text || q.question || `Question ${index + 1}`,
+    options,
+    correctAnswer,
+    points: q.points || 10,
+  };
+}
 
 interface ClassroomShellProps {
   courseId?: string;
@@ -28,66 +54,164 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
   const [course, setCourse] = useState<Course | null>(null);
   const [progress, setProgress] = useState<ApiCourseProgress | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Phones: the curriculum is a drawer over the lesson, so start with it closed.
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
   const [activeQuizModalId, setActiveQuizModalId] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
 
   // Fetch course and progress in parallel
   const loadData = useCallback(async () => {
     if (isPreview && previewCourse) {
-      setCourse(previewCourse);
-      const mockModules = (previewCourse.modules || []).map((m: any, mIdx: number) => ({
-        moduleId: m.id,
-        titleEn: m.title || `Module ${mIdx + 1}`,
-        titleAm: m.titleAm || m.title || `Module ${mIdx + 1}`,
-        order: m.order ?? mIdx + 1,
-        unlocked: true,
-        totalLessons: m.lessons?.length || 0,
-        completedLessons: 0,
-        moduleCompleted: false,
-        progressPercent: 0,
-        timeSpentSeconds: 0,
-        requiredSeconds: 0,
-        timeSatisfied: true,
-        lessons: (m.lessons || []).map((l: any, lIdx: number) => ({
-          lessonId: l.id,
-          titleEn: l.title || `Lesson ${lIdx + 1}`,
-          titleAm: l.titleAm || l.title || `Lesson ${lIdx + 1}`,
-          order: l.order ?? lIdx + 1,
-          completed: false,
+      // 1. Detect final assessment from previewCourse.quiz
+      const finalQuiz = (previewCourse as any)?.quiz;
+      const finalAssessment =
+        finalQuiz && (finalQuiz.questions?.length ?? 0) > 0
+          ? {
+              id: finalQuiz.id || 'preview-final-assessment',
+              titleEn: finalQuiz.title || 'Final Assessment',
+              titleAm: (finalQuiz as any).titleAm || finalQuiz.title || 'የማጠቃለያ ፈተና',
+              passingScore: finalQuiz.passMark ?? 70,
+              passed: false,
+              weight: finalQuiz.weight ?? 60,
+              type: 'FINAL_ASSESSMENT',
+              maxAttempts: finalQuiz.attemptsAllowed ?? 3,
+              timeLimitMinutes: finalQuiz.timeLimitMinutes ?? null,
+              questions: finalQuiz.questions || [],
+            }
+          : null;
+
+      const isModAss = (l: any) =>
+        l.contentType === 'ASSESSMENT' ||
+        l.contentType === 'QUIZ' ||
+        (l.title && l.title.toLowerCase().includes('module assessment')) ||
+        (l.quizQuestions && l.quizQuestions.length > 0);
+
+      const isLessonAss = (s: any) =>
+        s.contentType === 'ASSESSMENT' ||
+        s.contentType === 'QUIZ' ||
+        (s.title &&
+          (s.title.toLowerCase().includes('lesson assessment') ||
+            s.title.toLowerCase().includes('quiz'))) ||
+        (s.quizQuestions && s.quizQuestions.length > 0);
+
+      // Clean course modules so assessment rows aren't duplicated as instructional lessons
+      const cleanModules = (previewCourse.modules || []).map((m: any) => {
+        const instructionalLessons = (m.lessons || []).filter((l: any) => !isModAss(l));
+        return {
+          ...m,
+          lessons: instructionalLessons.map((l: any) => {
+            const instructionalSubs = (l.subLessons || []).filter((s: any) => !isLessonAss(s));
+            return {
+              ...l,
+              subLessons: instructionalSubs,
+            };
+          }),
+        };
+      });
+
+      setCourse({
+        ...previewCourse,
+        modules: cleanModules,
+      });
+
+      const mockModules = (previewCourse.modules || []).map((m: any, mIdx: number) => {
+        const modAssLesson = (m.lessons || []).find(isModAss);
+        const modAssessment = modAssLesson
+          ? {
+              id: modAssLesson.id || `preview-mod-ass-${m.id}`,
+              titleEn: modAssLesson.title || 'Module Assessment',
+              titleAm: modAssLesson.titleAm || modAssLesson.title || 'የሞጁል ምዘና',
+              passingScore: modAssLesson.quizPassMark ?? 70,
+              passed: false,
+              weight: modAssLesson.quizWeight ?? 20,
+              type: 'MODULE_ASSESSMENT',
+              maxAttempts: modAssLesson.quizAttemptsAllowed ?? 3,
+              timeLimitMinutes: modAssLesson.quizTimeLimitMinutes ?? 30,
+              questions: modAssLesson.quizQuestions || [],
+            }
+          : undefined;
+
+        const instructionalLessons = (m.lessons || []).filter((l: any) => !isModAss(l));
+
+        return {
+          moduleId: m.id,
+          titleEn: m.title || `Module ${mIdx + 1}`,
+          titleAm: m.titleAm || m.title || `Module ${mIdx + 1}`,
+          order: m.order ?? mIdx + 1,
           unlocked: true,
+          totalLessons: instructionalLessons.length,
+          completedLessons: 0,
+          moduleCompleted: false,
+          progressPercent: 0,
           timeSpentSeconds: 0,
           requiredSeconds: 0,
           timeSatisfied: true,
-          subLessons: (l.subLessons || []).map((sl: any, slIdx: number) => ({
-            lessonId: sl.id,
-            titleEn: sl.title || `Sub-topic ${slIdx + 1}`,
-            titleAm: sl.titleAm || sl.title || `Sub-topic ${slIdx + 1}`,
-            order: sl.order ?? slIdx + 1,
-            completed: false,
-            unlocked: true,
-            timeSpentSeconds: 0,
-            requiredSeconds: 0,
-            timeSatisfied: true,
-          })),
-        })),
-      }));
+          assessment: modAssessment,
+          lessons: instructionalLessons.map((l: any, lIdx: number) => {
+            const lessonAssSub = (l.subLessons || []).find(isLessonAss);
+            const lessonAssessment = lessonAssSub
+              ? {
+                  id: lessonAssSub.id || `preview-les-ass-${l.id}`,
+                  titleEn: lessonAssSub.title || 'Lesson Assessment',
+                  titleAm: lessonAssSub.titleAm || lessonAssSub.title || 'የትምህርት ምዘና',
+                  passingScore: lessonAssSub.quizPassMark ?? 70,
+                  passed: false,
+                  weight: lessonAssSub.quizWeight ?? 20,
+                  type: 'LESSON_ASSESSMENT',
+                  maxAttempts: lessonAssSub.quizAttemptsAllowed ?? 3,
+                  timeLimitMinutes: lessonAssSub.quizTimeLimitMinutes ?? 15,
+                  questions: lessonAssSub.quizQuestions || [],
+                }
+              : undefined;
+
+            const instructionalSubs = (l.subLessons || []).filter((s: any) => !isLessonAss(s));
+
+            return {
+              lessonId: l.id,
+              titleEn: l.title || `Lesson ${lIdx + 1}`,
+              titleAm: l.titleAm || l.title || `Lesson ${lIdx + 1}`,
+              order: l.order ?? lIdx + 1,
+              completed: false,
+              unlocked: true,
+              timeSpentSeconds: 0,
+              requiredSeconds: 0,
+              timeSatisfied: true,
+              assessment: lessonAssessment,
+              subLessons: instructionalSubs.map((sl: any, slIdx: number) => ({
+                lessonId: sl.id,
+                titleEn: sl.title || `Sub-topic ${slIdx + 1}`,
+                titleAm: sl.titleAm || sl.title || `Sub-topic ${slIdx + 1}`,
+                order: sl.order ?? slIdx + 1,
+                completed: false,
+                unlocked: true,
+                timeSpentSeconds: 0,
+                requiredSeconds: 0,
+                timeSatisfied: true,
+              })),
+            };
+          }),
+        };
+      });
 
       setProgress({
         courseId: previewCourse.id || 'preview',
         progressionMode: 'OPEN',
         stats: {
-          totalModules: previewCourse.modules?.length || 0,
-          totalLessons: previewCourse.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0,
+          totalModules: cleanModules.length,
+          totalLessons: cleanModules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0),
           completedLessons: 0,
           overallPercent: 0,
         },
         modules: mockModules,
         courseCompletion: {
-          contentCompleted: false,
-          finalAssessmentRequired: false,
+          contentCompleted: true,
+          finalAssessmentRequired: Boolean(finalAssessment),
           finalAssessmentPassed: false,
           certificateEligible: false,
-          finalAssessment: null,
+          finalAssessment,
         },
         liveSessions: (previewCourse.sessionPlans || []).map((sp: any, idx: number) => ({
           id: sp.id || `session-${idx}`,
@@ -137,7 +261,8 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
   } = useClassroomNavigation({ course, progress });
 
   // Time tracking & heartbeats
-  const activeItemId = activeContent?.subLesson?.id ?? activeContent?.lesson?.id ?? null;
+  // Preview records nothing, so it never starts the study-time heartbeat.
+  const activeItemId = isPreview ? null : (activeContent?.subLesson?.id ?? activeContent?.lesson?.id ?? null);
 
   // Calculate study time for current active target
   const currentTargetProgress = activeContent?.subLessonProgress ?? activeContent?.lessonProgress;
@@ -203,12 +328,91 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
     setActiveQuizModalId(assessmentId);
   };
 
-  const handleQuizPassed = async () => {
-    await loadData();
-    if (nextItem) {
-      navigateTo(nextItem);
-    }
+  // Continue after a passed quiz goes to the item right after that quiz, even when it was
+  // started from a lesson's inline card rather than from the quiz item itself.
+  const handleQuizContinue = () => {
+    const quizId = activeQuizModalId;
+    setActiveQuizModalId(null);
+    const quizIndex = flatItems.findIndex((i) => i.type === 'QUIZ' && i.quizId === quizId);
+    const target = quizIndex >= 0 ? flatItems[quizIndex + 1] : nextItem;
+    if (target) navigateTo(target);
   };
+
+  // Construct the active preview assessment for QuizTakerModal when in preview mode
+  const activePreviewAssessment = useMemo(() => {
+    if (!isPreview || !activeQuizModalId) return null;
+    const finalAss = progress?.courseCompletion?.finalAssessment;
+    if (
+      finalAss &&
+      (finalAss.id === activeQuizModalId ||
+        activeQuizModalId.includes('final') ||
+        activeQuizModalId.startsWith('q-'))
+    ) {
+      return {
+        id: finalAss.id,
+        courseId: course?.id || 'preview-course',
+        type: 'FINAL_ASSESSMENT',
+        titleEn: finalAss.titleEn || 'Final Assessment',
+        titleAm: finalAss.titleAm || 'የማጠቃለያ ፈተና',
+        passingScore: finalAss.passingScore ?? 70,
+        maxAttempts: (finalAss as any).maxAttempts ?? 3,
+        timeLimitMinutes: (finalAss as any).timeLimitMinutes ?? null,
+        questions: ((finalAss as any).questions ?? []).map(toPreviewQuestion),
+        attempts: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        shuffleQuestions: false,
+        descriptionEn: null,
+        descriptionAm: null,
+      } as any;
+    }
+
+    if (progress?.modules) {
+      for (const mod of progress.modules) {
+        if (mod.assessment && mod.assessment.id === activeQuizModalId) {
+          return {
+            id: mod.assessment.id,
+            courseId: course?.id || 'preview-course',
+            type: 'MODULE_ASSESSMENT',
+            titleEn: mod.assessment.titleEn,
+            titleAm: mod.assessment.titleAm,
+            passingScore: mod.assessment.passingScore,
+            maxAttempts: (mod.assessment as any).maxAttempts ?? 3,
+            timeLimitMinutes: (mod.assessment as any).timeLimitMinutes ?? 30,
+            questions: ((mod.assessment as any).questions ?? []).map(toPreviewQuestion),
+            attempts: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            shuffleQuestions: false,
+            descriptionEn: null,
+            descriptionAm: null,
+          } as any;
+        }
+        for (const les of mod.lessons ?? []) {
+          if (les.assessment && les.assessment.id === activeQuizModalId) {
+            return {
+              id: les.assessment.id,
+              courseId: course?.id || 'preview-course',
+              type: 'LESSON_ASSESSMENT',
+              titleEn: les.assessment.titleEn,
+              titleAm: les.assessment.titleAm,
+              passingScore: les.assessment.passingScore,
+              maxAttempts: (les.assessment as any).maxAttempts ?? 3,
+              timeLimitMinutes: (les.assessment as any).timeLimitMinutes ?? 15,
+              questions: ((les.assessment as any).questions ?? []).map(toPreviewQuestion),
+              attempts: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              shuffleQuestions: false,
+              descriptionEn: null,
+              descriptionAm: null,
+            } as any;
+          }
+        }
+      }
+    }
+    return null;
+  }, [isPreview, activeQuizModalId, progress, course]);
 
   if (loading && !course) {
     return (
@@ -274,8 +478,10 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
               setActiveQuizModalId(null);
             }
             navigateTo(item);
+            if (isMobile) setSidebarOpen(false);
           }}
           isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         {/* Stage Content Canvas */}
@@ -287,10 +493,12 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
               courseId={course.id}
               courseTitle={course.title}
               assessmentId={activeQuizModalId}
+              previewAssessment={activePreviewAssessment}
               embedded
               onPassed={() => {
-                void handleQuizPassed();
+                void loadData();
               }}
+              onContinue={handleQuizContinue}
             />
           ) : (
             <ClassroomStage

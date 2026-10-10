@@ -33,6 +33,21 @@ export async function bulkEnroll(courseId: string, userIds: string[]): Promise<B
   });
 }
 
+export interface UnenrollResult {
+  message: string;
+  removed: {
+    lessonCompletions: number;
+    moduleCompletions: number;
+    assessmentAttempts: number;
+    certificates: number;
+  };
+}
+
+/** Admin: removes the enrollment plus the learner's progress, attempts and certificate. */
+export async function unenrollLearner(enrollmentId: string): Promise<UnenrollResult> {
+  return api<UnenrollResult>(`enrollments/${enrollmentId}`, { method: 'DELETE' });
+}
+
 export async function dropEnrollment(
   enrollmentId: string,
   reason?: string,

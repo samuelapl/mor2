@@ -63,7 +63,12 @@ function buildPrisma(user: any) {
 describe('AuthService first-login password change', () => {
   let user: any;
   let prisma: ReturnType<typeof buildPrisma>;
-  let mail: { sendFirstLoginCode: jest.Mock; sendPasswordResetCode: jest.Mock };
+  let mail: {
+    firstLoginCode: jest.Mock;
+    passwordResetCode: jest.Mock;
+    passwordChanged: jest.Mock;
+    emailVerificationCode: jest.Mock;
+  };
   let service: AuthService;
 
   const lastCode = (mock: jest.Mock) => mock.mock.calls[mock.mock.calls.length - 1][1] as string;
@@ -81,7 +86,12 @@ describe('AuthService first-login password change', () => {
       roles: [{ role: 'LEARNER' }],
     };
     prisma = buildPrisma(user);
-    mail = { sendFirstLoginCode: jest.fn(), sendPasswordResetCode: jest.fn() };
+    mail = {
+      firstLoginCode: jest.fn(),
+      passwordResetCode: jest.fn(),
+      passwordChanged: jest.fn(),
+      emailVerificationCode: jest.fn(),
+    };
     const config = {
       get: (key: string, fallback?: string) =>
         ({ JWT_ACCESS_SECRET: 'access', JWT_REFRESH_SECRET: 'refresh' })[key] ?? fallback,
@@ -97,7 +107,7 @@ describe('AuthService first-login password change', () => {
 
   async function startChallenge() {
     const res: any = await service.login({ email: user.email, password: TEMP_PASSWORD });
-    return { res, code: lastCode(mail.sendFirstLoginCode) };
+    return { res, code: lastCode(mail.firstLoginCode) };
   }
 
   it('returns a challenge and emails a code instead of issuing tokens', async () => {
@@ -117,7 +127,7 @@ describe('AuthService first-login password change', () => {
     await expect(service.login({ email: user.email, password: 'Wrong1234' })).rejects.toThrow(
       UnauthorizedException,
     );
-    expect(mail.sendFirstLoginCode).not.toHaveBeenCalled();
+    expect(mail.firstLoginCode).not.toHaveBeenCalled();
   });
 
   it('sets the new password, clears the flag and signs the user in', async () => {
@@ -134,6 +144,8 @@ describe('AuthService first-login password change', () => {
     expect(session.user.password).toBeUndefined();
     expect(user.password).toBe('h:MyOwnPass1');
     expect(user.mustChangePassword).toBe(false);
+    // The first-login code was emailed, so the address is now proven.
+    expect(user.emailVerifiedAt).toBeInstanceOf(Date);
 
     // The challenge can't be replayed once the change is done.
     await expect(
@@ -184,7 +196,7 @@ describe('AuthService first-login password change', () => {
   it('does not accept a forgot-password code for first login', async () => {
     const { res } = await startChallenge();
     await service.forgotPassword(user.email);
-    const resetCode = lastCode(mail.sendPasswordResetCode);
+    const resetCode = lastCode(mail.passwordResetCode);
 
     await expect(
       service.completeFirstLogin({
@@ -210,18 +222,175 @@ describe('AuthService first-login password change', () => {
     await expect(service.resendFirstLoginCode(res.challengeToken)).resolves.toMatchObject({
       email: 'ab•••@example.com',
     });
-    expect(mail.sendFirstLoginCode).toHaveBeenCalledTimes(2);
+    expect(mail.firstLoginCode).toHaveBeenCalledTimes(2);
   });
 
   it('clears the flag when the user resets via forgot password instead', async () => {
     await service.forgotPassword(user.email);
     await service.resetPassword({
       email: user.email,
-      code: lastCode(mail.sendPasswordResetCode),
+      code: lastCode(mail.passwordResetCode),
       newPassword: 'MyOwnPass1',
     });
 
     expect(user.mustChangePassword).toBe(false);
+    expect(mail.passwordChanged).toHaveBeenCalledWith(user.email, 'en');
+  });
+});
+
+describe('AuthService email verification', () => {
+  let user: any;
+  let prisma: ReturnType<typeof buildPrisma> & { user: any };
+  let mail: {
+    emailVerificationCode: jest.Mock;
+    passwordResetCode: jest.Mock;
+    passwordChanged: jest.Mock;
+  };
+  let service: AuthService;
+
+  const lastCode = () =>
+    mail.emailVerificationCode.mock.calls[mail.emailVerificationCode.mock.calls.length - 1][1];
+
+  beforeEach(() => {
+    user = {
+      id: 'u3',
+      email: 'selam@example.com',
+      password: 'h:MyPass123',
+      firstName: 'Selam',
+      lastName: 'Bekele',
+      locale: 'am',
+      isActive: true,
+      registrationStatus: 'PENDING',
+      emailVerifiedAt: null,
+      mustChangePassword: false,
+      roles: [{ role: 'LEARNER' }],
+    };
+    prisma = buildPrisma(user) as any;
+    mail = {
+      emailVerificationCode: jest.fn(),
+      passwordResetCode: jest.fn(),
+      passwordChanged: jest.fn(),
+    };
+    const config = {
+      get: (key: string, fallback?: string) =>
+        ({ JWT_ACCESS_SECRET: 'access', JWT_REFRESH_SECRET: 'refresh' })[key] ?? fallback,
+    };
+    service = new AuthService(
+      prisma as any,
+      new JwtService({ secret: 'access' }),
+      config as any,
+      mail as any,
+      { effectivePermissions: jest.fn(async () => ['course.browse']) } as any,
+    );
+  });
+
+  it('register creates a PENDING learner and emails a verification code', async () => {
+    prisma.user.findUnique = jest.fn(async () => null);
+    prisma.user.create = jest.fn(async ({ data }: any) => ({ id: 'new', ...data }));
+
+    const res: any = await service.register({
+      email: 'new@example.com',
+      password: 'MyPass123',
+      firstName: 'New',
+      lastName: 'User',
+      locale: 'en',
+    } as any);
+
+    expect(prisma.user.create.mock.calls[0][0].data.registrationStatus).toBe('PENDING');
+    expect(res).toMatchObject({ emailVerificationRequired: true, email: 'ne•••@example.com' });
+    expect(res.accessToken).toBeUndefined();
+    expect(mail.emailVerificationCode).toHaveBeenCalledWith(
+      'new@example.com',
+      expect.stringMatching(/^\d{6}$/),
+      'en',
+    );
+  });
+
+  it('login with the right password asks for verification instead of signing in', async () => {
+    const res: any = await service.login({ email: user.email, password: 'MyPass123' });
+
+    expect(res).toEqual({
+      emailVerificationRequired: true,
+      email: 'se•••@example.com',
+      devCode: undefined,
+    });
+    expect(mail.emailVerificationCode).toHaveBeenCalledWith(user.email, expect.any(String), 'am');
+  });
+
+  it('login with a wrong password reveals nothing about the pending account', async () => {
+    await expect(service.login({ email: user.email, password: 'Wrong1234' })).rejects.toThrow(
+      'Invalid credentials',
+    );
+    expect(mail.emailVerificationCode).not.toHaveBeenCalled();
+  });
+
+  it('does not email a second code within the resend cooldown', async () => {
+    await service.login({ email: user.email, password: 'MyPass123' });
+    await service.login({ email: user.email, password: 'MyPass123' });
+    await service.resendVerification(user.email);
+
+    expect(mail.emailVerificationCode).toHaveBeenCalledTimes(1);
+
+    prisma.resets[0].createdAt = new Date(Date.now() - 61_000);
+    await service.resendVerification(user.email);
+    expect(mail.emailVerificationCode).toHaveBeenCalledTimes(2);
+  });
+
+  it('verifying the code activates the account and signs the user in', async () => {
+    await service.login({ email: user.email, password: 'MyPass123' });
+
+    const session: any = await service.verifyEmail({ email: user.email, code: lastCode() });
+
+    expect(session.accessToken).toEqual(expect.any(String));
+    expect(user.registrationStatus).toBe('APPROVED');
+    expect(user.emailVerifiedAt).toBeInstanceOf(Date);
+
+    // Already verified: the code can't be reused, and login now issues a session.
+    await expect(service.verifyEmail({ email: user.email, code: lastCode() })).rejects.toThrow(
+      BadRequestException,
+    );
+    const next: any = await service.login({ email: user.email, password: 'MyPass123' });
+    expect(next.accessToken).toEqual(expect.any(String));
+  });
+
+  it('rejects a wrong verification code without activating the account', async () => {
+    await service.login({ email: user.email, password: 'MyPass123' });
+    const wrong = lastCode() === '000000' ? '111111' : '000000';
+
+    await expect(service.verifyEmail({ email: user.email, code: wrong })).rejects.toThrow(
+      'Invalid or expired code.',
+    );
+    expect(user.registrationStatus).toBe('PENDING');
+  });
+
+  it('does not accept a password-reset code as a verification code', async () => {
+    await service.forgotPassword(user.email);
+    const resetCode = mail.passwordResetCode.mock.calls[0][1];
+
+    await expect(service.verifyEmail({ email: user.email, code: resetCode })).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('a password reset also verifies and activates a pending account', async () => {
+    await service.forgotPassword(user.email);
+    await service.resetPassword({
+      email: user.email,
+      code: mail.passwordResetCode.mock.calls[0][1],
+      newPassword: 'MyNewPass1',
+    });
+
+    expect(user.registrationStatus).toBe('APPROVED');
+    expect(user.emailVerifiedAt).toBeInstanceOf(Date);
+  });
+
+  it('keeps accounts rejected under the old approval flow blocked', async () => {
+    user.registrationStatus = 'REJECTED';
+    await expect(service.login({ email: user.email, password: 'MyPass123' })).rejects.toThrow(
+      /rejected/,
+    );
+    await service.resendVerification(user.email);
+    expect(mail.emailVerificationCode).not.toHaveBeenCalled();
   });
 });
 

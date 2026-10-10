@@ -50,3 +50,22 @@ export function hasAnyAssessment(modules: ModuleDraft[], finalQuestionCount: num
     )
   );
 }
+
+/** Sum of an assessment's question points. */
+export const totalQuestionPoints = (questions: { points: number }[] = []) =>
+  questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
+/**
+ * One point is one percent of the course grade, so a 20% assessment's questions must total
+ * 20 points. A 0% (practice) assessment or one without questions has no required total.
+ * Returns the mismatch, or null when the points are right. The backend checks the same rule
+ * on submit (common/utils/weights.util.ts).
+ */
+export function pointsMismatch(
+  questions: { points: number }[] = [],
+  weight: number,
+): { total: number; required: number } | null {
+  if (!weight || questions.length === 0) return null;
+  const total = totalQuestionPoints(questions);
+  return total === weight ? null : { total, required: weight };
+}

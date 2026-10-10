@@ -1,19 +1,22 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { getRoleFromPath } from '@/constants/roles';
 import { navItemsForRole, type NavItem } from '@/constants/navigation';
 import { useLms } from '@/lib/lms-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
+import { MOBILE_QUERY, TABLET_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 import AccountMenu from '@/components/shared/account/AccountMenu';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
-function filterNavItems(items: NavItem[], canAny: (codes: string[]) => boolean): NavItem[] {
+export function filterNavItems(items: NavItem[], canAny: (codes: string[]) => boolean): NavItem[] {
   return items
     .map((item) =>
       item.children ? { ...item, children: filterNavItems(item.children, canAny) } : item,
@@ -24,7 +27,17 @@ function filterNavItems(items: NavItem[], canAny: (codes: string[]) => boolean):
     });
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  /** Phones only: the sidebar is a drawer, shown while this is true. */
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+/**
+ * Desktop: full sidebar (collapsible). Tablet: starts as the collapsed icon rail.
+ * Phone: hidden; opens as a drawer over the page from the header's menu button.
+ */
+export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentUser, logout } = useLms();
   const { canAny } = usePermissions();
@@ -74,13 +87,39 @@ export default function Sidebar() {
   const toggleGroup = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !(prev[label] ?? false) }));
 
-  const [collapsed, setCollapsed] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const isTablet = useMediaQuery(TABLET_QUERY);
+  // null = follow the screen size (rail on tablets); set once the user toggles it.
+  const [collapsedPref, setCollapsedPref] = useState<boolean | null>(null);
+  const collapsed = isMobile ? false : (collapsedPref ?? isTablet);
+  const drawer = isMobile && mobileOpen;
+
+  const asideRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (drawer) asideRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+  }, [drawer]);
 
   return (
+    <>
+    {drawer ? (
+      <div
+        aria-hidden="true"
+        onClick={onMobileClose}
+        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-[1px] animate-fade-in md:hidden"
+      />
+    ) : null}
     <aside
+      ref={asideRef}
+      id="dashboard-sidebar"
+      role={drawer ? 'dialog' : undefined}
+      aria-modal={drawer ? true : undefined}
+      aria-label={isAmharic ? 'ዋና ማውጫ' : 'Main menu'}
       className={cn(
-        'relative flex shrink-0 flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 transition-[width] duration-200',
-        collapsed ? 'w-[76px]' : 'w-64',
+        'shrink-0 flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 transition-[width] duration-200',
+        mobileOpen
+          ? 'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] shadow-2xl animate-slide-in-left md:relative md:z-auto md:shadow-none md:animate-none'
+          : 'relative hidden md:flex',
+        collapsed ? 'md:w-[76px]' : 'md:w-64',
       )}
     >
       <div
@@ -115,9 +154,19 @@ export default function Sidebar() {
             </div>
           ) : null}
         </Link>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={onMobileClose}
+            aria-label={isAmharic ? 'ማውጫውን ዝጋ' : 'Close menu'}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : (
         <button
           type="button"
-          onClick={() => setCollapsed((prev) => !prev)}
+          onClick={() => setCollapsedPref(!collapsed)}
           title={
             collapsed
               ? isAmharic
@@ -135,6 +184,7 @@ export default function Sidebar() {
             <PanelLeftClose className="h-4 w-4" />
           )}
         </button>
+        )}
       </div>
 
       {!collapsed ? (
@@ -248,6 +298,11 @@ export default function Sidebar() {
       </nav>
 
       <div className="relative border-t border-slate-200 dark:border-slate-800 p-3 space-y-1">
+        {/* On phones the header has no room for these, so the drawer carries them. */}
+        <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:hidden">
+          <LanguageToggle placement="up-start" />
+          <ThemeToggle isAmharic={isAmharic} />
+        </div>
         <AccountMenu collapsed={collapsed} />
         <Link
           href="/login"
@@ -263,5 +318,6 @@ export default function Sidebar() {
         </Link>
       </div>
     </aside>
+    </>
   );
 }

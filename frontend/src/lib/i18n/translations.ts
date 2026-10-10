@@ -56,7 +56,6 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   Certificates: { en: 'Certificates', am: 'ሰርተፊኬቶች' },
   Progress: { en: 'Progress', am: 'የመማር እድገት' },
   Registration: { en: 'Registration', am: 'ምዝገባ' },
-  'Approve Registration': { en: 'Approve Registration', am: 'ምዝገባ ማጽደቅ' },
   'User Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   'Actor Registration': { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   'Bulk Register': { en: 'Bulk Register', am: 'በጅምላ መመዝገቢያ' },
@@ -284,11 +283,6 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   settingsDesc: {
     en: 'Platform parameters, storage configuration, and environment controls.',
     am: 'የመድረክ መለኪያዎች፣ የመረጃ ቋት እና የስርዓት ቁጥጥሮች።',
-  },
-  pendingRegistrationsTitle: { en: 'Registration Requests', am: 'የምዝገባ ጥያቄዎች' },
-  pendingRegistrationsDesc: {
-    en: 'Public sign-ups require your approval before learners can sign in.',
-    am: 'ተማሪዎች ከመግባታቸው በፊት የአስተዳዳሪ ማጽደቅ የሚያስፈልጋቸው ምዝገባዎች።',
   },
   registerActorTitle: { en: 'User Registration', am: 'የተጠቃሚ ምዝገባ' },
   registerActorDesc: {

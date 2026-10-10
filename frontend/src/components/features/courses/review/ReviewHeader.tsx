@@ -46,7 +46,7 @@ export function ReviewHeader({
   onArchive,
   onDelete,
 }: ReviewHeaderProps) {
-  const { lang, setLang, tBilingual } = useTranslation();
+  const { tBilingual } = useTranslation();
   const delivery = DELIVERY_LABEL[course.deliveryMode ?? 'BOTH'] ?? DELIVERY_LABEL.BOTH;
   const hasOverflow = can.archive || can.delete;
 
@@ -80,16 +80,6 @@ export function ReviewHeader({
 
       {/* Right: actions (each one already gated by permission + status) */}
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setLang(lang === 'en' ? 'am' : 'en')}
-          className="hidden items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50 sm:flex"
-          title="Switch Language"
-        >
-          <Globe2 className="h-3.5 w-3.5 text-slate-500" />
-          <span>{lang === 'en' ? 'አማ' : 'EN'}</span>
-        </button>
-
         {can.edit && (
           <Button size="sm" variant="outline" onClick={onEdit} className="gap-1.5 text-xs">
             <Pencil className="h-3.5 w-3.5" />

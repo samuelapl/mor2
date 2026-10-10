@@ -137,17 +137,35 @@ export function ClassroomStage({
       /\.(mp4|webm|ogg|mov)$/i.test(a.name),
   );
 
-  // 3. If active item is a Video or Audio stream (or has an attached video file)
+  const hasMediaBlocks = (currentTarget?.contentBlocks ?? []).some(
+    (b: any) => b.type === 'VIDEO' || b.type === 'PRESENTATION' || b.type === 'AUDIO',
+  );
+
+  // 3. If active item is a Video, Audio, or Slide Presentation (or has multi-media blocks or video attachment)
   if (
-    (currentContentType === 'VIDEO' || currentContentType === 'AUDIO' || hasVideoAttachment) &&
+    (currentContentType === 'VIDEO' ||
+      currentContentType === 'AUDIO' ||
+      currentContentType === 'PRESENTATION' ||
+      hasMediaBlocks ||
+      hasVideoAttachment) &&
     currentTarget
   ) {
+    const firstMediaBlock = (currentTarget?.contentBlocks ?? []).find(
+      (b: any) => b.type === 'PRESENTATION' || b.type === 'VIDEO' || b.type === 'AUDIO',
+    );
+    const mediaType: 'VIDEO' | 'AUDIO' | 'PRESENTATION' =
+      currentContentType === 'PRESENTATION' || firstMediaBlock?.type === 'PRESENTATION'
+        ? 'PRESENTATION'
+        : currentContentType === 'AUDIO' || firstMediaBlock?.type === 'AUDIO'
+          ? 'AUDIO'
+          : 'VIDEO';
+
     return (
       <MediaStage
         title={currentTarget.title}
         badgeLabel={badgeLabel}
         durationMin={currentTarget.durationMin}
-        contentType={currentContentType === 'AUDIO' ? 'AUDIO' : 'VIDEO'}
+        contentType={mediaType}
         resourceUrl={currentTarget.resourceUrl}
         content={currentTarget.content}
         lesson={currentTarget}

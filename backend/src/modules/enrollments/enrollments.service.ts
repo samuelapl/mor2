@@ -6,6 +6,7 @@ import { PaginationQuery } from '@common/interfaces';
 import { CreateEnrollmentDto } from './dto';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { InPersonSessionsService } from '@modules/live-sessions/in-person/in-person-sessions.service';
+import { AuditService } from '@modules/audit/audit.service';
 
 @Injectable()
 export class EnrollmentsService {
@@ -13,6 +14,7 @@ export class EnrollmentsService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly inPersonSessions: InPersonSessionsService,
+    private readonly auditService: AuditService,
   ) {}
 
   async selfEnroll(userId: string, dto: CreateEnrollmentDto) {
@@ -333,6 +335,53 @@ export class EnrollmentsService {
         droppedBy: 'self',
       },
     });
+  }
+
+  /**
+   * Admin unenroll: removes the enrollment together with everything the learner built up in
+   * the course (lesson/module progress, study time, assessment attempts and the certificate),
+   * so re-enrolling later starts from scratch.
+   */
+  async unenroll(enrollmentId: string, actorId: string) {
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { id: enrollmentId },
+    });
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+    const { userId, courseId } = enrollment;
+
+    const [lessons, modules, attempts, certificates] = await this.prisma.$transaction([
+      this.prisma.lessonCompletion.deleteMany({
+        where: { userId, lesson: { module: { courseId } } },
+      }),
+      this.prisma.moduleCompletion.deleteMany({
+        where: { userId, module: { courseId } },
+      }),
+      this.prisma.assessmentAttempt.deleteMany({
+        where: { userId, assessment: { courseId } },
+      }),
+      this.prisma.certificate.deleteMany({ where: { userId, courseId } }),
+      this.prisma.enrollment.delete({ where: { id: enrollmentId } }),
+    ]);
+
+    const removed = {
+      lessonCompletions: lessons.count,
+      moduleCompletions: modules.count,
+      assessmentAttempts: attempts.count,
+      certificates: certificates.count,
+    };
+
+    await this.auditService.record({
+      userId: actorId,
+      action: 'ENROLLMENT_UNENROLL',
+      entity: 'Enrollment',
+      entityId: enrollmentId,
+      oldValues: { userId, courseId, status: enrollment.status },
+      newValues: { removed },
+    });
+
+    return { message: 'Learner unenrolled and course progress removed', removed };
   }
 
   async markCompleted(id: string) {

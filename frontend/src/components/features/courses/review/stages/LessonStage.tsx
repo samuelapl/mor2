@@ -1,9 +1,11 @@
 'use client';
 
+import { formatDuration } from '@/lib/duration';
 import { ChevronRight, Clock, ExternalLink, FileQuestion, FileText, Paperclip } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ApiAssessment } from '@/lib/api/types';
 import type { Lesson, UploadedResource } from '@/types';
+import { SlideDeckViewer } from '@/components/shared/SlideDeckViewer';
 import { AttachmentCard } from '../../detail/AttachmentCard';
 import { getContentTypeBadge } from '../../detail/CourseCurriculumSection';
 import { getItemAttachments } from '../../wizard-components';
@@ -31,7 +33,17 @@ function youtubeEmbed(url: string): string | null {
 }
 
 /** Read-only preview of a lesson's main media, so reviewers see what learners will see. */
-function MediaPreview({ url, contentType, files }: { url?: string; contentType?: string; files: UploadedResource[] }) {
+function MediaPreview({
+  url,
+  fileName,
+  contentType,
+  files,
+}: {
+  url?: string;
+  fileName?: string;
+  contentType?: string;
+  files: UploadedResource[];
+}) {
   const { tBilingual } = useTranslation();
   const type = (contentType ?? '').toUpperCase();
   const mediaFile =
@@ -56,6 +68,9 @@ function MediaPreview({ url, contentType, files }: { url?: string; contentType?:
   }
   if (type === 'AUDIO' || AUDIO_FILE.test(src)) {
     return <audio src={src} controls className="w-full" />;
+  }
+  if (type === 'PRESENTATION') {
+    return <SlideDeckViewer url={src} fileName={fileName} />;
   }
   return (
     <a
@@ -93,13 +108,13 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              {lesson.durationMin} {tBilingual('min', 'ደቂቃ')}
+              {formatDuration(lesson.durationMin, isAmharic)}
             </span>
           </>
         }
       />
 
-      <MediaPreview url={lesson.resourceUrl} contentType={lesson.contentType} files={files} />
+      <MediaPreview url={lesson.resourceUrl} fileName={lesson.fileName} contentType={lesson.contentType} files={files} />
 
       <StageCard>
         <RichSection
@@ -133,7 +148,7 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
                     {number}.{i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-medium">{s.title}</span>
-                  <span className="shrink-0 text-xs text-slate-400">{s.durationMin}m</span>
+                  <span className="shrink-0 text-xs text-slate-400">{formatDuration(s.durationMin, isAmharic)}</span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                 </button>
               </li>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Eye, ShieldCheck, ShieldOff, Trash2, XCircle } from 'lucide-react';
+import { Eye, ShieldCheck, ShieldOff, Trash2 } from 'lucide-react';
 import { ROLES, ROLE_LABELS } from '@/constants/roles';
 import { fetchRolesWithPermissions } from '@/lib/api/permissions';
 import { useLms } from '@/lib/lms-store';
@@ -16,7 +16,6 @@ import { FilterBar } from '@/components/ui/FilterBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { Modal } from '@/components/ui/Modal';
-import { RichTextArea } from '@/components/ui/RichTextArea';
 import { ViewToggle, type ViewMode } from '@/components/ui/ViewToggle';
 import { UserDetailModal } from '@/components/features/users/UserDetailModal';
 import { toast } from '@/lib/toast';
@@ -52,8 +51,6 @@ export default function UsersPage() {
     currentUser,
     users,
     changeUserRole,
-    approveRegistrationRequest,
-    rejectRegistrationRequest,
     deactivateUser,
     reactivateUser,
     deleteUser,
@@ -67,9 +64,7 @@ export default function UsersPage() {
   const [role, setRole] = useState('all');
   const [status, setStatus] = useState('all');
   const [view, setView] = useState<ViewMode>('table');
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   /** Bulk actions and the delete dialog. */
   const [busy, setBusy] = useState(false);
@@ -234,27 +229,6 @@ export default function UsersPage() {
     );
   };
 
-  const approve = (userId: string) =>
-    runRowAction(
-      userId,
-      () => approveRegistrationRequest(userId),
-      'Registration approved successfully.',
-      'Failed to approve registration',
-    );
-
-  const reject = (userId: string, reason?: string) =>
-    runRowAction(
-      userId,
-      async () => {
-        const result = await rejectRegistrationRequest(userId, reason?.trim() || undefined);
-        setRejectTarget(null);
-        setRejectReason('');
-        return result;
-      },
-      'Registration rejected.',
-      'Failed to reject registration',
-    );
-
   const suspend = (userId: string) =>
     runRowAction(
       userId,
@@ -307,34 +281,6 @@ export default function UsersPage() {
 
   const statusButton = (user: User) => {
     const isBusy = busyUserId === user.id;
-    if (user.status === 'pending') {
-      return (
-        <div className="flex items-center gap-1.5">
-          <Button
-            size="sm"
-            variant="success"
-            isLoading={isBusy}
-            disabled={busy}
-            title="Approve registration"
-            onClick={() => void approve(user.id)}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            disabled={busy || isBusy}
-            title="Reject registration"
-            onClick={() => {
-              setRejectTarget(rejectTarget === user.id ? null : user.id);
-              setRejectReason('');
-            }}
-          >
-            <XCircle className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      );
-    }
     if (user.status === 'suspended') {
       return (
         <Button
@@ -397,7 +343,7 @@ export default function UsersPage() {
             onChange: withClearedSelection(setStatus),
             options: [
               { value: 'all', label: tBilingual('All Statuses', 'ሁሉም ሁኔታዎች') },
-              { value: 'pending', label: tBilingual('Pending', 'በመጠባበቅ ላይ') },
+              { value: 'pending', label: tBilingual('Email not verified', 'ኢሜይል ያልተረጋገጠ') },
               { value: 'active', label: tBilingual('Active', 'ንቁ') },
               { value: 'rejected', label: tBilingual('Rejected', 'ውድቅ የተደረገ') },
               { value: 'suspended', label: tBilingual('Suspended', 'የታገደ') },
@@ -558,41 +504,6 @@ export default function UsersPage() {
                     </div>
                   </Td>
                 </tr>
-                {rejectTarget === user.id ? (
-                  <tr key={`${user.id}-reject`}>
-                    <Td colSpan={canManage ? 7 : 6}>
-                      <div className="flex flex-col gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-3">
-                        <RichTextArea
-                          rows={2}
-                          value={rejectReason}
-                          onChange={(val) => setRejectReason(val)}
-                          placeholder="Reason (optional) — emailed to the applicant (supports formatting, bold, bullet points)…"
-                          compact
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setRejectTarget(null);
-                              setRejectReason('');
-                            }}
-                          >
-                            {tBilingual('Cancel', 'ይቅር')}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            isLoading={busyUserId === user.id}
-                            onClick={() => void reject(user.id, rejectReason)}
-                          >
-                            {tBilingual('Confirm', 'አረጋግጥ')}
-                          </Button>
-                        </div>
-                      </div>
-                    </Td>
-                  </tr>
-                ) : null}
               </Fragment>
             ))}
           </Table>
@@ -654,37 +565,6 @@ export default function UsersPage() {
                   </Button>
                   {statusActions(user)}
                 </div>
-                {rejectTarget === user.id ? (
-                  <div className="mt-2 flex flex-col gap-2 rounded-xl border border-red-200/70 bg-red-50/60 p-3">
-                    <RichTextArea
-                      rows={2}
-                      value={rejectReason}
-                      onChange={(val) => setRejectReason(val)}
-                      placeholder="Reason (optional)"
-                      compact
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setRejectTarget(null);
-                          setRejectReason('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        isLoading={busyUserId === user.id}
-                        onClick={() => void reject(user.id, rejectReason)}
-                      >
-                        Confirm
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
             ))}
           </div>
@@ -791,8 +671,6 @@ export default function UsersPage() {
         user={detailUser}
         onClose={() => setDetailUserId(null)}
         onChangeRole={(userId, nextRole) => void changeRole(userId, nextRole)}
-        onApprove={(userId) => void approve(userId)}
-        onReject={(userId) => void reject(userId)}
         onSuspend={(userId) => void suspend(userId)}
         onReactivate={(userId) => void reactivate(userId)}
         isLoading={Boolean(busyUserId)}

@@ -2,13 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { EmailContext, EmailJob } from './email.types';
+import { renderEmail } from './templates';
 
+/**
+ * Delivers emails over SMTP. Callers should not use it directly: they go through
+ * `EmailQueue`, whose worker calls `deliver` with retries.
+ */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly transporter: Transporter | null;
   private readonly from: string;
-  private readonly appName: string;
+  private readonly context: EmailContext;
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST');
@@ -16,7 +22,10 @@ export class MailService {
     const pass = this.configService.get<string>('SMTP_PASS');
 
     this.from = this.configService.get<string>('SMTP_FROM') || (user ?? '');
-    this.appName = this.configService.get<string>('APP_NAME') || 'ELTMS';
+    this.context = {
+      appName: this.configService.get<string>('APP_NAME') || 'ELTMS',
+      appUrl: this.configService.get<string>('APP_PUBLIC_URL')?.replace(/\/+$/, '') || undefined,
+    };
 
     if (host) {
       this.transporter = nodemailer.createTransport({
@@ -34,7 +43,7 @@ export class MailService {
       this.transporter = null;
       this.logger.warn(
         'SMTP is not configured (SMTP_HOST missing). ' +
-          'Password-reset emails will NOT be sent. Set SMTP_HOST to enable email delivery.',
+          'Emails will NOT be sent. Set SMTP_HOST to enable email delivery.',
       );
     }
   }
@@ -44,146 +53,38 @@ export class MailService {
   }
 
   /**
-   * Sends a 6-digit OTP code for password reset.
-   * NOTE: Never log the plaintext `code` value (except the dev fallback in `sendCodeEmail`).
+   * Renders and sends one email. Throws on SMTP errors so the queue can retry.
+   * NOTE: Never log rendered bodies — they can contain one-time codes (except the dev
+   * fallback below).
    */
-  async sendPasswordResetCode(to: string, code: string): Promise<void> {
-    await this.sendCodeEmail(to, code, {
-      kind: 'password reset code',
-      subject: `${this.appName} — Your password reset code`,
-      intro: 'Your password reset code is:',
-      footer: "If you didn't request this, you can safely ignore this email.",
-    });
-  }
+  async deliver(job: EmailJob): Promise<void> {
+    const { subject, html, text } = renderEmail(job, this.context);
 
-  /**
-   * Sends the 6-digit code an admin-created account uses to set its own password on
-   * first sign-in.
-   */
-  async sendFirstLoginCode(to: string, code: string): Promise<void> {
-    await this.sendCodeEmail(to, code, {
-      kind: 'first-login code',
-      subject: `${this.appName} — Set your password`,
-      intro: `Welcome to ${this.appName}! To finish signing in, enter this code and choose your own password:`,
-      footer:
-        "If you didn't just try to sign in, contact your administrator — someone may know your temporary password.",
-    });
-  }
-
-  private async sendCodeEmail(
-    to: string,
-    code: string,
-    copy: { kind: string; subject: string; intro: string; footer: string },
-  ): Promise<void> {
     if (!this.transporter) {
-      // Without SMTP nobody could ever receive the code; in development only, print it so
-      // the flow can still be exercised locally.
+      // Without SMTP nobody could ever receive the email; in development only, print it so
+      // flows that depend on a code can still be exercised locally.
       const isDev =
         this.configService.get<string>('NODE_ENV') === 'development' ||
         this.configService.get<string>('APP_ENV') === 'development';
       if (isDev) {
-        this.logger.warn(`[mail] SMTP not configured — DEV ONLY ${copy.kind} for ${to}: ${code}`);
+        this.logger.warn(
+          `[mail] SMTP not configured — DEV ONLY ${job.template} email for ${job.to}:\n${text}`,
+        );
       } else {
-        this.logger.warn(`[mail] SMTP not configured — skipping ${copy.kind} email to ${to}`);
+        this.logger.warn(
+          `[mail] SMTP not configured — skipping ${job.template} email to ${job.to}`,
+        );
       }
       return;
     }
 
-    const appName = this.appName;
-    // Format as "123 456" for easy readability in the email body.
-    const display = `${code.slice(0, 3)} ${code.slice(3)}`;
-
     await this.transporter.sendMail({
       from: this.from || undefined,
-      to,
-      subject: copy.subject,
-      text: [
-        `Hello,`,
-        ``,
-        `${copy.intro} ${code}`,
-        `It expires in 10 minutes.`,
-        ``,
-        copy.footer,
-      ].join('\n'),
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
-          <h2 style="color:#1e293b;margin:0 0 8px">${appName}</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.6">
-            ${copy.intro}
-          </p>
-          <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#4f46e5;background:#eef2ff;display:inline-block;padding:12px 24px;border-radius:8px;margin:16px 0">
-            ${display}
-          </p>
-          <p style="color:#94a3b8;font-size:12px">
-            This code expires in 10 minutes.<br/>
-            ${copy.footer}
-          </p>
-        </div>
-      `,
+      to: job.to,
+      subject,
+      text,
+      html,
     });
-    this.logger.log(`Sent ${copy.kind} email to ${to}`);
-  }
-
-  async sendRegistrationApproved(to: string): Promise<void> {
-    if (!this.transporter) {
-      this.logger.warn(`[mail] SMTP not configured — skipping approval email to ${to}`);
-      return;
-    }
-
-    const appName = this.appName;
-    await this.transporter.sendMail({
-      from: this.from || undefined,
-      to,
-      subject: `${appName} — Your registration was approved`,
-      text: [
-        `Hello,`,
-        ``,
-        `Your ${appName} registration has been approved by an administrator.`,
-        `You can now sign in to the training portal and start learning.`,
-      ].join('\n'),
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
-          <h2 style="color:#1e293b;margin:0 0 8px">${appName}</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.6">
-            Your registration has been <strong>approved</strong>. You can now sign in to the
-            training portal and start learning.
-          </p>
-        </div>
-      `,
-    });
-    this.logger.log(`Sent registration-approval email to ${to}`);
-  }
-
-  async sendRegistrationRejected(to: string, reason?: string): Promise<void> {
-    if (!this.transporter) {
-      this.logger.warn(`[mail] SMTP not configured — skipping rejection email to ${to}`);
-      return;
-    }
-
-    const appName = this.appName;
-    await this.transporter.sendMail({
-      from: this.from || undefined,
-      to,
-      subject: `${appName} — Registration update`,
-      text: [
-        `Hello,`,
-        ``,
-        `Your ${appName} registration could not be approved.`,
-        reason ? `Reason: ${reason}` : 'Please contact an administrator for more information.',
-      ].join('\n'),
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
-          <h2 style="color:#1e293b;margin:0 0 8px">${appName}</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.6">
-            Your registration could not be approved.
-            ${reason ? `<br />Reason: <strong>${reason}</strong>` : ''}
-          </p>
-          <p style="color:#94a3b8;font-size:12px">
-            Please contact an administrator if you believe this is a mistake.
-          </p>
-        </div>
-      `,
-    });
-    this.logger.log(`Sent registration-rejection email to ${to}`);
+    this.logger.log(`Sent ${job.template} email to ${job.to}`);
   }
 }

@@ -3,10 +3,19 @@ import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
 import { PaginationQuery } from '@common/interfaces';
+import { EmailQueue } from '@modules/mail/email.queue';
+
+export interface SendOptions {
+  /** Also email the notification (default). Pass false to keep it in-app only. */
+  email?: boolean;
+}
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailQueue: EmailQueue,
+  ) {}
 
   async send(
     userId: string,
@@ -14,8 +23,9 @@ export class NotificationsService {
     titles: { en: string; am: string },
     bodies?: { en?: string; am?: string },
     metadata?: Record<string, unknown>,
+    options: SendOptions = {},
   ) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         userId,
         type,
@@ -26,6 +36,8 @@ export class NotificationsService {
         metadata: metadata as Prisma.InputJsonValue,
       },
     });
+    if (options.email !== false) await this.emailQueue.notifications([notification.id]);
+    return notification;
   }
 
   async sendToMany(
@@ -34,10 +46,11 @@ export class NotificationsService {
     titles: { en: string; am: string },
     bodies?: { en?: string; am?: string },
     metadata?: Record<string, unknown>,
+    options: SendOptions = {},
   ) {
     if (userIds.length === 0) return [];
 
-    return this.prisma.notification.createManyAndReturn({
+    const notifications = await this.prisma.notification.createManyAndReturn({
       data: userIds.map((userId) => ({
         userId,
         type,
@@ -48,6 +61,10 @@ export class NotificationsService {
         metadata: metadata as Prisma.InputJsonValue,
       })),
     });
+    if (options.email !== false) {
+      await this.emailQueue.notifications(notifications.map((n) => n.id));
+    }
+    return notifications;
   }
 
   async findByUser(userId: string, query: PaginationQuery & { unreadOnly?: boolean }) {

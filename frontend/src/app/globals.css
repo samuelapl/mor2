@@ -67,6 +67,28 @@
 }
 
 @layer utilities {
+  /* Slide/PDF viewer: a full-size, always-visible scrollbar on the dark deck background. */
+  .deck-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: rgb(148 163 184 / 0.7) rgb(15 23 42);
+  }
+  .deck-scroll::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  .deck-scroll::-webkit-scrollbar-track,
+  .deck-scroll::-webkit-scrollbar-corner {
+    background: rgb(15 23 42);
+  }
+  .deck-scroll::-webkit-scrollbar-thumb {
+    background: rgb(148 163 184 / 0.7);
+    border: 3px solid rgb(15 23 42);
+    border-radius: 9999px;
+  }
+  .deck-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgb(203 213 225);
+  }
+
   /* Frosted-glass surface */
   .glass {
     background: rgb(255 255 255 / 0.72);
@@ -216,4 +238,4 @@ html.is-electron #desktop,
 html[data-is-desktop="true"] [data-desktop-app-only],
 html.is-electron [data-desktop-app-only] {
   display: none !important;
-}
+}

@@ -15,6 +15,7 @@ interface PageSectionProps {
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  centered?: boolean;
 }
 
 export default function PageSection({
@@ -23,6 +24,7 @@ export default function PageSection({
   action,
   children,
   className = 'mb-8',
+  centered = false,
 }: PageSectionProps) {
   const { lang } = useTranslation();
   const isAmharic = lang === 'am';
@@ -46,7 +48,11 @@ export default function PageSection({
 
   return (
     <section className={className}>
-      <div className="mb-4 flex items-start justify-between gap-4">
+      <div
+        className={`mb-4 flex items-start gap-4 ${
+          centered ? 'flex-col items-center text-center' : 'justify-between'
+        }`}
+      >
         <div>
           <h2 className="font-display text-base font-bold tracking-tight text-slate-900">
             {renderText(title)}

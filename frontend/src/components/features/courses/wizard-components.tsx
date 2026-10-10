@@ -298,11 +298,20 @@ export function getItemAttachments(item: {
 }): UploadedResource[] {
   const map = new Map<string, UploadedResource>();
 
+  const isMedia =
+    item.contentType === 'VIDEO' ||
+    item.contentType === 'AUDIO' ||
+    item.contentType === 'PRESENTATION';
+
   const list = [...(item.resources || []), ...(item.attachments || [])];
   for (const raw of list as any[]) {
     if (!raw) continue;
     const url = raw.url || raw.fileUrl;
-    if (url) {
+    // Primary lecture media must never appear in handouts/attachments list
+    if (isMedia && item.resourceUrl && url === item.resourceUrl) {
+      continue;
+    }
+    if (url && !map.has(url)) {
       map.set(url, {
         id: raw.id,
         name: raw.name || raw.fileName || url.split('/').pop() || 'Attached File',
@@ -313,12 +322,11 @@ export function getItemAttachments(item: {
     }
   }
 
-  // Only fallback to resourceUrl if not already a video/audio lecture stream
+  // Only fallback to resourceUrl for DOCUMENT lessons
   if (
     item.resourceUrl &&
     !map.has(item.resourceUrl) &&
-    item.contentType !== 'VIDEO' &&
-    item.contentType !== 'AUDIO'
+    !isMedia
   ) {
     map.set(item.resourceUrl, {
       name: item.fileName || item.resourceUrl.split('/').pop() || 'Attached File',

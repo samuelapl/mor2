@@ -18,7 +18,6 @@ import {
   AssignRoleDto,
   BulkCreateUsersDto,
   AdminResetPasswordDto,
-  RejectRegistrationDto,
   CreateActorDto,
 } from './dto';
 import { CurrentUser, Permissions } from '@common/decorators';
@@ -122,22 +121,6 @@ export class UsersController {
   @ApiParam({ name: 'role', type: String })
   async removeRole(@Param('id') id: string, @Param('role') role: string) {
     return this.usersService.removeRole(id, role);
-  }
-
-  @Post(':id/approve-registration')
-  @Permissions('user.manage')
-  @ApiOperation({ summary: 'Approve a pending registration' })
-  @ApiParam({ name: 'id', type: String })
-  async approveRegistration(@Param('id') id: string) {
-    return this.usersService.approveRegistration(id);
-  }
-
-  @Post(':id/reject-registration')
-  @Permissions('user.manage')
-  @ApiOperation({ summary: 'Reject a pending registration with an optional reason' })
-  @ApiParam({ name: 'id', type: String })
-  async rejectRegistration(@Param('id') id: string, @Body() dto: RejectRegistrationDto) {
-    return this.usersService.rejectRegistration(id, dto.reason);
   }
 
   @Post(':id/deactivate')

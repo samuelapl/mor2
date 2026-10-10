@@ -82,6 +82,7 @@ export interface Lesson {
   attachments?: UploadedResource[];
   parentId?: string;
   subLessons?: Lesson[];
+  contentBlocks?: any[];
 }
 
 export interface Module {
@@ -163,6 +164,8 @@ export interface Course {
   published: boolean;
   createdAt: string;
   cover?: string | null;
+  /** Total study time in hours, derived server-side from lesson durations on every curriculum save. */
+  estimatedHours?: number | null;
   rejectionReason?: string;
   lastRejectionReason?: string;
   rejectedBy?: string;
@@ -171,6 +174,8 @@ export interface Course {
   progress: Record<string, number>;
   modules: Module[];
   attachments?: Attachment[];
+  /** Files across the course from the server; set even when lesson files are hidden before enrolling. */
+  materialCount?: number;
   /** Reviewer decisions, newest first. Only present on courses loaded with detail. */
   approvals?: CourseApprovalEntry[];
   /** Owner planned online sessions during preparation (Online Self-Paced only). */
@@ -220,5 +225,11 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
 
 export type LoginResult =
   | { ok: true; role: Role; user?: User }
-  | { ok: false; message: string; passwordChangeRequired?: true; devCode?: string };
+  | {
+      ok: false;
+      message: string;
+      passwordChangeRequired?: true;
+      emailVerificationRequired?: true;
+      devCode?: string;
+    };
 

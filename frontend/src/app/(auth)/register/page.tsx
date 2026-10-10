@@ -3,12 +3,14 @@
 import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
   Building2,
-  CheckCircle2,
   CreditCard,
+  Eye,
+  EyeOff,
   Loader2,
   Lock,
   Mail,
@@ -18,9 +20,8 @@ import {
 import { isValidEmail, passwordIssues } from '@/constants/auth';
 import { useLms } from '@/lib/lms-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 
 const inputClass =
   'w-full rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
@@ -28,8 +29,9 @@ const inputClass =
 const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { register, ready } = useLms();
-  const { tBilingual, lang } = useTranslation();
+  const { tBilingual } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -38,9 +40,10 @@ export default function RegisterPage() {
   const [department, setDepartment] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const validate = (): string | null => {
     if (!firstName.trim() || !lastName.trim()) return 'First name and last name are required.';
@@ -60,6 +63,7 @@ export default function RegisterPage() {
       return;
     }
     setError(null);
+    setSubmitting(true);
     try {
       const result = await register({
         firstName,
@@ -77,8 +81,12 @@ export default function RegisterPage() {
         setSubmitting(false);
         return;
       }
-      toast.success('Registration submitted! Awaiting administrator approval.');
-      setSubmitted(true);
+      toast.success(
+        tBilingual('Account created. Check your email for a code.', 'መለያ ተፈጥሯል። ኮዱን በኢሜይልዎ ይመልከቱ።'),
+      );
+      const params = new URLSearchParams({ email: result.email });
+      if (result.devCode) params.set('dev', result.devCode);
+      router.push(`/verify-email?${params.toString()}`);
     } catch {
       setError('An unexpected error occurred. Please try again.');
       toast.error('An unexpected error occurred. Please try again.');
@@ -92,7 +100,7 @@ export default function RegisterPage() {
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
 
       <div className="relative w-full max-w-lg animate-fade-in-up">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <Link
             href="/login"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
@@ -100,10 +108,6 @@ export default function RegisterPage() {
             <ArrowLeft className="h-4 w-4" />
             {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
           </Link>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle isAmharic={lang === 'am'} />
-          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
@@ -126,42 +130,13 @@ export default function RegisterPage() {
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
               {tBilingual(
-                'Create a learner account. Your registration requires administrator approval before you can sign in.',
-                'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ምዝገባዎ በአስተዳዳሪ መጽደቅ አለበት።',
-              )}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-              {tBilingual(
-                'Your account is currently awaiting approval — future public guardrails prohibit access until it is granted.',
-                'መለያዎ በአሁኑ ጊዜ ይሁንታን በመጠባበቅ ላይ ነው — ፍቃድ እስኪሰጥ ድረስ መግባት አይፈቀድም።',
+                'Create a learner account. We will email you a code to verify your address before you sign in.',
+                'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ኢሜይልዎን ለማረጋገጥ ኮድ እንልክልዎታለን።',
               )}
             </p>
           </div>
 
-          {submitted ? (
-            <div className="mt-7 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-900/20 p-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <h2 className="mt-3 font-display text-lg font-bold text-slate-900 dark:text-emerald-50">
-                {tBilingual('Registration submitted', 'ምዝገባው ተልኳል')}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-emerald-100/70">
-                {tBilingual(
-                  'Your request has been sent to the learning administration team. Once an administrator approves your account you will be able to sign in and start learning.',
-                  'ጥያቄዎ ወደ ስልጠና አስተዳደር ቡድን ተልኳል። አስተዳዳሪ መለያዎን እንዳፀደቀ መግባትና መማር መጀመር ይችላሉ።',
-                )}
-              </p>
-              <Link
-                href="/login"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110"
-              >
-                {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          ) : (
-            <>
+          <>
               <form onSubmit={handleSubmit} className="mt-7 space-y-4" noValidate>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -251,7 +226,7 @@ export default function RegisterPage() {
                       <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input
                         id="reg-password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         required
                         aria-required="true"
                         autoComplete="new-password"
@@ -260,8 +235,16 @@ export default function RegisterPage() {
                           setPassword(event.target.value);
                           setError(null);
                         }}
-                        className={inputClass}
+                        className={cn(inputClass, 'pr-10')}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
                   <div>
@@ -276,7 +259,7 @@ export default function RegisterPage() {
                       <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input
                         id="confirmPassword"
-                        type="password"
+                        type={showConfirmPassword ? 'text' : 'password'}
                         required
                         aria-required="true"
                         autoComplete="new-password"
@@ -285,8 +268,16 @@ export default function RegisterPage() {
                           setConfirmPassword(event.target.value);
                           setError(null);
                         }}
-                        className={inputClass}
+                        className={cn(inputClass, 'pr-10')}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -377,8 +368,7 @@ export default function RegisterPage() {
                   {tBilingual('Sign in', 'ግባ')}
                 </Link>
               </p>
-            </>
-          )}
+          </>
         </div>
       </div>
     </main>

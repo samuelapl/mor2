@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, CheckCheck, LogOut, UserCircle } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Bell, CheckCheck, LogOut, Menu, UserCircle } from 'lucide-react';
 import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
 import { useLms } from '@/lib/lms-store';
 import {
@@ -29,7 +31,13 @@ function getInitials(label: string) {
 
 interface ApiNotificationListItem extends ApiNotification {}
 
-export default function Header() {
+interface HeaderProps {
+  /** Phones: opens the sidebar drawer. */
+  onMenuClick?: () => void;
+  menuOpen?: boolean;
+}
+
+export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, logout } = useLms();
@@ -117,12 +125,40 @@ export default function Header() {
     isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6">
-      <div />
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6">
+      {/* Phones have no sidebar: menu button + logo instead. */}
+      <div className="flex min-w-0 items-center gap-1 md:hidden">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label={isAmharic ? 'ማውጫ ክፈት' : 'Open menu'}
+          aria-controls="dashboard-sidebar"
+          aria-expanded={drawerOpen}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Link href="/" className="flex min-w-0 items-center gap-2" title="MoR LMS">
+          <Image
+            src="/logo.jpg"
+            alt="Ministry of Revenues"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 rounded-full object-contain"
+          />
+          <span className="truncate font-display text-sm font-bold text-slate-900 dark:text-white">
+            MoR LMS
+          </span>
+        </Link>
+      </div>
+      <div className="hidden md:block" />
 
-      <div className="flex items-center gap-3">
-        <LanguageToggle />
-        <ThemeToggle isAmharic={isAmharic} />
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Below `sm` these live in the sidebar drawer instead. */}
+        <LanguageToggle className="hidden sm:inline-block" />
+        <div className="hidden sm:block">
+          <ThemeToggle isAmharic={isAmharic} />
+        </div>
 
         <div className="relative" ref={panelRef}>
           <button
@@ -143,7 +179,7 @@ export default function Header() {
           </button>
 
           {open ? (
-            <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50">
+            <div className="fixed inset-x-3 top-[4.5rem] z-50 overflow-hidden rounded-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 px-4 py-3">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {isAmharic ? 'ማሳወቂያዎች' : 'Notifications'}
@@ -157,7 +193,7 @@ export default function Header() {
                   {isAmharic ? 'ሁሉንም አንብብ' : 'Mark all read'}
                 </button>
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-[min(24rem,calc(100dvh-9rem))] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                     {isAmharic ? 'ምንም ማሳወቂያዎች የሉም' : 'No notifications yet'}
@@ -208,7 +244,7 @@ export default function Header() {
             aria-haspopup="true"
             onClick={() => setMenuOpen((prev) => !prev)}
             title={demoUser?.name ?? 'Profile'}
-            className="flex items-center gap-2.5 rounded-xl border-l border-slate-200/80 dark:border-slate-700/80 pl-3 py-1 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+            className="flex items-center gap-2.5 rounded-xl py-1 sm:border-l sm:border-slate-200/80 sm:dark:border-slate-700/80 sm:pl-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
           >
             {demoUser?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -229,7 +265,7 @@ export default function Header() {
           </button>
 
           {menuOpen ? (
-            <div className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50 animate-fade-in-up">
+            <div className="absolute right-0 top-12 z-50 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50 animate-fade-in-up">
               {/* Profile summary with avatar, name, and email */}
               <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700/60 px-4 py-3">
                 {demoUser?.avatarUrl ? (

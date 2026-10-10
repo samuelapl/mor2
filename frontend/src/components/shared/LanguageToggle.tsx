@@ -9,6 +9,8 @@ export interface LanguageToggleProps {
   className?: string;
   showIcon?: boolean;
   compact?: boolean;
+  /** Where the dropdown opens. 'up-start' suits a toggle in a bottom-left corner. */
+  placement?: 'down-end' | 'up-start';
 }
 
 interface LanguageOption {
@@ -37,6 +39,7 @@ export function LanguageToggle({
   className,
   showIcon = true,
   compact = false,
+  placement = 'down-end',
 }: LanguageToggleProps) {
   const { lang, updateLocale } = useLms();
   const [isOpen, setIsOpen] = useState(false);
@@ -108,7 +111,12 @@ export function LanguageToggle({
         <div
           role="listbox"
           aria-label="Languages"
-          className="absolute right-0 top-full mt-1.5 z-[80] w-48 origin-top-right rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-850/95 p-1.5 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 focus:outline-hidden"
+          className={cn(
+            'absolute z-[80] w-48 rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-850/95 p-1.5 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 focus:outline-hidden',
+            placement === 'up-start'
+              ? 'left-0 bottom-full mb-1.5 origin-bottom-left'
+              : 'right-0 top-full mt-1.5 origin-top-right',
+          )}
         >
           <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-700/50 mb-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">

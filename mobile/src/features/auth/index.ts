@@ -12,6 +12,7 @@ export {
   useCompleteFirstLogin,
   useLogin,
   useLogout,
+  useVerifyEmail,
 } from './hooks/useAuthActions';
 export { useAuthFlowStore } from './store/auth-flow-store';
 export {
@@ -21,10 +22,12 @@ export {
   useSessionStore,
 } from './store/session-store';
 export {
+  isEmailVerificationRequired,
   isFirstLoginChallenge,
   type ApiUser,
   type ApiUserRole,
   type ApiVenueSummary,
+  type EmailVerificationRequired,
   type FirstLoginChallenge,
   type FirstLoginCompleteBody,
   type LoginBody,

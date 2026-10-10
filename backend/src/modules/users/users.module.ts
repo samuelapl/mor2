@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { PrismaService } from '@config/prisma.service';
-import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { MailModule } from '@modules/mail/mail.module';
 
 @Module({
-  imports: [NotificationsModule, MailModule],
+  imports: [MailModule],
   controllers: [UsersController],
   providers: [UsersService, PrismaService],
   exports: [UsersService],

@@ -11,6 +11,8 @@ import {
   FirstLoginResendCodeDto,
   FirstLoginVerifyCodeDto,
   FirstLoginCompleteDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
 } from './dto';
 import { Public, CurrentUser } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
@@ -29,13 +31,34 @@ export class AuthController {
   }
 
   @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify a new account with the emailed 6-digit code',
+    description: 'Activates the account and returns a session, like /auth/login.',
+  })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto);
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Email a new account-verification code' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto.email);
+  }
+
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with email and password',
     description:
       'For admin-created accounts that must set their own password, returns ' +
-      '{ passwordChangeRequired, challengeToken, email } instead of tokens and emails a code.',
+      '{ passwordChangeRequired, challengeToken, email } instead of tokens and emails a code. ' +
+      'For self-registered accounts that have not verified their email, returns ' +
+      '{ emailVerificationRequired, email } and emails a verification code.',
   })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);

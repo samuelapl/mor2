@@ -74,7 +74,9 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
       ) : null}
       {tab === 'security' ? <SecurityTab /> : null}
       {tab === 'details' ? <DetailsTab profile={profile} loading={loading} /> : null}
-      {tab === 'preferences' ? <PreferencesTab /> : null}
+      {tab === 'preferences' ? (
+        <PreferencesTab profile={profile} loading={loading} onUpdated={setProfile} />
+      ) : null}
     </Modal>
   );
 }

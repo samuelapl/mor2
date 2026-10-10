@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { isDeliveryModeEnabled } from '@/constants/delivery-modes';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { inputClass, labelClass } from '../../wizard-types';
-import { RichEditor, SmartTextarea } from '../../wizard-components';
+import { RichEditor } from '../../wizard-components';
 
 export interface CourseDetailsStageProps {
   title: string;
@@ -405,11 +405,12 @@ export function CourseDetailsStage({
           <label className={labelClass}>
             {tBilingual('Course Description', 'የኮርስ ማብራሪያ')} <span className="text-rose-500">*</span>
           </label>
-          <RichEditor
+          <textarea
             value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder={tBilingual('Describe what learners will learn in this course…', 'ሰልጣኞች በዚህ ኮርስ ውስጥ ምን እንደሚማሩ ያብራሩ…')}
-            onChange={setDescription}
-            minHeight={120}
+            rows={4}
+            className={cn(inputClass, 'min-h-[110px] resize-y leading-relaxed')}
           />
         </div>
 
@@ -466,11 +467,12 @@ export function CourseDetailsStage({
 
         <div>
           <label className={labelClass}>{tBilingual('Prerequisites (Optional)', 'ቅድመ-ሁኔታዎች (አማራጭ)')}</label>
-          <SmartTextarea
+          <textarea
             value={prerequisites}
-            onChange={setPrerequisites}
+            onChange={(e) => setPrerequisites(e.target.value)}
             placeholder="e.g. Introduction to Tax Law, BASIC-101, or 1 year in service"
             rows={2}
+            className={cn(inputClass, 'min-h-[70px] resize-y leading-relaxed')}
           />
         </div>
       </div>

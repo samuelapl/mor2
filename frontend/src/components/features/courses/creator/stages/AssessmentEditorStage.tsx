@@ -26,6 +26,8 @@ import { usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import { cn } from '@/lib/utils';
 import { inputClass, labelClass, uid } from '../../wizard-types';
 import { CompactRichEditor, MultiFileUploader } from '../../wizard-components';
+import { splitEvenly } from '@/components/features/prepared-quiz/quiz-points';
+import { pointsMismatch, totalQuestionPoints } from '../weights';
 
 export interface AssessmentEditorStageProps {
   scope: 'FINAL_ASSESSMENT' | 'MODULE_ASSESSMENT' | 'LESSON_ASSESSMENT';
@@ -61,7 +63,7 @@ export interface AssessmentEditorStageProps {
   courseId?: string;
 }
 
-function blankQuestion(type: QuestionType = 'multiple_choice', category = ''): Question {
+function blankQuestion(type: QuestionType = 'multiple_choice', category = '', points = 10): Question {
   return {
     id: uid('q'),
     type,
@@ -69,7 +71,7 @@ function blankQuestion(type: QuestionType = 'multiple_choice', category = ''): Q
     options: type === 'true_false' ? ['True', 'False'] : ['', '', '', ''],
     correctIndex: 0,
     answerText: '',
-    points: 10,
+    points,
     category,
   };
 }
@@ -129,7 +131,22 @@ export function AssessmentEditorStage({
           { value: 'short_answer' as QuestionType, label: 'Short Answer' },
         ];
 
-  const addQuestion = () => setQuestions((prev) => [...prev, blankQuestion()]);
+  // Points must total the weight (one point per percent), so a new question takes what is left.
+  const pointsTotal = totalQuestionPoints(questions);
+  const mismatch = pointsMismatch(questions, weight);
+  const canDistribute = weight > 0 && questions.length > 0 && weight >= questions.length;
+
+  const addQuestion = () =>
+    setQuestions((prev) => [
+      ...prev,
+      blankQuestion('multiple_choice', '', weight > 0 ? Math.max(1, weight - totalQuestionPoints(prev)) : 10),
+    ]);
+
+  const distributePointsEvenly = () =>
+    setQuestions((prev) => {
+      const split = splitEvenly(weight, prev.length);
+      return prev.map((q, i) => ({ ...q, points: split[i] }));
+    });
 
   const removeQuestion = (index: number) => {
     setQuestions((prev) => prev.filter((_, i) => i !== index));
@@ -315,9 +332,18 @@ export function AssessmentEditorStage({
               max={Math.max(0, maxWeight)}
               value={weight}
               onChange={(e) => setWeight(Math.max(0, Math.min(Math.max(0, maxWeight), parseInt(e.target.value, 10) || 0)))}
-              className={inputClass}
+              className={cn(inputClass, mismatch && 'border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-200')}
               placeholder="e.g. 20"
+              aria-invalid={Boolean(mismatch)}
             />
+            {mismatch && (
+              <p className="mt-1.5 text-[11px] font-medium text-rose-600">
+                {tBilingual(
+                  `Question points total ${mismatch.total}, but this assessment weighs ${mismatch.required}%. They must be equal (1 point = 1%).`,
+                  `የጥያቄዎቹ ነጥብ ድምር ${mismatch.total} ነው፤ የምዘናው ክብደት ግን ${mismatch.required}% ነው። እኩል መሆን አለባቸው (1 ነጥብ = 1%)።`,
+                )}
+              </p>
+            )}
           </div>
         </div>
 
@@ -469,7 +495,37 @@ export function AssessmentEditorStage({
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
             {tBilingual('Questions', 'ጥያቄዎች')} ({questions.length})
           </h4>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {weight > 0 && questions.length > 0 && (
+              <span
+                className={cn(
+                  'rounded-lg border px-2 py-1 text-[11px] font-bold',
+                  mismatch ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                )}
+              >
+                {tBilingual('Points:', 'ነጥብ:')} {pointsTotal} / {weight}
+              </span>
+            )}
+            {mismatch && (
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={distributePointsEvenly}
+                disabled={!canDistribute}
+                title={
+                  canDistribute
+                    ? undefined
+                    : tBilingual(
+                        `${questions.length} questions need at least ${questions.length}% weight to get 1 point each`,
+                        `${questions.length} ጥያቄዎች እያንዳንዳቸው 1 ነጥብ እንዲያገኙ ቢያንስ ${questions.length}% ክብደት ያስፈልጋል`,
+                      )
+                }
+                className="gap-1.5 shadow-xs text-xs"
+              >
+                {tBilingual('Distribute evenly', 'በእኩል አከፋፍል')}
+              </Button>
+            )}
             {bankQuestions.length > 0 && (
               <Button
                 size="sm"
@@ -554,9 +610,10 @@ export function AssessmentEditorStage({
                       type="number"
                       min={1}
                       max={100}
+                      step={1}
                       value={q.points}
                       onChange={(e) =>
-                        patchQuestion(qIdx, { points: parseInt(e.target.value) || 10 })
+                        patchQuestion(qIdx, { points: Math.max(1, parseInt(e.target.value, 10) || 1) })
                       }
                       className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-xs text-center font-bold"
                     />

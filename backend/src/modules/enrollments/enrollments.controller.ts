@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { EnrollmentStatus } from '@prisma/client';
 import { EnrollmentsService } from './enrollments.service';
@@ -70,5 +70,15 @@ export class EnrollmentsController {
     @Body('reason') reason?: string,
   ) {
     return this.enrollmentsService.drop(user.id, id, reason);
+  }
+
+  @Delete('enrollments/:id')
+  @Permissions('student.manage')
+  @ApiOperation({
+    summary: 'Unenroll a learner (admin): removes the enrollment, progress, attempts and certificate',
+  })
+  @ApiParam({ name: 'id', type: String })
+  async unenroll(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.enrollmentsService.unenroll(id, user.id);
   }
 }

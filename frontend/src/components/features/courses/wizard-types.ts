@@ -20,12 +20,22 @@ export interface LessonDraft {
   resourceUrl?: string;
   fileName?: string;
   fileSize?: number;
+  videoResourceUrl?: string;
+  videoFileName?: string;
+  videoFileSize?: number;
+  slideResourceUrl?: string;
+  slideFileName?: string;
+  slideFileSize?: number;
+  audioResourceUrl?: string;
+  audioFileName?: string;
+  audioFileSize?: number;
   resources?: UploadedResource[];
   attachments?: UploadedResource[];
   uploading?: boolean;
   uploadError?: string | null;
   subLessons?: LessonDraft[];
   required?: boolean;
+  contentBlocks?: import('@/lib/course-draft-blocks').LessonContentBlock[];
   /** Assignment-specific fields */
   assignmentInstructions?: string;
   assignmentMaxMarks?: number;
