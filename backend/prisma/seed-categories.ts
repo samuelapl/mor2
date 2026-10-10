@@ -164,3 +164,15 @@ export async function seedCategories(prismaClient?: PrismaClient) {
   console.log(`  ✓ Seeded ${CATEGORIES.length} lookup categories successfully!`);
 }
 
+
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  seedCategories(prisma)
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

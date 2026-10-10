@@ -79,12 +79,17 @@ export class CurriculumService {
   }
 
   // ── Modules ────────────────────────────────────────
-  /** Replaces the entire curriculum (modules + lessons + sub-lessons) atomically. Only DRAFT/REJECTED courses. */
+  /**
+   * Replaces the entire curriculum (modules + lessons + sub-lessons) atomically. Only DRAFT/REJECTED courses.
+   * Also derives durations bottom-up (lesson + its sub-lessons → module → course) and stores them on
+   * CurriculumModule.durationMinutes and Course.estimatedHours, matching frontend/src/lib/duration.ts.
+   */
   async replaceAll(courseId: string, dto: ReplaceModulesDto) {
     await this.assertCourseEditable(courseId);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.curriculumModule.deleteMany({ where: { courseId } });
+      let courseMinutes = 0;
 
       for (const [index, mod] of dto.modules.entries()) {
         const createdModule = await tx.curriculumModule.create({
@@ -116,8 +121,12 @@ export class CurriculumService {
           }
         }
 
+        let moduleMinutes = 0;
         if (mod.lessons && mod.lessons.length > 0) {
           for (const [idx, lesson] of mod.lessons.entries()) {
+            moduleMinutes += lesson.durationMinutes ?? 0;
+            for (const sub of lesson.subLessons ?? []) moduleMinutes += sub.durationMinutes ?? 0;
+
             const createdLesson = await tx.lesson.create({
               data: {
                 moduleId: createdModule.id,
@@ -185,7 +194,20 @@ export class CurriculumService {
             }
           }
         }
+
+        // Lesson times win; a module without any keeps the duration it was sent with.
+        const durationMinutes = moduleMinutes > 0 ? moduleMinutes : (mod.durationMinutes ?? 0);
+        courseMinutes += durationMinutes;
+        if (durationMinutes !== createdModule.durationMinutes) {
+          await tx.curriculumModule.update({ where: { id: createdModule.id }, data: { durationMinutes } });
+        }
       }
+
+      // Stored unrounded so minutes can be recovered exactly (hours × 60) for display.
+      await tx.course.update({
+        where: { id: courseId },
+        data: { estimatedHours: courseMinutes > 0 ? courseMinutes / 60 : null },
+      });
     });
 
     return this.getModules(courseId);

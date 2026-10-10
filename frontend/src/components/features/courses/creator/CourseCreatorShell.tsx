@@ -1,5 +1,6 @@
 'use client';
 
+import { calculateModuleDuration } from '@/lib/duration';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import type { Course, CourseDeliveryMode, CourseLevel, Question, UploadedResource, Quiz } from '@/types';
 import { useLms } from '@/lib/lms-store';
@@ -733,7 +734,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           title: m.title.trim() || 'Module',
           description: m.description?.trim() || undefined,
           objectives: m.objectives?.trim() || undefined,
-          durationMinutes: m.durationMinutes || undefined,
+          // The backend recomputes this from lesson times on save; sent for consistency.
+          durationMinutes: calculateModuleDuration({ lessons: m.lessons }) || undefined,
           resourceUrl: m.resourceUrl?.trim() || mResources[0]?.url || undefined,
           fileName: m.fileName || mResources[0]?.name || undefined,
           fileSize: m.fileSize || mResources[0]?.size || undefined,
@@ -967,8 +969,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           sessionsActive,
           sessionPlans,
         },
-        // Upload progress flags are UI state, not content.
-        (key, value) => (key === 'uploading' || key === 'uploadError' ? undefined : value),
+        // Upload progress flags are UI state, not content. IDs are left out too: every save
+        // recreates the curriculum server-side and hands back new IDs, which must not count as
+        // an edit (otherwise each save makes the draft dirty again and autosave never stops).
+        (key, value) => (key === 'uploading' || key === 'uploadError' || key === 'id' ? undefined : value),
       ),
     [
       title,
@@ -1220,7 +1224,19 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   };
 
   // ── Preview As Learner State & Model ──
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  // The preview shows the course as it was when opened. Saves made meanwhile replace every
+  // lesson ID, which would otherwise knock the learner view back to the course overview.
+  const [previewSnapshot, setPreviewSnapshot] = useState<Course | null>(null);
+
+  const exitPreview = () => {
+    setPreviewSnapshot(null);
+    // Drop the classroom's navigation params so the studio URL is left as it was.
+    if (typeof window !== 'undefined' && window.history?.replaceState) {
+      const url = new URL(window.location.href);
+      ['lesson', 'sub', 'quiz', 'view', 'module'].forEach((key) => url.searchParams.delete(key));
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
 
   const previewCourse: Course = useMemo(() => {
     const quizPayload = buildQuizPayload();
@@ -1251,9 +1267,10 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         description: m.description,
         objectives: m.objectives,
         order: mIdx + 1,
-        durationMinutes: m.durationMinutes || 60,
+        durationMinutes: calculateModuleDuration({ lessons: m.lessons }),
         resources: m.resources || [],
         lessons: m.lessons.map((l, lIdx) => ({
+          ...l,
           id: l.id,
           moduleId: m.id,
           title: l.title || `Lesson ${lIdx + 1}`,
@@ -1265,6 +1282,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           required: l.required ?? true,
           resources: l.resources || [],
           subLessons: (l.subLessons ?? []).map((s, sIdx) => ({
+            ...s,
             id: s.id,
             moduleId: m.id,
             title: s.title || `Sub-topic ${sIdx + 1}`,
@@ -1652,7 +1670,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         onSaveChanges={handleSaveChanges}
         onSaveDraft={() => handleSave(false)}
         onSubmitForApproval={() => handleSave(true)}
-        onPreview={() => setIsPreviewMode(true)}
+        onPreview={() => setPreviewSnapshot(previewCourse)}
         onExit={handleExit}
         isEdit={isEdit}
         autosaveStatus={autosaveStatus}
@@ -1690,13 +1708,9 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       )}
 
       {/* Learner Preview Mode Full Overlay */}
-      {isPreviewMode && (
+      {previewSnapshot && (
         <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col">
-          <ClassroomShell
-            previewCourse={previewCourse}
-            isPreview={true}
-            onExitPreview={() => setIsPreviewMode(false)}
-          />
+          <ClassroomShell previewCourse={previewSnapshot} isPreview={true} onExitPreview={exitPreview} />
         </div>
       )}
 
@@ -1710,6 +1724,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           courseTitle={title}
           finalAssessmentWeight={finalAssessmentWeight}
           finalQuestionCount={questions.length}
+          finalAssessmentTitle={quizTitle}
           onAddModule={handleAddModule}
           onAddLesson={handleAddLesson}
           onAddSubLesson={handleAddSubLesson}

@@ -1,5 +1,6 @@
 'use client';
 
+import { calculateLessonDuration, calculateModuleDuration, formatDuration } from '@/lib/duration';
 import { ChevronRight, Clock, FileQuestion, Layers, Paperclip } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ApiAssessment } from '@/lib/api/types';
@@ -21,9 +22,7 @@ interface ModuleStageProps {
 export function ModuleStage({ module, index, assessment, lessonAssessments, onSelectNode }: ModuleStageProps) {
   const { tBilingual, isAmharic } = useTranslation();
   const files = getItemAttachments(module);
-  const minutes =
-    module.durationMinutes ||
-    module.lessons.reduce((sum, l) => sum + (l.durationMin || 0) + (l.subLessons ?? []).reduce((s, sub) => s + (sub.durationMin || 0), 0), 0);
+  const minutes = calculateModuleDuration(module);
 
   return (
     <div className="space-y-6">
@@ -34,7 +33,7 @@ export function ModuleStage({ module, index, assessment, lessonAssessments, onSe
         meta={
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            {minutes} {tBilingual('min', 'ደቂቃ')} · {module.lessons.length} {tBilingual('lessons', 'ትምህርቶች')}
+            {formatDuration(minutes, isAmharic)} · {module.lessons.length} {tBilingual('lessons', 'ትምህርቶች')}
           </span>
         }
       />
@@ -78,7 +77,7 @@ export function ModuleStage({ module, index, assessment, lessonAssessments, onSe
                       <BadgeIcon className="h-3 w-3" />
                       {badge.label}
                     </span>
-                    <span className="shrink-0 text-xs text-slate-400">{l.durationMin}m</span>
+                    <span className="shrink-0 text-xs text-slate-400">{formatDuration(calculateLessonDuration(l), isAmharic)}</span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                   </button>
                 </li>

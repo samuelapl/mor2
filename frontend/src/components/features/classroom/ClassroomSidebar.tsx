@@ -297,7 +297,14 @@ export function ClassroomSidebar({
                     );
                   })()}
 
-                  {mod.lessons.map((lesson, lIdx) => {
+                  {mod.lessons
+                    .filter(
+                      (lesson) =>
+                        (lesson.contentType as string) !== 'ASSESSMENT' &&
+                        (lesson.contentType as string) !== 'QUIZ' &&
+                        !lesson.title.toLowerCase().includes('module assessment'),
+                    )
+                    .map((lesson, lIdx) => {
                     const lessonKey = `lesson-${lesson.id}`;
                     const lessonItem = itemsByKey.get(lessonKey);
                     const isLessonActive = activeKey === lessonKey;
@@ -305,7 +312,12 @@ export function ClassroomSidebar({
                     const isLessonCompleted = lessonItem?.completed ?? false;
 
                     // Child sub-lessons
-                    const subLessons = lesson.subLessons ?? [];
+                    const subLessons = (lesson.subLessons ?? []).filter(
+                      (s) =>
+                        (s.contentType as string) !== 'ASSESSMENT' &&
+                        (s.contentType as string) !== 'QUIZ' &&
+                        !s.title.toLowerCase().includes('lesson assessment'),
+                    );
                     const hasSubLessons = subLessons.length > 0;
                     const isLessonExpanded = Boolean(expandedLessons[lesson.id]);
 
@@ -430,7 +442,7 @@ export function ClassroomSidebar({
 
                         {/* Lesson Checkpoint Quiz Item (Directly below sub-lessons) */}
                         {lessonQuizItem && (
-                          <div className="pl-4 ml-3 border-l border-indigo-100 pt-0.5">
+                          <div className="pl-4 ml-3 border-l border-indigo-100 dark:border-indigo-900/50 pt-0.5">
                             <button
                               type="button"
                               onClick={() =>
@@ -443,7 +455,7 @@ export function ClassroomSidebar({
                                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs font-semibold'
                                   : lessonQuizItem.unlocked
                                     ? lessonQuizItem.completed
-                                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70'
+                                      ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100/70'
                                       : 'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-900/30'
                                     : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
                               )}
@@ -451,7 +463,7 @@ export function ClassroomSidebar({
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                 <BookOpenCheck className="h-3.5 w-3.5 shrink-0" />
                                 <span className="truncate">
-                                  {tBilingual('Lesson Assessment', 'የትምህርት ምዘና')}
+                                  {lessonQuizItem.assessment?.titleEn || lessonQuizItem.title || tBilingual('Lesson Assessment', 'የትምህርት ምዘና')}
                                 </span>
                               </div>
 
@@ -475,7 +487,7 @@ export function ClassroomSidebar({
 
                   {/* Module Assessment Item (At the end of all lessons in module) */}
                   {moduleQuizItem && (
-                    <div className="pt-2 border-t border-slate-200/70">
+                    <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => moduleQuizItem.unlocked && onSelectItem(moduleQuizItem)}
@@ -486,7 +498,7 @@ export function ClassroomSidebar({
                             ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
                             : moduleQuizItem.unlocked
                               ? moduleQuizItem.completed
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                                 : 'bg-gradient-to-r from-indigo-50 dark:from-indigo-900/20 to-violet-50 dark:to-violet-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:from-indigo-100 dark:hover:from-indigo-900/40'
                               : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
                         )}
@@ -494,7 +506,7 @@ export function ClassroomSidebar({
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Award className="h-4 w-4 shrink-0" />
                           <span className="truncate">
-                            {tBilingual('Module Assessment', 'የሞጁል ምዘና')}
+                            {moduleQuizItem.assessment?.titleEn || moduleQuizItem.title || tBilingual('Module Assessment', 'የሞጁል ምዘና')}
                           </span>
                         </div>
 
@@ -620,12 +632,12 @@ export function ClassroomSidebar({
                           ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                           : 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                         : finalItem.isInPersonLocked
-                          ? 'bg-amber-50/90 border-amber-200 text-amber-950 hover:bg-amber-100/80'
+                          ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-200 hover:bg-amber-100/80'
                           : finalItem.unlocked
                             ? finalItem.completed
-                              ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
                               : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
-                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300',
+                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -641,7 +653,7 @@ export function ClassroomSidebar({
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold truncate">
-                          {tBilingual('Final Course Assessment', 'የኮርስ ማጠቃለያ ፈተና')}
+                          {finalItem.assessment?.titleEn || finalItem.title || tBilingual('Final Assessment', 'የኮርስ ማጠቃለያ ፈተና')}
                         </p>
                         <p
                           className={cn(

@@ -21,6 +21,7 @@ import { uploadAttachment } from '@/lib/api/files';
 import { inputClass, labelClass } from '../../wizard-types';
 import { MultiFileUploader, RichEditor } from '../../wizard-components';
 import { cn } from '@/lib/utils';
+import { calculateModuleDuration, formatDuration } from '@/lib/duration';
 
 export interface ModuleEditorStageProps {
   module: ModuleDraft;
@@ -45,7 +46,8 @@ export function ModuleEditorStage({
   onDeleteLesson,
   onDeleteModuleAssessment,
 }: ModuleEditorStageProps) {
-  const { tBilingual } = useTranslation();
+  const { tBilingual, isAmharic } = useTranslation();
+  const moduleMinutes = calculateModuleDuration({ lessons: module.lessons });
 
   const instructionalLessons = module.lessons.filter(
     (l) =>
@@ -145,20 +147,11 @@ export function ModuleEditorStage({
           </div>
 
           <div>
-            <label className={labelClass}>
-              {tBilingual('Estimated Duration (Minutes)', 'የሚፈጀው ጊዜ (በደቂቃ)')}
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                min={5}
-                value={module.durationMinutes || 60}
-                onChange={(e) =>
-                  onUpdateModule({ durationMinutes: Number(e.target.value) || 60 })
-                }
-                className={inputClass}
-              />
-              <Clock className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+            <label className={labelClass}>{tBilingual('Module Duration', 'የሞጁሉ ቆይታ')}</label>
+            {/* Derived from the lessons; set study time on each lesson / sub-lesson instead. */}
+            <div className={cn(inputClass, 'flex items-center justify-between bg-slate-50 text-slate-700')}>
+              <span className="font-semibold">{formatDuration(moduleMinutes, isAmharic)}</span>
+              <Clock className="h-4 w-4 text-slate-400" />
             </div>
           </div>
         </div>

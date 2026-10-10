@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { AttachmentCard } from './AttachmentCard';
 import { getItemAttachments } from '../wizard-components';
+import { calculateLessonDuration, calculateModuleDuration, formatDuration } from '@/lib/duration';
 
 export function getContentTypeBadge(type?: string, isAmharic?: boolean) {
   const norm = (type || '').toUpperCase();
@@ -166,7 +167,7 @@ export function CourseCurriculumSection({
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                       <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      {module.durationMinutes ? `${module.durationMinutes} ${isAmharic ? 'ደቂቃ' : 'min'}` : isAmharic ? '60 ደቂቃ' : '60 min'}
+                      {formatDuration(calculateModuleDuration(module), isAmharic)}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                       <BookOpen className="h-3.5 w-3.5 text-slate-400" />
@@ -281,9 +282,9 @@ export function CourseCurriculumSection({
                                       <ContentIcon className="h-3 w-3" />
                                       {badge.label}
                                     </span>
-                                    {lesson.durationMin ? (
+                                    {calculateLessonDuration(lesson) > 0 ? (
                                       <span className="text-[11px] text-slate-500 font-medium">
-                                        {lesson.durationMin} {isAmharic ? 'ደቂቃ' : 'min'}
+                                        {formatDuration(calculateLessonDuration(lesson), isAmharic)}
                                       </span>
                                     ) : null}
                                     {lessonAttachments.length > 0 && (

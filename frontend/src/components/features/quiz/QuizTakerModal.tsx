@@ -37,6 +37,8 @@ interface QuizTakerModalProps {
   courseTitle: string;
   /** When provided, loads this specific (module/lesson/final) assessment instead of the course's first/final one. */
   assessmentId?: string;
+  /** In preview mode, the in-memory assessment data to take directly */
+  previewAssessment?: ApiAssessment | null;
   /** Called once the learner passes. The parent is responsible for refreshing progress / advancing. */
   onPassed?: () => void;
   /** When true, renders directly inside the container without a portal overlay covering the sidebar */
@@ -54,6 +56,7 @@ export function QuizTakerModal({
   courseId,
   courseTitle,
   assessmentId,
+  previewAssessment,
   onPassed,
   embedded = false,
 }: QuizTakerModalProps) {
@@ -93,6 +96,13 @@ export function QuizTakerModal({
     setError(null);
     setPassedNotified(false);
 
+    if (previewAssessment) {
+      setAssessment(previewAssessment);
+      setNotFound(false);
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         if (assessmentId) {
@@ -122,7 +132,7 @@ export function QuizTakerModal({
     return () => {
       cancelled = true;
     };
-  }, [open, courseId, assessmentId]);
+  }, [open, courseId, assessmentId, previewAssessment]);
 
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -158,6 +168,22 @@ export function QuizTakerModal({
     if (!assessment) return;
     setError(null);
     setAutoSubmitted(false);
+
+    // If taking in preview mode or with local draft assessment
+    if (previewAssessment || assessment.id?.startsWith('preview-') || assessment.id?.startsWith('q-')) {
+      setAttempt({ attemptId: 'preview-attempt', attemptNumber: 1 });
+      setAnswers({});
+      setResult(null);
+      setPassedNotified(false);
+      setLoading(false);
+      if (assessment.timeLimitMinutes && assessment.timeLimitMinutes > 0) {
+        setRemainingSec(assessment.timeLimitMinutes * 60);
+      } else {
+        setRemainingSec(null);
+      }
+      return;
+    }
+
     try {
       const started = await startAttempt(assessment.id);
       setAttempt({ attemptId: started.attemptId, attemptNumber: started.attemptNumber });
@@ -183,6 +209,55 @@ export function QuizTakerModal({
     if (!assessment || submitting) return;
     setError(null);
     setSubmitting(true);
+
+    // If submitting in preview mode
+    if (previewAssessment || assessment.id?.startsWith('preview-') || assessment.id?.startsWith('q-')) {
+      try {
+        let correctCount = 0;
+        const totalQuestions = assessment.questions.length;
+        const review: AssessmentReviewItem[] = assessment.questions.map((q, index) => {
+          const userAns = answers[index];
+          const isCorrect =
+            userAns !== undefined &&
+            (userAns === q.correctAnswer ||
+              (typeof q.correctAnswer === 'number' && userAns === q.correctAnswer) ||
+              (typeof q.correctAnswer === 'string' &&
+                String(userAns).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase()) ||
+              (typeof q.correctAnswer === 'number' && q.options?.[q.correctAnswer] === userAns));
+          if (isCorrect) correctCount++;
+          return {
+            questionId: q.id,
+            isCorrect,
+            selectedOption: userAns !== undefined ? userAns : null,
+            correctAnswer: q.correctAnswer,
+          } as any;
+        });
+
+        const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 100;
+        const passed = score >= (assessment.passingScore ?? 70);
+        const graded: GradedResult = {
+          attemptId: 'preview-attempt',
+          attemptNumber: 1,
+          score,
+          passed,
+          correctCount,
+          totalQuestions,
+          submittedAt: new Date().toISOString(),
+          timeSpentSeconds: 30,
+          review,
+        };
+        setResult(graded);
+        if (passed) {
+          toast.success(`Congratulations! You passed with ${score}%.`);
+        } else {
+          toast.warning(`You scored ${score}%. You need ${assessment.passingScore}% to pass.`);
+        }
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
       const payload: SubmitAnswer[] = Object.entries(answers).map(([index, selectedOption]) => ({
         questionId: assessment.questions[Number(index)].id,
@@ -534,9 +609,9 @@ export function QuizTakerModal({
           {assessment.questions.map((question, index) => (
             <div
               key={question.id}
-              className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+              className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
             >
-              <div className="flex items-start gap-2 text-sm font-semibold text-slate-800">
+              <div className="flex items-start gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
                   {index + 1}
                 </span>
@@ -544,11 +619,11 @@ export function QuizTakerModal({
               </div>
 
               {question.imageUrl ? (
-                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2">
                   <img
                     src={question.imageUrl}
                     alt={`Question ${index + 1} Diagram`}
-                    className="max-h-72 w-full object-contain rounded-lg bg-white"
+                    className="max-h-72 w-full object-contain rounded-lg bg-white dark:bg-slate-900"
                   />
                 </div>
               ) : null}
@@ -560,7 +635,7 @@ export function QuizTakerModal({
                     setAnswers((prev) => ({ ...prev, [index]: event.target.value }))
                   }
                   placeholder="Type your answer…"
-                  className="mt-3 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                  className="mt-3 w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                 />
               ) : (
                 <div className="mt-3 space-y-2">
@@ -575,7 +650,7 @@ export function QuizTakerModal({
                           'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150',
                           selected
                             ? 'border-indigo-500 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25'
-                            : 'border-slate-200/80 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/40',
+                            : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-slate-700/50',
                         )}
                       >
                         <span
@@ -583,7 +658,7 @@ export function QuizTakerModal({
                             'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
                             selected
                               ? 'border-white text-white'
-                              : 'border-slate-300 text-slate-400',
+                              : 'border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-400',
                           )}
                         >
                           {optionIndex + 1}
@@ -596,9 +671,9 @@ export function QuizTakerModal({
               )}
             </div>
           ))}
-          <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-md">
+          <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 px-4 py-3 shadow-lg backdrop-blur-md">
             <div>
-              <p className="text-xs font-semibold text-slate-700">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {answeredCount}/{assessment.questions.length} answered
               </p>
               {answeredCount < assessment.questions.length ? (
@@ -622,23 +697,23 @@ export function QuizTakerModal({
   if (embedded) {
     if (!open) return null;
     return (
-      <div className="w-full flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden min-h-[520px]">
+      <div className="w-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden min-h-[520px]">
         {/* Top Header Bar */}
-        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition shadow-2xs"
               title="Back to Course"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                 {assessment?.titleEn ?? 'Assessment'}
               </h2>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {assessment
                   ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts`
                   : courseTitle}
@@ -648,7 +723,7 @@ export function QuizTakerModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition"
             title="Close"
           >
             <X className="h-4 w-4" />

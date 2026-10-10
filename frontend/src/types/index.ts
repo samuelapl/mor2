@@ -164,6 +164,8 @@ export interface Course {
   published: boolean;
   createdAt: string;
   cover?: string | null;
+  /** Total study time in hours, derived server-side from lesson durations on every curriculum save. */
+  estimatedHours?: number | null;
   rejectionReason?: string;
   lastRejectionReason?: string;
   rejectedBy?: string;

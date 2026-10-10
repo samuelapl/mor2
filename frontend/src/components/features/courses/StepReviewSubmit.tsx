@@ -1,34 +1,14 @@
 'use client';
 
+import { calculateCourseDuration, calculateModuleDuration, formatDuration } from '@/lib/duration';
 import React, { useState, useMemo } from 'react';
 import {
-  Award,
   BookOpen,
-  Calendar,
-  Check,
-  CheckCircle2,
   ChevronDown,
-  ChevronUp,
-  Clock,
-  Download,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  FileCheck,
-  FileQuestion,
-  FileSpreadsheet,
-  FileText,
-  Film,
-  FolderOpen,
-  Headphones,
-  HelpCircle,
   Layers,
-  Link as LinkIcon,
   Maximize2,
   Minimize2,
-  Paperclip,
   Pencil,
-  Presentation,
   Scale,
   ShieldCheck,
 } from 'lucide-react';
@@ -37,8 +17,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
-import type { LessonDraft, ModuleDraft, WizardContentType } from './wizard-types';
-import { formatFileSize } from './wizard-components';
+import type { ModuleDraft } from './wizard-types';
 import { isModuleAssessmentLesson, isLessonAssessmentSub } from './creator/weights';
 
 export interface StepReviewSubmitProps {
@@ -100,270 +79,13 @@ function getItemAttachments(item: {
 }
 
 /**
- * Determines appropriate icon and color based on file extension or URL.
+ * Drops a leading outline number the author already typed into a title ("1.2 Intro",
+ * "Lesson 1.2: Intro"), since the outline prints its own number next to it.
  */
-function getFileBadge(file: UploadedResource) {
-  const url = (file.url || '').toLowerCase();
-  const name = (file.name || '').toLowerCase();
-  const ext = name.split('.').pop() || url.split('.').pop() || '';
-
-  if (['pdf'].includes(ext)) {
-    return {
-      icon: FileText,
-      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
-      badgeLabel: 'PDF',
-    };
-  }
-  if (['doc', 'docx'].includes(ext)) {
-    return {
-      icon: FileText,
-      bgColor: 'bg-blue-50 text-blue-700 border-blue-200',
-      badgeLabel: 'Word',
-    };
-  }
-  if (['xls', 'xlsx', 'csv'].includes(ext)) {
-    return {
-      icon: FileSpreadsheet,
-      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      badgeLabel: 'Spreadsheet',
-    };
-  }
-  if (['ppt', 'pptx'].includes(ext)) {
-    return {
-      icon: Presentation,
-      bgColor: 'bg-orange-50 text-orange-700 border-orange-200',
-      badgeLabel: 'Presentation',
-    };
-  }
-  if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
-    return {
-      icon: Film,
-      bgColor: 'bg-purple-50 text-purple-700 border-purple-200',
-      badgeLabel: 'Video',
-    };
-  }
-  if (['mp3', 'wav', 'm4a', 'aac'].includes(ext)) {
-    return {
-      icon: Headphones,
-      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
-      badgeLabel: 'Audio',
-    };
-  }
-  return {
-    icon: Paperclip,
-    bgColor: 'bg-slate-100 text-slate-700 border-slate-200',
-    badgeLabel: ext.toUpperCase() || 'File',
-  };
-}
-
-/**
- * Renders an attachment row with file details and open/download action buttons.
- */
-function AttachmentCard({ file }: { file: UploadedResource }) {
-  const badge = getFileBadge(file);
-  const Icon = badge.icon;
-  const fileName = file.name || file.url.split('/').pop() || 'Attachment';
-
-  return (
-    <div className="group flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition">
-      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
-            badge.bgColor,
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p
-            className="truncate text-xs font-semibold text-slate-800 group-hover:text-indigo-700 transition"
-            title={fileName}
-          >
-            {fileName}
-          </p>
-          <div className="flex items-center gap-2 text-[11px] text-slate-500">
-            <span className="font-medium text-slate-600">{badge.badgeLabel}</span>
-            {file.size ? (
-              <>
-                <span>•</span>
-                <span>{formatFileSize(file.size)}</span>
-              </>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1.5 shrink-0">
-        <a
-          href={file.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition shadow-2xs"
-          title="Open file in new tab"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          <span>Open</span>
-        </a>
-        <a
-          href={file.url}
-          download={fileName}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/80 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition shadow-2xs"
-          title="Download file"
-        >
-          <Download className="h-3.5 w-3.5" />
-          <span>Download</span>
-        </a>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Helper to get content type icon and styling
- */
-function getContentTypeBadge(type: WizardContentType) {
-  switch (type) {
-    case 'VIDEO':
-      return {
-        label: 'Video Lesson',
-        icon: Film,
-        color: 'text-purple-700 bg-purple-50 border-purple-200',
-      };
-    case 'AUDIO':
-      return {
-        label: 'Audio Lesson',
-        icon: Headphones,
-        color: 'text-amber-700 bg-amber-50 border-amber-200',
-      };
-    case 'DOCUMENT':
-      return {
-        label: 'Document / Reading',
-        icon: FileText,
-        color: 'text-blue-700 bg-blue-50 border-blue-200',
-      };
-    case 'PRESENTATION':
-      return {
-        label: 'Slide Presentation',
-        icon: Presentation,
-        color: 'text-orange-700 bg-orange-50 border-orange-200',
-      };
-    case 'QUIZ':
-    case 'ASSESSMENT':
-      return {
-        label: 'Assessment',
-        icon: Award,
-        color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-      };
-    case 'ASSIGNMENT':
-      return {
-        label: 'Graded Assignment',
-        icon: Award,
-        color: 'text-rose-700 bg-rose-50 border-rose-200',
-      };
-    default:
-      return { label: type, icon: BookOpen, color: 'text-slate-700 bg-slate-100 border-slate-200' };
-  }
-}
-
-/** Read-only preview of an inline assessment row's quiz (module / lesson checkpoint). */
-function AssessmentQuizPreview({
-  title,
-  questions,
-  passMark,
-  weight,
-}: {
-  title: string;
-  questions: Question[];
-  passMark?: number;
-  weight?: number;
-}) {
-  if (!questions || questions.length === 0) return null;
-  return (
-    <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
-          <FileQuestion className="h-4 w-4 text-emerald-600" />
-          {title} · {questions.length} Question{questions.length !== 1 ? 's' : ''}
-        </p>
-        <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
-          {typeof weight === 'number' && <span>Weight: {weight}%</span>}
-          <span>Passing score: {passMark || 70}%</span>
-        </div>
-      </div>
-
-      <div className="space-y-2.5">
-        {questions.map((q, qIdx) => (
-          <div
-            key={q.id || qIdx}
-            className="rounded-lg border border-emerald-200/80 bg-white p-3 space-y-2 shadow-2xs"
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
-              <span className="font-bold text-emerald-800 text-xs">
-                Q{qIdx + 1}:{' '}
-                <RichContent
-                  inline
-                  html={q.text}
-                  placeholder="No question prompt"
-                  className="font-medium text-slate-700"
-                />
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                {q.points || 10} pts
-              </span>
-            </div>
-
-            {q.type === 'multiple_choice' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {q.options.map((opt, optIdx) => (
-                  <div
-                    key={optIdx}
-                    className={cn(
-                      'flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs',
-                      q.correctIndex === optIdx
-                        ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900'
-                        : 'bg-slate-50 border-slate-200 text-slate-600',
-                    )}
-                  >
-                    <span className="font-mono text-[11px] text-slate-400">
-                      {String.fromCharCode(65 + optIdx)}.
-                    </span>
-                    <span className="truncate">{opt}</span>
-                    {q.correctIndex === optIdx && (
-                      <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {q.type === 'true_false' && (
-              <div className="flex items-center gap-2">
-                {['True', 'False'].map((opt, optIdx) => (
-                  <span
-                    key={opt}
-                    className={cn(
-                      'px-2.5 py-1 rounded-md border text-xs font-semibold',
-                      q.correctIndex === optIdx
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                        : 'bg-slate-50 border-slate-200 text-slate-500',
-                    )}
-                  >
-                    {opt}{' '}
-                    {q.correctIndex === optIdx
-                      ? '✓ (Correct)'
-                      : ''}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function withoutOutlineNumber(title: string, number: string): string {
+  const escaped = number.replace(/\./g, '\\.');
+  const cleaned = title.replace(new RegExp(`^\\s*(?:lesson|topic)?\\s*${escaped}(?!\\d)\\.?\\s*[:\\-–—)]?\\s*`, 'i'), '');
+  return cleaned.trim() || title.trim();
 }
 
 export function StepReviewSubmit({
@@ -396,20 +118,6 @@ export function StepReviewSubmit({
 }: StepReviewSubmitProps) {
   // Collect all module IDs for default-expanded state
   const initialModuleIds = useMemo(() => new Set(modules.map((m) => m.id)), [modules]);
-  const initialLessonIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const m of modules) {
-      for (const l of m.lessons) {
-        ids.add(l.id);
-        if (l.subLessons) {
-          for (const sub of l.subLessons) {
-            ids.add(sub.id);
-          }
-        }
-      }
-    }
-    return ids;
-  }, [modules]);
 
   const curriculumQuizzes = useMemo(() => {
     const list: Array<{ title: string; weight: number; passMark: number; moduleTitle: string }> = [];
@@ -447,7 +155,6 @@ export function StepReviewSubmit({
   const totalAssessmentsCount = curriculumQuizzes.length + (hasFinalAssessment ? 1 : 0);
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(initialModuleIds);
-  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(initialLessonIds);
 
   const toggleModule = (id: string) => {
     setExpandedModules((prev) => {
@@ -458,23 +165,12 @@ export function StepReviewSubmit({
     });
   };
 
-  const toggleLesson = (id: string) => {
-    setExpandedLessons((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const expandAll = () => {
     setExpandedModules(initialModuleIds);
-    setExpandedLessons(initialLessonIds);
   };
 
   const collapseAll = () => {
     setExpandedModules(new Set());
-    setExpandedLessons(new Set());
   };
 
   // Aggregated totals — assessment rows are stored inline in the draft tree
@@ -528,28 +224,8 @@ export function StepReviewSubmit({
     return count;
   }, [modules, assessmentResources, assessmentFileUrl, assessmentFileName, assessmentFileSize]);
 
-  const totalEstimatedDurationMin = useMemo(() => {
-    let total = 0;
-    for (const m of modules) {
-      if (m.durationMinutes) {
-        total += m.durationMinutes;
-      } else {
-        const lessonDuration = m.lessons.reduce((s, l) => {
-          const subSum = (l.subLessons || []).reduce((ss, sub) => ss + (sub.durationMin || 0), 0);
-          return s + (l.durationMin || 0) + subSum;
-        }, 0);
-        total += lessonDuration || 60;
-      }
-    }
-    return total;
-  }, [modules]);
+  const totalEstimatedDurationMin = useMemo(() => calculateCourseDuration(modules), [modules]);
 
-  const allAssessmentAttachments = getItemAttachments({
-    resources: assessmentResources,
-    resourceUrl: assessmentFileUrl,
-    fileName: assessmentFileName,
-    fileSize: assessmentFileSize,
-  });
 
   return (
     <div className="space-y-7">
@@ -565,8 +241,7 @@ export function StepReviewSubmit({
             </h3>
           </div>
           <p className="text-xs text-slate-500">
-            Comprehensive pre-publication review. All modules, attachments, reading notes, and
-            assessment questions are fully expanded below for your verification.
+            A high-level overview of your course before you submit it for approval.
           </p>
         </div>
 
@@ -631,9 +306,7 @@ export function StepReviewSubmit({
             Est. Time
           </p>
           <p className="mt-1 text-xl font-bold text-slate-900">
-            {totalEstimatedDurationMin >= 60
-              ? `${Math.floor(totalEstimatedDurationMin / 60)}h ${totalEstimatedDurationMin % 60}m`
-              : `${totalEstimatedDurationMin}m`}
+            {formatDuration(totalEstimatedDurationMin)}
           </p>
         </div>
       </div>
@@ -792,11 +465,11 @@ export function StepReviewSubmit({
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-indigo-600" />
               <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-                2. Curriculum Structure & Uploaded Materials
+                2. Curriculum Structure
               </h4>
             </div>
             <p className="text-xs text-slate-500">
-              Review all modules, lessons, reading notes, and every attached file.
+              Course outline at a glance. Expand a module to see its lessons and sub-lessons.
             </p>
           </div>
 
@@ -821,386 +494,95 @@ export function StepReviewSubmit({
             ⚠ No modules added to this course yet. Go back to Step 2 to add modules and lessons.
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="overflow-hidden rounded-xl border border-slate-200/90 divide-y divide-slate-200/80">
             {modules.map((module, mIdx) => {
               const isModExpanded = expandedModules.has(module.id);
-              const moduleAttachments = getItemAttachments(module);
-              const instructionalLessons = module.lessons.filter((l) => !isModuleAssessmentLesson(l));
-              const moduleAssessment = module.lessons.find((l) => isModuleAssessmentLesson(l));
+              const lessons = module.lessons.filter((l) => !isModuleAssessmentLesson(l));
+              const panelId = `review-module-${module.id}`;
 
               return (
-                <div
-                  key={module.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-50/50 shadow-2xs transition hover:border-slate-300"
-                >
-                  {/* Module Header Bar */}
-                  <div
+                <div key={module.id} className="bg-white">
+                  <button
+                    type="button"
                     onClick={() => toggleModule(module.id)}
-                    className="flex cursor-pointer flex-wrap items-center justify-between gap-3 border-l-4 border-l-indigo-600 bg-white p-4.5 px-5 transition hover:bg-slate-50/80 select-none"
+                    aria-expanded={isModExpanded}
+                    aria-controls={panelId}
+                    className={cn(
+                      'group flex w-full items-center gap-3 px-4 py-3.5 text-left transition sm:px-5',
+                      isModExpanded ? 'bg-indigo-50/40' : 'hover:bg-slate-50',
+                    )}
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <span className="flex h-7 px-2.5 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-2xs">
-                        Module {mIdx + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <h5 className="font-display text-base font-bold text-slate-900 truncate">
-                          {module.title.trim() || (
-                            <span className="text-amber-600 italic font-normal">
-                              Untitled Module
-                            </span>
-                          )}
-                        </h5>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
-                        {module.durationMinutes ? `${module.durationMinutes} min` : '60 min'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                        <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                        {instructionalLessons.length} Lesson{instructionalLessons.length !== 1 ? 's' : ''}
-                      </span>
-                      {moduleAttachments.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                          <Paperclip className="h-3.5 w-3.5" />
-                          {moduleAttachments.length} Attachment
-                          {moduleAttachments.length !== 1 ? 's' : ''}
-                        </span>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="rounded-lg p-1 text-slate-400 hover:text-slate-600"
-                        title={isModExpanded ? 'Collapse Module' : 'Expand Module'}
-                      >
-                        {isModExpanded ? (
-                          <ChevronUp className="h-5 w-5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Module Expanded Content */}
-                  {isModExpanded && (
-                    <div className="border-t border-slate-200/80 p-5 space-y-5">
-                      {/* Module Description & Objectives */}
-                      {module.description && stripHtmlTags(module.description) ? (
-                        <div className="rounded-xl bg-white p-4 border border-slate-200/70 space-y-1">
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            Module Overview & Description
-                          </p>
-                          <div
-                            className="text-xs text-slate-700 leading-relaxed prose prose-xs max-w-none"
-                            dangerouslySetInnerHTML={{ __html: module.description }}
-                          />
-                        </div>
-                      ) : null}
-
-                      {/* Module Attached Materials */}
-                      {moduleAttachments.length > 0 && (
-                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-2.5">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                            <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-                            <span>
-                              Module Attachments & Reference Materials ({moduleAttachments.length})
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            {moduleAttachments.map((file, fIdx) => (
-                              <AttachmentCard key={file.id || file.url || fIdx} file={file} />
-                            ))}
-                          </div>
-                        </div>
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition',
+                        isModExpanded
+                          ? 'bg-indigo-600 text-white shadow-2xs'
+                          : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100',
                       )}
+                    >
+                      {mIdx + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-2 text-sm font-semibold text-slate-900">
+                        {module.title.trim() || (
+                          <span className="font-normal italic text-amber-600">Untitled Module</span>
+                        )}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-slate-500">
+                        {lessons.length} lesson{lessons.length !== 1 ? 's' : ''}
+                        <span className="mx-1.5 text-slate-300">•</span>
+                        {formatDuration(calculateModuleDuration(module))}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
+                        isModExpanded && 'rotate-180 text-indigo-600',
+                      )}
+                    />
+                  </button>
 
-                      {/* Module Lessons List */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                            Lessons in Module {mIdx + 1} ({instructionalLessons.length})
-                          </p>
-                        </div>
-
-                        {instructionalLessons.length === 0 ? (
-                          <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3.5 text-xs text-amber-800 italic">
-                            ⚠ No lessons created for this module.
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {instructionalLessons.map((lesson, lIdx) => {
-                              const isLessExpanded = expandedLessons.has(lesson.id);
-                              const lessonBadge = getContentTypeBadge(lesson.contentType);
-                              const LessonTypeIcon = lessonBadge.icon;
-                              const lessonAttachments = getItemAttachments(lesson);
-                              const subLessons = (lesson.subLessons || []).filter((s) => !isLessonAssessmentSub(s));
-                              const lessonAssessment = (lesson.subLessons || []).find((s) => isLessonAssessmentSub(s));
-
-                              return (
-                                <div
-                                  key={lesson.id}
-                                  className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs"
-                                >
-                                  {/* Lesson Card Header */}
-                                  <div
-                                    onClick={() => toggleLesson(lesson.id)}
-                                    className="flex cursor-pointer flex-wrap items-center justify-between gap-2.5 p-3.5 px-4 transition hover:bg-slate-50/60 select-none"
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                      <span className="flex h-6 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-xs font-bold text-slate-700">
-                                        {mIdx + 1}.{lIdx + 1}
-                                      </span>
-                                      <span className="font-semibold text-slate-900 text-sm truncate">
-                                        {lesson.title.trim() || (
-                                          <span className="text-amber-600 italic font-normal">
-                                            Untitled Lesson
-                                          </span>
-                                        )}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                      <span
-                                        className={cn(
-                                          'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold',
-                                          lessonBadge.color,
-                                        )}
-                                      >
-                                        <LessonTypeIcon className="h-3 w-3" />
-                                        {lessonBadge.label}
-                                      </span>
-                                      <span className="text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
-                                        {lesson.durationMin || 15} min
-                                      </span>
-                                      {lesson.required === false ? (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-slate-500 border-slate-300"
-                                        >
-                                          Optional
-                                        </Badge>
-                                      ) : (
-                                        <Badge
-                                          variant="slate"
-                                          className="bg-slate-100 text-slate-700"
-                                        >
-                                          Required
-                                        </Badge>
-                                      )}
-                                      {lessonAttachments.length > 0 ? (
-                                        <Badge variant="blue" className="gap-1">
-                                          <Paperclip className="h-3 w-3" />
-                                          {lessonAttachments.length}
-                                        </Badge>
-                                      ) : null}
-                                      <button
-                                        type="button"
-                                        className="rounded p-1 text-slate-400 hover:text-slate-600"
-                                        title={isLessExpanded ? 'Collapse Lesson' : 'Expand Lesson'}
-                                      >
-                                        {isLessExpanded ? (
-                                          <ChevronUp className="h-4 w-4" />
-                                        ) : (
-                                          <ChevronDown className="h-4 w-4" />
-                                        )}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Lesson Body (Fully Visible by default) */}
-                                  {isLessExpanded && (
-                                    <div className="border-t border-slate-100 p-4 space-y-4 bg-slate-50/30 text-xs">
-                                      {/* Lesson Reading Notes / Content */}
-                                      <div className="space-y-1.5">
-                                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                          Reading Notes & Detailed Content
-                                        </p>
-                                        {lesson.content && stripHtmlTags(lesson.content) ? (
-                                          <div
-                                            className="rounded-xl border border-slate-200/80 bg-white p-3.5 text-slate-700 leading-relaxed prose prose-sm max-w-none shadow-2xs"
-                                            dangerouslySetInnerHTML={{ __html: lesson.content }}
-                                          />
-                                        ) : (
-                                          <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-2.5 text-xs text-amber-700 italic">
-                                            ⚠ No reading notes or instructions written for this
-                                            lesson.
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Lesson Attachments */}
-                                      {lessonAttachments.length > 0 && (
-                                        <div className="space-y-1.5">
-                                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                            Lesson Attachments ({lessonAttachments.length})
-                                          </p>
-                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {lessonAttachments.map((file, fIdx) => (
-                                              <AttachmentCard
-                                                key={file.id || file.url || fIdx}
-                                                file={file}
-                                              />
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* Assignment Configuration Preview (if ASSIGNMENT) */}
-                                      {lesson.contentType === 'ASSIGNMENT' && (
-                                        <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 space-y-2">
-                                          <p className="font-bold text-rose-900 text-xs flex items-center gap-1.5">
-                                            <Award className="h-4 w-4 text-rose-600" />
-                                            Assignment Guidelines & Submission Rules
-                                          </p>
-                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                                            <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">
-                                                Max Marks:{' '}
-                                              </span>
-                                              <span className="font-bold text-slate-800">
-                                                {lesson.assignmentMaxMarks || 100}
-                                              </span>
-                                            </div>
-                                            <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">
-                                                Due Date:{' '}
-                                              </span>
-                                              <span className="font-bold text-slate-800">
-                                                {lesson.assignmentDueDate || 'No deadline'}
-                                              </span>
-                                            </div>
-                                            <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                                              <span className="text-slate-500 font-medium">
-                                                Max File Size:{' '}
-                                              </span>
-                                              <span className="font-bold text-slate-800">
-                                                {lesson.assignmentMaxFileSizeMb || 50} MB
-                                              </span>
-                                            </div>
-                                          </div>
-                                          {lesson.assignmentInstructions && (
-                                            <div
-                                              className="mt-1 text-slate-700 leading-relaxed prose prose-xs max-w-none bg-white p-2.5 rounded-lg border border-rose-100"
-                                              dangerouslySetInnerHTML={{
-                                                __html: lesson.assignmentInstructions,
-                                              }}
-                                            />
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {/* Lesson Assessment (stored as an assessment sub-lesson) */}
-                                      {lessonAssessment && (lessonAssessment.quizQuestions?.length ?? 0) > 0 && (
-                                        <AssessmentQuizPreview
-                                          title={lessonAssessment.title.trim() || 'Lesson Assessment'}
-                                          questions={lessonAssessment.quizQuestions ?? []}
-                                          passMark={lessonAssessment.quizPassMark}
-                                          weight={lessonAssessment.quizWeight}
-                                        />
-                                      )}
-
-                                      {/* Sub-lessons Tree Container */}
-                                      {subLessons.length > 0 && (
-                                        <div className="space-y-2.5 pt-2">
-                                          <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                                            <p className="text-xs font-bold text-slate-800">
-                                              Sub-Lessons ({subLessons.length})
-                                            </p>
-                                          </div>
-
-                                          <div className="space-y-2.5 pl-3 sm:pl-4 border-l-2 border-indigo-200">
-                                            {subLessons.map((sub, sIdx) => {
-                                              const subBadge = getContentTypeBadge(sub.contentType);
-                                              const SubIcon = subBadge.icon;
-                                              const subAttachments = getItemAttachments(sub);
-
-                                              return (
-                                                <div
-                                                  key={sub.id}
-                                                  className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2.5 shadow-2xs"
-                                                >
-                                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                      <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                                                        {mIdx + 1}.{lIdx + 1}.{sIdx + 1}
-                                                      </span>
-                                                      <span className="font-semibold text-slate-800 text-xs truncate">
-                                                        {sub.title.trim() || (
-                                                          <span className="text-amber-600 italic font-normal">
-                                                            Untitled Sub-lesson
-                                                          </span>
-                                                        )}
-                                                      </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                      <span
-                                                        className={cn(
-                                                          'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold border',
-                                                          subBadge.color,
-                                                        )}
-                                                      >
-                                                        <SubIcon className="h-3 w-3" />
-                                                        {subBadge.label}
-                                                      </span>
-                                                      <span className="text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-[11px]">
-                                                        {sub.durationMin || 10} min
-                                                      </span>
-                                                    </div>
-                                                  </div>
-
-                                                  {/* Sub-lesson content */}
-                                                  {sub.content && stripHtmlTags(sub.content) ? (
-                                                    <div
-                                                      className="rounded-lg bg-slate-50/70 p-2.5 text-slate-700 text-xs leading-relaxed prose prose-xs max-w-none border border-slate-100"
-                                                      dangerouslySetInnerHTML={{
-                                                        __html: sub.content,
-                                                      }}
-                                                    />
-                                                  ) : null}
-
-                                                  {/* Sub-lesson attachments */}
-                                                  {subAttachments.length > 0 && (
-                                                    <div className="space-y-1.5 pt-1">
-                                                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                        Sub-Lesson Files ({subAttachments.length})
-                                                      </p>
-                                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                        {subAttachments.map((file, sfIdx) => (
-                                                          <AttachmentCard
-                                                            key={file.id || file.url || sfIdx}
-                                                            file={file}
-                                                          />
-                                                        ))}
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+                  {isModExpanded && (
+                    <div id={panelId} className="border-t border-slate-100 bg-slate-50/50 px-4 py-3 sm:px-5">
+                      {lessons.length === 0 ? (
+                        <p className="py-1.5 pl-11 text-xs italic text-amber-700">No lessons in this module yet.</p>
+                      ) : (
+                        <ol className="space-y-0.5">
+                          {lessons.map((lesson, lIdx) => {
+                            const subLessons = (lesson.subLessons ?? []).filter((sub) => !isLessonAssessmentSub(sub));
+                            return (
+                              <li key={lesson.id}>
+                                <div className="flex items-baseline gap-3 rounded-lg px-2 py-1.5">
+                                  <span className="w-9 shrink-0 text-right font-mono text-[11px] font-semibold text-indigo-600/80">
+                                    {mIdx + 1}.{lIdx + 1}
+                                  </span>
+                                  <span className="min-w-0 text-sm font-medium text-slate-800">
+                                    {withoutOutlineNumber(lesson.title, `${mIdx + 1}.${lIdx + 1}`) || (
+                                      <span className="font-normal italic text-amber-600">Untitled Lesson</span>
+                                    )}
+                                  </span>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Module Assessment (stored as an assessment lesson row) */}
-                        {moduleAssessment && (moduleAssessment.quizQuestions?.length ?? 0) > 0 && (
-                          <AssessmentQuizPreview
-                            title={moduleAssessment.title.trim() || 'Module Assessment'}
-                            questions={moduleAssessment.quizQuestions ?? []}
-                            passMark={moduleAssessment.quizPassMark}
-                            weight={moduleAssessment.quizWeight}
-                          />
-                        )}
-                      </div>
+                                {subLessons.length > 0 && (
+                                  <ul className="mb-1 ml-[3.25rem] space-y-0.5 border-l-2 border-slate-200 pl-4">
+                                    {subLessons.map((sub, sIdx) => (
+                                      <li key={sub.id} className="flex items-baseline gap-2.5 py-1">
+                                        <span className="shrink-0 font-mono text-[10px] text-slate-400">
+                                          {mIdx + 1}.{lIdx + 1}.{sIdx + 1}
+                                        </span>
+                                        <span className="min-w-0 text-[13px] text-slate-600">
+                                          {withoutOutlineNumber(sub.title, `${mIdx + 1}.${lIdx + 1}.${sIdx + 1}`) || (
+                                            <span className="italic text-amber-600">Untitled Sub-lesson</span>
+                                          )}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1240,192 +622,32 @@ export function StepReviewSubmit({
         </div>
 
         {/* Assessment Parameter Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-slate-500 font-medium">Grade Weight</p>
-            <p className="text-lg font-bold text-indigo-700 mt-1">{finalAssessmentWeight}%</p>
-          </div>
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-slate-500 font-medium">Passing Score</p>
-            <p className="text-lg font-bold text-emerald-600 mt-1">{passMark}%</p>
-            <p className="text-[10px] text-emerald-700/80 font-medium mt-0.5">Global Policy</p>
-          </div>
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-slate-500 font-medium">Time Limit</p>
-            <p className="text-lg font-bold text-slate-900 mt-1">
-              {timeLimitMinutes ? `${timeLimitMinutes} min` : 'No limit'}
-            </p>
-          </div>
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-slate-500 font-medium">Attempts Allowed</p>
-            <p className="text-lg font-bold text-slate-900 mt-1">{attemptsAllowed}</p>
-          </div>
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-slate-500 font-medium">Total Questions</p>
-            <p className="text-lg font-bold text-indigo-600 mt-1">{questions.length}</p>
-          </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { label: 'Grade Weight', value: `${finalAssessmentWeight}%`, tone: 'text-indigo-700' },
+            { label: 'Passing Score', value: `${passMark}%`, tone: 'text-emerald-600', note: 'Global policy' },
+            { label: 'Time Limit', value: timeLimitMinutes ? formatDuration(timeLimitMinutes) : 'No limit', tone: 'text-slate-900' },
+            { label: 'Attempts Allowed', value: String(attemptsAllowed), tone: 'text-slate-900' },
+            {
+              label: 'Questions',
+              value: String(questions.length),
+              tone: 'text-indigo-600',
+              note: `${questions.reduce((sum, q) => sum + (q.points || 10), 0)} pts total`,
+            },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+              <p className={cn('mt-1 text-lg font-bold', stat.tone)}>{stat.value}</p>
+              {stat.note ? <p className="mt-0.5 text-[10px] font-medium text-slate-500">{stat.note}</p> : null}
+            </div>
+          ))}
         </div>
 
-        {/* Assessment Reference Files */}
-        {allAssessmentAttachments.length > 0 && (
-          <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4 space-y-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 uppercase tracking-wider">
-              <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Assessment Reference Documents ({allAssessmentAttachments.length})</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {allAssessmentAttachments.map((file, fIdx) => (
-                <AttachmentCard key={file.id || file.url || fIdx} file={file} />
-              ))}
-            </div>
+        {questions.length === 0 && (
+          <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-3.5 text-xs text-amber-800">
+            ⚠ No final assessment questions added yet. Learners will complete the course without a final exam.
           </div>
         )}
-
-        {/* All Questions Preview (Expanded by default — no button click required!) */}
-        <div className="space-y-3 pt-1">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Exam Questions Preview ({questions.length})
-            </p>
-            <span className="text-xs font-medium text-slate-500">
-              Total Points: {questions.reduce((sum, q) => sum + (q.points || 10), 0)} pts
-            </span>
-          </div>
-
-          {questions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-amber-800 text-xs">
-              ⚠ No assessment questions added yet. Learners will complete the course without an
-              exam.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {questions.map((q, qIdx) => (
-                <div
-                  key={q.id || qIdx}
-                  className="rounded-xl border border-slate-200/90 bg-slate-50/40 p-4 text-xs space-y-2.5 shadow-2xs hover:border-slate-300 transition"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white text-[11px] font-bold">
-                        {qIdx + 1}
-                      </span>
-                      <Badge
-                        variant="slate"
-                        className="font-semibold text-slate-700 bg-white border-slate-200"
-                      >
-                        {q.type === 'multiple_choice'
-                          ? 'Multiple Choice'
-                          : q.type === 'true_false'
-                            ? 'True / False'
-                            : 'Short Answer'}
-                      </Badge>
-                    </div>
-                    <span className="font-bold text-indigo-700 text-xs">
-                      {q.points || 10} Points
-                    </span>
-                  </div>
-
-                  {/* Question Prompt */}
-                  <div
-                    className="font-medium text-slate-800 text-sm prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: q.text || '<em>No question prompt</em>' }}
-                  />
-
-                  {/* Question Image if present */}
-                  {q.imageUrl ? (
-                    <div className="pt-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={q.imageUrl}
-                        alt="Question context"
-                        className="max-h-48 rounded-lg border border-slate-200 object-cover"
-                      />
-                    </div>
-                  ) : null}
-
-                  {/* Multiple Choice Options */}
-                  {q.type === 'multiple_choice' && (
-                    <div className="space-y-1.5 pt-1">
-                      {q.options.map((opt, optIdx) => {
-                        const isCorrect = q.correctIndex === optIdx;
-                        return (
-                          <div
-                            key={optIdx}
-                            className={cn(
-                              'flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition',
-                              isCorrect
-                                ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900 shadow-2xs'
-                                : 'bg-white border-slate-200 text-slate-600',
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                'flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs font-bold',
-                                isCorrect
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-slate-100 text-slate-500',
-                              )}
-                            >
-                              {String.fromCharCode(65 + optIdx)}
-                            </span>
-                            <span className="flex-1">{opt}</span>
-                            {isCorrect && (
-                              <Badge
-                                variant="green"
-                                className="ml-auto text-xs py-0.5 px-2 bg-emerald-100 text-emerald-800 font-bold border-emerald-200"
-                              >
-                                Correct Answer ✓
-                              </Badge>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* True / False Options */}
-                  {q.type === 'true_false' && (
-                    <div className="flex items-center gap-3 pt-1">
-                      {['True', 'False'].map((opt, optIdx) => {
-                        const isCorrect = q.correctIndex === optIdx;
-                        return (
-                          <span
-                            key={opt}
-                            className={cn(
-                              'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs',
-                              isCorrect
-                                ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
-                                : 'bg-white border-slate-200 text-slate-500',
-                            )}
-                          >
-                            {opt}
-                            {isCorrect && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Short Answer Rubric */}
-                  {q.type === 'short_answer' && (
-                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
-                      <span className="font-semibold text-slate-700 block mb-1">
-                        Expected Keywords & Grading Rubric:
-                      </span>
-                      <p className="text-slate-600">
-                        {q.answerText || (
-                          <span className="italic text-slate-400">
-                            No grading criteria specified.
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Course Assessment Weight Allocation Summary */}

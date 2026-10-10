@@ -1,9 +1,11 @@
 'use client';
 
-import { ChevronRight, Clock, ExternalLink, FileQuestion, FileText, Paperclip, Presentation } from 'lucide-react';
+import { formatDuration } from '@/lib/duration';
+import { ChevronRight, Clock, ExternalLink, FileQuestion, FileText, Paperclip } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ApiAssessment } from '@/lib/api/types';
 import type { Lesson, UploadedResource } from '@/types';
+import { SlideDeckViewer } from '@/components/shared/SlideDeckViewer';
 import { AttachmentCard } from '../../detail/AttachmentCard';
 import { getContentTypeBadge } from '../../detail/CourseCurriculumSection';
 import { getItemAttachments } from '../../wizard-components';
@@ -31,7 +33,17 @@ function youtubeEmbed(url: string): string | null {
 }
 
 /** Read-only preview of a lesson's main media, so reviewers see what learners will see. */
-function MediaPreview({ url, contentType, files }: { url?: string; contentType?: string; files: UploadedResource[] }) {
+function MediaPreview({
+  url,
+  fileName,
+  contentType,
+  files,
+}: {
+  url?: string;
+  fileName?: string;
+  contentType?: string;
+  files: UploadedResource[];
+}) {
   const { tBilingual } = useTranslation();
   const type = (contentType ?? '').toUpperCase();
   const mediaFile =
@@ -58,49 +70,7 @@ function MediaPreview({ url, contentType, files }: { url?: string; contentType?:
     return <audio src={src} controls className="w-full" />;
   }
   if (type === 'PRESENTATION') {
-    const isPdf = /\.pdf(\?.*)?$/i.test(src);
-    const isGoogle = src.includes('docs.google.com/presentation');
-    const isOffice = /\.(ppt|pptx|pps|ppsx|odp)(\?.*)?$/i.test(src);
-    const googleEmbed = isGoogle
-      ? `${src.split('/edit')[0].split('/pub')[0].split('/preview')[0].replace(/\/+$/, '')}/embed?start=false&loop=false&delayms=3000`
-      : null;
-
-    return (
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900">
-        <div className="flex items-center justify-between px-3 py-2 bg-slate-800 text-xs text-slate-300">
-          <span className="flex items-center gap-1.5 font-medium">
-            <Presentation className="h-4 w-4 text-indigo-400" />
-            {tBilingual('Slide Deck Presentation', 'የስላይድ ማቅረቢያ')}
-          </span>
-          <a
-            href={src}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 text-slate-200 hover:text-white"
-          >
-            <ExternalLink className="h-3 w-3" />
-            {tBilingual('Open', 'ክፈት')}
-          </a>
-        </div>
-        {isPdf ? (
-          <iframe src={`${src}#toolbar=1`} className="h-96 w-full bg-white" title="Presentation PDF" />
-        ) : googleEmbed ? (
-          <div className="aspect-video w-full">
-            <iframe src={googleEmbed} className="h-full w-full" allowFullScreen title="Google Slides" />
-          </div>
-        ) : isOffice ? (
-          <iframe
-            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`}
-            className="h-96 w-full bg-white"
-            title="Office Presentation"
-          />
-        ) : (
-          <div className="aspect-video w-full">
-            <iframe src={src} className="h-full w-full" allowFullScreen title="Slide Deck" />
-          </div>
-        )}
-      </div>
-    );
+    return <SlideDeckViewer url={src} fileName={fileName} />;
   }
   return (
     <a
@@ -138,13 +108,13 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              {lesson.durationMin} {tBilingual('min', 'ደቂቃ')}
+              {formatDuration(lesson.durationMin, isAmharic)}
             </span>
           </>
         }
       />
 
-      <MediaPreview url={lesson.resourceUrl} contentType={lesson.contentType} files={files} />
+      <MediaPreview url={lesson.resourceUrl} fileName={lesson.fileName} contentType={lesson.contentType} files={files} />
 
       <StageCard>
         <RichSection
@@ -178,7 +148,7 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
                     {number}.{i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-medium">{s.title}</span>
-                  <span className="shrink-0 text-xs text-slate-400">{s.durationMin}m</span>
+                  <span className="shrink-0 text-xs text-slate-400">{formatDuration(s.durationMin, isAmharic)}</span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                 </button>
               </li>

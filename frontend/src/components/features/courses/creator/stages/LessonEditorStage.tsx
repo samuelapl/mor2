@@ -4,7 +4,9 @@ import React from 'react';
 import {
   Award,
   BookOpen,
-  ClipboardList,
+  ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Clock,
   ExternalLink,
   FileQuestion,
@@ -32,6 +34,7 @@ import { uploadAttachment } from '@/lib/api/files';
 import { inputClass, labelClass } from '../../wizard-types';
 import { MultiFileUploader, RichEditor, formatFileSize } from '../../wizard-components';
 import { cn } from '@/lib/utils';
+import { SlideDeckViewer, getSlideDeckKind } from '@/components/shared/SlideDeckViewer';
 import {
   parseLessonBlocks,
   serializeLessonBlocks,
@@ -80,7 +83,6 @@ export function LessonEditorStage({
     { type: 'VIDEO', labelEn: 'Video Lecture', labelAm: 'የቪዲዮ ትምህርት', icon: Video },
     { type: 'AUDIO', labelEn: 'Audio Lecture', labelAm: 'የድምጽ ትምህርት', icon: Headphones },
     { type: 'PRESENTATION', labelEn: 'Slide Deck', labelAm: 'ስላይድ', icon: Presentation },
-    { type: 'ASSIGNMENT', labelEn: 'Practical Assignment', labelAm: 'የተግባር ስራ', icon: ClipboardList },
   ];
 
   const subLessons = (lesson.subLessons ?? []).filter(
@@ -121,6 +123,13 @@ export function LessonEditorStage({
   const [blockTab, setBlockTab] = React.useState<Record<string, 'browse' | 'url'>>({});
   const [blockUploading, setBlockUploading] = React.useState<Record<string, boolean>>({});
   const [blockUploadError, setBlockUploadError] = React.useState<Record<string, string | null>>({});
+  const [collapsedBlocks, setCollapsedBlocks] = React.useState<Record<string, boolean>>({});
+
+  const toggleBlockCollapsed = (blockId: string) =>
+    setCollapsedBlocks((prev) => ({ ...prev, [blockId]: !prev[blockId] }));
+  const setAllBlocksCollapsed = (collapsed: boolean) =>
+    setCollapsedBlocks(Object.fromEntries(blocks.map((b) => [b.id, collapsed])));
+  const allBlocksCollapsed = blocks.length > 0 && blocks.every((b) => collapsedBlocks[b.id]);
 
   // Re-sync blocks when navigating to a different lesson ID
   React.useEffect(() => {
@@ -199,6 +208,16 @@ export function LessonEditorStage({
   };
 
   const handleBlockFileUpload = async (blockId: string, type: LessonBlockType, file: File) => {
+    if (type === 'PRESENTATION' && !['pdf', 'pptx'].includes(getSlideDeckKind(file.name))) {
+      setBlockUploadError((prev) => ({
+        ...prev,
+        [blockId]: tBilingual(
+          'Only PDF or PPTX slide decks can be shown in the classroom. Save older .ppt / .odp files as .pptx or PDF first.',
+          'በክላስሩም ውስጥ የሚታዩት PDF ወይም PPTX ስላይዶች ብቻ ናቸው። የቆዩ .ppt / .odp ፋይሎችን መጀመሪያ እንደ .pptx ወይም PDF ያስቀምጡ።',
+        ),
+      }));
+      return;
+    }
     setBlockUploading((prev) => ({ ...prev, [blockId]: true }));
     setBlockUploadError((prev) => ({ ...prev, [blockId]: null }));
     try {
@@ -376,7 +395,7 @@ export function LessonEditorStage({
         {/* Content Type Selector */}
         <div>
           <label className={labelClass}>{tBilingual('Lesson Content Type', 'የትምህርት ይዘት ዓይነት')}</label>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
             {CONTENT_TYPES.map((ct) => {
               const isSelected = (lesson.contentType || 'DOCUMENT') === ct.type;
               const Icon = ct.icon;
@@ -430,9 +449,27 @@ export function LessonEditorStage({
                 )}
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60">
-              {blocks.length} {blocks.length === 1 ? 'Block' : 'Blocks'}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {blocks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAllBlocksCollapsed(!allBlocksCollapsed)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                >
+                  {allBlocksCollapsed ? (
+                    <ChevronsUpDown className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronsDownUp className="h-3.5 w-3.5" />
+                  )}
+                  {allBlocksCollapsed
+                    ? tBilingual('Expand all', 'ሁሉንም ዘርጋ')
+                    : tBilingual('Collapse all', 'ሁሉንም ሰብስብ')}
+                </button>
+              )}
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60">
+                {blocks.length} {blocks.length === 1 ? 'Block' : 'Blocks'}
+              </span>
+            </div>
           </div>
 
           {/* Top Add Controls */}
@@ -444,6 +481,7 @@ export function LessonEditorStage({
               const tab = blockTab[block.id] || (isExternalUrl(block.url) ? 'url' : 'browse');
               const isUploading = Boolean(blockUploading[block.id]);
               const uploadError = blockUploadError[block.id];
+              const isCollapsed = Boolean(collapsedBlocks[block.id]);
 
               return (
                 <div
@@ -451,8 +489,22 @@ export function LessonEditorStage({
                   className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden transition-all"
                 >
                   {/* Block Header */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-700/80">
+                  <div
+                    className={cn(
+                      'flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60',
+                      !isCollapsed && 'border-b border-slate-200/80 dark:border-slate-700/80',
+                    )}
+                  >
                     <div className="flex items-center gap-2.5 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleBlockCollapsed(block.id)}
+                        title={isCollapsed ? tBilingual('Expand', 'ዘርጋ') : tBilingual('Collapse', 'ሰብስብ')}
+                        aria-expanded={!isCollapsed}
+                        className="p-1 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition"
+                      >
+                        <ChevronDown className={cn('h-4 w-4 transition-transform', isCollapsed && '-rotate-90')} />
+                      </button>
                       <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-600 text-white text-xs font-bold shrink-0">
                         {idx + 1}
                       </span>
@@ -518,214 +570,94 @@ export function LessonEditorStage({
                   </div>
 
                   {/* Block Content Body */}
-                  <div className="p-4 sm:p-5 space-y-4">
-                    {/* DOCUMENT BLOCK */}
-                    {block.type === 'DOCUMENT' && (
-                      <div>
-                        <RichEditor
-                          value={block.content || ''}
-                          placeholder={tBilingual(
-                            'Write comprehensive lecture notes, definitions, instructions and examples for this block…',
-                            'የትምህርቱን ይዘት፣ ትርጓሜዎች፣ መመሪያዎች እና ምሳሌዎችን በዝርዝር ይጻፉ…',
+                  {!isCollapsed && (
+                    <div className="p-4 sm:p-5 space-y-4">
+                      {/* DOCUMENT BLOCK */}
+                      {block.type === 'DOCUMENT' && (
+                        <div>
+                          <RichEditor
+                            value={block.content || ''}
+                            placeholder={tBilingual(
+                              'Write comprehensive lecture notes, definitions, instructions and examples for this block…',
+                              'የትምህርቱን ይዘት፣ ትርጓሜዎች፣ መመሪያዎች እና ምሳሌዎችን በዝርዝር ይጻፉ…',
+                            )}
+                            onChange={(val) => handleUpdateBlock(block.id, { content: val })}
+                            minHeight={150}
+                          />
+                        </div>
+                      )}
+
+                      {/* PRESENTATION / SLIDE BLOCK */}
+                      {block.type === 'PRESENTATION' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                              {tBilingual('Slide Deck Presentation Source', 'የስላይድ ማቅረቢያ ፋይል ወይም ሊንክ')}
+                            </label>
+                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'browse'
+                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                {tBilingual('Browse & Upload File', 'ፋይል ይጫኑ')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'url'
+                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <LinkIcon className="h-3.5 w-3.5" />
+                                {tBilingual('Embed / Web URL', 'የድረ-ገጽ አድራሻ (URL)')}
+                              </button>
+                            </div>
+                          </div>
+
+                          {uploadError && (
+                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                              {uploadError}
+                            </div>
                           )}
-                          onChange={(val) => handleUpdateBlock(block.id, { content: val })}
-                          minHeight={150}
-                        />
-                      </div>
-                    )}
 
-                    {/* PRESENTATION / SLIDE BLOCK */}
-                    {block.type === 'PRESENTATION' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {tBilingual('Slide Deck Presentation Source', 'የስላይድ ማቅረቢያ ፋይል ወይም ሊንክ')}
-                          </label>
-                          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'browse'
-                                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <Upload className="h-3.5 w-3.5" />
-                              {tBilingual('Browse & Upload File', 'ፋይል ይጫኑ')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'url'
-                                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <LinkIcon className="h-3.5 w-3.5" />
-                              {tBilingual('Embed / Web URL', 'የድረ-ገጽ አድራሻ (URL)')}
-                            </button>
-                          </div>
-                        </div>
-
-                        {uploadError && (
-                          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
-                            {uploadError}
-                          </div>
-                        )}
-
-                        {tab === 'browse' ? (
-                          block.url ? (
-                            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <Presentation className="h-5 w-5 text-indigo-600 shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                                    {block.fileName || block.url.split('/').pop() || 'Presentation File'}
-                                  </p>
-                                  {block.fileSize ? (
-                                    <span className="text-[11px] text-slate-500">{formatFileSize(block.fileSize)}</span>
-                                  ) : null}
+                          {tab === 'browse' ? (
+                            block.url ? (
+                              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <Presentation className="h-5 w-5 text-indigo-600 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                      {block.fileName || block.url.split('/').pop() || 'Presentation File'}
+                                    </p>
+                                    {block.fileSize ? (
+                                      <span className="text-[11px] text-slate-500">{formatFileSize(block.fileSize)}</span>
+                                    ) : null}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <label className="cursor-pointer">
-                                  <input
-                                    type="file"
-                                    accept=".ppt,.pptx,.pdf,.odp,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleBlockFileUpload(block.id, 'PRESENTATION', file);
-                                    }}
-                                  />
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50">
-                                    <Upload className="h-3 w-3" />
-                                    {isUploading ? tBilingual('Uploading...', 'በመጫን ላይ...') : tBilingual('Replace', 'ቀይር')}
-                                  </span>
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
-                                  className="p-1 text-slate-400 hover:text-rose-600 transition"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:border-indigo-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
-                              <input
-                                type="file"
-                                accept=".ppt,.pptx,.pdf,.odp,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleBlockFileUpload(block.id, 'PRESENTATION', file);
-                                }}
-                              />
-                              {isUploading ? (
-                                <>
-                                  <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
-                                  <span className="text-xs text-slate-600">{tBilingual('Uploading slide deck...', 'ስላይድ በመጫን ላይ...')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Presentation className="h-6 w-6 text-indigo-600" />
-                                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                    {tBilingual('Upload PPT, PPTX, or PDF Slide Deck', 'PPT፣ PPTX ወይም PDF ስላይድ ይጫኑ')}
-                                  </span>
-                                  <span className="text-[11px] text-slate-500">
-                                    {tBilingual('Opens directly inside the student classroom', 'ለተማሪዎች በቀጥታ በክላስሩም ውስጥ ይከፈታል')}
-                                  </span>
-                                </>
-                              )}
-                            </label>
-                          )
-                        ) : (
-                          <div className="space-y-1.5">
-                            <input
-                              type="url"
-                              value={block.url || ''}
-                              onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
-                              placeholder="https://docs.google.com/presentation/d/... or Canva / OneDrive URL"
-                              className={inputClass}
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              {tBilingual('Google Slides, Canva, Microsoft 365, or public slide URLs are supported.', 'የጉግል ስላይድ፣ የካንቫ ወይም ማይክሮሶፍት ስላይድ ሊንክ ማስገባት ይችላሉ።')}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* VIDEO BLOCK */}
-                    {block.type === 'VIDEO' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {tBilingual('Video Lecture Source', 'የቪዲዮ ትምህርት ፋይል ወይም ሊንክ')}
-                          </label>
-                          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'browse'
-                                  ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <Upload className="h-3.5 w-3.5" />
-                              {tBilingual('Browse & Upload Video', 'ቪዲዮ ይጫኑ')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'url'
-                                  ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <LinkIcon className="h-3.5 w-3.5" />
-                              {tBilingual('YouTube / Embed URL', 'የዩቲዩብ / ቪዲዮ አድራሻ')}
-                            </button>
-                          </div>
-                        </div>
-
-                        {uploadError && (
-                          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
-                            {uploadError}
-                          </div>
-                        )}
-
-                        {tab === 'browse' ? (
-                          block.url ? (
-                            <div className="space-y-3">
-                              <div className="overflow-hidden rounded-xl bg-black max-h-60 flex items-center justify-center">
-                                <video src={block.url} controls className="max-h-60 w-full object-contain" />
-                              </div>
-                              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border">
-                                <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
                                 <div className="flex items-center gap-2">
                                   <label className="cursor-pointer">
                                     <input
                                       type="file"
-                                      accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+                                      accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                                       className="hidden"
                                       onChange={(e) => {
                                         const file = e.target.files?.[0];
-                                        if (file) handleBlockFileUpload(block.id, 'VIDEO', file);
+                                        if (file) handleBlockFileUpload(block.id, 'PRESENTATION', file);
                                       }}
                                     />
-                                    <span className="px-2 py-1 rounded bg-white dark:bg-slate-700 border text-xs font-semibold hover:bg-slate-100">
-                                      {isUploading ? 'Uploading...' : 'Replace'}
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50">
+                                      <Upload className="h-3 w-3" />
+                                      {isUploading ? tBilingual('Uploading...', 'በመጫን ላይ...') : tBilingual('Replace', 'ቀይር')}
                                     </span>
                                   </label>
                                   <button
@@ -737,167 +669,294 @@ export function LessonEditorStage({
                                   </button>
                                 </div>
                               </div>
-                            </div>
-                          ) : (
-                            <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-rose-200 dark:border-rose-800 rounded-xl hover:border-rose-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
-                              <input
-                                type="file"
-                                accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleBlockFileUpload(block.id, 'VIDEO', file);
-                                }}
-                              />
-                              {isUploading ? (
-                                <>
-                                  <Loader2 className="h-6 w-6 text-rose-600 animate-spin" />
-                                  <span className="text-xs text-slate-600">{tBilingual('Uploading video...', 'ቪዲዮ በመጫን ላይ...')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Video className="h-6 w-6 text-rose-600" />
-                                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                    {tBilingual('Upload MP4, WebM, MOV Video Lecture', 'የ MP4፣ WebM ወይም MOV ቪዲዮ ይጫኑ')}
-                                  </span>
-                                  <span className="text-[11px] text-slate-500">
-                                    {tBilingual('Stored securely and streamed in the classroom', 'ደህንነቱ ተጠብቆ በክላስሩም ውስጥ ይጫወታል')}
-                                  </span>
-                                </>
-                              )}
-                            </label>
-                          )
-                        ) : (
-                          <div className="space-y-1.5">
-                            <input
-                              type="url"
-                              value={block.url || ''}
-                              onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
-                              placeholder="https://www.youtube.com/watch?v=... or direct MP4 URL"
-                              className={inputClass}
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              {tBilingual('YouTube video URLs and direct MP4 streams are supported.', 'የዩቲዩብ ወይም ቀጥታ የ MP4 ሊንክ ማስገባት ይችላሉ።')}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* AUDIO BLOCK */}
-                    {block.type === 'AUDIO' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {tBilingual('Audio Lecture Source', 'የድምጽ ትምህርት ፋይል ወይም ሊንክ')}
-                          </label>
-                          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'browse'
-                                  ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <Upload className="h-3.5 w-3.5" />
-                              {tBilingual('Browse & Upload Audio', 'የድምጽ ፋይል ይጫኑ')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
-                                tab === 'url'
-                                  ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
-                              )}
-                            >
-                              <LinkIcon className="h-3.5 w-3.5" />
-                              {tBilingual('Audio Stream URL', 'የድምጽ አድራሻ (URL)')}
-                            </button>
-                          </div>
-                        </div>
-
-                        {uploadError && (
-                          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
-                            {uploadError}
-                          </div>
-                        )}
-
-                        {tab === 'browse' ? (
-                          block.url ? (
-                            <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
-                                <div className="flex items-center gap-2">
-                                  <label className="cursor-pointer">
-                                    <input
-                                      type="file"
-                                      accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
-                                      className="hidden"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleBlockFileUpload(block.id, 'AUDIO', file);
-                                      }}
-                                    />
-                                    <span className="px-2 py-1 rounded bg-white dark:bg-slate-800 border text-xs font-semibold hover:bg-slate-100">
-                                      {isUploading ? 'Uploading...' : 'Replace'}
+                            ) : (
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:border-indigo-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                                <input
+                                  type="file"
+                                  accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleBlockFileUpload(block.id, 'PRESENTATION', file);
+                                  }}
+                                />
+                                {isUploading ? (
+                                  <>
+                                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                                    <span className="text-xs text-slate-600">{tBilingual('Uploading slide deck...', 'ስላይድ በመጫን ላይ...')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Presentation className="h-6 w-6 text-indigo-600" />
+                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                      {tBilingual('Upload PPTX or PDF Slide Deck', 'PPTX ወይም PDF ስላይድ ይጫኑ')}
                                     </span>
-                                  </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
-                                    className="p-1 text-slate-400 hover:text-rose-600 transition"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                    <span className="text-[11px] text-slate-500">
+                                      {tBilingual('Opens directly inside the student classroom', 'ለተማሪዎች በቀጥታ በክላስሩም ውስጥ ይከፈታል')}
+                                    </span>
+                                  </>
+                                )}
+                              </label>
+                            )
+                          ) : (
+                            <div className="space-y-1.5">
+                              <input
+                                type="url"
+                                value={block.url || ''}
+                                onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
+                                placeholder="https://docs.google.com/presentation/d/... or Canva / OneDrive URL"
+                                className={inputClass}
+                              />
+                              <p className="text-[11px] text-slate-500">
+                                {tBilingual('Google Slides, Canva, Microsoft 365, or public slide URLs are supported.', 'የጉግል ስላይድ፣ የካንቫ ወይም ማይክሮሶፍት ስላይድ ሊንክ ማስገባት ይችላሉ።')}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* In-page preview, exactly as learners will see it */}
+                          {block.url && /^(https?:\/\/|\/)/.test(block.url) && !isUploading && (
+                            <SlideDeckViewer url={block.url} fileName={block.fileName} maxHeightClass="max-h-[60vh]" />
+                          )}
+                        </div>
+                      )}
+
+                      {/* VIDEO BLOCK */}
+                      {block.type === 'VIDEO' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                              {tBilingual('Video Lecture Source', 'የቪዲዮ ትምህርት ፋይል ወይም ሊንክ')}
+                            </label>
+                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'browse'
+                                    ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                {tBilingual('Browse & Upload Video', 'ቪዲዮ ይጫኑ')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'url'
+                                    ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <LinkIcon className="h-3.5 w-3.5" />
+                                {tBilingual('YouTube / Embed URL', 'የዩቲዩብ / ቪዲዮ አድራሻ')}
+                              </button>
+                            </div>
+                          </div>
+
+                          {uploadError && (
+                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                              {uploadError}
+                            </div>
+                          )}
+
+                          {tab === 'browse' ? (
+                            block.url ? (
+                              <div className="space-y-3">
+                                <div className="overflow-hidden rounded-xl bg-black max-h-60 flex items-center justify-center">
+                                  <video src={block.url} controls className="max-h-60 w-full object-contain" />
+                                </div>
+                                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border">
+                                  <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
+                                  <div className="flex items-center gap-2">
+                                    <label className="cursor-pointer">
+                                      <input
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleBlockFileUpload(block.id, 'VIDEO', file);
+                                        }}
+                                      />
+                                      <span className="px-2 py-1 rounded bg-white dark:bg-slate-700 border text-xs font-semibold hover:bg-slate-100">
+                                        {isUploading ? 'Uploading...' : 'Replace'}
+                                      </span>
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
+                                      className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                              <audio src={block.url} controls className="w-full" />
-                            </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-rose-200 dark:border-rose-800 rounded-xl hover:border-rose-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                                <input
+                                  type="file"
+                                  accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleBlockFileUpload(block.id, 'VIDEO', file);
+                                  }}
+                                />
+                                {isUploading ? (
+                                  <>
+                                    <Loader2 className="h-6 w-6 text-rose-600 animate-spin" />
+                                    <span className="text-xs text-slate-600">{tBilingual('Uploading video...', 'ቪዲዮ በመጫን ላይ...')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Video className="h-6 w-6 text-rose-600" />
+                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                      {tBilingual('Upload MP4, WebM, MOV Video Lecture', 'የ MP4፣ WebM ወይም MOV ቪዲዮ ይጫኑ')}
+                                    </span>
+                                    <span className="text-[11px] text-slate-500">
+                                      {tBilingual('Stored securely and streamed in the classroom', 'ደህንነቱ ተጠብቆ በክላስሩም ውስጥ ይጫወታል')}
+                                    </span>
+                                  </>
+                                )}
+                              </label>
+                            )
                           ) : (
-                            <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-amber-200 dark:border-amber-800 rounded-xl hover:border-amber-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <div className="space-y-1.5">
                               <input
-                                type="file"
-                                accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleBlockFileUpload(block.id, 'AUDIO', file);
-                                }}
+                                type="url"
+                                value={block.url || ''}
+                                onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
+                                placeholder="https://www.youtube.com/watch?v=... or direct MP4 URL"
+                                className={inputClass}
                               />
-                              {isUploading ? (
-                                <>
-                                  <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
-                                  <span className="text-xs text-slate-600">{tBilingual('Uploading audio...', 'ድምጽ በመጫን ላይ...')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Headphones className="h-6 w-6 text-amber-600" />
-                                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                    {tBilingual('Upload MP3, WAV, AAC Audio Lecture', 'የ MP3፣ WAV ወይም AAC የድምጽ ትምህርት ይጫኑ')}
-                                  </span>
-                                </>
-                              )}
+                              <p className="text-[11px] text-slate-500">
+                                {tBilingual('YouTube video URLs and direct MP4 streams are supported.', 'የዩቲዩብ ወይም ቀጥታ የ MP4 ሊንክ ማስገባት ይችላሉ።')}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* AUDIO BLOCK */}
+                      {block.type === 'AUDIO' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                              {tBilingual('Audio Lecture Source', 'የድምጽ ትምህርት ፋይል ወይም ሊንክ')}
                             </label>
-                          )
-                        ) : (
-                          <div className="space-y-1.5">
-                            <input
-                              type="url"
-                              value={block.url || ''}
-                              onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
-                              placeholder="https://example.com/audio.mp3"
-                              className={inputClass}
-                            />
+                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'browse'
+                                    ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                {tBilingual('Browse & Upload Audio', 'የድምጽ ፋይል ይጫኑ')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'url' }))}
+                                className={cn(
+                                  'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
+                                  tab === 'url'
+                                    ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                )}
+                              >
+                                <LinkIcon className="h-3.5 w-3.5" />
+                                {tBilingual('Audio Stream URL', 'የድምጽ አድራሻ (URL)')}
+                              </button>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+
+                          {uploadError && (
+                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                              {uploadError}
+                            </div>
+                          )}
+
+                          {tab === 'browse' ? (
+                            block.url ? (
+                              <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
+                                  <div className="flex items-center gap-2">
+                                    <label className="cursor-pointer">
+                                      <input
+                                        type="file"
+                                        accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleBlockFileUpload(block.id, 'AUDIO', file);
+                                        }}
+                                      />
+                                      <span className="px-2 py-1 rounded bg-white dark:bg-slate-800 border text-xs font-semibold hover:bg-slate-100">
+                                        {isUploading ? 'Uploading...' : 'Replace'}
+                                      </span>
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
+                                      className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <audio src={block.url} controls className="w-full" />
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-amber-200 dark:border-amber-800 rounded-xl hover:border-amber-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                                <input
+                                  type="file"
+                                  accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleBlockFileUpload(block.id, 'AUDIO', file);
+                                  }}
+                                />
+                                {isUploading ? (
+                                  <>
+                                    <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
+                                    <span className="text-xs text-slate-600">{tBilingual('Uploading audio...', 'ድምጽ በመጫን ላይ...')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Headphones className="h-6 w-6 text-amber-600" />
+                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                      {tBilingual('Upload MP3, WAV, AAC Audio Lecture', 'የ MP3፣ WAV ወይም AAC የድምጽ ትምህርት ይጫኑ')}
+                                    </span>
+                                  </>
+                                )}
+                              </label>
+                            )
+                          ) : (
+                            <div className="space-y-1.5">
+                              <input
+                                type="url"
+                                value={block.url || ''}
+                                onChange={(e) => handleUpdateBlock(block.id, { url: e.target.value })}
+                                placeholder="https://example.com/audio.mp3"
+                                className={inputClass}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

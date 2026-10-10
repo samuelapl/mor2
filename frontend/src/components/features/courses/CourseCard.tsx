@@ -11,6 +11,8 @@ import {
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { RichContent } from '@/components/ui/RichContent';
 import { DeliveryModeBadge } from './DeliveryModeBadge';
+import { formatDuration, getCourseDurationMinutes } from '@/lib/duration';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CourseCardProps {
   course: Course;
@@ -35,6 +37,7 @@ export function CourseCard({
   deliveryMode,
   deliveryDetail,
 }: CourseCardProps) {
+  const { isAmharic } = useTranslation();
   const attachmentCount =
     (course.attachments?.length ?? 0) +
     course.modules.reduce(
@@ -47,10 +50,8 @@ export function CourseCard({
         ),
       0,
     );
-  const durationMin = course.modules.reduce(
-    (sum, module) => sum + module.lessons.reduce((a, lesson) => a + lesson.durationMin, 0),
-    0,
-  );
+  // Catalog lists carry no lessons, so this falls back to the course's stored estimatedHours.
+  const durationMin = getCourseDurationMinutes(course);
 
   return (
     <Card
@@ -96,7 +97,7 @@ export function CourseCard({
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
           <Clock className="h-3.5 w-3.5 text-indigo-500/70" />
-          {durationMin} min
+          {formatDuration(durationMin, isAmharic)}
         </span>
         {attachmentCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">

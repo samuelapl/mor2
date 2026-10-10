@@ -1,23 +1,9 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { isValidEmail, passwordIssues } from '@/constants/auth';
-import {
-  ApiError,
-  setAccessToken,
-  setRefreshHandler,
-  setUnauthorizedHandler,
-} from '@/lib/api/client';
+import { ApiError, setAccessToken, setRefreshHandler, setUnauthorizedHandler } from '@/lib/api/client';
 import {
   clearFirstLoginChallenge,
   completeFirstLogin as apiCompleteFirstLogin,
@@ -44,12 +30,7 @@ import {
   reviewCourse,
   updateCourse as apiUpdateCourse,
 } from '@/lib/api/courses';
-import {
-  bulkEnroll,
-  fetchCourseEnrollments,
-  fetchMyEnrollments,
-  selfEnroll,
-} from '@/lib/api/enrollments';
+import { bulkEnroll, fetchCourseEnrollments, fetchMyEnrollments, selfEnroll } from '@/lib/api/enrollments';
 import {
   assignRole,
   bulkCreateUsers,
@@ -71,12 +52,7 @@ import {
 } from '@/lib/api/courses';
 import { uploadAttachment, uploadCover } from '@/lib/api/files';
 import { replaceSessionPlans } from '@/lib/api/session-plans';
-import {
-  createCourseAssessment,
-  createLessonAssessment,
-  createModuleAssessment,
-  replaceAssessment,
-} from '@/lib/api/quiz';
+import { createCourseAssessment, createLessonAssessment, createModuleAssessment, replaceAssessment } from '@/lib/api/quiz';
 import type { AssessmentQuestionInput } from '@/lib/api/quiz';
 import {
   courseFromDetail,
@@ -165,9 +141,7 @@ function toAttachmentBodies(
 ): CreateCurriculumAttachmentBody[] | undefined {
   const rawList = attachments?.length ? attachments : resources?.length ? resources : [];
   // Ensure the primary lecture media resourceUrl is never in attachments
-  const list = isMediaLecture && resourceUrl
-    ? rawList.filter((r) => r.url !== resourceUrl)
-    : rawList;
+  const list = isMediaLecture && resourceUrl ? rawList.filter((r) => r.url !== resourceUrl) : rawList;
 
   if (list.length > 0) {
     return list.map(uploadedResourceToApiAttachment);
@@ -186,23 +160,11 @@ function toAttachmentBodies(
   return undefined;
 }
 
-function normalizeLessonContentType(
-  type?: string,
-): 'DOCUMENT' | 'INTERACTIVE' | 'VIDEO' | 'AUDIO' | 'PRESENTATION' | 'EXTERNAL_LINK' | 'SCORM' {
+function normalizeLessonContentType(type?: string): 'DOCUMENT' | 'INTERACTIVE' | 'VIDEO' | 'AUDIO' | 'PRESENTATION' | 'EXTERNAL_LINK' | 'SCORM' {
   if (!type) return 'DOCUMENT';
   if (type === 'ASSIGNMENT') return 'DOCUMENT';
   if (type === 'QUIZ' || type === 'ASSESSMENT') return 'INTERACTIVE';
-  if (
-    [
-      'DOCUMENT',
-      'INTERACTIVE',
-      'VIDEO',
-      'AUDIO',
-      'PRESENTATION',
-      'EXTERNAL_LINK',
-      'SCORM',
-    ].includes(type)
-  ) {
+  if (['DOCUMENT', 'INTERACTIVE', 'VIDEO', 'AUDIO', 'PRESENTATION', 'EXTERNAL_LINK', 'SCORM'].includes(type)) {
     return type as any;
   }
   return 'DOCUMENT';
@@ -217,18 +179,12 @@ interface LmsContextValue {
   setLang: (lang: Lang) => void;
   login: (email: string, password: string) => Promise<LoginResult>;
   /** Finishes the forced password change of an admin-created account and signs it in. */
-  completeFirstLogin: (input: {
-    code: string;
-    newPassword: string;
-    confirmPassword: string;
-  }) => Promise<LoginResult>;
+  completeFirstLogin: (input: { code: string; newPassword: string; confirmPassword: string }) => Promise<LoginResult>;
   /** Verifies a self-registered account with its emailed code and signs it in. */
   verifyEmail: (email: string, code: string) => Promise<LoginResult>;
   logout: () => void;
   /** Creates the account; the user then verifies their email before signing in. */
-  register: (
-    input: RegisterInput,
-  ) => Promise<{ ok: true; email: string; devCode?: string } | { ok: false; message: string }>;
+  register: (input: RegisterInput) => Promise<{ ok: true; email: string; devCode?: string } | { ok: false; message: string }>;
   courseById: (courseId: string) => Course | undefined;
   /** Re-fetches one course (e.g. after its sessions changed) and replaces it in the store. */
   refreshCourse: (courseId: string) => Promise<void>;
@@ -254,10 +210,7 @@ interface LmsContextValue {
     /** Omit to leave planned sessions untouched; [] removes them. */
     sessionPlans?: SessionPlanInput[];
   }) => Promise<ActionResult & { courseId?: string; savedModules?: ApiModule[] }>;
-  updateCourse: (
-    courseId: string,
-    input: { title: string; category: string; description: string },
-  ) => Promise<ActionResult>;
+  updateCourse: (courseId: string, input: { title: string; category: string; description: string }) => Promise<ActionResult>;
   updateCourseFull: (
     courseId: string,
     input: {
@@ -314,9 +267,7 @@ interface LmsContextValue {
     action: 'suspend' | 'delete',
     userIds: string[],
   ) => Promise<{ ok: false; message: string } | { ok: true; succeeded: number; failed: string[] }>;
-  bulkRegisterUsers: (
-    rows: BulkCreateUserItem[],
-  ) => Promise<{ ok: true; result: BulkCreateUsersResult } | { ok: false; message: string }>;
+  bulkRegisterUsers: (rows: BulkCreateUserItem[]) => Promise<{ ok: true; result: BulkCreateUsersResult } | { ok: false; message: string }>;
   registerActor: (input: {
     firstName: string;
     lastName: string;
@@ -337,17 +288,8 @@ interface LmsContextValue {
     primaryVenueId?: string;
     mustChangePassword?: boolean;
   }) => Promise<ActionResult>;
-  updateProfile: (input: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    tin?: string;
-    avatarUrl?: string;
-  }) => Promise<ActionResult>;
-  changePassword: (input: {
-    currentPassword: string;
-    newPassword: string;
-  }) => Promise<ActionResult>;
+  updateProfile: (input: { firstName?: string; lastName?: string; phone?: string; tin?: string; avatarUrl?: string }) => Promise<ActionResult>;
+  changePassword: (input: { currentPassword: string; newPassword: string }) => Promise<ActionResult>;
   updateLocale: (locale: Lang) => Promise<ActionResult>;
   /** Re-fetches the signed-in user's own permissions/roles (e.g. after editing a role's
    * permission matrix) so the sidebar and permission-gated pages react without a re-login. */
@@ -398,12 +340,7 @@ function questionToApi(
       points: q.points ?? 10,
     };
   }
-  const correctIdx =
-    typeof q.correctIndex === 'number'
-      ? q.correctIndex
-      : typeof q.correctAnswer === 'number'
-        ? q.correctAnswer
-        : 0;
+  const correctIdx = typeof q.correctIndex === 'number' ? q.correctIndex : typeof q.correctAnswer === 'number' ? q.correctAnswer : 0;
 
   return {
     id: qId,
@@ -431,29 +368,17 @@ function formatQuestionsForApi(questions: any[]): AssessmentQuestionInput[] {
 function isModuleAssessmentItem(l: WizardLessonInput): boolean {
   const t = (l.title || '').trim().toLowerCase();
   const c = (l.contentType || '').toUpperCase();
-  return (
-    c === 'ASSESSMENT' ||
-    c === 'QUIZ' ||
-    t === 'module assessment' ||
-    t.startsWith('module assessment')
-  );
+  return c === 'ASSESSMENT' || c === 'QUIZ' || t === 'module assessment' || t.startsWith('module assessment');
 }
 
 function isLessonAssessmentItem(sub: WizardLessonInput): boolean {
   const t = (sub.title || '').trim().toLowerCase();
   const c = (sub.contentType || '').toUpperCase();
-  return (
-    c === 'ASSESSMENT' ||
-    c === 'QUIZ' ||
-    t === 'lesson assessment' ||
-    t.startsWith('lesson assessment')
-  );
+  return c === 'ASSESSMENT' || c === 'QUIZ' || t === 'lesson assessment' || t.startsWith('lesson assessment');
 }
 
 function extractModuleAssessmentDef(mod: WizardModuleInput) {
-  const item = mod.lessons.find(
-    (l) => isModuleAssessmentItem(l) && l.quizQuestions && l.quizQuestions.length > 0,
-  );
+  const item = mod.lessons.find((l) => isModuleAssessmentItem(l) && l.quizQuestions && l.quizQuestions.length > 0);
   if (!item || !item.quizQuestions || item.quizQuestions.length === 0) return null;
   return {
     title: item.title.trim() || 'Module Assessment',
@@ -467,9 +392,7 @@ function extractModuleAssessmentDef(mod: WizardModuleInput) {
 
 function extractLessonAssessmentDef(lesson: WizardLessonInput) {
   // Check subLessons first
-  const sub = (lesson.subLessons ?? []).find(
-    (s) => isLessonAssessmentItem(s) && s.quizQuestions && s.quizQuestions.length > 0,
-  );
+  const sub = (lesson.subLessons ?? []).find((s) => isLessonAssessmentItem(s) && s.quizQuestions && s.quizQuestions.length > 0);
   if (sub && sub.quizQuestions && sub.quizQuestions.length > 0) {
     return {
       title: sub.title.trim() || 'Lesson Assessment',
@@ -496,11 +419,7 @@ function extractLessonAssessmentDef(lesson: WizardLessonInput) {
   return null;
 }
 
-async function syncCurriculumAndAssessments(
-  courseId: string,
-  rawModules: WizardModuleInput[],
-  quiz?: Quiz,
-): Promise<{ savedModules: ApiModule[] }> {
+async function syncCurriculumAndAssessments(courseId: string, rawModules: WizardModuleInput[], quiz?: Quiz): Promise<{ savedModules: ApiModule[] }> {
   // Filter instructional content to pass to replaceCurriculum
   const curriculumPayload = rawModules.map((mod) => {
     // Exclude module assessment dummy lesson rows from instructional lessons
@@ -522,22 +441,11 @@ async function syncCurriculumAndAssessments(
       description: mod.description || 'Course module',
       objectives: mod.objectives,
       durationMinutes: mod.durationMinutes,
-      attachments: toAttachmentBodies(
-        mod.attachments,
-        mod.resources,
-        mod.resourceUrl,
-        mod.fileName,
-        mod.fileSize,
-      ),
+      attachments: toAttachmentBodies(mod.attachments, mod.resources, mod.resourceUrl, mod.fileName, mod.fileSize),
       lessons: lessonsToSave.map((lesson) => {
-        const instructionalSubLessons = (lesson.subLessons ?? []).filter(
-          (s) => !isLessonAssessmentItem(s),
-        );
+        const instructionalSubLessons = (lesson.subLessons ?? []).filter((s) => !isLessonAssessmentItem(s));
         const lessonType = normalizeLessonContentType(lesson.contentType);
-        const isLessonMedia =
-          lessonType === 'VIDEO' ||
-          lessonType === 'AUDIO' ||
-          lessonType === 'PRESENTATION';
+        const isLessonMedia = lessonType === 'VIDEO' || lessonType === 'AUDIO' || lessonType === 'PRESENTATION';
 
         return {
           title: lesson.title,
@@ -545,20 +453,10 @@ async function syncCurriculumAndAssessments(
           durationMinutes: lesson.durationMin,
           contentType: lessonType,
           resourceUrl: lesson.resourceUrl,
-          attachments: toAttachmentBodies(
-            lesson.attachments,
-            lesson.resources,
-            lesson.resourceUrl,
-            lesson.fileName,
-            lesson.fileSize,
-            isLessonMedia,
-          ),
+          attachments: toAttachmentBodies(lesson.attachments, lesson.resources, lesson.resourceUrl, lesson.fileName, lesson.fileSize, isLessonMedia),
           subLessons: instructionalSubLessons.map((sub) => {
             const subType = normalizeLessonContentType(sub.contentType);
-            const isSubMedia =
-              subType === 'VIDEO' ||
-              subType === 'AUDIO' ||
-              subType === 'PRESENTATION';
+            const isSubMedia = subType === 'VIDEO' || subType === 'AUDIO' || subType === 'PRESENTATION';
 
             return {
               title: sub.title,
@@ -566,14 +464,7 @@ async function syncCurriculumAndAssessments(
               durationMinutes: sub.durationMin,
               contentType: subType,
               resourceUrl: sub.resourceUrl,
-              attachments: toAttachmentBodies(
-                sub.attachments,
-                sub.resources,
-                sub.resourceUrl,
-                sub.fileName,
-                sub.fileSize,
-                isSubMedia,
-              ),
+              attachments: toAttachmentBodies(sub.attachments, sub.resources, sub.resourceUrl, sub.fileName, sub.fileSize, isSubMedia),
             };
           }),
         };
@@ -763,9 +654,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           setMyEnrollments(mine.data);
           const enrolledCourseIds = new Set(
             mine.data
-              .filter(
-                (enrollment) => enrollment.status === 'ACTIVE' || enrollment.status === 'COMPLETED',
-              )
+              .filter((enrollment) => enrollment.status === 'ACTIVE' || enrollment.status === 'COMPLETED')
               .map((enrollment) => enrollment.courseId),
           );
           next = next.map((course) => ({
@@ -792,9 +681,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
               }
               return {
                 ...course,
-                enrolledLearnerIds: res.data
-                  .filter((enrollment) => enrollment.status === 'ACTIVE')
-                  .map((enrollment) => enrollment.userId),
+                enrolledLearnerIds: res.data.filter((enrollment) => enrollment.status === 'ACTIVE').map((enrollment) => enrollment.userId),
               };
             } catch {
               return course;
@@ -1244,11 +1131,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(
-          hasPermission(owner, 'course.update.own') ||
-          hasPermission(owner, 'course.update.all') ||
-          hasPermission(owner, 'course.create')
-        )
+        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all') || hasPermission(owner, 'course.create'))
       ) {
         return { ok: false, message: 'You are not allowed to edit this course.' };
       }
@@ -1285,11 +1168,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
         !owner ||
-        !(
-          hasPermission(owner, 'course.update.own') ||
-          hasPermission(owner, 'course.update.all') ||
-          hasPermission(owner, 'course.create')
-        )
+        !(hasPermission(owner, 'course.update.own') || hasPermission(owner, 'course.update.all') || hasPermission(owner, 'course.create'))
       ) {
         return { ok: false, message: 'You are not allowed to edit this course.' };
       }
@@ -1590,10 +1469,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         });
         setMyEnrollments((prev) => [...prev.filter((e) => e.courseId !== courseId), enr]);
       } catch (err) {
-        const message = errorMessage(
-          err,
-          'Enrollment failed. The course may no longer be available.',
-        );
+        const message = errorMessage(err, 'Enrollment failed. The course may no longer be available.');
         // The backend may say "already enrolled" even though our local
         // enrollment list is stale/out of sync — that's still the outcome
         // the learner wants, so settle into the enrolled state instead of
@@ -1617,10 +1493,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
-  const getEnrollmentForCourse = useCallback(
-    (courseId: string) => myEnrollments.find((e) => e.courseId === courseId),
-    [myEnrollments],
-  );
+  const getEnrollmentForCourse = useCallback((courseId: string) => myEnrollments.find((e) => e.courseId === courseId), [myEnrollments]);
 
   const changeUserRole = useCallback(
     async (userId: string, role: Role): Promise<ActionResult> => {
@@ -1753,10 +1626,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const courseById = useCallback(
-    (courseId: string) => courses.find((course) => course.id === courseId),
-    [courses],
-  );
+  const courseById = useCallback((courseId: string) => courses.find((course) => course.id === courseId), [courses]);
 
   const userName = useCallback((userId: string) => userNames[userId] ?? 'Unknown', [userNames]);
 

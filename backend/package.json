@@ -24,7 +24,8 @@
     "reseed:courses": "ts-node prisma/seed-courses.ts",
     "seed:news": "ts-node prisma/seed-news.ts",
     "seed:laws": "ts-node prisma/seed-laws.ts",
-    "questions:correct-first": "ts-node prisma/correct-answer-first.ts"
+    "questions:correct-first": "ts-node prisma/correct-answer-first.ts",
+    "durations:recalculate": "ts-node prisma/recalculate-durations.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

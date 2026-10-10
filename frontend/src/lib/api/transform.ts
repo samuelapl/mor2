@@ -222,6 +222,7 @@ export function courseFromApi(course: ApiCourseListItem): Course {
     published: course.status === 'PUBLISHED',
     createdAt: course.createdAt,
     cover: course.thumbnailUrl ?? null,
+    estimatedHours: course.estimatedHours ?? null,
     enrolledLearnerIds: [],
     progress: {},
     modules: [],

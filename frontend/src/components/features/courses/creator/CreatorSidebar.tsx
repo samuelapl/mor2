@@ -29,6 +29,7 @@ interface CreatorSidebarProps {
   courseTitle: string;
   finalAssessmentWeight?: number;
   finalQuestionCount?: number;
+  finalAssessmentTitle?: string;
   onAddModule: () => void;
   onAddLesson: (moduleId: string) => void;
   onAddSubLesson: (moduleId: string, lessonId: string) => void;
@@ -53,6 +54,7 @@ export function CreatorSidebar({
   courseTitle,
   finalAssessmentWeight = 60,
   finalQuestionCount = 0,
+  finalAssessmentTitle,
   onAddModule,
   onAddLesson,
   onAddSubLesson,
@@ -621,7 +623,9 @@ export function CreatorSidebar({
               <Award className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-xs font-bold truncate">{tBilingual('es', 'የማጠቃለያ ፈተና እና ደንቦች')}</h4>
+              <h4 className="text-xs font-bold truncate">
+                {finalAssessmentTitle?.trim() || tBilingual('Final Assessment', 'የማጠቃለያ ፈተና እና ደንቦች')}
+              </h4>
               <p className={cn('text-[11px] truncate', activeNode.type === 'FINAL_ASSESSMENT' ? 'text-indigo-100' : 'text-slate-500')}>
                 {finalQuestionCount} {tBilingual('questions', 'ጥያቄዎች')}
               </p>
