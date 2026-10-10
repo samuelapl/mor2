@@ -89,6 +89,7 @@ import {
 } from '@/lib/api/transform';
 import type {
   ApiEnrollment,
+  ApiModule,
   BulkCreateUserItem,
   BulkCreateUsersResult,
   CreateCurriculumAttachmentBody,
@@ -160,12 +161,19 @@ function toAttachmentBodies(
   resourceUrl?: string,
   fileName?: string,
   fileSize?: number,
+  isMediaLecture: boolean = false,
 ): CreateCurriculumAttachmentBody[] | undefined {
-  const list = attachments?.length ? attachments : resources?.length ? resources : [];
+  const rawList = attachments?.length ? attachments : resources?.length ? resources : [];
+  // Ensure the primary lecture media resourceUrl is never in attachments
+  const list = isMediaLecture && resourceUrl
+    ? rawList.filter((r) => r.url !== resourceUrl)
+    : rawList;
+
   if (list.length > 0) {
     return list.map(uploadedResourceToApiAttachment);
   }
-  if (resourceUrl) {
+  // If this is a video, audio, or presentation lecture, NEVER fallback to resourceUrl as an attachment
+  if (!isMediaLecture && resourceUrl) {
     return [
       {
         fileName: fileName || resourceUrl.split('/').pop() || 'Resource',
@@ -245,7 +253,7 @@ interface LmsContextValue {
     hasOnlineSessions?: boolean;
     /** Omit to leave planned sessions untouched; [] removes them. */
     sessionPlans?: SessionPlanInput[];
-  }) => Promise<ActionResult & { courseId?: string }>;
+  }) => Promise<ActionResult & { courseId?: string; savedModules?: ApiModule[] }>;
   updateCourse: (
     courseId: string,
     input: { title: string; category: string; description: string },
@@ -272,7 +280,7 @@ interface LmsContextValue {
       /** Omit to leave planned sessions untouched; [] removes them. */
       sessionPlans?: SessionPlanInput[];
     },
-  ) => Promise<ActionResult>;
+  ) => Promise<ActionResult & { savedModules?: ApiModule[] }>;
   saveCourseCover: (courseId: string, file: File) => Promise<ActionResult>;
   assignTrainerToCourse: (courseId: string, trainerId: string) => Promise<ActionResult>;
   unassignTrainerFromCourse: (courseId: string, trainerId: string) => Promise<ActionResult>;
@@ -492,7 +500,7 @@ async function syncCurriculumAndAssessments(
   courseId: string,
   rawModules: WizardModuleInput[],
   quiz?: Quiz,
-) {
+): Promise<{ savedModules: ApiModule[] }> {
   // Filter instructional content to pass to replaceCurriculum
   const curriculumPayload = rawModules.map((mod) => {
     // Exclude module assessment dummy lesson rows from instructional lessons
@@ -525,11 +533,17 @@ async function syncCurriculumAndAssessments(
         const instructionalSubLessons = (lesson.subLessons ?? []).filter(
           (s) => !isLessonAssessmentItem(s),
         );
+        const lessonType = normalizeLessonContentType(lesson.contentType);
+        const isLessonMedia =
+          lessonType === 'VIDEO' ||
+          lessonType === 'AUDIO' ||
+          lessonType === 'PRESENTATION';
+
         return {
           title: lesson.title,
           content: lesson.content,
           durationMinutes: lesson.durationMin,
-          contentType: normalizeLessonContentType(lesson.contentType),
+          contentType: lessonType,
           resourceUrl: lesson.resourceUrl,
           attachments: toAttachmentBodies(
             lesson.attachments,
@@ -537,21 +551,31 @@ async function syncCurriculumAndAssessments(
             lesson.resourceUrl,
             lesson.fileName,
             lesson.fileSize,
+            isLessonMedia,
           ),
-          subLessons: instructionalSubLessons.map((sub) => ({
-            title: sub.title,
-            content: sub.content,
-            durationMinutes: sub.durationMin,
-            contentType: normalizeLessonContentType(sub.contentType),
-            resourceUrl: sub.resourceUrl,
-            attachments: toAttachmentBodies(
-              sub.attachments,
-              sub.resources,
-              sub.resourceUrl,
-              sub.fileName,
-              sub.fileSize,
-            ),
-          })),
+          subLessons: instructionalSubLessons.map((sub) => {
+            const subType = normalizeLessonContentType(sub.contentType);
+            const isSubMedia =
+              subType === 'VIDEO' ||
+              subType === 'AUDIO' ||
+              subType === 'PRESENTATION';
+
+            return {
+              title: sub.title,
+              content: sub.content,
+              durationMinutes: sub.durationMin,
+              contentType: subType,
+              resourceUrl: sub.resourceUrl,
+              attachments: toAttachmentBodies(
+                sub.attachments,
+                sub.resources,
+                sub.resourceUrl,
+                sub.fileName,
+                sub.fileSize,
+                isSubMedia,
+              ),
+            };
+          }),
         };
       }),
     });
@@ -638,6 +662,8 @@ async function syncCurriculumAndAssessments(
   if (failures.length > 0) {
     throw new Error(`Course content saved, but some assessments were not: ${failures.join('; ')}`);
   }
+
+  return { savedModules };
 }
 
 export const LOCALE_STORAGE_KEY = 'eltms_locale';
@@ -1023,7 +1049,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 },
               ];
 
-        await syncCurriculumAndAssessments(created.id, modulesToCreate, input.quiz);
+        const { savedModules } = await syncCurriculumAndAssessments(created.id, modulesToCreate, input.quiz);
         if (input.sessionPlans) await replaceSessionPlans(created.id, { plans: input.sessionPlans });
 
         // Course-level materials.
@@ -1037,7 +1063,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         }
 
         await reloadData(owner);
-        return { ok: true, courseId: created.id };
+        return { ok: true, courseId: created.id, savedModules };
       } catch (err) {
         return {
           ok: false,
@@ -1328,7 +1354,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
                 },
               ];
 
-        await syncCurriculumAndAssessments(courseId, modulesToReplace, input.quiz);
+        const { savedModules } = await syncCurriculumAndAssessments(courseId, modulesToReplace, input.quiz);
         // After the curriculum: the server checks the combined weights stay within 100%.
         if (input.sessionPlans) await replaceSessionPlans(courseId, { plans: input.sessionPlans });
 
@@ -1343,7 +1369,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         }
 
         await reloadData(owner);
-        return { ok: true };
+        return { ok: true, savedModules };
       } catch (err) {
         return {
           ok: false,

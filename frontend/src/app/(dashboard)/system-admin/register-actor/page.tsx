@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, UserCog } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, UserCog } from 'lucide-react';
 import { useLms } from '@/lib/lms-store';
 import PageShell from '@/components/shared/PageShell';
-import PageSection from '@/components/shared/PageSection';
+import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ROLE_LABELS, ROLES } from '@/constants/roles';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -13,6 +14,7 @@ import { toast } from '@/lib/toast';
 import { fetchVenues } from '@/lib/api/venues';
 import { fetchRolesWithPermissions } from '@/lib/api/permissions';
 import type { ApiVenue } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
 
 interface RoleOption {
   name: string;
@@ -45,8 +47,10 @@ const EMPTY_FORM = {
 export default function RegisterActorPage() {
   const { currentUser, registerActor } = useLms();
   const { tBilingual, tRole } = useTranslation();
+  const router = useRouter();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [venues, setVenues] = useState<ApiVenue[]>([]);
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>(BUILT_IN_ROLE_OPTIONS);
 
@@ -115,6 +119,7 @@ export default function RegisterActorPage() {
         `${form.firstName} ${form.lastName} was registered and approved — they can sign in now.`,
       );
       setForm(EMPTY_FORM);
+      router.push('/system-admin/users');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to register user.');
     } finally {
@@ -125,24 +130,21 @@ export default function RegisterActorPage() {
   return (
     <PageShell
       role={currentUser?.role ?? 'system_admin'}
+      centered
       title={tBilingual('User Registration', 'የተጠቃሚ ምዝገባ')}
       description={tBilingual(
         'Manually register a user with any role. The account is created already approved and active — no approval queue.',
         'ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል — የይሁንታ ወረፋ አይጠብቅም።',
       )}
     >
-      <PageSection
-        title={tBilingual('New user', 'አዲስ ተጠቃሚ')}
-        description={tBilingual(
-          "Fill in the user's details and choose a role.",
-          'የተጠቃሚውን ዝርዝሮች ይሙሉ እና ሚና ይምረጡ።',
-        )}
+      <Modal
+        open
+        onClose={() => router.push('/system-admin/users')}
+        title={tBilingual('Register user', 'ተጠቃሚ መመዝገብ')}
+        size="lg"
       >
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>{tBilingual('First name', 'ስም')}</label>
               <input
@@ -220,7 +222,7 @@ export default function RegisterActorPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
               {tBilingual(
                 'Linking a trainer to their primary branch helps auto-populate venues when scheduling in-person sessions.',
                 'አሰልጣኝን ከዋና ቅርንጫፋቸው ጋር ማገናኘት በአካል የሚሰጡ ክፍለ-ጊዜዎችን ሲመድቡ ማዕከላትን በራስ-ሰር ለመሙላት ይረዳል።',
@@ -230,16 +232,26 @@ export default function RegisterActorPage() {
 
           <div>
             <label className={labelClass}>{tBilingual('Password', 'የይለፍ ቃል')}</label>
-            <input
-              type="text"
-              className={inputClass}
-              value={form.password}
-              onChange={(e) => update({ password: e.target.value })}
-              placeholder={tBilingual(
-                "Set the user's initial password",
-                'የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ',
-              )}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className={cn(inputClass, 'pr-10')}
+                value={form.password}
+                onChange={(e) => update({ password: e.target.value })}
+                placeholder={tBilingual(
+                  "Set the user's initial password",
+                  'የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ',
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none dark:hover:text-slate-200"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 pt-1">
@@ -248,11 +260,11 @@ export default function RegisterActorPage() {
               type="checkbox"
               checked={form.mustChangePassword}
               onChange={(e) => update({ mustChangePassword: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
             />
             <label
               htmlFor="mustChangePassword"
-              className="text-xs text-slate-600 dark:text-slate-400 select-none cursor-pointer"
+              className="cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400"
             >
               {tBilingual(
                 'Require password change on first sign-in (sends email code)',
@@ -261,17 +273,26 @@ export default function RegisterActorPage() {
             </label>
           </div>
 
-          <Button
-            type="submit"
-            isLoading={submitting}
-            loadingText={tBilingual('Registering user…', 'ተጠቃሚውን በመመዝገብ ላይ…')}
-            className="w-full justify-center gap-2"
-          >
-            <UserCog className="h-4 w-4" />
-            {tBilingual('Register user', 'ተጠቃሚውን መዝግብ')}
-          </Button>
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/system-admin/users')}
+            >
+              {tBilingual('Cancel', 'ሰርዝ')}
+            </Button>
+            <Button
+              type="submit"
+              isLoading={submitting}
+              loadingText={tBilingual('Registering user…', 'ተጠቃሚውን በመመዝገብ ላይ…')}
+              className="gap-2"
+            >
+              <UserCog className="h-4 w-4" />
+              {tBilingual('Register user', 'ተጠቃሚውን መዝግብ')}
+            </Button>
+          </div>
         </form>
-      </PageSection>
+      </Modal>
     </PageShell>
   );
 }

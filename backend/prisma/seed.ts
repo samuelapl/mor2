@@ -18,6 +18,7 @@ import {
 } from '@prisma/client';
 import { seedPermissions } from './seed-permissions';
 import { seedTemplates } from './seed-templates';
+import { seedCategories } from './seed-categories';
 import { seedLaws } from './seed-laws';
 
 import { correctAnswerFirst } from './correct-answer-first';
@@ -2414,6 +2415,9 @@ async function main() {
 
   // 3a. Seed Certificate Templates
   await seedTemplates(prisma);
+
+  // 3a1. Seed Dynamic Lookup Categories
+  await seedCategories(prisma);
 
   // 3a2. Seed Tax & Customs Laws Categories and Documents
   await seedLaws();

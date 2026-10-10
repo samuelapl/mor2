@@ -82,6 +82,7 @@ export interface Lesson {
   attachments?: UploadedResource[];
   parentId?: string;
   subLessons?: Lesson[];
+  contentBlocks?: any[];
 }
 
 export interface Module {

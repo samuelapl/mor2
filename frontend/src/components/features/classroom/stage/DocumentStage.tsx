@@ -42,8 +42,14 @@ export function DocumentStage({
     /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(a.url) ||
     /\.(mp4|webm|ogg|mov)$/i.test(a.name);
   const videoAttachment = allAttachments.find(isVideoAttachment);
-  const effectiveVideoUrl = lesson?.resourceUrl || videoAttachment?.url || null;
-  const attachments = allAttachments.filter((a) => !isVideoAttachment(a));
+  const isMediaLesson =
+    lesson?.contentType === 'VIDEO' ||
+    lesson?.contentType === 'AUDIO' ||
+    lesson?.contentType === 'PRESENTATION';
+
+  const attachments = allAttachments.filter(
+    (a) => !isVideoAttachment(a) && (!isMediaLesson || a.url !== lesson?.resourceUrl),
+  );
 
   // Check if assessment is ready to be taken
   const hasSubLessons = Boolean(lesson?.subLessons && lesson.subLessons.length > 0);

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Clock, ExternalLink, FileQuestion, FileText, Paperclip } from 'lucide-react';
+import { ChevronRight, Clock, ExternalLink, FileQuestion, FileText, Paperclip, Presentation } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ApiAssessment } from '@/lib/api/types';
 import type { Lesson, UploadedResource } from '@/types';
@@ -56,6 +56,51 @@ function MediaPreview({ url, contentType, files }: { url?: string; contentType?:
   }
   if (type === 'AUDIO' || AUDIO_FILE.test(src)) {
     return <audio src={src} controls className="w-full" />;
+  }
+  if (type === 'PRESENTATION') {
+    const isPdf = /\.pdf(\?.*)?$/i.test(src);
+    const isGoogle = src.includes('docs.google.com/presentation');
+    const isOffice = /\.(ppt|pptx|pps|ppsx|odp)(\?.*)?$/i.test(src);
+    const googleEmbed = isGoogle
+      ? `${src.split('/edit')[0].split('/pub')[0].split('/preview')[0].replace(/\/+$/, '')}/embed?start=false&loop=false&delayms=3000`
+      : null;
+
+    return (
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900">
+        <div className="flex items-center justify-between px-3 py-2 bg-slate-800 text-xs text-slate-300">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Presentation className="h-4 w-4 text-indigo-400" />
+            {tBilingual('Slide Deck Presentation', 'የስላይድ ማቅረቢያ')}
+          </span>
+          <a
+            href={src}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-slate-200 hover:text-white"
+          >
+            <ExternalLink className="h-3 w-3" />
+            {tBilingual('Open', 'ክፈት')}
+          </a>
+        </div>
+        {isPdf ? (
+          <iframe src={`${src}#toolbar=1`} className="h-96 w-full bg-white" title="Presentation PDF" />
+        ) : googleEmbed ? (
+          <div className="aspect-video w-full">
+            <iframe src={googleEmbed} className="h-full w-full" allowFullScreen title="Google Slides" />
+          </div>
+        ) : isOffice ? (
+          <iframe
+            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`}
+            className="h-96 w-full bg-white"
+            title="Office Presentation"
+          />
+        ) : (
+          <div className="aspect-video w-full">
+            <iframe src={src} className="h-full w-full" allowFullScreen title="Slide Deck" />
+          </div>
+        )}
+      </div>
+    );
   }
   return (
     <a

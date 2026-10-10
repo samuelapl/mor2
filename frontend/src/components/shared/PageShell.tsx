@@ -17,9 +17,17 @@ interface PageShellProps {
   actions?: ReactNode;
   children?: ReactNode;
   showLanguageToggle?: boolean;
+  centered?: boolean;
 }
 
-export default function PageShell({ role, title, description, actions, children }: PageShellProps) {
+export default function PageShell({
+  role,
+  title,
+  description,
+  actions,
+  children,
+  centered = false,
+}: PageShellProps) {
   const { lang, tRole } = useTranslation();
   const isAmharic = lang === 'am';
 
@@ -43,7 +51,11 @@ export default function PageShell({ role, title, description, actions, children 
 
   return (
     <div className="w-full animate-fade-in px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+      <div
+        className={`mb-8 flex flex-wrap items-start gap-4 ${
+          centered ? 'flex-col items-center text-center' : 'justify-between'
+        }`}
+      >
         <div>
           {role ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 dark:border-indigo-800/60 bg-white/70 dark:bg-slate-900/70 px-3 py-1 shadow-xs backdrop-blur-sm">
@@ -57,7 +69,11 @@ export default function PageShell({ role, title, description, actions, children 
             {renderText(title)}
           </h1>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p
+              className={`mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400 ${
+                centered ? 'mx-auto max-w-2xl' : 'max-w-2xl'
+              }`}
+            >
               {renderText(description)}
             </p>
           ) : null}

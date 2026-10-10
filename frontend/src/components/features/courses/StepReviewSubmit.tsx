@@ -39,6 +39,7 @@ import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
 import type { LessonDraft, ModuleDraft, WizardContentType } from './wizard-types';
 import { formatFileSize } from './wizard-components';
+import { isModuleAssessmentLesson, isLessonAssessmentSub } from './creator/weights';
 
 export interface StepReviewSubmitProps {
   title: string;
@@ -267,6 +268,104 @@ function getContentTypeBadge(type: WizardContentType) {
   }
 }
 
+/** Read-only preview of an inline assessment row's quiz (module / lesson checkpoint). */
+function AssessmentQuizPreview({
+  title,
+  questions,
+  passMark,
+  weight,
+}: {
+  title: string;
+  questions: Question[];
+  passMark?: number;
+  weight?: number;
+}) {
+  if (!questions || questions.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
+          <FileQuestion className="h-4 w-4 text-emerald-600" />
+          {title} · {questions.length} Question{questions.length !== 1 ? 's' : ''}
+        </p>
+        <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
+          {typeof weight === 'number' && <span>Weight: {weight}%</span>}
+          <span>Passing score: {passMark || 70}%</span>
+        </div>
+      </div>
+
+      <div className="space-y-2.5">
+        {questions.map((q, qIdx) => (
+          <div
+            key={q.id || qIdx}
+            className="rounded-lg border border-emerald-200/80 bg-white p-3 space-y-2 shadow-2xs"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+              <span className="font-bold text-emerald-800 text-xs">
+                Q{qIdx + 1}:{' '}
+                <RichContent
+                  inline
+                  html={q.text}
+                  placeholder="No question prompt"
+                  className="font-medium text-slate-700"
+                />
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500">
+                {q.points || 10} pts
+              </span>
+            </div>
+
+            {q.type === 'multiple_choice' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {q.options.map((opt, optIdx) => (
+                  <div
+                    key={optIdx}
+                    className={cn(
+                      'flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs',
+                      q.correctIndex === optIdx
+                        ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900'
+                        : 'bg-slate-50 border-slate-200 text-slate-600',
+                    )}
+                  >
+                    <span className="font-mono text-[11px] text-slate-400">
+                      {String.fromCharCode(65 + optIdx)}.
+                    </span>
+                    <span className="truncate">{opt}</span>
+                    {q.correctIndex === optIdx && (
+                      <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {q.type === 'true_false' && (
+              <div className="flex items-center gap-2">
+                {['True', 'False'].map((opt, optIdx) => (
+                  <span
+                    key={opt}
+                    className={cn(
+                      'px-2.5 py-1 rounded-md border text-xs font-semibold',
+                      q.correctIndex === optIdx
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                        : 'bg-slate-50 border-slate-200 text-slate-500',
+                    )}
+                  >
+                    {opt}{' '}
+                    {q.correctIndex === optIdx
+                      ? '✓ (Correct)'
+                      : ''}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StepReviewSubmit({
   title,
   titleAm,
@@ -378,16 +477,29 @@ export function StepReviewSubmit({
     setExpandedLessons(new Set());
   };
 
-  // Aggregated totals
+  // Aggregated totals — assessment rows are stored inline in the draft tree
+  // (module assessment as a lesson, lesson assessment as a sub-lesson) but are
+  // saved as separate assessment records, so they are not counted here.
   const totalLessons = useMemo(
-    () => modules.reduce((sum, m) => sum + m.lessons.length, 0),
+    () =>
+      modules.reduce(
+        (sum, m) => sum + m.lessons.filter((l) => !isModuleAssessmentLesson(l)).length,
+        0,
+      ),
     [modules],
   );
 
   const totalSubLessons = useMemo(
     () =>
       modules.reduce(
-        (sum, m) => sum + m.lessons.reduce((s, l) => s + (l.subLessons?.length || 0), 0),
+        (sum, m) =>
+          sum +
+          m.lessons
+            .filter((l) => !isModuleAssessmentLesson(l))
+            .reduce(
+              (s, l) => s + (l.subLessons ?? []).filter((sub) => !isLessonAssessmentSub(sub)).length,
+              0,
+            ),
         0,
       ),
     [modules],
@@ -713,6 +825,8 @@ export function StepReviewSubmit({
             {modules.map((module, mIdx) => {
               const isModExpanded = expandedModules.has(module.id);
               const moduleAttachments = getItemAttachments(module);
+              const instructionalLessons = module.lessons.filter((l) => !isModuleAssessmentLesson(l));
+              const moduleAssessment = module.lessons.find((l) => isModuleAssessmentLesson(l));
 
               return (
                 <div
@@ -746,7 +860,7 @@ export function StepReviewSubmit({
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                         <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                        {module.lessons.length} Lesson{module.lessons.length !== 1 ? 's' : ''}
+                        {instructionalLessons.length} Lesson{instructionalLessons.length !== 1 ? 's' : ''}
                       </span>
                       {moduleAttachments.length > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
@@ -806,22 +920,23 @@ export function StepReviewSubmit({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                            Lessons in Module {mIdx + 1} ({module.lessons.length})
+                            Lessons in Module {mIdx + 1} ({instructionalLessons.length})
                           </p>
                         </div>
 
-                        {module.lessons.length === 0 ? (
+                        {instructionalLessons.length === 0 ? (
                           <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3.5 text-xs text-amber-800 italic">
                             ⚠ No lessons created for this module.
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            {module.lessons.map((lesson, lIdx) => {
+                            {instructionalLessons.map((lesson, lIdx) => {
                               const isLessExpanded = expandedLessons.has(lesson.id);
                               const lessonBadge = getContentTypeBadge(lesson.contentType);
                               const LessonTypeIcon = lessonBadge.icon;
                               const lessonAttachments = getItemAttachments(lesson);
-                              const subLessons = lesson.subLessons || [];
+                              const subLessons = (lesson.subLessons || []).filter((s) => !isLessonAssessmentSub(s));
+                              const lessonAssessment = (lesson.subLessons || []).find((s) => isLessonAssessmentSub(s));
 
                               return (
                                 <div
@@ -976,88 +1091,14 @@ export function StepReviewSubmit({
                                         </div>
                                       )}
 
-                                      {/* Lesson Quiz Questions Preview (if QUIZ / ASSESSMENT) */}
-                                      {lesson.quizQuestions && lesson.quizQuestions.length > 0 && (
-                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
-                                          <div className="flex items-center justify-between">
-                                            <p className="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
-                                              <FileQuestion className="h-4 w-4 text-emerald-600" />
-                                              Lesson Quiz Questions ({lesson.quizQuestions.length})
-                                            </p>
-                                            <span className="text-[11px] font-semibold text-emerald-700">
-                                              Passing score: {lesson.quizPassMark || 70}%
-                                            </span>
-                                          </div>
-
-                                          <div className="space-y-2.5">
-                                            {lesson.quizQuestions.map((q, qIdx) => (
-                                              <div
-                                                key={q.id || qIdx}
-                                                className="rounded-lg border border-emerald-200/80 bg-white p-3 space-y-2 shadow-2xs"
-                                              >
-                                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
-                                                  <span className="font-bold text-emerald-800 text-xs">
-                                                    Q{qIdx + 1}:{' '}
-                                                    <RichContent
-                                                      inline
-                                                      html={q.text}
-                                                      placeholder="No question prompt"
-                                                      className="font-medium text-slate-700"
-                                                    />
-                                                  </span>
-                                                  <span className="text-[11px] font-semibold text-slate-500">
-                                                    {q.points || 10} pts
-                                                  </span>
-                                                </div>
-
-                                                {q.type === 'multiple_choice' && (
-                                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                                    {q.options.map((opt, optIdx) => (
-                                                      <div
-                                                        key={optIdx}
-                                                        className={cn(
-                                                          'flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs',
-                                                          q.correctIndex === optIdx
-                                                            ? 'bg-emerald-50 border-emerald-300 font-semibold text-emerald-900'
-                                                            : 'bg-slate-50 border-slate-200 text-slate-600',
-                                                        )}
-                                                      >
-                                                        <span className="font-mono text-[11px] text-slate-400">
-                                                          {String.fromCharCode(65 + optIdx)}.
-                                                        </span>
-                                                        <span className="truncate">{opt}</span>
-                                                        {q.correctIndex === optIdx && (
-                                                          <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                        )}
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                )}
-
-                                                {q.type === 'true_false' && (
-                                                  <div className="flex items-center gap-2">
-                                                    {['True', 'False'].map((opt, optIdx) => (
-                                                      <span
-                                                        key={opt}
-                                                        className={cn(
-                                                          'px-2.5 py-1 rounded-md border text-xs font-semibold',
-                                                          q.correctIndex === optIdx
-                                                            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                                                            : 'bg-slate-50 border-slate-200 text-slate-500',
-                                                        )}
-                                                      >
-                                                        {opt}{' '}
-                                                        {q.correctIndex === optIdx
-                                                          ? '✓ (Correct)'
-                                                          : ''}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
+                                      {/* Lesson Assessment (stored as an assessment sub-lesson) */}
+                                      {lessonAssessment && (lessonAssessment.quizQuestions?.length ?? 0) > 0 && (
+                                        <AssessmentQuizPreview
+                                          title={lessonAssessment.title.trim() || 'Lesson Assessment'}
+                                          questions={lessonAssessment.quizQuestions ?? []}
+                                          passMark={lessonAssessment.quizPassMark}
+                                          weight={lessonAssessment.quizWeight}
+                                        />
                                       )}
 
                                       {/* Sub-lessons Tree Container */}
@@ -1148,6 +1189,16 @@ export function StepReviewSubmit({
                               );
                             })}
                           </div>
+                        )}
+
+                        {/* Module Assessment (stored as an assessment lesson row) */}
+                        {moduleAssessment && (moduleAssessment.quizQuestions?.length ?? 0) > 0 && (
+                          <AssessmentQuizPreview
+                            title={moduleAssessment.title.trim() || 'Module Assessment'}
+                            questions={moduleAssessment.quizQuestions ?? []}
+                            passMark={moduleAssessment.quizPassMark}
+                            weight={moduleAssessment.quizWeight}
+                          />
                         )}
                       </div>
                     </div>

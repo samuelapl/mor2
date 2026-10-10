@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import type { ModuleDraft } from '../../wizard-types';
 import { StepReviewSubmit } from '../../StepReviewSubmit';
 import type { CreatorActiveNode } from '../types';
-import { computeWeightTotal, hasAnyAssessment } from '../weights';
+import { computeWeightTotal, hasAnyAssessment, isModuleAssessmentLesson, isLessonAssessmentSub } from '../weights';
 import type { SessionPlanDraft } from '../types';
 
 export interface ReviewSubmitStageProps {
@@ -90,8 +90,12 @@ export function ReviewSubmitStage({
 }: ReviewSubmitStageProps) {
   const { tBilingual } = useTranslation();
 
-  // Calculate stats
-  const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
+  // Calculate stats — assessment rows live inline in the draft tree but are saved
+  // as separate assessment records, so they are not counted as lessons.
+  const totalLessons = modules.reduce(
+    (acc, m) => acc + m.lessons.filter((l) => !isModuleAssessmentLesson(l)).length,
+    0,
+  );
   const totalModuleAssessments = modules.filter((m) =>
     m.lessons.some(
       (l) =>
@@ -104,9 +108,6 @@ export function ReviewSubmitStage({
   // Same total the studio and the backend submit check use.
   const calculatedWeights = computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length }, sessionPlans);
   const gradedCourse = hasAnyAssessment(modules, questions.length, sessionPlans);
-
-  const isAssessmentRow = (l: ModuleDraft['lessons'][number]) =>
-    l.contentType === 'ASSESSMENT' || l.contentType === 'QUIZ';
 
   // Blocking problems: anything here prevents submission.
   const issues: { message: string; node: CreatorActiveNode }[] = [];
@@ -132,16 +133,16 @@ export function ReviewSubmitStage({
     const mLabel = m.title.trim() || `${tBilingual('Module', 'ሞጁል')} ${mIdx + 1}`;
     const moduleNode: CreatorActiveNode = { type: 'MODULE', moduleId: m.id };
     if (!m.title.trim()) issues.push({ message: `${mLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: moduleNode });
-    const lessons = m.lessons.filter((l) => !isAssessmentRow(l));
+    const lessons = m.lessons.filter((l) => !isModuleAssessmentLesson(l));
     if (lessons.length === 0) issues.push({ message: `${mLabel}: ${tBilingual('has no lessons', 'ትምህርት የለውም')}`, node: moduleNode });
-    m.lessons.filter(isAssessmentRow).forEach((a) =>
+    m.lessons.filter(isModuleAssessmentLesson).forEach((a) =>
       checkQuestions(a.quizQuestions, `${mLabel} › ${a.title || 'Module Assessment'}`, { type: 'MODULE_ASSESSMENT', moduleId: m.id }),
     );
     lessons.forEach((l, lIdx) => {
       const lLabel = `${mLabel} › ${l.title.trim() || `${tBilingual('Lesson', 'ትምህርት')} ${lIdx + 1}`}`;
       if (!l.title.trim())
         issues.push({ message: `${lLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: { type: 'LESSON', moduleId: m.id, lessonId: l.id } });
-      (l.subLessons ?? []).filter(isAssessmentRow).forEach((a) =>
+      (l.subLessons ?? []).filter((s) => isLessonAssessmentSub(s)).forEach((a) =>
         checkQuestions(a.quizQuestions, `${lLabel} › ${a.title || 'Lesson Assessment'}`, {
           type: 'LESSON_ASSESSMENT',
           moduleId: m.id,

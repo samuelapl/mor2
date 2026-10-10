@@ -1,6 +1,15 @@
 'use client';
 
-import { Headphones, PlayCircle, BookOpenCheck, CheckCircle2, Lock } from 'lucide-react';
+import {
+  Headphones,
+  PlayCircle,
+  BookOpenCheck,
+  CheckCircle2,
+  Lock,
+  Presentation,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import type { Lesson, UploadedResource } from '@/types';
 import type { ApiProgressLesson, ApiProgressSubLesson, ApiAttachedAssessment } from '@/lib/api/types';
 import { RichContent } from '@/components/ui/RichContent';
@@ -13,7 +22,7 @@ interface MediaStageProps {
   title: string;
   badgeLabel?: string;
   durationMin?: number;
-  contentType: 'VIDEO' | 'AUDIO';
+  contentType: 'VIDEO' | 'AUDIO' | 'PRESENTATION';
   resourceUrl?: string | null;
   content?: string | null;
   lesson?: Lesson;
@@ -45,12 +54,17 @@ export function MediaStage({
 
   // Video attachment fallback if resourceUrl is not explicitly set
   const videoAttachment = allAttachments.find(isVideoAttachment);
-  const effectiveResourceUrl = resourceUrl || videoAttachment?.url || null;
+  const effectiveResourceUrl = resourceUrl || (contentType === 'VIDEO' ? videoAttachment?.url : null);
 
-  // Filter out video files from attachments so they are not listed in Lab Materials
-  const documentAttachments = allAttachments.filter((a) => !isVideoAttachment(a));
+  // Filter out the primary lecture media and video files from handouts list
+  const documentAttachments = allAttachments.filter(
+    (a) => !isVideoAttachment(a) && a.url !== effectiveResourceUrl,
+  );
 
+  const isPresentation = contentType === 'PRESENTATION';
   const isVideo = contentType === 'VIDEO' || Boolean(videoAttachment);
+  const isAudio = contentType === 'AUDIO';
+
   const isYoutube =
     effectiveResourceUrl &&
     (effectiveResourceUrl.includes('youtube.com') || effectiveResourceUrl.includes('youtu.be'));
@@ -67,6 +81,26 @@ export function MediaStage({
       return url;
     }
   };
+
+  const isPdf =
+    effectiveResourceUrl &&
+    (/\.pdf(\?.*)?$/i.test(effectiveResourceUrl) ||
+      (lesson?.fileName && /\.pdf$/i.test(lesson.fileName)));
+
+  const isGoogleSlides = effectiveResourceUrl?.includes('docs.google.com/presentation');
+
+  const getGoogleSlidesEmbed = (url: string) => {
+    if (url.includes('docs.google.com/presentation')) {
+      const base = url.split('/edit')[0].split('/pub')[0].split('/preview')[0].replace(/\/+$/, '');
+      return `${base}/embed?start=false&loop=false&delayms=3000`;
+    }
+    return url;
+  };
+
+  const isOfficeDoc =
+    effectiveResourceUrl &&
+    (/\.(ppt|pptx|pps|ppsx|odp)(\?.*)?$/i.test(effectiveResourceUrl) ||
+      (lesson?.fileName && /\.(ppt|pptx|pps|ppsx|odp)$/i.test(lesson.fileName)));
 
   const hasSubLessons = Boolean(lesson?.subLessons && lesson.subLessons.length > 0);
   const subLessonsAllDone = hasSubLessons
@@ -87,65 +121,300 @@ export function MediaStage({
             </Badge>
           ) : null}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-            {isVideo ? (
+            {isPresentation ? (
+              <Presentation className="h-3 w-3 text-indigo-500" />
+            ) : isVideo ? (
               <PlayCircle className="h-3 w-3 text-rose-500" />
             ) : (
               <Headphones className="h-3 w-3 text-amber-500" />
             )}
-            {isVideo ? 'Video Lecture' : 'Audio Lecture'}
+            {isPresentation
+              ? 'Slide Deck'
+              : isVideo
+                ? 'Video Lecture'
+                : 'Audio Lecture'}
             {durationMin ? ` · ${durationMin} min` : ''}
           </span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
       </div>
 
-      {/* Media Player Box */}
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-md">
-        {effectiveResourceUrl ? (
-          isVideo ? (
-            isYoutube ? (
-              <div className="aspect-video w-full">
-                <iframe
-                  src={getYoutubeEmbed(effectiveResourceUrl)}
-                  className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={title}
-                />
-              </div>
-            ) : (
-              <div className="aspect-video w-full flex items-center justify-center bg-black">
-                <video src={effectiveResourceUrl} controls className="h-full w-full max-h-[500px]" />
-              </div>
-            )
-          ) : (
-            <div className="p-8 flex flex-col items-center justify-center gap-4 bg-slate-900 text-white">
-              <Headphones className="h-12 w-12 text-indigo-400" />
-              <p className="text-sm font-semibold">{title}</p>
-              <audio src={effectiveResourceUrl} controls className="w-full max-w-md" />
-            </div>
-          )
-        ) : (
-          <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 bg-slate-900 text-slate-400">
-            <PlayCircle className="h-10 w-10 text-slate-600" />
-            <p className="text-xs">No media stream URL configured for this lecture.</p>
-          </div>
-        )}
-      </div>
+      {/* Multi-Content Blocks or Single Media Player */}
+      {lesson?.contentBlocks && lesson.contentBlocks.length > 0 ? (
+        <div className="space-y-6">
+          {lesson.contentBlocks.map((block, bIdx) => {
+            const bUrl = block.url;
+            const bTitle = block.title || title;
+            const bFileName = block.fileName || bTitle;
 
-      {/* Lecture Notes below player */}
-      {content && (
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Lecture Notes & Detailed Study Material
-          </h3>
-          <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
-            <RichContent
-              html={content}
-              className="text-[15px] sm:text-base leading-relaxed text-slate-800"
-            />
-          </div>
+            if (block.type === 'DOCUMENT') {
+              const htmlContent = block.content;
+              if (!htmlContent?.trim()) return null;
+              return (
+                <div key={block.id || `doc-${bIdx}`} className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 text-[11px]">
+                      {bIdx + 1}
+                    </span>
+                    <h4>{bTitle || 'Lecture Notes & Study Material'}</h4>
+                  </div>
+                  <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
+                    <RichContent html={htmlContent} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+                  </div>
+                </div>
+              );
+            }
+
+            if (block.type === 'PRESENTATION') {
+              const isBlockPdf = bUrl && (/\.pdf(\?.*)?$/i.test(bUrl) || /\.pdf$/i.test(bFileName));
+              const isBlockGoogle = bUrl?.includes('docs.google.com/presentation');
+              const isBlockOffice = bUrl && (/\.(ppt|pptx|pps|ppsx|odp)(\?.*)?$/i.test(bUrl) || /\.(ppt|pptx|pps|ppsx|odp)$/i.test(bFileName));
+
+              return (
+                <div key={block.id || `pres-${bIdx}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-md">
+                  <div className="flex flex-col bg-slate-900">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs text-slate-300">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-950 text-indigo-400 font-bold text-[11px]">
+                          {bIdx + 1}
+                        </span>
+                        <Presentation className="h-4 w-4 text-indigo-400 shrink-0" />
+                        <span className="font-semibold truncate">{bFileName}</span>
+                      </div>
+                      {bUrl && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={bUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            <span>Open in New Tab</span>
+                          </a>
+                          <a
+                            href={bUrl}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>Download Slides</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    {bUrl ? (
+                      isBlockPdf ? (
+                        <div className="w-full h-[650px] bg-slate-900">
+                          <iframe
+                            src={`${bUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                            className="w-full h-full bg-white border-0"
+                            title={bTitle}
+                          />
+                        </div>
+                      ) : isBlockGoogle ? (
+                        <div className="aspect-[16/9] w-full bg-slate-950">
+                          <iframe
+                            src={getGoogleSlidesEmbed(bUrl)}
+                            className="w-full h-full border-0"
+                            allowFullScreen
+                            title={bTitle}
+                          />
+                        </div>
+                      ) : isBlockOffice ? (
+                        <div className="w-full h-[650px] bg-slate-950 relative">
+                          <iframe
+                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(bUrl)}`}
+                            className="w-full h-full bg-white border-0"
+                            title={bTitle}
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[16/9] w-full min-h-[500px] bg-slate-950">
+                          <iframe src={bUrl} className="w-full h-full border-0" allowFullScreen title={bTitle} />
+                        </div>
+                      )
+                    ) : (
+                      <div className="p-8 text-center text-xs text-slate-400">No presentation URL provided.</div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            if (block.type === 'VIDEO') {
+              const isBlockYt = bUrl && (bUrl.includes('youtube.com') || bUrl.includes('youtu.be'));
+              return (
+                <div key={block.id || `vid-${bIdx}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-md">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs text-slate-300">
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-950 text-rose-400 font-bold text-[11px]">
+                        {bIdx + 1}
+                      </span>
+                      <PlayCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                      <span className="font-semibold truncate">{bFileName}</span>
+                    </div>
+                  </div>
+                  {bUrl ? (
+                    isBlockYt ? (
+                      <div className="aspect-video w-full">
+                        <iframe
+                          src={getYoutubeEmbed(bUrl)}
+                          className="h-full w-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={bTitle}
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video w-full flex items-center justify-center bg-black">
+                        <video src={bUrl} controls className="h-full w-full max-h-[500px]" />
+                      </div>
+                    )
+                  ) : (
+                    <div className="p-8 text-center text-xs text-slate-400">No video URL provided.</div>
+                  )}
+                </div>
+              );
+            }
+
+            if (block.type === 'AUDIO') {
+              return (
+                <div key={block.id || `aud-${bIdx}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-md p-6 text-white">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-950 text-amber-400 font-bold text-xs">
+                      {bIdx + 1}
+                    </span>
+                    <Headphones className="h-5 w-5 text-amber-400" />
+                    <span className="text-sm font-semibold truncate">{bFileName}</span>
+                  </div>
+                  {bUrl ? (
+                    <audio src={bUrl} controls className="w-full" />
+                  ) : (
+                    <div className="text-center text-xs text-slate-400">No audio URL provided.</div>
+                  )}
+                </div>
+              );
+            }
+
+            return null;
+          })}
         </div>
+      ) : (
+        <>
+          {/* Legacy Media Player Box / Slide Viewer */}
+          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-md">
+            {effectiveResourceUrl ? (
+              isPresentation ? (
+                <div className="flex flex-col bg-slate-900">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs text-slate-300">
+                    <div className="flex items-center gap-2 truncate">
+                      <Presentation className="h-4 w-4 text-indigo-400 shrink-0" />
+                      <span className="font-semibold truncate">{lesson?.fileName || title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={effectiveResourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span>Open in New Tab</span>
+                      </a>
+                      <a
+                        href={effectiveResourceUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>Download Slides</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {isPdf ? (
+                    <div className="w-full h-[650px] bg-slate-900">
+                      <iframe
+                        src={`${effectiveResourceUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                        className="w-full h-full bg-white border-0"
+                        title={title}
+                      />
+                    </div>
+                  ) : isGoogleSlides ? (
+                    <div className="aspect-[16/9] w-full bg-slate-950">
+                      <iframe
+                        src={getGoogleSlidesEmbed(effectiveResourceUrl)}
+                        className="w-full h-full border-0"
+                        allowFullScreen
+                        title={title}
+                      />
+                    </div>
+                  ) : isOfficeDoc ? (
+                    <div className="w-full h-[650px] bg-slate-950 relative">
+                      <iframe
+                        src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(effectiveResourceUrl)}`}
+                        className="w-full h-full bg-white border-0"
+                        title={title}
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-[16/9] w-full min-h-[500px] bg-slate-950">
+                      <iframe src={effectiveResourceUrl} className="w-full h-full border-0" allowFullScreen title={title} />
+                    </div>
+                  )}
+                </div>
+              ) : isVideo ? (
+                isYoutube ? (
+                  <div className="aspect-video w-full">
+                    <iframe
+                      src={getYoutubeEmbed(effectiveResourceUrl)}
+                      className="h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={title}
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-video w-full flex items-center justify-center bg-black">
+                    <video src={effectiveResourceUrl} controls className="h-full w-full max-h-[500px]" />
+                  </div>
+                )
+              ) : (
+                <div className="p-8 flex flex-col items-center justify-center gap-4 bg-slate-900 text-white">
+                  <Headphones className="h-12 w-12 text-indigo-400" />
+                  <p className="text-sm font-semibold">{title}</p>
+                  <audio src={effectiveResourceUrl} controls className="w-full max-w-md" />
+                </div>
+              )
+            ) : (
+              <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 bg-slate-900 text-slate-400">
+                {isPresentation ? <Presentation className="h-10 w-10 text-slate-600" /> : <PlayCircle className="h-10 w-10 text-slate-600" />}
+                <p className="text-xs">
+                  {isPresentation
+                    ? 'No slide deck or presentation configured for this lecture.'
+                    : 'No media stream URL configured for this lecture.'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Lecture Notes below player */}
+          {content && (
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Lecture Notes & Detailed Study Material
+              </h3>
+              <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 prose prose-base max-w-none">
+                <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Attached Resources (Documents / PDFs only — videos are displayed in the player) */}

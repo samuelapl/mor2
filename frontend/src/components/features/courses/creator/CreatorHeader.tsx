@@ -135,24 +135,14 @@ export function CreatorHeader({
             <span className="font-mono text-[11px] font-bold tracking-wider text-indigo-700 uppercase bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.2 rounded shrink-0">
               {code || 'DRAFT'}
             </span>
-            <span
-              className={cn(
-                'text-[10px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider shrink-0',
-                deliveryModeBadge.bg,
-              )}
-            >
+            <span className={cn('text-[10px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider shrink-0', deliveryModeBadge.bg)}>
               {tBilingual(deliveryModeBadge.en, deliveryModeBadge.am)}
             </span>
           </div>
           <h1 className="text-xs lg:text-sm font-bold text-slate-900 truncate mt-0.5" title={title}>
             {title.trim() || tBilingual('Untitled Course Studio', 'ስም ያልተሰጠው የኮርስ ስቱዲዮ')}
           </h1>
-          <AutosaveIndicator
-            status={autosaveStatus}
-            error={autosaveError}
-            lastSavedAt={lastSavedAt}
-            blockedReason={autosaveBlockedReason}
-          />
+          <AutosaveIndicator status={autosaveStatus} error={autosaveError} lastSavedAt={lastSavedAt} blockedReason={autosaveBlockedReason} />
         </div>
       </div>
 
@@ -177,9 +167,7 @@ export function CreatorHeader({
               <span
                 className={cn(
                   'flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold transition',
-                  isActive
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-200 text-slate-600',
+                  isActive ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600',
                 )}
               >
                 {idx + 1}
@@ -193,15 +181,6 @@ export function CreatorHeader({
       {/* Right: Actions (Save Draft, Language, Submit) */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Language switch */}
-        <button
-          type="button"
-          onClick={() => setLang(lang === 'en' ? 'am' : 'en')}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
-          title="Switch Language"
-        >
-          <Globe2 className="h-3.5 w-3.5 text-slate-500" />
-          <span>{lang === 'en' ? 'አማ' : 'EN'}</span>
-        </button>
 
         <Button
           variant="outline"
@@ -223,11 +202,7 @@ export function CreatorHeader({
           className="gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs shadow-indigo-600/20"
           title={tBilingual('Save changes to this course immediately', 'የኮርሱን ለውጦች ወዲያውኑ ያስቀምጡ')}
         >
-          {saving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Save className="h-3.5 w-3.5" />
-          )}
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           <span>{tBilingual('Save Changes', 'ለውጦችን አስቀምጥ')}</span>
         </Button>
 
@@ -240,9 +215,7 @@ export function CreatorHeader({
           title={tBilingual('Save as Draft and exit studio', 'እንደ ረቂቅ አስቀምጥ እና ውጣ')}
         >
           <FileCheck className="h-3.5 w-3.5 text-slate-500" />
-          <span className="hidden sm:inline">
-            {tBilingual('Save as Draft', 'እንደ ረቂቅ አስቀምጥ')}
-          </span>
+          <span className="hidden sm:inline">{tBilingual('Save as Draft', 'እንደ ረቂቅ አስቀምጥ')}</span>
         </Button>
 
         <Button
@@ -253,11 +226,7 @@ export function CreatorHeader({
           className="gap-1.5 text-xs font-bold shadow-xs shadow-indigo-600/20"
         >
           <Send className="h-3.5 w-3.5" />
-          <span>
-            {isEdit
-              ? tBilingual('Update & Resubmit', 'አዘምን እና እንደገና አቅርብ')
-              : tBilingual('Submit Course', 'ኮርሱን አቅርብ')}
-          </span>
+          <span>{isEdit ? tBilingual('Update & Resubmit', 'አዘምን እና እንደገና አቅርብ') : tBilingual('Submit Course', 'ኮርሱን አቅርብ')}</span>
         </Button>
       </div>
     </header>

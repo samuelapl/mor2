@@ -237,13 +237,18 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   const [assessmentUploadError, setAssessmentUploadError] = useState<string | null>(null);
 
   // Load every saved assessment (final, module and lesson tiers) back into the draft when editing.
-  const [assessmentsLoaded, setAssessmentsLoaded] = useState(!editingCourse?.id);
+  // Load every saved assessment (final, module and lesson tiers) back into the draft when editing.
+  const activeCourseId = editingCourse?.id || savedCourseId;
+  const [assessmentsLoaded, setAssessmentsLoaded] = useState(!activeCourseId);
+  const loadedAssessmentsForRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!editingCourse?.id) return;
+    if (!activeCourseId) return;
+    if (loadedAssessmentsForRef.current === activeCourseId) return;
     let cancelled = false;
     (async () => {
       try {
-        const list = await fetchCourseAssessments(editingCourse.id);
+        const list = await fetchCourseAssessments(activeCourseId);
         const details = await Promise.all(list.map((a) => fetchAssessmentWithAnswers(a.id).catch(() => null)));
         if (cancelled) return;
 
@@ -278,44 +283,79 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
         if (moduleQuizzes.size > 0 || lessonQuizzes.size > 0) {
           setModules((prev) =>
-            prev.map((m) => {
+            prev.map((m, mIdx) => {
+              const serverModId = editingCourse?.modules?.[mIdx]?.id;
+              const mq = moduleQuizzes.get(m.id) || (serverModId ? moduleQuizzes.get(serverModId) : undefined);
+
+              let instIdx = 0;
               const lessons = m.lessons.map((l) => {
-                const lq = lessonQuizzes.get(l.id);
-                if (!lq || (l.subLessons ?? []).some(isLessonAssessmentSub)) return l;
-                const sub: LessonDraft = {
-                  id: uid('les-ass'),
-                  title: lq.titleEn || 'Lesson Assessment',
+                if (isModuleAssessmentLesson(l)) return l;
+                const serverLesId = editingCourse?.modules?.[mIdx]?.lessons?.[instIdx++]?.id;
+                const lq = lessonQuizzes.get(l.id) || (serverLesId ? lessonQuizzes.get(serverLesId) : undefined);
+
+                if (lq) {
+                  const hasSub = (l.subLessons ?? []).some(isLessonAssessmentSub);
+                  if (hasSub) {
+                    return {
+                      ...l,
+                      subLessons: (l.subLessons ?? []).map((sub) =>
+                        isLessonAssessmentSub(sub)
+                          ? { ...sub, title: lq.titleEn || sub.title || 'Lesson Assessment', ...quizFields(lq) }
+                          : sub,
+                      ),
+                    };
+                  }
+                  const sub: LessonDraft = {
+                    id: uid('les-ass'),
+                    title: lq.titleEn || 'Lesson Assessment',
+                    content: '',
+                    durationMin: 15,
+                    contentType: 'ASSESSMENT',
+                    resourceUrl: '',
+                    required: true,
+                    resources: [],
+                    attachments: [],
+                    subLessons: [],
+                    ...quizFields(lq),
+                  };
+                  return { ...l, subLessons: [...(l.subLessons ?? []), sub] };
+                }
+                return l;
+              });
+
+              if (mq) {
+                const hasModAss = lessons.some(isModuleAssessmentLesson);
+                if (hasModAss) {
+                  return {
+                    ...m,
+                    lessons: lessons.map((l) =>
+                      isModuleAssessmentLesson(l)
+                        ? { ...l, title: mq.titleEn || l.title || 'Module Assessment', ...quizFields(mq) }
+                        : l,
+                    ),
+                  };
+                }
+                const row: LessonDraft = {
+                  id: uid('mod-ass'),
+                  title: mq.titleEn || 'Module Assessment',
                   content: '',
-                  durationMin: 15,
+                  durationMin: 30,
                   contentType: 'ASSESSMENT',
                   resourceUrl: '',
                   required: true,
                   resources: [],
                   attachments: [],
                   subLessons: [],
-                  ...quizFields(lq),
+                  ...quizFields(mq),
                 };
-                return { ...l, subLessons: [...(l.subLessons ?? []), sub] };
-              });
-              const mq = moduleQuizzes.get(m.id);
-              if (!mq || lessons.some(isModuleAssessmentLesson)) return { ...m, lessons };
-              const row: LessonDraft = {
-                id: uid('mod-ass'),
-                title: mq.titleEn || 'Module Assessment',
-                content: '',
-                durationMin: 30,
-                contentType: 'ASSESSMENT',
-                resourceUrl: '',
-                required: true,
-                resources: [],
-                attachments: [],
-                subLessons: [],
-                ...quizFields(mq),
-              };
-              return { ...m, lessons: [...lessons, row] };
+                return { ...m, lessons: [...lessons, row] };
+              }
+
+              return { ...m, lessons };
             }),
           );
         }
+        loadedAssessmentsForRef.current = activeCourseId;
       } catch {
         // Loading is best-effort; the course stays editable without its saved quizzes.
       } finally {
@@ -325,10 +365,12 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     return () => {
       cancelled = true;
     };
-  }, [editingCourse?.id]);
+  }, [activeCourseId, editingCourse]);
 
   // ── Active Node Selection in Studio ──
   const [activeNode, setActiveNode] = useState<CreatorActiveNode>({ type: 'COURSE_DETAILS' });
+  const activeNodeRef = useRef(activeNode);
+  activeNodeRef.current = activeNode;
 
   // Map activeNode to Studio Phase
   const currentPhase: CreatorPhase = useMemo(() => {
@@ -805,19 +847,88 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
     const run = async () => {
       const existingId = savedCourseIdRef.current;
+      let currentCourseId = existingId;
+      let savedMods: any[] | undefined;
       if (existingId) {
         const result = await updateCourseFull(existingId, details);
         if (!result.ok) throw new Error(result.message);
+        savedMods = (result as any).savedModules;
       } else {
         const result = await createCourse({ ...details, code: code.trim().toUpperCase() });
         if (result.courseId) {
           savedCourseIdRef.current = result.courseId;
           setSavedCourseId(result.courseId);
+          currentCourseId = result.courseId;
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('courseId', result.courseId);
+            window.history.replaceState(null, '', url.toString());
+          }
         }
         if (!result.ok) throw new Error(result.message);
+        savedMods = (result as any).savedModules;
       }
       if (cover) uploadedCoverRef.current = cover;
-      return savedCourseIdRef.current!;
+
+      // Keep local module and lesson IDs aligned with the newly generated backend IDs
+      if (savedMods && savedMods.length > 0) {
+        const idMap = new Map<string, string>();
+        setModules((prev) => {
+          const nextMods = prev.map((m, mIdx) => {
+            const sm = savedMods![mIdx];
+            if (!sm) return m;
+            if (m.id !== sm.id) idMap.set(m.id, sm.id);
+            const instLessons = sm.lessons ?? [];
+            let instIdx = 0;
+            return {
+              ...m,
+              id: sm.id,
+              lessons: m.lessons.map((l) => {
+                if (isModuleAssessmentLesson(l)) return l;
+                const sl = instLessons[instIdx++];
+                if (!sl) return l;
+                if (l.id !== sl.id) idMap.set(l.id, sl.id);
+                const instSubs = sl.subLessons ?? [];
+                let subIdx = 0;
+                return {
+                  ...l,
+                  id: sl.id,
+                  subLessons: (l.subLessons ?? []).map((sub) => {
+                    if (isLessonAssessmentSub(sub)) return sub;
+                    const ssl = instSubs[subIdx++];
+                    if (ssl && sub.id !== ssl.id) idMap.set(sub.id, ssl.id);
+                    return ssl ? { ...sub, id: ssl.id } : sub;
+                  }),
+                };
+              }),
+            };
+          });
+
+          // Atomically update activeNode with new IDs if any were re-mapped
+          const cur = activeNodeRef.current;
+          if (cur) {
+            const newModId = cur.moduleId ? (idMap.get(cur.moduleId) ?? cur.moduleId) : undefined;
+            const newLesId = cur.lessonId ? (idMap.get(cur.lessonId) ?? cur.lessonId) : undefined;
+            const newSubId = cur.subLessonId ? (idMap.get(cur.subLessonId) ?? cur.subLessonId) : undefined;
+            if (
+              (newModId && newModId !== cur.moduleId) ||
+              (newLesId && newLesId !== cur.lessonId) ||
+              (newSubId && newSubId !== cur.subLessonId)
+            ) {
+              setActiveNode({
+                ...cur,
+                ...(newModId ? { moduleId: newModId } : {}),
+                ...(newLesId ? { lessonId: newLesId } : {}),
+                ...(newSubId ? { subLessonId: newSubId } : {}),
+              });
+            }
+          }
+
+          return nextMods;
+        });
+      }
+
+      return currentCourseId!;
     };
 
     const next = saveQueueRef.current.then(run, run);
@@ -929,6 +1040,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     [editingCourse?.id, savedCourseId],
   );
 
+  const isEmergencyCheckedRef = useRef(false);
+
   const saveToEmergencyStorage = useCallback(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -957,6 +1070,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           savedAt: new Date().toISOString(),
         }),
       );
+      localStorage.setItem('mor_last_draft_key', emergencyDraftKey);
     } catch {}
   }, [
     emergencyDraftKey,
@@ -981,25 +1095,46 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     sessionPlans,
   ]);
 
-  useEffect(() => {
-    if (!title.trim() && !description.trim() && modules.length === 0) return;
-    saveToEmergencyStorage();
-  }, [saveToEmergencyStorage, title, description, modules]);
-
   const [emergencyDraftToRestore, setEmergencyDraftToRestore] = useState<any | null>(null);
 
+  // Check on mount for any saved emergency draft without overwriting it
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const raw = localStorage.getItem(emergencyDraftKey);
+      let raw = localStorage.getItem(emergencyDraftKey);
+      if (!raw && emergencyDraftKey === 'mor_emergency_draft_new') {
+        const lastKey = localStorage.getItem('mor_last_draft_key');
+        if (lastKey && lastKey.startsWith('mor_emergency_draft_')) {
+          raw = localStorage.getItem(lastKey);
+        }
+      }
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && (parsed.title || parsed.description || parsed.modules?.length)) {
+        const hasContent = Boolean(
+          (parsed.title && parsed.title.trim()) ||
+          (parsed.description && parsed.description.trim()) ||
+          (parsed.modules && parsed.modules.some((m: any) =>
+            (m.title && m.title !== 'Module 1: Introduction') ||
+            (m.lessons && m.lessons.some((l: any) => (l.title && l.title !== 'Welcome & Overview') || l.resourceUrl || l.quizQuestions?.length))
+          )) ||
+          (parsed.questions && parsed.questions.length > 0)
+        );
+        if (hasContent) {
           setEmergencyDraftToRestore(parsed);
         }
       }
-    } catch {}
+    } catch {} finally {
+      isEmergencyCheckedRef.current = true;
+    }
   }, [emergencyDraftKey]);
+
+  // Only save if user has actually edited (isDirty) and initial draft check has completed
+  useEffect(() => {
+    if (!isEmergencyCheckedRef.current) return;
+    if (!isDirty) return;
+    if (!title.trim() && !description.trim() && modules.length === 0) return;
+    saveToEmergencyStorage();
+  }, [saveToEmergencyStorage, isDirty, title, description, modules]);
 
   const restoreEmergencyDraft = () => {
     if (!emergencyDraftToRestore) return;
@@ -1031,6 +1166,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(emergencyDraftKey);
+        localStorage.removeItem('mor_last_draft_key');
       } catch {}
     }
     setEmergencyDraftToRestore(null);
@@ -1259,9 +1395,12 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     }
 
     if (activeNode.type === 'LESSON') {
-      const currentModule = modules.find((m) => m.id === activeNode.moduleId);
+      const currentModule = modules.find((m) => m.id === activeNode.moduleId) ?? modules[0];
       const instructional = currentModule?.lessons.filter((l) => !isModuleAssessmentLesson(l)) ?? [];
-      const lessonIndex = instructional.findIndex((l) => l.id === activeNode.lessonId);
+      let lessonIndex = instructional.findIndex((l) => l.id === activeNode.lessonId);
+      if (lessonIndex === -1 && instructional.length > 0) {
+        lessonIndex = 0;
+      }
       const currentLesson = instructional[lessonIndex];
       if (!currentModule || !currentLesson) {
         return <div className="p-8 text-center text-slate-500">Lesson not found. Please select another item from the sidebar.</div>;
@@ -1307,10 +1446,13 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     }
 
     if (activeNode.type === 'SUB_LESSON') {
-      const currentModule = modules.find((m) => m.id === activeNode.moduleId);
-      const parentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId);
+      const currentModule = modules.find((m) => m.id === activeNode.moduleId) ?? modules[0];
+      const parentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId) ?? currentModule?.lessons[0];
       const subs = (parentLesson?.subLessons ?? []).filter((s) => !isLessonAssessmentSub(s));
-      const subIndex = subs.findIndex((s) => s.id === activeNode.subLessonId);
+      let subIndex = subs.findIndex((s) => s.id === activeNode.subLessonId);
+      if (subIndex === -1 && subs.length > 0) {
+        subIndex = 0;
+      }
       const currentSub = subs[subIndex];
       if (!currentModule || !parentLesson || !currentSub) {
         return <div className="p-8 text-center text-slate-500">Sub-lesson not found. Please select another item from the sidebar.</div>;

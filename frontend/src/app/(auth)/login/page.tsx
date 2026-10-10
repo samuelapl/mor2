@@ -4,14 +4,12 @@ import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, ChevronDown, KeyRound, Loader2, Lock, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from 'lucide-react';
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from '@/constants/auth';
 import { ROLE_LABELS, ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { ROLE_ICONS } from '@/constants/navigation';
 import { useLms } from '@/lib/lms-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
@@ -23,9 +21,10 @@ const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-
 export default function LoginPage() {
   const router = useRouter();
   const { login, ready } = useLms();
-  const { tBilingual, tRole, lang } = useTranslation();
+  const { tBilingual, tRole } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [demoAccountsOpen, setDemoAccountsOpen] = useState(false);
@@ -39,16 +38,12 @@ export default function LoginPage() {
       const result = await login(email, password);
       if (result.ok) {
         toast.success('Welcome back! Signing you in…');
-        // ?redirect=/news/... brings readers back to the page that asked them to sign in.
-        // Only same-site paths are honoured, so the parameter cannot send users elsewhere.
         const redirect = new URLSearchParams(window.location.search).get('redirect');
         const safeRedirect = redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
         router.push(safeRedirect ?? getRoleHomePath(result.role, result.user?.permissions));
       } else if (result.passwordChangeRequired) {
-        // Admin-created account: a code was emailed, finish on the first-login page.
         router.push('/first-login');
       } else if (result.emailVerificationRequired) {
-        // Self-registered account that never verified its email: a code was emailed.
         const params = new URLSearchParams({ email: email.trim() });
         if (result.devCode) params.set('dev', result.devCode);
         router.push(`/verify-email?${params.toString()}`);
@@ -75,7 +70,7 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
@@ -83,10 +78,6 @@ export default function LoginPage() {
             <ArrowLeft className="h-4 w-4" />
             {tBilingual('Back to home', 'ወደ ዋና ገጽ ተመለስ')}
           </Link>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle isAmharic={lang === 'am'} />
-          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
@@ -104,14 +95,14 @@ export default function LoginPage() {
                 className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
               />
             </Link>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {tBilingual('Sign in to MoR LMS', 'ወደ ገቢዎች ሚ/ር LMS ይግቡ')}
+            <h1 className="mt-5 font-display text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {tBilingual(
+                'Welcome to MoR E-Learning Management System',
+                'እንኳን ወደ ገቢዎች ሚ/ር ኢ-ትምህርት አስተዳደር ሥርዓት በደህና መጡ',
+              )}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              {tBilingual(
-                'Staff demo accounts or a learner registration.',
-                'የሰራተኞች ማሳያ መለያዎች ወይም የተማሪ ምዝገባ።',
-              )}
+              {tBilingual('Sign in', 'ግባ')}
             </p>
           </div>
 
@@ -154,7 +145,7 @@ export default function LoginPage() {
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   autoComplete="current-password"
                   value={password}
@@ -163,8 +154,16 @@ export default function LoginPage() {
                     setError(null);
                   }}
                   placeholder="••••••••"
-                  className={inputClass}
+                  className={cn(inputClass, 'pr-10')}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -260,13 +259,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
-        <p className="mt-4 text-center text-[11px] text-slate-400 dark:text-slate-500">
-          {tBilingual(
-            'New registrations require administrator approval before the first sign-in.',
-            'አዳዲስ ምዝገባዎች ከመጀመሪያው መግቢያ በፊት የአስተዳዳሪ ማረጋገጫ ያስፈልጋቸዋል።',
-          )}
-        </p>
       </div>
     </main>
   );

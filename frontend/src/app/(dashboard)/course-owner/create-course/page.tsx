@@ -1,21 +1,46 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FilePenLine, PackageOpen } from 'lucide-react';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import PageShell from '@/components/shared/PageShell';
 import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
 import { ScormUpload } from '@/components/features/courses/ScormUpload';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLms } from '@/lib/lms-store';
 import { cn } from '@/lib/utils';
 
 type CreationMode = 'manual' | 'scorm' | null;
 
-export default function CreateCoursePage() {
+function CreateCourseContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const courseIdParam = searchParams.get('courseId');
+  const { courses } = useLms();
   const { tBilingual } = useTranslation();
-  const [mode, setMode] = useState<CreationMode>(null);
+
+  const editingCourse = useMemo(() => {
+    if (!courseIdParam) return null;
+    return courses.find((c) => c.id === courseIdParam) ?? null;
+  }, [courseIdParam, courses]);
+
+  const [mode, setMode] = useState<CreationMode>(() => (courseIdParam ? 'manual' : null));
+
+  useEffect(() => {
+    if (courseIdParam && mode !== 'manual') {
+      setMode('manual');
+    }
+  }, [courseIdParam, mode]);
+
+  const handleCancelManual = () => {
+    setMode(null);
+    if (courseIdParam && typeof window !== 'undefined' && window.history?.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('courseId');
+      window.history.replaceState(null, '', url.pathname);
+    }
+  };
 
   return (
     <>
@@ -72,7 +97,7 @@ export default function CreateCoursePage() {
       {/* Manual creation — full-screen workspace overlay */}
       <WorkspaceDetailOverlay
         open={mode === 'manual'}
-        onClose={() => setMode(null)}
+        onClose={handleCancelManual}
         title={tBilingual('Create New Course', 'አዲስ ኮርስ ፍጠር')}
         subtitle={tBilingual(
           'Add course details, build your curriculum, attach content, and set up the final assessment.',
@@ -81,8 +106,9 @@ export default function CreateCoursePage() {
       >
         <div className="w-full">
           <CourseCreationWizard
+            editingCourse={editingCourse}
             onDone={() => router.push('/courses')}
-            onCancel={() => setMode(null)}
+            onCancel={handleCancelManual}
           />
         </div>
       </WorkspaceDetailOverlay>
@@ -107,5 +133,13 @@ export default function CreateCoursePage() {
         </div>
       </WorkspaceDetailOverlay>
     </>
+  );
+}
+
+export default function CreateCoursePage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateCourseContent />
+    </Suspense>
   );
 }
