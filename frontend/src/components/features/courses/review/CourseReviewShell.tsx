@@ -236,7 +236,12 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             {latestRejection && (
               <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800">
                 <p className="font-bold">{tBilingual('Rejected — reason from reviewer', 'ውድቅ ተደርጓል — የገምጋሚ ምክንያት')}</p>
-                <div className="mt-1" dangerouslySetInnerHTML={{ __html: latestRejection }} />
+                {/* Reasons are plain text now; older ones were saved as rich-text HTML. */}
+                {/<[a-z][\s\S]*>/i.test(latestRejection) ? (
+                  <div className="mt-1" dangerouslySetInnerHTML={{ __html: latestRejection }} />
+                ) : (
+                  <p className="mt-1 whitespace-pre-line">{latestRejection}</p>
+                )}
               </div>
             )}
 

@@ -133,9 +133,12 @@ export function OverviewStage({
                   {tBilingual('Trainers:', 'አሰልጣኞች:')} {trainers.map(userName).join(', ')}
                 </Chip>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                  {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
-                </span>
+                // Only courses with online sessions need a trainer (see useCourseActions.requiresTrainer).
+                (course.sessionPlans?.length ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                    {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
+                  </span>
+                )
               )}
             </div>
 

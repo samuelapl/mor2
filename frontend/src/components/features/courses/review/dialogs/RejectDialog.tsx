@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { RichTextArea } from '@/components/ui/RichTextArea';
+import { TextArea } from '@/components/ui/TextArea';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 type ReasonDialogMode = 'reject' | 'returnToDraft';
@@ -81,7 +81,7 @@ export function RejectDialog({ open, mode = 'reject', onClose, courseLabel, busy
         </>
       }
     >
-      <RichTextArea
+      <TextArea
         id="courseRejectReason"
         label={t(copy.label)}
         required

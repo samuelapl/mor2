@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar } from '@/components/ui/FilterBar';
-import { RichTextArea } from '@/components/ui/RichTextArea';
+import { TextArea } from '@/components/ui/TextArea';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { toast } from '@/lib/toast';
 
@@ -185,7 +185,7 @@ export function PendingCourseApprovals() {
           </>
         }
       >
-        <RichTextArea
+        <TextArea
           id="rejectionReason"
           label="Reason for rejection"
           required

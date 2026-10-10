@@ -8,7 +8,7 @@ import {
   Loader2,
   RefreshCw,
   Search,
-  UserMinus,
+  UserX,
   UserPlus,
   UsersRound,
   X,
@@ -21,7 +21,7 @@ import { TableSkeleton } from '@/components/ui/Skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { useLms } from '@/lib/lms-store';
-import { dropEnrollment, fetchCourseEnrollments } from '@/lib/api/enrollments';
+import { fetchCourseEnrollments, unenrollLearner } from '@/lib/api/enrollments';
 import { fetchCourseLearnersProgress } from '@/lib/api/progress';
 import { usePagination } from '@/lib/usePagination';
 import { cn } from '@/lib/utils';
@@ -223,19 +223,19 @@ export function EnrollmentForm() {
     }
   };
 
-  // Handle learner drop/withdrawal
+  // Unenroll: removes the enrollment along with the learner's progress and certificate
   const handleWithdrawConfirm = async () => {
     if (!withdrawingLearner) return;
     setWithdrawing(true);
     try {
-      await dropEnrollment(withdrawingLearner.enrollmentId, 'Withdrawn by training admin');
-      toast.success(`${withdrawingLearner.name} has been withdrawn from this course.`);
+      await unenrollLearner(withdrawingLearner.enrollmentId);
+      toast.success(`${withdrawingLearner.name} has been unenrolled from this course.`);
       setWithdrawingLearner(null);
       if (selectedCourse?.id) {
         void loadRoster(selectedCourse.id);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to withdraw learner.');
+      toast.error(err instanceof Error ? err.message : 'Failed to unenroll learner.');
     } finally {
       setWithdrawing(false);
     }
@@ -626,16 +626,15 @@ export function EnrollmentForm() {
                                   ? 'Active'
                                   : 'Dropped'}
                             </Badge>
-                            {learner.status === 'ACTIVE' && (
-                              <button
-                                type="button"
-                                title={`Withdraw ${learner.name}`}
-                                onClick={() => setWithdrawingLearner(learner)}
-                                className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                              >
-                                <UserMinus className="h-4 w-4" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              title={`Unenroll ${learner.name}`}
+                              aria-label={`Unenroll ${learner.name}`}
+                              onClick={() => setWithdrawingLearner(learner)}
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                            >
+                              <UserX className="h-4 w-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -730,12 +729,12 @@ export function EnrollmentForm() {
         </div>
       )}
 
-      {/* Confirm Learner Withdrawal Modal */}
+      {/* Confirm Learner Unenroll Modal */}
       <ConfirmModal
         open={Boolean(withdrawingLearner)}
-        title="Withdraw Learner from Course"
-        description={`Are you sure you want to withdraw "${withdrawingLearner?.name}" from "${selectedCourse?.title}"? Their progress will be preserved but their status will change to Dropped.`}
-        confirmText="Withdraw Learner"
+        title="Unenroll Learner from Course"
+        description={`Unenroll "${withdrawingLearner?.name}" from "${selectedCourse?.title}"? This permanently removes their enrollment, lesson and module progress, assessment attempts and certificate for this course. This cannot be undone.`}
+        confirmText="Unenroll Learner"
         variant="danger"
         isLoading={withdrawing}
         onConfirm={handleWithdrawConfirm}

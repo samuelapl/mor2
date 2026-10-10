@@ -188,6 +188,8 @@ export interface ApiCourseDetail extends ApiCourseListItem {
   approvals: ApiApproval[];
   attachments?: ApiAttachment[];
   sessionPlans?: ApiCourseSessionPlanRow[];
+  /** Files across the course, counted even when lesson files are hidden (learner not enrolled yet). */
+  materialCount?: number;
 }
 
 /** A planned online session as included in the course detail. */

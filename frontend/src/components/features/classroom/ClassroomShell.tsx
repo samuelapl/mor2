@@ -328,11 +328,14 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
     setActiveQuizModalId(assessmentId);
   };
 
-  const handleQuizPassed = async () => {
-    await loadData();
-    if (nextItem) {
-      navigateTo(nextItem);
-    }
+  // Continue after a passed quiz goes to the item right after that quiz, even when it was
+  // started from a lesson's inline card rather than from the quiz item itself.
+  const handleQuizContinue = () => {
+    const quizId = activeQuizModalId;
+    setActiveQuizModalId(null);
+    const quizIndex = flatItems.findIndex((i) => i.type === 'QUIZ' && i.quizId === quizId);
+    const target = quizIndex >= 0 ? flatItems[quizIndex + 1] : nextItem;
+    if (target) navigateTo(target);
   };
 
   // Construct the active preview assessment for QuizTakerModal when in preview mode
@@ -493,8 +496,9 @@ export function ClassroomShell({ courseId, previewCourse, isPreview, onExitPrevi
               previewAssessment={activePreviewAssessment}
               embedded
               onPassed={() => {
-                void handleQuizPassed();
+                void loadData();
               }}
+              onContinue={handleQuizContinue}
             />
           ) : (
             <ClassroomStage

@@ -181,9 +181,14 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
           const subLessonsAllDone = hasSubLessons
             ? (lessonProg?.subLessons?.every((s) => s.completed) ?? false)
             : true;
+          // Mirrors the backend gate: a lesson without sub-lessons only completes once its
+          // assessment is passed, so its quiz opens on study time rather than on completion.
           const quizUnlocked = isOpenProgression
             ? true
-            : lessonUnlocked && lessonCompleted && subLessonsAllDone;
+            : lessonUnlocked &&
+              (hasSubLessons
+                ? lessonCompleted && subLessonsAllDone
+                : (lessonProg?.timeSatisfied ?? true));
           const quizCompleted = lessonAssessment.passed;
 
           items.push({

@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import type { ModuleDraft } from '../../wizard-types';
 import { StepReviewSubmit } from '../../StepReviewSubmit';
 import type { CreatorActiveNode } from '../types';
-import { computeWeightTotal, hasAnyAssessment, isModuleAssessmentLesson, isLessonAssessmentSub } from '../weights';
+import { computeWeightTotal, hasAnyAssessment, isModuleAssessmentLesson, isLessonAssessmentSub, pointsMismatch } from '../weights';
 import type { SessionPlanDraft } from '../types';
 
 export interface ReviewSubmitStageProps {
@@ -114,10 +114,20 @@ export function ReviewSubmitStage({
   if (!code.trim()) issues.push({ message: tBilingual('Course code is required', 'የኮርስ ኮድ ያስፈልጋል'), node: { type: 'COURSE_DETAILS' } });
   if (modules.length === 0) issues.push({ message: tBilingual('Add at least one module', 'ቢያንስ አንድ ሞጁል ያክሉ'), node: { type: 'COURSE_DETAILS' } });
 
-  const checkQuestions = (qs: Question[] | undefined, label: string, node: CreatorActiveNode) => {
+  const checkQuestions = (qs: Question[] | undefined, weight: number, label: string, node: CreatorActiveNode) => {
     if (!qs || qs.length === 0) {
       issues.push({ message: `${label}: ${tBilingual('has no questions', 'ጥያቄ የለውም')}`, node });
       return;
+    }
+    const mismatch = pointsMismatch(qs, weight);
+    if (mismatch) {
+      issues.push({
+        message: `${label}: ${tBilingual(
+          `question points total ${mismatch.total} but the weight is ${mismatch.required}% — they must be equal`,
+          `የጥያቄ ነጥቦች ድምር ${mismatch.total} ነው ክብደቱ ግን ${mismatch.required}% ነው — እኩል መሆን አለባቸው`,
+        )}`,
+        node,
+      });
     }
     qs.forEach((q, i) => {
       const n = `${label} · Q${i + 1}`;
@@ -136,14 +146,14 @@ export function ReviewSubmitStage({
     const lessons = m.lessons.filter((l) => !isModuleAssessmentLesson(l));
     if (lessons.length === 0) issues.push({ message: `${mLabel}: ${tBilingual('has no lessons', 'ትምህርት የለውም')}`, node: moduleNode });
     m.lessons.filter(isModuleAssessmentLesson).forEach((a) =>
-      checkQuestions(a.quizQuestions, `${mLabel} › ${a.title || 'Module Assessment'}`, { type: 'MODULE_ASSESSMENT', moduleId: m.id }),
+      checkQuestions(a.quizQuestions, a.quizWeight ?? 0, `${mLabel} › ${a.title || 'Module Assessment'}`, { type: 'MODULE_ASSESSMENT', moduleId: m.id }),
     );
     lessons.forEach((l, lIdx) => {
       const lLabel = `${mLabel} › ${l.title.trim() || `${tBilingual('Lesson', 'ትምህርት')} ${lIdx + 1}`}`;
       if (!l.title.trim())
         issues.push({ message: `${lLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: { type: 'LESSON', moduleId: m.id, lessonId: l.id } });
       (l.subLessons ?? []).filter((s) => isLessonAssessmentSub(s)).forEach((a) =>
-        checkQuestions(a.quizQuestions, `${lLabel} › ${a.title || 'Lesson Assessment'}`, {
+        checkQuestions(a.quizQuestions, a.quizWeight ?? 0, `${lLabel} › ${a.title || 'Lesson Assessment'}`, {
           type: 'LESSON_ASSESSMENT',
           moduleId: m.id,
           lessonId: l.id,
@@ -151,7 +161,7 @@ export function ReviewSubmitStage({
       );
     });
   });
-  if (questions.length > 0) checkQuestions(questions, quizTitle || 'Final Assessment', { type: 'FINAL_ASSESSMENT' });
+  if (questions.length > 0) checkQuestions(questions, finalAssessmentWeight, quizTitle || 'Final Assessment', { type: 'FINAL_ASSESSMENT' });
   sessionPlans.forEach((plan, i) => {
     const label = plan.titleEn.trim() || `${tBilingual('Online session', 'ኦንላይን ክፍለ-ጊዜ')} ${i + 1}`;
     const node: CreatorActiveNode = { type: 'SESSION_PLAN', sessionPlanId: plan.id };

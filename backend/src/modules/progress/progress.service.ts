@@ -11,6 +11,7 @@ import {
   computeSequentialUnlocks,
   isTimeSatisfied,
   loadUserCompletionState,
+  moduleRequiredSeconds,
   requiredSeconds,
   sumLessonTime,
 } from '@common/utils';
@@ -279,6 +280,15 @@ export class ProgressService {
         ]),
       );
 
+      const moduleRequired = moduleRequiredSeconds(
+        module.durationMinutes,
+        module.lessons.flatMap((l) => [
+          l.durationMinutes,
+          ...(l.subLessons ?? []).map((sub) => sub.durationMinutes),
+        ]),
+        ratio,
+      );
+
       return {
         moduleId: module.id,
         title: module.title,
@@ -294,8 +304,8 @@ export class ProgressService {
           lessonsInModule > 0 ? Math.round((completedInModule / lessonsInModule) * 100) : 0,
         durationMinutes: module.durationMinutes,
         timeSpentSeconds: moduleTimeSpent,
-        requiredSeconds: requiredSeconds(module.durationMinutes, ratio),
-        timeSatisfied: isTimeSatisfied(moduleTimeSpent, module.durationMinutes, ratio),
+        requiredSeconds: moduleRequired,
+        timeSatisfied: moduleTimeSpent >= moduleRequired,
         assessment: moduleAssessmentByModuleId.get(module.id) ?? null,
         lessons: module.lessons.map((lesson) => {
           const timeSpentSeconds = lesson.completions[0]?.timeSpentSeconds ?? 0;
@@ -766,7 +776,7 @@ export class ProgressService {
 
     const activeLessons = await this.prisma.lesson.findMany({
       where: { moduleId, deletedAt: null },
-      select: { id: true, parentId: true },
+      select: { id: true, parentId: true, durationMinutes: true },
     });
 
     if (activeLessons.length === 0) return;
@@ -797,11 +807,13 @@ export class ProgressService {
     });
 
     const ratio = await this.policyService.getTimeRatio();
-    const moduleTimeOk = isTimeSatisfied(
-      sumLessonTime(completionRows),
-      currentModule.durationMinutes,
-      ratio,
-    );
+    const moduleTimeOk =
+      sumLessonTime(completionRows) >=
+      moduleRequiredSeconds(
+        currentModule.durationMinutes,
+        activeLessons.map((l) => l.durationMinutes),
+        ratio,
+      );
 
     const moduleAssessment = await this.prisma.assessment.findFirst({
       where: { moduleId, type: AssessmentType.MODULE_ASSESSMENT },

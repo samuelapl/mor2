@@ -187,6 +187,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
   const totalAttachments = useMemo(() => {
     if (!course) return 0;
+    // Lesson files are hidden until the learner enrolls, so counting them here would come up short.
+    if (course.materialCount !== undefined) return course.materialCount;
     let count = (course.attachments || []).length;
     for (const mod of course.modules || []) {
       count += getItemAttachments(mod).length;

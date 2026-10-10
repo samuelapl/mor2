@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { assertCourseWeightsTotal } from './weights.util';
+import { assertAssessmentPointsMatchWeights, assertCourseWeightsTotal } from './weights.util';
 
 const db = (rows: Array<{ weight: number; questions: unknown }>) =>
   ({ assessment: { findMany: jest.fn().mockResolvedValue(rows) } }) as any;
@@ -73,5 +73,31 @@ describe('assertCourseWeightsTotal with session quizzes', () => {
       { weight: 20, questions: [], type: 'SESSION_ASSESSMENT' },
     ];
     await expect(assertCourseWeightsTotal(db(rows as any), 'c', 'exact')).resolves.toBeUndefined();
+  });
+});
+
+describe('assertAssessmentPointsMatchWeights', () => {
+  const rows = (...r: Array<{ weight: number; questions: unknown }>) =>
+    db(r.map((x, i) => ({ titleEn: `A${i}`, ...x })) as any);
+
+  it('accepts points that total the weight', async () => {
+    await expect(
+      assertAssessmentPointsMatchWeights(rows({ weight: 20, questions: [{ points: 15 }, { points: 5 }] }), 'c'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('rejects points that do not total the weight', async () => {
+    await expect(
+      assertAssessmentPointsMatchWeights(rows({ weight: 20, questions: [{ points: 10 }, { points: 20 }] }), 'c'),
+    ).rejects.toThrow('"A0" has 30 points but weighs 20%');
+  });
+
+  it('skips 0% assessments and assessments without questions', async () => {
+    await expect(
+      assertAssessmentPointsMatchWeights(
+        rows({ weight: 0, questions: [{ points: 10 }] }, { weight: 30, questions: [] }),
+        'c',
+      ),
+    ).resolves.toBeUndefined();
   });
 });

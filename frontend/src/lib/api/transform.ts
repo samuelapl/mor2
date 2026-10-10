@@ -260,6 +260,7 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
     trainerIds: (apiCourse.trainers ?? []).map((trainer) => trainer.userId),
     modules: (apiCourse.modules ?? []).map(moduleFromApi),
     attachments: (apiCourse.attachments ?? []).map(attachmentFromApi),
+    materialCount: apiCourse.materialCount,
     rejectionReason: latest.reason,
     lastRejectionReason: secondLatest?.reason,
     sessionPlans: (apiCourse.sessionPlans ?? []).map((p) => ({

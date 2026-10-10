@@ -39,8 +39,10 @@ interface QuizTakerModalProps {
   assessmentId?: string;
   /** In preview mode, the in-memory assessment data to take directly */
   previewAssessment?: ApiAssessment | null;
-  /** Called once the learner passes. The parent is responsible for refreshing progress / advancing. */
+  /** Called exactly once when the learner passes, so the parent can refresh progress. */
   onPassed?: () => void;
+  /** Called when the learner clicks Continue after passing. Defaults to `onClose`. */
+  onContinue?: () => void;
   /** When true, renders directly inside the container without a portal overlay covering the sidebar */
   embedded?: boolean;
 }
@@ -58,6 +60,7 @@ export function QuizTakerModal({
   assessmentId,
   previewAssessment,
   onPassed,
+  onContinue,
   embedded = false,
 }: QuizTakerModalProps) {
   const [loading, setLoading] = useState(false);
@@ -75,14 +78,11 @@ export function QuizTakerModal({
 
   useEffect(() => {
     if (result) {
-      if (result.passed && onPassed) {
-        onPassed();
-      }
       setTimeout(() => {
         congratsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 50);
     }
-  }, [result, onPassed]);
+  }, [result]);
 
   useEffect(() => {
     if (!open) return;
@@ -391,10 +391,7 @@ export function QuizTakerModal({
                   {result.passed ? (
                     <Button
                       size="md"
-                      onClick={() => {
-                        onPassed?.();
-                        onClose();
-                      }}
+                      onClick={onContinue ?? onClose}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 shadow-md"
                     >
                       Continue

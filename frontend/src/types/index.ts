@@ -174,6 +174,8 @@ export interface Course {
   progress: Record<string, number>;
   modules: Module[];
   attachments?: Attachment[];
+  /** Files across the course from the server; set even when lesson files are hidden before enrolling. */
+  materialCount?: number;
   /** Reviewer decisions, newest first. Only present on courses loaded with detail. */
   approvals?: CourseApprovalEntry[];
   /** Owner planned online sessions during preparation (Online Self-Paced only). */
