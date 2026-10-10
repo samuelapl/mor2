@@ -32,11 +32,14 @@ import { LegalDocumentsModule } from './modules/legal-documents/legal-documents.
 import { PreparedQuizModule } from './modules/prepared-quiz/prepared-quiz.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { SessionReschedulerModule } from './modules/session-rescheduler/session-rescheduler.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       validate,
@@ -68,6 +71,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     LookupCategoriesModule,
     NewsModule,
     LegalDocumentsModule,
+    SessionReschedulerModule,
   ],
   providers: [
     PrismaService,

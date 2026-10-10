@@ -409,6 +409,7 @@ export class ProgressService {
         select: {
           id: true,
           sessionPlanId: true,
+          originalPlanId: true,
           titleEn: true,
           scheduledAt: true,
           durationMinutes: true,
@@ -435,6 +436,18 @@ export class ProgressService {
 
     const byId = new Map(sessions.map((s) => [s.id, s]));
     const planned = plans.map((p): LearnerSessionInfo => {
+      // 1. Check if learner already attended any completed session for this specific plan
+      const attendedPrior = sessions.find(
+        (s) =>
+          (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+          s.status === 'COMPLETED' &&
+          s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
+      );
+      if (attendedPrior) {
+        return toInfo(attendedPrior, p.id);
+      }
+
+      // 2. Otherwise return current active/upcoming session for this plan
       const live =
         p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
       return live
@@ -452,7 +465,7 @@ export class ProgressService {
             planned: true,
           };
     });
-    const extra = sessions.filter((s) => !s.sessionPlanId).map((s) => toInfo(s, null));
+    const extra = sessions.filter((s) => !s.sessionPlanId && !s.originalPlanId).map((s) => toInfo(s, null));
     return [...planned, ...extra];
   }
 

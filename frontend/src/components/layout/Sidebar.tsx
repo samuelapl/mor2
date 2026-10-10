@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -33,13 +33,20 @@ export default function Sidebar() {
   const navItems = filterNavItems(navItemsForRole(role), canAny);
 
   const currentPath = pathname ? pathname.replace(/\/+$/, "") || "/" : "/";
+  const [currentQuery, setCurrentQuery] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentQuery(window.location.search);
+    }
+  }, [pathname]);
 
   // Flatten all navigable hrefs in current nav to pick the single best (most specific/longest) match
   const allHrefs = useMemo(() => {
     const list: string[] = [];
     const collect = (items: NavItem[]) => {
       for (const item of items) {
-        if (item.href) list.push(item.href.replace(/\/+$/, "") || "/");
+        if (item.href) list.push(item.href.split('?')[0].replace(/\/+$/, "") || "/");
         if (item.children) collect(item.children);
       }
     };
@@ -62,12 +69,27 @@ export default function Sidebar() {
   }, [allHrefs, currentPath]);
 
   const isActive = (href: string) => {
-    const normalized = href ? href.replace(/\/+$/, "") || "/" : "/";
+    if (!href) return false;
+    const [pathPart, queryPart] = href.split('?');
+    const normalized = pathPart.replace(/\/+$/, "") || "/";
+    if (queryPart) {
+      if (normalized !== currentPath) return false;
+      const targetParams = new URLSearchParams(queryPart);
+      const activeParams = new URLSearchParams(currentQuery);
+      let match = true;
+      targetParams.forEach((val, key) => {
+        if (activeParams.get(key) !== val) match = false;
+      });
+      return match;
+    }
     return normalized === activeHref;
   };
 
-  const isGroupActive = (item: NavItem): boolean =>
-    item.children?.some((child) => (child.href ? isActive(child.href) : false)) ?? false;
+  const isGroupActive = (item: NavItem): boolean => {
+    if (item.children?.some((child) => (child.href ? isActive(child.href) : false))) return true;
+    if (item.children?.some((child) => child.href && child.href.split('?')[0] === currentPath)) return true;
+    return item.href ? isActive(item.href) : false;
+  };
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const isGroupOpen = (item: NavItem) => openGroups[item.label] ?? isGroupActive(item);
