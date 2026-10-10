@@ -653,6 +653,10 @@ model LiveSession {
   preparedQuizzes   SessionPreparedQuiz[]         @relation("SessionPreparedQuizzes")
   /// The planned session this was scheduled from, if any. Deleting the plan keeps the held session.
   sessionPlanId     String?                       @unique @map("session_plan_id")
+  isAutoRescheduled Boolean                       @default(false) @map("is_auto_rescheduled")
+  rescheduleStatus  String                        @default("NONE") @map("reschedule_status")
+  originalPlanId    String?                       @map("original_plan_id")
+  plannedOrder      Int?                          @map("planned_order")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -1207,4 +1211,21 @@ model LegalDocument {
   @@index([categoryId, status])
   @@index([createdById])
   @@map("legal_documents")
+}
+
+// ──────────────────────────────────────────────────────────
+// 21. Public Holidays (Calendar Governance)
+// ──────────────────────────────────────────────────────────
+
+model PublicHoliday {
+  id          String   @id @default(uuid())
+  nameEn      String   @map("name_en")
+  nameAm      String?  @map("name_am")
+  holidayDate DateTime @unique @map("holiday_date") @db.Date
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([holidayDate])
+  @@map("public_holidays")
 }

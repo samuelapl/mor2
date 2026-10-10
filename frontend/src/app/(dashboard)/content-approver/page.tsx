@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
 import { CourseCard } from '@/components/features/courses/CourseCard';
-import { DonutChart, BarChart } from '@/components/ui/charts';
+import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 export default function ContentApproverDashboardPage() {
   const { courses } = useLms();
@@ -140,12 +140,12 @@ export default function ContentApproverDashboardPage() {
                 </Button>
               </Link>
             </div>
-            <div className="mt-6 flex justify-center">
-              <DonutChart
-                segments={queueSegments}
-                centerLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
-                centerValue={courses.length}
-                emptyText={isAmharic ? 'ምንም የቀረበ ኮርስ የለም' : 'No courses submitted'}
+            <div className="mt-6">
+              <VerticalBarChart
+                items={queueSegments}
+                totalValue={courses.length}
+                unitLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
+                emptyText={isAmharic ? 'ምንም የቀረበ ኮርስ የለም' : 'No courses submitted in database'}
               />
             </div>
           </div>

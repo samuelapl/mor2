@@ -489,6 +489,8 @@ export const ROLE_PERMISSION_MATRIX: Record<RoleName, string[]> = {
     'CERTIFICATE_TEMPLATE_MANAGE',
     'news.manage',
     'news.publish',
+    'laws.view',
+    'laws.manage',
   ],
   [RoleName.TRAINER]: [
     'course.view.assigned',

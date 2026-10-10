@@ -4,15 +4,21 @@ import { useEffect, useState } from 'react';
 import {
   Award,
   CheckCircle2,
+  CalendarCheck,
+  CalendarClock,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Compass,
   Info,
   Lock,
+  Plus,
   RotateCcw,
   Save,
   ShieldAlert,
   ShieldCheck,
   Timer,
+  Trash2,
   Unlock,
   Users,
   Video,
@@ -24,7 +30,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { type CourseProgressionMode, fetchCoursePolicy, updateCoursePolicy } from '@/lib/api/policy';
 import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
-import { ApiError } from '@/lib/api/client';
+import { ApiError, api } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { CardSkeleton } from '@/components/ui/Skeleton';
@@ -52,6 +58,16 @@ export default function PoliciesPage() {
   const [allowAllViewAttendance, setAllowAllViewAttendance] = useState(false);
   const [attendanceThreshold, setAttendanceThreshold] = useState('60');
   const [livePolicyUpdatedAt, setLivePolicyUpdatedAt] = useState<string | null>(null);
+  const [rescheduleDayGap, setRescheduleDayGap] = useState('10');
+
+  // Ethiopian Public Holidays state
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const [loadingHolidays, setLoadingHolidays] = useState(false);
+  const [seedingHolidays, setSeedingHolidays] = useState(false);
+  const [showHolidays, setShowHolidays] = useState(false);
+  const [newHolidayName, setNewHolidayName] = useState('');
+  const [newHolidayDate, setNewHolidayDate] = useState('');
+  const [addingHoliday, setAddingHoliday] = useState(false);
 
   // Load course policies
   const loadCoursePolicies = async () => {
@@ -82,6 +98,9 @@ export default function PoliciesPage() {
         if (settings.default_attendance_threshold) {
           setAttendanceThreshold(settings.default_attendance_threshold);
         }
+        if (settings.live_session_reschedule_day_gap) {
+          setRescheduleDayGap(settings.live_session_reschedule_day_gap);
+        }
         if (settings.updated_at) {
           setLivePolicyUpdatedAt(settings.updated_at);
         }
@@ -95,10 +114,86 @@ export default function PoliciesPage() {
     }
   };
 
+  const loadHolidays = async () => {
+    setLoadingHolidays(true);
+    try {
+      const data = await api<any[]>('admin/public-holidays');
+      setHolidays(Array.isArray(data) ? data : []);
+    } catch {
+      // best effort
+    } finally {
+      setLoadingHolidays(false);
+    }
+  };
+
+  const handleSeedDefaults = async () => {
+    setSeedingHolidays(true);
+    try {
+      await api('admin/public-holidays/seed-defaults', { method: 'POST' });
+      toast.success(tBilingual('Standard Ethiopian holidays registered.', 'የኢትዮጵያ መደበኛ በዓላት ተመዝግበዋል።'));
+      await loadHolidays();
+    } catch {
+      toast.error('Failed to register default holidays.');
+    } finally {
+      setSeedingHolidays(false);
+    }
+  };
+
+  const handleAddHoliday = async () => {
+    if (!newHolidayName.trim() || !newHolidayDate) {
+      toast.warning(tBilingual('Please enter holiday name and date.', 'እባክዎ የበዓሉን ስም እና ቀን ያስገቡ።'));
+      return;
+    }
+    setAddingHoliday(true);
+    try {
+      await api('admin/public-holidays', {
+        method: 'POST',
+        body: { nameEn: newHolidayName.trim(), holidayDate: newHolidayDate, isActive: true },
+      });
+      toast.success(tBilingual('Holiday added.', 'በዓል ተመዝግቧል።'));
+      setNewHolidayName('');
+      setNewHolidayDate('');
+      await loadHolidays();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to add holiday.');
+    } finally {
+      setAddingHoliday(false);
+    }
+  };
+
+  const handleDeleteHoliday = async (id: string) => {
+    try {
+      await api(`admin/public-holidays/${id}`, { method: 'DELETE' });
+      toast.success(tBilingual('Holiday removed.', 'በዓል ተሰርዟል።'));
+      setHolidays((prev) => prev.filter((h) => h.id !== id));
+    } catch {
+      toast.error('Failed to remove holiday.');
+    }
+  };
+
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'reschedule_gap' || tab === 'live_sessions') {
+        setActiveTab('live_sessions');
+      } else if (tab === 'course') {
+        setActiveTab('course');
+      }
+    }
     void loadCoursePolicies();
     void loadLivePolicies();
+    void loadHolidays();
   }, []);
+
+  const switchTab = (tab: PolicyTab) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   const saveCoursePolicy = async () => {
     setSavingCoursePolicy(true);
@@ -128,9 +223,10 @@ export default function PoliciesPage() {
       await updateSystemSettings({
         allow_all_view_attendance: String(allowAllViewAttendance),
         default_attendance_threshold: String(attendanceThreshold),
+        live_session_reschedule_day_gap: String(rescheduleDayGap),
       });
       setLivePolicyUpdatedAt(new Date().toISOString());
-      toast.success('Live session attendance policy saved successfully.');
+      toast.success(tBilingual('Live session policy saved successfully.', 'የቀጥታ ክፍለ-ጊዜ ፖሊሲ በተሳካ ሁኔታ ተቀምጧል።'));
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Failed to persist live session policy settings.',
@@ -163,9 +259,9 @@ export default function PoliciesPage() {
       <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
         <button
           type="button"
-          onClick={() => setActiveTab('course')}
+          onClick={() => switchTab('course')}
           className={cn(
-            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs',
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs cursor-pointer',
             activeTab === 'course'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
               : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
@@ -177,9 +273,9 @@ export default function PoliciesPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('live_sessions')}
+          onClick={() => switchTab('live_sessions')}
           className={cn(
-            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs',
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs cursor-pointer',
             activeTab === 'live_sessions'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
               : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
@@ -189,9 +285,6 @@ export default function PoliciesPage() {
           <span>
             {tBilingual('Live Sessions & Attendance Policy', 'የቀጥታ ክፍለ-ጊዜዎች እና የክትትል ፖሊሲ')}
           </span>
-          <Badge variant="indigo" className="ml-1 text-[10px] py-0 px-1.5">
-            {tBilingual('Relocated', 'የተዛወረ')}
-          </Badge>
         </button>
       </div>
 
@@ -676,7 +769,8 @@ export default function PoliciesPage() {
               <CardSkeleton count={2} />
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
               {/* Card 1: Attendance Visibility */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-200/80 bg-white p-6 shadow-soft ring-super-soft">
                 <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
@@ -850,7 +944,277 @@ export default function PoliciesPage() {
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Card 3: Rolling Rescheduler & Day Gap Policy */}
+            <div className="relative overflow-hidden rounded-2xl border border-violet-200/90 bg-white p-6 shadow-soft ring-super-soft">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                    <CalendarClock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">
+                        {tBilingual(
+                          'Institutional Day Gap Between Cycles',
+                          'በዙሮች መካከል ያለው የተቋም የቀናት ልዩነት',
+                        )}
+                      </h3>
+                      <Badge variant="indigo" className="text-[10px] py-0 px-2 font-bold">
+                        {tBilingual('Rolling Cycle Engine', 'ተከታታይ ዙር ሞተር')}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 max-w-2xl leading-relaxed">
+                      {tBilingual(
+                        'When a live session completes, the engine automatically calculates the next session date by finding the latest upcoming scheduled session for the course and adding this policy day gap. Original start hours and durations are preserved.',
+                        'አንድ የቀጥታ ክፍለ-ጊዜ ሲጠናቀቅ ስርዓቱ የመጨረሻውን የኮርስ መርሐግብር ተከትሎ በዚህ የተቋም የፖሊሲ ቀን ልዩነት መሠረት ቀጣዩን ዙር በራስ-ሰር ያዘጋጃል። የመጀመሪያው ሰዓትና ቆይታ ሳይለወጥ ይጠበቃል።',
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-6">
+                {/* Day Gap Controls */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <span>{tBilingual('Policy Day Gap Between Cycles', 'በዙሮች መካከል ያለው የፖሊሲ የቀናት ልዩነት')}</span>
+                    <span className="text-violet-700 font-bold text-base">
+                      {rescheduleDayGap} {tBilingual('Days', 'ቀናት')}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[7, 10, 14, 21, 30].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setRescheduleDayGap(String(preset))}
+                        className={cn(
+                          'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all border cursor-pointer',
+                          rescheduleDayGap === String(preset)
+                            ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900',
+                        )}
+                      >
+                        {preset} {tBilingual('Days', 'ቀናት')}
+                        {preset === 10 && ` (${tBilingual('Default', 'ነባሪ')})`}
+                      </button>
+                    ))}
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <span className="text-xs text-slate-500">
+                        {tBilingual('Custom:', 'ብጁ፡')}
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={rescheduleDayGap}
+                        onChange={(e) => setRescheduleDayGap(e.target.value)}
+                        className="w-24 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                      />
+                      <span className="text-xs text-slate-400">
+                        {tBilingual('days', 'ቀናት')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Concrete Example Box */}
+                <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-4 space-y-2">
+                  <p className="text-xs font-bold text-violet-900">
+                    {tBilingual('Rolling Cycle Rule Example:', 'የተከታታይ ዙር ደንብ ምሳሌ፡')}
+                  </p>
+                  <p className="text-xs text-violet-800 leading-relaxed">
+                    {tBilingual(
+                      `If a course has 3 sessions (Session 1 on Nov 1, Session 2 on Nov 10, Session 3 on Nov 20) with a ${rescheduleDayGap}-day gap: when Session 1 ends on Nov 1, Session 1 is rescheduled for Nov 20 + ${rescheduleDayGap} days. Newly enrolled learners can attend Session 1 on that date, while previously attended learners already have verified credit and do not need to repeat it. Course publishers retain full rights to manually adjust trainer, date, or time after automatic rescheduling.`,
+                      `አንድ ኮርስ 3 ክፍለ-ጊዜዎች ቢኖሩት (ክፍለ-ጊዜ 1 በህዳር 1፣ ክፍለ-ጊዜ 2 በህዳር 10፣ ክፍለ-ጊዜ 3 በህዳር 20) እና የ ${rescheduleDayGap} ቀናት ልዩነት ቢኖር፦ ክፍለ-ጊዜ 1 በህዳር 1 ሲጠናቀቅ ክፍለ-ጊዜ 1 ለህዳር 20 + ${rescheduleDayGap} ቀናት እንደገና ይዘጋጃል። አዲስ የተመዘገቡ ተማሪዎች በዚያ ቀን መከታተል ይችላሉ፤ ቀደም ሲል ያጠናቀቁ ተማሪዎች ደግሞ ምስክር ወረቀታቸው አይቋረጥም። የኮርስ አዘጋጆች ከዳግም መርሐግብር በኋላ አሰልጣኙን ወይም ቀኑን በእጅ ማስተካከል ይችላሉ።`,
+                    )}
+                  </p>
+                </div>
+
+                {/* Institutional Working Calendar Highlights */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
+                      <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                      <span>{tBilingual('Monday – Saturday Active', 'ከሰኞ – ቅዳሜ የሥራ ቀናት')}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                      {tBilingual(
+                        'Standard Ethiopian public sector & revenue academic training days are fully respected.',
+                        'መደበኛ የኢትዮጵያ የመንግሥት ዘርፍና የገቢዎች አካዳሚ የስልጠና ቀናት ሙሉ በሙሉ ይከበራሉ።',
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
+                      <ShieldAlert className="h-4 w-4 text-amber-600" />
+                      <span>{tBilingual('Sundays Strictly Skipped', 'እሑዶች አይካተቱም')}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                      {tBilingual(
+                        'If a computed date lands on a Sunday, the engine automatically rolls it forward to Monday.',
+                        'የተሰላው ቀን እሁድ ላይ ካረፈ ሞተሩ በቀጥታ ወደ ሰኞ ያስተላልፈዋል።',
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
+                      <Award className="h-4 w-4 text-indigo-600" />
+                      <span>{tBilingual('Statutory Holidays Skipped', 'ህጋዊ የህዝብ በዓላት')}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                      {tBilingual(
+                        'National holidays registered in the table below are automatically bypassed to the next open working day.',
+                        'ከዚህ በታች የተመዘገቡ ብሄራዊ በዓላት በራስ-ሰር ታልፈው ወደ ቀጣዩ የሥራ ቀን ይዘዋወራሉ።',
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Public Holidays Collapsible Management */}
+                <div className="border-t border-slate-200/80 pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">
+                        {tBilingual('Ethiopian Statutory Public Holidays', 'የኢትዮጵያ ህጋዊ የህዝብ በዓላት')}
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        {tBilingual(
+                          `${holidays.length} registered holiday(s) currently active in the calendar engine.`,
+                          `በቀን መቁጠሪያው ውስጥ ${holidays.length} ንቁ በዓላት ተመዝግበዋል።`,
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleSeedDefaults()}
+                        isLoading={seedingHolidays}
+                        loadingText={tBilingual('Seeding…', 'በማስገባት ላይ…')}
+                        className="text-xs text-violet-700 border-violet-200 hover:bg-violet-50 cursor-pointer"
+                      >
+                        {tBilingual('Seed Standard Holidays', 'መደበኛ በዓላትን አስገባ')}
+                      </Button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowHolidays(!showHolidays)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        {showHolidays
+                          ? tBilingual('Hide Table', 'ሰንጠረዡን ደብቅ')
+                          : tBilingual('Manage Holidays', 'በዓላትን አስተዳድር')}
+                        {showHolidays ? (
+                          <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {showHolidays && (
+                    <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                      {/* Add Holiday Form */}
+                      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
+                        <input
+                          type="text"
+                          placeholder={tBilingual('Holiday name (e.g. Adwa Victory Day)', 'የበዓሉ ስም (ለምሳሌ የአድዋ ድል በዓል)')}
+                          value={newHolidayName}
+                          onChange={(e) => setNewHolidayName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                        />
+                        <input
+                          type="date"
+                          value={newHolidayDate}
+                          onChange={(e) => setNewHolidayDate(e.target.value)}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => void handleAddHoliday()}
+                          isLoading={addingHoliday}
+                          disabled={!newHolidayName.trim() || !newHolidayDate}
+                          className="gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs cursor-pointer"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {tBilingual('Add Holiday', 'በዓል አክል')}
+                        </Button>
+                      </div>
+
+                      {/* Holiday List Table */}
+                      {loadingHolidays ? (
+                        <p className="text-xs text-slate-400 py-2">
+                          {tBilingual('Loading public holidays…', 'የህዝብ በዓላትን በመጫን ላይ…')}
+                        </p>
+                      ) : holidays.length === 0 ? (
+                        <div className="text-center py-4 text-xs text-slate-500">
+                          <p>{tBilingual('No public holidays registered yet.', 'እስካሁን የተመዘገበ የህዝብ በዓል የለም።')}</p>
+                          <p className="mt-1 text-[11px] text-slate-400">
+                            {tBilingual(
+                              'Click "Seed Standard Holidays" above to populate Ethiopian statutory holidays automatically.',
+                              'የኢትዮጵያ ህጋዊ በዓላትን በራስ-ሰር ለማስገባት ከላይ "መደበኛ በዓላትን አስገባ" የሚለውን ይጫኑ።',
+                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                          <table className="w-full text-left text-xs">
+                              <thead className="border-b border-slate-200 bg-slate-100/70 text-slate-600 font-semibold sticky top-0">
+                                <tr>
+                                  <th className="px-3 py-2">{tBilingual('Holiday Name', 'የበዓሉ ስም')}</th>
+                                  <th className="px-3 py-2">{tBilingual('Date', 'ቀን')}</th>
+                                  <th className="px-3 py-2 text-right">{tBilingual('Actions', 'እርምጃዎች')}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {holidays.map((h) => {
+                                  const dateStr = new Date(h.holidayDate).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    weekday: 'short',
+                                  });
+                                  return (
+                                    <tr key={h.id} className="hover:bg-slate-50/80">
+                                      <td className="px-3 py-2 font-medium text-slate-800">
+                                        {h.nameEn}
+                                        {h.nameAm && <span className="ml-2 text-slate-400">({h.nameAm})</span>}
+                                      </td>
+                                      <td className="px-3 py-2 text-slate-600">{dateStr}</td>
+                                      <td className="px-3 py-2 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={() => void handleDeleteHoliday(h.id)}
+                                          className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                                          title={tBilingual('Delete Holiday', 'በዓሉን ሰርዝ')}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
           <div className="flex items-center gap-3">
             {livePolicyUpdatedAt ? (
