@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { ApiLiveSession, ApiVenue } from '@/lib/api/types';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useLiveSessionStore } from '@/lib/stores/live-session-store';
@@ -38,7 +39,7 @@ import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function LearnerDashboardPage() {
   const courses = useCourseStore((s) => s.courses);
-  const lang = useAuthStore((s) => s.lang);
+  const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
   const getEnrollmentForCourse = useEnrollmentForCourse();
   const me = currentUser?.id ?? '';

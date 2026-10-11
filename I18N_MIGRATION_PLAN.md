@@ -216,7 +216,7 @@ Order: smallest first to prove the script, then the rest. Each step:
 
 | Phase | Work | TypeScript | i18n:check | Browser | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| 1 | `locale-store.ts` | [ ] | n/a | [ ] | Pending |
+| 1 | `locale-store.ts` | [x] | n/a | [x] | Done |
 | 2 | Catalog + `t()` + `translate()` + check script | [ ] | [ ] | [ ] | Pending |
 | 3 | Extraction script | [ ] | n/a | n/a | Pending |
 | 4.1–4.12 | Folder migrations | [ ] | [ ] | [ ] | Pending |

@@ -31,7 +31,7 @@ interface StudioHeaderProps {
 
 export function StudioHeader(props: StudioHeaderProps) {
   const { stage, questionCount } = props;
-  const { lang, setLang } = useTranslation();
+  const { lang, changeLanguage } = useTranslation();
 
   return (
     <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-3 shadow-2xs sm:px-4 lg:px-6 dark:border-slate-800 dark:bg-slate-900">
@@ -84,7 +84,7 @@ export function StudioHeader(props: StudioHeaderProps) {
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
-          onClick={() => setLang(lang === 'en' ? 'am' : 'en')}
+          onClick={() => void changeLanguage(lang === 'en' ? 'am' : 'en')}
           className="hidden items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50 sm:flex dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           title="Switch Language"
         >

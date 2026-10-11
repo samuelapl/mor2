@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Lock, Save, ShieldCheck } from 'lucide-react';
 import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
-import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocaleStore } from '@/lib/stores/locale-store';
 import PageShell from '@/components/shared/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -11,9 +11,8 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
 export default function SystemSettingsPage() {
-  const lang = useAuthStore((s) => s.lang);
-  const setLang = useAuthStore((s) => s.setLang);
-  const { tBilingual } = useTranslation();
+  const lang = useLocaleStore((s) => s.lang);
+  const { tBilingual, changeLanguage } = useTranslation();
   const [sessionTimeout, setSessionTimeout] = useState('60');
   const [notifications, setNotifications] = useState(true);
   const [openRegistration, setOpenRegistration] = useState(false);
@@ -116,7 +115,7 @@ export default function SystemSettingsPage() {
               </label>
               <select
                 value={lang}
-                onChange={(event) => setLang(event.target.value as 'en' | 'am')}
+                onChange={(event) => void changeLanguage(event.target.value as 'en' | 'am')}
                 className={inputClass}
               >
                 <option value="en">English (እንግሊዝኛ)</option>

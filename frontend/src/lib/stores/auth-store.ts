@@ -20,29 +20,9 @@ import { getStoredAccessToken, getStoredRefreshToken, clearTokens } from '@/lib/
 import { changeMyPassword, updateMyProfile } from '@/lib/api/users';
 import type { ActionResult, Lang, LoginResult, User } from '@/types';
 
+import { getStoredLocale, persistLocale, useLocaleStore } from './locale-store';
 import { reloadAll, resetAll, seedUserName } from './session-data';
 import { errorMessage } from './store-utils';
-
-export const LOCALE_STORAGE_KEY = 'eltms_locale';
-
-export function getStoredLocale(): Lang {
-  if (typeof window === 'undefined') return 'en';
-  try {
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored === 'am' || stored === 'en') return stored;
-  } catch {}
-  return 'en';
-}
-
-export function persistLocale(locale: Lang): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.lang = locale;
-    }
-  } catch {}
-}
 
 export interface RegisterInput {
   firstName: string;
@@ -62,13 +42,11 @@ let authInitialized = false;
 interface AuthState {
   ready: boolean;
   currentUser: User | null;
-  lang: Lang;
 }
 
 interface AuthActions {
   /** Restores the session from the stored refresh token. Runs once per page load. */
   initAuth: () => void;
-  setLang: (lang: Lang) => void;
   login: (email: string, password: string) => Promise<LoginResult>;
   /** Finishes the forced password change of an admin-created account and signs it in. */
   completeFirstLogin: (input: { code: string; newPassword: string; confirmPassword: string }) => Promise<LoginResult>;
@@ -81,7 +59,9 @@ interface AuthActions {
   register: (input: RegisterInput) => Promise<RegisterResult>;
   updateProfile: (input: { firstName?: string; lastName?: string; phone?: string; tin?: string; avatarUrl?: string }) => Promise<ActionResult>;
   changePassword: (input: { currentPassword: string; newPassword: string }) => Promise<ActionResult>;
-  updateLocale: (locale: Lang) => Promise<ActionResult>;
+  /** Saves the chosen language on the signed-in user's profile (no-op when signed out).
+   * The UI language itself lives in the locale store. */
+  syncLocale: (locale: Lang) => Promise<ActionResult>;
   /** Re-fetches the signed-in user's own permissions/roles (e.g. after editing a role's
    * permission matrix) so the sidebar and permission-gated pages react without a re-login. */
   refreshPermissions: () => Promise<void>;
@@ -95,12 +75,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
     set({ currentUser: res.user });
     const storedLocale = getStoredLocale();
     if (storedLocale) {
-      set({ lang: storedLocale });
+      useLocaleStore.setState({ lang: storedLocale });
       if (res.user.locale && res.user.locale !== storedLocale) {
         void updateMyProfile({ locale: storedLocale }).catch(() => {});
       }
     } else if (res.user.locale === 'am' || res.user.locale === 'en') {
-      set({ lang: res.user.locale });
+      useLocaleStore.setState({ lang: res.user.locale });
       persistLocale(res.user.locale);
     }
     seedUserName(res.user);
@@ -111,20 +91,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
   return {
     ready: false,
     currentUser: null,
-    lang: 'en',
 
     initAuth: () => {
       if (authInitialized) return;
       authInitialized = true;
-
-      // Synchronize stored language on initial client mount
-      const stored = getStoredLocale();
-      if (stored) {
-        set({ lang: stored });
-        if (typeof document !== 'undefined' && document.documentElement) {
-          document.documentElement.lang = stored;
-        }
-      }
 
       setAccessToken(getStoredAccessToken());
       setRefreshHandler(async () => {
@@ -157,11 +127,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
         }
         set({ ready: true });
       })();
-    },
-
-    setLang: (nextLang) => {
-      set({ lang: nextLang });
-      persistLocale(nextLang);
     },
 
     login: async (email, password) => {
@@ -319,12 +284,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
       }
     },
 
-    updateLocale: async (locale) => {
-      // 1. Immediately apply the language change locally so UI updates with zero latency
-      set({ lang: locale });
-      persistLocale(locale);
-
-      // 2. If user is signed in, sync preference to profile in background
+    syncLocale: async (locale) => {
+      // If user is signed in, sync preference to profile in background
       const current = get().currentUser;
       if (current) {
         const merged = { ...current, locale };

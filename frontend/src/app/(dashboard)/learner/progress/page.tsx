@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronDown, Lock, PlayCircle } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils';
 export default function ProgressPage() {
   const router = useRouter();
   const courses = useCourseStore((s) => s.courses);
-  const lang = useAuthStore((s) => s.lang);
+  const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
   const { t, tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';

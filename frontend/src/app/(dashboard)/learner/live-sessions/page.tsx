@@ -24,6 +24,7 @@ import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useUserName } from '@/lib/stores/user-store';
 import PageShell from '@/components/shared/PageShell';
@@ -42,7 +43,7 @@ import { isInPersonSession } from '@/lib/session-mode';
 export default function LearnerLiveSessionsPage() {
   const searchParams = useSearchParams();
   const targetSessionId = searchParams.get('sessionId') || searchParams.get('joinSessionId');
-  const lang = useAuthStore((s) => s.lang);
+  const lang = useLocaleStore((s) => s.lang);
   const allCourses = useCourseStore((s) => s.courses);
   const currentUser = useAuthStore((s) => s.currentUser);
   const userName = useUserName();

@@ -61,7 +61,7 @@ export function CreatorHeader({
   lastSavedAt,
   autosaveBlockedReason,
 }: CreatorHeaderProps) {
-  const { lang, setLang, tBilingual } = useTranslation();
+  const { tBilingual } = useTranslation();
 
   const STEPS: Array<{
     id: CreatorPhase;

@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import type { Lang, Role } from '@/types';
+import { useLocaleStore } from '@/lib/stores/locale-store';
+import type { ActionResult, Lang, Role } from '@/types';
 import {
   COMMON_TRANSLATIONS,
   NAV_TRANSLATIONS,
@@ -15,9 +16,7 @@ import {
 export type BilingualInput = string | { en: string; am: string };
 
 export function useTranslation() {
-  const lang = useAuthStore((s) => s.lang);
-  const setLang = useAuthStore((s) => s.setLang);
-  const updateLocale = useAuthStore((s) => s.updateLocale);
+  const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const t = useCallback(
@@ -62,6 +61,12 @@ export function useTranslation() {
     [lang],
   );
 
+  /** Switches the UI language and, when signed in, saves it on the user's profile. */
+  const changeLanguage = useCallback(async (next: Lang): Promise<ActionResult> => {
+    useLocaleStore.getState().setLang(next);
+    return useAuthStore.getState().syncLocale(next);
+  }, []);
+
   const tNav = useCallback(
     (label?: string | null): string => {
       if (!label) return '';
@@ -77,8 +82,7 @@ export function useTranslation() {
     tRoleDesc,
     tNav,
     lang,
-    setLang,
-    updateLocale,
+    changeLanguage,
     currentUser,
     isAmharic: lang === 'am',
     isEnglish: lang === 'en',

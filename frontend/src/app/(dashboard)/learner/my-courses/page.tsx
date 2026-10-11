@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Laptop } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
@@ -25,7 +26,7 @@ import type { ApiVenue } from '@/lib/api/types';
 export default function LearnerCoursesPage() {
   const router = useRouter();
   const courses = useCourseStore((s) => s.courses);
-  const lang = useAuthStore((s) => s.lang);
+  const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
   const ready = useAuthStore((s) => s.ready);
   const getEnrollmentForCourse = useEnrollmentForCourse();
