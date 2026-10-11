@@ -13,8 +13,6 @@ import {
   type TranslationVars,
 } from './index';
 
-export type BilingualInput = string | { en: string; am: string };
-
 /** `t` for a namespace takes keys relative to it; without a namespace it takes full keys. */
 type TFunction<K extends string> = (key: K, vars?: TranslationVars) => string;
 /** Like `t`, but placeholder values may be JSX (e.g. `{ total: <strong>{n}</strong> }`). */
@@ -41,17 +39,6 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
       });
     },
     [lang, namespace],
-  );
-
-  /** @deprecated Inline bilingual text — use `t('key')` with locales/en + locales/am. */
-  const tBilingual = useCallback(
-    (enOrEntry: BilingualInput, amFallback?: string): string => {
-      if (typeof enOrEntry === 'object' && enOrEntry !== null) {
-        return lang === 'am' ? enOrEntry.am : enOrEntry.en;
-      }
-      return lang === 'am' ? (amFallback ?? enOrEntry) : enOrEntry;
-    },
-    [lang],
   );
 
   const tRole = useCallback(
@@ -88,7 +75,6 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
   return {
     t,
     tRich,
-    tBilingual,
     tRole,
     tRoleDesc,
     tNav,
@@ -103,8 +89,6 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
 export interface TranslationApi<K extends string> {
   t: TFunction<K>;
   tRich: TRichFunction<K>;
-  /** @deprecated Inline bilingual text — use `t('key')` with locales/en + locales/am. */
-  tBilingual: (enOrEntry: BilingualInput, amFallback?: string) => string;
   tRole: (role?: Role | string | null) => string;
   tRoleDesc: (role?: Role | string | null) => string;
   tNav: (label?: string | null) => string;

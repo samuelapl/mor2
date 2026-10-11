@@ -23,7 +23,6 @@ import { useCourseStore } from '@/lib/stores/course-store';
 import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
-import { tr } from '@/constants/labels';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
 import { StatCard } from '@/components/ui/StatCard';
@@ -42,6 +41,7 @@ export default function LearnerDashboardPage() {
   const courses = useCourseStore((s) => s.courses);
   const lang = useLocaleStore((s) => s.lang);
   const { t } = useTranslation('dashboard');
+  const { t: tCommon } = useTranslation('common');
   const currentUser = useAuthStore((s) => s.currentUser);
   const getEnrollmentForCourse = useEnrollmentForCourse();
   const me = currentUser?.id ?? '';
@@ -123,7 +123,7 @@ export default function LearnerDashboardPage() {
       <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={BookOpen}
-          label={tr(lang, 'myCourses')}
+          label={tCommon('myCourses')}
           value={enrolled.length}
           hint={
             t('learnerDashboardPage.onlineInPerson', { onlineCount, inPersonCount })
@@ -138,14 +138,14 @@ export default function LearnerDashboardPage() {
         />
         <StatCard
           icon={CheckCircle2}
-          label={tr(lang, 'completed')}
+          label={tCommon('completed')}
           value={completed.length}
           hint={t('learnerDashboardPage.finishedCourses')}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={Award}
-          label={tr(lang, 'averageProgress')}
+          label={tCommon('averageProgress')}
           value={`${avgProgress}%`}
           hint={t('learnerDashboardPage.platformAverage')}
           iconClassName="bg-indigo-50 text-indigo-600"
@@ -228,7 +228,7 @@ export default function LearnerDashboardPage() {
                   size="md"
                   className="border-white/20 text-white hover:bg-white/10"
                 >
-                  {tr(lang, 'myCourses')}
+                  {tCommon('myCourses')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -462,7 +462,7 @@ export default function LearnerDashboardPage() {
                 </div>
                 <div>
                   <p className="font-display text-sm font-semibold text-slate-900">
-                    {tr(lang, 'liveSessions')}
+                    {tCommon('liveSessions')}
                   </p>
                   <p className="text-xs text-slate-500">
                     {upcomingSessions.length} available sessions
@@ -483,7 +483,7 @@ export default function LearnerDashboardPage() {
                 </div>
                 <div>
                   <p className="font-display text-sm font-semibold text-slate-900">
-                    {tr(lang, 'certificates')}
+                    {tCommon('certificates')}
                   </p>
                   <p className="text-xs text-slate-500">{completed.length} earned certificates</p>
                 </div>

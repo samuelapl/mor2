@@ -248,7 +248,7 @@ Order: smallest first to prove the script, then the rest. Each step:
 | 4.10 | system-admin → users + admin | [x] | [x] | [ ] | Committed — browser check pending |
 | 4.11 | courses + quiz | [x] | [x] | [ ] | Committed — browser check pending |
 | 4.12 | landing + duration/time units | [x] | [x] | [ ] | Committed — browser check pending |
-| 5 | Cleanup + guard | [ ] | [ ] | [ ] | Pending |
+| 5 | Cleanup + guard | [x] | [x] | [ ] | Committed — browser check pending |
 
 ## 7. Wording Conflicts to Review (same English, different Amharic)
 
@@ -291,3 +291,17 @@ The migration kept every original translation, so these are separate keys today.
 | news | Sign in | newsComments.signIn, useSignInPrompt.signIn |
 | users | Cancel | usersPage.cancel, registerActorPage.cancel |
 | users | Register user | registerActorPage.registerUser, registerActorPage.registerUser2 |
+
+## 8. As Built (2026-10-11)
+
+- **Text:** `frontend/src/lib/i18n/locales/{en,am}/*.json` — 15 namespaces, ~2,300 keys.
+- **In components:** `const { t } = useTranslation('<ns>')` → `t('key', { vars })`; `tRich` when a placeholder is JSX; `tRole` / `tNav` for roles and menu labels.
+- **Outside components:** `translate('ns.key')` (current UI language) or `translateIn(lang, 'ns.key')` (explicit language, e.g. `formatDuration`).
+- **Language state:** `lib/stores/locale-store.ts`; switch with `changeLanguage()` from `useTranslation()`.
+- **Removed:** `tBilingual`, `lib/i18n/translations.ts`, `constants/labels.ts` (`tr`), `BilingualText` props on PageShell/PageSection.
+- **Guard:** `npm run i18n:check` (runs automatically before `npm run build`) fails on:
+  - en/am key mismatches, empty values, or placeholder mismatches
+  - Amharic text in `.ts`/`.tsx` that is not in `scripts/i18n-allowlist.json`
+- **Adding text:** add the key to both `locales/en/<ns>.json` and `locales/am/<ns>.json`, then use `t('key')`. Intentional Amharic in code (native language names, Amharic-input placeholders, certificate-language text) goes in the allow-list with a reason.
+- **Tooling:** `scripts/i18n-extract.mjs` (codemod used for the migration) stays for converting any remaining `isAmharic ? … : …` text.
+

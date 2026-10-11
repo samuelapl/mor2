@@ -20,7 +20,6 @@ import { selfCheckIn } from '@/lib/api/monitoring';
 import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { ApiError } from '@/lib/api/client';
-import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuthStore } from '@/lib/stores/auth-store';

@@ -2,16 +2,11 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
-
-export interface BilingualText {
-  en: string;
-  am: string;
-}
+import { matchCommonEnglish } from '@/lib/i18n';
 
 interface PageSectionProps {
-  title: string | BilingualText | ReactNode;
-  description?: string | BilingualText | ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -27,22 +22,11 @@ export default function PageSection({
   centered = false,
 }: PageSectionProps) {
   const { lang } = useTranslation();
-  const isAmharic = lang === 'am';
 
-  const renderText = (value?: string | BilingualText | ReactNode): ReactNode => {
+  /** Plain English strings that match a `common` entry are shown in the current language. */
+  const renderText = (value?: ReactNode): ReactNode => {
     if (!value) return null;
-    if (typeof value === 'object' && value !== null && 'en' in value && 'am' in value) {
-      const b = value as BilingualText;
-      return isAmharic ? b.am : b.en;
-    }
-    if (typeof value === 'string') {
-      for (const entry of Object.values(COMMON_TRANSLATIONS)) {
-        if (entry.en.toLowerCase() === value.toLowerCase()) {
-          return isAmharic ? entry.am : entry.en;
-        }
-      }
-      return value;
-    }
+    if (typeof value === 'string') return matchCommonEnglish(value, lang) ?? value;
     return value;
   };
 

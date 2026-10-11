@@ -7,7 +7,6 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
-import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -26,6 +25,7 @@ export default function ProgressPage() {
   const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
   const { t } = useTranslation('dashboard');
+  const { t: tCommon } = useTranslation('common');
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -94,7 +94,7 @@ export default function ProgressPage() {
                     </div>
                   </div>
                   <Badge variant={done ? 'green' : 'blue'} className="order-4 sm:order-none">
-                    {done ? tr(lang, 'completed') : tr(lang, 'inProgress')}
+                    {done ? tCommon('completed') : tCommon('inProgress')}
                   </Badge>
                   <Button
                     size="sm"
@@ -112,7 +112,7 @@ export default function ProgressPage() {
                     {done ? (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        {tr(lang, 'completed')}
+                        {tCommon('completed')}
                       </>
                     ) : (
                       <>

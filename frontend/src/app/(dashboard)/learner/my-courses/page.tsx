@@ -8,7 +8,6 @@ import { useLocaleStore } from '@/lib/stores/locale-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
-import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';

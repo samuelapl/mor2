@@ -109,6 +109,21 @@ export function lookupIn(lang: Lang, key: string): string | undefined {
   return lookup(lang, key);
 }
 
+/**
+ * When `text` is exactly the English of a top-level `common` entry (case-insensitive), returns
+ * that entry in `lang`. Lets PageShell/PageSection translate plain English titles.
+ */
+export function matchCommonEnglish(text: string, lang: Lang): string | undefined {
+  const needle = text.toLowerCase();
+  const en = catalogs.en.common as Record<string, unknown>;
+  for (const [key, value] of Object.entries(en)) {
+    if (typeof value === 'string' && value.toLowerCase() === needle) {
+      return lookupIn(lang, `common.${key}`) ?? value;
+    }
+  }
+  return undefined;
+}
+
 /** Replaces `{name}` placeholders with values from `vars`; unknown placeholders are left as is. */
 export function format(template: string, vars?: TranslationVars): string {
   if (!vars) return template;

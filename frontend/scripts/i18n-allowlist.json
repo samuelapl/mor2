@@ -1,0 +1,138 @@
+{
+  "src/app/(dashboard)/system-admin/categories/page.tsx": {
+    "reason": "Example placeholder for an Amharic name input",
+    "allowed": [
+      "የግብር ህግ"
+    ]
+  },
+  "src/app/(dashboard)/system-admin/settings/page.tsx": {
+    "reason": "Language names in a language picker",
+    "allowed": [
+      "አማርኛ",
+      "እንግሊዝኛ"
+    ]
+  },
+  "src/app/news/[slug]/page.tsx": {
+    "reason": "SEO metadata deliberately in both languages",
+    "allowed": [
+      "ዜና",
+      "የገቢዎች ሚኒስቴር"
+    ]
+  },
+  "src/app/news/page.tsx": {
+    "reason": "SEO metadata deliberately in both languages",
+    "allowed": [
+      "ዜናዎች",
+      "የገቢዎች ሚኒስቴር ዜናዎች እና ማስታወቂያዎች"
+    ]
+  },
+  "src/components/features/certificates/CertificateLanguageDropdown.tsx": {
+    "reason": "Native language names",
+    "allowed": [
+      "ትግርኛ",
+      "አማርኛ"
+    ]
+  },
+  "src/components/features/certificates/CertificateRenderer.tsx": {
+    "reason": "Certificate text in the certificate's own language (not the UI language)",
+    "allowed": [
+      "ሁሉንም የስልጠና ክፍሎች በመከታተልና የማጠቃለያ ፈተናዎችን በማለፍ።",
+      "ማረጋገጫ ቁጥር",
+      "ሰዓት",
+      "ቀን ፦",
+      "የስልጠና ማረጋገጫ የምስክር ወረቀት",
+      "የስልጠና ሰዓት ፦",
+      "የስልጠናውን ኮርስ በተሳካ ሁኔታ ላጠናቀቁ",
+      "የተረጋገጠ",
+      "የተረጋገጠ ማረጋገጫ",
+      "የገቢዎች ሚኒስቴር ኢቲኤምኤስ አካዳሚ",
+      "ይህ ምስክር ወረቀት የተሰጠው ለ"
+    ]
+  },
+  "src/components/features/classroom/ClassroomShell.tsx": {
+    "reason": "Default Amharic titles for assessment data (content, not UI)",
+    "allowed": [
+      "የማጠቃለያ ፈተና",
+      "የሞጁል ምዘና",
+      "የትምህርት ምዘና"
+    ]
+  },
+  "src/components/features/courses/StepReviewSubmit.tsx": {
+    "reason": "Label of the Amharic title field",
+    "allowed": [
+      "አማርኛ",
+      "የስልጠና ርዕስ"
+    ]
+  },
+  "src/components/features/laws/CategoryFormModal.tsx": {
+    "reason": "Example placeholder for an Amharic input",
+    "allowed": [
+      "ምሳሌ፡ የተጨማሪ እሴት ታክስ አዋጅ"
+    ]
+  },
+  "src/components/features/laws/DocumentFormModal.tsx": {
+    "reason": "Example placeholders for Amharic inputs",
+    "allowed": [
+      "ምሳሌ፡ የፌዴራል የታክስ አስተዳደር አዋጅ",
+      "የሰነዱ አጭር ማብራሪያ"
+    ]
+  },
+  "src/components/features/laws/PdfViewerModal.tsx": {
+    "reason": "\"ነጋሪት\" (Negarit) emblem — a proper name",
+    "allowed": [
+      "ነጋሪት"
+    ]
+  },
+  "src/components/features/news/NewsEditor.tsx": {
+    "reason": "Default news source value (the ministry's name) and its placeholder",
+    "allowed": [
+      "የገቢዎች ሚኒስቴር"
+    ]
+  },
+  "src/components/features/question-bank/studio/StudioHeader.tsx": {
+    "reason": "Language toggle shows the other language's native short name",
+    "allowed": [
+      "አማ"
+    ]
+  },
+  "src/components/features/sessions/shared/EditSessionModal.tsx": {
+    "reason": "Label/example placeholder of the Amharic title input",
+    "allowed": [
+      "አማርኛ",
+      "የቀጥታ የጥያቄና መልስ ክፍለ ጊዜ"
+    ]
+  },
+  "src/components/features/sessions/shared/ScheduleSessionModal.tsx": {
+    "reason": "Labels/example placeholders of the Amharic title inputs",
+    "allowed": [
+      "አማርኛ",
+      "የቀጥታ የጥያቄና መልስ ክፍለ ጊዜ",
+      "የግብር ኦዲት የተግባር ልምምድ"
+    ]
+  },
+  "src/components/features/sessions/shared/SessionDetailModal.tsx": {
+    "reason": "Label of the Amharic title section",
+    "allowed": [
+      "የርዕስ መረጃ"
+    ]
+  },
+  "src/components/features/sessions/virtual/interactive/LiveQuizTrainerControl.tsx": {
+    "reason": "Example placeholder for an Amharic question input",
+    "allowed": [
+      "የተጨማሪ እሴት ታክስ ማስታወቂያ ማቅረቢያ የመጨረሻ ቀን መቼ ነው"
+    ]
+  },
+  "src/components/shared/LanguageToggle.tsx": {
+    "reason": "Native language names",
+    "allowed": [
+      "አማ",
+      "አማርኛ"
+    ]
+  },
+  "src/components/shared/account/PreferencesTab.tsx": {
+    "reason": "Native language name",
+    "allowed": [
+      "አማርኛ"
+    ]
+  }
+}

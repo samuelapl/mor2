@@ -2,18 +2,13 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { COMMON_TRANSLATIONS } from '@/lib/i18n/translations';
+import { matchCommonEnglish } from '@/lib/i18n';
 import type { Role } from '@/types';
-
-export interface BilingualText {
-  en: string;
-  am: string;
-}
 
 interface PageShellProps {
   role?: Role;
-  title: string | BilingualText | ReactNode;
-  description?: string | BilingualText | ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
   showLanguageToggle?: boolean;
@@ -29,23 +24,11 @@ export default function PageShell({
   centered = false,
 }: PageShellProps) {
   const { lang, tRole } = useTranslation();
-  const isAmharic = lang === 'am';
 
-  const renderText = (value?: string | BilingualText | ReactNode): ReactNode => {
+  /** Plain English strings that match a `common` entry are shown in the current language. */
+  const renderText = (value?: ReactNode): ReactNode => {
     if (!value) return null;
-    if (typeof value === 'object' && value !== null && 'en' in value && 'am' in value) {
-      const b = value as BilingualText;
-      return isAmharic ? b.am : b.en;
-    }
-    if (typeof value === 'string') {
-      // Check if known common translation key or English text matches
-      for (const entry of Object.values(COMMON_TRANSLATIONS)) {
-        if (entry.en.toLowerCase() === value.toLowerCase()) {
-          return isAmharic ? entry.am : entry.en;
-        }
-      }
-      return value;
-    }
+    if (typeof value === 'string') return matchCommonEnglish(value, lang) ?? value;
     return value;
   };
 

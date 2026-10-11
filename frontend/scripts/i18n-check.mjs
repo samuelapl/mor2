@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // Checks src/lib/i18n/locales: every key exists in both en and am, no empty values,
-// and both languages use the same {placeholders}. Exits 1 on any problem.
+// and both languages use the same {placeholders}. Also fails on Amharic text in .ts/.tsx
+// code outside the locales, except strings listed in scripts/i18n-allowlist.json (each
+// with a reason). Exits 1 on any problem.
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 const root = join(process.cwd(), 'src/lib/i18n/locales');
 const langs = ['en', 'am'];
@@ -51,9 +53,32 @@ for (const file of [...files].sort()) {
   }
 }
 
+// Amharic in code: every Amharic run must be allow-listed for its file.
+const allowlist = JSON.parse(readFileSync(join(process.cwd(), 'scripts/i18n-allowlist.json'), 'utf8'));
+const amharicRun = /[\u1200-\u137F]+(?:[ \u1360-\u1368]+[\u1200-\u137F]+)*/g;
+function walk(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) return p.includes(join('lib', 'i18n', 'locales')) ? [] : walk(p);
+    return /\.tsx?$/.test(d.name) ? [p] : [];
+  });
+}
+let codeFiles = 0;
+for (const file of walk(join(process.cwd(), 'src'))) {
+  codeFiles++;
+  const rel = relative(process.cwd(), file).split(sep).join('/');
+  const text = readFileSync(file, 'utf8');
+  const allowed = new Set(allowlist[rel]?.allowed ?? []);
+  for (const m of text.matchAll(amharicRun)) {
+    if (allowed.has(m[0])) continue;
+    const line = text.slice(0, m.index).split('\n').length;
+    problems.push(`${rel}:${line}: Amharic text in code ("${m[0].slice(0, 40)}") — move it to locales/am + locales/en and use t(), or allow-list it in scripts/i18n-allowlist.json with a reason`);
+  }
+}
+
 if (problems.length) {
   console.error(`i18n:check found ${problems.length} problem(s):`);
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`i18n:check OK — ${files.size} namespaces, ${keyCount} keys, en/am in sync.`);
+console.log(`i18n:check OK — ${files.size} namespaces, ${keyCount} keys, en/am in sync; ${codeFiles} code files without unlisted Amharic.`);
