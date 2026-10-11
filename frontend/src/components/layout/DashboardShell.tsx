@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getRoleFromPath, isBuiltInRole, getRoleHomePath } from '@/constants/roles';
 import { PERMISSION_GATED_PATHS } from '@/constants/navigation';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/usePermissions';
 
 function getGatedPermissions(pathname: string): string[] | undefined {
@@ -21,7 +21,8 @@ function getGatedPermissions(pathname: string): string[] | undefined {
 }
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
-  const { ready, currentUser } = useLms();
+  const ready = useAuthStore((s) => s.ready);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { canAny } = usePermissions();
   const pathname = usePathname();
   const router = useRouter();

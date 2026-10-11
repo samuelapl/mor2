@@ -8,7 +8,7 @@ import { ArrowLeft, ArrowRight, ChevronDown, Eye, EyeOff, KeyRound, Loader2, Loc
 import { MOCK_ACCOUNTS, MOCK_PASSWORD } from '@/constants/auth';
 import { ROLE_LABELS, ROLE_PATHS, getRoleHomePath } from '@/constants/roles';
 import { ROLE_ICONS } from '@/constants/navigation';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,8 @@ const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, ready } = useLms();
+  const login = useAuthStore((s) => s.login);
+  const ready = useAuthStore((s) => s.ready);
   const { tBilingual, tRole } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

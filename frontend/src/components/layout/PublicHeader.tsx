@@ -8,14 +8,14 @@ import { LayoutDashboard, Landmark, Menu, X } from 'lucide-react';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { getRoleHomePath } from '@/constants/roles';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
 /** Institutional banner + sticky top bar shared by the landing page and the public news pages. */
 export default function PublicHeader() {
   const { tBilingual, lang } = useTranslation();
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

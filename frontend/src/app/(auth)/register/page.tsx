@@ -18,7 +18,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { isValidEmail, passwordIssues } from '@/constants/auth';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,8 @@ const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-sl
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, ready } = useLms();
+  const register = useAuthStore((s) => s.register);
+  const ready = useAuthStore((s) => s.ready);
   const { tBilingual } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');

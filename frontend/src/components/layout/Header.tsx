@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, CheckCheck, LogOut, Menu, UserCircle } from 'lucide-react';
 import { getRoleFromPath, ROLE_LABELS } from '@/constants/roles';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   fetchMyNotifications,
   fetchUnreadCount,
@@ -40,7 +40,8 @@ interface HeaderProps {
 export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, logout } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const logout = useAuthStore((s) => s.logout);
   const { lang, tRole } = useTranslation();
   const isAmharic = lang === 'am';
   const role = currentUser?.role ?? getRoleFromPath(pathname);

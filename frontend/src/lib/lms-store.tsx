@@ -2,20 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { isValidEmail, passwordIssues } from '@/constants/auth';
-import { ApiError, setAccessToken, setRefreshHandler, setUnauthorizedHandler } from '@/lib/api/client';
-import {
-  clearFirstLoginChallenge,
-  completeFirstLogin as apiCompleteFirstLogin,
-  login as apiLogin,
-  logout as apiLogout,
-  readFirstLoginChallenge,
-  saveFirstLoginChallenge,
-  type AuthResult,
-  refresh as apiRefresh,
-  register as apiRegister,
-  verifyEmail as apiVerifyEmail,
-} from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/client';
+import { useAuthStore, setSessionHooks, type RegisterInput, type RegisterResult } from '@/lib/stores/auth-store';
 import {
   fetchCourseDetail,
   fetchCourseModules,
@@ -34,16 +22,13 @@ import { bulkEnroll, fetchCourseEnrollments, fetchMyEnrollments, selfEnroll } fr
 import {
   assignRole,
   bulkCreateUsers,
-  changeMyPassword,
   createActor,
   deactivateUser as apiDeactivateUser,
   fetchUsers,
   reactivateUser as apiReactivateUser,
   deleteUser as apiDeleteUser,
   removeRole,
-  updateMyProfile,
 } from '@/lib/api/users';
-import { getStoredAccessToken, getStoredRefreshToken, clearTokens } from '@/lib/api/tokens';
 import {
   assignTrainer as apiAssignTrainer,
   unassignTrainer,
@@ -85,17 +70,6 @@ import type {
   UploadedResource,
   User,
 } from '@/types';
-
-interface RegisterInput {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  password: string;
-  confirmPassword: string;
-  department?: string;
-  tin?: string;
-}
 
 export interface WizardLessonInput {
   title: string;
@@ -184,7 +158,7 @@ interface LmsContextValue {
   verifyEmail: (email: string, code: string) => Promise<LoginResult>;
   logout: () => void;
   /** Creates the account; the user then verifies their email before signing in. */
-  register: (input: RegisterInput) => Promise<{ ok: true; email: string; devCode?: string } | { ok: false; message: string }>;
+  register: (input: RegisterInput) => Promise<RegisterResult>;
   courseById: (courseId: string) => Course | undefined;
   /** Re-fetches one course (e.g. after its sessions changed) and replaces it in the store. */
   refreshCourse: (courseId: string) => Promise<void>;
@@ -557,58 +531,31 @@ async function syncCurriculumAndAssessments(courseId: string, rawModules: Wizard
   return { savedModules };
 }
 
-export const LOCALE_STORAGE_KEY = 'eltms_locale';
-
-export function getStoredLocale(): Lang {
-  if (typeof window === 'undefined') return 'en';
-  try {
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored === 'am' || stored === 'en') return stored;
-  } catch {}
-  return 'en';
-}
-
-export function persistLocale(locale: Lang): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.lang = locale;
-    }
-  } catch {}
-}
+export { LOCALE_STORAGE_KEY, getStoredLocale, persistLocale } from '@/lib/stores/auth-store';
 
 export function LmsProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
+  // Auth, session and locale live in the Zustand auth store (Phase 1 facade).
+  const ready = useAuthStore((s) => s.ready);
+  const lang = useAuthStore((s) => s.lang);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const setLang = useAuthStore((s) => s.setLang);
+  const login = useAuthStore((s) => s.login);
+  const completeFirstLogin = useAuthStore((s) => s.completeFirstLogin);
+  const verifyEmail = useAuthStore((s) => s.verifyEmail);
+  const logout = useAuthStore((s) => s.logout);
+  const register = useAuthStore((s) => s.register);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const changePassword = useAuthStore((s) => s.changePassword);
+  const updateLocale = useAuthStore((s) => s.updateLocale);
+  const refreshPermissions = useAuthStore((s) => s.refreshPermissions);
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [myEnrollments, setMyEnrollments] = useState<ApiEnrollment[]>([]);
-  const [lang, setLangState] = useState<Lang>('en');
-  const setLang = useCallback((nextLang: Lang) => {
-    setLangState(nextLang);
-    persistLocale(nextLang);
-  }, []);
-
-  // Synchronize stored language on initial client mount
-  useEffect(() => {
-    const stored = getStoredLocale();
-    if (stored) {
-      setLangState(stored);
-      if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.lang = stored;
-      }
-    }
-  }, []);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
 
-  const currentUserRef = useRef<User | null>(null);
   const coursesRef = useRef<Course[]>([]);
   const usersRef = useRef<User[]>([]);
-
-  useEffect(() => {
-    currentUserRef.current = currentUser;
-  }, [currentUser]);
 
   useEffect(() => {
     coursesRef.current = courses;
@@ -618,10 +565,8 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     usersRef.current = users;
   }, [users]);
 
-  const clearSession = useCallback(() => {
-    setAccessToken(null);
-    setCurrentUser(null);
-    currentUserRef.current = null;
+  // Clears the user-scoped data; the auth store clears the token and user.
+  const clearData = useCallback(() => {
     setUsers([]);
     usersRef.current = [];
     setCourses([]);
@@ -631,7 +576,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reloadData = useCallback(async (user?: User | null) => {
-    const current = user ?? currentUserRef.current;
+    const current = user ?? useAuthStore.getState().currentUser;
     try {
       const list = await fetchCourses({ limit: 100 });
       const details = await Promise.all(list.data.map((course) => fetchCourseDetail(course.id)));
@@ -714,166 +659,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const enterSession = useCallback(
-    async (res: AuthResult): Promise<LoginResult> => {
-      setAccessToken(res.accessToken);
-      setCurrentUser(res.user);
-      currentUserRef.current = res.user;
-      setUserNames({ [res.user.id]: res.user.name });
-      const storedLocale = getStoredLocale();
-      if (storedLocale) {
-        setLangState(storedLocale);
-        if (res.user.locale && res.user.locale !== storedLocale) {
-          void updateMyProfile({ locale: storedLocale }).catch(() => {});
-        }
-      } else if (res.user.locale === 'am' || res.user.locale === 'en') {
-        setLangState(res.user.locale);
-        persistLocale(res.user.locale);
-      }
-      await reloadData(res.user);
-      return { ok: true, role: res.user.role, user: res.user };
-    },
-    [reloadData],
-  );
-
-  const login = useCallback(
-    async (email: string, password: string): Promise<LoginResult> => {
-      try {
-        const res = await apiLogin(email.trim(), password);
-        if ('passwordChangeRequired' in res) {
-          saveFirstLoginChallenge({
-            challengeToken: res.challengeToken,
-            email: res.email,
-            devCode: res.devCode,
-          });
-          return {
-            ok: false,
-            passwordChangeRequired: true,
-            message: 'You need to set a new password before continuing.',
-            devCode: res.devCode,
-          };
-        }
-        if ('emailVerificationRequired' in res) {
-          return {
-            ok: false,
-            emailVerificationRequired: true,
-            message: 'Please verify your email. We sent a code to your inbox.',
-            devCode: res.devCode,
-          };
-        }
-        return await enterSession(res);
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Unable to sign in. Please try again.'),
-        };
-      }
-    },
-    [enterSession],
-  );
-
-  const verifyEmail = useCallback(
-    async (email: string, code: string): Promise<LoginResult> => {
-      try {
-        return await enterSession(await apiVerifyEmail(email, code));
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Could not verify your email. Please try again.'),
-        };
-      }
-    },
-    [enterSession],
-  );
-
-  const completeFirstLogin: LmsContextValue['completeFirstLogin'] = useCallback(
-    async ({ code, newPassword, confirmPassword }) => {
-      const challenge = readFirstLoginChallenge();
-      if (!challenge) {
-        return {
-          ok: false,
-          message: 'Your password-change session has expired. Please sign in again.',
-        };
-      }
-      try {
-        const res = await apiCompleteFirstLogin({
-          challengeToken: challenge.challengeToken,
-          code,
-          newPassword,
-          confirmPassword,
-        });
-        clearFirstLoginChallenge();
-        return await enterSession(res);
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Could not change your password. Please try again.'),
-        };
-      }
-    },
-    [enterSession],
-  );
-
-  const refreshPermissions = useCallback(async (): Promise<void> => {
-    try {
-      const res = await apiRefresh();
-      setAccessToken(res.accessToken);
-      setCurrentUser(res.user);
-      currentUserRef.current = res.user;
-    } catch {
-      // best-effort — keep the existing session if the refresh call fails
-    }
-  }, []);
-
-  const logout = useCallback(() => {
-    void apiLogout();
-    clearSession();
-  }, [clearSession]);
-
-  const register: LmsContextValue['register'] = useCallback(
-    async (input) => {
-      const firstName = input.firstName.trim();
-      const lastName = input.lastName.trim();
-      const email = input.email.trim().toLowerCase();
-      const phone = input.phone.trim();
-      const tin = input.tin?.trim();
-
-      if (!firstName || !lastName || !email || !phone || !input.password) {
-        return { ok: false, message: 'Please fill in all required fields.' };
-      }
-      if (!isValidEmail(email)) {
-        return { ok: false, message: 'Please enter a valid email address.' };
-      }
-      const pwdError = passwordIssues(input.password);
-      if (pwdError) return { ok: false, message: pwdError };
-      if (input.password !== input.confirmPassword) {
-        return { ok: false, message: 'Confirm password must match.' };
-      }
-
-      try {
-        const res = await apiRegister({
-          firstName,
-          lastName,
-          email,
-          phone,
-          password: input.password,
-          tin: tin || undefined,
-        });
-        // No session yet: the account is activated by verifying the emailed code.
-        return { ok: true, email, devCode: res.devCode };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Registration failed. Please try again.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
   const createCourse: LmsContextValue['createCourse'] = useCallback(
     async (input) => {
-      const owner = currentUserRef.current;
+      const owner = useAuthStore.getState().currentUser;
       if (!owner || !hasPermission(owner, 'course.create')) {
         return { ok: false, message: 'You are not allowed to create courses.' };
       }
@@ -966,7 +754,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     async (courseId, file) => {
       try {
         await uploadCover(courseId, file);
-        await reloadData(currentUserRef.current);
+        await reloadData(useAuthStore.getState().currentUser);
         return { ok: true };
       } catch (err) {
         return {
@@ -982,7 +770,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     async (courseId, trainerId) => {
       try {
         await apiAssignTrainer(courseId, trainerId);
-        await reloadData(currentUserRef.current);
+        await reloadData(useAuthStore.getState().currentUser);
         return { ok: true };
       } catch (err) {
         return {
@@ -998,7 +786,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     async (courseId, trainerId) => {
       try {
         await unassignTrainer(courseId, trainerId);
-        await reloadData(currentUserRef.current);
+        await reloadData(useAuthStore.getState().currentUser);
         return { ok: true };
       } catch (err) {
         return {
@@ -1027,7 +815,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
             password: row.password || undefined,
           })),
         );
-        await reloadData(currentUserRef.current);
+        await reloadData(useAuthStore.getState().currentUser);
         return { ok: true, result };
       } catch (err) {
         return {
@@ -1052,7 +840,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           primaryVenueId: input.primaryVenueId || undefined,
           mustChangePassword: input.mustChangePassword,
         });
-        await reloadData(currentUserRef.current);
+        await reloadData(useAuthStore.getState().currentUser);
         return { ok: true };
       } catch (err) {
         return {
@@ -1064,69 +852,9 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
-  const updateProfile: LmsContextValue['updateProfile'] = useCallback(async (input) => {
-    const current = currentUserRef.current;
-    if (!current) return { ok: false, message: 'You must be signed in.' };
-    try {
-      const updated = await updateMyProfile(input);
-      const merged: User = {
-        ...current,
-        firstName: updated.firstName,
-        lastName: updated.lastName,
-        name: `${updated.firstName} ${updated.lastName}`,
-        phone: updated.phone ?? '',
-        tin: updated.tin ?? null,
-        avatarUrl: updated.avatarUrl ?? current.avatarUrl ?? null,
-        locale: updated.locale === 'am' ? 'am' : 'en',
-      };
-      setCurrentUser(merged);
-      currentUserRef.current = merged;
-      return { ok: true };
-    } catch (err) {
-      return {
-        ok: false,
-        message: errorMessage(err, 'Failed to update profile.'),
-      };
-    }
-  }, []);
-
-  const changePassword: LmsContextValue['changePassword'] = useCallback(async (input) => {
-    try {
-      await changeMyPassword(input);
-      return { ok: true };
-    } catch (err) {
-      return {
-        ok: false,
-        message: errorMessage(err, 'Failed to change password.'),
-      };
-    }
-  }, []);
-
-  const updateLocale: LmsContextValue['updateLocale'] = useCallback(async (locale) => {
-    // 1. Immediately apply the language change locally so UI updates with zero latency
-    setLangState(locale);
-    persistLocale(locale);
-
-    // 2. If user is signed in, sync preference to profile in background
-    const current = currentUserRef.current;
-    if (current) {
-      const merged = { ...current, locale };
-      setCurrentUser(merged);
-      currentUserRef.current = merged;
-
-      try {
-        await updateMyProfile({ locale });
-      } catch (err) {
-        console.warn('Could not sync language preference to remote profile:', err);
-      }
-    }
-
-    return { ok: true };
-  }, []);
-
   const updateCourse: LmsContextValue['updateCourse'] = useCallback(
     async (courseId, input) => {
-      const owner = currentUserRef.current;
+      const owner = useAuthStore.getState().currentUser;
       const course = coursesRef.current.find((item) => item.id === courseId);
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
@@ -1163,7 +891,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const updateCourseFull: LmsContextValue['updateCourseFull'] = useCallback(
     async (courseId, input) => {
-      const owner = currentUserRef.current;
+      const owner = useAuthStore.getState().currentUser;
       const course = coursesRef.current.find((item) => item.id === courseId);
       if (!course) return { ok: false, message: 'Course not found.' };
       if (
@@ -1261,7 +989,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const submitForApproval = useCallback(
     async (courseId: string): Promise<ActionResult> => {
-      const owner = currentUserRef.current;
+      const owner = useAuthStore.getState().currentUser;
       try {
         await requestApproval(courseId);
         await reloadData(owner);
@@ -1278,7 +1006,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const approveCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
-      const approver = currentUserRef.current;
+      const approver = useAuthStore.getState().currentUser;
       try {
         await reviewCourse(courseId, { status: 'APPROVED' });
         await reloadData(approver);
@@ -1295,7 +1023,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const rejectCourse = useCallback(
     async (courseId: string, reason: string): Promise<ActionResult> => {
-      const approver = currentUserRef.current;
+      const approver = useAuthStore.getState().currentUser;
       const trimmed = reason.trim();
       if (!trimmed) {
         return { ok: false, message: 'A rejection reason is required.' };
@@ -1316,7 +1044,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const requestChangesCourse = useCallback(
     async (courseId: string, reason: string): Promise<ActionResult> => {
-      const approver = currentUserRef.current;
+      const approver = useAuthStore.getState().currentUser;
       const trimmed = reason.trim();
       if (!trimmed) {
         return { ok: false, message: 'A reason is required when requesting changes.' };
@@ -1337,7 +1065,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const returnCourseToDraft = useCallback(
     async (courseId: string, reason: string): Promise<ActionResult> => {
-      const approver = currentUserRef.current;
+      const approver = useAuthStore.getState().currentUser;
       const trimmed = reason.trim();
       if (!trimmed) {
         return { ok: false, message: 'A reason is required when returning a course to draft.' };
@@ -1358,7 +1086,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const publishCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       try {
         await apiPublishCourse(courseId);
         await reloadData(admin);
@@ -1375,7 +1103,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const unpublishCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       try {
         await apiUnpublishCourse(courseId);
         await reloadData(admin);
@@ -1392,7 +1120,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const archiveCourse = useCallback(
     async (courseId: string): Promise<ActionResult> => {
-      const actor = currentUserRef.current;
+      const actor = useAuthStore.getState().currentUser;
       try {
         await apiArchiveCourse(courseId);
         await reloadData(actor);
@@ -1409,7 +1137,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const deleteCourse = useCallback(
     async (courseId: string): Promise<ActionResult & { affectedLearners?: number }> => {
-      const owner = currentUserRef.current;
+      const owner = useAuthStore.getState().currentUser;
       try {
         const res = await apiDeleteCourse(courseId);
         await reloadData(owner);
@@ -1426,7 +1154,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const enrollLearners = useCallback(
     async (courseId: string, learnerIds: string[]): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'student.manage')) {
         return {
           ok: false,
@@ -1456,7 +1184,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         sessionId?: string;
       },
     ): Promise<ActionResult> => {
-      const learner = currentUserRef.current;
+      const learner = useAuthStore.getState().currentUser;
       if (!learner || !hasPermission(learner, 'enrollment.self')) {
         return { ok: false, message: 'Only learners can self-enroll.' };
       }
@@ -1497,7 +1225,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const changeUserRole = useCallback(
     async (userId: string, role: Role): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'role.manage')) {
         return {
           ok: false,
@@ -1530,7 +1258,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const deactivateUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'user.manage')) {
         return { ok: false, message: 'You are not allowed to manage users.' };
       }
@@ -1550,7 +1278,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const reactivateUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'user.manage')) {
         return { ok: false, message: 'You are not allowed to manage users.' };
       }
@@ -1570,7 +1298,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const deleteUser = useCallback(
     async (userId: string): Promise<ActionResult> => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'user.manage')) {
         return { ok: false, message: 'You are not allowed to manage users.' };
       }
@@ -1590,7 +1318,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const bulkUserAction: LmsContextValue['bulkUserAction'] = useCallback(
     async (action, userIds) => {
-      const admin = currentUserRef.current;
+      const admin = useAuthStore.getState().currentUser;
       if (!admin || !hasPermission(admin, 'user.manage')) {
         return { ok: false, message: 'You are not allowed to manage users.' };
       }
@@ -1631,51 +1359,16 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const userName = useCallback((userId: string) => userNames[userId] ?? 'Unknown', [userNames]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    setAccessToken(getStoredAccessToken());
-    setRefreshHandler(async () => {
-      try {
-        const res = await apiRefresh();
-        setAccessToken(res.accessToken);
-        if (!cancelled) {
-          currentUserRef.current = res.user;
-          setCurrentUser(res.user);
-        }
-        return res.accessToken;
-      } catch {
-        return null;
-      }
+    setSessionHooks({
+      onSignIn: async (user) => {
+        setUserNames({ [user.id]: user.name });
+        await reloadData(user);
+      },
+      onRestore: (user) => reloadData(user),
+      onClear: clearData,
     });
-    setUnauthorizedHandler(() => {
-      clearTokens();
-      clearSession();
-    });
-
-    (async () => {
-      const refreshToken = getStoredRefreshToken();
-      if (refreshToken) {
-        try {
-          const res = await apiRefresh();
-          if (cancelled) return;
-          setAccessToken(res.accessToken);
-          currentUserRef.current = res.user;
-          setCurrentUser(res.user);
-          await reloadData(res.user);
-        } catch {
-          if (!cancelled) {
-            clearTokens();
-            clearSession();
-          }
-        }
-      }
-      if (!cancelled) setReady(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [clearSession, reloadData]);
+    useAuthStore.getState().initAuth();
+  }, [clearData, reloadData]);
 
   // Live permission sync: whenever permissions change or every ~10s, sync current user permissions
   useEffect(() => {

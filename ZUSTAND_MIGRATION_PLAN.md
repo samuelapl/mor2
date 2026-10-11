@@ -3,9 +3,9 @@
 ## 1. Executive Summary & Goals
 
 ### The Problem
-`frontend/src/lib/lms-store.tsx` is an **1,809-line monolithic "God Object"** implemented using React's built-in Context API (`createContext` + `useContext`). 
-- **118 components** across the application consume `useLms()`.
-- **Re-render cascades**: Because all state (auth, courses, enrollments, users, language) lives inside a single Context value, any state change (e.g., reloading courses or updating an enrollment) forces **all 118 components** to re-render.
+`frontend/src/lib/lms-store.tsx` is an **1,808-line monolithic "God Object"** implemented using React's built-in Context API (`createContext` + `useContext`). 
+- **60 files** across the application consume `useLms()`.
+- **Re-render cascades**: Because all state (auth, courses, enrollments, users, language) lives inside a single Context value, any state change (e.g., reloading courses or updating an enrollment) forces **every `useLms()` consumer** to re-render.
 - **Hook-only limitation**: Context values cannot be accessed outside of React component trees, complicating token refreshes, interceptors, and non-React utilities in `client.ts`.
 
 ### The Goal
@@ -56,6 +56,37 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
 Components can be migrated to `useAuthStore` or `useCourseStore` one at a time. Nothing breaks if a component still calls `useLms()`.
 
+> Note: the re-render benefit only appears once components read from the stores directly (mostly Phase 5). During Phases 1–4 the facade still re-renders all `useLms()` consumers — that's expected.
+
+---
+
+## 2a. Current State & Ground Rules (updated 2026-10-11)
+
+**State today**
+- Branch: `migration`. `zustand@^5.0.15` is installed; only `lib/stores/prepared-quiz-store.ts` exists.
+- `LmsProvider` holds 7 `useState`s: `ready`, `courses`, `users`, `myEnrollments`, `lang`, `currentUser`, `userNames`, plus refs `currentUserRef`, `coursesRef`, `usersRef`.
+- No frontend tests → verification is `npx tsc --noEmit` + manual browser checks per phase.
+
+**Cross-domain logic the per-domain split must respect**
+- `reloadData(user)` is ONE loader that fills courses, enrollments, users and `userNames` together, and is role-dependent:
+  - learner → `fetchMyEnrollments()` and sets each course's `enrolledLearnerIds` from it
+  - owner/admin/trainer → `fetchCourseEnrollments()` per course
+  - admins → `fetchUsers()`
+  - `userNames` is built from course owners, trainers, enrollments and users.
+- `clearSession()` resets ALL domains (token, user, users, courses, enrollments, userNames).
+- `enterSession()` (shared by `login`, `verifyEmail`, `completeFirstLogin`) sets the user and locale, then calls `reloadData`.
+
+→ **Decision:** create `lib/stores/session-data.ts` holding `reloadAll(user)` and `resetAll()`. They write into each store via `useXStore.setState(...)`. While Phase 1 is in progress, `reloadData`/`clearSession` stay in the provider. As each store is created, they start writing to it. They move fully into `session-data.ts` in Phase 4.
+
+**Ground rules (zero behavior change)**
+1. Move logic verbatim — same API calls, same error messages, same fallbacks. No "improvements" during migration.
+2. The 401 handler keeps its current behavior: `clearTokens()` + `clearSession()` only — do **not** call `logout()` (that would add an `apiLogout()` call).
+3. Keep all side effects: the `setRefreshHandler` token refresh, the 10s permission polling, and the `mor_permissions_updated` / `storage` / `focus` listeners.
+4. `initAuth()` must be idempotent (module-level guard) — React StrictMode runs effects twice in dev.
+5. Keep the `LmsContextValue` shape identical until Phase 5 so all 60 consumers keep compiling.
+6. Stores are client-only (`'use client'` consumers); never read them in Server Components.
+7. One commit per phase on `migration`; revert a single phase if it breaks.
+
 ---
 
 ## 3. The 5 Migration Phases
@@ -91,13 +122,18 @@ Extract all authentication, user session, profile management, permission refresh
 
 #### Implementation Steps
 1. Create `frontend/src/lib/stores/auth-store.ts` using `create` from `zustand`.
-2. Connect `initAuth()` to load stored tokens and fetch the profile on startup via `fetchMyProfile()`.
-3. Wire up 401 unauthorized handling directly: `setUnauthorizedHandler(() => useAuthStore.getState().logout())`.
-4. In `lms-store.tsx`: Remove local `currentUser`, `lang`, and `ready` useState hooks. Read them from `useAuthStore` and pass them into `LmsContext.Provider`.
-5. Update core auth consumers:
-   - `src/components/layout/Navbar.tsx` (or Header/Sidebar components reading `currentUser`).
+2. Move the startup logic as-is into `initAuth()`: read the stored refresh token → `apiRefresh()` → set the token and user → reload data → `ready = true`. Do NOT switch to `fetchMyProfile()`. Guard it so it runs only once.
+3. Move `setRefreshHandler(...)` and `setUnauthorizedHandler(() => { clearTokens(); clearSession(); })` unchanged — same behavior as today, no `logout()`/`apiLogout()` call.
+4. Move the permission sync (10s interval + `mor_permissions_updated`/`storage`/`focus` listeners) as-is. It can stay as a `useEffect` in the provider that calls `useAuthStore.getState().refreshPermissions()`.
+5. Keep the `enterSession()` flow: set the user, apply the stored/user locale, then call the provider's `reloadData` (so dashboards still get courses/users/enrollments after login).
+6. In `lms-store.tsx`: Remove local `currentUser`, `lang`, and `ready` useState hooks plus `currentUserRef`. Read them from `useAuthStore` (`getState()` replaces the ref) and pass them into `LmsContext.Provider`.
+7. Update core auth consumers:
+   - `src/components/layout/Header.tsx`, `Sidebar.tsx`, `DashboardShell.tsx` (components reading `currentUser`).
    - `src/app/(auth)/login/page.tsx` & `src/app/(auth)/register/page.tsx`.
-6. Run `npx tsc --noEmit` to verify type safety.
+8. Run `npx tsc --noEmit` to verify type safety.
+
+#### Browser Check
+Login (each role) · logout · page reload keeps you logged in · register + email verification · first-login password change · language switch persists after reload · change a user's role in another tab → permissions update within ~10s · expired session (401) sends you back to login.
 
 ---
 
@@ -128,9 +164,13 @@ Extract the user directory, trainer lookups, role assignments, suspensions, and 
 2. Move user management API calls (`@/lib/api/users`) into store actions.
 3. In `lms-store.tsx`: Delegate `users`, `userNames`, `userName`, `changeUserRole`, `bulkUserAction`, etc. to `useUserStore`.
 4. Migrate admin components:
-   - `src/app/(dashboard)/admin/users/` (User table and modals).
+   - `src/app/(dashboard)/system-admin/users/page.tsx` (User table and modals).
    - `src/components/features/users/` components.
-5. Run `npx tsc --noEmit` to verify.
+5. Make `reloadData`/`clearSession` write `users` and `userNames` via `useUserStore.setState(...)`.
+6. Run `npx tsc --noEmit` to verify.
+
+#### Browser Check
+Admin users list loads · names show correctly on courses (owners/trainers) · role change · deactivate/reactivate · delete · bulk action · bulk CSV registration · create trainer/actor.
 
 ---
 
@@ -156,8 +196,12 @@ Extract all enrollment state and actions (learner self-enrollment and admin bulk
 4. Migrate learner dashboard and catalog enrollment buttons:
    - `src/app/(dashboard)/learner/page.tsx`.
    - `src/components/features/courses/CatalogCourseModal.tsx` enrollment CTA.
-   - `src/components/features/courses/detail/CourseEnrollmentCard.tsx`.
-5. Run `npx tsc --noEmit` to verify.
+   - `src/components/features/courses/EnrolledCourseActions.tsx`.
+5. Make `reloadData`/`clearSession` write `myEnrollments` via `useEnrollmentStore.setState(...)`.
+6. Run `npx tsc --noEmit` to verify.
+
+#### Browser Check
+Learner self-enrolls from catalog · "Enrolled" state shows on catalog/detail · learner dashboard lists courses + progress · admin bulk-enrolls learners · logout → login as another user shows no stale enrollments.
 
 ---
 
@@ -194,11 +238,15 @@ Extract course catalogs, authoring pipelines (`createCourse`, `updateCourseFull`
 1. Create `frontend/src/lib/stores/course-store.ts`.
 2. Move curriculum and assessment sync helper functions (`syncCurriculumAndAssessments`, `formatQuestionsForApi`, etc.) into `course-store.ts` or a dedicated `course-sync.ts` utility.
 3. In `lms-store.tsx`: Proxy all remaining course actions from `useCourseStore`.
-4. Migrate Course Creator and Review stages:
+4. Move `reloadData` → `reloadAll(user)` and `clearSession` → `resetAll()` into `lib/stores/session-data.ts` (logic unchanged, writes to all 4 stores). `coursesRef`/`usersRef` are replaced by `getState()`.
+5. Migrate Course Creator and Review stages:
    - `src/components/features/courses/creator/CourseCreatorShell.tsx`.
    - `src/components/features/courses/review/CourseReviewShell.tsx`.
-   - `src/components/features/courses/detail/CourseDetailPage.tsx`.
-5. Run `npx tsc --noEmit` to verify.
+   - `src/components/features/courses/CourseCreationWizard.tsx` and `src/components/features/courses/detail/` sections.
+6. Run `npx tsc --noEmit` to verify.
+
+#### Browser Check
+Course list per role · create course · edit + autosave lessons (multi-content blocks order kept) · quizzes/assessments save · cover upload · assign/unassign trainer · course owner view · submit → approve/reject/request changes → publish/unpublish · archive · delete.
 
 ---
 
@@ -245,7 +293,7 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 
 | Phase | Target Store | Proxy Wired in `lms-store` | TypeScript Pass | Status |
 | :--- | :--- | :---: | :---: | :--- |
-| **Phase 1** | `auth-store.ts` | [ ] | [ ] | Pending |
+| **Phase 1** | `auth-store.ts` | [x] | [x] | Awaiting browser check |
 | **Phase 2** | `user-store.ts` | [ ] | [ ] | Pending |
 | **Phase 3** | `enrollment-store.ts` | [ ] | [ ] | Pending |
 | **Phase 4** | `course-store.ts` | [ ] | [ ] | Pending |

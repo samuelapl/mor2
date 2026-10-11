@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { getRoleFromPath } from '@/constants/roles';
 import { navItemsForRole, type NavItem } from '@/constants/navigation';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,8 @@ interface SidebarProps {
  */
 export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
-  const { currentUser, logout } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const logout = useAuthStore((s) => s.logout);
   const { canAny } = usePermissions();
   const { tNav, t, isAmharic } = useTranslation();
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? 'learner';
