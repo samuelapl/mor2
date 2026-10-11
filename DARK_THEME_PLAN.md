@@ -257,7 +257,7 @@ Tick each route once its step is finished. Also open the modals and drawers reac
 
 | Phase | Work | tsc / build | Browser | Status |
 | :--- | :--- | :---: | :---: | :--- |
-| 1 | Tokens + theme store + toggle fixes | [ ] | [ ] | Pending |
+| 1 | Tokens + theme store + toggle fixes | [x] | [x] | Done |
 | 2 | Shared UI / layout / charts | [ ] | [ ] | Pending |
 | 3 | Codemod (`scripts/theme-tokens.mjs`) | [ ] | n/a | Pending |
 | 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [ ] | [ ] | Pending |

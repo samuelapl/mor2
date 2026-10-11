@@ -4,9 +4,10 @@ import { useEffect } from 'react';
 
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useLocaleStore } from '@/lib/stores/locale-store';
+import { useThemeStore } from '@/lib/stores/theme-store';
 
 /**
- * Restores the saved language, starts the auth session (stored-token restore,
+ * Restores the saved language and theme, starts the auth session (stored-token restore,
  * refresh/401 handlers) and keeps the
  * signed-in user's permissions fresh. Renders nothing.
  */
@@ -16,6 +17,7 @@ export function SessionSync() {
 
   useEffect(() => {
     useLocaleStore.getState().hydrate();
+    useThemeStore.getState().hydrate();
     useAuthStore.getState().initAuth();
   }, []);
 

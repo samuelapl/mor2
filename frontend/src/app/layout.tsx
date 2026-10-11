@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Poppins, Inter } from 'next/font/google';
 import AppProviders from '@/components/providers/AppProviders';
-import { themeInitScript } from '@/lib/theme';
+import { themeInitScript } from '@/lib/theme-init';
 import './globals.css';
 
 const poppins = Poppins({
@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans antialiased text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-950 transition-colors duration-200">
+      <body className="font-sans antialiased bg-background text-foreground transition-colors duration-200">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
 import { Moon, Sun, Monitor, Check } from 'lucide-react';
-import { useTheme } from '@/lib/theme';
+import { useThemeStore } from '@/lib/stores/theme-store';
 import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,9 @@ const OPTIONS: { value: 'light' | 'dark' | 'system'; icon: typeof Sun; labelKey:
 
 export function ThemeToggle() {
   const { t } = useTranslation('common');
-  const { theme, setTheme, isDark } = useTheme();
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const isDark = useThemeStore((s) => s.resolvedTheme === 'dark');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

@@ -1,11 +1,31 @@
 import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
+// Semantic color token defined in globals.css (light under :root, dark under .dark).
+const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: 'class',
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      colors: {
+        background: token("background"),
+        foreground: token("foreground"),
+        card: { DEFAULT: token("card"), foreground: token("card-foreground") },
+        popover: { DEFAULT: token("popover"), foreground: token("popover-foreground") },
+        muted: { DEFAULT: token("muted"), foreground: token("muted-foreground") },
+        subtle: { foreground: token("subtle-foreground") },
+        border: token("border"),
+        input: token("input"),
+        ring: token("ring"),
+        primary: { DEFAULT: token("primary"), foreground: token("primary-foreground"), soft: token("primary-soft") },
+        accent: { soft: token("accent-soft") },
+        success: { DEFAULT: token("success"), soft: token("success-soft") },
+        warning: { DEFAULT: token("warning"), soft: token("warning-soft") },
+        danger: { DEFAULT: token("danger"), soft: token("danger-soft") },
+        info: { DEFAULT: token("info"), soft: token("info-soft") },
+      },
       fontFamily: {
         sans: ["var(--font-inter)", '"Inter"', '"Noto Sans Ethiopic"', '"Nyala"', ...defaultTheme.fontFamily.sans],
         display: [
@@ -25,10 +45,10 @@ const config: Config = {
         amharic: ['"Noto Sans Ethiopic"', '"Nyala"', '"Abyssinica SIL"', "sans-serif"],
       },
       boxShadow: {
-        soft: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.08)",
-        lift: "0 8px 24px -6px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.06)",
+        soft: "0 1px 2px 0 rgb(var(--shadow) / 0.04), 0 1px 3px 0 rgb(var(--shadow) / 0.08)",
+        lift: "0 8px 24px -6px rgb(var(--shadow) / 0.12), 0 2px 6px -2px rgb(var(--shadow) / 0.06)",
         glow: "0 0 0 1px rgb(99 102 241 / 0.2), 0 8px 24px -6px rgb(99 102 241 / 0.35)",
-        card: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -12px rgb(15 23 42 / 0.12)",
+        card: "0 1px 2px 0 rgb(var(--shadow) / 0.04), 0 12px 32px -12px rgb(var(--shadow) / 0.12)",
       },
       borderRadius: {
         "2xl": "1rem",

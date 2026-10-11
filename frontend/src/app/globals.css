@@ -2,15 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Semantic color tokens (space-separated RGB, used as `rgb(var(--x) / <alpha>)`).
+ * Exposed as Tailwind colors in tailwind.config.ts. This file is the only place
+ * that knows the dark values; components use the token classes (bg-card, text-foreground…).
+ */
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-rgb: 255, 255, 255;
+  --background: 255 255 255;
+  --foreground: 15 23 42;
+  --card: 255 255 255;
+  --card-foreground: 15 23 42;
+  --popover: 255 255 255;
+  --popover-foreground: 15 23 42;
+  --muted: 248 250 252;
+  --muted-foreground: 100 116 139;
+  --subtle-foreground: 148 163 184;
+  --border: 226 232 240;
+  --input: 203 213 225;
+  --ring: 99 102 241;
+  --primary: 79 70 229;
+  --primary-foreground: 255 255 255;
+  --primary-soft: 238 242 255;
+  --accent-soft: 245 243 255;
+  --success: 4 120 87;
+  --success-soft: 236 253 245;
+  --warning: 180 83 9;
+  --warning-soft: 255 251 235;
+  --danger: 190 18 60;
+  --danger-soft: 255 241 242;
+  --info: 3 105 161;
+  --info-soft: 240 249 255;
+  --shadow: 15 23 42;
 }
 
 .dark {
-  --foreground-rgb: 241, 245, 249;
-  --background-rgb: 2, 6, 23;
   color-scheme: dark;
+  --background: 2 6 23;
+  --foreground: 241 245 249;
+  --card: 15 23 42;
+  --card-foreground: 241 245 249;
+  --popover: 15 23 42;
+  --popover-foreground: 241 245 249;
+  --muted: 30 41 59;
+  --muted-foreground: 148 163 184;
+  --subtle-foreground: 100 116 139;
+  --border: 51 65 85;
+  --input: 71 85 105;
+  --ring: 129 140 248;
+  --primary: 99 102 241;
+  --primary-foreground: 255 255 255;
+  --primary-soft: 30 27 75;
+  --accent-soft: 46 16 101;
+  --success: 52 211 153;
+  --success-soft: 2 44 34;
+  --warning: 251 191 36;
+  --warning-soft: 69 26 3;
+  --danger: 251 113 133;
+  --danger-soft: 76 5 25;
+  --info: 56 189 248;
+  --info-soft: 8 47 73;
+  --shadow: 15 23 42;
 }
 
 @layer base {
@@ -19,8 +70,6 @@
   }
 
   body {
-    color: rgb(var(--foreground-rgb));
-    background: rgb(var(--background-rgb));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
