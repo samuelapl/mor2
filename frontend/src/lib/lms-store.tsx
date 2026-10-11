@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 
 import { ApiError } from '@/lib/api/client';
 import { useAuthStore, setSessionHooks, type RegisterInput, type RegisterResult } from '@/lib/stores/auth-store';
-import { setDataReloader } from '@/lib/stores/session-data';
+import { useEnrollmentStore, type EnrollSelfOptions } from '@/lib/stores/enrollment-store';
+import { setCourseEnrolledMarker, setDataReloader } from '@/lib/stores/session-data';
 import {
   useUserStore,
   type BulkRegisterUsersResult,
@@ -25,7 +26,7 @@ import {
   reviewCourse,
   updateCourse as apiUpdateCourse,
 } from '@/lib/api/courses';
-import { bulkEnroll, fetchCourseEnrollments, fetchMyEnrollments, selfEnroll } from '@/lib/api/enrollments';
+import { fetchCourseEnrollments, fetchMyEnrollments } from '@/lib/api/enrollments';
 import { fetchUsers } from '@/lib/api/users';
 import {
   assignTrainer as apiAssignTrainer,
@@ -218,14 +219,7 @@ interface LmsContextValue {
   archiveCourse: (courseId: string) => Promise<ActionResult>;
   deleteCourse: (courseId: string) => Promise<ActionResult & { affectedLearners?: number }>;
   enrollLearners: (courseId: string, learnerIds: string[]) => Promise<ActionResult>;
-  enrollSelf: (
-    courseId: string,
-    options?: {
-      deliveryMode?: CourseDeliveryMode;
-      venueId?: string;
-      sessionId?: string;
-    },
-  ) => Promise<ActionResult>;
+  enrollSelf: (courseId: string, options?: EnrollSelfOptions) => Promise<ActionResult>;
   myEnrollments: ApiEnrollment[];
   getEnrollmentForCourse: (courseId: string) => ApiEnrollment | undefined;
   changeUserRole: (userId: string, role: Role) => Promise<ActionResult>;
@@ -535,8 +529,12 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const bulkRegisterUsers = useUserStore((s) => s.bulkRegisterUsers);
   const registerActor = useUserStore((s) => s.registerActor);
 
+  // Learner enrollments live in the Zustand enrollment store (Phase 3 facade).
+  const myEnrollments = useEnrollmentStore((s) => s.myEnrollments);
+  const enrollLearners = useEnrollmentStore((s) => s.enrollLearners);
+  const enrollSelf = useEnrollmentStore((s) => s.enrollSelf);
+
   const [courses, setCourses] = useState<Course[]>([]);
-  const [myEnrollments, setMyEnrollments] = useState<ApiEnrollment[]>([]);
 
   const coursesRef = useRef<Course[]>([]);
 
@@ -549,7 +547,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     useUserStore.getState().reset();
     setCourses([]);
     coursesRef.current = [];
-    setMyEnrollments([]);
+    useEnrollmentStore.getState().reset();
   }, []);
 
   const reloadData = useCallback(async (user?: User | null) => {
@@ -573,7 +571,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       if (current?.role === 'learner') {
         try {
           const mine = await fetchMyEnrollments();
-          setMyEnrollments(mine.data);
+          useEnrollmentStore.setState({ myEnrollments: mine.data });
           const enrolledCourseIds = new Set(
             mine.data
               .filter((enrollment) => enrollment.status === 'ACTIVE' || enrollment.status === 'COMPLETED')
@@ -1074,75 +1072,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     [reloadData],
   );
 
-  const enrollLearners = useCallback(
-    async (courseId: string, learnerIds: string[]): Promise<ActionResult> => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'student.manage')) {
-        return {
-          ok: false,
-          message: 'Only training administrators can enroll learners.',
-        };
-      }
-      try {
-        await bulkEnroll(courseId, learnerIds);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to enroll learners.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const enrollSelf = useCallback(
-    async (
-      courseId: string,
-      options?: {
-        deliveryMode?: CourseDeliveryMode;
-        venueId?: string;
-        sessionId?: string;
-      },
-    ): Promise<ActionResult> => {
-      const learner = useAuthStore.getState().currentUser;
-      if (!learner || !hasPermission(learner, 'enrollment.self')) {
-        return { ok: false, message: 'Only learners can self-enroll.' };
-      }
-      try {
-        const enr = await selfEnroll({
-          courseId,
-          deliveryMode: options?.deliveryMode,
-          venueId: options?.venueId,
-          sessionId: options?.sessionId,
-        });
-        setMyEnrollments((prev) => [...prev.filter((e) => e.courseId !== courseId), enr]);
-      } catch (err) {
-        const message = errorMessage(err, 'Enrollment failed. The course may no longer be available.');
-        // The backend may say "already enrolled" even though our local
-        // enrollment list is stale/out of sync — that's still the outcome
-        // the learner wants, so settle into the enrolled state instead of
-        // surfacing it as a failure.
-        if (!/already enrolled/i.test(message)) {
-          return { ok: false, message };
-        }
-      }
-      // Reflect the enrolled state immediately rather than waiting on a
-      // full reloadData() round trip to update the button.
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === courseId && !course.enrolledLearnerIds.includes(learner.id)
-            ? { ...course, enrolledLearnerIds: [...course.enrolledLearnerIds, learner.id] }
-            : course,
-        ),
-      );
-      await reloadData(learner);
-      return { ok: true };
-    },
-    [reloadData],
-  );
-
   const getEnrollmentForCourse = useCallback((courseId: string) => myEnrollments.find((e) => e.courseId === courseId), [myEnrollments]);
 
   const refreshCourse = useCallback(async (courseId: string) => {
@@ -1175,6 +1104,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
       onClear: clearData,
     });
     setDataReloader(reloadData);
+    setCourseEnrolledMarker((courseId, learnerId) => {
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === courseId && !course.enrolledLearnerIds.includes(learnerId)
+            ? { ...course, enrolledLearnerIds: [...course.enrolledLearnerIds, learnerId] }
+            : course,
+        ),
+      );
+    });
     useAuthStore.getState().initAuth();
   }, [clearData, reloadData]);
 

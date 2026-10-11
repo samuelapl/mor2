@@ -20,3 +20,17 @@ export function setDataReloader(fn: DataReloader): void {
 export function reloadAll(user: User | null = useAuthStore.getState().currentUser): Promise<void> {
   return reloader(user);
 }
+
+type CourseEnrolledMarker = (courseId: string, learnerId: string) => void;
+
+let courseEnrolledMarker: CourseEnrolledMarker = () => {};
+
+/** Registered by `LmsProvider` while `courses` still lives there (moves to the course store in Phase 4). */
+export function setCourseEnrolledMarker(fn: CourseEnrolledMarker): void {
+  courseEnrolledMarker = fn;
+}
+
+/** Marks a course as enrolled for `learnerId` locally, before the full reload finishes. */
+export function markCourseEnrolled(courseId: string, learnerId: string): void {
+  courseEnrolledMarker(courseId, learnerId);
+}

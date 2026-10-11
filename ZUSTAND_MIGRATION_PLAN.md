@@ -201,7 +201,7 @@ Extract all enrollment state and actions (learner self-enrollment and admin bulk
 6. Run `npx tsc --noEmit` to verify.
 
 #### Browser Check
-Learner self-enrolls from catalog · "Enrolled" state shows on catalog/detail · learner dashboard lists courses + progress · admin bulk-enrolls learners · logout → login as another user shows no stale enrollments.
+Learner self-enrolls from catalog · "Enrolled" state shows on catalog/detail · learner dashboard lists courses + progress · training admin enrolls a learner from /training-admin/enrollments (UI sends one learner; the API accepts many) · logout → login as another user shows no stale enrollments.
 
 ---
 
@@ -294,8 +294,8 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 | Phase | Target Store | Proxy Wired in `lms-store` | TypeScript Pass | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **Phase 1** | `auth-store.ts` | [x] | [x] | Done |
-| **Phase 2** | `user-store.ts` | [x] | [x] | Awaiting browser check |
-| **Phase 3** | `enrollment-store.ts` | [ ] | [ ] | Pending |
+| **Phase 2** | `user-store.ts` | [x] | [x] | Done |
+| **Phase 3** | `enrollment-store.ts` | [x] | [x] | Awaiting browser check (consumers switch in Phase 4/5 — they also read courses) |
 | **Phase 4** | `course-store.ts` | [ ] | [ ] | Pending |
 | **Phase 5** | Cutover & Delete `lms-store.tsx` | N/A (Deleted) | [ ] | Pending |
 
