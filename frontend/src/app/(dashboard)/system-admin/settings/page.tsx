@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export default function SystemSettingsPage() {
   const lang = useLocaleStore((s) => s.lang);
-  const { tBilingual, changeLanguage } = useTranslation();
+  const { changeLanguage, t } = useTranslation('admin');
   const [sessionTimeout, setSessionTimeout] = useState('60');
   const [notifications, setNotifications] = useState(true);
   const [openRegistration, setOpenRegistration] = useState(false);
@@ -80,11 +80,8 @@ export default function SystemSettingsPage() {
   return (
     <PageShell
       role="system_admin"
-      title={tBilingual('System Settings', 'የስርዓት ቅንብሮች')}
-      description={tBilingual(
-        'Configure platform defaults, institutional security, and system preferences.',
-        'የመድረኩን ነባሪዎች፣ ተቋማዊ ደህንነት እና የስርዓት ምርጫዎችን ያዋቅሩ።',
-      )}
+      title={t('systemAdminDashboardPage.systemSettings')}
+      description={t('systemSettingsPage.configurePlatformDefaultsInstitutionalSe')}
     >
       <div className="max-w-2xl space-y-6 pb-8">
         {errorMessage && (
@@ -97,13 +94,10 @@ export default function SystemSettingsPage() {
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              {tBilingual('System name', 'የስርዓቱ ስም')}
+              {t('systemSettingsPage.systemName')}
             </label>
             <input
-              value={tBilingual(
-                'Ministry of Revenues — Learning Management System',
-                'የገቢዎች ሚኒስቴር — የትምህርት ማኔጅመንት ስርዓት',
-              )}
+              value={t('systemSettingsPage.ministryOfRevenuesLearningManagementSyst')}
               readOnly
               className={cn(inputClass, 'bg-slate-50')}
             />
@@ -111,7 +105,7 @@ export default function SystemSettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                {tBilingual('Default language', 'ነባሪ ቋንቋ')}
+                {t('systemSettingsPage.defaultLanguage')}
               </label>
               <select
                 value={lang}
@@ -124,7 +118,7 @@ export default function SystemSettingsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                {tBilingual('Session timeout (minutes)', 'የክፍለ-ጊዜ ማብቂያ (በደቂቃዎች)')}
+                {t('systemSettingsPage.sessionTimeoutMinutes')}
               </label>
               <input
                 type="number"
@@ -142,29 +136,20 @@ export default function SystemSettingsPage() {
         <div className="divide-y divide-slate-100/80 rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
           {[
             {
-              label: tBilingual('Email notifications', 'የኢሜይል ማሳወቂያዎች'),
-              description: tBilingual(
-                'Send email updates and session reminders to users and trainers.',
-                'ለተጠቃሚዎች እና አሰልጣኞች የኢሜይል ዝማኔዎችን እና የክፍለ-ጊዜ ማስታወሻዎችን ይላኩ።',
-              ),
+              label: t('systemSettingsPage.emailNotifications'),
+              description: t('systemSettingsPage.sendEmailUpdatesAndSessionReminders'),
               value: notifications,
               set: setNotifications,
             },
             {
-              label: tBilingual('Open registration', 'ክፍት ምዝገባ'),
-              description: tBilingual(
-                'Allow new users to self-register via the login page.',
-                'አዲስ ተጠቃሚዎች በመግቢያ ገጹ በኩል ራሳቸውን እንዲመዘግቡ ይፍቀዱ።',
-              ),
+              label: t('systemSettingsPage.openRegistration'),
+              description: t('systemSettingsPage.allowNewUsersToSelfRegister'),
               value: openRegistration,
               set: setOpenRegistration,
             },
             {
-              label: tBilingual('SSO / e-services integration', 'የ SSO / የኢ-አገልግሎቶች ቅንጅት'),
-              description: tBilingual(
-                'Single sign-on with the MoR eServices portal.',
-                'ከገቢዎች ሚኒስቴር የኢ-አገልግሎቶች መግቢያ ጋር የተዋሃደ አንድ ወጥ መግቢያ (SSO)።',
-              ),
+              label: t('systemSettingsPage.ssoEServicesIntegration'),
+              description: t('systemSettingsPage.singleSignOnWithTheMor'),
               value: ssoEnabled,
               set: setSSOEnabled,
             },
@@ -200,13 +185,13 @@ export default function SystemSettingsPage() {
           >
             <Save className="h-4 w-4" />
             {saving
-              ? tBilingual('Saving settings…', 'ቅንብሮችን በማስቀመጥ ላይ…')
-              : tBilingual('Save Settings', 'ቅንብሮችን አስቀምጥ')}
+              ? t('systemSettingsPage.savingSettings')
+              : t('systemSettingsPage.saveSettings')}
           </Button>
           {saved && (
             <Badge variant="green" className="flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              {tBilingual('Settings updated successfully', 'ቅንብሮች በተሳካ ሁኔታ ተዘምነዋል')}
+              {t('systemSettingsPage.settingsUpdatedSuccessfully')}
             </Badge>
           )}
         </div>

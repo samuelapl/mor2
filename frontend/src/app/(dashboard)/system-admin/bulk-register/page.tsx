@@ -182,7 +182,7 @@ function rowErrors(row: RowDraft, roleNames: Set<string>): string[] {
 
 export default function BulkRegisterPage() {
   const bulkRegisterUsers = useUserStore((s) => s.bulkRegisterUsers);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('users');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<RowDraft[]>([]);
   const { page, totalPages, setPage, pageItems } = usePagination(rows, 10);
@@ -380,23 +380,17 @@ export default function BulkRegisterPage() {
   return (
     <PageShell
       role="system_admin"
-      title={tBilingual('Bulk Register Users', 'ተጠቃሚዎችን በብዛት መዝግብ')}
-      description={tBilingual(
-        'Import a CSV of user accounts. Accounts are created approved and active; duplicate emails are skipped.',
-        'የተጠቃሚዎችን ዝርዝር በ CSV ፋይል ያስመጡ። መለያዎች በቀጥታ የጸደቁና ንቁ ሆነው ይፈጠራሉ፤ የተደገሙ ኢሜይሎች ይታለፋሉ።',
-      )}
+      title={t('bulkRegisterPage.bulkRegisterUsers')}
+      description={t('bulkRegisterPage.importACsvOfUserAccounts')}
     >
       <PageSection
-        title={tBilingual('Import a spreadsheet', 'የተጠቃሚዎችን ሰነድ አስመጣ')}
-        description={tBilingual(
-          'Columns: first_name, last_name, email, phone (required) and password, tin, role (optional). A blank password is auto-generated, a blank role means Learner.',
-          'አምዶች፡ first_name፣ last_name፣ email፣ phone (ግዴታ) እና password፣ tin፣ role (አማራጭ)። ባዶ ይለፍ ቃል በራሱ ይፈጠራል፤ ባዶ ሚና ማለት ተማሪ ነው።',
-        )}
+        title={t('bulkRegisterPage.importASpreadsheet')}
+        description={t('bulkRegisterPage.columnsFirstNameLastNameEmail')}
       >
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
             <Download className="h-3.5 w-3.5" />
-            {tBilingual('Download template', 'የቅጽ አብነት አውርድ')}
+            {t('bulkRegisterPage.downloadTemplate')}
           </Button>
           <Button
             type="button"
@@ -405,7 +399,7 @@ export default function BulkRegisterPage() {
             onClick={() => fileInputRef.current?.click()}
           >
             <FileSpreadsheet className="h-3.5 w-3.5" />
-            {tBilingual('Choose CSV', 'CSV ፋይል ምረጥ')}
+            {t('bulkRegisterPage.chooseCsv')}
           </Button>
           <input
             ref={fileInputRef}
@@ -427,33 +421,21 @@ export default function BulkRegisterPage() {
           </div>
         ) : null}
         <p className="mt-3 text-xs text-slate-400">
-          {tBilingual(
-            `Columns are matched by header name, so their order doesn't matter. Roles accepted: ${roleOptions.map((role) => role.label).join(', ')}. Tip: if you edit the file in Excel, format the phone and tin columns as Text so leading zeros are kept.`,
-            `አምዶች በስሞቻቸው ስለሚዛመዱ ቅደም ተከተላቸው ለውጥ አያመጣም። ተቀባይነት ያላቸው ሚናዎች፡ ${roleOptions.map((role) => role.label).join(', ')}። ፍንጭ፡ ፋይሉን በ Excel ካስተካከሉ፣ የመነሻ ዜሮዎች እንዳይጠፉ የስልክ እና የግብር መለያ ቁጥር (TIN) አምዶችን እንደ Text ይቅረጹ።`,
-          )}
+          {t('bulkRegisterPage.columnsAreMatchedByHeaderName', { value: roleOptions.map((role) => role.label).join(', ') })}
         </p>
       </PageSection>
 
       {rows.length === 0 ? (
         result ? null : (
           <EmptyState
-            title={tBilingual('No rows loaded', 'ምንም ረድፎች አልተጫኑም')}
-            description={tBilingual(
-              'Choose a CSV file above to preview its contents before creating accounts.',
-              'መለያዎችን ከመፍጠርዎ በፊት ይዘቱን ለመገምገም ከላይ የ CSV ፋይል ይምረጡ።',
-            )}
+            title={t('bulkRegisterPage.noRowsLoaded')}
+            description={t('bulkRegisterPage.chooseACsvFileAboveTo')}
           />
         )
       ) : (
         <PageSection
-          title={tBilingual(
-            `Preview (${rows.length} rows, ${readyRows.length} ready, ${selectedRows.length} selected)`,
-            `ቅድመ-ዕይታ (${rows.length} ረድፎች፣ ${readyRows.length} ዝግጁ፣ ${selectedRows.length} የተመረጡ)`,
-          )}
-          description={tBilingual(
-            'Review and fix the imported records, then tick the rows to register. Rows with errors are not sent.',
-            'የገቡትን መረጃዎች ይገምግሙና ያርሙ፣ ከዚያም የሚመዘገቡትን ረድፎች ይምረጡ። ስህተት ያለባቸው ረድፎች አይላኩም።',
-          )}
+          title={t('bulkRegisterPage.previewRowsReadySelected', { count: rows.length, count2: readyRows.length, count3: selectedRows.length })}
+          description={t('bulkRegisterPage.reviewAndFixTheImportedRecords')}
         >
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <button
@@ -461,21 +443,21 @@ export default function BulkRegisterPage() {
               onClick={() => setSelectedKeys(new Set(rows.map((row) => row.key)))}
               className="font-semibold text-indigo-600 hover:text-indigo-800"
             >
-              {tBilingual('Select all', 'ሁሉንም ምረጥ')}
+              {t('bulkRegisterPage.selectAll')}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set(readyRows.map((row) => row.key)))}
               className="font-semibold text-indigo-600 hover:text-indigo-800"
             >
-              {tBilingual('Select ready only', 'ዝግጁ የሆኑትን ብቻ ምረጥ')}
+              {t('bulkRegisterPage.selectReadyOnly')}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set())}
               className="font-semibold text-slate-500 hover:text-slate-700"
             >
-              {tBilingual('Clear selection', 'ምርጫን አጽዳ')}
+              {t('bulkRegisterPage.clearSelection')}
             </button>
           </div>
           <Table
@@ -493,14 +475,14 @@ export default function BulkRegisterPage() {
                   />
                 ),
               },
-              tBilingual('Line', 'መስመር'),
-              tBilingual('First name', 'ስም'),
-              tBilingual('Last name', 'የአባት ስም'),
-              tBilingual('Email', 'ኢሜይል'),
-              tBilingual('Phone', 'ስልክ'),
-              tBilingual('TIN', 'የግብር መለያ'),
-              tBilingual('Role', 'ሚና'),
-              tBilingual('Password', 'የይለፍ ቃል'),
+              t('bulkRegisterPage.line'),
+              t('bulkRegisterPage.firstName'),
+              t('bulkRegisterPage.lastName'),
+              t('usersPage.email'),
+              t('bulkRegisterPage.phone'),
+              t('bulkRegisterPage.tin'),
+              t('usersPage.role'),
+              t('bulkRegisterPage.password'),
               '',
             ]}
           >
@@ -568,7 +550,7 @@ export default function BulkRegisterPage() {
                   <Td className="align-top">
                     <input
                       value={row.tin}
-                      placeholder={tBilingual('optional', 'አማራጭ')}
+                      placeholder={t('bulkRegisterPage.optional')}
                       onChange={(event) => patchRow(row.key, { tin: event.target.value })}
                       className={`w-28 ${cellInputClass}`}
                     />
@@ -581,7 +563,7 @@ export default function BulkRegisterPage() {
                     >
                       {!roleKnown ? (
                         <option value={row.role} disabled>
-                          {tBilingual('Unknown:', 'ያልታወቀ:')} {row.role}
+                          {t('bulkRegisterPage.unknown')} {row.role}
                         </option>
                       ) : null}
                       {roleOptions.map((role) => (
@@ -594,7 +576,7 @@ export default function BulkRegisterPage() {
                   <Td className="align-top">
                     <input
                       value={row.password}
-                      placeholder={tBilingual('auto-generate', 'በራሱ ይፍጠር')}
+                      placeholder={t('bulkRegisterPage.autoGenerate')}
                       onChange={(event) => patchRow(row.key, { password: event.target.value })}
                       className={`w-28 ${cellInputClass}`}
                     />
@@ -635,25 +617,23 @@ export default function BulkRegisterPage() {
           <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
             {selectedWithErrors > 0 ? (
               <span className="text-xs text-amber-700">
-                {tBilingual(
-                  `${selectedWithErrors} selected row${selectedWithErrors === 1 ? ' has' : 's have'} errors and won't be sent until fixed.`,
-                  `${selectedWithErrors} የተመረጡ ረድፎች ስህተት ስላላቸው እስኪስተካከሉ ድረስ አይላኩም።`,
-                )}
+                {t(selectedWithErrors === 1 ? 'bulkRegisterPage.rowsWithErrorsOne' : 'bulkRegisterPage.rowsWithErrorsOther', {
+                  count: selectedWithErrors,
+                })}
               </span>
             ) : null}
             <Button
               type="button"
               isLoading={saving}
-              loadingText={tBilingual('Registering users…', 'ተጠቃሚዎችን በመመዝገብ ላይ…')}
+              loadingText={t('bulkRegisterPage.registeringUsers')}
               disabled={submitRows.length === 0}
               onClick={handleCreate}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <UserPlus className="h-4 w-4" />
-              {tBilingual(
-                `Register ${submitRows.length} selected user${submitRows.length === 1 ? '' : 's'}`,
-                `${submitRows.length} የተመረጡ ተጠቃሚዎችን መዝግብ`,
-              )}
+              {t(submitRows.length === 1 ? 'bulkRegisterPage.registerSelectedOne' : 'bulkRegisterPage.registerSelectedOther', {
+                count: submitRows.length,
+              })}
             </Button>
           </div>
         </PageSection>
@@ -661,37 +641,31 @@ export default function BulkRegisterPage() {
 
       {createdRows.length > 0 ? (
         <PageSection
-          title={tBilingual('Registration summary', 'የምዝገባ ማጠቃለያ')}
+          title={t('bulkRegisterPage.registrationSummary')}
           description={
             message ??
-            tBilingual(
-              'Below is the confirmation of the records created.',
-              'ከዚህ በታች የተፈጠሩት መረጃዎች ማረጋገጫ ቀርቧል።',
-            )
+            t('bulkRegisterPage.belowIsTheConfirmationOfThe')
           }
         >
           {createdRows.length > 0 ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
                 <span>
-                  {tBilingual(
-                    'Passwords are shown only once. Download the credentials now and share them securely with each user.',
-                    'የይለፍ ቃሎች የሚታዩት አንድ ጊዜ ብቻ ነው። የመግቢያ መረጃዎችን አሁን አውርደው ለእያንዳንዱ ተጠቃሚ በጥንቃቄ ያጋሩ።',
-                  )}
+                  {t('bulkRegisterPage.passwordsAreShownOnlyOnceDownload')}
                 </span>
                 <Button type="button" variant="outline" size="sm" onClick={downloadCredentials}>
                   <Download className="h-3.5 w-3.5" />
-                  {tBilingual('Download credentials CSV', 'የይለፍ ቃሎችን CSV አውርድ')}
+                  {t('bulkRegisterPage.downloadCredentialsCsv')}
                 </Button>
               </div>
               <Table
                 columns={[
-                  tBilingual('Name', 'ስም'),
-                  tBilingual('Email', 'ኢሜይል'),
-                  tBilingual('Phone', 'ስልክ'),
-                  tBilingual('TIN', 'የግብር መለያ'),
-                  tBilingual('Role', 'ሚና'),
-                  tBilingual('Password', 'የይለፍ ቃል'),
+                  t('bulkRegisterPage.name'),
+                  t('usersPage.email'),
+                  t('bulkRegisterPage.phone'),
+                  t('bulkRegisterPage.tin'),
+                  t('usersPage.role'),
+                  t('bulkRegisterPage.password'),
                 ]}
               >
                 {createdRows.map((row) => (
@@ -720,16 +694,13 @@ export default function BulkRegisterPage() {
           {skippedRows.length > 0 ? (
             <>
               <p className="text-sm font-medium text-amber-700">
-                {tBilingual(
-                  `${skippedRows.length} row(s) skipped — they are still in the preview above so you can fix and resend them.`,
-                  `${skippedRows.length} ረድፍ(ፎች) ታልፈዋል — ከላይ ባለው ቅድመ-ዕይታ ውስጥ ስላሉ አስተካክለው እንደገና መላክ ይችላሉ።`,
-                )}
+                {t('bulkRegisterPage.rowSSkippedTheyAreStill', { count: skippedRows.length })}
               </p>
               <Table
                 columns={[
-                  tBilingual('Line', 'መስመር'),
-                  tBilingual('Email', 'ኢሜይል'),
-                  tBilingual('Reason', 'ምክንያት'),
+                  t('bulkRegisterPage.line'),
+                  t('usersPage.email'),
+                  t('bulkRegisterPage.reason'),
                 ]}
               >
                 {skippedRows.map((row) => (
@@ -747,10 +718,7 @@ export default function BulkRegisterPage() {
 
       <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500">
         <UploadCloud className="h-4 w-4 shrink-0 text-indigo-500" />
-        {tBilingual(
-          'Passwords left blank are auto-generated to meet the password policy. On first sign-in, each user receives an emailed code and must set their own password. Up to 500 users per import.',
-          'ባዶ የቀሩ የይለፍ ቃሎች የደህንነት ፖሊሲውን እንዲያሟሉ በራሳቸው ይፈጠራሉ። በመጀመሪያው መግቢያ ላይ እያንዳንዱ ተጠቃሚ በኢሜይል ኮድ ይደርሰዋል እንዲሁም የራሱን የይለፍ ቃል ማዘጋጀት አለበት። በአንድ ጊዜ እስከ 500 ተጠቃሚዎች ይቻላል።',
-        )}
+        {t('bulkRegisterPage.passwordsLeftBlankAreAutoGenerated')}
       </div>
     </PageShell>
   );

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 
 export default function AuditLogsPage() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('admin');
   const [logs, setLogs] = useState<ApiAuditLog[]>([]);
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -70,11 +70,8 @@ export default function AuditLogsPage() {
   return (
     <PageShell
       role="system_admin"
-      title={tBilingual('Audit Logs', 'የኦዲት መዝገቦች')}
-      description={tBilingual(
-        'A chronological trail of actions performed across the system.',
-        'በስርዓቱ ውስጥ የተከናወኑ ተግባራት ቅደም ተከተላዊ የክትትል መዝገብ።',
-      )}
+      title={t('auditLogsPage.auditLogs')}
+      description={t('auditLogsPage.aChronologicalTrailOfActionsPerformed')}
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
@@ -82,16 +79,13 @@ export default function AuditLogsPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={tBilingual(
-              'Search actor, action, target or IP…',
-              'ተዋናይ፣ እርምጃ፣ ዒላማ ወይም አይፒ ይፈልጉ…',
-            )}
+            placeholder={t('auditLogsPage.searchActorActionTargetOrIp')}
             className="w-full rounded-xl border border-slate-200/90 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
           />
         </div>
         <Button size="sm" variant="outline" onClick={download}>
           <Download className="h-3.5 w-3.5" />
-          {tBilingual('Download CSV', 'CSV አውርድ')}
+          {t('auditLogsPage.downloadCsv')}
         </Button>
       </div>
 
@@ -101,11 +95,11 @@ export default function AuditLogsPage() {
 
       <Table
         columns={[
-          tBilingual('Timestamp', 'የጊዜ ማህተም'),
-          tBilingual('Actor', 'ፈጻሚ'),
-          tBilingual('Action', 'እርምጃ'),
-          tBilingual('Entity', 'አካል'),
-          tBilingual('IP Address', 'የአይፒ አድራሻ'),
+          t('auditLogsPage.timestamp'),
+          t('auditLogsPage.actor'),
+          t('auditLogsPage.action'),
+          t('auditLogsPage.entity'),
+          t('auditLogsPage.ipAddress'),
         ]}
       >
         {pageItems.map((log) => (
@@ -116,7 +110,7 @@ export default function AuditLogsPage() {
             <Td className="font-medium text-slate-900">
               {log.user
                 ? `${log.user.firstName} ${log.user.lastName}`
-                : tBilingual('System', 'ስርዓት')}
+                : t('auditLogsPage.system')}
             </Td>
             <Td>
               <span className="text-slate-600">{log.action}</span>
@@ -135,10 +129,7 @@ export default function AuditLogsPage() {
         {filtered.length === 0 ? (
           <tr>
             <Td colSpan={5} className="py-10 text-center text-xs text-slate-400">
-              {tBilingual(
-                'No audit entries match your search.',
-                'ከፍለጋዎ ጋር የሚዛመድ ምንም የኦዲት መዝገብ አልተገኘም።',
-              )}
+              {t('auditLogsPage.noAuditEntriesMatchYourSearch')}
             </Td>
           </tr>
         ) : null}

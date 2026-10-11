@@ -40,7 +40,7 @@ type PolicyTab = 'course' | 'live_sessions';
 
 export default function PoliciesPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('admin');
   const [activeTab, setActiveTab] = useState<PolicyTab>('course');
 
   // Course policy states
@@ -130,7 +130,7 @@ export default function PoliciesPage() {
     setSeedingHolidays(true);
     try {
       await api('admin/public-holidays/seed-defaults', { method: 'POST' });
-      toast.success(tBilingual('Standard Ethiopian holidays registered.', 'የኢትዮጵያ መደበኛ በዓላት ተመዝግበዋል።'));
+      toast.success(t('policiesPage.standardEthiopianHolidaysRegistered'));
       await loadHolidays();
     } catch {
       toast.error('Failed to register default holidays.');
@@ -141,7 +141,7 @@ export default function PoliciesPage() {
 
   const handleAddHoliday = async () => {
     if (!newHolidayName.trim() || !newHolidayDate) {
-      toast.warning(tBilingual('Please enter holiday name and date.', 'እባክዎ የበዓሉን ስም እና ቀን ያስገቡ።'));
+      toast.warning(t('policiesPage.pleaseEnterHolidayNameAndDate'));
       return;
     }
     setAddingHoliday(true);
@@ -150,7 +150,7 @@ export default function PoliciesPage() {
         method: 'POST',
         body: { nameEn: newHolidayName.trim(), holidayDate: newHolidayDate, isActive: true },
       });
-      toast.success(tBilingual('Holiday added.', 'በዓል ተመዝግቧል።'));
+      toast.success(t('policiesPage.holidayAdded'));
       setNewHolidayName('');
       setNewHolidayDate('');
       await loadHolidays();
@@ -164,7 +164,7 @@ export default function PoliciesPage() {
   const handleDeleteHoliday = async (id: string) => {
     try {
       await api(`admin/public-holidays/${id}`, { method: 'DELETE' });
-      toast.success(tBilingual('Holiday removed.', 'በዓል ተሰርዟል።'));
+      toast.success(t('policiesPage.holidayRemoved'));
       setHolidays((prev) => prev.filter((h) => h.id !== id));
     } catch {
       toast.error('Failed to remove holiday.');
@@ -226,7 +226,7 @@ export default function PoliciesPage() {
         live_session_reschedule_day_gap: String(rescheduleDayGap),
       });
       setLivePolicyUpdatedAt(new Date().toISOString());
-      toast.success(tBilingual('Live session policy saved successfully.', 'የቀጥታ ክፍለ-ጊዜ ፖሊሲ በተሳካ ሁኔታ ተቀምጧል።'));
+      toast.success(t('policiesPage.liveSessionPolicySavedSuccessfully'));
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Failed to persist live session policy settings.',
@@ -249,11 +249,8 @@ export default function PoliciesPage() {
   return (
     <PageShell
       role={currentUser?.role ?? 'system_admin'}
-      title={tBilingual('Policies', 'መመሪያዎችና ፖሊሲዎች')}
-      description={tBilingual(
-        'Manage institutional policies including course completion requirements, retake rules, and live session attendance governance.',
-        'የኮርስ ማጠናቀቂያ መስፈርቶችን፣ የድጋሚ ፈተና ደንቦችን እና የቀጥታ ክፍለ-ጊዜ ክትትል አስተዳደርን ጨምሮ ተቋማዊ ፖሊሲዎችን ያስተዳድሩ።',
-      )}
+      title={t('policiesPage.policies')}
+      description={t('policiesPage.manageInstitutionalPoliciesIncludingCour')}
     >
       {/* Navigation Tabs */}
       <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
@@ -268,7 +265,7 @@ export default function PoliciesPage() {
           )}
         >
           <Clock className="h-4 w-4" />
-          <span>{tBilingual('Course Completion Policies', 'የኮርስ ማጠናቀቂያ ፖሊሲዎች')}</span>
+          <span>{t('policiesPage.courseCompletionPolicies')}</span>
         </button>
 
         <button
@@ -283,7 +280,7 @@ export default function PoliciesPage() {
         >
           <Video className="h-4 w-4" />
           <span>
-            {tBilingual('Live Sessions & Attendance Policy', 'የቀጥታ ክፍለ-ጊዜዎች እና የክትትል ፖሊሲ')}
+            {t('policiesPage.liveSessionsAttendancePolicy')}
           </span>
         </button>
       </div>
@@ -294,24 +291,21 @@ export default function PoliciesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                {tBilingual('Course Completion & Retake Rules', 'የኮርስ ማጠናቀቂያ እና የድጋሚ ፈተና ደንቦች')}
+                {t('policiesPage.courseCompletionRetakeRules')}
               </h2>
               <p className="text-xs text-slate-500">
-                {tBilingual(
-                  'Applied globally to module progress calculations and assessment lockout policies.',
-                  'በሞጁል እድገት ስሌቶች እና የምዘና መቆለፊያ ፖሊሲዎች ላይ በአጠቃላይ ተፈጻሚ ይሆናል።',
-                )}
+                {t('policiesPage.appliedGloballyToModuleProgressCalculati')}
               </p>
             </div>
             <Button
               onClick={() => void saveCoursePolicy()}
               isLoading={savingCoursePolicy}
-              loadingText={tBilingual('Saving Policies…', 'ፖሊሲዎችን በማስቀመጥ ላይ…')}
+              loadingText={t('policiesPage.savingPolicies')}
               disabled={loadingCoursePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Save className="h-4 w-4" />
-              {tBilingual('Save Course Policies', 'የኮርስ ፖሊሲዎችን አስቀምጥ')}
+              {t('policiesPage.saveCoursePolicies')}
             </Button>
           </div>
 
@@ -329,12 +323,9 @@ export default function PoliciesPage() {
                       <Compass className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle>{tBilingual('Course Progress Policy', 'የኮርስ እድገት ፖሊሲ')}</CardTitle>
+                      <CardTitle>{t('policiesPage.courseProgressPolicy')}</CardTitle>
                       <CardDescription>
-                        {tBilingual(
-                          'Configure how learners navigate course modules and lessons. In Open Progression, lessons and quizzes are open immediately, but the Final Assessment and Certificate remain strictly gated until 100% completion.',
-                          'ተማሪዎች የኮርስ ሞጁሎችን እና ትምህርቶችን እንዴት እንደሚያልፉ ይወስኑ። በክፍት እድገት ውስጥ ትምህርቶች እና ጥያቄዎች ክፍት ናቸው፣ ነገር ግን የመጨረሻው ፈተና እና ሰርተፍኬት ሙሉ በሙሉ እስኪጠናቀቅ ድረስ ተቆልፈው ይቆያሉ።',
-                        )}
+                        {t('policiesPage.configureHowLearnersNavigateCourseModule')}
                       </CardDescription>
                     </div>
                   </div>
@@ -343,8 +334,8 @@ export default function PoliciesPage() {
                     className="text-xs uppercase tracking-wide px-3 py-1 font-semibold"
                   >
                     {progressionMode === 'OPEN'
-                      ? tBilingual('Open Progression', 'ክፍት እድገት')
-                      : tBilingual('Locked Progression', 'የተቆለፈ እድገት')}
+                      ? t('policiesPage.openProgression')
+                      : t('policiesPage.lockedProgression')}
                   </Badge>
                 </div>
 
@@ -375,20 +366,14 @@ export default function PoliciesPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold text-slate-900">
-                              {tBilingual(
-                                'Locked Progression (Sequential)',
-                                'የተቆለፈ የትምህርት ቅደም ተከተል (ቅደም-ተከተላዊ)',
-                              )}
+                              {t('policiesPage.lockedProgressionSequential')}
                             </h4>
                             <Badge variant="slate" className="text-[10px] py-0 px-1.5">
-                              {tBilingual('Default', 'ነባሪ')}
+                              {t('policiesPage.default')}
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {tBilingual(
-                              'Learners must complete modules, lessons, and required quizzes in strict sequential order.',
-                              'ተማሪዎች ሞጁሎችን፣ ትምህርቶችን እና አስፈላጊ ፈተናዎችን በቅደም ተከተል ማጠናቀቅ አለባቸው።',
-                            )}
+                            {t('policiesPage.learnersMustCompleteModulesLessonsAnd')}
                           </p>
                         </div>
                       </div>
@@ -408,19 +393,13 @@ export default function PoliciesPage() {
                         <div className="flex items-start gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
                           <span>
-                            {tBilingual(
-                              'A module or lesson unlocks only after preceding prerequisites are completed.',
-                              'አንድ ሞጁል ወይም ትምህርት የሚከፈተው ቀደም ሲል የነበሩ ቅድመ-ሁኔታዎች እንደተጠናቀቁ ከተመዘገቡ ብቻ ነው።',
-                            )}
+                            {t('policiesPage.aModuleOrLessonUnlocksOnly')}
                           </span>
                         </div>
                         <div className="flex items-start gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
                           <span>
-                            {tBilingual(
-                              'Best suited for step-by-step onboarding, certification tracks, and structured compliance.',
-                              'ለደረጃ በደረጃ ስልጠናዎች፣ የብቃት ማረጋገጫ መንገዶች እና ጥብቅ የህግ ማሟያ ኮርሶች ተመራጭ ነው።',
-                            )}
+                            {t('policiesPage.bestSuitedForStepByStep')}
                           </span>
                         </div>
                       </div>
@@ -452,20 +431,14 @@ export default function PoliciesPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold text-slate-900">
-                              {tBilingual(
-                                'Open Progression (Flexible / Self-Paced)',
-                                'ክፍት የትምህርት ቅደም ተከተል (ተለዋዋጭ / በራስ ፍጥነት)',
-                              )}
+                              {t('policiesPage.openProgressionFlexibleSelfPaced')}
                             </h4>
                             <Badge variant="blue" className="text-[10px] py-0 px-1.5">
-                              {tBilingual('Flexible', 'ተለዋዋጭ')}
+                              {t('policiesPage.flexible')}
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {tBilingual(
-                              'All modules, lessons, and quizzes are open immediately. Final Assessment & Certificate unlock upon 100% completion.',
-                              'ሁሉም ሞጁሎች፣ ትምህርቶች እና ጥያቄዎች ክፍት ናቸው። የመጨረሻው ምዘና እና ምስክር ወረቀት 100% ሲጠናቀቅ ይከፈታሉ።',
-                            )}
+                            {t('policiesPage.allModulesLessonsAndQuizzesAre')}
                           </p>
                         </div>
                       </div>
@@ -485,19 +458,13 @@ export default function PoliciesPage() {
                         <div className="flex items-start gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
                           <span>
-                            {tBilingual(
-                              'Learners can explore any topic and take module or lesson quizzes in any order.',
-                              'ተማሪዎች ማንኛውንም ርዕስ መርጠው መማር እና የሞጁል ወይም የትምህርት ጥያቄዎችን በማንኛውም ቅደም ተከተል መውሰድ ይችላሉ።',
-                            )}
+                            {t('policiesPage.learnersCanExploreAnyTopicAnd')}
                           </span>
                         </div>
                         <div className="flex items-start gap-2">
                           <ShieldAlert className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
                           <span>
-                            {tBilingual(
-                              'The Final Assessment and Certificate remain locked until all preceding lessons and quizzes are completed.',
-                              'ሁሉም ቀደም ሲል የነበሩ ትምህርቶች እና ፈተናዎች እስኪጠናቀቁ ድረስ የመጨረሻው ምዘና እና ምስክር ወረቀት ተቆልፈው ይቆያሉ።',
-                            )}
+                            {t('policiesPage.theFinalAssessmentAndCertificateRemain')}
                           </span>
                         </div>
                       </div>
@@ -512,19 +479,16 @@ export default function PoliciesPage() {
                     <Clock className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <CardTitle>{tBilingual('Time-Spent Requirement', 'የቆይታ ጊዜ መስፈርት')}</CardTitle>
+                    <CardTitle>{t('policiesPage.timeSpentRequirement')}</CardTitle>
                     <CardDescription>
-                      {tBilingual(
-                        "Learners must spend at least this percentage of a lesson or module's configured duration before it can be marked complete.",
-                        'ተማሪዎች አንድ ትምህርት ወይም ሞጁል እንደተጠናቀቀ ከመመዝገቡ በፊት ከተመደበው የቆይታ ጊዜ ቢያንስ ይህንን መቶኛ ማሳለፍ አለባቸው።',
-                      )}
+                      {t('policiesPage.learnersMustSpendAtLeastThis')}
                     </CardDescription>
                   </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                    <span>{tBilingual('Required time spent', 'አስፈላጊ የቆይታ ጊዜ')}</span>
+                    <span>{t('policiesPage.requiredTimeSpent')}</span>
                     <span className="text-indigo-600 font-bold">{timeSpentPercent}%</span>
                   </div>
                   <input
@@ -549,19 +513,13 @@ export default function PoliciesPage() {
                       className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                     />
                     <span className="text-xs text-slate-400">
-                      {tBilingual(
-                        `e.g. a 20-minute lesson requires ${Math.ceil(20 * 60 * (timeSpentPercent / 100))} second(s) spent before completion.`,
-                        `ለምሳሌ ባለ 20 ደቂቃ ትምህርት ከመጠናቀቁ በፊት ${Math.ceil(20 * 60 * (timeSpentPercent / 100))} ሰከንዶች ቆይታ ያስፈልገዋል።`,
-                      )}
+                      {t('policiesPage.eGA20MinuteLesson', { value: Math.ceil(20 * 60 * (timeSpentPercent / 100)) })}
                     </span>
                   </div>
                   {timeSpentPercent === 0 ? (
                     <p className="flex items-center gap-1.5 text-xs text-amber-600">
                       <ShieldAlert className="h-3.5 w-3.5" />
-                      {tBilingual(
-                        '0% disables the time requirement entirely — lessons can be completed instantly.',
-                        '0% የጊዜ መስፈርቱን ሙሉ በሙሉ ያሰናክላል — ትምህርቶች ወዲያውኑ ሊጠናቀቁ ይችላሉ።',
-                      )}
+                      {t('policiesPage.n0DisablesTheTimeRequirementEntirely')}
                     </p>
                   ) : null}
                 </div>
@@ -574,13 +532,10 @@ export default function PoliciesPage() {
                   </div>
                   <div className="flex-1">
                     <CardTitle>
-                      {tBilingual('Assessment Retake Cooldown', 'የምዘና ድጋሚ ሙከራ ማረፊያ ጊዜ')}
+                      {t('policiesPage.assessmentRetakeCooldown')}
                     </CardTitle>
                     <CardDescription>
-                      {tBilingual(
-                        'Once a learner exhausts every attempt on an assessment, they may retake it again after this many minutes. Set to 0 to keep attempts permanently locked out.',
-                        'ተማሪ በምዘና ላይ የተሰጡትን ሙከራዎች ከጨረሰ በኋላ ከዚህ ደቂቃዎች በኋላ እንደገና ሊሞክር ይችላል። ሙከራዎች በቋሚነት እንዲቆለፉ 0 ያድርጉት።',
-                      )}
+                      {t('policiesPage.onceALearnerExhaustsEveryAttempt')}
                     </CardDescription>
                   </div>
                 </div>
@@ -598,19 +553,13 @@ export default function PoliciesPage() {
                       className="w-28 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                     />
                     <span className="text-sm text-slate-600 font-medium">
-                      {tBilingual('minutes', 'ደቂቃዎች')}
+                      {t('policiesPage.minutes')}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">
                     {retakeCooldownMinutes === 0
-                      ? tBilingual(
-                          'Retakes are disabled — max attempts reached is a permanent lockout.',
-                          'ድጋሚ ሙከራዎች ተሰናክለዋል — ከፍተኛው ሙከራ ሲደረስ በቋሚነት ይቆለፋል።',
-                        )
-                      : tBilingual(
-                          `A learner who exhausts their attempts can retake the assessment ${retakeCooldownMinutes} minute(s) after their last submission.`,
-                          `ሙከራዎቹን ያጠናቀቀ ተማሪ ከመጨረሻው ምዝገባው ከ ${retakeCooldownMinutes} ደቂቃ(ዎች) በኋላ እንደገና መሞከር ይችላል።`,
-                        )}
+                      ? t('policiesPage.retakesAreDisabledMaxAttemptsReached')
+                      : t('policiesPage.aLearnerWhoExhaustsTheirAttempts', { retakeCooldownMinutes })}
                   </p>
                 </div>
               </Card>
@@ -624,27 +573,21 @@ export default function PoliciesPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle>
-                        {tBilingual(
-                          'Global Assessment & Certification Pass Mark',
-                          'አጠቃላይ የምዘና እና ምስክር ወረቀት ማለፊያ ነጥብ',
-                        )}
+                        {t('policiesPage.globalAssessmentCertificationPassMark')}
                       </CardTitle>
                       <Badge variant="green" className="text-[10px] py-0 px-1.5 font-bold">
-                        {tBilingual('Dual Threshold', 'ድርብ ገደብ')}
+                        {t('policiesPage.dualThreshold')}
                       </Badge>
                     </div>
                     <CardDescription className="mt-1">
-                      {tBilingual(
-                        'The global minimum score required to pass individual assessments and earn course certification. Learners must meet or exceed this mark on each quiz and in their total weighted course grade.',
-                        'የግል ምዘናዎችን ለማለፍ እና የኮርስ የምስክር ወረቀት ለማግኘት የሚያስፈልገው አጠቃላይ ዝቅተኛ ውጤት። ተማሪዎች በእያንዳንዱ ፈተና እና በጠቅላላው የክብደት ውጤታቸው ይህንን ማሟላት አለባቸው።',
-                      )}
+                      {t('policiesPage.theGlobalMinimumScoreRequiredTo')}
                     </CardDescription>
                   </div>
                 </div>
 
                 <div className="mt-6 space-y-4">
                   <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                    <span>{tBilingual('Passing threshold', 'የማለፊያ መስፈርት')}</span>
+                    <span>{t('policiesPage.passingThreshold')}</span>
                     <span className="text-emerald-700 font-bold text-base">{passingScorePercent}%</span>
                   </div>
 
@@ -672,10 +615,7 @@ export default function PoliciesPage() {
                       className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 font-semibold text-slate-800"
                     />
                     <span className="text-xs text-slate-500">
-                      {tBilingual(
-                        'Select preset standard:',
-                        'ፈጣን መደበኛ ምረቃ፦',
-                      )}
+                      {t('policiesPage.selectPresetStandard')}
                     </span>
                     {[
                       { label: '50% (Standard)', value: 50 },
@@ -704,21 +644,15 @@ export default function PoliciesPage() {
                     <div className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <span>
-                        <strong>{tBilingual('Per-Assessment Gate:', 'በእያንዳንዱ ምዘና፦')}</strong>{' '}
-                        {tBilingual(
-                          `Learners must score at least ${passingScorePercent}% on every quiz to pass it, retaking attempts until reached.`,
-                          `ተማሪዎች እያንዳንዱን ፈተና ለማለፍ ቢያንስ ${passingScorePercent}% ማግኘት አለባቸው፤ እስኪያልፉ ድረስ ድጋሚ ይሞክራሉ።`,
-                        )}
+                        <strong>{t('policiesPage.perAssessmentGate')}</strong>{' '}
+                        {t('policiesPage.learnersMustScoreAtLeastOn', { passingScorePercent })}
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <span>
-                        <strong>{tBilingual('Certification Gate:', 'የምስክር ወረቀት መስፈርት፦')}</strong>{' '}
-                        {tBilingual(
-                          `Total course grade (sum of weighted assessments) must also reach ${passingScorePercent}% to unlock the certificate.`,
-                          `የምስክር ወረቀቱን ለመክፈት አጠቃላይ የተመዘነ የኮርስ ውጤት ቢያንስ ${passingScorePercent}% መድረስ አለበት።`,
-                        )}
+                        <strong>{t('policiesPage.certificationGate')}</strong>{' '}
+                        {t('policiesPage.totalCourseGradeSumOfWeighted', { passingScorePercent })}
                       </span>
                     </div>
                   </div>
@@ -743,24 +677,21 @@ export default function PoliciesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                {tBilingual('Live Sessions & Attendance Policy', 'የቀጥታ ክፍለ-ጊዜዎች እና የክትትል ፖሊሲ')}
+                {t('policiesPage.liveSessionsAttendancePolicy')}
               </h2>
               <p className="text-xs text-slate-500">
-                {tBilingual(
-                  'Define platform-wide attendance visibility for participants and stay qualification thresholds.',
-                  'ለመላው መድረክ የተሳታፊዎችን የክትትል ታይነት እና የቆይታ ብቁነት ገደቦችን ይወስኑ።',
-                )}
+                {t('policiesPage.definePlatformWideAttendanceVisibilityFo')}
               </p>
             </div>
             <Button
               onClick={() => void saveLivePolicy()}
               isLoading={savingLivePolicy}
-              loadingText={tBilingual('Saving Policy…', 'ፖሊሲን በማስቀመጥ ላይ…')}
+              loadingText={t('policiesPage.savingPolicy')}
               disabled={loadingLivePolicy}
               className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Save className="h-4 w-4" />
-              {tBilingual('Save Live Session Policy', 'የቀጥታ ክፍለ-ጊዜ ፖሊሲን አስቀምጥ')}
+              {t('policiesPage.saveLiveSessionPolicy')}
             </Button>
           </div>
 
@@ -780,22 +711,16 @@ export default function PoliciesPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-slate-900">
-                        {tBilingual(
-                          'Permit All Actors to View Session Attendance',
-                          'ሁሉም ተጠቃሚዎች የክፍለ-ጊዜውን ክትትል እንዲያዩ ፍቀድ',
-                        )}
+                        {t('policiesPage.permitAllActorsToViewSession')}
                       </h3>
                       <Badge variant={allowAllViewAttendance ? 'green' : 'slate'}>
                         {allowAllViewAttendance
-                          ? tBilingual('Permitted to All', 'ለሁሉም ተፈቅዷል')
-                          : tBilingual('Restricted to Staff', 'ለሠራተኞች ብቻ የተገደበ')}
+                          ? t('policiesPage.permittedToAll')
+                          : t('policiesPage.restrictedToStaff')}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {tBilingual(
-                        'Determine whether learners and non-staff participants can inspect attendance logs.',
-                        'ተማሪዎች እና ሰራተኛ ያልሆኑ ተሳታፊዎች የክትትል መዝገቦችን መመልከት መቻላቸውን ይወስኑ።',
-                      )}
+                      {t('policiesPage.determineWhetherLearnersAndNonStaff')}
                     </p>
                   </div>
                 </div>
@@ -805,22 +730,13 @@ export default function PoliciesPage() {
                     <div className="pr-4">
                       <p className="text-sm font-semibold text-slate-800">
                         {allowAllViewAttendance
-                          ? tBilingual('Public Dynamic Attendance Log', 'የህዝብ ተለዋዋጭ የክትትል መዝገብ')
-                          : tBilingual(
-                              'Restricted Staff Attendance Log',
-                              'የተገደበ የሰራተኞች የክትትል መዝገብ',
-                            )}
+                          ? t('policiesPage.publicDynamicAttendanceLog')
+                          : t('policiesPage.restrictedStaffAttendanceLog')}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                         {allowAllViewAttendance
-                          ? tBilingual(
-                              'All participants, including enrolled learners, can open the attendance modal and observe real-time join times, stay durations, and verification statuses.',
-                              'የተመዘገቡ ተማሪዎችን ጨምሮ ሁሉም ተሳታፊዎች የክትትል መስኮቱን በመክፈት የተቀላቀሉበትን ሰዓት፣ የቆይታ ጊዜ እና የማረጋገጫ ሁኔታዎችን በቅጽበት መከታተል ይችላሉ።',
-                            )
-                          : tBilingual(
-                              'Only trainers, course owners, training administrators, and system administrators can view session attendee rosters.',
-                              'አሰልጣኞች፣ የኮርስ ባለቤቶች፣ የስልጠና አስተዳዳሪዎች እና የስርዓት አስተዳዳሪዎች ብቻ የተሳታፊዎችን ዝርዝር ማየት ይችላሉ።',
-                            )}
+                          ? t('policiesPage.allParticipantsIncludingEnrolledLearners')
+                          : t('policiesPage.onlyTrainersCourseOwnersTrainingAdminist')}
                       </p>
                     </div>
 
@@ -843,10 +759,7 @@ export default function PoliciesPage() {
                   <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 text-xs text-indigo-800 flex items-start gap-2.5">
                     <Info className="h-4 w-4 shrink-0 text-indigo-600 mt-0.5" />
                     <span>
-                      {tBilingual(
-                        'Individual session creators can still toggle visibility specifically per session, but this master switch defines the platform standard for all live sessions.',
-                        'የግል ክፍለ-ጊዜ ፈጣሪዎች ለእያንዳንዱ ክፍለ-ጊዜ ታይነቱን መወሰን ይችላሉ፤ ነገር ግን ይህ ዋና መቀየሪያ ለመላው መድረክ የቀጥታ ክፍለ-ጊዜዎች ነባሪውን ይወስናል።',
-                      )}
+                      {t('policiesPage.individualSessionCreatorsCanStillToggle')}
                     </span>
                   </div>
                 </div>
@@ -860,16 +773,10 @@ export default function PoliciesPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-bold text-slate-900">
-                      {tBilingual(
-                        'Minimum Active Stay Threshold for "Present" Status',
-                        'እንደ "ተገኝቷል" ለመቆጠር ዝቅተኛው የቆይታ መቶኛ',
-                      )}
+                      {t('policiesPage.minimumActiveStayThresholdForPresent')}
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      {tBilingual(
-                        'Required percentage of total session duration a participant must stay connected.',
-                        'ተሳታፊው መቆየት ያለበት አጠቃላይ የክፍለ-ጊዜው የቆይታ ጊዜ መቶኛ።',
-                      )}
+                      {t('policiesPage.requiredPercentageOfTotalSessionDuration')}
                     </p>
                   </div>
                 </div>
@@ -877,7 +784,7 @@ export default function PoliciesPage() {
                 <div className="mt-5 space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>{tBilingual('Threshold percentage', 'የብቁነት መቶኛ')}</span>
+                      <span>{t('policiesPage.thresholdPercentage')}</span>
                       <span className="text-emerald-700 font-bold text-base">
                         {numericThreshold}%
                       </span>
@@ -908,10 +815,7 @@ export default function PoliciesPage() {
                         </span>
                       </div>
                       <span className="text-xs text-slate-500">
-                        {tBilingual(
-                          'Minimum 10%, Maximum 100%. Recommended: 60%.',
-                          'ዝቅተኛ 10%፣ ከፍተኛ 100%። የሚመከረው፡ 60%።',
-                        )}
+                        {t('policiesPage.minimum10Maximum100Recommended60')}
                       </span>
                     </div>
                   </div>
@@ -919,25 +823,19 @@ export default function PoliciesPage() {
                   {/* Dynamic calculation preview */}
                   <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-2">
                     <p className="text-xs font-semibold text-slate-700">
-                      {tBilingual('Qualification Preview:', 'የብቁነት ቅድመ-ዕይታ፡')}
+                      {t('policiesPage.qualificationPreview')}
                     </p>
                     <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
                       <li>
-                        {tBilingual(
-                          'For a 60-minute session: Learner must stay connected for at least',
-                          'ለ 60-ደቂቃ ክፍለ-ጊዜ፡ ተማሪው ቢያንስ መቆየት አለበት፡',
-                        )}{' '}
+                        {t('policiesPage.forA60MinuteSessionLearner')}{' '}
                         <span className="font-semibold text-emerald-700">
                           {Math.round(60 * (numericThreshold / 100))}{' '}
-                          {tBilingual('minutes', 'ደቂቃዎች')}
+                          {t('policiesPage.minutes')}
                         </span>{' '}
-                        {tBilingual('to be marked PRESENT.', 'እንደ ተገኝቷል ለመመዝገብ።')}
+                        {t('policiesPage.toBeMarkedPresent')}
                       </li>
                       <li>
-                        {tBilingual(
-                          `Learners with less than ${numericThreshold}% active stay will automatically be marked ABSENT in audit exports.`,
-                          `ከ ${numericThreshold}% በታች የቆዩ ተማሪዎች በክትትል ሰነዶች ላይ በቀጥታ አልተገኘም (ቀሪ) ተብለው ይመዘገባሉ።`,
-                        )}
+                        {t('policiesPage.learnersWithLessThanActiveStay', { numericThreshold })}
                       </li>
                     </ul>
                   </div>
@@ -955,20 +853,14 @@ export default function PoliciesPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-slate-900">
-                        {tBilingual(
-                          'Institutional Day Gap Between Cycles',
-                          'በዙሮች መካከል ያለው የተቋም የቀናት ልዩነት',
-                        )}
+                        {t('policiesPage.institutionalDayGapBetweenCycles')}
                       </h3>
                       <Badge variant="indigo" className="text-[10px] py-0 px-2 font-bold">
-                        {tBilingual('Rolling Cycle Engine', 'ተከታታይ ዙር ሞተር')}
+                        {t('policiesPage.rollingCycleEngine')}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500 max-w-2xl leading-relaxed">
-                      {tBilingual(
-                        'When a live session completes, the engine automatically calculates the next session date by finding the latest upcoming scheduled session for the course and adding this policy day gap. Original start hours and durations are preserved.',
-                        'አንድ የቀጥታ ክፍለ-ጊዜ ሲጠናቀቅ ስርዓቱ የመጨረሻውን የኮርስ መርሐግብር ተከትሎ በዚህ የተቋም የፖሊሲ ቀን ልዩነት መሠረት ቀጣዩን ዙር በራስ-ሰር ያዘጋጃል። የመጀመሪያው ሰዓትና ቆይታ ሳይለወጥ ይጠበቃል።',
-                      )}
+                      {t('policiesPage.whenALiveSessionCompletesThe')}
                     </p>
                   </div>
                 </div>
@@ -978,9 +870,9 @@ export default function PoliciesPage() {
                 {/* Day Gap Controls */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-                    <span>{tBilingual('Policy Day Gap Between Cycles', 'በዙሮች መካከል ያለው የፖሊሲ የቀናት ልዩነት')}</span>
+                    <span>{t('policiesPage.policyDayGapBetweenCycles')}</span>
                     <span className="text-violet-700 font-bold text-base">
-                      {rescheduleDayGap} {tBilingual('Days', 'ቀናት')}
+                      {rescheduleDayGap} {t('policiesPage.days')}
                     </span>
                   </div>
 
@@ -997,14 +889,14 @@ export default function PoliciesPage() {
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900',
                         )}
                       >
-                        {preset} {tBilingual('Days', 'ቀናት')}
-                        {preset === 10 && ` (${tBilingual('Default', 'ነባሪ')})`}
+                        {preset} {t('policiesPage.days')}
+                        {preset === 10 && ` (${t('policiesPage.default')})`}
                       </button>
                     ))}
 
                     <div className="flex items-center gap-2 ml-auto">
                       <span className="text-xs text-slate-500">
-                        {tBilingual('Custom:', 'ብጁ፡')}
+                        {t('policiesPage.custom')}
                       </span>
                       <input
                         type="number"
@@ -1015,7 +907,7 @@ export default function PoliciesPage() {
                         className="w-24 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
                       />
                       <span className="text-xs text-slate-400">
-                        {tBilingual('days', 'ቀናት')}
+                        {t('policiesPage.days2')}
                       </span>
                     </div>
                   </div>
@@ -1024,13 +916,10 @@ export default function PoliciesPage() {
                 {/* Concrete Example Box */}
                 <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-4 space-y-2">
                   <p className="text-xs font-bold text-violet-900">
-                    {tBilingual('Rolling Cycle Rule Example:', 'የተከታታይ ዙር ደንብ ምሳሌ፡')}
+                    {t('policiesPage.rollingCycleRuleExample')}
                   </p>
                   <p className="text-xs text-violet-800 leading-relaxed">
-                    {tBilingual(
-                      `If a course has 3 sessions (Session 1 on Nov 1, Session 2 on Nov 10, Session 3 on Nov 20) with a ${rescheduleDayGap}-day gap: when Session 1 ends on Nov 1, Session 1 is rescheduled for Nov 20 + ${rescheduleDayGap} days. Newly enrolled learners can attend Session 1 on that date, while previously attended learners already have verified credit and do not need to repeat it. Course publishers retain full rights to manually adjust trainer, date, or time after automatic rescheduling.`,
-                      `አንድ ኮርስ 3 ክፍለ-ጊዜዎች ቢኖሩት (ክፍለ-ጊዜ 1 በህዳር 1፣ ክፍለ-ጊዜ 2 በህዳር 10፣ ክፍለ-ጊዜ 3 በህዳር 20) እና የ ${rescheduleDayGap} ቀናት ልዩነት ቢኖር፦ ክፍለ-ጊዜ 1 በህዳር 1 ሲጠናቀቅ ክፍለ-ጊዜ 1 ለህዳር 20 + ${rescheduleDayGap} ቀናት እንደገና ይዘጋጃል። አዲስ የተመዘገቡ ተማሪዎች በዚያ ቀን መከታተል ይችላሉ፤ ቀደም ሲል ያጠናቀቁ ተማሪዎች ደግሞ ምስክር ወረቀታቸው አይቋረጥም። የኮርስ አዘጋጆች ከዳግም መርሐግብር በኋላ አሰልጣኙን ወይም ቀኑን በእጅ ማስተካከል ይችላሉ።`,
-                    )}
+                    {t('policiesPage.ifACourseHas3Sessions', { rescheduleDayGap })}
                   </p>
                 </div>
 
@@ -1039,39 +928,30 @@ export default function PoliciesPage() {
                   <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
                     <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
                       <CalendarCheck className="h-4 w-4 text-emerald-600" />
-                      <span>{tBilingual('Monday – Saturday Active', 'ከሰኞ – ቅዳሜ የሥራ ቀናት')}</span>
+                      <span>{t('policiesPage.mondaySaturdayActive')}</span>
                     </div>
                     <p className="mt-1 text-[11px] text-slate-500 leading-normal">
-                      {tBilingual(
-                        'Standard Ethiopian public sector & revenue academic training days are fully respected.',
-                        'መደበኛ የኢትዮጵያ የመንግሥት ዘርፍና የገቢዎች አካዳሚ የስልጠና ቀናት ሙሉ በሙሉ ይከበራሉ።',
-                      )}
+                      {t('policiesPage.standardEthiopianPublicSectorRevenueAcad')}
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
                     <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
                       <ShieldAlert className="h-4 w-4 text-amber-600" />
-                      <span>{tBilingual('Sundays Strictly Skipped', 'እሑዶች አይካተቱም')}</span>
+                      <span>{t('policiesPage.sundaysStrictlySkipped')}</span>
                     </div>
                     <p className="mt-1 text-[11px] text-slate-500 leading-normal">
-                      {tBilingual(
-                        'If a computed date lands on a Sunday, the engine automatically rolls it forward to Monday.',
-                        'የተሰላው ቀን እሁድ ላይ ካረፈ ሞተሩ በቀጥታ ወደ ሰኞ ያስተላልፈዋል።',
-                      )}
+                      {t('policiesPage.ifAComputedDateLandsOn')}
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
                     <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
                       <Award className="h-4 w-4 text-indigo-600" />
-                      <span>{tBilingual('Statutory Holidays Skipped', 'ህጋዊ የህዝብ በዓላት')}</span>
+                      <span>{t('policiesPage.statutoryHolidaysSkipped')}</span>
                     </div>
                     <p className="mt-1 text-[11px] text-slate-500 leading-normal">
-                      {tBilingual(
-                        'National holidays registered in the table below are automatically bypassed to the next open working day.',
-                        'ከዚህ በታች የተመዘገቡ ብሄራዊ በዓላት በራስ-ሰር ታልፈው ወደ ቀጣዩ የሥራ ቀን ይዘዋወራሉ።',
-                      )}
+                      {t('policiesPage.nationalHolidaysRegisteredInTheTable')}
                     </p>
                   </div>
                 </div>
@@ -1081,13 +961,10 @@ export default function PoliciesPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">
-                        {tBilingual('Ethiopian Statutory Public Holidays', 'የኢትዮጵያ ህጋዊ የህዝብ በዓላት')}
+                        {t('policiesPage.ethiopianStatutoryPublicHolidays')}
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        {tBilingual(
-                          `${holidays.length} registered holiday(s) currently active in the calendar engine.`,
-                          `በቀን መቁጠሪያው ውስጥ ${holidays.length} ንቁ በዓላት ተመዝግበዋል።`,
-                        )}
+                        {t('policiesPage.registeredHolidaySCurrentlyActiveIn', { count: holidays.length })}
                       </p>
                     </div>
 
@@ -1098,10 +975,10 @@ export default function PoliciesPage() {
                         size="sm"
                         onClick={() => void handleSeedDefaults()}
                         isLoading={seedingHolidays}
-                        loadingText={tBilingual('Seeding…', 'በማስገባት ላይ…')}
+                        loadingText={t('policiesPage.seeding')}
                         className="text-xs text-violet-700 border-violet-200 hover:bg-violet-50 cursor-pointer"
                       >
-                        {tBilingual('Seed Standard Holidays', 'መደበኛ በዓላትን አስገባ')}
+                        {t('policiesPage.seedStandardHolidays')}
                       </Button>
 
                       <button
@@ -1110,8 +987,8 @@ export default function PoliciesPage() {
                         className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
                         {showHolidays
-                          ? tBilingual('Hide Table', 'ሰንጠረዡን ደብቅ')
-                          : tBilingual('Manage Holidays', 'በዓላትን አስተዳድር')}
+                          ? t('policiesPage.hideTable')
+                          : t('policiesPage.manageHolidays')}
                         {showHolidays ? (
                           <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
                         ) : (
@@ -1127,7 +1004,7 @@ export default function PoliciesPage() {
                       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
                         <input
                           type="text"
-                          placeholder={tBilingual('Holiday name (e.g. Adwa Victory Day)', 'የበዓሉ ስም (ለምሳሌ የአድዋ ድል በዓል)')}
+                          placeholder={t('policiesPage.holidayNameEGAdwaVictory')}
                           value={newHolidayName}
                           onChange={(e) => setNewHolidayName(e.target.value)}
                           className="flex-1 min-w-[200px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
@@ -1147,23 +1024,20 @@ export default function PoliciesPage() {
                           className="gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
-                          {tBilingual('Add Holiday', 'በዓል አክል')}
+                          {t('policiesPage.addHoliday')}
                         </Button>
                       </div>
 
                       {/* Holiday List Table */}
                       {loadingHolidays ? (
                         <p className="text-xs text-slate-400 py-2">
-                          {tBilingual('Loading public holidays…', 'የህዝብ በዓላትን በመጫን ላይ…')}
+                          {t('policiesPage.loadingPublicHolidays')}
                         </p>
                       ) : holidays.length === 0 ? (
                         <div className="text-center py-4 text-xs text-slate-500">
-                          <p>{tBilingual('No public holidays registered yet.', 'እስካሁን የተመዘገበ የህዝብ በዓል የለም።')}</p>
+                          <p>{t('policiesPage.noPublicHolidaysRegisteredYet')}</p>
                           <p className="mt-1 text-[11px] text-slate-400">
-                            {tBilingual(
-                              'Click "Seed Standard Holidays" above to populate Ethiopian statutory holidays automatically.',
-                              'የኢትዮጵያ ህጋዊ በዓላትን በራስ-ሰር ለማስገባት ከላይ "መደበኛ በዓላትን አስገባ" የሚለውን ይጫኑ።',
-                            )}
+                            {t('policiesPage.clickSeedStandardHolidaysAboveTo')}
                           </p>
                         </div>
                       ) : (
@@ -1171,9 +1045,9 @@ export default function PoliciesPage() {
                           <table className="w-full text-left text-xs">
                               <thead className="border-b border-slate-200 bg-slate-100/70 text-slate-600 font-semibold sticky top-0">
                                 <tr>
-                                  <th className="px-3 py-2">{tBilingual('Holiday Name', 'የበዓሉ ስም')}</th>
-                                  <th className="px-3 py-2">{tBilingual('Date', 'ቀን')}</th>
-                                  <th className="px-3 py-2 text-right">{tBilingual('Actions', 'እርምጃዎች')}</th>
+                                  <th className="px-3 py-2">{t('policiesPage.holidayName')}</th>
+                                  <th className="px-3 py-2">{t('policiesPage.date')}</th>
+                                  <th className="px-3 py-2 text-right">{t('policiesPage.actions')}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
@@ -1196,7 +1070,7 @@ export default function PoliciesPage() {
                                           type="button"
                                           onClick={() => void handleDeleteHoliday(h.id)}
                                           className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
-                                          title={tBilingual('Delete Holiday', 'በዓሉን ሰርዝ')}
+                                          title={t('policiesPage.deleteHoliday')}
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
                                         </button>

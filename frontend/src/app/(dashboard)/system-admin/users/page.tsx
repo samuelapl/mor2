@@ -57,7 +57,7 @@ export default function UsersPage() {
   const bulkUserAction = useUserStore((s) => s.bulkUserAction);
   const { can } = usePermissions();
   const canManage = can('user.manage');
-  const { t, tBilingual, tRole } = useTranslation();
+  const { t, tRole } = useTranslation('users');
 
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('all');
@@ -309,25 +309,22 @@ export default function UsersPage() {
   return (
     <PageShell
       role={currentUser?.role ?? 'system_admin'}
-      title={tBilingual('Users & Roles', 'ተጠቃሚዎች እና ሚናዎች')}
-      description={tBilingual(
-        'Manage user accounts, approval status, and role assignments.',
-        'የተጠቃሚ መለያዎችን፣ የማረጋገጫ ሁኔታን እና የሚና ምደባዎችን ያስተዳድሩ።',
-      )}
+      title={t('usersPage.usersRoles')}
+      description={t('usersPage.manageUserAccountsApprovalStatusAnd')}
       actions={<ViewToggle view={view} onChange={setView} />}
     >
       <FilterBar
         search={search}
         onSearchChange={withClearedSelection(setSearch)}
-        searchPlaceholder={tBilingual('Search name, email or phone…', 'ስም፣ ኢሜይል ወይም ስልክ ይፈልጉ…')}
+        searchPlaceholder={t('usersPage.searchNameEmailOrPhone')}
         selects={[
           {
             id: 'role',
-            label: tBilingual('Role', 'ሚና'),
+            label: t('usersPage.role'),
             value: role,
             onChange: withClearedSelection(setRole),
             options: [
-              { value: 'all', label: tBilingual('All Roles', 'ሁሉም ሚናዎች') },
+              { value: 'all', label: t('usersPage.allRoles') },
               ...roleOptions.map((item) => {
                 const isBuiltIn = ROLES.includes(item.name.toLowerCase() as Role);
                 const displayLabel = isBuiltIn ? tRole(item.name.toLowerCase() as Role) : item.label;
@@ -337,24 +334,24 @@ export default function UsersPage() {
           },
           {
             id: 'status',
-            label: tBilingual('Status', 'ሁኔታ'),
+            label: t('usersPage.status'),
             value: status,
             onChange: withClearedSelection(setStatus),
             options: [
-              { value: 'all', label: tBilingual('All Statuses', 'ሁሉም ሁኔታዎች') },
-              { value: 'pending', label: tBilingual('Email not verified', 'ኢሜይል ያልተረጋገጠ') },
-              { value: 'active', label: tBilingual('Active', 'ንቁ') },
-              { value: 'rejected', label: tBilingual('Rejected', 'ውድቅ የተደረገ') },
-              { value: 'suspended', label: tBilingual('Suspended', 'የታገደ') },
+              { value: 'all', label: t('usersPage.allStatuses') },
+              { value: 'pending', label: t('usersPage.emailNotVerified') },
+              { value: 'active', label: t('usersPage.active') },
+              { value: 'rejected', label: t('usersPage.rejected') },
+              { value: 'suspended', label: t('usersPage.suspended') },
             ],
           },
           {
             id: 'department',
-            label: tBilingual('Department', 'ክፍል'),
+            label: t('usersPage.department'),
             value: department,
             onChange: withClearedSelection(setDepartment),
             options: [
-              { value: 'all', label: tBilingual('All Departments', 'ሁሉም ክፍሎች') },
+              { value: 'all', label: t('usersPage.allDepartments') },
               ...departments.map((item) => ({ value: item, label: item })),
             ],
           },
@@ -436,12 +433,12 @@ export default function UsersPage() {
                     },
                   ]
                 : []),
-              tBilingual('User', 'ተጠቃሚ'),
-              tBilingual('Email', 'ኢሜይል'),
-              tBilingual('Department', 'ክፍል'),
-              tBilingual('Status', 'ሁኔታ'),
-              tBilingual('Role', 'ሚና'),
-              tBilingual('Actions', 'እርምጃዎች'),
+              t('usersPage.user'),
+              t('usersPage.email'),
+              t('usersPage.department'),
+              t('usersPage.status'),
+              t('usersPage.role'),
+              t('usersPage.actions'),
             ]}
           >
             {pageItems.map((user) => (
@@ -463,7 +460,7 @@ export default function UsersPage() {
                       <UserStatusBadge status={user.status} />
                       {user.mustChangePassword ? (
                         <Badge variant="amber">
-                          {tBilingual('Must change password', 'የይለፍ ቃል መቀየር አለበት')}
+                          {t('usersPage.mustChangePassword')}
                         </Badge>
                       ) : null}
                     </div>
@@ -582,30 +579,27 @@ export default function UsersPage() {
       <Modal
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
-        title={tBilingual('Delete user?', 'ተጠቃሚ ይሰረዝ?')}
+        title={t('usersPage.deleteUser')}
         subtitle={deleteTarget?.email}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" disabled={busy} onClick={() => setDeleteTarget(null)}>
-              {tBilingual('Cancel', 'ይቅር')}
+              {t('usersPage.cancel')}
             </Button>
             <Button
               variant="danger"
               isLoading={busy}
-              loadingText={tBilingual('Deleting…', 'በመሰረዝ ላይ…')}
+              loadingText={t('usersPage.deleting')}
               onClick={() => void confirmDelete()}
             >
-              <Trash2 className="h-4 w-4" /> {tBilingual('Delete user', 'ተጠቃሚ ሰርዝ')}
+              <Trash2 className="h-4 w-4" /> {t('usersPage.deleteUser2')}
             </Button>
           </div>
         }
       >
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{deleteTarget?.name}</span>{' '}
-          {tBilingual(
-            'will be removed from the users list and can no longer sign in. Their course history, certificates and audit records are kept, and their email can be registered again.',
-            'ከተጠቃሚዎች ዝርዝር ውስጥ ይወገዳል እና ከዚህ በኋላ መግባት አይችልም። የኮርስ ታሪካቸው፣ ሰርተፍኬታቸው እና የኦዲት መዝገቦቻቸው ይጠበቃሉ፣ እና ኢሜይላቸው እንደገና ሊመዘገብ ይችላል።',
-          )}
+          {t('usersPage.willBeRemovedFromTheUsers')}
         </p>
       </Modal>
 

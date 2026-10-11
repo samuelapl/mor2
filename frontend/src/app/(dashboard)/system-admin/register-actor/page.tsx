@@ -48,7 +48,7 @@ const EMPTY_FORM = {
 export default function RegisterActorPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const registerActor = useUserStore((s) => s.registerActor);
-  const { tBilingual, tRole } = useTranslation();
+  const { tRole, t } = useTranslation('users');
   const router = useRouter();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -133,22 +133,19 @@ export default function RegisterActorPage() {
     <PageShell
       role={currentUser?.role ?? 'system_admin'}
       centered
-      title={tBilingual('User Registration', 'የተጠቃሚ ምዝገባ')}
-      description={tBilingual(
-        'Manually register a user with any role. The account is created already approved and active — no approval queue.',
-        'ማንኛውንም ሚና የያዘ ተጠቃሚ በእጅ ይመዝግቡ። መለያው በቀጥታ የጸደቀና ንቁ ሆኖ ይፈጠራል — የይሁንታ ወረፋ አይጠብቅም።',
-      )}
+      title={t('registerActorPage.userRegistration')}
+      description={t('registerActorPage.manuallyRegisterAUserWithAny')}
     >
       <Modal
         open
         onClose={() => router.push('/system-admin/users')}
-        title={tBilingual('Register user', 'ተጠቃሚ መመዝገብ')}
+        title={t('registerActorPage.registerUser')}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>{tBilingual('First name', 'ስም')}</label>
+              <label className={labelClass}>{t('bulkRegisterPage.firstName')}</label>
               <input
                 className={inputClass}
                 value={form.firstName}
@@ -157,7 +154,7 @@ export default function RegisterActorPage() {
               />
             </div>
             <div>
-              <label className={labelClass}>{tBilingual('Last name', 'የአባት ስም')}</label>
+              <label className={labelClass}>{t('bulkRegisterPage.lastName')}</label>
               <input
                 className={inputClass}
                 value={form.lastName}
@@ -168,7 +165,7 @@ export default function RegisterActorPage() {
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Email', 'ኢሜይል')}</label>
+            <label className={labelClass}>{t('usersPage.email')}</label>
             <input
               type="email"
               className={inputClass}
@@ -179,7 +176,7 @@ export default function RegisterActorPage() {
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Phone (optional)', 'ስልክ (አማራጭ)')}</label>
+            <label className={labelClass}>{t('registerActorPage.phoneOptional')}</label>
             <input
               className={inputClass}
               value={form.phone}
@@ -189,7 +186,7 @@ export default function RegisterActorPage() {
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Role', 'ሚና')}</label>
+            <label className={labelClass}>{t('usersPage.role')}</label>
             <select
               className={inputClass}
               value={form.role}
@@ -209,41 +206,35 @@ export default function RegisterActorPage() {
 
           <div>
             <label className={labelClass}>
-              {tBilingual('Primary Venue / Branch Assignment', 'ዋና የስልጠና ማዕከል / ቅርንጫፍ ምደባ')}{' '}
-              {form.role === 'trainer' && `(${tBilingual('Recommended for Trainers', 'ለአሰልጣኞች የሚመከር')})`}
+              {t('registerActorPage.primaryVenueBranchAssignment')}{' '}
+              {form.role === 'trainer' && `(${t('registerActorPage.recommendedForTrainers')})`}
             </label>
             <select
               className={inputClass}
               value={form.primaryVenueId}
               onChange={(e) => update({ primaryVenueId: e.target.value })}
             >
-              <option value="">{tBilingual('No Primary Venue (Virtual / Multiple Branches)', 'ዋና ማዕከል የለም (ምናባዊ / በርካታ ቅርንጫፎች)')}</option>
+              <option value="">{t('registerActorPage.noPrimaryVenueVirtualMultipleBranches')}</option>
               {venues.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.branch} — {v.name} ({v.capacity} {tBilingual('seats', 'ወንበሮች')})
+                  {v.branch} — {v.name} ({v.capacity} {t('registerActorPage.seats')})
                 </option>
               ))}
             </select>
             <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-              {tBilingual(
-                'Linking a trainer to their primary branch helps auto-populate venues when scheduling in-person sessions.',
-                'አሰልጣኝን ከዋና ቅርንጫፋቸው ጋር ማገናኘት በአካል የሚሰጡ ክፍለ-ጊዜዎችን ሲመድቡ ማዕከላትን በራስ-ሰር ለመሙላት ይረዳል።',
-              )}
+              {t('registerActorPage.linkingATrainerToTheirPrimary')}
             </p>
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Password', 'የይለፍ ቃል')}</label>
+            <label className={labelClass}>{t('bulkRegisterPage.password')}</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 className={cn(inputClass, 'pr-10')}
                 value={form.password}
                 onChange={(e) => update({ password: e.target.value })}
-                placeholder={tBilingual(
-                  "Set the user's initial password",
-                  'የተጠቃሚውን የመነሻ ይለፍ ቃል ያስገቡ',
-                )}
+                placeholder={t('registerActorPage.setTheUserSInitialPassword')}
               />
               <button
                 type="button"
@@ -268,10 +259,7 @@ export default function RegisterActorPage() {
               htmlFor="mustChangePassword"
               className="cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400"
             >
-              {tBilingual(
-                'Require password change on first sign-in (sends email code)',
-                'በመጀመሪያው መግቢያ ላይ የይለፍ ቃል መቀየር ይጠይቁ (የኢሜይል ኮድ ይልካል)',
-              )}
+              {t('registerActorPage.requirePasswordChangeOnFirstSign')}
             </label>
           </div>
 
@@ -281,16 +269,16 @@ export default function RegisterActorPage() {
               variant="outline"
               onClick={() => router.push('/system-admin/users')}
             >
-              {tBilingual('Cancel', 'ሰርዝ')}
+              {t('registerActorPage.cancel')}
             </Button>
             <Button
               type="submit"
               isLoading={submitting}
-              loadingText={tBilingual('Registering user…', 'ተጠቃሚውን በመመዝገብ ላይ…')}
+              loadingText={t('registerActorPage.registeringUser')}
               className="gap-2"
             >
               <UserCog className="h-4 w-4" />
-              {tBilingual('Register user', 'ተጠቃሚውን መዝግብ')}
+              {t('registerActorPage.registerUser2')}
             </Button>
           </div>
         </form>

@@ -38,7 +38,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function SystemAdminDashboardPage() {
   const { stats, loading: statsLoading } = useDashboardStats();
-  const { lang, t } = useTranslation();
+  const { lang, t } = useTranslation('admin');
   const isAmharic = lang === 'am';
 
   const sessions = useLiveSessionStore((s) => s.sessions);
@@ -73,37 +73,31 @@ export default function SystemAdminDashboardPage() {
   const certificatesCount = stats?.statuses.certificatesIssued ?? 0;
 
   const roleLabels: Record<string, string> = {
-    SYSTEM_ADMIN: isAmharic ? 'የስርዓት አስተዳዳሪ' : 'System Admin',
-    TRAINING_ADMIN: isAmharic ? 'የስልጠና አስተዳዳሪ' : 'Training Admin',
-    COURSE_OWNER: isAmharic ? 'የኮርስ ባለቤት' : 'Course Owner',
-    CONTENT_APPROVER: isAmharic ? 'የይዘት አጽዳቂ' : 'Content Approver',
-    TRAINER: isAmharic ? 'አሰልጣኝ' : 'Trainer',
-    LEARNER: isAmharic ? 'ሰልጣኝ' : 'Learner',
+    SYSTEM_ADMIN: t('systemAdminDashboardPage.systemAdmin'),
+    TRAINING_ADMIN: t('systemAdminDashboardPage.trainingAdmin'),
+    COURSE_OWNER: t('systemAdminDashboardPage.courseOwner'),
+    CONTENT_APPROVER: t('systemAdminDashboardPage.contentApprover'),
+    TRAINER: t('systemAdminDashboardPage.trainer'),
+    LEARNER: t('systemAdminDashboardPage.learner'),
   };
 
   const quickLinks = [
     {
       href: '/system-admin/users',
-      title: isAmharic ? 'ተጠቃሚዎች እና ሚናዎች' : 'Users & Roles',
-      description: isAmharic
-        ? 'የመድረክ መለያዎችን ያስተዳድሩ እና አስተዳደራዊ ሚናዎችን ይመድቡ።'
-        : 'Manage platform accounts and assign administrative roles.',
+      title: t('systemAdminDashboardPage.usersRoles'),
+      description: t('systemAdminDashboardPage.managePlatformAccountsAndAssignAdministr'),
       icon: UsersRound,
     },
     {
       href: '/system-admin/settings',
-      title: isAmharic ? 'የስርዓት ቅንብሮች' : 'System Settings',
-      description: isAmharic
-        ? 'የስርዓት መለኪያዎችን፣ የደህንነት ፖሊሲዎችን እና የመረጃ ቋቶችን ያዋቅሩ።'
-        : 'Configure system parameters, security policies, and storage.',
+      title: t('systemAdminDashboardPage.systemSettings'),
+      description: t('systemAdminDashboardPage.configureSystemParametersSecurityPolicie'),
       icon: Settings,
     },
     {
       href: '/system-admin/audit-logs',
-      title: isAmharic ? 'የኦዲት መዝገብ' : 'Audit Trail',
-      description: isAmharic
-        ? 'የደህንነት መዝገቦችን፣ የማረጋገጫ እና የለውጥ ታሪክን ይገምግሙ።'
-        : 'Review security logs, authentication, and state modifications.',
+      title: t('systemAdminDashboardPage.auditTrail'),
+      description: t('systemAdminDashboardPage.reviewSecurityLogsAuthenticationAndState'),
       icon: ScrollText,
     },
   ];
@@ -136,33 +130,33 @@ export default function SystemAdminDashboardPage() {
   const metricBars = useMemo(() => {
     return [
       {
-        label: isAmharic ? 'ንቁ ምዝገባዎች' : 'Active Enrollments',
+        label: t('systemAdminDashboardPage.activeEnrollments'),
         value: activeEnrollments,
-        subLabel: isAmharic ? `ጠቅላላ ${enrollmentsCount}` : `${enrollmentsCount} total`,
+        subLabel: t('systemAdminDashboardPage.total', { enrollmentsCount }),
         color: '#3b82f6',
       },
       {
-        label: isAmharic ? 'የታተሙ ኮርሶች' : 'Published Courses',
+        label: t('systemAdminDashboardPage.publishedCourses'),
         value: publishedCount,
-        subLabel: isAmharic ? `ጠቅላላ ${coursesCount}` : `${coursesCount} total`,
+        subLabel: t('systemAdminDashboardPage.total2', { coursesCount }),
         color: '#10b981',
       },
       {
-        label: isAmharic ? 'ማጽደቅ የሚጠብቁ' : 'Pending Approvals',
+        label: t('systemAdminDashboardPage.pendingApprovals'),
         value: pendingApprovals,
-        subLabel: isAmharic ? 'ግምገማ የሚጠብቁ' : 'Awaiting review',
+        subLabel: t('systemAdminDashboardPage.awaitingReview'),
         color: '#f59e0b',
       },
       {
-        label: isAmharic ? 'የተሰጡ ሰርተፊኬቶች' : 'Certificates Issued',
+        label: t('systemAdminDashboardPage.certificatesIssued'),
         value: certificatesCount,
-        subLabel: isAmharic ? 'የተጠናቀቁ ስልጠናዎች' : 'Platform completions',
+        subLabel: t('systemAdminDashboardPage.platformCompletions'),
         color: '#8b5cf6',
       },
       {
-        label: isAmharic ? 'የመጪ ስልጠናዎች' : 'Upcoming Sessions',
+        label: t('systemAdminDashboardPage.upcomingSessions'),
         value: activeSessions,
-        subLabel: isAmharic ? 'የቀጥታ ስልጠና' : 'Live video training',
+        subLabel: t('systemAdminDashboardPage.liveVideoTraining'),
         color: '#06b6d4',
       },
     ];
@@ -180,46 +174,42 @@ export default function SystemAdminDashboardPage() {
   return (
     <PageShell
       role="system_admin"
-      title={isAmharic ? 'የስርዓት አስተዳዳሪ ዳሽቦርድ' : 'System Administrator Dashboard'}
+      title={t('systemAdminDashboardPage.systemAdministratorDashboard')}
       description={
-        isAmharic
-          ? 'የመድረኩ የስራ አፈጻጸም፣ ደህንነት፣ የተጠቃሚዎች ቁጥር እና የስርዓት ቅንብሮች አጠቃላይ እይታ።'
-          : 'Overview of platform operations, security posture, user growth, and system configuration.'
+        t('systemAdminDashboardPage.overviewOfPlatformOperationsSecurityPost')
       }
     >
       {/* Top Stat KPI Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={UsersRound}
-          label={isAmharic ? 'ጠቅላላ ተጠቃሚዎች' : 'Total users'}
+          label={t('systemAdminDashboardPage.totalUsers')}
           value={usersCount}
           hint={
-            isAmharic ? `${activeEnrollments} ንቁ ምዝገባዎች` : `${activeEnrollments} active enrollments`
+            t('systemAdminDashboardPage.activeEnrollments2', { activeEnrollments })
           }
         />
         <StatCard
           icon={BookOpen}
-          label={isAmharic ? 'ጠቅላላ ኮርሶች' : 'Total courses'}
+          label={t('systemAdminDashboardPage.totalCourses')}
           value={coursesCount}
-          hint={isAmharic ? `${publishedCount} የታተሙ` : `${publishedCount} published`}
+          hint={t('systemAdminDashboardPage.published', { publishedCount })}
           iconClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           icon={CheckCircle2}
-          label={isAmharic ? 'ጠቅላላ ምዝገባዎች' : 'Total enrollments'}
+          label={t('systemAdminDashboardPage.totalEnrollments')}
           value={enrollmentsCount}
           hint={
-            isAmharic
-              ? `${certificatesCount} የተሰጡ ሰርተፊኬቶች`
-              : `${certificatesCount} certificates issued`
+            t('systemAdminDashboardPage.certificatesIssued2', { certificatesCount })
           }
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={Video}
-          label={isAmharic ? 'ንቁ የቀጥታ ስልጠናዎች' : 'Active Live Sessions'}
+          label={t('systemAdminDashboardPage.activeLiveSessions')}
           value={activeSessions}
-          hint={isAmharic ? 'የታቀዱ ወይም የቀጥታ ስርጭቶች' : 'Scheduled or broadcast-ready'}
+          hint={t('systemAdminDashboardPage.scheduledOrBroadcastReady')}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
       </div>
@@ -232,31 +222,29 @@ export default function SystemAdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? 'የተጠቃሚዎች የሚና ክፍፍል' : 'User Role Distribution'}
+                  {t('systemAdminDashboardPage.userRoleDistribution')}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic
-                    ? 'በመድረኩ ውስጥ ያሉ መለያዎች ድልድል (ከመረጃ ቋት በቀጥታ የተገኘ)'
-                    : 'Allocation of platform accounts across access roles (live database track)'}
+                  {t('systemAdminDashboardPage.allocationOfPlatformAccountsAcrossAccess')}
                 </p>
               </div>
               <Badge variant="slate">
-                {isAmharic ? `ጠቅላላ ተጠቃሚዎች: ${usersCount}` : `Total Users: ${usersCount}`}
+                {t('systemAdminDashboardPage.totalUsers2', { usersCount })}
               </Badge>
             </div>
             <div className="mt-6">
               <VerticalBarChart
                 items={roleSegments}
                 totalValue={usersCount}
-                unitLabel={isAmharic ? 'ተጠቃሚዎች' : 'Users'}
-                emptyText={isAmharic ? 'ምንም ተጠቃሚ አልተገኘም' : 'No users recorded in database'}
+                unitLabel={t('systemAdminDashboardPage.users')}
+                emptyText={t('systemAdminDashboardPage.noUsersRecordedInDatabase')}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400 flex items-center justify-between">
-            <span>{isAmharic ? 'የመረጃ ቋት የቀጥታ መዝገብ' : 'Live database record'}</span>
+            <span>{t('systemAdminDashboardPage.liveDatabaseRecord')}</span>
             <span className="font-medium text-slate-600">
-              {roleSegments.filter((r) => r.value > 0).length} {isAmharic ? 'ንቁ ሚናዎች በመረጃ ቋት' : 'active roles in DB'}
+              {roleSegments.filter((r) => r.value > 0).length} {t('systemAdminDashboardPage.activeRolesInDb')}
             </span>
           </div>
         </div>
@@ -267,19 +255,19 @@ export default function SystemAdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? 'የመድረኩ አፈጻጸም እና እድገት' : 'Platform Operations & Growth'}
+                  {t('systemAdminDashboardPage.platformOperationsGrowth')}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic ? 'የተሳትፎ እና የህትመት ስታቲስቲክስ' : 'Engagement and publishing statistics'}
+                  {t('systemAdminDashboardPage.engagementAndPublishingStatistics')}
                 </p>
               </div>
-              <Badge variant="blue">{isAmharic ? 'የቀጥታ ስታቲስቲክስ' : 'Real-time stats'}</Badge>
+              <Badge variant="blue">{t('systemAdminDashboardPage.realTimeStats')}</Badge>
             </div>
             <div className="mt-6">
               <BarChart
                 items={metricBars}
                 emptyText={
-                  isAmharic ? 'ምንም የስራ መለኪያ አልተመዘገበም።' : 'No operational metrics recorded.'
+                  t('systemAdminDashboardPage.noOperationalMetricsRecorded')
                 }
                 barColor="#6366f1"
               />
@@ -287,15 +275,13 @@ export default function SystemAdminDashboardPage() {
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>
-              {isAmharic
-                ? `ጠቅላላ ምዝገባዎች: ${enrollmentsCount}`
-                : `Total enrollments: ${enrollmentsCount}`}
+              {t('systemAdminDashboardPage.totalEnrollments2', { enrollmentsCount })}
             </span>
             <Link
               href="/system-admin/audit-logs"
               className="font-semibold text-indigo-600 hover:underline"
             >
-              {isAmharic ? 'የኦዲት መዝገብ እይ →' : 'Review audit logs →'}
+              {t('systemAdminDashboardPage.reviewAuditLogs')}
             </Link>
           </div>
         </div>
@@ -305,8 +291,8 @@ export default function SystemAdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <PageSection
-            title={isAmharic ? 'ፈጣን ተግባራት' : 'Quick actions'}
-            description={isAmharic ? 'የአስተዳደር መቆጣጠሪያ ማዕከል' : 'Administrative control center.'}
+            title={t('systemAdminDashboardPage.quickActions')}
+            description={t('systemAdminDashboardPage.administrativeControlCenter')}
           >
             <div className="space-y-3.5">
               {quickLinks.map((link) => {
@@ -334,16 +320,14 @@ export default function SystemAdminDashboardPage() {
 
         <div className="lg:col-span-3">
           <PageSection
-            title={isAmharic ? 'የቅርብ ጊዜ የኦዲት እንቅስቃሴዎች' : 'Recent audit activity'}
+            title={t('systemAdminDashboardPage.recentAuditActivity')}
             description={
-              isAmharic
-                ? 'በስርዓቱ የኦዲት መዝገብ ውስጥ የተመዘገቡ የቅርብ ጊዜ የደህንነት እና የአሰራር ክንውኖች።'
-                : 'Latest security and operational entries in the system audit trail.'
+              t('systemAdminDashboardPage.latestSecurityAndOperationalEntriesIn')
             }
             action={
               <Link href="/system-admin/audit-logs">
                 <Button variant="outline" size="sm">
-                  {isAmharic ? 'ሙሉውን መዝገብ እይ' : 'View full trail'}
+                  {t('systemAdminDashboardPage.viewFullTrail')}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
@@ -361,9 +345,7 @@ export default function SystemAdminDashboardPage() {
                         <span className="font-semibold text-slate-900">
                           {log.user
                             ? `${log.user.firstName} ${log.user.lastName}`
-                            : isAmharic
-                              ? 'የስርዓት አገልግሎት'
-                              : 'System Service'}
+                            : t('systemAdminDashboardPage.systemService')}
                         </span>{' '}
                         <span className="text-slate-600">{log.action}</span>
                         {log.entityId ? (
@@ -374,7 +356,7 @@ export default function SystemAdminDashboardPage() {
                         ) : null}
                       </p>
                       <span className="mt-1 inline-block text-[11px] text-slate-400">
-                        {new Date(log.createdAt).toLocaleString(isAmharic ? 'am-ET' : 'en-US')}
+                        {new Date(log.createdAt).toLocaleString(t('systemAdminDashboardPage.enUs'))}
                       </span>
                     </div>
                     <Badge variant="slate" className="shrink-0 text-[10px]">
@@ -384,9 +366,7 @@ export default function SystemAdminDashboardPage() {
                 ))}
                 {recentLogs.length === 0 ? (
                   <li className="px-5 py-8 text-center text-xs text-slate-400">
-                    {isAmharic
-                      ? 'ምንም የቅርብ ጊዜ የኦዲት እንቅስቃሴ አልተመዘገበም።'
-                      : 'No recent audit activity recorded.'}
+                    {t('systemAdminDashboardPage.noRecentAuditActivityRecorded')}
                   </li>
                 ) : null}
               </ul>
