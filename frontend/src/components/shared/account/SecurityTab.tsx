@@ -16,7 +16,7 @@ const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 const EMPTY_FORM = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
 function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   const [visible, setVisible] = useState(false);
 
   return (
@@ -28,8 +28,8 @@ function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
         aria-label={
           visible
-            ? tBilingual('Hide password', 'የይለፍ ቃል ደብቅ')
-            : tBilingual('Show password', 'የይለፍ ቃል አሳይ')
+            ? t('passwordInput.hidePassword')
+            : t('passwordInput.showPassword')
         }
         aria-pressed={visible}
       >
@@ -41,7 +41,7 @@ function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
 
 export default function SecurityTab() {
   const changePassword = useAuthStore((s) => s.changePassword);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,7 +51,7 @@ export default function SecurityTab() {
     setError(null);
 
     if (!form.currentPassword) {
-      const msg = tBilingual('Enter your current password.', 'የአሁኑን የይለፍ ቃልዎን ያስገቡ።');
+      const msg = t('securityTab.enterYourCurrentPassword');
       setError(msg);
       toast.error(msg);
       return;
@@ -63,10 +63,7 @@ export default function SecurityTab() {
       return;
     }
     if (form.newPassword !== form.confirmPassword) {
-      const msg = tBilingual(
-        'New password and confirmation do not match.',
-        'አዲሱ የይለፍ ቃል እና ማረጋገጫው አይመሳሰሉም።',
-      );
+      const msg = t('securityTab.newPasswordAndConfirmationDoNot');
       setError(msg);
       toast.error(msg);
       return;
@@ -81,16 +78,13 @@ export default function SecurityTab() {
 
     if (!result.ok) {
       const msg =
-        result.message ?? tBilingual('Failed to change password.', 'የይለፍ ቃል መቀየር አልተሳካም።');
+        result.message ?? t('securityTab.failedToChangePassword');
       setError(msg);
       toast.error(msg);
       return;
     }
     toast.success(
-      tBilingual(
-        'Password changed successfully. Please sign in again on your other devices.',
-        'የይለፍ ቃልዎ በተሳካ ሁኔታ ተቀይሯል። እባክዎ በሌሎች መሳሪያዎችዎ ላይ እንደገና ይግቡ።',
-      ),
+      t('securityTab.passwordChangedSuccessfullyPleaseSignIn'),
     );
     setForm(EMPTY_FORM);
   };
@@ -98,7 +92,7 @@ export default function SecurityTab() {
   return (
     <form onSubmit={handleSubmit} className="max-w-sm space-y-4">
       <div>
-        <label className={labelClass}>{tBilingual('Current password', 'የአሁኑ የይለፍ ቃል')}</label>
+        <label className={labelClass}>{t('securityTab.currentPassword')}</label>
         <PasswordInput
           autoComplete="current-password"
           value={form.currentPassword}
@@ -106,20 +100,17 @@ export default function SecurityTab() {
         />
       </div>
       <div>
-        <label className={labelClass}>{tBilingual('New password', 'አዲስ የይለፍ ቃል')}</label>
+        <label className={labelClass}>{t('securityTab.newPassword')}</label>
         <PasswordInput
           autoComplete="new-password"
           value={form.newPassword}
           onChange={(e) => setForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-          placeholder={tBilingual(
-            'At least 8 characters with a letter and a number',
-            'ቢያንስ 8 ቁምፊዎች (ፊደላት እና ቁጥሮች የያዘ)',
-          )}
+          placeholder={t('securityTab.atLeast8CharactersWithA')}
         />
       </div>
       <div>
         <label className={labelClass}>
-          {tBilingual('Confirm new password', 'አዲሱን የይለፍ ቃል አረጋግጥ')}
+          {t('securityTab.confirmNewPassword')}
         </label>
         <PasswordInput
           autoComplete="new-password"
@@ -135,11 +126,11 @@ export default function SecurityTab() {
       <Button
         type="submit"
         isLoading={saving}
-        loadingText={tBilingual('Changing password...', 'የይለፍ ቃል በመቀየር ላይ...')}
+        loadingText={t('securityTab.changingPassword')}
         className="gap-2"
       >
         <KeyRound className="h-4 w-4" />
-        {tBilingual('Change password', 'የይለፍ ቃል ቀይር')}
+        {t('securityTab.changePassword')}
       </Button>
     </form>
   );

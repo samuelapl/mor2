@@ -17,7 +17,7 @@ interface PreferencesTabProps {
 
 export default function PreferencesTab({ profile, loading, onUpdated }: PreferencesTabProps) {
   const lang = useLocaleStore((s) => s.lang);
-  const { tBilingual, changeLanguage } = useTranslation();
+  const { changeLanguage, t } = useTranslation('common');
   const [saving, setSaving] = useState<Lang | null>(null);
   const [savingEmail, setSavingEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
       onUpdated(await updateMyProfile({ emailNotifications: !emailOn }));
     } catch {
       setError(
-        tBilingual('Failed to update email notifications.', 'የኢሜይል ማሳወቂያዎችን ማዘመን አልተቻለም።'),
+        t('preferencesTab.failedToUpdateEmailNotifications'),
       );
     } finally {
       setSavingEmail(false);
@@ -39,8 +39,8 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
   };
 
   const options: { key: Lang; label: string; native: string }[] = [
-    { key: 'en', label: tBilingual('English', 'እንግሊዝኛ'), native: 'English (EN)' },
-    { key: 'am', label: tBilingual('Amharic', 'አማርኛ'), native: 'አማርኛ (AM)' },
+    { key: 'en', label: t('preferencesTab.english'), native: 'English (EN)' },
+    { key: 'am', label: t('preferencesTab.amharic'), native: 'አማርኛ (AM)' },
   ];
 
   const handleSelect = async (option: Lang) => {
@@ -50,7 +50,7 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
     const result = await changeLanguage(option);
     setSaving(null);
     if (!result.ok) {
-      setError(result.message ?? tBilingual('Failed to update language.', 'ቋንቋውን ማዘመን አልተቻለም።'));
+      setError(result.message ?? t('preferencesTab.failedToUpdateLanguage'));
     }
   };
 
@@ -59,7 +59,7 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
       <div>
         <p className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
           <Globe className="h-4 w-4 text-slate-400" />
-          {tBilingual('Display language', 'የመተግበሪያው ቋንቋ')}
+          {t('preferencesTab.displayLanguage')}
         </p>
         <div className="grid grid-cols-2 gap-3">
           {options.map((option) => (
@@ -88,20 +88,17 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
         <div>
           <p className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <Mail className="h-4 w-4 text-slate-400" />
-            {tBilingual('Email notifications', 'የኢሜይል ማሳወቂያዎች')}
+            {t('preferencesTab.emailNotifications')}
           </p>
           <p className="mt-0.5 text-xs text-slate-400">
-            {tBilingual(
-              'Also email me about enrollments, grades, certificates, course reviews and session reminders. Account and security emails are always sent.',
-              'ስለ ምዝገባዎች፣ ውጤቶች፣ ሰርተፊኬቶች፣ የኮርስ ግምገማዎች እና የክፍለ ጊዜ ማስታወሻዎች በኢሜይል ያሳውቁኝ። የመለያ እና የደህንነት ኢሜይሎች ሁልጊዜ ይላካሉ።',
-            )}
+            {t('preferencesTab.alsoEmailMeAboutEnrollmentsGrades')}
           </p>
         </div>
         <button
           type="button"
           role="switch"
           aria-checked={emailOn}
-          aria-label={tBilingual('Email notifications', 'የኢሜይል ማሳወቂያዎች')}
+          aria-label={t('preferencesTab.emailNotifications')}
           onClick={() => void toggleEmail()}
           disabled={!profile || loading || savingEmail}
           className={cn(
@@ -121,10 +118,7 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
         <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
       ) : null}
       <p className="text-xs text-slate-400">
-        {tBilingual(
-          'Your language choice is saved to your account and applied the next time you sign in.',
-          'የመረጡት ቋንቋ በመለያዎ ውስጥ ይቀመጣል እንዲሁም በቀጣይ ሲገቡ በቀጥታ ይተገበራል።',
-        )}
+        {t('preferencesTab.yourLanguageChoiceIsSavedTo')}
       </p>
     </div>
   );

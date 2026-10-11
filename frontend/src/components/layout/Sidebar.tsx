@@ -320,7 +320,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
         {/* On phones the header has no room for these, so the drawer carries them. */}
         <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:hidden">
           <LanguageToggle placement="up-start" />
-          <ThemeToggle isAmharic={isAmharic} />
+          <ThemeToggle />
         </div>
         <AccountMenu collapsed={collapsed} />
         <Link

@@ -13,47 +13,35 @@ interface HelpSupportProps {
 
 export default function HelpSupport({ open, onClose }: HelpSupportProps) {
   const [expanded, setExpanded] = useState<number | null>(0);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
 
   const faqs = [
     {
-      q: tBilingual('How do I reset my password?', 'የይለፍ ቃሌን እንዴት መቀየር እችላለሁ?'),
-      a: tBilingual(
-        "Open Account → Security and enter your current and new password. You'll need to sign in again on your other devices afterwards.",
-        'መለያ → ደህንነት የሚለውን ከፍተው አሁን ያለውን እና አዲሱን የይለፍ ቃል ያስገቡ። ከዚያ በኋላ በሌሎች መሳሪያዎችዎ ላይ እንደገና መግባት ይኖርብዎታል።',
-      ),
+      q: t('helpSupport.howDoIResetMyPassword'),
+      a: t('helpSupport.openAccountSecurityAndEnterYour'),
     },
     {
-      q: tBilingual('How do I switch the interface language?', 'የስርዓቱን ቋንቋ እንዴት መቀየር እችላለሁ?'),
-      a: tBilingual(
-        'Open Account → Preferences and choose English or Amharic, or use the language toggle in the header/sidebar. Your choice is saved automatically.',
-        'በራስጌው ወይም በጎን ማውጫው ላይ ያለውን የቋንቋ መምረጫ በመጠቀም ወይም መለያ → ምርጫዎች ውስጥ በመግባት እንግሊዝኛ ወይም አማርኛ መምረጥ ይችላሉ።',
-      ),
+      q: t('helpSupport.howDoISwitchTheInterface'),
+      a: t('helpSupport.openAccountPreferencesAndChooseEnglish'),
     },
     {
-      q: tBilingual('Who approves new registrations?', 'አዳዲስ ምዝገባዎችን የሚያጸድቀው ማን ነው?'),
-      a: tBilingual(
-        'A System Administrator or Training Administrator reviews and approves new sign-ups before they can log in.',
-        'የስርዓት አስተዳዳሪ ወይም የስልጠና አስተዳዳሪ አዳዲስ ተጠቃሚዎች ከመግባታቸው በፊት መረጃቸውን መርምረው ያጸድቃሉ።',
-      ),
+      q: t('helpSupport.whoApprovesNewRegistrations'),
+      a: t('helpSupport.aSystemAdministratorOrTrainingAdministra'),
     },
     {
-      q: tBilingual('How do I get a course certificate?', 'የኮርስ ማጠናቀቂያ ሰርተፍኬት እንዴት ማግኘት እችላለሁ?'),
-      a: tBilingual(
-        'Certificates are issued automatically once you complete all modules and pass the final assessment, if one is required.',
-        'ሁሉንም ሞጁሎች አጠናቀው የማጠቃለያ ፈተናውን ካለፉ በኋላ ሰርተፍኬቱ በራስ-ሰር ይዘጋጅልዎታል።',
-      ),
+      q: t('helpSupport.howDoIGetACourse'),
+      a: t('helpSupport.certificatesAreIssuedAutomaticallyOnceYo'),
     },
   ];
 
   const shortcuts = [
     {
       keys: 'Esc',
-      action: tBilingual('Close the open modal or panel', 'ክፍት የሆነውን መስኮት ወይም ፓነል ዝጋ'),
+      action: t('helpSupport.closeTheOpenModalOrPanel'),
     },
     {
       keys: 'Ctrl / Cmd + K',
-      action: tBilingual('Focus the search bar (where available)', 'ወደ ፍለጋ ሳጥኑ ሂድ'),
+      action: t('helpSupport.focusTheSearchBarWhereAvailable'),
     },
   ];
 
@@ -61,17 +49,14 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title={tBilingual('Help & Support', 'እርዳታ እና ድጋፍ')}
-      subtitle={tBilingual(
-        'FAQs, contact information, and shortcuts',
-        'ተደጋጋሚ ጥያቄዎች፣ የእውቂያ መረጃ እና አቋራጮች',
-      )}
+      title={t('accountMenu.helpSupport')}
+      subtitle={t('helpSupport.faqsContactInformationAndShortcuts')}
       size="lg"
     >
       <div className="space-y-6">
         <section>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {tBilingual('Frequently asked questions', 'ተደጋጋሚ ጥያቄዎች')}
+            {t('helpSupport.frequentlyAskedQuestions')}
           </h3>
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
             {faqs.map((item, index) => (
@@ -99,7 +84,7 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
 
         <section>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {tBilingual('Contact support', 'የቴክኒክ ድጋፍ አግኝ')}
+            {t('helpSupport.contactSupport')}
           </h3>
           <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600">
             <p className="flex items-center gap-2">
@@ -114,7 +99,7 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             <Keyboard className="h-3.5 w-3.5" />{' '}
-            {tBilingual('Keyboard shortcuts', 'የቁልፍ ሰሌዳ አቋራጮች')}
+            {t('helpSupport.keyboardShortcuts')}
           </h3>
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
             {shortcuts.map((s) => (
@@ -129,10 +114,7 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
         </section>
 
         <p className="text-center text-xs text-slate-400">
-          {tBilingual(
-            'MoR Learning Management System · v1.0.0',
-            'የገቢዎች ሚኒስቴር የስልጠና ማስተዳደሪያ ስርዓት · v1.0.0',
-          )}
+          {t('helpSupport.morLearningManagementSystemV10')}
         </p>
       </div>
     </Modal>

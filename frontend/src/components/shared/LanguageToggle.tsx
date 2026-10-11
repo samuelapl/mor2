@@ -41,7 +41,7 @@ export function LanguageToggle({
   compact = false,
   placement = 'down-end',
 }: LanguageToggleProps) {
-  const { lang, changeLanguage } = useTranslation();
+  const { lang, changeLanguage, t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -120,7 +120,7 @@ export function LanguageToggle({
         >
           <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-700/50 mb-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {lang === 'am' ? 'ቋንቋ ይምረጡ' : 'Select Language'}
+              {t('languageToggle.selectLanguage')}
             </p>
           </div>
 

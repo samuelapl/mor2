@@ -244,5 +244,108 @@
     "basic": "መሰረታዊ",
     "intermediate": "መካከለኛ",
     "advanced": "ከፍተኛ"
+  },
+  "languageToggle": {
+    "selectLanguage": "ቋንቋ ይምረጡ"
+  },
+  "pdfDeck": {
+    "couldNotLoadThisPdf": "ይህን PDF መክፈት አልተቻለም።"
+  },
+  "pptxDeck": {
+    "couldNotLoadThisSlideDeck": "ይህን ስላይድ መክፈት አልተቻለም።",
+    "couldNotDisplayThisSlideDeck": "ይህን ስላይድ ማሳየት አልተቻለም።"
+  },
+  "deckLoading": {
+    "loadingSlides": "ስላይዶች በመጫን ላይ…"
+  },
+  "slideDeckViewer": {
+    "slideDeck": "ስላይድ",
+    "pages": "{pageCount} ገጾች",
+    "slides": "{pageCount} ስላይዶች",
+    "zoom": "ማጉያ",
+    "zoomOut": "አሳንስ",
+    "fitToWidth": "ከስፋቱ ጋር አስተካክል",
+    "zoomResetToFitWidth": "ማጉያ {value}%፣ ወደ ስፋት መልስ",
+    "zoomIn": "አጉላ",
+    "thisOlderPowerpointFormatPptPps": "ይህ የቆየ የፓወርፖይንት ቅርጸት (.ppt / .pps / .odp) በብሮውዘር ውስጥ ሊታይ አይችልም። እንደ .pptx ወይም PDF አስቀምጠው እንደገና ይጫኑ ወይም አውርደው ይመልከቱ።"
+  },
+  "accountMenu": {
+    "helpSupport": "እርዳታ እና ድጋፍ"
+  },
+  "accountModal": {
+    "profile": "መገለጫ",
+    "security": "ደህንነት",
+    "details": "ዝርዝር መረጃ",
+    "preferences": "ምርጫዎች",
+    "accountSettings": "የመለያ ቅንብሮች",
+    "manageYourProfileSecurityAndPreferences": "የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ"
+  },
+  "detailsTab": {
+    "roles": "ሚናዎች",
+    "status": "ሁኔታ",
+    "memberSince": "አባል የሆነበት ጊዜ",
+    "lastLogin": "የመጨረሻ መግቢያ",
+    "never": "አልገባም"
+  },
+  "helpSupport": {
+    "howDoIResetMyPassword": "የይለፍ ቃሌን እንዴት መቀየር እችላለሁ?",
+    "openAccountSecurityAndEnterYour": "መለያ → ደህንነት የሚለውን ከፍተው አሁን ያለውን እና አዲሱን የይለፍ ቃል ያስገቡ። ከዚያ በኋላ በሌሎች መሳሪያዎችዎ ላይ እንደገና መግባት ይኖርብዎታል።",
+    "howDoISwitchTheInterface": "የስርዓቱን ቋንቋ እንዴት መቀየር እችላለሁ?",
+    "openAccountPreferencesAndChooseEnglish": "በራስጌው ወይም በጎን ማውጫው ላይ ያለውን የቋንቋ መምረጫ በመጠቀም ወይም መለያ → ምርጫዎች ውስጥ በመግባት እንግሊዝኛ ወይም አማርኛ መምረጥ ይችላሉ።",
+    "whoApprovesNewRegistrations": "አዳዲስ ምዝገባዎችን የሚያጸድቀው ማን ነው?",
+    "aSystemAdministratorOrTrainingAdministra": "የስርዓት አስተዳዳሪ ወይም የስልጠና አስተዳዳሪ አዳዲስ ተጠቃሚዎች ከመግባታቸው በፊት መረጃቸውን መርምረው ያጸድቃሉ።",
+    "howDoIGetACourse": "የኮርስ ማጠናቀቂያ ሰርተፍኬት እንዴት ማግኘት እችላለሁ?",
+    "certificatesAreIssuedAutomaticallyOnceYo": "ሁሉንም ሞጁሎች አጠናቀው የማጠቃለያ ፈተናውን ካለፉ በኋላ ሰርተፍኬቱ በራስ-ሰር ይዘጋጅልዎታል።",
+    "closeTheOpenModalOrPanel": "ክፍት የሆነውን መስኮት ወይም ፓነል ዝጋ",
+    "focusTheSearchBarWhereAvailable": "ወደ ፍለጋ ሳጥኑ ሂድ",
+    "faqsContactInformationAndShortcuts": "ተደጋጋሚ ጥያቄዎች፣ የእውቂያ መረጃ እና አቋራጮች",
+    "frequentlyAskedQuestions": "ተደጋጋሚ ጥያቄዎች",
+    "contactSupport": "የቴክኒክ ድጋፍ አግኝ",
+    "keyboardShortcuts": "የቁልፍ ሰሌዳ አቋራጮች",
+    "morLearningManagementSystemV10": "የገቢዎች ሚኒስቴር የስልጠና ማስተዳደሪያ ስርዓት · v1.0.0"
+  },
+  "preferencesTab": {
+    "failedToUpdateEmailNotifications": "የኢሜይል ማሳወቂያዎችን ማዘመን አልተቻለም።",
+    "english": "እንግሊዝኛ",
+    "amharic": "አማርኛ",
+    "failedToUpdateLanguage": "ቋንቋውን ማዘመን አልተቻለም።",
+    "displayLanguage": "የመተግበሪያው ቋንቋ",
+    "emailNotifications": "የኢሜይል ማሳወቂያዎች",
+    "alsoEmailMeAboutEnrollmentsGrades": "ስለ ምዝገባዎች፣ ውጤቶች፣ ሰርተፊኬቶች፣ የኮርስ ግምገማዎች እና የክፍለ ጊዜ ማስታወሻዎች በኢሜይል ያሳውቁኝ። የመለያ እና የደህንነት ኢሜይሎች ሁልጊዜ ይላካሉ።",
+    "yourLanguageChoiceIsSavedTo": "የመረጡት ቋንቋ በመለያዎ ውስጥ ይቀመጣል እንዲሁም በቀጣይ ሲገቡ በቀጥታ ይተገበራል።"
+  },
+  "profileTab": {
+    "profileAvatarUpdatedSuccessfully": "የመገለጫ ፎቶ በተሳካ ሁኔታ ተቀይሯል!",
+    "firstAndLastNameAreRequired": "ስም እና የአባት ስም ያስፈልጋሉ።",
+    "failedToUpdateProfile": "መገለጫን ማደስ አልተሳካም።",
+    "profileUpdatedSuccessfully": "መገለጫዎ በተሳካ ሁኔታ ተሻሽሏል!",
+    "changeAvatar": "ፎቶ ቀይር",
+    "firstName": "ስም",
+    "lastName": "የአባት ስም",
+    "tin": "የግብር ከፋይ መለያ (TIN)",
+    "taxpayerId": "የግብር ከፋይ መለያ",
+    "savingChanges": "ለውጦችን በማስቀመጥ ላይ...",
+    "saveChanges": "ለውጦችን አስቀምጥ"
+  },
+  "passwordInput": {
+    "hidePassword": "የይለፍ ቃል ደብቅ",
+    "showPassword": "የይለፍ ቃል አሳይ"
+  },
+  "securityTab": {
+    "enterYourCurrentPassword": "የአሁኑን የይለፍ ቃልዎን ያስገቡ።",
+    "newPasswordAndConfirmationDoNot": "አዲሱ የይለፍ ቃል እና ማረጋገጫው አይመሳሰሉም።",
+    "failedToChangePassword": "የይለፍ ቃል መቀየር አልተሳካም።",
+    "passwordChangedSuccessfullyPleaseSignIn": "የይለፍ ቃልዎ በተሳካ ሁኔታ ተቀይሯል። እባክዎ በሌሎች መሳሪያዎችዎ ላይ እንደገና ይግቡ።",
+    "currentPassword": "የአሁኑ የይለፍ ቃል",
+    "newPassword": "አዲስ የይለፍ ቃል",
+    "atLeast8CharactersWithA": "ቢያንስ 8 ቁምፊዎች (ፊደላት እና ቁጥሮች የያዘ)",
+    "confirmNewPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
+    "changingPassword": "የይለፍ ቃል በመቀየር ላይ...",
+    "changePassword": "የይለፍ ቃል ቀይር"
+  },
+  "themeToggle": {
+    "light": "ብርሃን",
+    "dark": "ጨለማ",
+    "system": "የስርዓቱ"
   }
 }

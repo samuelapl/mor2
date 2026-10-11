@@ -14,10 +14,10 @@ interface AccountMenuProps {
 export default function AccountMenu({ collapsed = false }: AccountMenuProps) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
 
-  const accountLabel = tBilingual('Account', 'መለያ');
-  const helpLabel = tBilingual('Help & Support', 'እርዳታ እና ድጋፍ');
+  const accountLabel = t('header.account');
+  const helpLabel = t('accountMenu.helpSupport');
 
   return (
     <>

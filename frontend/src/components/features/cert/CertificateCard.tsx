@@ -177,7 +177,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
             />
 
             {/* Theme Toggle */}
-            <ThemeToggle isAmharic={isAmharic} />
+            <ThemeToggle />
 
             <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
               <Printer className="h-4 w-4" />

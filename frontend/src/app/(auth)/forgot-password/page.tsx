@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
         <LanguageToggle />
-        <ThemeToggle isAmharic={lang === 'am'} />
+        <ThemeToggle />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">

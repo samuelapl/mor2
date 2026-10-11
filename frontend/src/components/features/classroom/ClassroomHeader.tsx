@@ -100,7 +100,7 @@ export function ClassroomHeader({
         <LanguageToggle compact className="sm:hidden" />
         <LanguageToggle className="hidden sm:inline-block" />
         <div className="hidden sm:block">
-          <ThemeToggle isAmharic={lang === 'am'} />
+          <ThemeToggle />
         </div>
       </div>
     </header>

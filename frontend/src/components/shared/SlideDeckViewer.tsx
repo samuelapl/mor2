@@ -137,7 +137,7 @@ interface DeckProps {
 }
 
 function PdfDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   const [doc, setDoc] = React.useState<PDFDocumentProxy | null>(null);
   const [aspect, setAspect] = React.useState(9 / 16);
   const [error, setError] = React.useState<string | null>(null);
@@ -163,7 +163,7 @@ function PdfDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
         setDoc(loaded);
         onPageCount(loaded.numPages);
       } catch {
-        if (!cancelled) setError(tBilingual('Could not load this PDF.', 'ይህን PDF መክፈት አልተቻለም።'));
+        if (!cancelled) setError(t('pdfDeck.couldNotLoadThisPdf'));
       }
     })();
 
@@ -216,7 +216,7 @@ async function dropMissingParts(data: ArrayBuffer): Promise<ArrayBuffer> {
 }
 
 function PptxDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   const hostRef = React.useRef<HTMLDivElement>(null);
   const [data, setData] = React.useState<ArrayBuffer | null>(null);
   const [rendering, setRendering] = React.useState(true);
@@ -236,7 +236,7 @@ function PptxDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
         if (!cancelled) setData(buf);
       })
       .catch(() => {
-        if (!cancelled) setError(tBilingual('Could not load this slide deck.', 'ይህን ስላይድ መክፈት አልተቻለም።'));
+        if (!cancelled) setError(t('pptxDeck.couldNotLoadThisSlideDeck'));
       });
     return () => {
       cancelled = true;
@@ -279,7 +279,7 @@ function PptxDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
         setRendering(false);
       } catch {
         if (!cancelled) {
-          setError(tBilingual('Could not display this slide deck.', 'ይህን ስላይድ ማሳየት አልተቻለም።'));
+          setError(t('pptxDeck.couldNotDisplayThisSlideDeck'));
           setRendering(false);
         }
       }
@@ -318,11 +318,11 @@ function PptxDeck({ url, fitWidth, zoom, onPageCount }: DeckProps) {
 /* ------------------------------------------------------------------ */
 
 function DeckLoading() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16 text-xs text-slate-400">
       <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
-      {tBilingual('Loading slides…', 'ስላይዶች በመጫን ላይ…')}
+      {t('deckLoading.loadingSlides')}
     </div>
   );
 }
@@ -359,10 +359,10 @@ export function SlideDeckViewer({
   maxHeightClass = 'max-h-[75vh]',
   badge,
 }: SlideDeckViewerProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
   const kind = getSlideDeckKind(url, fileName);
   const [pageCount, setPageCount] = React.useState<number | null>(null);
-  const label = fileName || title || tBilingual('Slide Deck', 'ስላይድ');
+  const label = fileName || title || t('slideDeckViewer.slideDeck');
   const canDownload = kind !== 'google' && kind !== 'embed';
 
   const [zoom, setZoom] = React.useState(1);
@@ -433,21 +433,21 @@ export function SlideDeckViewer({
           {pageCount ? (
             <span className="shrink-0 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
               {kind === 'pdf'
-                ? tBilingual(`${pageCount} pages`, `${pageCount} ገጾች`)
-                : tBilingual(`${pageCount} slides`, `${pageCount} ስላይዶች`)}
+                ? t('slideDeckViewer.pages', { pageCount })
+                : t('slideDeckViewer.slides', { pageCount })}
             </span>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {zoomable && (
-            <div className="flex items-center rounded-lg bg-slate-800 p-0.5" role="group" aria-label={tBilingual('Zoom', 'ማጉያ')}>
+            <div className="flex items-center rounded-lg bg-slate-800 p-0.5" role="group" aria-label={t('slideDeckViewer.zoom')}>
               <button
                 type="button"
                 onClick={() => changeZoom((z) => z - ZOOM_STEP)}
                 disabled={zoom <= MIN_ZOOM}
                 className={zoomButtonClass}
-                title={tBilingual('Zoom out', 'አሳንስ')}
-                aria-label={tBilingual('Zoom out', 'አሳንስ')}
+                title={t('slideDeckViewer.zoomOut')}
+                aria-label={t('slideDeckViewer.zoomOut')}
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </button>
@@ -455,8 +455,8 @@ export function SlideDeckViewer({
                 type="button"
                 onClick={() => changeZoom(() => 1)}
                 className="h-7 min-w-[3.25rem] rounded-lg px-1.5 text-[11px] font-semibold tabular-nums text-slate-200 transition hover:bg-slate-700"
-                title={tBilingual('Fit to width', 'ከስፋቱ ጋር አስተካክል')}
-                aria-label={tBilingual(`Zoom ${Math.round(zoom * 100)}%, reset to fit width`, `ማጉያ ${Math.round(zoom * 100)}%፣ ወደ ስፋት መልስ`)}
+                title={t('slideDeckViewer.fitToWidth')}
+                aria-label={t('slideDeckViewer.zoomResetToFitWidth', { value: Math.round(zoom * 100) })}
               >
                 {Math.round(zoom * 100)}%
               </button>
@@ -465,8 +465,8 @@ export function SlideDeckViewer({
                 onClick={() => changeZoom((z) => z + ZOOM_STEP)}
                 disabled={zoom >= MAX_ZOOM}
                 className={zoomButtonClass}
-                title={tBilingual('Zoom in', 'አጉላ')}
-                aria-label={tBilingual('Zoom in', 'አጉላ')}
+                title={t('slideDeckViewer.zoomIn')}
+                aria-label={t('slideDeckViewer.zoomIn')}
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
@@ -477,10 +477,10 @@ export function SlideDeckViewer({
               href={url}
               download={fileName}
               className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-2.5 py-1.5 font-medium text-white transition hover:bg-indigo-500"
-              title={tBilingual('Download', 'አውርድ')}
+              title={t('download')}
             >
               <Download className="h-3 w-3" />
-              <span className="hidden sm:inline">{tBilingual('Download', 'አውርድ')}</span>
+              <span className="hidden sm:inline">{t('download')}</span>
             </a>
           )}
         </div>
@@ -498,10 +498,7 @@ export function SlideDeckViewer({
       ) : kind === 'legacy' ? (
         <DeckMessage>
           <span className="max-w-sm">
-            {tBilingual(
-              'This older PowerPoint format (.ppt / .pps / .odp) cannot be shown in the browser. Save it as .pptx or PDF and upload it again, or download it to view.',
-              'ይህ የቆየ የፓወርፖይንት ቅርጸት (.ppt / .pps / .odp) በብሮውዘር ውስጥ ሊታይ አይችልም። እንደ .pptx ወይም PDF አስቀምጠው እንደገና ይጫኑ ወይም አውርደው ይመልከቱ።',
-            )}
+            {t('slideDeckViewer.thisOlderPowerpointFormatPptPps')}
           </span>
         </DeckMessage>
       ) : (

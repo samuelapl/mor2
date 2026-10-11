@@ -244,5 +244,108 @@
     "basic": "Basic",
     "intermediate": "Intermediate",
     "advanced": "Advanced"
+  },
+  "languageToggle": {
+    "selectLanguage": "Select Language"
+  },
+  "pdfDeck": {
+    "couldNotLoadThisPdf": "Could not load this PDF."
+  },
+  "pptxDeck": {
+    "couldNotLoadThisSlideDeck": "Could not load this slide deck.",
+    "couldNotDisplayThisSlideDeck": "Could not display this slide deck."
+  },
+  "deckLoading": {
+    "loadingSlides": "Loading slides…"
+  },
+  "slideDeckViewer": {
+    "slideDeck": "Slide Deck",
+    "pages": "{pageCount} pages",
+    "slides": "{pageCount} slides",
+    "zoom": "Zoom",
+    "zoomOut": "Zoom out",
+    "fitToWidth": "Fit to width",
+    "zoomResetToFitWidth": "Zoom {value}%, reset to fit width",
+    "zoomIn": "Zoom in",
+    "thisOlderPowerpointFormatPptPps": "This older PowerPoint format (.ppt / .pps / .odp) cannot be shown in the browser. Save it as .pptx or PDF and upload it again, or download it to view."
+  },
+  "accountMenu": {
+    "helpSupport": "Help & Support"
+  },
+  "accountModal": {
+    "profile": "Profile",
+    "security": "Security",
+    "details": "Details",
+    "preferences": "Preferences",
+    "accountSettings": "Account settings",
+    "manageYourProfileSecurityAndPreferences": "Manage your profile, security, and preferences"
+  },
+  "detailsTab": {
+    "roles": "Roles",
+    "status": "Status",
+    "memberSince": "Member since",
+    "lastLogin": "Last login",
+    "never": "Never"
+  },
+  "helpSupport": {
+    "howDoIResetMyPassword": "How do I reset my password?",
+    "openAccountSecurityAndEnterYour": "Open Account → Security and enter your current and new password. You'll need to sign in again on your other devices afterwards.",
+    "howDoISwitchTheInterface": "How do I switch the interface language?",
+    "openAccountPreferencesAndChooseEnglish": "Open Account → Preferences and choose English or Amharic, or use the language toggle in the header/sidebar. Your choice is saved automatically.",
+    "whoApprovesNewRegistrations": "Who approves new registrations?",
+    "aSystemAdministratorOrTrainingAdministra": "A System Administrator or Training Administrator reviews and approves new sign-ups before they can log in.",
+    "howDoIGetACourse": "How do I get a course certificate?",
+    "certificatesAreIssuedAutomaticallyOnceYo": "Certificates are issued automatically once you complete all modules and pass the final assessment, if one is required.",
+    "closeTheOpenModalOrPanel": "Close the open modal or panel",
+    "focusTheSearchBarWhereAvailable": "Focus the search bar (where available)",
+    "faqsContactInformationAndShortcuts": "FAQs, contact information, and shortcuts",
+    "frequentlyAskedQuestions": "Frequently asked questions",
+    "contactSupport": "Contact support",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "morLearningManagementSystemV10": "MoR Learning Management System · v1.0.0"
+  },
+  "preferencesTab": {
+    "failedToUpdateEmailNotifications": "Failed to update email notifications.",
+    "english": "English",
+    "amharic": "Amharic",
+    "failedToUpdateLanguage": "Failed to update language.",
+    "displayLanguage": "Display language",
+    "emailNotifications": "Email notifications",
+    "alsoEmailMeAboutEnrollmentsGrades": "Also email me about enrollments, grades, certificates, course reviews and session reminders. Account and security emails are always sent.",
+    "yourLanguageChoiceIsSavedTo": "Your language choice is saved to your account and applied the next time you sign in."
+  },
+  "profileTab": {
+    "profileAvatarUpdatedSuccessfully": "Profile avatar updated successfully!",
+    "firstAndLastNameAreRequired": "First and last name are required.",
+    "failedToUpdateProfile": "Failed to update profile.",
+    "profileUpdatedSuccessfully": "Profile updated successfully!",
+    "changeAvatar": "Change avatar",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "tin": "TIN",
+    "taxpayerId": "Taxpayer ID",
+    "savingChanges": "Saving changes...",
+    "saveChanges": "Save changes"
+  },
+  "passwordInput": {
+    "hidePassword": "Hide password",
+    "showPassword": "Show password"
+  },
+  "securityTab": {
+    "enterYourCurrentPassword": "Enter your current password.",
+    "newPasswordAndConfirmationDoNot": "New password and confirmation do not match.",
+    "failedToChangePassword": "Failed to change password.",
+    "passwordChangedSuccessfullyPleaseSignIn": "Password changed successfully. Please sign in again on your other devices.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "atLeast8CharactersWithA": "At least 8 characters with a letter and a number",
+    "confirmNewPassword": "Confirm new password",
+    "changingPassword": "Changing password...",
+    "changePassword": "Change password"
+  },
+  "themeToggle": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

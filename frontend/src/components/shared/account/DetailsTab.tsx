@@ -25,7 +25,7 @@ interface DetailsTabProps {
 }
 
 export default function DetailsTab({ profile, loading }: DetailsTabProps) {
-  const { tBilingual, tRole } = useTranslation();
+  const { tRole, t } = useTranslation('common');
 
   if (loading || !profile) {
     return (
@@ -37,23 +37,23 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
 
   const statusOf = (user: ApiUser): { label: string; variant: BadgeVariant } => {
     if (user.registrationStatus === 'PENDING') {
-      return { label: tBilingual('Email not verified', 'ኢሜይል ያልተረጋገጠ'), variant: 'amber' };
+      return { label: t('userStatusBadge.emailNotVerified'), variant: 'amber' };
     }
     if (user.registrationStatus === 'REJECTED') {
-      return { label: tBilingual('Rejected', 'ውድቅ የተደረገ'), variant: 'red' };
+      return { label: t('status.rejected'), variant: 'red' };
     }
     return user.isActive
-      ? { label: tBilingual('Active', 'ንቁ'), variant: 'green' }
-      : { label: tBilingual('Suspended', 'የታገደ'), variant: 'red' };
+      ? { label: t('active'), variant: 'green' }
+      : { label: t('status.suspended'), variant: 'red' };
   };
 
   const status = statusOf(profile);
 
   return (
     <div className="divide-y divide-slate-100">
-      <Row label={tBilingual('Email', 'ኢሜይል')} value={profile.email} />
+      <Row label={t('email')} value={profile.email} />
       <Row
-        label={tBilingual('Roles', 'ሚናዎች')}
+        label={t('detailsTab.roles')}
         value={
           <div className="flex flex-wrap justify-end gap-1.5">
             {profile.roles.map((r) => {
@@ -68,7 +68,7 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
         }
       />
       <Row
-        label={tBilingual('Status', 'ሁኔታ')}
+        label={t('detailsTab.status')}
         value={
           <Badge variant={status.variant} dot>
             {status.label}
@@ -76,15 +76,15 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
         }
       />
       <Row
-        label={tBilingual('Member since', 'አባል የሆነበት ጊዜ')}
+        label={t('detailsTab.memberSince')}
         value={new Date(profile.createdAt).toLocaleDateString()}
       />
       <Row
-        label={tBilingual('Last login', 'የመጨረሻ መግቢያ')}
+        label={t('detailsTab.lastLogin')}
         value={
           profile.lastLogin
             ? new Date(profile.lastLogin).toLocaleString()
-            : tBilingual('Never', 'አልገባም')
+            : t('detailsTab.never')
         }
       />
     </div>

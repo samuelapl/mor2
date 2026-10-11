@@ -158,7 +158,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
         {/* Below `sm` these live in the sidebar drawer instead. */}
         <LanguageToggle className="hidden sm:inline-block" />
         <div className="hidden sm:block">
-          <ThemeToggle isAmharic={isAmharic} />
+          <ThemeToggle />
         </div>
 
         <div className="relative" ref={panelRef}>

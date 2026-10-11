@@ -2,15 +2,18 @@
 import { useRef, useState, useEffect } from 'react';
 import { Moon, Sun, Monitor, Check } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
+import type { NamespaceKey } from '@/lib/i18n';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
-const OPTIONS = [
-  { value: 'light' as const, icon: Sun, en: 'Light', am: 'ብርሃን' },
-  { value: 'dark' as const, icon: Moon, en: 'Dark', am: 'ጨለማ' },
-  { value: 'system' as const, icon: Monitor, en: 'System', am: 'የስርዓቱ' },
+const OPTIONS: { value: 'light' | 'dark' | 'system'; icon: typeof Sun; labelKey: NamespaceKey<'common'> }[] = [
+  { value: 'light', icon: Sun, labelKey: 'themeToggle.light' },
+  { value: 'dark', icon: Moon, labelKey: 'themeToggle.dark' },
+  { value: 'system', icon: Monitor, labelKey: 'themeToggle.system' },
 ];
 
-export function ThemeToggle({ isAmharic }: { isAmharic?: boolean }) {
+export function ThemeToggle() {
+  const { t } = useTranslation('common');
   const { theme, setTheme, isDark } = useTheme();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +38,7 @@ export function ThemeToggle({ isAmharic }: { isAmharic?: boolean }) {
       </button>
       {open && (
         <div className="absolute right-0 top-11 z-[80] w-40 overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/60 animate-scale-in">
-          {OPTIONS.map(({ value, icon: Ic, en, am }) => (
+          {OPTIONS.map(({ value, icon: Ic, labelKey }) => (
             <button
               key={value}
               type="button"
@@ -46,7 +49,7 @@ export function ThemeToggle({ isAmharic }: { isAmharic?: boolean }) {
               )}
             >
               <Ic className="h-4 w-4" />
-              <span className="flex-1 text-left">{isAmharic ? am : en}</span>
+              <span className="flex-1 text-left">{t(labelKey)}</span>
               {theme === value && <Check className="h-3.5 w-3.5" />}
             </button>
           ))}

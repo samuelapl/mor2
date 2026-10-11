@@ -96,7 +96,7 @@ export default function PublicHeader() {
           {/* Controls & Actions */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             <LanguageToggle />
-            <ThemeToggle isAmharic={lang === 'am'} />
+            <ThemeToggle />
 
             {dashboardHref ? (
               <Link

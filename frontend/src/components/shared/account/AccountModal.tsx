@@ -22,13 +22,13 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
   const [tab, setTab] = useState<TabKey>('profile');
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(false);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: 'profile', label: tBilingual('Profile', 'መገለጫ') },
-    { key: 'security', label: tBilingual('Security', 'ደህንነት') },
-    { key: 'details', label: tBilingual('Details', 'ዝርዝር መረጃ') },
-    { key: 'preferences', label: tBilingual('Preferences', 'ምርጫዎች') },
+    { key: 'profile', label: t('accountModal.profile') },
+    { key: 'security', label: t('accountModal.security') },
+    { key: 'details', label: t('accountModal.details') },
+    { key: 'preferences', label: t('accountModal.preferences') },
   ];
 
   useEffect(() => {
@@ -44,11 +44,8 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title={tBilingual('Account settings', 'የመለያ ቅንብሮች')}
-      subtitle={tBilingual(
-        'Manage your profile, security, and preferences',
-        'የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ',
-      )}
+      title={t('accountModal.accountSettings')}
+      subtitle={t('accountModal.manageYourProfileSecurityAndPreferences')}
       size="lg"
     >
       <div className="mb-5 flex gap-1 border-b border-slate-100 pb-3">
