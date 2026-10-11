@@ -29,7 +29,7 @@ const PAGE_SIZE = 20;
 export default function NewsCommentsModerationPage() {
   const { id } = useParams<{ id: string }>();
   const { can } = usePermissions();
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('news');
   const [headline, setHeadline] = useState('');
   const [items, setItems] = useState<ApiAdminNewsComment[]>([]);
   const [meta, setMeta] = useState<ApiMeta | null>(null);
@@ -62,13 +62,10 @@ export default function NewsCommentsModerationPage() {
 
   if (!can(NEWS_PERMISSIONS.publish)) {
     return (
-      <PageShell title={{ en: 'Comments', am: 'አስተያየቶች' }}>
+      <PageShell title={'newsComments.comments'}>
         <EmptyState
-          title={tBilingual('Publishers only', 'ለአሳታሚዎች ብቻ')}
-          description={tBilingual(
-            'Moderating comments needs the news.publish permission.',
-            'አስተያየቶችን ማስተዳደር news.publish ፈቃድ ያስፈልገዋል።',
-          )}
+          title={t('newsCommentsModerationPage.publishersOnly')}
+          description={t('newsCommentsModerationPage.moderatingCommentsNeedsTheNewsPublish')}
         />
       </PageShell>
     );
@@ -96,7 +93,7 @@ export default function NewsCommentsModerationPage() {
 
   return (
     <PageShell
-      title={{ en: 'Comments', am: 'አስተያየቶች' }}
+      title={'newsComments.comments'}
       description={headline ? <span lang={newsTextLang(headline)}>{headline}</span> : undefined}
       actions={
         <Link
@@ -104,21 +101,21 @@ export default function NewsCommentsModerationPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
         >
           <ArrowLeft className="h-4 w-4" />
-          {tBilingual('Back to the news', 'ወደ ዜናው ተመለስ')}
+          {t('newsCommentsModerationPage.backToTheNews')}
         </Link>
       }
     >
       {loading ? (
         <TableSkeleton rows={5} columns={4} />
       ) : items.length === 0 ? (
-        <EmptyState title={tBilingual('No comments yet', 'እስካሁን ምንም አስተያየት የለም')} />
+        <EmptyState title={t('newsCommentsModerationPage.noCommentsYet')} />
       ) : (
         <>
           <Table
             columns={[
-              { name: 'author', label: tBilingual('Author', 'ጸሐፊ') },
-              { name: 'comment', label: tBilingual('Comment', 'አስተያየት') },
-              { name: 'visibility', label: tBilingual('Visibility', 'ታይነት') },
+              { name: 'author', label: t('newsEditor.author') },
+              { name: 'comment', label: t('newsCommentsModerationPage.comment') },
+              { name: 'visibility', label: t('newsCommentsModerationPage.visibility') },
               { name: 'actions', label: '' },
             ]}
           >
@@ -141,9 +138,9 @@ export default function NewsCommentsModerationPage() {
                 </Td>
                 <Td>
                   {c.isHidden ? (
-                    <Badge variant="outline">{tBilingual('Hidden', 'የተደበቀ')}</Badge>
+                    <Badge variant="outline">{t('newsCommentsModerationPage.hidden')}</Badge>
                   ) : (
-                    <Badge variant="green">{tBilingual('Visible', 'የሚታይ')}</Badge>
+                    <Badge variant="green">{t('newsCommentsModerationPage.visible')}</Badge>
                   )}
                 </Td>
                 <Td className="whitespace-nowrap text-right">
@@ -151,8 +148,8 @@ export default function NewsCommentsModerationPage() {
                     type="button"
                     onClick={() => void toggleHidden(c)}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-                    aria-label={c.isHidden ? tBilingual('Show', 'አሳይ') : tBilingual('Hide', 'ደብቅ')}
-                    title={c.isHidden ? tBilingual('Show', 'አሳይ') : tBilingual('Hide', 'ደብቅ')}
+                    aria-label={c.isHidden ? t('newsCommentsModerationPage.show') : t('newsCommentsModerationPage.hide')}
+                    title={c.isHidden ? t('newsCommentsModerationPage.show') : t('newsCommentsModerationPage.hide')}
                   >
                     {c.isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                   </button>
@@ -160,8 +157,8 @@ export default function NewsCommentsModerationPage() {
                     type="button"
                     onClick={() => setDeleting(c)}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                    aria-label={tBilingual('Delete', 'ሰርዝ')}
-                    title={tBilingual('Delete', 'ሰርዝ')}
+                    aria-label={t('newsComments.delete')}
+                    title={t('newsComments.delete')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -187,9 +184,9 @@ export default function NewsCommentsModerationPage() {
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        title={tBilingual('Delete this comment?', 'ይህ አስተያየት ይሰረዝ?')}
-        description={tBilingual('It will be removed for everyone.', 'ለሁሉም ይወገዳል።')}
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
+        title={t('newsCommentsModerationPage.deleteThisComment')}
+        description={t('newsCommentsModerationPage.itWillBeRemovedForEveryone')}
+        confirmText={t('newsComments.delete')}
         variant="danger"
       />
     </PageShell>

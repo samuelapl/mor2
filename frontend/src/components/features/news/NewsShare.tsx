@@ -13,7 +13,7 @@ function XGlyph() {
 }
 
 export function NewsShare({ newsId, slug, headline }: { newsId: string; slug: string; headline: string }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const [url, setUrl] = useState('');
   const [canNativeShare, setCanNativeShare] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -53,7 +53,7 @@ export function NewsShare({ newsId, slug, headline }: { newsId: string; slug: st
       setTimeout(() => setCopied(false), 2000);
       count();
     } catch {
-      toast.error(tBilingual('Could not copy the link', 'ሊንኩን መቅዳት አልተቻለም'));
+      toast.error(t('newsShare.couldNotCopyTheLink'));
     }
   };
 
@@ -72,38 +72,38 @@ export function NewsShare({ newsId, slug, headline }: { newsId: string; slug: st
   return (
     <div className="flex items-center gap-2">
       <span className="mr-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-        {tBilingual('Share', 'አጋራ')}
+        {t('newsShare.share')}
       </span>
       {canNativeShare && (
         <button
           type="button"
           onClick={nativeShare}
           className={iconButton}
-          aria-label={tBilingual('Share', 'አጋራ')}
+          aria-label={t('newsShare.share')}
         >
           <Share2 className="h-4 w-4" />
         </button>
       )}
-      {targets.map((t) => (
+      {targets.map((target) => (
         <a
-          key={t.label}
-          href={url ? t.href : undefined}
+          key={target.label}
+          href={url ? target.href : undefined}
           target="_blank"
           rel="noopener noreferrer"
           onClick={count}
           className={iconButton}
-          aria-label={`${tBilingual('Share on', 'አጋራ በ')} ${t.label}`}
-          title={t.label}
+          aria-label={`${t('newsShare.shareOn')} ${target.label}`}
+          title={target.label}
         >
-          {t.icon}
+          {target.icon}
         </a>
       ))}
       <button
         type="button"
         onClick={copyLink}
         className={iconButton}
-        aria-label={tBilingual('Copy link', 'ሊንኩን ቅዳ')}
-        title={tBilingual('Copy link', 'ሊንኩን ቅዳ')}
+        aria-label={t('newsShare.copyLink')}
+        title={t('newsShare.copyLink')}
       >
         {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Link2 className="h-4 w-4" />}
       </button>

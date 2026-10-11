@@ -24,7 +24,7 @@ const PAGE_SIZE = 20;
 export function NewsComments({ newsId, allowComments }: { newsId: string; allowComments: boolean }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const ready = useAuthStore((s) => s.ready);
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('news');
   const { loginHref } = useSignInPrompt();
   const [comments, setComments] = useState<ApiNewsComment[]>([]);
   const [total, setTotal] = useState(0);
@@ -72,7 +72,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
       setTotal((n) => n + 1);
       setDraft('');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : tBilingual('Could not post your comment', 'አስተያየትዎን መለጠፍ አልተቻለም'));
+      toast.error(err instanceof Error ? err.message : t('newsComments.couldNotPostYourComment'));
     } finally {
       setPosting(false);
     }
@@ -97,14 +97,14 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
       setComments((prev) =>
         prev.map((c) => (c.id === commentId ? { ...c, content: updated.content } : c)),
       );
-      toast.success(tBilingual('Comment updated successfully', 'አስተያየትዎ በተሳካ ሁኔታ ተሻሽሏል'));
+      toast.success(t('newsComments.commentUpdatedSuccessfully'));
       setEditingId(null);
       setEditDraft('');
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : tBilingual('Could not update comment', 'አስተያየቱን ማሻሻል አልተቻለም'),
+          : t('newsComments.couldNotUpdateComment'),
       );
     } finally {
       setSavingEdit(false);
@@ -117,9 +117,9 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
       await deleteOwnNewsComment(newsId, deletingId);
       setComments((prev) => prev.filter((c) => c.id !== deletingId));
       setTotal((n) => Math.max(0, n - 1));
-      toast.success(tBilingual('Comment deleted successfully', 'አስተያየቱ በተሳካ ሁኔታ ተሰርዟል'));
+      toast.success(t('newsComments.commentDeletedSuccessfully'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : tBilingual('Could not delete the comment', 'አስተያየቱን መሰረዝ አልተቻለም'));
+      toast.error(err instanceof Error ? err.message : t('newsComments.couldNotDeleteTheComment'));
     } finally {
       setDeletingId(null);
     }
@@ -128,14 +128,14 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
   return (
     <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
       <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-        {tBilingual('Comments', 'አስተያየቶች')}{' '}
+        {t('newsComments.comments')}{' '}
         <span className="text-sm font-medium text-slate-400">({total})</span>
       </h2>
 
       {!allowComments ? (
         <p className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-900 dark:text-slate-400">
           <Lock className="h-4 w-4" />
-          {tBilingual('Comments are closed for this news.', 'ለዚህ ዜና አስተያየት መስጠት ተዘግቷል።')}
+          {t('newsComments.commentsAreClosedForThisNews')}
         </p>
       ) : currentUser ? (
         <form onSubmit={submit} className="mt-4">
@@ -143,7 +143,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_LENGTH))}
             rows={3}
-            placeholder={tBilingual('Write a comment…', 'አስተያየት ይጻፉ…')}
+            placeholder={t('newsComments.writeAComment')}
             className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           />
           <div className="mt-2 flex items-center justify-between">
@@ -151,16 +151,16 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
               {draft.length}/{MAX_LENGTH}
             </span>
             <Button type="submit" size="sm" isLoading={posting} disabled={!draft.trim()}>
-              {tBilingual('Post comment', 'አስተያየት ለጥፍ')}
+              {t('newsComments.postComment')}
             </Button>
           </div>
         </form>
       ) : (
         <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
           <Link href={loginHref} className="font-semibold text-sky-700 hover:underline dark:text-sky-400">
-            {tBilingual('Sign in', 'ይግቡ')}
+            {t('newsComments.signIn')}
           </Link>{' '}
-          {tBilingual('to join the conversation.', 'እና በውይይቱ ይሳተፉ።')}
+          {t('newsComments.toJoinTheConversation')}
         </p>
       )}
 
@@ -185,8 +185,8 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                       type="button"
                       onClick={() => startEdit(c)}
                       className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
-                      title={tBilingual('Edit comment', 'አስተያየት አርትዕ')}
-                      aria-label={tBilingual('Edit comment', 'አስተያየት አርትዕ')}
+                      title={t('newsComments.editComment')}
+                      aria-label={t('newsComments.editComment')}
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
@@ -194,8 +194,8 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                       type="button"
                       onClick={() => setDeletingId(c.id)}
                       className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                      title={tBilingual('Delete comment', 'አስተያየት ሰርዝ')}
-                      aria-label={tBilingual('Delete comment', 'አስተያየት ሰርዝ')}
+                      title={t('newsComments.deleteComment')}
+                      aria-label={t('newsComments.deleteComment')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -222,7 +222,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                         onClick={cancelEdit}
                         disabled={savingEdit}
                       >
-                        {tBilingual('Cancel', 'ተወው')}
+                        {t('newsComments.cancel')}
                       </Button>
                       <Button
                         type="button"
@@ -231,7 +231,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                         isLoading={savingEdit}
                         disabled={!editDraft.trim() || editDraft.trim() === c.content}
                       >
-                        {tBilingual('Save changes', 'ለውጦችን መዝግብ')}
+                        {t('newsComments.saveChanges')}
                       </Button>
                     </div>
                   </div>
@@ -252,13 +252,13 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
 
       {!loading && comments.length === 0 && allowComments && (
         <p className="mt-2 text-sm text-slate-400">
-          {tBilingual('No comments yet.', 'እስካሁን ምንም አስተያየት የለም።')}
+          {t('newsComments.noCommentsYet')}
         </p>
       )}
       {hasMore && (
         <div className="mt-6">
           <Button variant="outline" size="sm" isLoading={loading} onClick={() => load(page + 1)}>
-            {tBilingual('Load more comments', 'ተጨማሪ አስተያየቶችን አሳይ')}
+            {t('newsComments.loadMoreComments')}
           </Button>
         </div>
       )}
@@ -267,9 +267,9 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
         open={Boolean(deletingId)}
         onClose={() => setDeletingId(null)}
         onConfirm={confirmDelete}
-        title={tBilingual('Delete comment?', 'አስተያየቱ ይሰረዝ?')}
-        description={tBilingual('This cannot be undone.', 'ይህ ሊቀለበስ አይችልም።')}
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
+        title={t('newsComments.deleteComment2')}
+        description={t('newsComments.thisCannotBeUndone')}
+        confirmText={t('newsComments.delete')}
         variant="danger"
       />
     </section>

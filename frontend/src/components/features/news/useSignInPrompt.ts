@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 
@@ -9,15 +10,15 @@ import { toast } from '@/lib/toast';
 export function useSignInPrompt() {
   const router = useRouter();
   const pathname = usePathname();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
 
   const loginHref = `/login?redirect=${encodeURIComponent(pathname)}`;
   const prompt = useCallback(
-    (message: { en: string; am: string }) =>
-      toast.info(tBilingual(message), {
-        action: { label: tBilingual('Sign in', 'ግባ'), onClick: () => router.push(loginHref) },
+    (messageKey: NamespaceKey<'news'>) =>
+      toast.info(t(messageKey), {
+        action: { label: t('useSignInPrompt.signIn'), onClick: () => router.push(loginHref) },
       }),
-    [router, loginHref, tBilingual],
+    [router, loginHref, t],
   );
 
   return { prompt, loginHref };

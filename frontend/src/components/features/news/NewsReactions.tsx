@@ -19,7 +19,7 @@ interface NewsReactionsProps {
 /** Like / dislike. Only the like count is public; dislikes are feedback for the publishers. */
 export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsProps) {
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const { prompt } = useSignInPrompt();
   // Optimistic local copy; re-synced from props when the parent refetches with the user's token.
   const [state, setState] = useState({ likeCount, myReaction });
@@ -32,7 +32,7 @@ export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsPr
 
   const react = async (type: NewsReactionType) => {
     if (!currentUser) {
-      prompt({ en: 'Sign in to react to news', am: 'ለዜናው ምላሽ ለመስጠት ይግቡ' });
+      prompt('newsReactions.signInToReactToNews');
       return;
     }
     if (pending) return;
@@ -49,7 +49,7 @@ export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsPr
       setState(await reactToNews(newsId, type));
     } catch (err) {
       setState(previous);
-      toast.error(err instanceof Error ? err.message : tBilingual('Could not save your reaction', 'ምላሽዎን ማስቀመጥ አልተቻለም'));
+      toast.error(err instanceof Error ? err.message : t('newsReactions.couldNotSaveYourReaction'));
     } finally {
       setPending(false);
     }
@@ -73,7 +73,7 @@ export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsPr
         className={buttonClass(state.myReaction === 'LIKE')}
       >
         <ThumbsUp className="h-4 w-4" />
-        <span>{tBilingual('Like', 'ወደድኩት')}</span>
+        <span>{t('newsReactions.like')}</span>
         <span className="tabular-nums">{state.likeCount}</span>
       </button>
       <button
@@ -81,8 +81,8 @@ export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsPr
         onClick={() => react('DISLIKE')}
         disabled={pending}
         aria-pressed={state.myReaction === 'DISLIKE'}
-        aria-label={tBilingual('Dislike', 'አልወደድኩትም')}
-        title={tBilingual('Dislike', 'አልወደድኩትም')}
+        aria-label={t('newsReactions.dislike')}
+        title={t('newsReactions.dislike')}
         className={buttonClass(state.myReaction === 'DISLIKE')}
       >
         <ThumbsDown className="h-4 w-4" />

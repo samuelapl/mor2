@@ -16,7 +16,7 @@ interface NewsCardProps {
 }
 
 export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
-  const { lang, tBilingual } = useTranslation();
+  const { lang, t } = useTranslation('news');
   const textLang = newsTextLang(news.headline, news.summary);
   const date = formatNewsDate(news.eventDate ?? news.publishedAt, lang);
 
@@ -71,7 +71,7 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
           {news.isFeatured && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
               <Star className="h-3 w-3 fill-current" />
-              {tBilingual('Featured', 'ተለይቶ የቀረበ')}
+              {t('newsCard.featured')}
             </span>
           )}
         </div>

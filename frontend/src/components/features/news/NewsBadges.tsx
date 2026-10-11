@@ -6,19 +6,19 @@ import { NEWS_CATEGORY_LABELS, NEWS_STATUS_LABELS, NEWS_STATUS_VARIANTS } from '
 import type { NewsCategory, NewsStatus } from '@/lib/api/types';
 
 export function NewsCategoryBadge({ category, className }: { category: NewsCategory; className?: string }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   return (
     <Badge variant="blue" className={className}>
-      {tBilingual(NEWS_CATEGORY_LABELS[category])}
+      {t(NEWS_CATEGORY_LABELS[category])}
     </Badge>
   );
 }
 
 export function NewsStatusBadge({ status }: { status: NewsStatus }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   return (
     <Badge variant={NEWS_STATUS_VARIANTS[status]} dot>
-      {tBilingual(NEWS_STATUS_LABELS[status])}
+      {t(NEWS_STATUS_LABELS[status])}
     </Badge>
   );
 }

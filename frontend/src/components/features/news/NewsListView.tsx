@@ -23,7 +23,7 @@ const SITE_HEADER_HEIGHT = 64; // PublicHeader's sticky bar (h-16)
  * covers every post, featured included, so nothing becomes unfindable.
  */
 export function NewsListView() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const [category, setCategory] = useState<NewsCategory | undefined>();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -120,16 +120,16 @@ export function NewsListView() {
       >
         <div className="mx-auto max-w-7xl px-4 pb-5 pt-8 sm:px-6 lg:px-8 lg:pt-10">
           <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
-            {tBilingual('Ministry of Revenues', 'የገቢዎች ሚኒስቴር')}
+            {t('latestNewsSection.ministryOfRevenues')}
           </span>
           <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
-            {tBilingual('News & Announcements', 'ዜናዎች እና ማስታወቂያዎች')}
+            {t('newsListView.newsAnnouncements')}
           </h1>
 
           <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
               <button type="button" onClick={() => chooseCategory(undefined)} className={tabClass(!category)}>
-                {tBilingual('All', 'ሁሉም')}
+                {t('newsListView.all')}
               </button>
               {NEWS_CATEGORIES.map((c) => (
                 <button
@@ -138,7 +138,7 @@ export function NewsListView() {
                   onClick={() => chooseCategory(c)}
                   className={tabClass(category === c)}
                 >
-                  {tBilingual(NEWS_CATEGORY_LABELS[c])}
+                  {t(NEWS_CATEGORY_LABELS[c])}
                 </button>
               ))}
             </div>
@@ -148,7 +148,7 @@ export function NewsListView() {
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={tBilingual('Search headlines…', 'ርዕሶችን ይፈልጉ…')}
+                placeholder={t('newsListView.searchHeadlines')}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               />
             </label>
@@ -158,7 +158,7 @@ export function NewsListView() {
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         {showFeatured && (
-          <section className="mb-12" aria-label={tBilingual('Featured news', 'ተለይተው የቀረቡ ዜናዎች')}>
+          <section className="mb-12" aria-label={t('newsListView.featuredNews')}>
             <NewsCard news={lead} variant="hero" />
             {/* A single extra featured post goes full width; two sit side by side. */}
             {otherFeatured.length === 1 && (
@@ -179,7 +179,7 @@ export function NewsListView() {
         <div ref={listTop}>
           {showFeatured && (
             <h2 className="mb-5 font-display text-lg font-bold text-slate-900 dark:text-white">
-              {tBilingual('Latest news', 'የቅርብ ጊዜ ዜናዎች')}
+              {t('newsListView.latestNews')}
             </h2>
           )}
 
@@ -187,18 +187,18 @@ export function NewsListView() {
             <CardSkeleton count={PAGE_SIZE} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" />
           ) : failed ? (
             <EmptyState
-              title={tBilingual('Could not load news', 'ዜናዎችን መጫን አልተቻለም')}
-              description={tBilingual('Please try again in a moment.', 'እባክዎ ትንሽ ቆይተው እንደገና ይሞክሩ።')}
+              title={t('newsListView.couldNotLoadNews')}
+              description={t('newsListView.pleaseTryAgainInAMoment')}
             />
           ) : items.length === 0 ? (
             // Featured posts alone are already on screen; only say "nothing" when there truly is nothing.
             showFeatured ? null : (
               <EmptyState
-                title={tBilingual('No news found', 'ምንም ዜና አልተገኘም')}
+                title={t('newsListView.noNewsFound')}
                 description={
                   filtering
-                    ? tBilingual('Try another search or category.', 'ሌላ ፍለጋ ወይም ምድብ ይሞክሩ።')
-                    : tBilingual('Check back soon for announcements.', 'ለማስታወቂያዎች በቅርቡ ይመለሱ።')
+                    ? t('newsListView.tryAnotherSearchOrCategory')
+                    : t('newsListView.checkBackSoonForAnnouncements')
                 }
               />
             )

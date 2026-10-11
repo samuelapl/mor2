@@ -1,5 +1,6 @@
 import type { Lang } from '@/types';
 import type { NewsCategory, NewsStatus } from '@/lib/api/types';
+import type { NamespaceKey } from '@/lib/i18n';
 
 /**
  * News text (headline, summary, content) is shown exactly as written — usually Amharic,
@@ -16,19 +17,19 @@ export function newsTextLang(...texts: (string | null | undefined)[]): 'am' | 'e
 
 export const NEWS_CATEGORIES: NewsCategory[] = ['PRESS_RELEASE', 'ANNOUNCEMENT', 'EVENT', 'NOTICE'];
 
-export const NEWS_CATEGORY_LABELS: Record<NewsCategory, { en: string; am: string }> = {
-  PRESS_RELEASE: { en: 'Press Release', am: 'ጋዜጣዊ መግለጫ' },
-  ANNOUNCEMENT: { en: 'Announcement', am: 'ማስታወቂያ' },
-  EVENT: { en: 'Event', am: 'ዝግጅት' },
-  NOTICE: { en: 'Notice', am: 'ማሳሰቢያ' },
+export const NEWS_CATEGORY_LABELS: Record<NewsCategory, NamespaceKey<'news'>> = {
+  PRESS_RELEASE: 'news.pressRelease',
+  ANNOUNCEMENT: 'news.announcement',
+  EVENT: 'news.event',
+  NOTICE: 'news.notice',
 };
 
-export const NEWS_STATUS_LABELS: Record<NewsStatus, { en: string; am: string }> = {
-  DRAFT: { en: 'Draft', am: 'ረቂቅ' },
-  PENDING_REVIEW: { en: 'Pending review', am: 'ግምገማ በመጠባበቅ ላይ' },
-  REJECTED: { en: 'Rejected', am: 'ውድቅ የተደረገ' },
-  PUBLISHED: { en: 'Published', am: 'የታተመ' },
-  ARCHIVED: { en: 'Unpublished', am: 'ከህትመት የወረደ' },
+export const NEWS_STATUS_LABELS: Record<NewsStatus, NamespaceKey<'news'>> = {
+  DRAFT: 'news.draft',
+  PENDING_REVIEW: 'news.pendingReview',
+  REJECTED: 'news.rejected',
+  PUBLISHED: 'news.published',
+  ARCHIVED: 'news.unpublished',
 };
 
 export const NEWS_STATUS_VARIANTS: Record<

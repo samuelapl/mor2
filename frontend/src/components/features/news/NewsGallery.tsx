@@ -8,7 +8,7 @@ import type { ApiNewsImage } from '@/lib/api/types';
 
 /** Photo grid with a keyboard-navigable lightbox. */
 export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const close = useCallback(() => setOpenIndex(null), []);
@@ -35,7 +35,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
   return (
     <section className="mt-10">
       <h2 className="mb-4 font-display text-lg font-bold text-slate-900 dark:text-white">
-        {tBilingual('Photo gallery', 'የፎቶ ማዕከል')}
+        {t('newsGallery.photoGallery')}
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {images.map((image, index) => (
@@ -75,7 +75,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
           <button
             type="button"
             onClick={close}
-            aria-label={tBilingual('Close', 'ዝጋ')}
+            aria-label={t('newsGallery.close')}
             className="absolute right-4 top-4 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white"
           >
             <X className="h-6 w-6" />
@@ -88,7 +88,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
                   e.stopPropagation();
                   step(-1);
                 }}
-                aria-label={tBilingual('Previous photo', 'ቀዳሚ ፎቶ')}
+                aria-label={t('newsGallery.previousPhoto')}
                 className="absolute left-2 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white sm:left-6"
               >
                 <ChevronLeft className="h-8 w-8" />
@@ -99,7 +99,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
                   e.stopPropagation();
                   step(1);
                 }}
-                aria-label={tBilingual('Next photo', 'ቀጣይ ፎቶ')}
+                aria-label={t('newsGallery.nextPhoto')}
                 className="absolute right-2 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white sm:right-6"
               >
                 <ChevronRight className="h-8 w-8" />

@@ -137,7 +137,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
   const router = useRouter();
   const currentUser = useAuthStore((s) => s.currentUser);
   const { can, isSystemAdmin } = usePermissions();
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('news');
 
   const [news, setNews] = useState<ApiAdminNews | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -192,15 +192,15 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
 
   const validate = (): boolean => {
     const next: typeof errors = {};
-    if (!form.headline.trim()) next.headline = tBilingual('Headline is required', 'ርዕስ ያስፈልጋል');
+    if (!form.headline.trim()) next.headline = t('newsEditor.headlineIsRequired');
     else if (form.headline.trim().length > 200)
-      next.headline = tBilingual('At most 200 characters', 'ቢበዛ 200 ፊደላት');
+      next.headline = t('newsEditor.atMost200Characters');
     if (form.summary.trim().length > 300)
-      next.summary = tBilingual('At most 300 characters', 'ቢበዛ 300 ፊደላት');
+      next.summary = t('newsEditor.atMost300Characters');
     if (!stripHtmlTags(form.content).trim())
-      next.content = tBilingual('Content is required', 'ይዘት ያስፈልጋል');
+      next.content = t('newsEditor.contentIsRequired');
     if (form.source.trim().length > 120)
-      next.source = tBilingual('At most 120 characters', 'ቢበዛ 120 ፊደላት');
+      next.source = t('newsEditor.atMost120Characters');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -230,7 +230,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     if (!news) {
       const created = await run('save', () => createNews(toInput(form)), 'Could not save the draft');
       if (created) {
-        toast.success(tBilingual('Draft saved — you can now add photos', 'ረቂቁ ተቀምጧል — አሁን ፎቶዎችን ማከል ይችላሉ'));
+        toast.success(t('newsEditor.draftSavedYouCanNowAdd'));
         router.replace(`/news-management/${created.id}`);
       }
       return created;
@@ -239,7 +239,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     const updated = await run('save', () => updateNews(news.id, toInput(form)), 'Could not save changes');
     if (updated) {
       applyServerNews(updated);
-      toast.success(tBilingual('Changes saved', 'ለውጦቹ ተቀምጠዋል'));
+      toast.success(t('newsEditor.changesSaved'));
     }
     return updated;
   };
@@ -250,7 +250,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     const result = await run('submit', () => submitNews(news.id), 'Could not submit for review');
     if (result) {
       applyServerNews(result);
-      toast.success(tBilingual('Submitted for review', 'ለግምገማ ተልኳል'));
+      toast.success(t('newsEditor.submittedForReview'));
     }
   };
 
@@ -259,7 +259,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     const result = await run('approve', () => reviewNews(news.id, { approve: true }), 'Could not publish');
     if (result) {
       applyServerNews(result);
-      toast.success(tBilingual('Published', 'ታትሟል'));
+      toast.success(t('newsEditor.published'));
     }
   };
 
@@ -274,7 +274,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       applyServerNews(result);
       setRejectOpen(false);
       setRejectReason('');
-      toast.success(tBilingual('Returned to the author', 'ለጸሐፊው ተመልሷል'));
+      toast.success(t('newsEditor.returnedToTheAuthor'));
     }
   };
 
@@ -284,7 +284,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     setConfirm(null);
     if (result) {
       applyServerNews(result);
-      toast.success(tBilingual('Taken off the public site', 'ከህዝብ ገጽ ተወግዷል'));
+      toast.success(t('newsEditor.takenOffThePublicSite'));
     }
   };
 
@@ -293,7 +293,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     const result = await run('republish', () => republishNews(news.id), 'Could not republish');
     if (result) {
       applyServerNews(result);
-      toast.success(tBilingual('Published again', 'እንደገና ታትሟል'));
+      toast.success(t('newsEditor.publishedAgain'));
     }
   };
 
@@ -308,7 +308,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     const ok = await run('delete', () => deleteNews(news.id).then(() => true), 'Could not delete');
     setConfirm(null);
     if (ok) {
-      toast.success(tBilingual('News deleted', 'ዜናው ተሰርዟል'));
+      toast.success(t('newsEditor.newsDeleted'));
       router.push('/news-management');
     }
   };
@@ -398,7 +398,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       <div className="px-6 py-16 text-center lg:px-10">
         <p className="text-sm text-red-600">{loadError}</p>
         <Link href="/news-management" className="mt-4 inline-block text-sm font-semibold text-indigo-600">
-          {tBilingual('Back to news', 'ወደ ዜናዎች ተመለስ')}
+          {t('newsEditor.backToNews')}
         </Link>
       </div>
     );
@@ -414,18 +414,18 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
       >
         <ArrowLeft className="h-4 w-4" />
-        {tBilingual('All news', 'ሁሉም ዜናዎች')}
+        {t('newsDetailView.allNews')}
       </Link>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">
-          {news ? tBilingual('Edit news', 'ዜና አስተካክል') : tBilingual('New news', 'አዲስ ዜና')}
+          {news ? t('newsEditor.editNews') : t('newsEditor.newNews')}
         </h1>
         {status && <NewsStatusBadge status={status} />}
         {news?.isFeatured && (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
             <Star className="h-3.5 w-3.5 fill-current" />
-            {tBilingual('Featured', 'ተለይቶ የቀረበ')}
+            {t('newsCard.featured')}
           </span>
         )}
       </div>
@@ -433,11 +433,11 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       {/* Status banners */}
       {status === 'REJECTED' && news?.rejectionReason && (
         <Banner tone="red" icon={<XCircle className="h-4 w-4" />}>
-          <strong>{tBilingual('Returned by the reviewer:', 'በገምጋሚው የተመለሰ፦')}</strong>{' '}
+          <strong>{t('newsEditor.returnedByTheReviewer')}</strong>{' '}
           <span lang={newsTextLang(news.rejectionReason)}>{news.rejectionReason}</span>
           {canSubmit && (
             <span className="block text-xs opacity-80">
-              {tBilingual('Fix it and submit again.', 'አስተካክለው እንደገና ይላኩ።')}
+              {t('newsEditor.fixItAndSubmitAgain')}
             </span>
           )}
         </Banner>
@@ -445,27 +445,18 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       {status === 'PENDING_REVIEW' && !canReview && (
         <Banner tone="amber" icon={<Clock className="h-4 w-4" />}>
           {isAuthor
-            ? tBilingual(
-                'Waiting for a publisher to review this news. It cannot be edited until it is reviewed.',
-                'ይህ ዜና በአሳታሚ እስኪገመገም በመጠባበቅ ላይ ነው። እስኪገመገም ድረስ ሊስተካከል አይችልም።',
-              )
-            : tBilingual(
-                'Waiting for review. You cannot review news you wrote.',
-                'ግምገማ በመጠባበቅ ላይ። እርስዎ የጻፉትን ዜና መገምገም አይችሉም።',
-              )}
+            ? t('newsEditor.waitingForAPublisherToReview')
+            : t('newsEditor.waitingForReviewYouCannotReview')}
         </Banner>
       )}
       {status === 'PUBLISHED' && canEdit && (
         <Banner tone="blue" icon={<AlertTriangle className="h-4 w-4" />}>
-          {tBilingual(
-            'This news is live. Saved changes appear on the public site immediately.',
-            'ይህ ዜና ታትሟል። የሚቀመጡ ለውጦች ወዲያውኑ በህዝብ ገጽ ላይ ይታያሉ።',
-          )}
+          {t('newsEditor.thisNewsIsLiveSavedChanges')}
         </Banner>
       )}
       {readOnly && status !== 'PENDING_REVIEW' && (
         <Banner tone="slate" icon={<Eye className="h-4 w-4" />}>
-          {tBilingual('You can view this news but not change it.', 'ይህን ዜና ማየት ይችላሉ ግን መቀየር አይችሉም።')}
+          {t('newsEditor.youCanViewThisNewsBut')}
         </Banner>
       )}
 
@@ -475,15 +466,12 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
           <Card>
             <div className="space-y-5">
               <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                {tBilingual(
-                  'Write in Amharic or English. Readers see the text exactly as written, whatever language their screen is set to.',
-                  'በአማርኛ ወይም በእንግሊዝኛ ይጻፉ። አንባቢዎች የስክሪናቸው ቋንቋ ምንም ይሁን ጽሑፉን እንደተጻፈ ያያሉ።',
-                )}
+                {t('newsEditor.writeInAmharicOrEnglishReaders')}
               </p>
 
               <div>
                 <label htmlFor="news-headline" className={labelClass}>
-                  {tBilingual('Headline', 'ርዕስ')} <span className="text-red-500">*</span>
+                  {t('newsEditor.headline')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="news-headline"
@@ -500,9 +488,9 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
 
               <div>
                 <label htmlFor="news-summary" className={labelClass}>
-                  {tBilingual('Summary', 'ማጠቃለያ')}{' '}
+                  {t('newsEditor.summary')}{' '}
                   <span className="font-normal text-slate-400">
-                    {tBilingual('(optional — taken from the content if empty)', '(አማራጭ — ባዶ ከሆነ ከይዘቱ ይወሰዳል)')}
+                    {t('newsEditor.optionalTakenFromTheContentIf')}
                   </span>
                 </label>
                 <textarea
@@ -520,7 +508,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
 
               <div lang={textLang}>
                 <RichTextArea
-                  label={tBilingual('Content', 'ይዘት')}
+                  label={t('newsEditor.content')}
                   required
                   value={form.content}
                   onChange={(v) => set('content', v)}
@@ -535,24 +523,21 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
           {/* Photos */}
           <Card>
             <h2 className="mb-1 font-display text-base font-bold text-slate-900 dark:text-white">
-              {tBilingual('Photos', 'ፎቶዎች')}
+              {t('newsEditor.photos')}
             </h2>
             <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
-              {tBilingual(
-                'JPEG, PNG or WebP, up to 5 MB each. The cover appears on cards and in link previews.',
-                'JPEG፣ PNG ወይም WebP፣ እያንዳንዱ እስከ 5 MB። የሽፋን ፎቶው በካርዶች እና በሊንክ ቅድመ-እይታ ላይ ይታያል።',
-              )}
+              {t('newsEditor.jpegPngOrWebpUpTo')}
             </p>
 
             {!news ? (
               <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700">
-                {tBilingual('Save the draft first to add a cover and photos.', 'የሽፋን ፎቶ እና ፎቶዎችን ለማከል መጀመሪያ ረቂቁን ያስቀምጡ።')}
+                {t('newsEditor.saveTheDraftFirstToAdd')}
               </p>
             ) : (
               <div className="space-y-6">
                 <div>
                   <p className={labelClass}>
-                    {tBilingual('Cover image', 'የሽፋን ፎቶ')} <span className="text-red-500">*</span>
+                    {t('newsEditor.coverImage')} <span className="text-red-500">*</span>
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <NewsCover
@@ -580,8 +565,8 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                           onClick={() => coverInput.current?.click()}
                         >
                           {news.coverImageUrl
-                            ? tBilingual('Replace cover', 'ሽፋኑን ቀይር')
-                            : tBilingual('Upload cover', 'ሽፋን ስቀል')}
+                            ? t('newsEditor.replaceCover')
+                            : t('newsEditor.uploadCover')}
                         </Button>
                       </>
                     )}
@@ -591,7 +576,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <p className={cn(labelClass, 'mb-0')}>
-                      {tBilingual('Gallery', 'የፎቶ ማዕከል')} ({images.length})
+                      {t('newsEditor.gallery')} ({images.length})
                     </p>
                     {canEdit && (
                       <>
@@ -613,13 +598,13 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                           isLoading={busy === 'gallery'}
                           onClick={() => galleryInput.current?.click()}
                         >
-                          {tBilingual('Add photos', 'ፎቶዎችን አክል')}
+                          {t('newsEditor.addPhotos')}
                         </Button>
                       </>
                     )}
                   </div>
                   {images.length === 0 ? (
-                    <p className="text-xs text-slate-400">{tBilingual('No gallery photos.', 'ምንም የማዕከል ፎቶ የለም።')}</p>
+                    <p className="text-xs text-slate-400">{t('newsEditor.noGalleryPhotos')}</p>
                   ) : (
                     <ul className="space-y-3">
                       {images.map((image, index) => (
@@ -632,7 +617,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                           <input
                             defaultValue={image.caption ?? ''}
                             onBlur={(e) => void saveCaption(image, e.target.value)}
-                            placeholder={tBilingual('Caption (optional)', 'መግለጫ (አማራጭ)')}
+                            placeholder={t('newsEditor.captionOptional')}
                             maxLength={300}
                             disabled={!canEdit}
                             className={cn(inputClass, 'py-2')}
@@ -640,21 +625,21 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                           {canEdit && (
                             <div className="flex shrink-0 items-center">
                               <IconButton
-                                label={tBilingual('Move up', 'ወደ ላይ')}
+                                label={t('newsEditor.moveUp')}
                                 disabled={index === 0}
                                 onClick={() => void moveImage(index, -1)}
                               >
                                 <ArrowUp className="h-4 w-4" />
                               </IconButton>
                               <IconButton
-                                label={tBilingual('Move down', 'ወደ ታች')}
+                                label={t('newsEditor.moveDown')}
                                 disabled={index === images.length - 1}
                                 onClick={() => void moveImage(index, 1)}
                               >
                                 <ArrowDown className="h-4 w-4" />
                               </IconButton>
                               <IconButton
-                                label={tBilingual('Delete photo', 'ፎቶ ሰርዝ')}
+                                label={t('newsEditor.deletePhoto')}
                                 danger
                                 onClick={() => setImageToDelete(image)}
                               >
@@ -678,7 +663,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
             <div className="space-y-4">
               <div>
                 <label htmlFor="news-category" className={labelClass}>
-                  {tBilingual('Category', 'ምድብ')}
+                  {t('newsEditor.category')}
                 </label>
                 <select
                   id="news-category"
@@ -689,14 +674,14 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                 >
                   {NEWS_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {tBilingual(NEWS_CATEGORY_LABELS[c])}
+                      {t(NEWS_CATEGORY_LABELS[c])}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label htmlFor="news-source" className={labelClass}>
-                  {tBilingual('Source', 'ምንጭ')}
+                  {t('newsEditor.source')}
                 </label>
                 <input
                   id="news-source"
@@ -710,9 +695,9 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
               </div>
               <div>
                 <label htmlFor="news-event-date" className={labelClass}>
-                  {tBilingual('Event date', 'የዝግጅቱ ቀን')}{' '}
+                  {t('newsEditor.eventDate')}{' '}
                   <span className="font-normal text-slate-400">
-                    {tBilingual('(shown instead of the publish date)', '(ከህትመት ቀኑ ይልቅ ይታያል)')}
+                    {t('newsEditor.shownInsteadOfThePublishDate')}
                   </span>
                 </label>
                 <input
@@ -732,7 +717,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   disabled={readOnly}
                   className="h-4 w-4 rounded border-slate-300 text-indigo-600"
                 />
-                {tBilingual('Allow comments', 'አስተያየት ፍቀድ')}
+                {t('newsEditor.allowComments')}
               </label>
             </div>
           </Card>
@@ -749,10 +734,10 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   onClick={() => void save()}
                 >
                   {!news
-                    ? tBilingual('Save draft', 'ረቂቅ አስቀምጥ')
+                    ? t('newsEditor.saveDraft')
                     : isDirty
-                      ? tBilingual('Save changes', 'ለውጦችን አስቀምጥ')
-                      : tBilingual('All changes saved', 'ሁሉም ለውጦች ተቀምጠዋል')}
+                      ? t('newsEditor.saveChanges')
+                      : t('newsEditor.allChangesSaved')}
                 </Button>
               )}
               {canSubmit && (
@@ -763,8 +748,8 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   onClick={() => void submit()}
                 >
                   {status === 'REJECTED'
-                    ? tBilingual('Resubmit for review', 'እንደገና ለግምገማ ላክ')
-                    : tBilingual('Submit for review', 'ለግምገማ ላክ')}
+                    ? t('newsEditor.resubmitForReview')
+                    : t('newsEditor.submitForReview')}
                 </Button>
               )}
               {canReview && (
@@ -776,7 +761,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     disabled={Boolean(busy) || isDirty}
                     onClick={() => void approve()}
                   >
-                    {tBilingual('Approve & publish', 'አጽድቅ እና አትም')}
+                    {t('newsEditor.approvePublish')}
                   </Button>
                   <Button
                     variant="danger"
@@ -784,11 +769,11 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     disabled={Boolean(busy)}
                     onClick={() => setRejectOpen(true)}
                   >
-                    {tBilingual('Reject', 'ውድቅ አድርግ')}
+                    {t('newsEditor.reject')}
                   </Button>
                   {isDirty && (
                     <p className="text-xs text-amber-600">
-                      {tBilingual('Save your edits before approving.', 'ከማጽደቅዎ በፊት ለውጦችዎን ያስቀምጡ።')}
+                      {t('newsEditor.saveYourEditsBeforeApproving')}
                     </p>
                   )}
                 </>
@@ -803,8 +788,8 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     onClick={() => void toggleFeatured()}
                   >
                     {news?.isFeatured
-                      ? tBilingual('Remove from featured', 'ከተለዩት አስወግድ')
-                      : tBilingual('Feature on home page', 'በዋና ገጽ ላይ አጉላ')}
+                      ? t('newsEditor.removeFromFeatured')
+                      : t('newsEditor.featureOnHomePage')}
                   </Button>
                   <Button
                     variant="outline"
@@ -812,7 +797,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     disabled={Boolean(busy)}
                     onClick={() => setConfirm('unpublish')}
                   >
-                    {tBilingual('Unpublish', 'ከህትመት አውርድ')}
+                    {t('newsEditor.unpublish')}
                   </Button>
                 </>
               )}
@@ -824,7 +809,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   disabled={Boolean(busy)}
                   onClick={() => void republish()}
                 >
-                  {tBilingual('Publish again', 'እንደገና አትም')}
+                  {t('newsEditor.publishAgain')}
                 </Button>
               )}
               <Button
@@ -832,7 +817,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                 icon={<Eye className="h-4 w-4" />}
                 onClick={() => setPreviewOpen(true)}
               >
-                {tBilingual('Preview', 'ቅድመ-እይታ')}
+                {t('newsEditor.preview')}
               </Button>
               {status === 'PUBLISHED' && news && (
                 <Link
@@ -841,7 +826,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  {tBilingual('View public page', 'የህዝብ ገጹን ይመልከቱ')}
+                  {t('newsEditor.viewPublicPage')}
                 </Link>
               )}
               {news && canEdit && (
@@ -852,7 +837,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   disabled={Boolean(busy)}
                   onClick={() => setConfirm('delete')}
                 >
-                  {tBilingual('Delete', 'ሰርዝ')}
+                  {t('newsComments.delete')}
                 </Button>
               )}
             </div>
@@ -862,33 +847,33 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
           {news && (
             <Card>
               <dl className="space-y-2.5 text-xs">
-                <Detail label={tBilingual('Author', 'ጸሐፊ')}>
+                <Detail label={t('newsEditor.author')}>
                   {news.createdBy.firstName} {news.createdBy.lastName}
                 </Detail>
-                <Detail label={tBilingual('Created', 'የተፈጠረበት')}>{formatNewsDate(news.createdAt, lang)}</Detail>
+                <Detail label={t('newsEditor.created')}>{formatNewsDate(news.createdAt, lang)}</Detail>
                 {news.updatedBy && (
-                  <Detail label={tBilingual('Last edited by', 'መጨረሻ ያስተካከለው')}>
+                  <Detail label={t('newsEditor.lastEditedBy')}>
                     {news.updatedBy.firstName} {news.updatedBy.lastName}
                   </Detail>
                 )}
                 {news.reviewedBy && (
-                  <Detail label={tBilingual('Reviewed by', 'የገመገመው')}>
+                  <Detail label={t('newsEditor.reviewedBy')}>
                     {news.reviewedBy.firstName} {news.reviewedBy.lastName}
                     {news.reviewedAt ? ` · ${formatNewsDate(news.reviewedAt, lang)}` : ''}
                   </Detail>
                 )}
                 {news.publishedAt && (
-                  <Detail label={tBilingual('First published', 'መጀመሪያ የታተመበት')}>
+                  <Detail label={t('newsEditor.firstPublished')}>
                     {formatNewsDate(news.publishedAt, lang)}
                   </Detail>
                 )}
               </dl>
               <div className="mt-4 grid grid-cols-5 gap-1 border-t border-slate-100 pt-4 text-center dark:border-slate-800">
-                <Stat icon={ThumbsUp} value={news.likeCount} title={tBilingual('Likes', 'ወደድኩት')} />
-                <Stat icon={ThumbsDown} value={news.dislikeCount} title={tBilingual('Dislikes', 'አልወደድኩትም')} />
-                <Stat icon={MessageCircle} value={news.commentCount} title={tBilingual('Comments', 'አስተያየቶች')} />
-                <Stat icon={Eye} value={news.viewCount} title={tBilingual('Views', 'እይታዎች')} />
-                <Stat icon={Share2} value={news.shareCount} title={tBilingual('Shares', 'ማጋራቶች')} />
+                <Stat icon={ThumbsUp} value={news.likeCount} title={t('newsEditor.likes')} />
+                <Stat icon={ThumbsDown} value={news.dislikeCount} title={t('newsEditor.dislikes')} />
+                <Stat icon={MessageCircle} value={news.commentCount} title={t('newsComments.comments')} />
+                <Stat icon={Eye} value={news.viewCount} title={t('newsEditor.views')} />
+                <Stat icon={Share2} value={news.shareCount} title={t('newsEditor.shares')} />
               </div>
               {canPublish && (
                 <Link
@@ -896,7 +881,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
-                  {tBilingual('Moderate comments', 'አስተያየቶችን አስተዳድር')}
+                  {t('newsEditor.moderateComments')}
                 </Link>
               )}
             </Card>
@@ -908,7 +893,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       <Modal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        title={tBilingual('Preview', 'ቅድመ-እይታ')}
+        title={t('newsEditor.preview')}
         size="xl"
       >
         <div className="mx-auto max-w-3xl">
@@ -930,12 +915,12 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
       <Modal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
-        title={tBilingual('Reject news', 'ዜናውን ውድቅ አድርግ')}
-        subtitle={tBilingual('The author will see this reason.', 'ጸሐፊው ይህን ምክንያት ያያል።')}
+        title={t('newsEditor.rejectNews')}
+        subtitle={t('newsEditor.theAuthorWillSeeThisReason')}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setRejectOpen(false)}>
-              {tBilingual('Cancel', 'ሰርዝ')}
+              {t('newsEditor.cancel')}
             </Button>
             <Button
               variant="danger"
@@ -943,7 +928,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
               disabled={!rejectReason.trim()}
               onClick={() => void reject()}
             >
-              {tBilingual('Reject', 'ውድቅ አድርግ')}
+              {t('newsEditor.reject')}
             </Button>
           </div>
         }
@@ -954,7 +939,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
           maxLength={1000}
           rows={4}
           autoFocus
-          placeholder={tBilingual('What needs to change?', 'ምን መቀየር አለበት?')}
+          placeholder={t('newsEditor.whatNeedsToChange')}
           className={cn(inputClass, 'resize-y')}
         />
       </Modal>
@@ -964,12 +949,9 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         onClose={() => setConfirm(null)}
         onConfirm={remove}
         isLoading={busy === 'delete'}
-        title={tBilingual('Delete this news?', 'ይህ ዜና ይሰረዝ?')}
-        description={tBilingual(
-          'It will disappear from the site and this list. The record is kept for audit purposes.',
-          'ከድረ-ገጹ እና ከዚህ ዝርዝር ይጠፋል። መዝገቡ ለኦዲት ዓላማ ይቀመጣል።',
-        )}
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
+        title={t('newsEditor.deleteThisNews')}
+        description={t('newsEditor.itWillDisappearFromTheSite')}
+        confirmText={t('newsComments.delete')}
         variant="danger"
       />
       <ConfirmModal
@@ -977,12 +959,9 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         onClose={() => setConfirm(null)}
         onConfirm={unpublish}
         isLoading={busy === 'unpublish'}
-        title={tBilingual('Unpublish this news?', 'ይህ ዜና ከህትመት ይውረድ?')}
-        description={tBilingual(
-          'It will be removed from the public site. You can publish it again later.',
-          'ከህዝብ ገጹ ይወገዳል። በኋላ እንደገና ማተም ይችላሉ።',
-        )}
-        confirmText={tBilingual('Unpublish', 'ከህትመት አውርድ')}
+        title={t('newsEditor.unpublishThisNews')}
+        description={t('newsEditor.itWillBeRemovedFromThe')}
+        confirmText={t('newsEditor.unpublish')}
         variant="warning"
       />
       <ConfirmModal
@@ -990,9 +969,9 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         onClose={() => setImageToDelete(null)}
         onConfirm={removeImage}
         isLoading={busy === 'image-delete'}
-        title={tBilingual('Delete this photo?', 'ይህ ፎቶ ይሰረዝ?')}
-        description={tBilingual('This cannot be undone.', 'ይህ ሊቀለበስ አይችልም።')}
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
+        title={t('newsEditor.deleteThisPhoto')}
+        description={t('newsComments.thisCannotBeUndone')}
+        confirmText={t('newsComments.delete')}
         variant="danger"
       />
     </div>

@@ -31,7 +31,7 @@ function useRecordView(newsId: string) {
 export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
   const ready = useAuthStore((s) => s.ready);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const [news, setNews] = useState(initial);
   const [more, setMore] = useState<ApiNewsCard[]>([]);
 
@@ -58,7 +58,7 @@ export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-sky-700 dark:text-slate-400 dark:hover:text-sky-400"
       >
         <ArrowLeft className="h-4 w-4" />
-        {tBilingual('All news', 'ሁሉም ዜናዎች')}
+        {t('newsDetailView.allNews')}
       </Link>
 
       <NewsArticleView news={news} />
@@ -73,7 +73,7 @@ export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
       {more.length > 0 && (
         <section className="mt-14 border-t border-slate-200 pt-8 dark:border-slate-800">
           <h2 className="mb-5 font-display text-lg font-bold text-slate-900 dark:text-white">
-            {tBilingual('More news', 'ተጨማሪ ዜናዎች')}
+            {t('newsDetailView.moreNews')}
           </h2>
           <div className="grid gap-5 sm:grid-cols-3">
             {more.map((n) => (

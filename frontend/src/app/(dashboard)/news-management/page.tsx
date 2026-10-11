@@ -42,7 +42,7 @@ const STATUS_TABS: (NewsStatus | 'ALL')[] = [
 export default function NewsManagementPage() {
   const router = useRouter();
   const { can } = usePermissions();
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('news');
   const canManage = can(NEWS_PERMISSIONS.manage);
   const canPublish = can(NEWS_PERMISSIONS.publish);
 
@@ -99,15 +99,12 @@ export default function NewsManagementPage() {
 
   return (
     <PageShell
-      title={{ en: 'News Management', am: 'የዜና አስተዳደር' }}
-      description={{
-        en: 'Write Ministry news, send it for review and publish it to the public site.',
-        am: 'የሚኒስቴሩን ዜናዎች ይጻፉ፣ ለግምገማ ይላኩ እና በህዝብ ገጽ ላይ ያትሙ።',
-      }}
+      title={'newsManagementPage.newsManagement'}
+      description={'newsManagementPage.writeMinistryNewsSendItFor'}
       actions={
         canManage ? (
           <Link href="/news-management/new">
-            <Button icon={<Plus className="h-4 w-4" />}>{tBilingual('New news', 'አዲስ ዜና')}</Button>
+            <Button icon={<Plus className="h-4 w-4" />}>{t('newsEditor.newNews')}</Button>
           </Link>
         ) : null
       }
@@ -127,7 +124,7 @@ export default function NewsManagementPage() {
                   : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:text-indigo-700 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700',
               )}
             >
-              {s === 'ALL' ? tBilingual('All', 'ሁሉም') : tBilingual(NEWS_STATUS_LABELS[s])}
+              {s === 'ALL' ? t('newsListView.all') : t(NEWS_STATUS_LABELS[s])}
               {s === 'PENDING_REVIEW' && pendingCount > 0 && (
                 <span
                   className={cn(
@@ -146,19 +143,19 @@ export default function NewsManagementPage() {
       <FilterBar
         search={searchInput}
         onSearchChange={setSearchInput}
-        searchPlaceholder={tBilingual('Search headlines…', 'ርዕሶችን ይፈልጉ…')}
+        searchPlaceholder={t('newsListView.searchHeadlines')}
         selects={[
           {
             id: 'category',
-            label: tBilingual('Category', 'ምድብ'),
+            label: t('newsEditor.category'),
             value: category,
             onChange: (v) => {
               setCategory(v as NewsCategory | '');
               setPage(1);
             },
             options: [
-              { value: '', label: tBilingual('All categories', 'ሁሉም ምድቦች') },
-              ...NEWS_CATEGORIES.map((c) => ({ value: c, label: tBilingual(NEWS_CATEGORY_LABELS[c]) })),
+              { value: '', label: t('newsManagementPage.allCategories') },
+              ...NEWS_CATEGORIES.map((c) => ({ value: c, label: t(NEWS_CATEGORY_LABELS[c]) })),
             ],
           },
         ]}
@@ -174,12 +171,12 @@ export default function NewsManagementPage() {
         <TableSkeleton rows={6} columns={6} />
       ) : items.length === 0 ? (
         <EmptyState
-          title={tBilingual('No news here', 'እዚህ ምንም ዜና የለም')}
+          title={t('newsManagementPage.noNewsHere')}
           description={
             status === 'PENDING_REVIEW' && canPublish
-              ? tBilingual('Nothing is waiting for review.', 'ግምገማ የሚጠብቅ ምንም የለም።')
+              ? t('newsManagementPage.nothingIsWaitingForReview')
               : canManage
-                ? tBilingual('Create a news post to get started.', 'ለመጀመር የዜና ጽሑፍ ይፍጠሩ።')
+                ? t('newsManagementPage.createANewsPostToGet')
                 : undefined
           }
         />
@@ -187,13 +184,13 @@ export default function NewsManagementPage() {
         <>
           <Table
             columns={[
-              { name: 'headline', label: tBilingual('News', 'ዜና') },
-              { name: 'status', label: tBilingual('Status', 'ሁኔታ') },
-              { name: 'author', label: tBilingual('Author', 'ጸሐፊ') },
-              { name: 'updated', label: tBilingual('Updated', 'የተሻሻለው') },
+              { name: 'headline', label: t('newsManagementPage.news') },
+              { name: 'status', label: t('newsManagementPage.status') },
+              { name: 'author', label: t('newsEditor.author') },
+              { name: 'updated', label: t('newsManagementPage.updated') },
               {
                 name: 'engagement',
-                label: tBilingual('Engagement', 'ተሳትፎ'),
+                label: t('newsManagementPage.engagement'),
                 className: 'hidden lg:table-cell',
               },
               { name: 'actions', label: '' },
@@ -231,10 +228,10 @@ export default function NewsManagementPage() {
                 <Td className="whitespace-nowrap text-xs">{formatNewsDate(n.updatedAt, lang)}</Td>
                 <Td className="hidden whitespace-nowrap text-xs tabular-nums lg:table-cell">
                   <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-                    <EngagementStat icon={ThumbsUp} value={n.likeCount} label={tBilingual('Likes', 'ወደድኩት')} />
-                    <EngagementStat icon={ThumbsDown} value={n.dislikeCount} label={tBilingual('Dislikes', 'አልወደድኩትም')} />
-                    <EngagementStat icon={MessageCircle} value={n.commentCount} label={tBilingual('Comments', 'አስተያየቶች')} />
-                    <EngagementStat icon={Eye} value={n.viewCount} label={tBilingual('Views', 'እይታዎች')} />
+                    <EngagementStat icon={ThumbsUp} value={n.likeCount} label={t('newsEditor.likes')} />
+                    <EngagementStat icon={ThumbsDown} value={n.dislikeCount} label={t('newsEditor.dislikes')} />
+                    <EngagementStat icon={MessageCircle} value={n.commentCount} label={t('newsComments.comments')} />
+                    <EngagementStat icon={Eye} value={n.viewCount} label={t('newsEditor.views')} />
                   </div>
                 </Td>
                 <Td className="text-right">
@@ -244,8 +241,8 @@ export default function NewsManagementPage() {
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
                       className="inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-                      aria-label={tBilingual('View public page', 'የህዝብ ገጹን ይመልከቱ')}
-                      title={tBilingual('View public page', 'የህዝብ ገጹን ይመልከቱ')}
+                      aria-label={t('newsEditor.viewPublicPage')}
+                      title={t('newsEditor.viewPublicPage')}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Link>

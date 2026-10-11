@@ -10,7 +10,7 @@ import { NewsCard } from './NewsCard';
 
 /** "Latest News" strip on the landing page; the whole section is hidden until there is news. */
 export function LatestNewsSection() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('news');
   const [items, setItems] = useState<ApiNewsCard[]>([]);
 
   useEffect(() => {
@@ -27,17 +27,17 @@ export function LatestNewsSection() {
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
-              {tBilingual('Ministry of Revenues', 'የገቢዎች ሚኒስቴር')}
+              {t('latestNewsSection.ministryOfRevenues')}
             </span>
             <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
-              {tBilingual('Latest News', 'የቅርብ ጊዜ ዜናዎች')}
+              {t('latestNewsSection.latestNews')}
             </h2>
           </div>
           <Link
             href="/news"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:underline dark:text-sky-400"
           >
-            {tBilingual('View all news', 'ሁሉንም ዜናዎች ይመልከቱ')}
+            {t('latestNewsSection.viewAllNews')}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
