@@ -187,7 +187,7 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
 
   if (loading) {
     return (
-      <div className="flex h-full min-h-[450px] flex-col items-center justify-center gap-3 p-8 text-center text-slate-500">
+      <div className="flex h-full min-h-[450px] flex-col items-center justify-center gap-3 p-8 text-center text-muted-foreground">
         <Loader2 className="h-7 w-7 animate-spin text-amber-500" />
         <p className="text-sm font-medium">
           {t('certificateStage.retrievingOfficialCertificationCredentia')}
@@ -209,22 +209,22 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
     return (
       <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-8 animate-fade-in">
         {/* Locked Header Card */}
-        <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/40 dark:border-amber-900/40 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20 p-8 shadow-xs text-center space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100/80 text-amber-600 ring-8 ring-amber-50 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-950/30">
+        <div className="rounded-2xl border border-warning/25 bg-gradient-to-br from-warning-soft/70 via-card to-warning-soft/40 p-8 shadow-xs text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning-soft/80 text-warning ring-8 ring-warning-soft">
             {isInPerson ? <Building2 className="h-7 w-7" /> : <Lock className="h-7 w-7" />}
           </div>
 
           <div className="space-y-1.5 max-w-xl mx-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/90 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200 px-3 py-1 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-soft/90 text-warning px-3 py-1 text-xs font-semibold">
               <Award className="h-3.5 w-3.5" />
               {t('certificateStage.verifiedCertificateOfCompletion')}
             </span>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
               {isInPerson
                 ? t('certificateStage.certificatePendingClassroomCompletion')
                 : t('certificateStage.certificateCurrentlyLocked')}
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-sm text-secondary-foreground leading-relaxed">
               {isInPerson
                 ? t('certificateStage.forInPersonPracticumCoursesCertification')
                 : t('certificateStage.completeAllLessonsExercisesAndRequired')}
@@ -233,45 +233,45 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
 
           {/* Progress Checklist */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto text-left pt-4">
-            <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-4 space-y-2">
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-700 dark:text-slate-300">
+                <span className="text-secondary-foreground">
                   {t('certificateStage.courseLessonsCompleted')}
                 </span>
-                <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                <span className="font-mono text-primary">
                   {completedLessons}/{totalLessons} ({lessonPercent}%)
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-500"
                   style={{ width: `${lessonPercent}%` }}
                 />
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-4 space-y-1.5">
+            <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-700 dark:text-slate-300">
+                <span className="text-secondary-foreground">
                   {isInPerson
                     ? t('classroomSidebar.inPersonClassroomEvaluation')
                     : t('certificateStage.finalCertificationExam')}
                 </span>
                 {isInPerson ? (
-                  <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-bold text-[11px] bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-warning font-bold text-[11px] bg-warning-soft border border-warning/30 px-2 py-0.5 rounded-full">
                     <Building2 className="h-3 w-3" /> {t('certificateStage.trainerAdministered')}
                   </span>
                 ) : finalPassed ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span className="inline-flex items-center gap-1 text-success font-bold">
                     <CheckCircle2 className="h-3.5 w-3.5" /> {t('certificateStage.passed')}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                  <span className="inline-flex items-center gap-1 text-warning font-bold">
                     <Lock className="h-3.5 w-3.5" /> {t('certificateStage.required')}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 {isInPerson
                   ? t('certificateStage.assessedPhysicallyAtTheTrainingVenue')
                   : finalAssessment
@@ -341,22 +341,22 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in print:p-0 print:m-0">
       {/* Celebration Header Card (Hidden on Print) */}
-      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50/40 to-white dark:border-emerald-900/40 dark:from-emerald-950/20 dark:via-slate-900 dark:to-teal-950/20 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6 print:hidden">
+      <div className="rounded-2xl border border-success/30 bg-gradient-to-r from-success-soft via-success-soft/40 to-card p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6 print:hidden">
         <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 px-3 py-1 text-xs font-bold">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft text-success px-3 py-1 text-xs font-bold">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
               {t('certificateStage.courseCompletedCertified')}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               Cert #{certificate?.certificateNumber || 'ETIMS-2026-PENDING'}
             </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {t('certificateStage.officialCertificateOfCompletion')}{' '}
             <Award className="h-5 w-5 text-amber-500 shrink-0" />
           </h2>
-          <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-xs md:text-sm text-secondary-foreground">
             {t('certificateStage.congratulationsYourCredentialsHaveBeenOf', { recipientName })}
           </p>
         </div>
@@ -366,16 +366,16 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           <button
             type="button"
             onClick={handleCopyVerification}
-            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-secondary-foreground shadow-2xs hover:bg-muted transition"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <Check className="h-3.5 w-3.5 text-success" />
                 {t('certificateStage.copiedLink')}
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
                 {t('certificateStage.copyVerification')}
               </>
             )}
@@ -384,9 +384,9 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           <button
             type="button"
             onClick={handlePrint}
-            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-secondary-foreground shadow-2xs hover:bg-muted transition"
           >
-            <Printer className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+            <Printer className="h-3.5 w-3.5 text-secondary-foreground" />
             {t('certificateStage.print')}
           </button>
 
@@ -402,14 +402,14 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 p-4 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-xs text-danger flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Main Certificate Viewport */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 p-3 md:p-6 shadow-md overflow-x-auto print:border-none print:shadow-none print:p-0">
+      <div className="rounded-2xl border border-border/80 bg-card p-3 md:p-6 shadow-md overflow-x-auto print:border-none print:shadow-none print:p-0">
         <CertificateRenderer
           template={template}
           studentName={recipientName}
@@ -422,14 +422,14 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
       </div>
 
       {/* Verification footer note */}
-      <div className="text-center text-xs text-slate-400 pb-8 print:hidden">
+      <div className="text-center text-xs text-subtle-foreground pb-8 print:hidden">
         <p>
           {t('certificateStage.thisCredentialCanBePubliclyVerified')}{' '}
-          <span className="font-mono text-slate-600">
+          <span className="font-mono text-secondary-foreground">
             {typeof window !== 'undefined' ? window.location.origin : ''}/verify
           </span>{' '}
           {t('certificateStage.usingCode')}{' '}
-          <strong className="font-mono text-slate-700">
+          <strong className="font-mono text-secondary-foreground">
             {certificate?.verificationCode || '—'}
           </strong>
           .
@@ -443,13 +443,13 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
 function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) {
   const { isAmharic, t } = useTranslation('classroom');
   return (
-    <div className="flex gap-3 rounded-2xl border border-sky-200 dark:border-sky-900/40 bg-sky-50/80 dark:bg-sky-950/30 p-5 text-left">
-      <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" />
+    <div className="flex gap-3 rounded-2xl border border-info/30 bg-info-soft/80 p-5 text-left">
+      <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-info" />
       <div className="space-y-2">
-        <p className="text-sm font-bold text-sky-900 dark:text-sky-200">
+        <p className="text-sm font-bold text-info">
           {t(sessions.length === 1 ? 'pendingSessions.remainingOne' : 'pendingSessions.remainingOther', { count: sessions.length })}
         </p>
-        <ul className="space-y-1 text-sm text-sky-900/90 dark:text-sky-200/90">
+        <ul className="space-y-1 text-sm text-info/90">
           {sessions.map((s) => (
             <li key={s.id}>
               <span className="font-medium">{s.titleEn}</span>

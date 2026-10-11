@@ -34,11 +34,11 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
+    <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-2xs">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
         {/* Name */}
         <label className="group relative min-w-[220px] flex-1">
-          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Quiz name</span>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">Quiz name</span>
           <input
             key={quiz.id + quiz.title}
             defaultValue={quiz.title}
@@ -46,18 +46,18 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur();
             }}
-            className="w-full rounded-xl border border-transparent bg-slate-50 py-2 pl-3 pr-9 text-base font-bold text-slate-900 outline-none transition hover:border-slate-200 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            className="w-full rounded-xl border border-transparent bg-muted py-2 pl-3 pr-9 text-base font-bold text-foreground outline-none transition hover:border-border focus:border-ring focus:bg-card focus:ring-4 focus:ring-ring/10"
           />
-          <Pencil className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5 text-slate-300 group-focus-within:text-indigo-500" />
+          <Pencil className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5 text-subtle-foreground group-focus-within:text-indigo-500" />
         </label>
 
         {/* Timer */}
         <div>
-          <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
             <Clock className="h-3 w-3" />
             Time for the whole quiz
           </span>
-          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+          <div className="flex items-center gap-1 rounded-xl bg-secondary p-1">
             {TIMER_PRESETS.map((minutes) => (
               <button
                 key={minutes}
@@ -66,7 +66,7 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
                 onClick={() => onTimerChange(minutes)}
                 className={cn(
                   'rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
-                  quiz.timeLimitMinutes === minutes ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900',
+                  quiz.timeLimitMinutes === minutes ? 'bg-card text-primary shadow-xs' : 'text-secondary-foreground hover:text-foreground',
                 )}
               >
                 {minutes}m
@@ -85,8 +85,8 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
               }}
               aria-label="Custom minutes"
               className={cn(
-                'w-16 rounded-lg px-2 py-1.5 text-center text-xs font-semibold outline-none [color-scheme:light] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20',
-                isPreset ? 'bg-transparent text-slate-700' : 'bg-white text-indigo-700 shadow-xs placeholder:text-indigo-700',
+                'w-16 rounded-lg px-2 py-1.5 text-center text-xs font-semibold outline-none placeholder:text-subtle-foreground focus:bg-card focus:ring-2 focus:ring-ring/20',
+                isPreset ? 'bg-transparent text-secondary-foreground' : 'bg-card text-primary shadow-xs placeholder:text-primary/80',
               )}
             />
           </div>
@@ -97,7 +97,7 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
             type="button"
             onClick={onDelete}
             disabled={busy}
-            className="mt-5 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-subtle-foreground transition hover:bg-danger-soft hover:text-danger disabled:opacity-50"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
@@ -108,15 +108,15 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
       {graded && <PointsAllocation allocated={graded.weight} assigned={totalPoints(quiz)} />}
 
       {graded && (
-        <div className="flex gap-3 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-orange-50/40 p-3.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+        <div className="flex gap-3 rounded-xl border border-warning/25 bg-gradient-to-r from-warning-soft to-warning-soft/40 p-3.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
             <GraduationCap className="h-4 w-4" />
           </span>
-          <div className="text-xs leading-relaxed text-amber-900">
+          <div className="text-xs leading-relaxed text-warning">
             <p className="font-bold">
               Graded course quiz · {graded.weight}% of the course grade · pass mark {graded.passingScore}%
             </p>
-            <p className="mt-0.5 text-amber-800/90">
+            <p className="mt-0.5 text-warning/90">
               Question points must add up to <strong>{graded.weight}</strong>, one point per percent of the course grade. When
               the session is marked completed, each learner&apos;s answers become their result; learners who didn&apos;t answer
               score 0. This quiz was planned with the course, so it can&apos;t be deleted here.
@@ -133,13 +133,13 @@ function PointsAllocation({ allocated, assigned }: { allocated: number; assigned
   const remaining = allocated - assigned;
   const done = remaining === 0;
   const cells = [
-    { label: 'Allocated', value: allocated, hint: 'Points this quiz must total', tone: 'text-slate-900' },
-    { label: 'Assigned', value: assigned, hint: 'Points set on its questions', tone: 'text-indigo-700' },
+    { label: 'Allocated', value: allocated, hint: 'Points this quiz must total', tone: 'text-foreground' },
+    { label: 'Assigned', value: assigned, hint: 'Points set on its questions', tone: 'text-primary' },
     {
       label: 'Remaining',
       value: remaining,
       hint: done ? 'Ready to broadcast' : 'Assign before going live',
-      tone: done ? 'text-emerald-700' : 'text-amber-700',
+      tone: done ? 'text-success' : 'text-warning',
     },
   ];
   return (
@@ -151,17 +151,17 @@ function PointsAllocation({ allocated, assigned }: { allocated: number; assigned
             'rounded-xl border p-3',
             cell.label === 'Remaining'
               ? done
-                ? 'border-emerald-200 bg-emerald-50/60'
-                : 'border-amber-200 bg-amber-50/60'
-              : 'border-slate-200 bg-slate-50/60',
+                ? 'border-success/30 bg-success-soft/60'
+                : 'border-warning/30 bg-warning-soft/60'
+              : 'border-border bg-muted/60',
           )}
         >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{cell.label}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">{cell.label}</p>
           <p className={cn('mt-0.5 text-2xl font-extrabold leading-tight', cell.tone)}>
             {cell.value}
-            <span className="ml-1 text-xs font-semibold text-slate-400">pts</span>
+            <span className="ml-1 text-xs font-semibold text-subtle-foreground">pts</span>
           </p>
-          <p className="text-[11px] text-slate-500">{cell.hint}</p>
+          <p className="text-[11px] text-muted-foreground">{cell.hint}</p>
         </div>
       ))}
     </div>

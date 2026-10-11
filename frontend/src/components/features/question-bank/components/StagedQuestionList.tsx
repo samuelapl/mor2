@@ -33,7 +33,7 @@ export function StagedQuestionList({ questions, issues, onKeepAnyway, onEdit, on
         <button
           type="button"
           onClick={onClear}
-          className="shrink-0 whitespace-nowrap text-xs font-medium text-slate-400 transition hover:text-rose-600"
+          className="shrink-0 whitespace-nowrap text-xs font-medium text-subtle-foreground transition hover:text-danger"
         >
           Clear all
         </button>
@@ -46,22 +46,22 @@ export function StagedQuestionList({ questions, issues, onKeepAnyway, onEdit, on
             <div key={sq.id} className="space-y-2">
               <div
                 className={cn(
-                  'flex items-center justify-between gap-3 rounded-xl border p-3 text-xs transition hover:border-indigo-200',
+                  'flex items-center justify-between gap-3 rounded-xl border p-3 text-xs transition hover:border-primary/30',
                   issue?.reason === 'EXACT'
-                    ? 'border-rose-300 bg-rose-50/60 dark:border-rose-800 dark:bg-rose-900/20'
+                    ? 'border-danger/30 bg-danger-soft/60'
                     : issue
-                      ? 'border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-900/20'
-                      : 'border-slate-200/90 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/50',
+                      ? 'border-warning/30 bg-warning-soft/60'
+                      : 'border-border/90 bg-muted/50',
                 )}
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white text-[10px] font-bold text-indigo-700 ring-1 ring-indigo-200 dark:bg-slate-900 dark:text-indigo-400 dark:ring-indigo-800">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-card text-[10px] font-bold text-primary ring-1 ring-ring/20">
                     {sIdx + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-800 dark:text-slate-200">{stripHtml(sq.question)}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span className="font-medium capitalize text-indigo-600 dark:text-indigo-400">{sq.type.toLowerCase().replace(/_/g, ' ')}</span>
+                    <p className="truncate font-semibold text-foreground">{stripHtml(sq.question)}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className="font-medium capitalize text-primary">{sq.type.toLowerCase().replace(/_/g, ' ')}</span>
                       {sq.options.length > 0 && (
                         <>
                           <span>•</span>
@@ -84,7 +84,7 @@ export function StagedQuestionList({ questions, issues, onKeepAnyway, onEdit, on
                   <button
                     type="button"
                     onClick={() => onRemove(sIdx)}
-                    className={cn(iconButtonClass, 'hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30')}
+                    className={cn(iconButtonClass, 'hover:bg-danger-soft hover:text-danger')}
                     title="Remove question"
                     aria-label="Remove question"
                   >
@@ -105,13 +105,13 @@ export function StagedQuestionList({ questions, issues, onKeepAnyway, onEdit, on
 function StagedIssueDetails({ issue, onKeepAnyway }: { issue: StagedDuplicateIssue; onKeepAnyway: () => void }) {
   const exact = issue.reason === 'EXACT';
   return (
-    <div className="ml-3 space-y-2 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
-      <p className={cn('text-[11px] font-semibold', exact ? 'text-rose-700 dark:text-rose-400' : 'text-amber-800 dark:text-amber-300')}>
+    <div className="ml-3 space-y-2 border-l-2 border-border pl-3">
+      <p className={cn('text-[11px] font-semibold', exact ? 'text-danger' : 'text-warning')}>
         {exact ? 'Already in the bank or queued twice. Edit or remove it.' : 'Similar to questions below.'}
       </p>
       {issue.matches.length > 0 && <DuplicateMatchList matches={issue.matches} />}
       {issue.queuedMatches.map((q, i) => (
-        <p key={i} className="truncate text-[11px] text-slate-600 dark:text-slate-400">
+        <p key={i} className="truncate text-[11px] text-secondary-foreground">
           Queued: {stripHtml(q.question)}
         </p>
       ))}
@@ -119,7 +119,7 @@ function StagedIssueDetails({ issue, onKeepAnyway }: { issue: StagedDuplicateIss
         <button
           type="button"
           onClick={onKeepAnyway}
-          className="text-[11px] font-semibold text-amber-800 underline-offset-2 hover:underline dark:text-amber-300"
+          className="text-[11px] font-semibold text-warning underline-offset-2 hover:underline"
         >
           Keep anyway — it is a different question
         </button>

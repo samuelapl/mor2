@@ -101,7 +101,7 @@ export function VenueDetailModal({
       }}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border/90 bg-card shadow-2xl">
         {/* Header */}
         <div className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-6 text-white">
           <button
@@ -135,24 +135,24 @@ export function VenueDetailModal({
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Course & Session Info */}
           {(courseTitle || session) && (
-            <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 space-y-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="rounded-xl border border-border/90 bg-muted/70 p-4 space-y-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Enrolled Training Session
               </span>
 
               {courseTitle && (
                 <div className="flex items-center gap-2">
                   {courseCode && (
-                    <span className="rounded-md bg-indigo-100 font-mono text-[11px] font-semibold text-indigo-800 px-2 py-0.5">
+                    <span className="rounded-md bg-primary-soft font-mono text-[11px] font-semibold text-primary px-2 py-0.5">
                       {courseCode}
                     </span>
                   )}
-                  <h4 className="text-sm font-bold text-slate-900">{courseTitle}</h4>
+                  <h4 className="text-sm font-bold text-foreground">{courseTitle}</h4>
                 </div>
               )}
 
               {session && (
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 text-xs text-slate-600">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-xs text-secondary-foreground">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                     <span>{formatDate(session.scheduledAt)}</span>
@@ -165,7 +165,7 @@ export function VenueDetailModal({
                   </div>
                   {session.trainer && (
                     <div className="col-span-2 flex items-center gap-1.5 pt-1">
-                      <UserCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      <UserCheck className="h-3.5 w-3.5 text-success shrink-0" />
                       <span>
                         Trainer: {session.trainer.firstName} {session.trainer.lastName} (
                         {session.trainer.email})
@@ -179,28 +179,28 @@ export function VenueDetailModal({
 
           {/* Venue Specifications */}
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="h-4 w-4 text-indigo-500" />
-                <span className="font-semibold text-slate-700">Seat Capacity</span>
+                <span className="font-semibold text-secondary-foreground">Seat Capacity</span>
               </div>
-              <p className="mt-1 text-base font-bold text-slate-900">{venue.capacity} seats</p>
-              <p className="text-[11px] text-slate-400">Strictly enforced maximum</p>
+              <p className="mt-1 text-base font-bold text-foreground">{venue.capacity} seats</p>
+              <p className="text-[11px] text-subtle-foreground">Strictly enforced maximum</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-emerald-500" />
-                <span className="font-semibold text-slate-700">Branch Center</span>
+                <span className="font-semibold text-secondary-foreground">Branch Center</span>
               </div>
-              <p className="mt-1 text-base font-bold text-slate-900 truncate">{venue.branch}</p>
-              <p className="text-[11px] text-slate-400">Ethiopian Ministry of Revenues</p>
+              <p className="mt-1 text-base font-bold text-foreground truncate">{venue.branch}</p>
+              <p className="text-[11px] text-subtle-foreground">Ethiopian Ministry of Revenues</p>
             </div>
           </div>
 
           {/* Classroom Amenities & Facilities */}
           <div className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Classroom Amenities & Equipment
             </span>
             <div className="flex flex-wrap gap-2">
@@ -210,26 +210,26 @@ export function VenueDetailModal({
                   return (
                     <span
                       key={facility}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1 text-xs font-medium text-secondary-foreground shadow-2xs"
                     >
-                      <Icon className="h-3.5 w-3.5 text-indigo-600" />
+                      <Icon className="h-3.5 w-3.5 text-primary" />
                       {facility}
                     </span>
                   );
                 })
               ) : (
-                <span className="text-xs text-slate-400">Standard classroom amenities</span>
+                <span className="text-xs text-subtle-foreground">Standard classroom amenities</span>
               )}
             </div>
           </div>
 
           {/* Ministry Attendance Check-In Notice */}
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4 text-xs text-amber-900 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-amber-900">
-              <ShieldCheck className="h-4 w-4 text-amber-700" />
+          <div className="rounded-xl border border-warning/25 bg-warning-soft/70 p-4 text-xs text-warning space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-warning">
+              <ShieldCheck className="h-4 w-4 text-warning" />
               <span>In-Person Classroom Check-In Policy</span>
             </div>
-            <p className="text-amber-800 leading-relaxed">
+            <p className="text-warning leading-relaxed">
               Please arrive at the <strong>{venue.branch}</strong> training facility at least 15
               minutes prior to lecture start. Ensure you carry your official Ministry of Revenues
               employee badge. Once inside the room, scan the session QR code or enter the 6-digit
@@ -239,7 +239,7 @@ export function VenueDetailModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-border/60 bg-muted px-6 py-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
             Close
           </Button>

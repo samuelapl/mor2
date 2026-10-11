@@ -90,42 +90,42 @@ export default function ContentApproverDashboardPage() {
           label={t('contentApproverDashboardPage.pendingReview2')}
           value={pending.length}
           hint={t('contentApproverDashboardPage.awaitingYourApproval')}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-soft text-info"
         />
         <StatCard
           icon={CheckCircle2}
           label={t('contentApproverDashboardPage.approvedCourses')}
           value={approved.length}
           hint={t('contentApproverDashboardPage.inApprovedRepository')}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-soft text-success"
         />
         <StatCard
           icon={BookOpen}
           label={t('contentApproverDashboardPage.totalCatalog')}
           value={courses.length}
           hint={t('contentApproverDashboardPage.allActiveCourses')}
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-primary-soft text-primary"
         />
         <StatCard
           icon={Clock4}
           label={t('contentApproverDashboardPage.approvalRate')}
           value={`${approvalRate}%`}
           hint={t('contentApproverDashboardPage.approvedVsSubmitted')}
-          iconClassName="bg-amber-50 text-amber-600"
+          iconClassName="bg-warning-soft text-warning"
         />
       </div>
 
       {/* Graphical Insights: Review Queue & Category Breakdown */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Review Queue Status Donut */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('contentApproverDashboardPage.approvalQueueStatus')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('contentApproverDashboardPage.distributionOfCoursesAcrossReviewStages')}
                 </p>
               </div>
@@ -145,25 +145,25 @@ export default function ContentApproverDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('contentApproverDashboardPage.coursesAwaitingYourAction', { count: pending.length })}
             </span>
-            <span className="font-semibold text-emerald-600">
+            <span className="font-semibold text-success">
               {t('contentApproverDashboardPage.approved', { count: approved.length })}
             </span>
           </div>
         </div>
 
         {/* Category Distribution Bar Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('contentApproverDashboardPage.coursesByCategory')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('contentApproverDashboardPage.curriculumDistributionAcrossDomains')}
                 </p>
               </div>
@@ -179,11 +179,11 @@ export default function ContentApproverDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('contentApproverDashboardPage.categoriesRepresented', { count: categoryBars.length })}
             </span>
-            <Link href="/courses" className="font-semibold text-indigo-600 hover:underline">
+            <Link href="/courses" className="font-semibold text-primary hover:underline">
               {t('contentApproverDashboardPage.approvedLibrary')}
             </Link>
           </div>
@@ -235,14 +235,14 @@ export default function ContentApproverDashboardPage() {
             t('contentApproverDashboardPage.theApprovalQueueIsCurrentlyEmpty')
           }
         >
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-12 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-success-soft text-success">
               <FileCheck2 className="h-6 w-6" />
             </div>
-            <p className="mt-4 text-sm font-semibold text-slate-700">
+            <p className="mt-4 text-sm font-semibold text-secondary-foreground">
               {t('contentApproverDashboardPage.allSubmissionsReviewed')}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-subtle-foreground">
               {t('contentApproverDashboardPage.thereAreNoPendingCourseSubmissions')}
             </p>
           </div>

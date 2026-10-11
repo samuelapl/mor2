@@ -28,9 +28,9 @@ const BUILT_IN_ROLE_OPTIONS: RoleOption[] = ROLES.map((role) => ({
 }));
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -221,7 +221,7 @@ export default function RegisterActorPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               {t('registerActorPage.linkingATrainerToTheirPrimary')}
             </p>
           </div>
@@ -239,7 +239,7 @@ export default function RegisterActorPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none dark:hover:text-slate-200"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle-foreground transition-colors hover:text-secondary-foreground focus:outline-none"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -253,11 +253,11 @@ export default function RegisterActorPage() {
               type="checkbox"
               checked={form.mustChangePassword}
               onChange={(e) => update({ mustChangePassword: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+              className="h-4 w-4 rounded border-input text-primary focus:ring-ring bg-card"
             />
             <label
               htmlFor="mustChangePassword"
-              className="cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400"
+              className="cursor-pointer select-none text-xs text-secondary-foreground"
             >
               {t('registerActorPage.requirePasswordChangeOnFirstSign')}
             </label>

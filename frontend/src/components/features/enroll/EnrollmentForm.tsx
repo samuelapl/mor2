@@ -1,18 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  AlertCircle,
-  ArrowUpDown,
-  BookOpen,
-  Loader2,
-  RefreshCw,
-  Search,
-  UserX,
-  UserPlus,
-  UsersRound,
-  X,
-} from 'lucide-react';
+import { AlertCircle, ArrowUpDown, BookOpen, Loader2, RefreshCw, Search, UserX, UserPlus, UsersRound, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
@@ -85,12 +74,8 @@ export function EnrollmentForm() {
 
   // Search, Filter & Sort States
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'DROPPED'>(
-    'ALL',
-  );
-  const [sortBy, setSortBy] = useState<'name' | 'progress_desc' | 'progress_asc' | 'date_desc'>(
-    'progress_desc',
-  );
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'DROPPED'>('ALL');
+  const [sortBy, setSortBy] = useState<'name' | 'progress_desc' | 'progress_asc' | 'date_desc'>('progress_desc');
 
   // Enroll & Withdraw Modal States
   const [showEnrollModal, setShowEnrollModal] = useState(false);
@@ -127,15 +112,11 @@ export function EnrollmentForm() {
       setRosterError(null);
 
       try {
-        const [enrollmentsRes, progressRes] = await Promise.allSettled([
-          fetchCourseEnrollments(cId),
-          fetchCourseLearnersProgress(cId),
-        ]);
+        const [enrollmentsRes, progressRes] = await Promise.allSettled([fetchCourseEnrollments(cId), fetchCourseLearnersProgress(cId)]);
 
         const enrollments = enrollmentsRes.status === 'fulfilled' ? enrollmentsRes.value.data : [];
         const progressList = progressRes.status === 'fulfilled' ? progressRes.value.learners : [];
-        const totalLessons =
-          progressRes.status === 'fulfilled' ? progressRes.value.totalLessons : 0;
+        const totalLessons = progressRes.status === 'fulfilled' ? progressRes.value.totalLessons : 0;
 
         // Index progress by userId
         const progressMap = new Map<string, (typeof progressList)[0]>();
@@ -156,17 +137,12 @@ export function EnrollmentForm() {
             resolvedName = `${progressItem.firstName} ${progressItem.lastName}`.trim();
           }
 
-          const resolvedEmail =
-            directoryUser?.email ??
-            enrollment.user?.email ??
-            progressItem?.email ??
-            'No email recorded';
+          const resolvedEmail = directoryUser?.email ?? enrollment.user?.email ?? progressItem?.email ?? 'No email recorded';
 
           const resolvedDepartment = directoryUser?.department ?? 'General Revenue';
 
           const resolvedProgress =
-            progressItem?.progressPercent ??
-            (selectedCourse?.progress ? (selectedCourse.progress[enrollment.userId] ?? 0) : 0);
+            progressItem?.progressPercent ?? (selectedCourse?.progress ? (selectedCourse.progress[enrollment.userId] ?? 0) : 0);
 
           const resolvedCompletedLessons = progressItem?.completedLessons ?? 0;
 
@@ -186,9 +162,7 @@ export function EnrollmentForm() {
 
         setRoster(items);
       } catch (err) {
-        setRosterError(
-          err instanceof Error ? err.message : 'Failed to load enrolled students roster.',
-        );
+        setRosterError(err instanceof Error ? err.message : 'Failed to load enrolled students roster.');
       } finally {
         setLoadingRoster(false);
       }
@@ -249,13 +223,8 @@ export function EnrollmentForm() {
   const metrics = useMemo(() => {
     const total = roster.length;
     const active = roster.filter((r) => r.status === 'ACTIVE').length;
-    const completed = roster.filter(
-      (r) => r.status === 'COMPLETED' || r.progressPercent === 100,
-    ).length;
-    const avgProgress =
-      total > 0
-        ? Math.round(roster.reduce((sum, item) => sum + item.progressPercent, 0) / total)
-        : 0;
+    const completed = roster.filter((r) => r.status === 'COMPLETED' || r.progressPercent === 100).length;
+    const avgProgress = total > 0 ? Math.round(roster.reduce((sum, item) => sum + item.progressPercent, 0) / total) : 0;
     return { total, active, completed, avgProgress };
   }, [roster]);
 
@@ -272,10 +241,7 @@ export function EnrollmentForm() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          item.email.toLowerCase().includes(q) ||
-          item.department.toLowerCase().includes(q),
+        (item) => item.name.toLowerCase().includes(q) || item.email.toLowerCase().includes(q) || item.department.toLowerCase().includes(q),
       );
     }
 
@@ -300,10 +266,7 @@ export function EnrollmentForm() {
   }, [roster, statusFilter, searchQuery, sortBy]);
 
   // Pagination for roster
-  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(
-    filteredRoster,
-    10,
-  );
+  const { page, totalPages, setPage, pageItems, pageSize, setPageSize, totalItems } = usePagination(filteredRoster, 10);
 
   const formatEnrollDate = (dateStr?: string) => {
     if (!dateStr) return '—';
@@ -323,19 +286,17 @@ export function EnrollmentForm() {
   return (
     <div className="space-y-6">
       {/* Top Header Card: Course Selector & Summary Metrics */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft">
         <div className="pointer-events-none absolute -right-6 -top-6 h-44 w-44 rounded-full bg-gradient-to-bl from-indigo-500/10 via-violet-500/5 to-transparent blur-xl" />
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           {/* Course Selector Dropdown & Info */}
           <div className="max-w-xl space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <BookOpen className="h-4 w-4" />
               </span>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Select Course Catalog
-              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Course Catalog</label>
             </div>
 
             <div className="relative">
@@ -346,23 +307,20 @@ export function EnrollmentForm() {
                   setPage(1);
                   setSearchQuery('');
                 }}
-                className="w-full appearance-none rounded-xl border border-slate-200/90 bg-white py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-800 shadow-sm outline-none transition hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
+                className="w-full appearance-none rounded-xl border border-border/90 bg-card py-2.5 pl-4 pr-10 text-sm font-semibold text-foreground shadow-sm outline-none transition hover:border-primary/30 focus:border-ring focus:ring-4 focus:ring-ring/10 cursor-pointer"
               >
                 {courses.map((course) => (
                   <option key={course.id} value={course.id}>
-                    {course.code} — {course.title} ({course.enrolledLearnerIds?.length ?? 0}{' '}
-                    enrolled)
+                    {course.code} — {course.title} ({course.enrolledLearnerIds?.length ?? 0} enrolled)
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle-foreground">
                 <ArrowUpDown className="h-4 w-4" />
               </div>
             </div>
 
-            {plainDescription ? (
-              <p className="line-clamp-1 text-xs text-slate-500">{plainDescription}</p>
-            ) : null}
+            {plainDescription ? <p className="line-clamp-1 text-xs text-muted-foreground">{plainDescription}</p> : null}
           </div>
 
           {/* Action Toolbar */}
@@ -385,7 +343,7 @@ export function EnrollmentForm() {
               onClick={() => selectedCourse?.id && void loadRoster(selectedCourse.id)}
               isLoading={loadingRoster}
               loadingText="Refreshing..."
-              className="gap-2 text-slate-700 hover:bg-slate-50"
+              className="gap-2 text-secondary-foreground hover:bg-muted"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh Roster
@@ -394,53 +352,37 @@ export function EnrollmentForm() {
         </div>
 
         {/* Course Statistics Strip */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-slate-100 pt-5">
-          <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Total Enrolled
-            </p>
-            <p className="mt-1 font-display text-xl font-bold text-slate-900">
-              {loadingRoster ? '…' : metrics.total}
-            </p>
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-border/60 pt-5">
+          <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total Enrolled</p>
+            <p className="mt-1 font-display text-xl font-bold text-foreground">{loadingRoster ? '…' : metrics.total}</p>
           </div>
 
-          <div className="rounded-xl bg-emerald-50/70 p-3.5 border border-emerald-100/60">
-            <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">
-              Active Learners
-            </p>
-            <p className="mt-1 font-display text-xl font-bold text-emerald-800">
-              {loadingRoster ? '…' : metrics.active}
-            </p>
+          <div className="rounded-xl bg-success-soft/70 p-3.5 border border-success/20">
+            <p className="text-[11px] font-semibold text-success uppercase tracking-wider">Active Learners</p>
+            <p className="mt-1 font-display text-xl font-bold text-success">{loadingRoster ? '…' : metrics.active}</p>
           </div>
 
-          <div className="rounded-xl bg-blue-50/70 p-3.5 border border-blue-100/60">
-            <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">
-              Completed
-            </p>
-            <p className="mt-1 font-display text-xl font-bold text-blue-800">
-              {loadingRoster ? '…' : metrics.completed}
-            </p>
+          <div className="rounded-xl bg-info-soft/70 p-3.5 border border-info/20">
+            <p className="text-[11px] font-semibold text-info uppercase tracking-wider">Completed</p>
+            <p className="mt-1 font-display text-xl font-bold text-info">{loadingRoster ? '…' : metrics.completed}</p>
           </div>
 
-          <div className="rounded-xl bg-violet-50/70 p-3.5 border border-violet-100/60">
-            <p className="text-[11px] font-semibold text-violet-700 uppercase tracking-wider">
-              Avg. Completion
-            </p>
-            <p className="mt-1 font-display text-xl font-bold text-violet-800">
-              {loadingRoster ? '…' : `${metrics.avgProgress}%`}
-            </p>
+          <div className="rounded-xl bg-accent-soft/70 p-3.5 border border-accent/20">
+            <p className="text-[11px] font-semibold text-accent uppercase tracking-wider">Avg. Completion</p>
+            <p className="mt-1 font-display text-xl font-bold text-accent">{loadingRoster ? '…' : `${metrics.avgProgress}%`}</p>
           </div>
         </div>
       </div>
 
       {/* Main Roster Panel */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft ring-super-soft">
         {/* Table Filter & Search Controls */}
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between bg-slate-50/40">
+        <div className="flex flex-col gap-3 border-b border-border/60 p-4 sm:flex-row sm:items-center sm:justify-between bg-muted/40">
           <div className="flex flex-1 items-center gap-3">
             {/* Search Input */}
             <div className="relative w-full max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
               <input
                 type="text"
                 placeholder="Search enrolled learners by name, email..."
@@ -449,13 +391,13 @@ export function EnrollmentForm() {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 shadow-xs"
+                className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-8 text-xs text-foreground placeholder:text-subtle-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/10 shadow-xs"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtle-foreground hover:text-secondary-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -463,7 +405,7 @@ export function EnrollmentForm() {
             </div>
 
             {/* Status Filter Buttons */}
-            <div className="hidden sm:flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs shadow-xs">
+            <div className="hidden sm:flex items-center gap-1.5 rounded-xl border border-border bg-card p-1 text-xs shadow-xs">
               {(['ALL', 'ACTIVE', 'COMPLETED', 'DROPPED'] as const).map((st) => (
                 <button
                   key={st}
@@ -474,9 +416,7 @@ export function EnrollmentForm() {
                   }}
                   className={cn(
                     'rounded-lg px-2.5 py-1 text-xs font-semibold transition',
-                    statusFilter === st
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                    statusFilter === st ? 'bg-indigo-600 text-white shadow-xs' : 'text-secondary-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {st === 'ALL' ? 'All' : st.charAt(0) + st.slice(1).toLowerCase()}
@@ -487,11 +427,11 @@ export function EnrollmentForm() {
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <span className="text-xs text-slate-500 font-medium">Sort by:</span>
+            <span className="text-xs text-muted-foreground font-medium">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs outline-none focus:border-indigo-400 cursor-pointer"
+              className="rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-secondary-foreground shadow-xs outline-none focus:border-ring cursor-pointer"
             >
               <option value="progress_desc">Highest Progress</option>
               <option value="progress_asc">Lowest Progress</option>
@@ -509,31 +449,23 @@ export function EnrollmentForm() {
         ) : rosterError ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <AlertCircle className="h-8 w-8 text-rose-500 mb-2" />
-            <p className="text-sm font-semibold text-slate-800">Error Loading Enrolled Students</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-md">{rosterError}</p>
-            <Button
-              variant="outline"
-              onClick={() => selectedCourse?.id && void loadRoster(selectedCourse.id)}
-              className="mt-4 gap-2"
-            >
+            <p className="text-sm font-semibold text-foreground">Error Loading Enrolled Students</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">{rosterError}</p>
+            <Button variant="outline" onClick={() => selectedCourse?.id && void loadRoster(selectedCourse.id)} className="mt-4 gap-2">
               <RefreshCw className="h-3.5 w-3.5" />
               Try Again
             </Button>
           </div>
         ) : filteredRoster.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 ring-1 ring-indigo-200/50 mb-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-indigo-500 ring-1 ring-indigo-200/50 mb-4">
               <UsersRound className="h-7 w-7" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900">
-              {roster.length === 0
-                ? `No learners enrolled in "${selectedCourse?.title}" yet`
-                : 'No matching learners found'}
+            <h3 className="text-sm font-bold text-foreground">
+              {roster.length === 0 ? `No learners enrolled in "${selectedCourse?.title}" yet` : 'No matching learners found'}
             </h3>
-            <p className="mt-1 text-xs text-slate-500 max-w-sm">
-              {roster.length === 0
-                ? 'There are currently no learners enrolled in this course.'
-                : 'Try clearing or modifying your search filter.'}
+            <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+              {roster.length === 0 ? 'There are currently no learners enrolled in this course.' : 'Try clearing or modifying your search filter.'}
             </p>
           </div>
         ) : (
@@ -542,7 +474,7 @@ export function EnrollmentForm() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-border/80 bg-muted/70 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <th className="py-3.5 pl-6 pr-4">Learner Profile</th>
                     <th className="px-4 py-3.5">Department</th>
                     <th className="px-4 py-3.5">Enrolled Date</th>
@@ -550,16 +482,13 @@ export function EnrollmentForm() {
                     <th className="py-3.5 pl-4 pr-6 text-right">Status & Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border/60">
                   {pageItems.map((learner) => {
                     const avatarGradient = getAvatarColor(learner.userId);
                     const initials = getInitials(learner.name);
 
                     return (
-                      <tr
-                        key={learner.enrollmentId}
-                        className="hover:bg-slate-50/80 transition-colors"
-                      >
+                      <tr key={learner.enrollmentId} className="hover:bg-muted/80 transition-colors">
                         {/* Profile Info */}
                         <td className="py-3.5 pl-6 pr-4">
                           <div className="flex items-center gap-3">
@@ -572,37 +501,29 @@ export function EnrollmentForm() {
                               {initials}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-slate-900 truncate">
-                                {learner.name}
-                              </p>
-                              <p className="text-xs text-slate-400 truncate">{learner.email}</p>
+                              <p className="font-semibold text-foreground truncate">{learner.name}</p>
+                              <p className="text-xs text-subtle-foreground truncate">{learner.email}</p>
                             </div>
                           </div>
                         </td>
 
                         {/* Department */}
                         <td className="px-4 py-3.5">
-                          <span className="text-xs font-medium text-slate-600">
-                            {learner.department}
-                          </span>
+                          <span className="text-xs font-medium text-secondary-foreground">{learner.department}</span>
                         </td>
 
                         {/* Enrolled Date */}
                         <td className="px-4 py-3.5">
-                          <span className="text-xs text-slate-500 whitespace-nowrap">
-                            {formatEnrollDate(learner.enrolledAt)}
-                          </span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{formatEnrollDate(learner.enrolledAt)}</span>
                         </td>
 
                         {/* Progress */}
                         <td className="px-4 py-3.5">
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold text-slate-700">
-                                {learner.progressPercent}%
-                              </span>
+                              <span className="font-semibold text-secondary-foreground">{learner.progressPercent}%</span>
                               {learner.totalLessons > 0 && (
-                                <span className="text-[11px] text-slate-400">
+                                <span className="text-[11px] text-subtle-foreground">
                                   {learner.completedLessons} / {learner.totalLessons} lessons
                                 </span>
                               )}
@@ -635,7 +556,7 @@ export function EnrollmentForm() {
                               title={`Unenroll ${learner.name}`}
                               aria-label={`Unenroll ${learner.name}`}
                               onClick={() => setWithdrawingLearner(learner)}
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                              className="rounded-lg p-1.5 text-subtle-foreground hover:bg-danger-soft hover:text-danger transition"
                             >
                               <UserX className="h-4 w-4" />
                             </button>
@@ -649,7 +570,7 @@ export function EnrollmentForm() {
             </div>
 
             {/* Pagination Strip */}
-            <div className="border-t border-slate-100 px-6 py-3 bg-slate-50/40">
+            <div className="border-t border-border/60 px-6 py-3 bg-muted/40">
               <Pagination
                 page={page}
                 totalPages={totalPages}
@@ -667,37 +588,36 @@ export function EnrollmentForm() {
       {/* Enroll Learner Modal */}
       {showEnrollModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="relative w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border/60">
+            <div className="flex items-center justify-between pb-4 border-b border-border/60">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Enroll Learner</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Enroll a student into{' '}
-                  <span className="font-semibold text-slate-700">{selectedCourse?.title}</span>
+                <h3 className="text-base font-bold text-foreground">Enroll Learner</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Enroll a student into <span className="font-semibold text-secondary-foreground">{selectedCourse?.title}</span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowEnrollModal(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="py-4 space-y-3">
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-secondary-foreground">
                 Select Eligible Learner ({unenrolledUsers.length} available)
               </label>
               {unenrolledUsers.length === 0 ? (
-                <p className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500 border border-slate-200">
+                <p className="rounded-xl bg-muted p-4 text-center text-xs text-muted-foreground border border-border">
                   All registered learners are already enrolled in this course.
                 </p>
               ) : (
                 <select
                   value={userToEnroll}
                   onChange={(e) => setUserToEnroll(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-800 shadow-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 cursor-pointer"
+                  className="w-full rounded-xl border border-border bg-card py-2.5 px-3 text-sm text-foreground shadow-xs outline-none focus:border-ring focus:ring-2 focus:ring-ring/10 cursor-pointer"
                 >
                   <option value="">-- Choose a learner --</option>
                   {unenrolledUsers.map((u) => (
@@ -709,13 +629,8 @@ export function EnrollmentForm() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setShowEnrollModal(false)}
-                disabled={enrolling}
-              >
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border/60">
+              <Button variant="outline" type="button" onClick={() => setShowEnrollModal(false)} disabled={enrolling}>
                 Cancel
               </Button>
               <Button

@@ -27,12 +27,12 @@ export function QuizQuestionList({ quiz, busy, onSetPoints, onRemove }: QuizQues
   };
 
   return (
-    <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-2xs lg:sticky lg:top-4">
-      <header className="space-y-3 border-b border-slate-100 p-4">
+    <section className="flex min-h-0 flex-col rounded-2xl border border-border bg-card shadow-2xs lg:sticky lg:top-4">
+      <header className="space-y-3 border-b border-border/60 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-bold text-slate-900">{quiz.title}</h3>
-            <p className="mt-0.5 flex items-center gap-2 text-[11px] font-medium text-slate-500">
+            <h3 className="truncate text-sm font-bold text-foreground">{quiz.title}</h3>
+            <p className="mt-0.5 flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
               <span>
                 {quiz.questions.length} {quiz.questions.length === 1 ? 'question' : 'questions'}
               </span>
@@ -43,17 +43,17 @@ export function QuizQuestionList({ quiz, busy, onSetPoints, onRemove }: QuizQues
             </p>
           </div>
           <span className="shrink-0 text-right">
-            <span className="block text-lg font-extrabold leading-none text-slate-900">
+            <span className="block text-lg font-extrabold leading-none text-foreground">
               {total}
-              {weight !== null && <span className="text-sm font-bold text-slate-400"> / {weight}</span>}
+              {weight !== null && <span className="text-sm font-bold text-subtle-foreground"> / {weight}</span>}
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">points</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle-foreground">points</span>
           </span>
         </div>
 
         {weight !== null && quiz.questions.length > 0 && (
           <div className="space-y-2">
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-2 overflow-hidden rounded-full bg-secondary">
               <div
                 className={cn('h-full rounded-full transition-all', status.kind === 'ready' ? 'bg-emerald-500' : 'bg-amber-400')}
                 style={{ width: `${Math.min(100, (total / Math.max(1, weight)) * 100)}%` }}
@@ -61,12 +61,12 @@ export function QuizQuestionList({ quiz, busy, onSetPoints, onRemove }: QuizQues
             </div>
             <div className="flex items-center justify-between gap-2">
               {status.kind === 'ready' ? (
-                <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Points match the quiz weight
                 </p>
               ) : (
-                <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-warning">
                   <AlertCircle className="h-3.5 w-3.5" />
                   Assign {weight - total} more {weight - total === 1 ? 'point' : 'points'}
                 </p>
@@ -75,7 +75,7 @@ export function QuizQuestionList({ quiz, busy, onSetPoints, onRemove }: QuizQues
                 type="button"
                 onClick={splitEvenlyNow}
                 disabled={busy}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-primary transition hover:bg-primary-soft disabled:opacity-50"
               >
                 <Scale className="h-3.5 w-3.5" />
                 Split evenly
@@ -88,9 +88,9 @@ export function QuizQuestionList({ quiz, busy, onSetPoints, onRemove }: QuizQues
       <div className="max-h-[560px] min-h-[240px] flex-1 space-y-2 overflow-y-auto p-4">
         {quiz.questions.length === 0 ? (
           <div className="flex h-48 flex-col items-center justify-center text-center">
-            <HelpCircle className="h-8 w-8 text-slate-300" />
-            <p className="mt-2 text-sm font-semibold text-slate-600">No questions yet</p>
-            <p className="max-w-[240px] text-xs text-slate-400">
+            <HelpCircle className="h-8 w-8 text-subtle-foreground" />
+            <p className="mt-2 text-sm font-semibold text-secondary-foreground">No questions yet</p>
+            <p className="max-w-[240px] text-xs text-subtle-foreground">
               Select questions in the bank, or pick some at random, then add them here.
             </p>
           </div>
@@ -153,16 +153,16 @@ function QuizQuestionRow({ item, index, busy, maxPoints, onSetPoints, onRemove }
   };
 
   return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-3 transition hover:border-indigo-200">
+    <div className="group rounded-xl border border-border bg-card p-3 transition hover:border-primary/30">
       <div className="flex items-start gap-3">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-100">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-[11px] font-bold text-primary ring-1 ring-ring/20">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle-foreground">
             {QUESTION_TYPE_LABEL[item.question.type] ?? item.question.type}
           </span>
-          <div className="line-clamp-2 text-sm font-medium leading-snug text-slate-800">
+          <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
             <RichContent html={item.question.question} inline inheritText />
           </div>
         </div>
@@ -183,23 +183,23 @@ function QuizQuestionRow({ item, index, busy, maxPoints, onSetPoints, onRemove }
             }}
             aria-label={`Points for question ${index + 1}`}
             className={cn(
-              'h-9 w-14 rounded-lg border bg-slate-50 text-center text-sm font-bold text-slate-900 outline-none [color-scheme:light] focus:bg-white focus:ring-4',
-              error ? 'border-rose-300 focus:ring-rose-500/10' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-500/10',
+              'h-9 w-14 rounded-lg border bg-muted text-center text-sm font-bold text-foreground outline-none focus:bg-card focus:ring-4',
+              error ? 'border-danger/30 focus:ring-danger/10' : 'border-border focus:border-ring focus:ring-ring/10',
             )}
           />
-          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400">pts</span>
+          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-subtle-foreground">pts</span>
         </label>
         <button
           type="button"
           onClick={onRemove}
           disabled={busy}
           aria-label="Remove from quiz"
-          className="mt-1.5 rounded-lg p-1.5 text-slate-300 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+          className="mt-1.5 rounded-lg p-1.5 text-subtle-foreground transition hover:bg-danger-soft hover:text-danger disabled:opacity-50"
         >
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
-      {error && <p className="mt-2 pl-9 text-[11px] font-medium text-rose-600">{error}</p>}
+      {error && <p className="mt-2 pl-9 text-[11px] font-medium text-danger">{error}</p>}
     </div>
   );
 }

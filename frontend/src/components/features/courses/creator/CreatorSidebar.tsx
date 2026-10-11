@@ -153,12 +153,12 @@ export function CreatorSidebar({
   const isLesAssessmentActive = (lessonId: string) => activeNode.type === 'LESSON_ASSESSMENT' && activeNode.lessonId === lessonId;
 
   return (
-    <aside className="w-80 lg:w-96 shrink-0 border-r border-slate-200 bg-slate-50/70 flex flex-col h-full overflow-hidden">
+    <aside className="w-80 lg:w-96 shrink-0 border-r border-border bg-muted/70 flex flex-col h-full overflow-hidden">
       {/* Sidebar Header / Structure Summary */}
-      <div className="p-4 border-b border-slate-200/80 bg-white/80 shrink-0">
+      <div className="p-4 border-b border-border/80 bg-card/80 shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('creatorSidebar.courseStructure')}</span>
-          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('creatorSidebar.courseStructure')}</span>
+          <span className="text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full border border-border/60">
             {modules.length} {t('creatorSidebar.modules')}
           </span>
         </div>
@@ -175,20 +175,20 @@ export function CreatorSidebar({
             'flex items-center gap-3 p-3 rounded-2xl border transition cursor-pointer group',
             activeNode.type === 'COURSE_DETAILS'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20'
-              : 'bg-white text-slate-800 border-slate-200/80 hover:border-indigo-200 hover:bg-white/90 shadow-2xs',
+              : 'bg-card text-foreground border-border/80 hover:border-primary/30 hover:bg-card/90 shadow-2xs',
           )}
         >
           <div
             className={cn(
               'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-              activeNode.type === 'COURSE_DETAILS' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100',
+              activeNode.type === 'COURSE_DETAILS' ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary group-hover:bg-primary/15',
             )}
           >
             <BookOpen className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-xs font-bold truncate">{courseTitle.trim() || t('creatorSidebar.courseOverviewDetails')}</h4>
-            <p className={cn('text-[11px] truncate', activeNode.type === 'COURSE_DETAILS' ? 'text-indigo-100' : 'text-slate-500')}>
+            <p className={cn('text-[11px] truncate', activeNode.type === 'COURSE_DETAILS' ? 'text-indigo-100' : 'text-muted-foreground')}>
               {t('creatorSidebar.generalSettingsGoalsSyllabus')}
             </p>
           </div>
@@ -205,14 +205,14 @@ export function CreatorSidebar({
           );
 
           return (
-            <div key={mod.id} className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs transition">
+            <div key={mod.id} className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs transition">
               {/* Module Header Bar */}
               <div
                 className={cn(
                   'flex items-center justify-between p-2.5 transition',
                   isModuleActive(mod.id)
-                    ? 'bg-indigo-50/70 border-b border-indigo-100 text-indigo-900 font-bold'
-                    : 'hover:bg-slate-50 text-slate-800',
+                    ? 'bg-primary-soft/70 border-b border-primary/30 text-primary font-bold'
+                    : 'hover:bg-muted text-foreground',
                 )}
               >
                 <div
@@ -221,7 +221,7 @@ export function CreatorSidebar({
                   onClick={() => toggleModuleCollapse(mod.id)}
                   className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer select-none"
                 >
-                  <button type="button" className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                  <button type="button" className="p-1 text-subtle-foreground hover:text-secondary-foreground rounded">
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
 
@@ -232,7 +232,7 @@ export function CreatorSidebar({
                     }}
                     className="min-w-0 flex-1"
                   >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    <span className="text-[10px] font-bold text-subtle-foreground uppercase tracking-wider block">
                       {t('creatorSidebar.module', { value: modIdx + 1 })}
                     </span>
                     <h4 className="text-xs font-bold truncate">{mod.title.trim() || t('creatorSidebar.untitledModule')}</h4>
@@ -240,14 +240,14 @@ export function CreatorSidebar({
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2">
-                  <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">
+                  <span className="text-[10px] font-medium text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border/60">
                     {instructionalLessons.length} {t('creatorSidebar.lessons')}
                   </span>
                   {modules.length > 1 && (
                     <button
                       type="button"
                       onClick={() => onDeleteModule(mod.id)}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded transition"
+                      className="p-1 text-subtle-foreground hover:text-danger rounded transition"
                       title={t('creatorSidebar.deleteModule')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -258,7 +258,7 @@ export function CreatorSidebar({
 
               {/* Module Content Tree (When Expanded) */}
               {!isCollapsed && (
-                <div className="p-2 space-y-1 bg-slate-50/30 border-t border-slate-100">
+                <div className="p-2 space-y-1 bg-muted/30 border-t border-border/60">
                   {/* Instructional Lessons */}
                   {instructionalLessons.map((lesson, lIdx) => {
                     const Icon = getLessonIcon(lesson.contentType);
@@ -296,7 +296,7 @@ export function CreatorSidebar({
                             'group flex items-center justify-between gap-2 p-2 rounded-xl text-xs transition cursor-pointer',
                             isLessonActive(lesson.id)
                               ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60',
+                              : 'bg-card hover:bg-secondary text-secondary-foreground border border-border/60',
                           )}
                         >
                           <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -313,13 +313,13 @@ export function CreatorSidebar({
                                   'p-0.5 rounded transition shrink-0',
                                   isLessonActive(lesson.id)
                                     ? 'text-white/80 hover:text-white hover:bg-white/20'
-                                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200/60',
+                                    : 'text-subtle-foreground hover:text-secondary-foreground hover:bg-input/60',
                                 )}
                               >
                                 {isLessonCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                               </button>
                             )}
-                            <Icon className={cn('h-3.5 w-3.5 shrink-0', isLessonActive(lesson.id) ? 'text-white' : 'text-indigo-600')} />
+                            <Icon className={cn('h-3.5 w-3.5 shrink-0', isLessonActive(lesson.id) ? 'text-white' : 'text-primary')} />
                             <span className="truncate">{lesson.title.trim() || t('creatorSidebar.lesson', { value: lIdx + 1 })}</span>
                           </div>
 
@@ -330,7 +330,7 @@ export function CreatorSidebar({
                                   'text-[10px] font-semibold px-1.5 py-0.5 rounded-full border',
                                   isLessonActive(lesson.id)
                                     ? 'bg-white/20 text-white border-white/30'
-                                    : 'bg-slate-100 text-slate-600 border-slate-200',
+                                    : 'bg-secondary text-secondary-foreground border-border',
                                 )}
                                 title={t('creatorSidebar.subLessons', { count: subLessons.length })}
                               >
@@ -346,7 +346,7 @@ export function CreatorSidebar({
                                 }}
                                 className={cn(
                                   'opacity-0 group-hover:opacity-100 p-0.5 rounded transition',
-                                  isLessonActive(lesson.id) ? 'hover:text-rose-200' : 'text-slate-400 hover:text-rose-600',
+                                  isLessonActive(lesson.id) ? 'hover:text-rose-200' : 'text-subtle-foreground hover:text-danger',
                                 )}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -357,7 +357,7 @@ export function CreatorSidebar({
 
                         {/* Nested Sub-lessons Dropdown Container */}
                         {hasSubLessons && !isLessonCollapsed && (
-                          <div className="ml-3 pl-3 border-l-2 border-indigo-200 dark:border-indigo-800 space-y-1 py-1 transition-all">
+                          <div className="ml-3 pl-3 border-l-2 border-primary/30 space-y-1 py-1 transition-all">
                             {subLessons.map((sub, sIdx) => {
                               const SubIcon = getLessonIcon(sub.contentType);
                               return (
@@ -376,13 +376,13 @@ export function CreatorSidebar({
                                   className={cn(
                                     'group flex items-center justify-between gap-2 p-1.5 rounded-lg text-[11px] transition cursor-pointer',
                                     isSubLessonActive(sub.id)
-                                      ? 'bg-indigo-100/90 text-indigo-950 font-bold border border-indigo-200'
-                                      : 'bg-white/70 hover:bg-white text-slate-600 border border-slate-200/50 shadow-2xs',
+                                      ? 'bg-primary-soft/90 text-primary font-bold border border-primary/30'
+                                      : 'bg-card/70 hover:bg-card text-secondary-foreground border border-border/50 shadow-2xs',
                                   )}
                                 >
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
-                                    <SubIcon className="h-3 w-3 text-slate-500 shrink-0" />
+                                    <span className="h-1.5 w-1.5 rounded-full bg-subtle-foreground shrink-0" />
+                                    <SubIcon className="h-3 w-3 text-muted-foreground shrink-0" />
                                     <span className="truncate">
                                       {sub.title.trim() || t('creatorSidebar.subLesson', { value: sIdx + 1 })}
                                     </span>
@@ -393,7 +393,7 @@ export function CreatorSidebar({
                                       e.stopPropagation();
                                       onDeleteSubLesson(mod.id, lesson.id, sub.id);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 rounded transition"
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-subtle-foreground hover:text-danger rounded transition"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
@@ -403,7 +403,7 @@ export function CreatorSidebar({
                             <button
                               type="button"
                               onClick={() => onAddSubLesson(mod.id, lesson.id)}
-                              className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 border border-dashed border-indigo-200 transition"
+                              className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-primary hover:text-primary/80 hover:bg-primary-soft border border-dashed border-primary/30 transition"
                             >
                               <Plus className="h-3 w-3" />
                               <span>{t('creatorSidebar.addSubTopic')}</span>
@@ -426,12 +426,12 @@ export function CreatorSidebar({
                             className={cn(
                               'group flex items-center justify-between gap-2 ml-4 p-1.5 rounded-lg text-[11px] transition cursor-pointer',
                               isLesAssessmentActive(lesson.id)
-                                ? 'bg-amber-100 text-amber-900 font-bold border border-amber-300 shadow-2xs'
-                                : 'bg-amber-50/60 hover:bg-amber-50 text-amber-800 border border-amber-200/60',
+                                ? 'bg-warning-soft text-warning font-bold border border-warning/30 shadow-2xs'
+                                : 'bg-warning-soft/60 hover:bg-warning-soft text-warning border border-warning/20',
                             )}
                           >
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                              <FileQuestion className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                              <FileQuestion className="h-3.5 w-3.5 text-warning shrink-0" />
                               <span className="truncate font-semibold">{t('creatorSidebar.lessonAssessment')}</span>
                             </div>
                             <button
@@ -440,7 +440,7 @@ export function CreatorSidebar({
                                 e.stopPropagation();
                                 onDeleteLessonAssessment(mod.id, lesson.id);
                               }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 text-amber-600 hover:text-rose-600 rounded transition"
+                              className="opacity-0 group-hover:opacity-100 p-0.5 text-warning hover:text-danger rounded transition"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -465,11 +465,11 @@ export function CreatorSidebar({
                         'group flex items-center justify-between gap-2 p-2 rounded-xl text-xs transition cursor-pointer',
                         isModAssessmentActive(mod.id)
                           ? 'bg-emerald-700 text-white font-bold shadow-xs'
-                          : 'bg-emerald-50 hover:bg-emerald-100/70 text-emerald-900 border border-emerald-200',
+                          : 'bg-success-soft hover:bg-success-soft/70 text-success border border-success/30',
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Award className={cn('h-4 w-4 shrink-0', isModAssessmentActive(mod.id) ? 'text-white' : 'text-emerald-600')} />
+                        <Award className={cn('h-4 w-4 shrink-0', isModAssessmentActive(mod.id) ? 'text-white' : 'text-success')} />
                         <span className="truncate font-bold">{t('creatorSidebar.moduleAssessment')}</span>
                       </div>
                       <button
@@ -480,7 +480,7 @@ export function CreatorSidebar({
                         }}
                         className={cn(
                           'opacity-0 group-hover:opacity-100 p-0.5 rounded transition',
-                          isModAssessmentActive(mod.id) ? 'hover:text-rose-200' : 'text-emerald-600 hover:text-rose-600',
+                          isModAssessmentActive(mod.id) ? 'hover:text-rose-200' : 'text-success hover:text-danger',
                         )}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -493,7 +493,7 @@ export function CreatorSidebar({
                     <button
                       type="button"
                       onClick={() => onAddLesson(mod.id)}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition"
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-border bg-card text-[11px] font-semibold text-secondary-foreground hover:bg-primary-soft hover:text-primary hover:border-primary/30 transition"
                     >
                       <Plus className="h-3 w-3" />
                       <span>{t('creatorSidebar.lesson2')}</span>
@@ -503,7 +503,7 @@ export function CreatorSidebar({
                       <button
                         type="button"
                         onClick={() => onAddModuleAssessment(mod.id)}
-                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100/80 transition"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-success/30 bg-success-soft/50 text-[11px] font-semibold text-success hover:bg-success-soft/80 transition"
                       >
                         <Award className="h-3 w-3" />
                         <span>{t('creatorSidebar.assessment')}</span>
@@ -520,7 +520,7 @@ export function CreatorSidebar({
         <button
           type="button"
           onClick={onAddModule}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-700 bg-indigo-50/40 hover:bg-indigo-50 hover:border-indigo-400 font-bold text-xs transition"
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-primary/30 text-primary bg-primary-soft/40 hover:bg-primary-soft hover:border-ring font-bold text-xs transition"
         >
           <Plus className="h-4 w-4" />
           <span>{t('creatorSidebar.addNewModule')}</span>
@@ -528,13 +528,13 @@ export function CreatorSidebar({
 
         {/* 3b. Planned Online Sessions */}
         {showSessions && (
-          <div className="space-y-1.5 rounded-2xl border border-sky-200/80 bg-white p-2.5 shadow-2xs">
+          <div className="space-y-1.5 rounded-2xl border border-info/25 bg-card p-2.5 shadow-2xs">
             <div className="flex items-center justify-between px-1">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-700">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-info">
                 <Video className="h-3.5 w-3.5" />
                 {t('creatorSidebar.onlineSessions')}
               </span>
-              <span className="text-[10px] font-semibold text-slate-400">{sessionPlans.length}</span>
+              <span className="text-[10px] font-semibold text-subtle-foreground">{sessionPlans.length}</span>
             </div>
             {sessionPlans.map((plan, i) => {
               const active = activeNode.type === 'SESSION_PLAN' && activeNode.sessionPlanId === plan.id;
@@ -547,13 +547,13 @@ export function CreatorSidebar({
                   onClick={() => onSelectNode({ type: 'SESSION_PLAN', sessionPlanId: plan.id })}
                   className={cn(
                     'group flex cursor-pointer items-center gap-2 rounded-lg p-1.5 text-[11px] transition',
-                    active ? 'bg-indigo-600 font-semibold text-white' : 'text-slate-700 hover:bg-sky-50',
+                    active ? 'bg-indigo-600 font-semibold text-white' : 'text-secondary-foreground hover:bg-info-soft',
                   )}
                 >
                   <span
                     className={cn(
                       'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold',
-                      active ? 'bg-white/20' : 'bg-sky-50 text-sky-700',
+                      active ? 'bg-white/20' : 'bg-info-soft text-info',
                     )}
                   >
                     {i + 1}
@@ -563,7 +563,7 @@ export function CreatorSidebar({
                     <span
                       className={cn(
                         'shrink-0 rounded-full px-1.5 text-[10px] font-bold',
-                        active ? 'bg-white/20' : 'border border-indigo-200/60 bg-indigo-50 text-indigo-700',
+                        active ? 'bg-white/20' : 'border border-primary/20 bg-primary-soft text-primary',
                       )}
                     >
                       {plan.quizzes.length}Q · {weight}%
@@ -578,7 +578,7 @@ export function CreatorSidebar({
                       }}
                       className={cn(
                         'shrink-0 rounded p-0.5 opacity-0 transition group-hover:opacity-100',
-                        active ? 'hover:bg-white/20' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-600',
+                        active ? 'hover:bg-white/20' : 'text-subtle-foreground hover:bg-danger-soft hover:text-danger',
                       )}
                       aria-label="Remove session"
                     >
@@ -592,7 +592,7 @@ export function CreatorSidebar({
               <button
                 type="button"
                 onClick={onAddSessionPlan}
-                className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-sky-300 py-1.5 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-50"
+                className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-info/30 py-1.5 text-[11px] font-semibold text-info transition hover:bg-info-soft"
               >
                 <Plus className="h-3 w-3" />
                 {t('creatorSidebar.addSession')}
@@ -610,14 +610,14 @@ export function CreatorSidebar({
             'flex items-center justify-between gap-3 p-3 rounded-2xl border transition cursor-pointer group',
             activeNode.type === 'FINAL_ASSESSMENT'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20'
-              : 'bg-white text-slate-800 border-slate-200/80 hover:border-indigo-200 hover:bg-white/90 shadow-2xs',
+              : 'bg-card text-foreground border-border/80 hover:border-primary/30 hover:bg-card/90 shadow-2xs',
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div
               className={cn(
                 'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-                activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-700 group-hover:bg-amber-100',
+                activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-warning-soft text-warning group-hover:bg-warning/15',
               )}
             >
               <Award className="h-4 w-4" />
@@ -626,7 +626,7 @@ export function CreatorSidebar({
               <h4 className="text-xs font-bold truncate">
                 {finalAssessmentTitle?.trim() || t('creatorSidebar.finalAssessment')}
               </h4>
-              <p className={cn('text-[11px] truncate', activeNode.type === 'FINAL_ASSESSMENT' ? 'text-indigo-100' : 'text-slate-500')}>
+              <p className={cn('text-[11px] truncate', activeNode.type === 'FINAL_ASSESSMENT' ? 'text-indigo-100' : 'text-muted-foreground')}>
                 {finalQuestionCount} {t('creatorSidebar.questions')}
               </p>
             </div>
@@ -635,7 +635,7 @@ export function CreatorSidebar({
           <span
             className={cn(
               'text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0',
-              activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
+              activeNode.type === 'FINAL_ASSESSMENT' ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary border border-primary/20',
             )}
           >
             {finalAssessmentWeight}%
@@ -651,20 +651,20 @@ export function CreatorSidebar({
             'flex items-center gap-3 p-3 rounded-2xl border transition cursor-pointer group',
             activeNode.type === 'REVIEW_SUBMIT'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20'
-              : 'bg-white text-slate-800 border-slate-200/80 hover:border-indigo-200 hover:bg-white/90 shadow-2xs',
+              : 'bg-card text-foreground border-border/80 hover:border-primary/30 hover:bg-card/90 shadow-2xs',
           )}
         >
           <div
             className={cn(
               'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-              activeNode.type === 'REVIEW_SUBMIT' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100',
+              activeNode.type === 'REVIEW_SUBMIT' ? 'bg-white/20 text-white' : 'bg-success-soft text-success group-hover:bg-success/15',
             )}
           >
             <FileCheck className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-xs font-bold truncate">{t('creatorSidebar.reviewSubmit')}</h4>
-            <p className={cn('text-[11px] truncate', activeNode.type === 'REVIEW_SUBMIT' ? 'text-indigo-100' : 'text-slate-500')}>
+            <p className={cn('text-[11px] truncate', activeNode.type === 'REVIEW_SUBMIT' ? 'text-indigo-100' : 'text-muted-foreground')}>
               {t('creatorSidebar.finalCheckSubmission')}
             </p>
           </div>

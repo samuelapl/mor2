@@ -49,9 +49,9 @@ import { cn } from '@/lib/utils';
 import { CertificateRenderer } from './CertificateRenderer';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-700 shadow-2xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3 py-2 text-xs text-secondary-foreground shadow-2xs outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-2 focus:ring-ring/10';
 
-const labelClass = 'mb-1 block text-[11px] font-bold text-slate-600 uppercase tracking-wider';
+const labelClass = 'mb-1 block text-[11px] font-bold text-secondary-foreground uppercase tracking-wider';
 
 export function CertificateTemplatesAdmin() {
   const [templates, setTemplates] = useState<ApiCertificateTemplate[]>([]);
@@ -540,22 +540,22 @@ export function CertificateTemplatesAdmin() {
           className={cn(
             'rounded-xl border p-3.5 text-xs font-medium flex items-center justify-between gap-3 shadow-2xs animate-fade-in',
             flashOk
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-rose-200 bg-rose-50 text-rose-800',
+              ? 'border-success/30 bg-success-soft text-success'
+              : 'border-danger/30 bg-danger-soft text-danger',
           )}
         >
           <div className="flex items-center gap-2">
             {flashOk ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
             ) : (
-              <X className="h-4 w-4 text-rose-600 shrink-0" />
+              <X className="h-4 w-4 text-danger shrink-0" />
             )}
             <span>{flash}</span>
           </div>
           <button
             type="button"
             onClick={() => setFlash(null)}
-            className="text-slate-400 hover:text-slate-600"
+            className="text-subtle-foreground hover:text-secondary-foreground"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -563,8 +563,8 @@ export function CertificateTemplatesAdmin() {
       )}
 
       {loading ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+        <div className="flex h-48 flex-col items-center justify-center gap-2 text-subtle-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-xs">Loading certificate templates…</p>
         </div>
       ) : templates.length === 0 ? (
@@ -582,10 +582,10 @@ export function CertificateTemplatesAdmin() {
               <div
                 key={template.id}
                 className={cn(
-                  'flex flex-col justify-between overflow-hidden rounded-2xl border bg-white transition-all duration-200 hover:shadow-md',
+                  'flex flex-col justify-between overflow-hidden rounded-2xl border bg-card transition-all duration-200 hover:shadow-md',
                   template.isActive
                     ? 'border-amber-400 ring-2 ring-amber-400/20 shadow-xs'
-                    : 'border-slate-200/90 shadow-2xs',
+                    : 'border-border/90 shadow-2xs',
                 )}
               >
                 <div>
@@ -619,7 +619,7 @@ export function CertificateTemplatesAdmin() {
                       ) : template.isActive ? (
                         <Badge
                           variant="amber"
-                          className="shadow-xs font-bold text-[11px] bg-amber-500 text-slate-950 border-amber-600"
+                          className="shadow-xs font-bold text-[11px] bg-amber-500 text-foreground border-warning"
                         >
                           ★ Active Template
                         </Badge>
@@ -650,27 +650,27 @@ export function CertificateTemplatesAdmin() {
                   {/* Card Body */}
                   <div className="p-4 space-y-3">
                     <div>
-                      <h3 className="font-semibold text-sm text-slate-900 truncate">
+                      <h3 className="font-semibold text-sm text-foreground truncate">
                         {template.name}
                       </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {template.description || 'No description provided.'}
                       </p>
                     </div>
 
                     {/* Feature Pills */}
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-                        <QrCode className="h-3 w-3 text-indigo-600" /> Dynamic QR
+                      <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                        <QrCode className="h-3 w-3 text-primary" /> Dynamic QR
                       </span>
                       {hasStamp && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-                          <Stamp className="h-3 w-3 text-amber-600" /> Official Stamp
+                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                          <Stamp className="h-3 w-3 text-warning" /> Official Stamp
                         </span>
                       )}
                       {hasSigs && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-                          <PenTool className="h-3 w-3 text-emerald-600" /> Authorized Signatures
+                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                          <PenTool className="h-3 w-3 text-success" /> Authorized Signatures
                         </span>
                       )}
                     </div>
@@ -678,7 +678,7 @@ export function CertificateTemplatesAdmin() {
                 </div>
 
                 {/* Card Action Footer */}
-                <div className="p-4 pt-0 border-t border-slate-100 mt-2">
+                <div className="p-4 pt-0 border-t border-border/60 mt-2">
                   <div className="flex items-center justify-between gap-2 pt-3">
                     <div className="flex items-center gap-2">
                       {!template.isActive ? (
@@ -694,14 +694,14 @@ export function CertificateTemplatesAdmin() {
                         </Button>
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 px-1">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-success px-1">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Live Default
                           </span>
                           <button
                             type="button"
                             disabled={busy}
                             onClick={() => void deactivate(template.id)}
-                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 underline ml-0.5"
+                            className="text-[11px] font-semibold text-muted-foreground hover:text-foreground underline ml-0.5"
                             title="Deactivate template"
                           >
                             Deactivate
@@ -725,7 +725,7 @@ export function CertificateTemplatesAdmin() {
                         onClick={() => void toggleArchive(template.id, template.isArchived)}
                         disabled={busy}
                         title={template.isArchived ? 'Restore from archive' : 'Archive template'}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                        className="p-1.5 rounded-lg text-subtle-foreground hover:text-primary hover:bg-primary-soft transition"
                       >
                         {template.isArchived ? (
                           <ArchiveRestore className="h-3.5 w-3.5" />
@@ -739,7 +739,7 @@ export function CertificateTemplatesAdmin() {
                         onClick={() => void duplicate(template.id)}
                         disabled={busy}
                         title="Duplicate template"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                        className="p-1.5 rounded-lg text-subtle-foreground hover:text-secondary-foreground hover:bg-secondary transition"
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </button>
@@ -751,7 +751,7 @@ export function CertificateTemplatesAdmin() {
                         }
                         disabled={busy}
                         title="Delete template"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                        className="p-1.5 rounded-lg text-subtle-foreground hover:text-danger hover:bg-danger-soft transition"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -816,15 +816,15 @@ export function CertificateTemplatesAdmin() {
           </div>
 
           {/* Tab Selector */}
-          <div className="flex border-b border-slate-200 gap-4">
+          <div className="flex border-b border-border gap-4">
             <button
               type="button"
               onClick={() => setActiveTab('assets')}
               className={cn(
                 'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
                 activeTab === 'assets'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800',
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               <Stamp className="h-3.5 w-3.5" />
@@ -837,8 +837,8 @@ export function CertificateTemplatesAdmin() {
               className={cn(
                 'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
                 activeTab === 'text'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800',
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               <Type className="h-3.5 w-3.5" />
@@ -851,8 +851,8 @@ export function CertificateTemplatesAdmin() {
               className={cn(
                 'pb-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5',
                 activeTab === 'background'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800',
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               <ImagePlus className="h-3.5 w-3.5" />
@@ -865,8 +865,8 @@ export function CertificateTemplatesAdmin() {
             {/* Left Controls Column */}
             <div className="lg:col-span-5 space-y-5">
               {/* Info banner explaining drag-and-drop */}
-              <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/70 to-blue-50/40 p-3.5 text-xs text-indigo-900 flex items-start gap-2.5">
-                <Move className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+              <div className="rounded-xl border border-primary/25 bg-gradient-to-r from-primary-soft/70 to-info-soft/40 p-3.5 text-xs text-primary flex items-start gap-2.5">
+                <Move className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
                   <strong>Visual Drag Positioning:</strong> Drag any logo, stamp, signature, or QR
                   code directly on the preview to place it. No manual X/Y coordinates needed!
@@ -876,20 +876,20 @@ export function CertificateTemplatesAdmin() {
               {activeTab === 'assets' && (
                 <div className="space-y-4">
                   {/* 1. Company Logo Asset */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                           <ImagePlus className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-foreground">
                             Company Logo &amp; Brand
                           </h4>
-                          <p className="text-[10px] text-slate-400">Drag on preview to position</p>
+                          <p className="text-[10px] text-subtle-foreground">Drag on preview to position</p>
                         </div>
                       </div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={logoField.visible !== false}
@@ -905,7 +905,7 @@ export function CertificateTemplatesAdmin() {
                     {/* Logo Image Preview & Upload */}
                     <div className="space-y-2">
                       {logoField.imageUrl ? (
-                        <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-muted">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={logoField.imageUrl}
@@ -913,7 +913,7 @@ export function CertificateTemplatesAdmin() {
                             className="h-9 max-w-[140px] object-contain"
                           />
                           <div className="flex items-center gap-2">
-                            <label className="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline">
+                            <label className="cursor-pointer text-xs font-semibold text-primary hover:underline">
                               Replace
                               <input
                                 type="file"
@@ -935,8 +935,8 @@ export function CertificateTemplatesAdmin() {
                           </div>
                         </div>
                       ) : (
-                        <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
-                          <Upload className="h-3.5 w-3.5 text-slate-500" />
+                        <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-input bg-muted px-3 py-2.5 text-xs font-semibold text-secondary-foreground hover:bg-secondary transition">
+                          <Upload className="h-3.5 w-3.5 text-muted-foreground" />
                           {uploadingAssetKey === logoField.key
                             ? 'Uploading Logo…'
                             : 'Upload Company Logo (PNG / JPG)'}
@@ -973,7 +973,7 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-secondary-foreground mb-1">
                         <span>Logo Max Width</span>
                         <span className="font-mono">{logoField.width ?? 140}px</span>
                       </div>
@@ -991,17 +991,17 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* 2. Official Stamps (Multiple Stamps, PNG uploads, drag-and-drop) */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-4">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning-soft text-warning">
                           <Stamp className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-foreground">
                             Official Stamps &amp; Seals
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-subtle-foreground">
                             Upload PNG seal &amp; drag to position
                           </p>
                         </div>
@@ -1019,7 +1019,7 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     {stampFields.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <p className="text-xs text-subtle-foreground text-center py-3 bg-muted rounded-xl border border-dashed border-border">
                         No stamps currently added. Click &ldquo;Add Stamp&rdquo; to place an
                         official seal.
                       </p>
@@ -1030,17 +1030,17 @@ export function CertificateTemplatesAdmin() {
                           className={cn(
                             'p-3 rounded-xl border space-y-3 transition-all',
                             selectedFieldKey === stamp.key
-                              ? 'border-amber-400 bg-amber-50/20 ring-1 ring-amber-400/30'
-                              : 'border-slate-200 bg-slate-50/50',
+                              ? 'border-amber-400 bg-warning-soft/20 ring-1 ring-amber-400/30'
+                              : 'border-border bg-muted/50',
                           )}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <Stamp className="h-3.5 w-3.5 text-amber-600" />
+                            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <Stamp className="h-3.5 w-3.5 text-warning" />
                               Official Stamp #{idx + 1}
                             </span>
                             <div className="flex items-center gap-2">
-                              <label className="text-[11px] font-semibold text-slate-500 cursor-pointer">
+                              <label className="text-[11px] font-semibold text-muted-foreground cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={stamp.visible !== false}
@@ -1054,7 +1054,7 @@ export function CertificateTemplatesAdmin() {
                               <button
                                 type="button"
                                 onClick={() => removeStamp(stamp.key)}
-                                className="text-slate-400 hover:text-rose-600 p-1"
+                                className="text-subtle-foreground hover:text-danger p-1"
                                 title="Delete stamp"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -1064,7 +1064,7 @@ export function CertificateTemplatesAdmin() {
 
                           {/* Stamp PNG upload */}
                           {stamp.imageUrl ? (
-                            <div className="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-white">
+                            <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-card">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={stamp.imageUrl}
@@ -1072,7 +1072,7 @@ export function CertificateTemplatesAdmin() {
                                 className="h-10 w-10 object-contain drop-shadow-xs"
                               />
                               <div className="flex items-center gap-2 text-xs">
-                                <label className="cursor-pointer font-semibold text-amber-700 hover:underline">
+                                <label className="cursor-pointer font-semibold text-warning hover:underline">
                                   Change PNG
                                   <input
                                     type="file"
@@ -1087,15 +1087,15 @@ export function CertificateTemplatesAdmin() {
                                 <button
                                   type="button"
                                   onClick={() => updateField(stamp.key, { imageUrl: undefined })}
-                                  className="text-slate-400 hover:text-slate-600"
+                                  className="text-subtle-foreground hover:text-secondary-foreground"
                                 >
                                   Use Vector Seal
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50/50 transition">
-                              <Upload className="h-3.5 w-3.5 text-amber-600" />
+                            <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-warning/30 bg-card px-3 py-2 text-xs font-semibold text-warning hover:bg-warning-soft/50 transition">
+                              <Upload className="h-3.5 w-3.5 text-warning" />
                               {uploadingAssetKey === stamp.key
                                 ? 'Uploading Stamp PNG…'
                                 : 'Upload Stamp PNG Image'}
@@ -1113,7 +1113,7 @@ export function CertificateTemplatesAdmin() {
 
                           {/* Size Slider (Updates live) */}
                           <div>
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-secondary-foreground mb-1">
                               <span>Stamp Size</span>
                               <span className="font-mono">{stamp.size ?? 85}px</span>
                             </div>
@@ -1129,7 +1129,7 @@ export function CertificateTemplatesAdmin() {
                             />
                           </div>
 
-                          <p className="text-[10px] text-slate-400 italic">
+                          <p className="text-[10px] text-subtle-foreground italic">
                             💡 Drag this stamp on the live canvas preview to move it anywhere.
                           </p>
                         </div>
@@ -1138,17 +1138,17 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* 3. Authorized Signatures (Multiple Signatures, PNG upload or cursive) */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-4">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success-soft text-success">
                           <PenTool className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-foreground">
                             Authorized Signatories
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-subtle-foreground">
                             Add signatures &amp; drag anywhere
                           </p>
                         </div>
@@ -1166,7 +1166,7 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     {signatureFields.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <p className="text-xs text-subtle-foreground text-center py-3 bg-muted rounded-xl border border-dashed border-border">
                         No signatories added. Click &ldquo;Add Signatory&rdquo; to place a
                         signature.
                       </p>
@@ -1177,17 +1177,17 @@ export function CertificateTemplatesAdmin() {
                           className={cn(
                             'p-3.5 rounded-xl border space-y-3 transition-all',
                             selectedFieldKey === sig.key
-                              ? 'border-emerald-400 bg-emerald-50/20 ring-1 ring-emerald-400/30'
-                              : 'border-slate-200 bg-slate-50/50',
+                              ? 'border-emerald-400 bg-success-soft/20 ring-1 ring-emerald-400/30'
+                              : 'border-border bg-muted/50',
                           )}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <PenTool className="h-3.5 w-3.5 text-emerald-600" />
+                            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <PenTool className="h-3.5 w-3.5 text-success" />
                               Signatory #{idx + 1}
                             </span>
                             <div className="flex items-center gap-2">
-                              <label className="text-[11px] font-semibold text-slate-500 cursor-pointer">
+                              <label className="text-[11px] font-semibold text-muted-foreground cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={sig.visible !== false}
@@ -1201,7 +1201,7 @@ export function CertificateTemplatesAdmin() {
                               <button
                                 type="button"
                                 onClick={() => removeSignature(sig.key)}
-                                className="text-slate-400 hover:text-rose-600 p-1"
+                                className="text-subtle-foreground hover:text-danger p-1"
                                 title="Delete signature"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -1232,7 +1232,7 @@ export function CertificateTemplatesAdmin() {
 
                           {/* Signature PNG upload */}
                           {sig.imageUrl ? (
-                            <div className="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-white">
+                            <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-card">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={sig.imageUrl}
@@ -1240,7 +1240,7 @@ export function CertificateTemplatesAdmin() {
                                 className="h-8 max-w-[120px] object-contain"
                               />
                               <div className="flex items-center gap-2 text-xs">
-                                <label className="cursor-pointer font-semibold text-emerald-700 hover:underline">
+                                <label className="cursor-pointer font-semibold text-success hover:underline">
                                   Change PNG
                                   <input
                                     type="file"
@@ -1255,15 +1255,15 @@ export function CertificateTemplatesAdmin() {
                                 <button
                                   type="button"
                                   onClick={() => updateField(sig.key, { imageUrl: undefined })}
-                                  className="text-slate-400 hover:text-slate-600"
+                                  className="text-subtle-foreground hover:text-secondary-foreground"
                                 >
                                   Use Cursive Font
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-50/50 transition">
-                              <Upload className="h-3.5 w-3.5 text-emerald-600" />
+                            <label className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-success/30 bg-card px-3 py-2 text-xs font-semibold text-success hover:bg-success-soft/50 transition">
+                              <Upload className="h-3.5 w-3.5 text-success" />
                               {uploadingAssetKey === sig.key
                                 ? 'Uploading Signature…'
                                 : 'Upload Signature PNG (Transparent)'}
@@ -1281,7 +1281,7 @@ export function CertificateTemplatesAdmin() {
 
                           {/* Width Slider (Updates live) */}
                           <div>
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-secondary-foreground mb-1">
                               <span>Signature Width</span>
                               <span className="font-mono">{sig.width ?? 130}px</span>
                             </div>
@@ -1297,7 +1297,7 @@ export function CertificateTemplatesAdmin() {
                             />
                           </div>
 
-                          <p className="text-[10px] text-slate-400 italic">
+                          <p className="text-[10px] text-subtle-foreground italic">
                             💡 Drag this signature on the canvas to place it anywhere.
                           </p>
                         </div>
@@ -1306,22 +1306,22 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* 4. QR Code & Verified Badge */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-4">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info-soft text-info">
                           <QrCode className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-foreground">
                             Dynamic QR Verification &amp; Badge
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-subtle-foreground">
                             Drag QR &amp; adjust size live
                           </p>
                         </div>
                       </div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={qrField.visible !== false}
@@ -1333,7 +1333,7 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-secondary-foreground mb-1">
                         <span>QR Code Size</span>
                         <span className="font-mono">{qrField.size ?? 68}px</span>
                       </div>
@@ -1347,7 +1347,7 @@ export function CertificateTemplatesAdmin() {
                       />
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div className="pt-2 border-t border-border/60 flex items-center justify-between">
                       <div className="flex-1 mr-3">
                         <label className={labelClass}>Verified Badge Text</label>
                         <input
@@ -1358,7 +1358,7 @@ export function CertificateTemplatesAdmin() {
                           className={inputClass}
                         />
                       </div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer mt-4">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground cursor-pointer mt-4">
                         <input
                           type="checkbox"
                           checked={verifiedBadgeField.visible !== false}
@@ -1373,17 +1373,17 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* 5. Course Hours & Issue Date Placement */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                           <Move className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-foreground">
                             Course Hours &amp; Issue Date
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-subtle-foreground">
                             Dynamic student data · Drag on canvas to place
                           </p>
                         </div>
@@ -1391,12 +1391,12 @@ export function CertificateTemplatesAdmin() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 pt-1">
-                      <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                      <div className="space-y-1.5 p-2.5 rounded-xl border border-border bg-muted/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">
+                          <label className="text-[11px] font-bold text-secondary-foreground">
                             Course Hours
                           </label>
-                          <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground cursor-pointer">
                             <input
                               type="checkbox"
                               checked={courseHoursField.visible !== false}
@@ -1418,12 +1418,12 @@ export function CertificateTemplatesAdmin() {
                         />
                       </div>
 
-                      <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                      <div className="space-y-1.5 p-2.5 rounded-xl border border-border bg-muted/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">
+                          <label className="text-[11px] font-bold text-secondary-foreground">
                             Date of Issue
                           </label>
-                          <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground cursor-pointer">
                             <input
                               type="checkbox"
                               checked={issuedAtField.visible !== false}
@@ -1443,27 +1443,27 @@ export function CertificateTemplatesAdmin() {
                         />
                       </div>
                     </div>
-                    <p className="text-[10px] text-slate-400 italic">
+                    <p className="text-[10px] text-subtle-foreground italic">
                       💡 Course hours and issue date are dynamic. Drag either label directly on the
                       canvas preview to reposition.
                     </p>
                   </div>
 
                   {/* 6. Platform Footer Note */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
                           <Type className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">Platform Footer Note</h4>
-                          <p className="text-[10px] text-slate-400">
+                          <h4 className="text-xs font-bold text-foreground">Platform Footer Note</h4>
+                          <p className="text-[10px] text-subtle-foreground">
                             Accreditation statement at the bottom
                           </p>
                         </div>
                       </div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={
@@ -1496,7 +1496,7 @@ export function CertificateTemplatesAdmin() {
                         onClick={() =>
                           updateField(footerNoteField.key, { text: '', visible: false })
                         }
-                        className="text-xs text-rose-600 hover:text-rose-700 font-semibold"
+                        className="text-xs text-danger hover:text-danger/80 font-semibold"
                       >
                         Remove / Clear Note
                       </button>
@@ -1508,7 +1508,7 @@ export function CertificateTemplatesAdmin() {
                             visible: true,
                           })
                         }
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                        className="text-xs text-primary hover:text-primary/80 font-semibold"
                       >
                         Reset Default Note
                       </button>
@@ -1519,8 +1519,8 @@ export function CertificateTemplatesAdmin() {
 
               {activeTab === 'text' && (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
+                    <h4 className="text-xs font-bold text-foreground">
                       Certificate Header &amp; Statements
                     </h4>
                     <div>
@@ -1537,7 +1537,7 @@ export function CertificateTemplatesAdmin() {
                         type="color"
                         value={titleField?.color ?? '#1e293b'}
                         onChange={(e) => updateField('certificateTitle', { color: e.target.value })}
-                        className="h-8 w-16 cursor-pointer rounded-lg border border-slate-200 bg-white p-0.5"
+                        className="h-8 w-16 cursor-pointer rounded-lg border border-border bg-card p-0.5"
                       />
                     </div>
                     <div>
@@ -1574,17 +1574,17 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* Course Hours & Issue Date in Typography tab as well */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
+                    <h4 className="text-xs font-bold text-foreground">
                       Course Hours &amp; Date Metadata Labels
                     </h4>
                     <div className="grid grid-cols-2 gap-3 pt-1">
-                      <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                      <div className="space-y-1.5 p-2.5 rounded-xl border border-border bg-muted/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">
+                          <label className="text-[11px] font-bold text-secondary-foreground">
                             Course Hours
                           </label>
-                          <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground cursor-pointer">
                             <input
                               type="checkbox"
                               checked={courseHoursField.visible !== false}
@@ -1606,12 +1606,12 @@ export function CertificateTemplatesAdmin() {
                         />
                       </div>
 
-                      <div className="space-y-1.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                      <div className="space-y-1.5 p-2.5 rounded-xl border border-border bg-muted/60">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-slate-700">
+                          <label className="text-[11px] font-bold text-secondary-foreground">
                             Date of Issue
                           </label>
-                          <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 cursor-pointer">
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground cursor-pointer">
                             <input
                               type="checkbox"
                               checked={issuedAtField.visible !== false}
@@ -1634,10 +1634,10 @@ export function CertificateTemplatesAdmin() {
                   </div>
 
                   {/* Footer Note in Typography tab as well */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-900">Platform Footer Note</h4>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                      <h4 className="text-xs font-bold text-foreground">Platform Footer Note</h4>
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={
@@ -1668,7 +1668,7 @@ export function CertificateTemplatesAdmin() {
                         onClick={() =>
                           updateField(footerNoteField.key, { text: '', visible: false })
                         }
-                        className="text-xs text-rose-600 hover:text-rose-700 font-semibold"
+                        className="text-xs text-danger hover:text-danger/80 font-semibold"
                       >
                         Remove / Clear Note
                       </button>
@@ -1680,7 +1680,7 @@ export function CertificateTemplatesAdmin() {
                             visible: true,
                           })
                         }
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                        className="text-xs text-primary hover:text-primary/80 font-semibold"
                       >
                         Reset Default Note
                       </button>
@@ -1691,21 +1691,21 @@ export function CertificateTemplatesAdmin() {
 
               {activeTab === 'background' && (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                    <h4 className="text-xs font-bold text-slate-900">
+                  <div className="rounded-xl border border-border bg-card p-4 shadow-2xs space-y-3">
+                    <h4 className="text-xs font-bold text-foreground">
                       Custom Background Canvas (PNG / JPG)
                     </h4>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Upload a full-bleed A4 landscape border or background artwork. When omitted,
                       the high-fidelity geometric vector frame renders automatically.
                     </p>
 
-                    <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 p-6 text-center hover:bg-slate-50 transition">
-                      <ImagePlus className="h-8 w-8 text-slate-400 mb-2" />
-                      <span className="text-xs font-semibold text-indigo-600">
+                    <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-input p-6 text-center hover:bg-muted transition">
+                      <ImagePlus className="h-8 w-8 text-subtle-foreground mb-2" />
+                      <span className="text-xs font-semibold text-primary">
                         {backgroundFile ? backgroundFile.name : 'Click to select background image'}
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-1">
+                      <span className="text-[10px] text-subtle-foreground mt-1">
                         Recommended: 1754 × 1240 px (A4 Landscape)
                       </span>
                       <input
@@ -1730,7 +1730,7 @@ export function CertificateTemplatesAdmin() {
                           setBackgroundUrl(null);
                           setBackgroundFile(null);
                         }}
-                        className="w-full text-rose-600 hover:text-rose-700"
+                        className="w-full text-danger hover:text-danger/80"
                       >
                         <X className="h-3.5 w-3.5 mr-1" />
                         Remove Custom Background (Revert to Geometric Frame)
@@ -1744,16 +1744,16 @@ export function CertificateTemplatesAdmin() {
             {/* Right Column: Real-Time Interactive Draggable Canvas Preview */}
             <div className="lg:col-span-7 sticky top-4 space-y-2">
               <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5 text-indigo-600" />
+                <span className="text-xs font-bold text-secondary-foreground flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-primary" />
                   Interactive Live Canvas Preview
                 </span>
-                <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-primary bg-primary-soft border border-primary/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Move className="h-3 w-3" /> Drag elements to position
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-900/5 p-4 shadow-inner overflow-hidden">
+              <div className="rounded-2xl border border-border bg-muted p-4 shadow-inner overflow-hidden">
                 <CertificateRenderer
                   template={liveDraftTemplate}
                   editable={true}
@@ -1769,7 +1769,7 @@ export function CertificateTemplatesAdmin() {
                 />
               </div>
 
-              <p className="text-[11px] text-slate-400 text-center pt-1">
+              <p className="text-[11px] text-subtle-foreground text-center pt-1">
                 Click &amp; drag any logo, stamp, signature, or QR code on the canvas. Sizing
                 sliders update instantly in the preview.
               </p>

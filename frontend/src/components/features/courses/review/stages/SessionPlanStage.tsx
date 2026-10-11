@@ -182,25 +182,25 @@ export function SessionPlanStage({
       />
 
       {/* Readiness steps: 1. assign trainer (here) → 2. schedule (Session Scheduling page) */}
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-indigo-50/80 via-white to-white px-6 py-4">
+      <section className="overflow-hidden rounded-2xl border border-border/90 bg-card shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-primary-soft/80 via-card to-card px-6 py-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">{t('sessionPlanStage.getThisSessionReady')}</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-primary">{t('sessionPlanStage.getThisSessionReady')}</p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
               {doneSteps === 2
                 ? t('sessionPlanStage.allSetThisSessionIsReady')
                 : t('sessionPlanStage.twoStepsBeforeThisSessionCan')}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-secondary">
               <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${doneSteps * 50}%` }} />
             </div>
-            <span className="text-xs font-bold text-slate-600">{doneSteps}/2</span>
+            <span className="text-xs font-bold text-secondary-foreground">{doneSteps}/2</span>
           </div>
         </div>
 
-        <ol className="grid gap-px bg-slate-100 sm:grid-cols-2">
+        <ol className="grid gap-px bg-secondary sm:grid-cols-2">
           <Step
             number={1}
             done={Boolean(trainerId)}
@@ -228,7 +228,7 @@ export function SessionPlanStage({
               !scheduled && afterApproval ? (
                 <Link
                   href={schedulingHref}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
                 >
                   {t('sessionPlanStage.openSessionScheduling')}
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -240,14 +240,14 @@ export function SessionPlanStage({
       </section>
 
       {publishBlockers.length > 0 && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-rose-800">
+        <div className="rounded-2xl border border-danger/30 bg-danger-soft/80 p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-danger">
             <AlertTriangle className="h-3.5 w-3.5" />
             {t(publishBlockers.length === 1 ? 'sessionPlanStage.blocksPublishingOne' : 'sessionPlanStage.blocksPublishingOther', {
               count: publishBlockers.length,
             })}
           </p>
-          <ul className="space-y-1 text-xs text-rose-800">
+          <ul className="space-y-1 text-xs text-danger">
             {publishBlockers.map((b, i) => (
               <li key={i} className="flex items-start gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
@@ -263,7 +263,7 @@ export function SessionPlanStage({
         <div
           className={cn(
             'flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between',
-            justAssigned ? 'border-indigo-300 bg-indigo-50 ring-4 ring-indigo-500/10' : 'border-indigo-200 bg-indigo-50/60',
+            justAssigned ? 'border-primary/30 bg-primary-soft ring-4 ring-ring/10' : 'border-primary/30 bg-primary-soft/60',
           )}
         >
           <div className="flex items-start gap-3">
@@ -271,12 +271,12 @@ export function SessionPlanStage({
               <Info className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-bold text-indigo-950">
+              <p className="text-sm font-bold text-primary">
                 {justAssigned
                   ? t('sessionPlanStage.trainerAssignedNextScheduleTheSession')
                   : t('sessionPlanStage.nextScheduleTheSession')}
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-indigo-900/80">
+              <p className="mt-0.5 text-xs leading-relaxed text-primary/80">
                 {t('sessionPlanStage.goToTheSessionSchedulingPage')}
               </p>
             </div>
@@ -300,25 +300,25 @@ export function SessionPlanStage({
 
       {/* Step 1: trainer assignment. Scheduling itself happens on the Session Scheduling page. */}
       <StageCard title={t('sessionPlanStage.step1SessionTrainer')} icon={<UserCheck className="h-4 w-4" />}>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted p-3">
           <div className="flex items-center gap-3">
             <div
               className={cn(
                 'flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold',
-                trainerId ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-400',
+                trainerId ? 'bg-indigo-600 text-white' : 'bg-border text-subtle-foreground',
               )}
             >
               {trainerId ? initials(userName(trainerId)) : <UserX className="h-4 w-4" />}
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">{t('sessionPlanStage.trainerForThisSession')}</p>
-              <p className="text-sm font-bold text-slate-800">
+              <p className="text-xs font-medium text-muted-foreground">{t('sessionPlanStage.trainerForThisSession')}</p>
+              <p className="text-sm font-bold text-foreground">
                 {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerAssignedYet')}
               </p>
             </div>
           </div>
           {trainerId && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
               <Check className="h-3.5 w-3.5" />
               {t('sessionPlanStage.assigned')}
             </span>
@@ -327,7 +327,7 @@ export function SessionPlanStage({
 
         {canAssignTrainer ? (
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-secondary-foreground">
               {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignATrainer2')}
             </label>
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start">
@@ -351,19 +351,19 @@ export function SessionPlanStage({
                   {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignTrainer')}
                 </Button>
                 {trainerId && (
-                  <Button variant="outline" size="sm" disabled={busy} onClick={() => void saveTrainer(null)} className="whitespace-nowrap text-rose-600 hover:text-rose-700">
+                  <Button variant="outline" size="sm" disabled={busy} onClick={() => void saveTrainer(null)} className="whitespace-nowrap text-danger hover:text-danger/80">
                     {t('sessionPlanStage.remove')}
                   </Button>
                 )}
               </div>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-subtle-foreground">
               {t('sessionPlanStage.searchByNameOrEmailEach')}
             </p>
           </div>
         ) : (
           !trainerId && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {t('sessionPlanStage.aTrainingAdministratorAssignsTheTrainer')}
             </p>
           )
@@ -381,9 +381,9 @@ export function SessionPlanStage({
             <Detail label={t('sessionPlanStage.platform')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
             <Detail label={t('sessionPlanStage.status')}>{scheduled.status}</Detail>
           </dl>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-subtle-foreground">
             {t('sessionPlanStage.changeTheDateOrTimeOn')}{' '}
-            <Link href={schedulingHref} className="font-semibold text-indigo-600 hover:text-indigo-800">
+            <Link href={schedulingHref} className="font-semibold text-primary hover:text-primary/80">
               {t('mediaPreview.open')}
             </Link>
           </p>
@@ -397,7 +397,7 @@ export function SessionPlanStage({
 
       {plan.quizzes.length === 0 ? (
         <StageCard title={t('sessionPlanStage.sessionQuizzes')} icon={<FileQuestion className="h-4 w-4" />}>
-          <p className="text-sm text-slate-500">{t('sessionPlanStage.thisSessionHasNoGradedQuiz')}</p>
+          <p className="text-sm text-muted-foreground">{t('sessionPlanStage.thisSessionHasNoGradedQuiz')}</p>
         </StageCard>
       ) : (
         plan.quizzes.map((q) => {
@@ -406,25 +406,25 @@ export function SessionPlanStage({
           return (
             <StageCard key={q.id} title={q.titleEn} icon={<FileQuestion className="h-4 w-4" />}>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 font-semibold text-indigo-700">
+                <span className="rounded-md border border-primary/30 bg-primary-soft px-1.5 font-semibold text-primary">
                   {q.weight}% {t('lessonEditorStage.weight')}
                 </span>
                 <span
                   className={`rounded-md border px-1.5 font-semibold ${
                     policyPassMark !== null && q.passingScore < policyPassMark
-                      ? 'border-amber-200 bg-amber-50 text-amber-700'
-                      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      ? 'border-warning/30 bg-warning-soft text-warning'
+                      : 'border-success/30 bg-success-soft text-success'
                   }`}
                 >
                   {t('reviewSubmitStage.pass')} {q.passingScore}%
                 </span>
-                {q.timeLimitMinutes ? <span className="text-slate-400">{q.timeLimitMinutes} min</span> : null}
-                <span className="text-slate-400">
+                {q.timeLimitMinutes ? <span className="text-subtle-foreground">{q.timeLimitMinutes} min</span> : null}
+                <span className="text-subtle-foreground">
                   · {questions.length} {t(questions.length === 1 ? 'sessionPlanStage.questionUnit' : 'sessionPlanStage.questionsUnit')}
                 </span>
               </div>
               {questions.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {t('sessionPlanStage.noQuestionsPreparedYetTheTrainer')}
                 </p>
               ) : (
@@ -439,7 +439,7 @@ export function SessionPlanStage({
         })
       )}
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-subtle-foreground">
         {t('sessionPlanStage.eachSessionQuizIsGradedWhen')}
       </p>
     </div>
@@ -464,30 +464,30 @@ function Step({
   action?: React.ReactNode;
 }) {
   return (
-    <li className={cn('flex gap-3 bg-white p-5 transition-colors', active && 'bg-indigo-50/40')}>
+    <li className={cn('flex gap-3 bg-card p-5 transition-colors', active && 'bg-primary-soft/40')}>
       <div
         className={cn(
           'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all',
           done && 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30',
           !done && active && 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 ring-4 ring-indigo-500/15',
-          !done && !active && 'border-2 border-slate-200 bg-white text-slate-400',
+          !done && !active && 'border-2 border-border bg-card text-subtle-foreground',
         )}
       >
         {done ? <Check className="h-4 w-4" /> : number}
       </div>
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className={cn('text-sm font-bold', done || active ? 'text-slate-900' : 'text-slate-500')}>{title}</p>
+          <p className={cn('text-sm font-bold', done || active ? 'text-foreground' : 'text-muted-foreground')}>{title}</p>
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-              done ? 'bg-emerald-50 text-emerald-700' : active ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500',
+              done ? 'bg-success-soft text-success' : active ? 'bg-primary-soft text-primary' : 'bg-secondary text-muted-foreground',
             )}
           >
             {done ? labels.done : active ? labels.next : labels.pending}
           </span>
         </div>
-        <p className="text-xs leading-relaxed text-slate-500">{description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
         {action}
       </div>
     </li>
@@ -499,7 +499,7 @@ function StatusPill({ done, icon: Icon, children }: { done: boolean; icon: typeo
     <span
       className={cn(
         'flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-semibold',
-        done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600',
+        done ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-secondary-foreground',
       )}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -511,8 +511,8 @@ function StatusPill({ done, icon: Icon, children }: { done: boolean; icon: typeo
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
-      <dd className="mt-0.5 font-medium text-slate-800">{children}</dd>
+      <dt className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">{label}</dt>
+      <dd className="mt-0.5 font-medium text-foreground">{children}</dd>
     </div>
   );
 }

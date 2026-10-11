@@ -100,7 +100,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
 
   if (!ready) {
     return (
-      <FullScreenMessage icon={<Loader2 className="h-6 w-6 animate-spin text-indigo-600" />} title={t('courseReviewShell.loadingCourse')} />
+      <FullScreenMessage icon={<Loader2 className="h-6 w-6 animate-spin text-primary" />} title={t('courseReviewShell.loadingCourse')} />
     );
   }
 
@@ -117,7 +117,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   if (!course) {
     return (
       <FullScreenMessage
-        icon={<ShieldAlert className="h-6 w-6 text-slate-400" />}
+        icon={<ShieldAlert className="h-6 w-6 text-subtle-foreground" />}
         title={t('courseReviewShell.courseNotFound')}
         subtitle={t('courseReviewShell.itMayHaveBeenDeletedOr')}
         action={<Button onClick={() => router.push('/courses')}>{t('courseReviewShell.backToCourses')}</Button>}
@@ -224,7 +224,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const latestRejection = course.status === 'rejected' ? course.rejectionReason || course.lastRejectionReason : undefined;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-800 antialiased">
+    <div className="flex h-screen flex-col overflow-hidden bg-muted text-foreground antialiased">
       <ReviewHeader
         course={course}
         can={actions.can}
@@ -249,7 +249,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
         <main ref={stageRef} className="flex-1 overflow-y-auto px-4 py-6 md:px-8 lg:px-12">
           <div className="mx-auto max-w-5xl space-y-6 pb-10">
             {latestRejection && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800">
+              <div className="rounded-2xl border border-danger/30 bg-danger-soft/80 p-4 text-sm text-danger">
                 <p className="font-bold">{t('courseReviewShell.rejectedReasonFromReviewer')}</p>
                 {/* Reasons are plain text now; older ones were saved as rich-text HTML. */}
                 {/<[a-z][\s\S]*>/i.test(latestRejection) ? (
@@ -261,7 +261,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             )}
 
             {assessmentsLoading && selectedNode.type !== 'OVERVIEW' && selectedNode.type !== 'APPROVAL_HISTORY' ? (
-              <div className="flex items-center justify-center gap-2 py-16 text-xs text-slate-400">
+              <div className="flex items-center justify-center gap-2 py-16 text-xs text-subtle-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t('courseReviewShell.loadingAssessments')}
               </div>
@@ -270,12 +270,12 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             )}
 
             {/* Previous / Next follow the sidebar order */}
-            <nav className="flex items-center justify-between gap-3 border-t border-slate-200 pt-5">
+            <nav className="flex items-center justify-between gap-3 border-t border-border pt-5">
               <Button variant="outline" size="sm" disabled={!prev} onClick={() => prev && select(prev)} className="gap-1.5 text-xs">
                 <ChevronLeft className="h-4 w-4" />
                 {t('courseReviewShell.previous')}
               </Button>
-              <span className="text-xs text-slate-400">{position >= 0 ? `${position + 1} / ${order.length}` : ''}</span>
+              <span className="text-xs text-subtle-foreground">{position >= 0 ? `${position + 1} / ${order.length}` : ''}</span>
               <Button variant="outline" size="sm" disabled={!next} onClick={() => next && select(next)} className="gap-1.5 text-xs">
                 {t('courseReviewShell.next')}
                 <ChevronRight className="h-4 w-4" />
@@ -327,10 +327,10 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
 
 function FullScreenMessage({ icon, title, subtitle, action }: { icon: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-slate-50 p-6 text-center">
+    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-muted p-6 text-center">
       {icon}
-      <p className="text-sm font-bold text-slate-800">{title}</p>
-      {subtitle && <p className="max-w-sm text-xs text-slate-500">{subtitle}</p>}
+      <p className="text-sm font-bold text-foreground">{title}</p>
+      {subtitle && <p className="max-w-sm text-xs text-muted-foreground">{subtitle}</p>}
       {action}
     </div>
   );

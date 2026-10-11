@@ -79,7 +79,7 @@ const BUILT_IN_ROLE_OPTIONS: RoleOption[] = ROLES.map((role) => ({
 }));
 
 const cellInputClass =
-  'rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-indigo-300';
+  'rounded-lg border border-border bg-card px-2 py-1 text-xs outline-none focus:border-primary/30';
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -416,11 +416,11 @@ export default function BulkRegisterPage() {
           {fileName ? <Badge variant={fileError ? 'red' : 'green'}>{fileName}</Badge> : null}
         </div>
         {fileError ? (
-          <div className="mt-3 rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700">
+          <div className="mt-3 rounded-xl border border-danger/20 bg-danger-soft/80 px-4 py-2.5 text-sm text-danger">
             {fileError}
           </div>
         ) : null}
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-subtle-foreground">
           {t('bulkRegisterPage.columnsAreMatchedByHeaderName', { value: roleOptions.map((role) => role.label).join(', ') })}
         </p>
       </PageSection>
@@ -441,21 +441,21 @@ export default function BulkRegisterPage() {
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set(rows.map((row) => row.key)))}
-              className="font-semibold text-indigo-600 hover:text-indigo-800"
+              className="font-semibold text-primary hover:text-primary/80"
             >
               {t('bulkRegisterPage.selectAll')}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set(readyRows.map((row) => row.key)))}
-              className="font-semibold text-indigo-600 hover:text-indigo-800"
+              className="font-semibold text-primary hover:text-primary/80"
             >
               {t('bulkRegisterPage.selectReadyOnly')}
             </button>
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set())}
-              className="font-semibold text-slate-500 hover:text-slate-700"
+              className="font-semibold text-muted-foreground hover:text-secondary-foreground"
             >
               {t('bulkRegisterPage.clearSelection')}
             </button>
@@ -471,7 +471,7 @@ export default function BulkRegisterPage() {
                     checked={allSelected}
                     onChange={toggleAll}
                     aria-label="Select all rows"
-                    className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+                    className="h-4 w-4 cursor-pointer rounded border-input accent-indigo-600"
                   />
                 ),
               },
@@ -494,7 +494,7 @@ export default function BulkRegisterPage() {
                   key={row.key}
                   className={
                     errors.length > 0
-                      ? 'bg-red-50/40'
+                      ? 'bg-danger-soft/40'
                       : selectedKeys.has(row.key)
                         ? undefined
                         : 'opacity-60'
@@ -506,10 +506,10 @@ export default function BulkRegisterPage() {
                       checked={selectedKeys.has(row.key)}
                       onChange={() => toggleRow(row.key)}
                       aria-label={`Select line ${row.line}`}
-                      className="mt-1.5 h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+                      className="mt-1.5 h-4 w-4 cursor-pointer rounded border-input accent-indigo-600"
                     />
                   </Td>
-                  <Td className="align-top text-xs text-slate-400">{row.line}</Td>
+                  <Td className="align-top text-xs text-subtle-foreground">{row.line}</Td>
                   <Td className="align-top">
                     <input
                       value={row.firstName}
@@ -585,7 +585,7 @@ export default function BulkRegisterPage() {
                     <button
                       type="button"
                       onClick={() => removeRow(row.key)}
-                      className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                      className="rounded-lg p-1.5 text-subtle-foreground transition-colors hover:bg-danger-soft hover:text-danger"
                       aria-label="Remove row"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -609,14 +609,14 @@ export default function BulkRegisterPage() {
           )}
 
           {message && result === 'error' ? (
-            <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-2.5 text-sm text-red-700">
+            <div className="rounded-xl border border-danger/20 bg-danger-soft/80 px-4 py-2.5 text-sm text-danger">
               {message}
             </div>
           ) : null}
 
           <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
             {selectedWithErrors > 0 ? (
-              <span className="text-xs text-amber-700">
+              <span className="text-xs text-warning">
                 {t(selectedWithErrors === 1 ? 'bulkRegisterPage.rowsWithErrorsOne' : 'bulkRegisterPage.rowsWithErrorsOther', {
                   count: selectedWithErrors,
                 })}
@@ -649,7 +649,7 @@ export default function BulkRegisterPage() {
         >
           {createdRows.length > 0 ? (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/20 bg-warning-soft/80 px-4 py-2.5 text-sm text-warning">
                 <span>
                   {t('bulkRegisterPage.passwordsAreShownOnlyOnceDownload')}
                 </span>
@@ -671,7 +671,7 @@ export default function BulkRegisterPage() {
                 {createdRows.map((row) => (
                   <tr key={row.id}>
                     <Td>
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-foreground">
                         {row.firstName} {row.lastName}
                       </span>
                     </Td>
@@ -682,7 +682,7 @@ export default function BulkRegisterPage() {
                       <Badge variant="outline">{roleLabel(row.role)}</Badge>
                     </Td>
                     <Td>
-                      <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+                      <code className="rounded bg-secondary px-1.5 py-0.5 text-xs">
                         {row.password}
                       </code>
                     </Td>
@@ -693,7 +693,7 @@ export default function BulkRegisterPage() {
           ) : null}
           {skippedRows.length > 0 ? (
             <>
-              <p className="text-sm font-medium text-amber-700">
+              <p className="text-sm font-medium text-warning">
                 {t('bulkRegisterPage.rowSSkippedTheyAreStill', { count: skippedRows.length })}
               </p>
               <Table
@@ -705,9 +705,9 @@ export default function BulkRegisterPage() {
               >
                 {skippedRows.map((row) => (
                   <tr key={`${row.line}-${row.email}`}>
-                    <Td className="text-xs text-slate-400">{row.line}</Td>
+                    <Td className="text-xs text-subtle-foreground">{row.line}</Td>
                     <Td>{row.email}</Td>
-                    <Td className="text-red-600">{row.reason}</Td>
+                    <Td className="text-danger">{row.reason}</Td>
                   </tr>
                 ))}
               </Table>
@@ -716,7 +716,7 @@ export default function BulkRegisterPage() {
         </PageSection>
       ) : null}
 
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500">
+      <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-muted/70 px-4 py-3 text-xs text-muted-foreground">
         <UploadCloud className="h-4 w-4 shrink-0 text-indigo-500" />
         {t('bulkRegisterPage.passwordsLeftBlankAreAutoGenerated')}
       </div>

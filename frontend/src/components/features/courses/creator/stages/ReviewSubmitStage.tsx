@@ -184,13 +184,13 @@ export function ReviewSubmitStage({
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-16">
       {/* Pre-flight Validation Checklist Banner */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold text-slate-900">
+            <h2 className="font-display text-lg font-bold text-foreground">
               {t('reviewSubmitStage.coursePreFlightChecklistSubmission')}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {t('reviewSubmitStage.reviewYourSyllabusAssessmentsAndConfigur')}
             </p>
           </div>
@@ -211,7 +211,7 @@ export function ReviewSubmitStage({
               disabled={!isReadyToSubmit || saving}
               isLoading={saving}
               onClick={onSubmitForApproval}
-              className="gap-2 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold px-4"
+              className="gap-2 shadow-sm bg-primary hover:bg-primary/90 text-xs font-semibold px-4"
             >
               <Send className="h-3.5 w-3.5" />
               {t('reviewSubmitStage.submitForApproval')}
@@ -227,20 +227,20 @@ export function ReviewSubmitStage({
             className={cn(
               'p-3.5 rounded-xl border transition cursor-pointer flex items-start gap-2.5',
               isTitleValid
-                ? 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50'
-                : 'border-rose-200 bg-rose-50/50 hover:bg-rose-50',
+                ? 'border-success/30 bg-success-soft/50 hover:bg-success-soft'
+                : 'border-danger/30 bg-danger-soft/50 hover:bg-danger-soft',
             )}
           >
             {isTitleValid ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-foreground">
                 {t('reviewSubmitStage.courseInformation')}
               </p>
-              <p className="text-[11px] text-slate-500 truncate">
+              <p className="text-[11px] text-muted-foreground truncate">
                 {isTitleValid ? title : t('reviewSubmitStage.titleRequired')}
               </p>
             </div>
@@ -256,20 +256,20 @@ export function ReviewSubmitStage({
             className={cn(
               'p-3.5 rounded-xl border transition cursor-pointer flex items-start gap-2.5',
               isModulesValid
-                ? 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50'
-                : 'border-amber-200 bg-amber-50/50 hover:bg-amber-50',
+                ? 'border-success/30 bg-success-soft/50 hover:bg-success-soft'
+                : 'border-warning/30 bg-warning-soft/50 hover:bg-warning-soft',
             )}
           >
             {isModulesValid ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-foreground">
                 {t('reviewSubmitStage.curriculumContent')}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-muted-foreground">
                 {modules.length} {t('reviewSubmitStage.modules')}, {totalLessons}{' '}
                 {t('creatorSidebar.lessons')}
               </p>
@@ -282,20 +282,20 @@ export function ReviewSubmitStage({
             className={cn(
               'p-3.5 rounded-xl border transition cursor-pointer flex items-start gap-2.5',
               isWeightValid
-                ? 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50'
-                : 'border-amber-200 bg-amber-50/50 hover:bg-amber-50',
+                ? 'border-success/30 bg-success-soft/50 hover:bg-success-soft'
+                : 'border-warning/30 bg-warning-soft/50 hover:bg-warning-soft',
             )}
           >
             {isWeightValid ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-foreground">
                 {t('reviewSubmitStage.assessmentWeights')}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-muted-foreground">
                 {t('reviewSubmitStage.total')} {calculatedWeights}%{' '}
                 {isWeightValid
                   ? '✓'
@@ -308,8 +308,8 @@ export function ReviewSubmitStage({
         </div>
 
         {issues.length > 0 && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4">
-            <p className="mb-2 text-xs font-bold text-rose-700">
+          <div className="rounded-xl border border-danger/30 bg-danger-soft/50 p-4">
+            <p className="mb-2 text-xs font-bold text-danger">
               {t('reviewSubmitStage.fixIssueSBeforeSubmitting', { count: issues.length })}
             </p>
             <ul className="space-y-1">
@@ -318,7 +318,7 @@ export function ReviewSubmitStage({
                   <button
                     type="button"
                     onClick={() => onSelectNode(issue.node)}
-                    className="flex items-start gap-1.5 text-left text-[11px] text-rose-700 hover:underline"
+                    className="flex items-start gap-1.5 text-left text-[11px] text-danger hover:underline"
                   >
                     <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                     {issue.message}
@@ -331,36 +331,36 @@ export function ReviewSubmitStage({
       </div>
 
       {/* Embedded Full Learner-style Review */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-        <div className="border-b border-slate-100 pb-4 mb-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs">
+        <div className="border-b border-border/60 pb-4 mb-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-secondary-foreground">
             {t('reviewSubmitStage.learnerPreviewDetailedSyllabus')}
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-subtle-foreground mt-0.5">
             {t('reviewSubmitStage.thisMatchesHowEnrolledLearnersExperience')}
           </p>
         </div>
 
         {sessionPlans.length > 0 && (
-          <div className="mb-6 space-y-2 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
-            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-800">
+          <div className="mb-6 space-y-2 rounded-xl border border-info/30 bg-info-soft/40 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-info">
               <Video className="h-3.5 w-3.5" />
               {t('reviewSubmitStage.plannedOnlineSessions', { count: sessionPlans.length })}
             </p>
             <ol className="space-y-1.5">
               {sessionPlans.map((plan, i) => (
-                <li key={plan.id} className="flex flex-wrap items-center gap-2 text-sm text-slate-800">
-                  <span className="text-xs font-bold text-slate-400">{i + 1}.</span>
+                <li key={plan.id} className="flex flex-wrap items-center gap-2 text-sm text-foreground">
+                  <span className="text-xs font-bold text-subtle-foreground">{i + 1}.</span>
                   <span className="font-medium">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                   {plan.quizzes.map((q) => (
-                    <span key={q.id} className="rounded-md border border-indigo-200 bg-white px-1.5 text-[11px] font-semibold text-indigo-700">
+                    <span key={q.id} className="rounded-md border border-primary/30 bg-card px-1.5 text-[11px] font-semibold text-primary">
                       {q.titleEn} · {q.weight}% · {t('reviewSubmitStage.pass')} {q.passingScore}%
                     </span>
                   ))}
                 </li>
               ))}
             </ol>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-muted-foreground">
               {t('reviewSubmitStage.scheduledWithADateTrainerAnd')}
             </p>
           </div>

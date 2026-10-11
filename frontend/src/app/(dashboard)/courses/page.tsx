@@ -117,7 +117,7 @@ export default function CoursesPage() {
         ) : undefined
       }
     >
-      <div className="mb-5 flex flex-wrap items-center gap-1.5 border-b border-slate-200/80 pb-3">
+      <div className="mb-5 flex flex-wrap items-center gap-1.5 border-b border-border/80 pb-3">
         {tabs.map((tab) => {
           const active = statusTab === tab.id;
           return (
@@ -130,14 +130,14 @@ export default function CoursesPage() {
               }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150',
-                active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                active ? 'bg-foreground text-background shadow-sm' : 'text-secondary-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
               <span>{tab.label}</span>
               <span
                 className={cn(
                   'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                  active ? 'bg-slate-700 text-slate-100' : 'bg-slate-200/70 text-slate-600',
+                  active ? 'bg-foreground text-background' : 'bg-border/70 text-secondary-foreground',
                 )}
               >
                 {tab.count}
@@ -189,7 +189,7 @@ export default function CoursesPage() {
               course={course}
             >
               {course.status === 'rejected' && course.rejectionReason ? (
-                <div className="w-full rounded-xl border border-red-200/70 bg-red-50/80 px-3 py-2 text-xs text-red-700">
+                <div className="w-full rounded-xl border border-danger/20 bg-danger-soft/80 px-3 py-2 text-xs text-danger">
                   <p className="font-semibold">Admin feedback</p>
                   <p className="mt-0.5">{course.rejectionReason}</p>
                 </div>
@@ -252,15 +252,15 @@ export default function CoursesPage() {
                   type="button"
                   onClick={() => setCreationMode(option.key)}
                   className={cn(
-                    'group flex flex-col items-start rounded-2xl border border-slate-200/80 bg-white p-6 text-left shadow-soft ring-super-soft transition-all duration-200',
-                    'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lift',
+                    'group flex flex-col items-start rounded-2xl border border-border/80 bg-card p-6 text-left shadow-soft ring-super-soft transition-all duration-200',
+                    'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift',
                   )}
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-110">
                     <option.icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">{option.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{option.description}</p>
+                  <h3 className="mt-4 font-display text-sm font-semibold text-foreground">{option.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
                 </button>
               ))}
             </div>

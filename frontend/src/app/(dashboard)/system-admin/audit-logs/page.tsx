@@ -10,6 +10,7 @@ import PageShell from '@/components/shared/PageShell';
 import { Table, Td } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { filterSearchIconClass, filterSearchInputClass } from '@/components/ui/FilterBar';
 import { Pagination } from '@/components/ui/Pagination';
 
 export default function AuditLogsPage() {
@@ -75,12 +76,12 @@ export default function AuditLogsPage() {
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className={filterSearchIconClass} />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('auditLogsPage.searchActorActionTargetOrIp')}
-            className="w-full rounded-xl border border-slate-200/90 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+            className={filterSearchInputClass}
           />
         </div>
         <Button size="sm" variant="outline" onClick={download}>
@@ -90,7 +91,7 @@ export default function AuditLogsPage() {
       </div>
 
       {error ? (
-        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>
       ) : null}
 
       <Table
@@ -107,28 +108,28 @@ export default function AuditLogsPage() {
             <Td className="whitespace-nowrap">
               <Badge variant="slate">{new Date(log.createdAt).toLocaleString()}</Badge>
             </Td>
-            <Td className="font-medium text-slate-900">
+            <Td className="font-medium text-foreground">
               {log.user
                 ? `${log.user.firstName} ${log.user.lastName}`
                 : t('auditLogsPage.system')}
             </Td>
             <Td>
-              <span className="text-slate-600">{log.action}</span>
+              <span className="text-secondary-foreground">{log.action}</span>
             </Td>
             <Td>
-              <span className="text-slate-600">{log.entity}</span>
+              <span className="text-secondary-foreground">{log.entity}</span>
               {log.entityId ? (
-                <span className="block text-[11px] text-slate-400">{log.entityId}</span>
+                <span className="block text-[11px] text-subtle-foreground">{log.entityId}</span>
               ) : null}
             </Td>
             <Td>
-              <span className="font-mono text-[11px] text-slate-500">{log.ipAddress ?? '—'}</span>
+              <span className="font-mono text-[11px] text-muted-foreground">{log.ipAddress ?? '—'}</span>
             </Td>
           </tr>
         ))}
         {filtered.length === 0 ? (
           <tr>
-            <Td colSpan={5} className="py-10 text-center text-xs text-slate-400">
+            <Td colSpan={5} className="py-10 text-center text-xs text-subtle-foreground">
               {t('auditLogsPage.noAuditEntriesMatchYourSearch')}
             </Td>
           </tr>

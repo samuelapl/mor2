@@ -72,8 +72,8 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const DEFAULT_SOURCE = 'የገቢዎች ሚኒስቴር';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:disabled:bg-slate-800/60';
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400';
+  'w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 interface FormState {
   headline: string;
@@ -396,8 +396,8 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
   if (loadError) {
     return (
       <div className="px-6 py-16 text-center lg:px-10">
-        <p className="text-sm text-red-600">{loadError}</p>
-        <Link href="/news-management" className="mt-4 inline-block text-sm font-semibold text-indigo-600">
+        <p className="text-sm text-danger">{loadError}</p>
+        <Link href="/news-management" className="mt-4 inline-block text-sm font-semibold text-primary">
           {t('newsEditor.backToNews')}
         </Link>
       </div>
@@ -411,19 +411,19 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
     <div className="w-full animate-fade-in px-6 py-8 lg:px-10">
       <Link
         href="/news-management"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         {t('newsDetailView.allNews')}
       </Link>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="font-display text-2xl font-bold text-foreground">
           {news ? t('newsEditor.editNews') : t('newsEditor.newNews')}
         </h1>
         {status && <NewsStatusBadge status={status} />}
         {news?.isFeatured && (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-warning">
             <Star className="h-3.5 w-3.5 fill-current" />
             {t('newsCard.featured')}
           </span>
@@ -465,7 +465,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         <div className="space-y-6">
           <Card>
             <div className="space-y-5">
-              <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+              <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
                 {t('newsEditor.writeInAmharicOrEnglishReaders')}
               </p>
 
@@ -489,7 +489,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
               <div>
                 <label htmlFor="news-summary" className={labelClass}>
                   {t('newsEditor.summary')}{' '}
-                  <span className="font-normal text-slate-400">
+                  <span className="font-normal text-subtle-foreground">
                     {t('newsEditor.optionalTakenFromTheContentIf')}
                   </span>
                 </label>
@@ -522,15 +522,15 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
 
           {/* Photos */}
           <Card>
-            <h2 className="mb-1 font-display text-base font-bold text-slate-900 dark:text-white">
+            <h2 className="mb-1 font-display text-base font-bold text-foreground">
               {t('newsEditor.photos')}
             </h2>
-            <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mb-4 text-xs text-muted-foreground">
               {t('newsEditor.jpegPngOrWebpUpTo')}
             </p>
 
             {!news ? (
-              <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700">
+              <p className="rounded-xl border border-dashed border-input px-4 py-6 text-center text-sm text-muted-foreground">
                 {t('newsEditor.saveTheDraftFirstToAdd')}
               </p>
             ) : (
@@ -604,13 +604,13 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     )}
                   </div>
                   {images.length === 0 ? (
-                    <p className="text-xs text-slate-400">{t('newsEditor.noGalleryPhotos')}</p>
+                    <p className="text-xs text-subtle-foreground">{t('newsEditor.noGalleryPhotos')}</p>
                   ) : (
                     <ul className="space-y-3">
                       {images.map((image, index) => (
                         <li
                           key={image.id}
-                          className="flex items-center gap-3 rounded-xl border border-slate-200 p-2 dark:border-slate-800"
+                          className="flex items-center gap-3 rounded-xl border border-border p-2"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={image.url} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover" />
@@ -691,12 +691,12 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   disabled={readOnly}
                   className={cn(inputClass, errors.source && 'border-red-400')}
                 />
-                {errors.source && <p className="mt-1 text-xs text-red-600">{errors.source}</p>}
+                {errors.source && <p className="mt-1 text-xs text-danger">{errors.source}</p>}
               </div>
               <div>
                 <label htmlFor="news-event-date" className={labelClass}>
                   {t('newsEditor.eventDate')}{' '}
-                  <span className="font-normal text-slate-400">
+                  <span className="font-normal text-subtle-foreground">
                     {t('newsEditor.shownInsteadOfThePublishDate')}
                   </span>
                 </label>
@@ -709,13 +709,13 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   className={inputClass}
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <label className="flex items-center gap-2 text-sm text-secondary-foreground">
                 <input
                   type="checkbox"
                   checked={form.allowComments}
                   onChange={(e) => set('allowComments', e.target.checked)}
                   disabled={readOnly}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                  className="h-4 w-4 rounded border-input text-primary"
                 />
                 {t('newsEditor.allowComments')}
               </label>
@@ -772,7 +772,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                     {t('newsEditor.reject')}
                   </Button>
                   {isDirty && (
-                    <p className="text-xs text-amber-600">
+                    <p className="text-xs text-warning">
                       {t('newsEditor.saveYourEditsBeforeApproving')}
                     </p>
                   )}
@@ -823,7 +823,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                 <Link
                   href={newsPath(news.slug)}
                   target="_blank"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-medium text-secondary-foreground hover:bg-secondary"
                 >
                   <ExternalLink className="h-4 w-4" />
                   {t('newsEditor.viewPublicPage')}
@@ -832,7 +832,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
               {news && canEdit && (
                 <Button
                   variant="ghost"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
+                  className="text-danger hover:bg-danger-soft hover:text-danger/80"
                   icon={<Trash2 className="h-4 w-4" />}
                   disabled={Boolean(busy)}
                   onClick={() => setConfirm('delete')}
@@ -868,7 +868,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   </Detail>
                 )}
               </dl>
-              <div className="mt-4 grid grid-cols-5 gap-1 border-t border-slate-100 pt-4 text-center dark:border-slate-800">
+              <div className="mt-4 grid grid-cols-5 gap-1 border-t border-border/60 pt-4 text-center">
                 <Stat icon={ThumbsUp} value={news.likeCount} title={t('newsEditor.likes')} />
                 <Stat icon={ThumbsDown} value={news.dislikeCount} title={t('newsEditor.dislikes')} />
                 <Stat icon={MessageCircle} value={news.commentCount} title={t('newsComments.comments')} />
@@ -878,7 +878,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
               {canPublish && (
                 <Link
                   href={`/news-management/${news.id}/comments`}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
                   {t('newsEditor.moderateComments')}
@@ -988,10 +988,10 @@ function Banner({
   children: ReactNode;
 }) {
   const tones = {
-    red: 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300',
-    amber: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
-    blue: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300',
-    slate: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300',
+    red: 'border-danger/30 bg-danger-soft text-danger',
+    amber: 'border-warning/30 bg-warning-soft text-warning',
+    blue: 'border-info/30 bg-info-soft text-info',
+    slate: 'border-border bg-muted text-secondary-foreground',
   };
   return (
     <div className={cn('mb-5 flex gap-2.5 rounded-xl border px-4 py-3 text-sm', tones[tone])}>
@@ -1004,8 +1004,8 @@ function Banner({
 function FieldFoot({ error, count, max }: { error?: string; count: number; max: number }) {
   return (
     <div className="mt-1 flex justify-between text-xs">
-      <span className="text-red-600">{error}</span>
-      <span className="tabular-nums text-slate-400">
+      <span className="text-danger">{error}</span>
+      <span className="tabular-nums text-subtle-foreground">
         {count}/{max}
       </span>
     </div>
@@ -1033,10 +1033,10 @@ function IconButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'rounded-lg p-1.5 text-slate-400 transition disabled:opacity-30',
+        'rounded-lg p-1.5 text-subtle-foreground transition disabled:opacity-30',
         danger
-          ? 'hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40'
-          : 'hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800',
+          ? 'hover:bg-danger-soft hover:text-danger'
+          : 'hover:bg-secondary hover:text-secondary-foreground',
       )}
     >
       {children}
@@ -1047,8 +1047,8 @@ function IconButton({
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex justify-between gap-3">
-      <dt className="text-slate-500 dark:text-slate-400">{label}</dt>
-      <dd className="text-right font-medium text-slate-800 dark:text-slate-200">{children}</dd>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium text-foreground">{children}</dd>
     </div>
   );
 }
@@ -1056,8 +1056,8 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 function Stat({ icon: Icon, value, title }: { icon: LucideIcon; value: number; title: string }) {
   return (
     <div title={title}>
-      <Icon className="mx-auto h-4 w-4 text-slate-400" aria-hidden />
-      <div className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200">{value}</div>
+      <Icon className="mx-auto h-4 w-4 text-subtle-foreground" aria-hidden />
+      <div className="text-sm font-semibold tabular-nums text-foreground">{value}</div>
       <div className="sr-only">{title}</div>
     </div>
   );

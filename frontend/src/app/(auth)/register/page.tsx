@@ -24,9 +24,9 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400';
+const labelClass = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-secondary-foreground';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -97,21 +97,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-card px-4 py-12 transition-colors duration-200">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
 
       <div className="relative w-full max-w-lg animate-fade-in-up">
         <div className="mb-4 flex items-center">
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             {t('firstLoginForm.backToSignIn')}
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
           <div className="text-center">
             <Link
               href="/"
@@ -126,10 +126,10 @@ export default function RegisterPage() {
                 className="mx-auto h-14 w-14 rounded-full object-contain shadow-md"
               />
             </Link>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
               {t('registerPage.registration')}
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {t('registerPage.createALearnerAccountWeWill')}
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
-                      <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="firstName"
                         required
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
-                      <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="lastName"
                         required
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                     <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                     <input
                       id="reg-email"
                       type="email"
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="reg-password"
                         type={showPassword ? 'text' : 'password'}
@@ -238,7 +238,7 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-subtle-foreground hover:text-secondary-foreground transition-colors focus:outline-none"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -254,7 +254,7 @@ export default function RegisterPage() {
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -271,7 +271,7 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-subtle-foreground hover:text-secondary-foreground transition-colors focus:outline-none"
                         aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                       >
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -279,7 +279,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-subtle-foreground">
                   {t('registerPage.useAtLeast8CharactersIncluding')}
                 </p>
 
@@ -293,7 +293,7 @@ export default function RegisterPage() {
                       <span className="sr-only">(required)</span>
                     </label>
                     <div className="relative">
-                      <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="phone"
                         required
@@ -312,12 +312,12 @@ export default function RegisterPage() {
                   <div>
                     <label htmlFor="tin" className={labelClass}>
                       <span>{t('registerPage.tin')}</span>
-                      <span className="text-xs font-normal text-slate-400">
+                      <span className="text-xs font-normal text-subtle-foreground">
                         ({t('registerPage.optional')})
                       </span>
                     </label>
                     <div className="relative">
-                      <CreditCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <CreditCard className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                       <input
                         id="tin"
                         value={tin}
@@ -333,7 +333,7 @@ export default function RegisterPage() {
                 </div>
 
                 {error ? (
-                  <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
+                  <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
                     {error}
                   </div>
                 ) : null}
@@ -357,7 +357,7 @@ export default function RegisterPage() {
                 </button>
               </form>
 
-              <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-4 text-center text-sm text-muted-foreground">
                 {t('registerPage.alreadyRegistered')}{' '}
                 <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">
                   {t('loginPage.signIn')}

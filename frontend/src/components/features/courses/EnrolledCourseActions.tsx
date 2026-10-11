@@ -27,9 +27,9 @@ export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }:
           <Button
             size="sm"
             variant="outline"
-            className="border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
+            className="border-success/30 bg-success-soft/70 text-success hover:bg-success-soft hover:border-success/60"
           >
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
             {t("enrolledCourseActions.completed")}
           </Button>
         ) : (
@@ -56,16 +56,16 @@ export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }:
               size="sm"
               variant="outline"
               onClick={onViewVenue}
-              className="gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+              className="gap-1.5 text-xs text-secondary-foreground border-input hover:bg-muted"
             >
-              <MapPin className="h-3.5 w-3.5 text-indigo-600" />
+              <MapPin className="h-3.5 w-3.5 text-primary" />
               {t("enrolledCourseActions.classroomVenue")}
             </Button>
           ) : null}
 
           <Link href="/learner/live-sessions">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs">
-              <Calendar className="h-3.5 w-3.5 text-indigo-600" />
+              <Calendar className="h-3.5 w-3.5 text-primary" />
               {t("enrolledCourseActions.sessionsCheckIn")}
             </Button>
           </Link>

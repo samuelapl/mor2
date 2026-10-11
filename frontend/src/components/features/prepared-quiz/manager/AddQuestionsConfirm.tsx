@@ -54,21 +54,21 @@ export function AddQuestionsConfirm({ quiz, questions, busy, onCancel, onConfirm
       }
     >
       <div className="space-y-4">
-        <p className="flex items-start gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 text-sm text-indigo-900">
-          <Scale className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+        <p className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary-soft/60 p-3 text-sm text-primary">
+          <Scale className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           {pointsNote}
         </p>
         <ol className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
           {questions.map((q, i) => (
-            <li key={q.id} className="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-bold text-slate-600">
+            <li key={q.id} className="flex items-start gap-3 rounded-xl border border-border p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-secondary text-[11px] font-bold text-secondary-foreground">
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-subtle-foreground">
                   {QUESTION_TYPE_LABEL[q.type] ?? q.type}
                 </span>
-                <div className="line-clamp-2 text-sm font-medium leading-snug text-slate-800">
+                <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
                   <RichContent html={q.question} inline inheritText />
                 </div>
               </div>

@@ -94,29 +94,29 @@ export function CreatorHeader({
   const deliveryModeBadge = {
     ONLINE_ONLY: {
       labelKey: 'creatorHeader.online',
-      bg: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+      bg: 'bg-primary-soft text-primary border-primary/25',
     },
     IN_PERSON_ONLY: {
       labelKey: 'creatorHeader.inPerson',
-      bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
+      bg: 'bg-warning-soft text-warning border-warning/25',
     },
     BOTH: {
       labelKey: 'creatorHeader.hybrid',
-      bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      bg: 'bg-success-soft text-success border-success/25',
     },
   }[deliveryMode] || {
     labelKey: 'creatorHeader.hybrid',
-    bg: 'bg-slate-50 text-slate-700 border-slate-200',
+    bg: 'bg-muted text-secondary-foreground border-border',
   };
 
   return (
-    <header className="h-16 shrink-0 border-b border-slate-200/80 bg-white px-4 lg:px-6 flex items-center justify-between gap-4 z-20 shadow-2xs">
+    <header className="h-16 shrink-0 border-b border-border/80 bg-card px-4 lg:px-6 flex items-center justify-between gap-4 z-20 shadow-2xs">
       {/* Left: Back / Title & Meta */}
       <div className="flex items-center gap-3 min-w-0 max-w-[280px] lg:max-w-xs xl:max-w-sm">
         <button
           type="button"
           onClick={onExit}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition"
           title={t('creatorHeader.backToCourses')}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -124,14 +124,14 @@ export function CreatorHeader({
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] font-bold tracking-wider text-indigo-700 uppercase bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.2 rounded shrink-0">
+            <span className="font-mono text-[11px] font-bold tracking-wider text-primary uppercase bg-primary-soft border border-primary/20 px-1.5 py-0.2 rounded shrink-0">
               {code || 'DRAFT'}
             </span>
             <span className={cn('text-[10px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider shrink-0', deliveryModeBadge.bg)}>
               {t(deliveryModeBadge.labelKey as NamespaceKey<'courses'>)}
             </span>
           </div>
-          <h1 className="text-xs lg:text-sm font-bold text-slate-900 truncate mt-0.5" title={title}>
+          <h1 className="text-xs lg:text-sm font-bold text-foreground truncate mt-0.5" title={title}>
             {title.trim() || t('creatorHeader.untitledCourseStudio')}
           </h1>
           <AutosaveIndicator status={autosaveStatus} error={autosaveError} lastSavedAt={lastSavedAt} blockedReason={autosaveBlockedReason} />
@@ -139,7 +139,7 @@ export function CreatorHeader({
       </div>
 
       {/* Center: Phase Steps */}
-      <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60">
+      <nav className="hidden md:flex items-center gap-1 bg-secondary/80 p-1 rounded-2xl border border-border/60">
         {STEPS.map((step, idx) => {
           const isActive = phase === step.id;
           const Icon = step.icon;
@@ -152,14 +152,14 @@ export function CreatorHeader({
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition',
                 isActive
-                  ? 'bg-white text-indigo-700 shadow-2xs font-bold border border-slate-200/60'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50',
+                  ? 'bg-card text-primary shadow-2xs font-bold border border-border/60'
+                  : 'text-secondary-foreground hover:text-foreground hover:bg-input/60',
               )}
             >
               <span
                 className={cn(
                   'flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold transition',
-                  isActive ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600',
+                  isActive ? 'bg-indigo-600 text-white' : 'bg-border text-secondary-foreground',
                 )}
               >
                 {idx + 1}
@@ -181,7 +181,7 @@ export function CreatorHeader({
           className="gap-1.5 text-xs font-medium"
           title={t('creatorHeader.previewAsLearner')}
         >
-          <Eye className="h-3.5 w-3.5 text-slate-500" />
+          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="hidden lg:inline">{t('creatorHeader.previewAsLearner')}</span>
         </Button>
 
@@ -206,7 +206,7 @@ export function CreatorHeader({
           className="gap-1.5 text-xs font-medium"
           title={t('creatorHeader.saveAsDraftAndExitStudio')}
         >
-          <FileCheck className="h-3.5 w-3.5 text-slate-500" />
+          <FileCheck className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="hidden sm:inline">{t('creatorHeader.saveAsDraft')}</span>
         </Button>
 
@@ -241,7 +241,7 @@ function AutosaveIndicator({
 
   let icon = <Check className="h-3 w-3" />;
   let text: string;
-  let tone = 'text-slate-400';
+  let tone = 'text-subtle-foreground';
   let hint: string | undefined;
 
   if (status === 'saving') {
@@ -250,19 +250,19 @@ function AutosaveIndicator({
   } else if (status === 'error') {
     icon = <CloudOff className="h-3 w-3" />;
     text = t('autosaveIndicator.autosaveFailed');
-    tone = 'text-rose-600';
+    tone = 'text-danger';
     hint = error ?? undefined;
   } else if (status === 'pending' && blockedReason) {
     icon = <CloudOff className="h-3 w-3" />;
     text = t('autosaveIndicator.notSavedYet');
-    tone = 'text-amber-600';
+    tone = 'text-warning';
     hint = blockedReason;
   } else if (status === 'pending') {
     text = t('autosaveIndicator.unsavedChanges');
-    tone = 'text-amber-600';
+    tone = 'text-warning';
   } else if (status === 'saved' && time) {
     text = `${t('autosaveIndicator.saved')} ${time}`;
-    tone = 'text-emerald-600';
+    tone = 'text-success';
   } else {
     text = t('autosaveIndicator.autosaveOn');
   }

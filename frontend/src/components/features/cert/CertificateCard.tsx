@@ -122,8 +122,8 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
-          <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
+          <span className="font-mono text-xs font-semibold text-muted-foreground">
             {certificate.certificateNumber}
           </span>
           <div className="flex items-center gap-1.5">
@@ -133,7 +133,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               rel="noreferrer"
               title={t('certificateCard.verifyCredentialAuthenticity')}
             >
-              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600">
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-subtle-foreground hover:text-primary">
                 <ShieldCheck className="h-4 w-4" />
               </Button>
             </a>
@@ -141,7 +141,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               size="sm"
               variant="outline"
               onClick={() => setOpen(true)}
-              className="gap-1.5 h-8 px-2.5 text-slate-700 dark:text-slate-200"
+              className="gap-1.5 h-8 px-2.5 text-secondary-foreground"
               title={t('certificateCard.viewCertificate')}
             >
               <Eye className="h-3.5 w-3.5" />
@@ -152,7 +152,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               variant="outline"
               onClick={handleDownload}
               disabled={downloading}
-              className="gap-1.5 h-8 px-2.5 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+              className="gap-1.5 h-8 px-2.5 text-primary border-primary/30 hover:bg-primary-soft"
               title={t('certificateCard.downloadCertificatePdf')}
             >
               <Download className="h-3.5 w-3.5" />
@@ -199,7 +199,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               target="_blank"
               rel="noreferrer"
             >
-              <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
+              <Button size="sm" variant="outline" className="gap-1.5 text-secondary-foreground">
                 <ExternalLink className="h-4 w-4" />
                 {t('certificateCard.verify')}
               </Button>
@@ -210,14 +210,14 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
         <div className="w-full space-y-6 pb-12">
           {/* Status warning banner if Revoked or Expired */}
           {isRevoked && (
-            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
-              <XCircle className="h-5 w-5 shrink-0 text-red-600" />
+            <div className="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger-soft p-4 text-danger">
+              <XCircle className="h-5 w-5 shrink-0 text-danger" />
               <div>
                 <p className="font-bold text-sm">
                   {t('certificateCard.thisCertificateHasBeenRevokedBy')}
                 </p>
                 {certificate.revokedReason && (
-                  <p className="text-xs text-red-700 mt-0.5">
+                  <p className="text-xs text-danger mt-0.5">
                     {t('certificateCard.reason')} {certificate.revokedReason}
                   </p>
                 )}
@@ -226,20 +226,20 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
           )}
 
           {isExpired && !isRevoked && (
-            <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+            <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 text-warning">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
               <div>
                 <p className="font-bold text-sm">
                   {t('certificateCard.thisCertificateHasExpired')}
                 </p>
-                <p className="text-xs text-amber-700 mt-0.5">
+                <p className="text-xs text-warning mt-0.5">
                   {t('certificateCard.validityEndedOn')} {formatDate(certificate.expiresAt)}
                 </p>
               </div>
             </div>
           )}
 
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/5 dark:bg-slate-950/40 p-4 shadow-inner overflow-hidden flex items-center justify-center">
+          <div className="rounded-2xl border border-border bg-muted p-4 shadow-inner overflow-hidden flex items-center justify-center">
             <div className="w-full max-w-4xl">
               <CertificateRenderer
                 template={templateToUse}

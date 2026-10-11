@@ -58,13 +58,13 @@ export function useQuizReadinessGate() {
       }
     >
       <div className="space-y-3">
-        <p className="flex items-start gap-2 text-sm text-slate-700">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <p className="flex items-start gap-2 text-sm text-secondary-foreground">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           This session has a graded quiz that counts toward the course grade. Prepare it before starting or joining the session:
         </p>
         <ul className="space-y-1.5">
           {blocked?.problems.map((problem) => (
-            <li key={problem} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+            <li key={problem} className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs font-medium text-warning">
               {problem}
             </li>
           ))}

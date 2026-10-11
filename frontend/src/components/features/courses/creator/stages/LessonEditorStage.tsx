@@ -240,10 +240,10 @@ export function LessonEditorStage({
   };
 
   const renderAddBlockControls = (position: 'top' | 'bottom') => (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-950/20">
+    <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-dashed border-primary/30 bg-primary-soft/40">
       <div className="flex items-center gap-2">
-        <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+        <Plus className="h-4 w-4 text-primary" />
+        <span className="text-xs font-bold text-secondary-foreground">
           {position === 'top'
             ? t('lessonEditorStage.addContentToTop')
             : t('lessonEditorStage.addContentToBottom')}
@@ -253,33 +253,33 @@ export function LessonEditorStage({
         <button
           type="button"
           onClick={() => handleAddBlock('PRESENTATION', position)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 bg-card text-xs font-semibold text-primary hover:bg-primary-soft transition shadow-2xs"
         >
-          <Presentation className="h-3.5 w-3.5 text-indigo-600" />
+          <Presentation className="h-3.5 w-3.5 text-primary" />
           <span>+ {t('lessonEditorStage.slideDeck')}</span>
         </button>
         <button
           type="button"
           onClick={() => handleAddBlock('VIDEO', position)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-800 bg-white dark:bg-slate-900 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/30 bg-card text-xs font-semibold text-danger hover:bg-danger-soft transition shadow-2xs"
         >
-          <Video className="h-3.5 w-3.5 text-rose-600" />
+          <Video className="h-3.5 w-3.5 text-danger" />
           <span>+ {t('lessonEditorStage.videoLecture')}</span>
         </button>
         <button
           type="button"
           onClick={() => handleAddBlock('AUDIO', position)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-warning/30 bg-card text-xs font-semibold text-warning hover:bg-warning-soft transition shadow-2xs"
         >
-          <Headphones className="h-3.5 w-3.5 text-amber-600" />
+          <Headphones className="h-3.5 w-3.5 text-warning" />
           <span>+ {t('lessonEditorStage.audioLecture')}</span>
         </button>
         <button
           type="button"
           onClick={() => handleAddBlock('DOCUMENT', position)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-semibold text-secondary-foreground hover:bg-muted transition shadow-2xs"
         >
-          <FileText className="h-3.5 w-3.5 text-slate-600" />
+          <FileText className="h-3.5 w-3.5 text-secondary-foreground" />
           <span>+ {t('lessonEditorStage.lectureNotes')}</span>
         </button>
       </div>
@@ -319,17 +319,17 @@ export function LessonEditorStage({
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200 pb-12">
       {/* Lesson Banner */}
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-slate-50 p-6 shadow-2xs">
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary-soft/80 via-card to-muted p-6 shadow-2xs">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-600/30">
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">
                 {moduleTitle} {isSubLesson && parentLessonTitle ? `• ${parentLessonTitle}` : ''}
               </span>
-              <h2 className="text-lg font-bold text-slate-900 truncate">
+              <h2 className="text-lg font-bold text-foreground truncate">
                 {lesson.title.trim() ||
                   (isSubLesson
                     ? t('creatorSidebar.subLesson', { value: lessonIndex + 1 })
@@ -339,10 +339,10 @@ export function LessonEditorStage({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground border border-border">
               {lesson.contentType || 'DOCUMENT'}
             </span>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary-soft text-primary border border-primary/20">
               {lesson.durationMin || 15} {t('lessonEditorStage.min')}
             </span>
           </div>
@@ -350,8 +350,8 @@ export function LessonEditorStage({
       </div>
 
       {/* Lesson Settings */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('lessonEditorStage.lessonDetailsFormat')}
         </h3>
 
@@ -384,7 +384,7 @@ export function LessonEditorStage({
                 }
                 className={inputClass}
               />
-              <Clock className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Clock className="absolute right-3 top-3 h-4 w-4 text-subtle-foreground pointer-events-none" />
             </div>
           </div>
         </div>
@@ -414,14 +414,14 @@ export function LessonEditorStage({
                   className={cn(
                     'flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition cursor-pointer',
                     isSelected
-                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 font-bold shadow-xs'
-                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50',
+                      ? 'border-primary bg-primary-soft/70 text-primary font-bold shadow-xs'
+                      : 'border-border bg-card hover:border-input text-secondary-foreground hover:bg-muted',
                   )}
                 >
                   <Icon
                     className={cn(
                       'h-4 w-4',
-                      isSelected ? 'text-indigo-600' : 'text-slate-500',
+                      isSelected ? 'text-primary' : 'text-muted-foreground',
                     )}
                   />
                   <span className="text-xs">{t(ct.labelKey)}</span>
@@ -433,13 +433,13 @@ export function LessonEditorStage({
 
         {/* Multi-Content Blocks Studio */}
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-2 border-b border-border/60">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
                 <span>{t('lessonEditorStage.lessonContentBlocksOrdering')}</span>
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {t('lessonEditorStage.addMultipleContentPiecesVideosSlides')}
               </p>
             </div>
@@ -448,7 +448,7 @@ export function LessonEditorStage({
                 <button
                   type="button"
                   onClick={() => setAllBlocksCollapsed(!allBlocksCollapsed)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-border text-xs font-semibold text-secondary-foreground hover:bg-muted transition"
                 >
                   {allBlocksCollapsed ? (
                     <ChevronsUpDown className="h-3.5 w-3.5" />
@@ -460,7 +460,7 @@ export function LessonEditorStage({
                     : t('lessonEditorStage.collapseAll')}
                 </button>
               )}
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary-soft text-primary border border-primary/20">
                 {blocks.length} {blocks.length === 1 ? 'Block' : 'Blocks'}
               </span>
             </div>
@@ -480,13 +480,13 @@ export function LessonEditorStage({
               return (
                 <div
                   key={block.id}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden transition-all"
+                  className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden transition-all"
                 >
                   {/* Block Header */}
                   <div
                     className={cn(
-                      'flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60',
-                      !isCollapsed && 'border-b border-slate-200/80 dark:border-slate-700/80',
+                      'flex items-center justify-between px-4 py-3 bg-muted/80',
+                      !isCollapsed && 'border-b border-border/80',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -495,7 +495,7 @@ export function LessonEditorStage({
                         onClick={() => toggleBlockCollapsed(block.id)}
                         title={isCollapsed ? t('lessonEditorStage.expand') : t('lessonEditorStage.collapse')}
                         aria-expanded={!isCollapsed}
-                        className="p-1 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition"
+                        className="p-1 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-input/60 transition"
                       >
                         <ChevronDown className={cn('h-4 w-4 transition-transform', isCollapsed && '-rotate-90')} />
                       </button>
@@ -503,13 +503,13 @@ export function LessonEditorStage({
                         {idx + 1}
                       </span>
                       {block.type === 'PRESENTATION' ? (
-                        <Presentation className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                        <Presentation className="h-4 w-4 text-primary shrink-0" />
                       ) : block.type === 'VIDEO' ? (
-                        <Video className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                        <Video className="h-4 w-4 text-danger shrink-0" />
                       ) : block.type === 'AUDIO' ? (
-                        <Headphones className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <Headphones className="h-4 w-4 text-warning shrink-0" />
                       ) : (
-                        <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400 shrink-0" />
+                        <FileText className="h-4 w-4 text-secondary-foreground shrink-0" />
                       )}
                       <input
                         type="text"
@@ -524,7 +524,7 @@ export function LessonEditorStage({
                                 ? 'Audio Lecture'
                                 : 'Lecture Notes & Study Material'
                         }
-                        className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-transparent border-0 border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:ring-0 px-1 py-0.5 truncate max-w-xs sm:max-w-md outline-none"
+                        className="text-xs font-bold text-foreground bg-transparent border-0 border-b border-transparent hover:border-input focus:border-ring focus:ring-0 px-1 py-0.5 truncate max-w-xs sm:max-w-md outline-none"
                       />
                     </div>
 
@@ -535,7 +535,7 @@ export function LessonEditorStage({
                         disabled={idx === 0}
                         onClick={() => handleMoveBlock(idx, 'up')}
                         title={t('lessonEditorStage.moveUp')}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none transition"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-input/60 disabled:opacity-30 disabled:pointer-events-none transition"
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
@@ -546,7 +546,7 @@ export function LessonEditorStage({
                         disabled={idx === blocks.length - 1}
                         onClick={() => handleMoveBlock(idx, 'down')}
                         title={t('lessonEditorStage.moveDown')}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none transition"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-input/60 disabled:opacity-30 disabled:pointer-events-none transition"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
@@ -556,7 +556,7 @@ export function LessonEditorStage({
                         type="button"
                         onClick={() => handleDeleteBlock(block.id)}
                         title={t('lessonEditorStage.deleteBlock')}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition ml-1"
+                        className="p-1.5 rounded-lg text-subtle-foreground hover:text-danger hover:bg-danger-soft transition ml-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -581,19 +581,19 @@ export function LessonEditorStage({
                       {/* PRESENTATION / SLIDE BLOCK */}
                       {block.type === 'PRESENTATION' && (
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
+                            <label className="text-xs font-semibold text-secondary-foreground">
                               {t('lessonEditorStage.slideDeckPresentationSource')}
                             </label>
-                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                            <div className="inline-flex rounded-xl bg-secondary p-1 text-xs">
                               <button
                                 type="button"
                                 onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'browse'
-                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-primary shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
@@ -605,8 +605,8 @@ export function LessonEditorStage({
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'url'
-                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-primary shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
@@ -616,22 +616,22 @@ export function LessonEditorStage({
                           </div>
 
                           {uploadError && (
-                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                            <div className="p-3 rounded-xl bg-danger-soft text-danger text-xs border border-danger/30">
                               {uploadError}
                             </div>
                           )}
 
                           {tab === 'browse' ? (
                             block.url ? (
-                              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+                              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-primary-soft/50 border border-primary/30">
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <Presentation className="h-5 w-5 text-indigo-600 shrink-0" />
+                                  <Presentation className="h-5 w-5 text-primary shrink-0" />
                                   <div className="min-w-0">
-                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                    <p className="text-xs font-bold text-foreground truncate">
                                       {block.fileName || block.url.split('/').pop() || 'Presentation File'}
                                     </p>
                                     {block.fileSize ? (
-                                      <span className="text-[11px] text-slate-500">{formatFileSize(block.fileSize)}</span>
+                                      <span className="text-[11px] text-muted-foreground">{formatFileSize(block.fileSize)}</span>
                                     ) : null}
                                   </div>
                                 </div>
@@ -646,7 +646,7 @@ export function LessonEditorStage({
                                         if (file) handleBlockFileUpload(block.id, 'PRESENTATION', file);
                                       }}
                                     />
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-input bg-card text-xs font-semibold text-secondary-foreground hover:bg-muted">
                                       <Upload className="h-3 w-3" />
                                       {isUploading ? t('lessonEditorStage.uploading') : t('lessonEditorStage.replace')}
                                     </span>
@@ -654,14 +654,14 @@ export function LessonEditorStage({
                                   <button
                                     type="button"
                                     onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
-                                    className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                    className="p-1 text-subtle-foreground hover:text-danger transition"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:border-indigo-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-primary/30 rounded-xl hover:border-ring cursor-pointer text-center bg-muted/50">
                                 <input
                                   type="file"
                                   accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
@@ -673,16 +673,16 @@ export function LessonEditorStage({
                                 />
                                 {isUploading ? (
                                   <>
-                                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingSlideDeck')}</span>
+                                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                                    <span className="text-xs text-secondary-foreground">{t('lessonEditorStage.uploadingSlideDeck')}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Presentation className="h-6 w-6 text-indigo-600" />
-                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                    <Presentation className="h-6 w-6 text-primary" />
+                                    <span className="text-xs font-semibold text-foreground">
                                       {t('lessonEditorStage.uploadPptxOrPdfSlideDeck')}
                                     </span>
-                                    <span className="text-[11px] text-slate-500">
+                                    <span className="text-[11px] text-muted-foreground">
                                       {t('lessonEditorStage.opensDirectlyInsideTheStudentClassroom')}
                                     </span>
                                   </>
@@ -698,7 +698,7 @@ export function LessonEditorStage({
                                 placeholder="https://docs.google.com/presentation/d/... or Canva / OneDrive URL"
                                 className={inputClass}
                               />
-                              <p className="text-[11px] text-slate-500">
+                              <p className="text-[11px] text-muted-foreground">
                                 {t('lessonEditorStage.googleSlidesCanvaMicrosoft365Or')}
                               </p>
                             </div>
@@ -714,19 +714,19 @@ export function LessonEditorStage({
                       {/* VIDEO BLOCK */}
                       {block.type === 'VIDEO' && (
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
+                            <label className="text-xs font-semibold text-secondary-foreground">
                               {t('lessonEditorStage.videoLectureSource')}
                             </label>
-                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                            <div className="inline-flex rounded-xl bg-secondary p-1 text-xs">
                               <button
                                 type="button"
                                 onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'browse'
-                                    ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-danger shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
@@ -738,8 +738,8 @@ export function LessonEditorStage({
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'url'
-                                    ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-danger shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
@@ -749,7 +749,7 @@ export function LessonEditorStage({
                           </div>
 
                           {uploadError && (
-                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                            <div className="p-3 rounded-xl bg-danger-soft text-danger text-xs border border-danger/30">
                               {uploadError}
                             </div>
                           )}
@@ -760,7 +760,7 @@ export function LessonEditorStage({
                                 <div className="overflow-hidden rounded-xl bg-black max-h-60 flex items-center justify-center">
                                   <video src={block.url} controls className="max-h-60 w-full object-contain" />
                                 </div>
-                                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border">
+                                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted border">
                                   <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
                                   <div className="flex items-center gap-2">
                                     <label className="cursor-pointer">
@@ -773,14 +773,14 @@ export function LessonEditorStage({
                                           if (file) handleBlockFileUpload(block.id, 'VIDEO', file);
                                         }}
                                       />
-                                      <span className="px-2 py-1 rounded bg-white dark:bg-slate-700 border text-xs font-semibold hover:bg-slate-100">
+                                      <span className="px-2 py-1 rounded bg-card border text-xs font-semibold hover:bg-secondary">
                                         {isUploading ? 'Uploading...' : 'Replace'}
                                       </span>
                                     </label>
                                     <button
                                       type="button"
                                       onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
-                                      className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                      className="p-1 text-subtle-foreground hover:text-danger transition"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </button>
@@ -788,7 +788,7 @@ export function LessonEditorStage({
                                 </div>
                               </div>
                             ) : (
-                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-rose-200 dark:border-rose-800 rounded-xl hover:border-rose-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-danger/30 rounded-xl hover:border-danger/60 cursor-pointer text-center bg-muted/50">
                                 <input
                                   type="file"
                                   accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
@@ -800,16 +800,16 @@ export function LessonEditorStage({
                                 />
                                 {isUploading ? (
                                   <>
-                                    <Loader2 className="h-6 w-6 text-rose-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingVideo')}</span>
+                                    <Loader2 className="h-6 w-6 text-danger animate-spin" />
+                                    <span className="text-xs text-secondary-foreground">{t('lessonEditorStage.uploadingVideo')}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Video className="h-6 w-6 text-rose-600" />
-                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                    <Video className="h-6 w-6 text-danger" />
+                                    <span className="text-xs font-semibold text-foreground">
                                       {t('lessonEditorStage.uploadMp4WebmMovVideoLecture')}
                                     </span>
-                                    <span className="text-[11px] text-slate-500">
+                                    <span className="text-[11px] text-muted-foreground">
                                       {t('lessonEditorStage.storedSecurelyAndStreamedInThe')}
                                     </span>
                                   </>
@@ -825,7 +825,7 @@ export function LessonEditorStage({
                                 placeholder="https://www.youtube.com/watch?v=... or direct MP4 URL"
                                 className={inputClass}
                               />
-                              <p className="text-[11px] text-slate-500">
+                              <p className="text-[11px] text-muted-foreground">
                                 {t('lessonEditorStage.youtubeVideoUrlsAndDirectMp4')}
                               </p>
                             </div>
@@ -836,19 +836,19 @@ export function LessonEditorStage({
                       {/* AUDIO BLOCK */}
                       {block.type === 'AUDIO' && (
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
+                            <label className="text-xs font-semibold text-secondary-foreground">
                               {t('lessonEditorStage.audioLectureSource')}
                             </label>
-                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                            <div className="inline-flex rounded-xl bg-secondary p-1 text-xs">
                               <button
                                 type="button"
                                 onClick={() => setBlockTab((prev) => ({ ...prev, [block.id]: 'browse' }))}
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'browse'
-                                    ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-warning shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
@@ -860,8 +860,8 @@ export function LessonEditorStage({
                                 className={cn(
                                   'flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all',
                                   tab === 'url'
-                                    ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900',
+                                    ? 'bg-card text-warning shadow-xs'
+                                    : 'text-secondary-foreground hover:text-foreground',
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
@@ -871,14 +871,14 @@ export function LessonEditorStage({
                           </div>
 
                           {uploadError && (
-                            <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                            <div className="p-3 rounded-xl bg-danger-soft text-danger text-xs border border-danger/30">
                               {uploadError}
                             </div>
                           )}
 
                           {tab === 'browse' ? (
                             block.url ? (
-                              <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
+                              <div className="p-3 rounded-xl bg-warning-soft/50 border border-warning/30 space-y-2">
                                 <div className="flex items-center justify-between text-xs">
                                   <span className="font-semibold truncate max-w-sm">{block.fileName || block.url}</span>
                                   <div className="flex items-center gap-2">
@@ -892,14 +892,14 @@ export function LessonEditorStage({
                                           if (file) handleBlockFileUpload(block.id, 'AUDIO', file);
                                         }}
                                       />
-                                      <span className="px-2 py-1 rounded bg-white dark:bg-slate-800 border text-xs font-semibold hover:bg-slate-100">
+                                      <span className="px-2 py-1 rounded bg-card border text-xs font-semibold hover:bg-secondary">
                                         {isUploading ? 'Uploading...' : 'Replace'}
                                       </span>
                                     </label>
                                     <button
                                       type="button"
                                       onClick={() => handleUpdateBlock(block.id, { url: '', fileName: undefined, fileSize: undefined })}
-                                      className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                      className="p-1 text-subtle-foreground hover:text-danger transition"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </button>
@@ -908,7 +908,7 @@ export function LessonEditorStage({
                                 <audio src={block.url} controls className="w-full" />
                               </div>
                             ) : (
-                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-amber-200 dark:border-amber-800 rounded-xl hover:border-amber-400 cursor-pointer text-center bg-slate-50/50 dark:bg-slate-900/50">
+                              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-warning/30 rounded-xl hover:border-warning/60 cursor-pointer text-center bg-muted/50">
                                 <input
                                   type="file"
                                   accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
@@ -920,13 +920,13 @@ export function LessonEditorStage({
                                 />
                                 {isUploading ? (
                                   <>
-                                    <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingAudio')}</span>
+                                    <Loader2 className="h-6 w-6 text-warning animate-spin" />
+                                    <span className="text-xs text-secondary-foreground">{t('lessonEditorStage.uploadingAudio')}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Headphones className="h-6 w-6 text-amber-600" />
-                                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                    <Headphones className="h-6 w-6 text-warning" />
+                                    <span className="text-xs font-semibold text-foreground">
                                       {t('lessonEditorStage.uploadMp3WavAacAudioLecture')}
                                     </span>
                                   </>
@@ -981,9 +981,9 @@ export function LessonEditorStage({
 
       {/* Sub-lessons & Lesson Assessment section (only for parent lessons) */}
       {!isSubLesson && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h3 className="text-sm font-bold text-slate-900">
+        <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+            <h3 className="text-sm font-bold text-foreground">
               {t('lessonEditorStage.subLessonsCheckpointQuiz')}
             </h3>
 
@@ -996,7 +996,7 @@ export function LessonEditorStage({
                   onClick={onAddSubLesson}
                   className="gap-1.5 text-xs font-semibold"
                 >
-                  <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                  <Plus className="h-3.5 w-3.5 text-primary" />
                   <span>{t('lessonEditorStage.addSubLesson')}</span>
                 </Button>
               )}
@@ -1007,9 +1007,9 @@ export function LessonEditorStage({
                   variant="outline"
                   size="sm"
                   onClick={onAddLessonAssessment}
-                  className="gap-1.5 text-xs font-semibold text-amber-800 border-amber-200 bg-amber-50/50 hover:bg-amber-100/70"
+                  className="gap-1.5 text-xs font-semibold text-warning border-warning/30 bg-warning-soft/50 hover:bg-warning-soft/70"
                 >
-                  <Award className="h-3.5 w-3.5 text-amber-600" />
+                  <Award className="h-3.5 w-3.5 text-warning" />
                   <span>{t('lessonEditorStage.addAssessment')}</span>
                 </Button>
               )}
@@ -1023,24 +1023,24 @@ export function LessonEditorStage({
                 role="button"
                 tabIndex={0}
                 onClick={() => onSelectSubLesson?.(sub.id)}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-indigo-50/40 hover:border-indigo-200 transition cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/50 hover:bg-primary-soft/40 hover:border-primary/30 transition cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-600">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-card border border-border text-[10px] font-bold text-secondary-foreground">
                     {sIdx + 1}
                   </span>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-900 truncate">
+                    <h4 className="text-xs font-bold text-foreground truncate">
                       {sub.title.trim() || t('creatorSidebar.subLesson', { value: sIdx + 1 })}
                     </h4>
-                    <span className="text-[10px] text-slate-500 font-medium">
+                    <span className="text-[10px] text-muted-foreground font-medium">
                       {sub.contentType || 'DOCUMENT'} • {sub.durationMin || 10} {t('lessonEditorStage.min')}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-indigo-600 font-bold group-hover:underline">
+                  <span className="text-[11px] text-primary font-bold group-hover:underline">
                     {t('lessonEditorStage.editSubLesson')} &rarr;
                   </span>
                   <button
@@ -1049,7 +1049,7 @@ export function LessonEditorStage({
                       e.stopPropagation();
                       onDeleteSubLesson?.(sub.id);
                     }}
-                    className="p-1 text-slate-400 hover:text-rose-600 rounded transition"
+                    className="p-1 text-subtle-foreground hover:text-danger rounded transition"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -1063,24 +1063,24 @@ export function LessonEditorStage({
                 role="button"
                 tabIndex={0}
                 onClick={onSelectLessonAssessment}
-                className="flex items-center justify-between p-3 rounded-xl border border-amber-200 bg-amber-50/40 hover:bg-amber-100/60 transition cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-xl border border-warning/30 bg-warning-soft/40 hover:bg-warning-soft/60 transition cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
                     <FileQuestion className="h-3.5 w-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-amber-950 truncate">
+                    <h4 className="text-xs font-bold text-warning truncate">
                       {t('lessonEditorStage.lessonAssessmentCheckpoint')}
                     </h4>
-                    <span className="text-[10px] text-amber-700 font-medium">
+                    <span className="text-[10px] text-warning font-medium">
                       {lessonAssessment.quizQuestions?.length || 0} {t('creatorSidebar.questions')} • {lessonAssessment.quizWeight ?? 20}% {t('lessonEditorStage.weight')}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-amber-800 font-bold group-hover:underline">
+                  <span className="text-[11px] text-warning font-bold group-hover:underline">
                     {t('lessonEditorStage.editQuestions')} &rarr;
                   </span>
                   <button
@@ -1089,7 +1089,7 @@ export function LessonEditorStage({
                       e.stopPropagation();
                       onDeleteLessonAssessment?.();
                     }}
-                    className="p-1 text-amber-700 hover:text-rose-600 rounded transition"
+                    className="p-1 text-warning hover:text-danger rounded transition"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

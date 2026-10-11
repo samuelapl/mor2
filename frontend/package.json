@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run i18n:check",
+    "prebuild": "npm run i18n:check && npm run theme:check",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "i18n:check": "node scripts/i18n-check.mjs"
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "theme:check": "node scripts/theme-check.mjs",
+    "theme:tokens": "node scripts/theme-tokens.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.24",

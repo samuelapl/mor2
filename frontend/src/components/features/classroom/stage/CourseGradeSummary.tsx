@@ -26,15 +26,15 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
   const canRetakeSomething = breakdown.some((a) => a.retakeAvailable);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-2xs">
+    <div className="space-y-4 rounded-2xl border border-border bg-card p-5 text-left shadow-2xs">
       {blockedByGrade && (
-        <div className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+        <div className="flex gap-3 rounded-xl border border-danger/30 bg-danger-soft/80 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
           <div className="space-y-1 text-sm">
-            <p className="font-bold text-rose-800">
+            <p className="font-bold text-danger">
               {t('courseGradeSummary.youDidNotReachTheRequired', { grade, required })}
             </p>
-            <p className="flex items-center gap-1.5 text-rose-700">
+            <p className="flex items-center gap-1.5 text-danger">
               {canRetakeSomething ? <RotateCcw className="h-3.5 w-3.5" /> : <LifeBuoy className="h-3.5 w-3.5" />}
               {canRetakeSomething
                 ? t('courseGradeSummary.retakeAnAssessmentToImproveYour')
@@ -46,24 +46,24 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs font-semibold">
-          <span className="text-slate-700">{t('courseGradeSummary.courseGrade')}</span>
-          <span className={cn('font-mono', gradeShort ? 'text-rose-600' : 'text-emerald-600')}>
+          <span className="text-secondary-foreground">{t('courseGradeSummary.courseGrade')}</span>
+          <span className={cn('font-mono', gradeShort ? 'text-danger' : 'text-success')}>
             {grade}% / {t('courseGradeSummary.required', { required })}
           </span>
         </div>
-        <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className={cn('h-full rounded-full transition-all duration-500', gradeShort ? 'bg-rose-500' : 'bg-emerald-500')}
             style={{ width: `${Math.min(100, grade)}%` }}
           />
-          <div className="absolute top-0 h-full w-0.5 bg-slate-700" style={{ left: `${Math.min(100, required)}%` }} title={`${required}%`} />
+          <div className="absolute top-0 h-full w-0.5 bg-secondary-foreground" style={{ left: `${Math.min(100, required)}%` }} title={`${required}%`} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400">
+            <tr className="border-b border-border/60 text-left text-[11px] uppercase tracking-wider text-subtle-foreground">
               <th className="py-2 pr-3 font-semibold">{t('courseGradeSummary.assessment')}</th>
               <th className="py-2 pr-3 text-right font-semibold">{t('courseGradeSummary.best')}</th>
               <th className="py-2 pr-3 text-right font-semibold">{t('courseGradeSummary.passMark')}</th>
@@ -73,20 +73,20 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
           </thead>
           <tbody>
             {breakdown.map((a) => (
-              <tr key={a.id} className="border-b border-slate-50 last:border-0">
+              <tr key={a.id} className="border-b border-border/40 last:border-0">
                 <td className="py-2 pr-3">
-                  <span className="flex items-center gap-1.5 font-medium text-slate-800">
+                  <span className="flex items-center gap-1.5 font-medium text-foreground">
                     {a.passed ? (
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
                     ) : (
-                      <XCircle className={cn('h-3.5 w-3.5 shrink-0', a.attempted ? 'text-rose-500' : 'text-slate-300')} />
+                      <XCircle className={cn('h-3.5 w-3.5 shrink-0', a.attempted ? 'text-rose-500' : 'text-subtle-foreground')} />
                     )}
                     {a.titleEn}
                     {a.type === 'SESSION_ASSESSMENT' && (
-                      <span className="rounded bg-sky-100 px-1 text-[10px] font-semibold text-sky-700">{t('courseGradeSummary.liveSession')}</span>
+                      <span className="rounded bg-info-soft px-1 text-[10px] font-semibold text-info">{t('courseGradeSummary.liveSession')}</span>
                     )}
                     {!a.attempted && (
-                      <span className="rounded bg-slate-100 px-1 text-[10px] font-semibold text-slate-500">
+                      <span className="rounded bg-secondary px-1 text-[10px] font-semibold text-muted-foreground">
                         {a.type === 'SESSION_ASSESSMENT' ? t('courseGradeSummary.upcoming') : t('courseGradeSummary.notTaken')}
                       </span>
                     )}

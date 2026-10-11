@@ -67,7 +67,7 @@ export default function ProgressPage() {
             return (
               <div
                 key={course.id}
-                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+                className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm"
               >
                 <button
                   type="button"
@@ -75,11 +75,11 @@ export default function ProgressPage() {
                     setExpanded((prev) => ({ ...prev, [course.id]: !prev[course.id] }))
                   }
                   // Phones: title + chevron, then the bar, then status + action. One row from `sm`.
-                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 text-left transition-colors hover:bg-slate-50/60 sm:flex-nowrap sm:px-5"
+                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 text-left transition-colors hover:bg-muted/60 sm:flex-nowrap sm:px-5"
                 >
                   <div className="order-1 min-w-0 flex-1 sm:order-none">
-                    <p className="truncate font-medium text-slate-900">{course.title}</p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="truncate font-medium text-foreground">{course.title}</p>
+                    <p className="text-[11px] text-subtle-foreground">
                       {data
                         ? `${data.stats.completedLessons}/${data.stats.totalLessons} lessons · ${data.stats.totalModules} modules`
                         : course.code}
@@ -88,7 +88,7 @@ export default function ProgressPage() {
                   <div className="order-3 w-full sm:order-none sm:w-40">
                     <div className="flex items-center gap-3">
                       <ProgressBar value={percent} className="flex-1" />
-                      <span className="w-10 text-right text-xs font-medium text-slate-600">
+                      <span className="w-10 text-right text-xs font-medium text-secondary-foreground">
                         {data ? `${percent}%` : '…'}
                       </span>
                     </div>
@@ -102,7 +102,7 @@ export default function ProgressPage() {
                     className={cn(
                       'order-5 ml-auto sm:order-none sm:ml-0',
                       done &&
-                        'border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400',
+                        'border-success/30 bg-success-soft/70 text-success hover:bg-success-soft hover:border-success/60',
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -111,7 +111,7 @@ export default function ProgressPage() {
                   >
                     {done ? (
                       <>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                         {tCommon('completed')}
                       </>
                     ) : (
@@ -123,22 +123,22 @@ export default function ProgressPage() {
                   </Button>
                   <ChevronDown
                     className={cn(
-                      'order-2 h-4 w-4 shrink-0 text-slate-400 transition-transform sm:order-none',
+                      'order-2 h-4 w-4 shrink-0 text-subtle-foreground transition-transform sm:order-none',
                       open ? 'rotate-180' : '',
                     )}
                   />
                 </button>
                 {open && data ? (
-                  <div className="space-y-4 border-t border-slate-100 px-5 py-4">
+                  <div className="space-y-4 border-t border-border/60 px-5 py-4">
                     {data.modules.map((mod) => (
                       <div key={mod.moduleId}>
                         <div className="flex items-start justify-between gap-3">
-                          <p className="min-w-0 text-sm font-semibold text-slate-700">
+                          <p className="min-w-0 text-sm font-semibold text-secondary-foreground">
                             {mod.unlocked === false ? (
-                              <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" />
+                              <Lock className="mr-1.5 inline h-3.5 w-3.5 text-subtle-foreground" />
                             ) : null}
                             {mod.title || mod.titleEn}
-                            <span className="ml-2 text-xs font-normal text-slate-400">
+                            <span className="ml-2 text-xs font-normal text-subtle-foreground">
                               {mod.completedLessons}/{mod.totalLessons} lessons
                             </span>
                           </p>
@@ -153,7 +153,7 @@ export default function ProgressPage() {
                                 <span
                                   className={cn(
                                     'font-medium',
-                                    lesson.unlocked === false ? 'text-slate-400' : 'text-slate-700',
+                                    lesson.unlocked === false ? 'text-subtle-foreground' : 'text-secondary-foreground',
                                   )}
                                 >
                                   {lesson.title || lesson.titleEn}

@@ -107,13 +107,13 @@ export function RichEditor({
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
-          'before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none',
+          'before:content-[attr(data-placeholder)] before:text-subtle-foreground before:float-left before:pointer-events-none',
       }),
     ],
     content: value,
     editorProps: {
       attributes: {
-        class: `rich-content prose prose-sm max-w-none px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none`,
+        class: `rich-content prose prose-sm max-w-none px-4 py-3 text-foreground focus:outline-none`,
         style: `min-height: ${minHeight}px`,
       },
     },
@@ -133,8 +133,8 @@ export function RichEditor({
   if (!editor) return null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10">
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 bg-slate-50/70 p-1.5">
+    <div className="overflow-hidden rounded-xl border border-border/90 bg-card shadow-xs focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/10">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-border/60 bg-muted/70 p-1.5">
         {TOOLBAR_BUTTONS.map((btn) => {
           const Icon = btn.icon;
           const active = btn.isActive(editor);
@@ -145,8 +145,8 @@ export function RichEditor({
               onClick={() => btn.run(editor)}
               title={btn.title}
               className={cn(
-                'rounded-md p-1.5 text-slate-600 transition hover:bg-slate-200/70 hover:text-slate-900',
-                active && 'bg-indigo-100 text-indigo-700 hover:bg-indigo-100',
+                'rounded-md p-1.5 text-secondary-foreground transition hover:bg-input/60 hover:text-foreground',
+                active && 'bg-primary-soft text-primary hover:bg-primary/15',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -177,13 +177,13 @@ export function CompactRichEditor({
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
-          'before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none',
+          'before:content-[attr(data-placeholder)] before:text-subtle-foreground before:float-left before:pointer-events-none',
       }),
     ],
     content: value,
     editorProps: {
       attributes: {
-        class: 'rich-content prose prose-sm max-w-none px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none min-h-[48px]',
+        class: 'rich-content prose prose-sm max-w-none px-3 py-2 text-foreground focus:outline-none min-h-[48px]',
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -202,14 +202,14 @@ export function CompactRichEditor({
   if (!editor) return null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/10">
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50/70 px-2 py-1">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/10">
+      <div className="flex flex-wrap items-center gap-1 border-b border-border/60 bg-muted/70 px-2 py-1">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('bold') && 'bg-indigo-100 text-indigo-700 font-bold',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('bold') && 'bg-primary-soft text-primary font-bold',
           )}
           title="Bold"
         >
@@ -219,8 +219,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('italic') && 'bg-indigo-100 text-indigo-700',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('italic') && 'bg-primary-soft text-primary',
           )}
           title="Italic"
         >
@@ -230,20 +230,20 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('underline') && 'bg-indigo-100 text-indigo-700',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('underline') && 'bg-primary-soft text-primary',
           )}
           title="Underline"
         >
           <UnderlineIcon className="h-3.5 w-3.5" />
         </button>
-        <span className="h-3 w-px bg-slate-200 mx-0.5" />
+        <span className="h-3 w-px bg-border mx-0.5" />
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('bulletList') && 'bg-indigo-100 text-indigo-700',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('bulletList') && 'bg-primary-soft text-primary',
           )}
           title="Bullet List"
         >
@@ -253,8 +253,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('orderedList') && 'bg-indigo-100 text-indigo-700',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('orderedList') && 'bg-primary-soft text-primary',
           )}
           title="Numbered List"
         >
@@ -264,8 +264,8 @@ export function CompactRichEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCode().run()}
           className={cn(
-            'rounded p-1 text-slate-600 hover:bg-slate-200/70',
-            editor.isActive('code') && 'bg-indigo-100 text-indigo-700',
+            'rounded p-1 text-secondary-foreground hover:bg-input/60',
+            editor.isActive('code') && 'bg-primary-soft text-primary',
           )}
           title="Code"
         >
@@ -349,48 +349,48 @@ export function getFileBadge(file: UploadedResource) {
   if (['pdf'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      bgColor: 'bg-danger-soft text-danger border-danger/30',
       badgeLabel: 'PDF',
     };
   }
   if (['doc', 'docx'].includes(ext)) {
     return {
       icon: FileText,
-      bgColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      bgColor: 'bg-info-soft text-info border-info/30',
       badgeLabel: 'Word',
     };
   }
   if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return {
       icon: FileSpreadsheet,
-      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      bgColor: 'bg-success-soft text-success border-success/30',
       badgeLabel: 'Spreadsheet',
     };
   }
   if (['ppt', 'pptx'].includes(ext)) {
     return {
       icon: Presentation,
-      bgColor: 'bg-orange-50 text-orange-700 border-orange-200',
+      bgColor: 'bg-warning-soft text-warning border-warning/30',
       badgeLabel: 'Presentation',
     };
   }
   if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
     return {
       icon: Film,
-      bgColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      bgColor: 'bg-accent-soft text-accent border-accent/30',
       badgeLabel: 'Video',
     };
   }
   if (['mp3', 'wav', 'm4a', 'aac'].includes(ext)) {
     return {
       icon: Headphones,
-      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      bgColor: 'bg-warning-soft text-warning border-warning/30',
       badgeLabel: 'Audio',
     };
   }
   return {
     icon: Paperclip,
-    bgColor: 'bg-slate-100 text-slate-700 border-slate-200',
+    bgColor: 'bg-secondary text-secondary-foreground border-border',
     badgeLabel: ext.toUpperCase() || 'File',
   };
 }
@@ -440,24 +440,24 @@ export function MultiFileUploader({
 
   const themeClasses = {
     indigo: {
-      activeBorder: 'border-indigo-500 bg-indigo-50/50',
+      activeBorder: 'border-ring bg-primary-soft/50',
       icon: 'text-indigo-500',
-      badge: 'bg-indigo-50 text-indigo-700',
+      badge: 'bg-primary-soft text-primary',
     },
     emerald: {
-      activeBorder: 'border-emerald-500 bg-emerald-50/50',
+      activeBorder: 'border-success bg-success-soft/50',
       icon: 'text-emerald-500',
-      badge: 'bg-emerald-50 text-emerald-700',
+      badge: 'bg-success-soft text-success',
     },
     orange: {
-      activeBorder: 'border-orange-500 bg-orange-50/50',
+      activeBorder: 'border-warning bg-warning-soft/50',
       icon: 'text-orange-500',
-      badge: 'bg-orange-50 text-orange-700',
+      badge: 'bg-warning-soft text-warning',
     },
     slate: {
-      activeBorder: 'border-slate-500 bg-slate-50/50',
-      icon: 'text-slate-500',
-      badge: 'bg-slate-100 text-slate-700',
+      activeBorder: 'border-muted-foreground bg-muted/50',
+      icon: 'text-muted-foreground',
+      badge: 'bg-secondary text-secondary-foreground',
     },
   }[theme];
 
@@ -468,7 +468,7 @@ export function MultiFileUploader({
           {allFiles.map((file, idx) => (
             <div
               key={file.id || file.url || idx}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white p-2.5 px-3.5 text-xs shadow-2xs hover:border-slate-300 transition"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/90 bg-card p-2.5 px-3.5 text-xs shadow-2xs hover:border-input transition"
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div
@@ -480,11 +480,11 @@ export function MultiFileUploader({
                   <FileText className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-800" title={file.name}>
+                  <p className="truncate font-medium text-foreground" title={file.name}>
                     {file.name}
                   </p>
                   {file.size ? (
-                    <p className="text-[11px] text-slate-400">{formatFileSize(file.size)}</p>
+                    <p className="text-[11px] text-subtle-foreground">{formatFileSize(file.size)}</p>
                   ) : null}
                 </div>
               </div>
@@ -493,14 +493,14 @@ export function MultiFileUploader({
                   href={file.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 transition"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-2.5 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary transition"
                 >
                   <ExternalLink className="h-3 w-3" /> View
                 </a>
                 <button
                   type="button"
                   onClick={() => onRemove(file.id || file.url)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                  className="rounded-lg p-1 text-subtle-foreground hover:bg-danger-soft hover:text-danger transition"
                   title="Remove file"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -534,7 +534,7 @@ export function MultiFileUploader({
           'relative rounded-xl border border-dashed p-3 text-center transition',
           isDragging
             ? themeClasses.activeBorder
-            : 'border-slate-300 bg-slate-50/40 hover:border-slate-400 hover:bg-slate-50/80',
+            : 'border-input bg-muted/40 hover:border-subtle-foreground/60 hover:bg-muted/80',
         )}
       >
         <input
@@ -556,23 +556,23 @@ export function MultiFileUploader({
           className="flex flex-col items-center justify-center gap-1 cursor-pointer select-none py-1"
         >
           {uploading ? (
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-600">
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Uploading file(s)...</span>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition">
+              <div className="flex items-center gap-2 text-xs font-semibold text-secondary-foreground hover:text-primary transition">
                 <Upload className={cn('h-4 w-4', themeClasses.icon)} />
                 <span>{placeholderText}</span>
               </div>
-              <p className="text-[11px] text-slate-400 max-w-md">{descriptionText}</p>
+              <p className="text-[11px] text-subtle-foreground max-w-md">{descriptionText}</p>
             </>
           )}
         </label>
       </div>
 
-      {uploadError ? <p className="text-xs text-red-600 font-medium">{uploadError}</p> : null}
+      {uploadError ? <p className="text-xs text-danger font-medium">{uploadError}</p> : null}
     </div>
   );
 }
@@ -712,13 +712,13 @@ export function SmartTextarea({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/10">
-      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50/80 border-b border-slate-100 text-xs text-slate-600">
-        <span className="text-[11px] font-medium text-slate-400 mr-1">Quick list:</span>
+    <div className="rounded-xl border border-border/90 bg-card overflow-hidden shadow-2xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/10">
+      <div className="flex items-center gap-1.5 px-3 py-1 bg-muted/80 border-b border-border/60 text-xs text-secondary-foreground">
+        <span className="text-[11px] font-medium text-subtle-foreground mr-1">Quick list:</span>
         <button
           type="button"
           onClick={() => insertPrefix('bullet')}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-slate-200 text-slate-700 font-medium transition text-[11px]"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-input/60 text-secondary-foreground font-medium transition text-[11px]"
           title="Add Bullet (•)"
         >
           <span>•</span> Bullet List
@@ -726,7 +726,7 @@ export function SmartTextarea({
         <button
           type="button"
           onClick={() => insertPrefix('number')}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-slate-200 text-slate-700 font-medium transition text-[11px]"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-input/60 text-secondary-foreground font-medium transition text-[11px]"
           title="Add Numbered List (1.)"
         >
           <span>1.</span> Numbered List
@@ -740,7 +740,7 @@ export function SmartTextarea({
         onKeyDown={(e) => handleSmartListKeyDown(e, value, onChange)}
         placeholder={placeholder}
         rows={rows}
-        className={cn('w-full px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none resize-y', className)}
+        className={cn('w-full px-3 py-2 text-sm text-foreground placeholder-subtle-foreground outline-none resize-y', className)}
       />
     </div>
   );

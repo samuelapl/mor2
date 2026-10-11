@@ -92,14 +92,14 @@ export function MediaStage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-4 space-y-2">
+      <div className="border-b border-border pb-4 space-y-2">
         <div className="flex items-center gap-2">
           {badgeLabel ? (
             <Badge variant="indigo" className="text-xs">
               {badgeLabel}
             </Badge>
           ) : null}
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
             {isPresentation ? (
               <Presentation className="h-3 w-3 text-indigo-500" />
             ) : isVideo ? (
@@ -115,7 +115,7 @@ export function MediaStage({
             {durationMin ? ` · ${durationMin} min` : ''}
           </span>
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{title}</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">{title}</h2>
       </div>
 
       {/* Multi-Content Blocks or Single Media Player */}
@@ -130,15 +130,15 @@ export function MediaStage({
               const htmlContent = block.content;
               if (!htmlContent?.trim()) return null;
               return (
-                <div key={block.id || `doc-${bIdx}`} className="rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-2xs space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[11px]">
+                <div key={block.id || `doc-${bIdx}`} className="rounded-2xl border border-border/90 bg-card p-6 shadow-2xs space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-secondary-foreground">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary-soft text-primary text-[11px]">
                       {bIdx + 1}
                     </span>
                     <h4>{bTitle || 'Lecture Notes & Study Material'}</h4>
                   </div>
-                  <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200 prose dark:prose-invert prose-base max-w-none">
-                    <RichContent html={htmlContent} className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200" />
+                  <div className="text-[15px] sm:text-base leading-relaxed text-foreground prose dark:prose-invert prose-base max-w-none">
+                    <RichContent html={htmlContent} className="text-[15px] sm:text-base leading-relaxed text-foreground" />
                   </div>
                 </div>
               );
@@ -159,7 +159,7 @@ export function MediaStage({
                   }
                 />
               ) : (
-                <div key={block.id || `pres-${bIdx}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-xs text-slate-400">
+                <div key={block.id || `pres-${bIdx}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-xs text-subtle-foreground">
                   No presentation URL provided.
                 </div>
               );
@@ -169,7 +169,7 @@ export function MediaStage({
               const isBlockYt = bUrl && (bUrl.includes('youtube.com') || bUrl.includes('youtu.be'));
               return (
                 <div key={block.id || `vid-${bIdx}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-md">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs text-slate-300">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs text-subtle-foreground">
                     <div className="flex items-center gap-2 truncate">
                       <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-950 text-rose-400 font-bold text-[11px]">
                         {bIdx + 1}
@@ -195,7 +195,7 @@ export function MediaStage({
                       </div>
                     )
                   ) : (
-                    <div className="p-8 text-center text-xs text-slate-400">No video URL provided.</div>
+                    <div className="p-8 text-center text-xs text-subtle-foreground">No video URL provided.</div>
                   )}
                 </div>
               );
@@ -214,7 +214,7 @@ export function MediaStage({
                   {bUrl ? (
                     <audio src={bUrl} controls className="w-full" />
                   ) : (
-                    <div className="text-center text-xs text-slate-400">No audio URL provided.</div>
+                    <div className="text-center text-xs text-subtle-foreground">No audio URL provided.</div>
                   )}
                 </div>
               );
@@ -259,8 +259,8 @@ export function MediaStage({
                 </div>
               )
             ) : (
-              <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 bg-slate-900 text-slate-400">
-                {isPresentation ? <Presentation className="h-10 w-10 text-slate-600" /> : <PlayCircle className="h-10 w-10 text-slate-600" />}
+              <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 bg-slate-900 text-subtle-foreground">
+                {isPresentation ? <Presentation className="h-10 w-10 text-secondary-foreground" /> : <PlayCircle className="h-10 w-10 text-secondary-foreground" />}
                 <p className="text-xs">
                   {isPresentation
                     ? 'No slide deck or presentation configured for this lecture.'
@@ -272,12 +272,12 @@ export function MediaStage({
 
           {/* Lecture Notes below player */}
           {content && (
-            <div className="rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-2xs space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-2xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
                 Lecture Notes & Detailed Study Material
               </h3>
-              <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200 prose dark:prose-invert prose-base max-w-none">
-                <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200" />
+              <div className="text-[15px] sm:text-base leading-relaxed text-foreground prose dark:prose-invert prose-base max-w-none">
+                <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-foreground" />
               </div>
             </div>
           )}
@@ -297,10 +297,10 @@ export function MediaStage({
           <div
             className={`rounded-2xl border p-5 sm:p-6 transition-all shadow-2xs ${
               isQuizPassed
-                ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                ? 'border-success/30 bg-success-soft/60'
                 : isQuizUnlocked
-                  ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/80 dark:border-indigo-900/50 dark:from-indigo-950/30 dark:via-slate-900 dark:to-violet-950/30 ring-1 ring-indigo-500/20'
-                  : 'border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40'
+                  ? 'border-primary/30 bg-gradient-to-r from-primary-soft/80 via-card to-accent-soft/80 ring-1 ring-ring/20'
+                  : 'border-border bg-muted/70'
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -308,10 +308,10 @@ export function MediaStage({
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                     isQuizPassed
-                      ? 'border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                      ? 'border-success/30 bg-success-soft text-success'
                       : isQuizUnlocked
-                        ? 'border-indigo-300 bg-indigo-100 text-indigo-700 shadow-2xs dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
-                        : 'border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+                        ? 'border-primary/30 bg-primary-soft text-primary shadow-2xs'
+                        : 'border-border bg-secondary text-subtle-foreground'
                   }`}
                 >
                   {isQuizPassed ? (
@@ -325,14 +325,14 @@ export function MediaStage({
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{assessment.titleEn}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{assessment.titleEn}</h4>
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                         isQuizPassed
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60'
+                          ? 'bg-success-soft text-success border-success/30'
                           : isQuizUnlocked
-                            ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800/60'
-                            : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                            ? 'bg-primary-soft text-primary border-primary/30'
+                            : 'bg-border text-secondary-foreground border-input'
                       }`}
                     >
                       {isQuizPassed
@@ -343,7 +343,7 @@ export function MediaStage({
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {isQuizPassed
                       ? `You successfully passed this checkpoint assessment (Requirement: ${assessment.passingScore}%). Great job!`
                       : isQuizUnlocked
@@ -361,10 +361,10 @@ export function MediaStage({
                   onClick={() => onTakeQuiz(assessment.id)}
                   className={
                     isQuizPassed
-                      ? 'border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-slate-700'
+                      ? 'border-success/30 bg-card text-success hover:bg-success-soft'
                       : isQuizUnlocked
                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                        : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
+                        : 'bg-border text-subtle-foreground'
                   }
                 >
                   {isQuizPassed ? (

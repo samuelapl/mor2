@@ -1396,7 +1396,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       const moduleIndex = modules.findIndex((m) => m.id === activeNode.moduleId);
       const currentModule = modules[moduleIndex];
       if (!currentModule) {
-        return <div className="p-8 text-center text-slate-500">Module not found. Please select another item from the sidebar.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Module not found. Please select another item from the sidebar.</div>;
       }
       return (
         <ModuleEditorStage
@@ -1424,7 +1424,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       }
       const currentLesson = instructional[lessonIndex];
       if (!currentModule || !currentLesson) {
-        return <div className="p-8 text-center text-slate-500">Lesson not found. Please select another item from the sidebar.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Lesson not found. Please select another item from the sidebar.</div>;
       }
       return (
         <LessonEditorStage
@@ -1476,7 +1476,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       }
       const currentSub = subs[subIndex];
       if (!currentModule || !parentLesson || !currentSub) {
-        return <div className="p-8 text-center text-slate-500">Sub-lesson not found. Please select another item from the sidebar.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Sub-lesson not found. Please select another item from the sidebar.</div>;
       }
       return (
         <LessonEditorStage
@@ -1512,7 +1512,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       const currentModule = modules.find((m) => m.id === activeNode.moduleId);
       const assessmentLesson = currentModule?.lessons.find(isModuleAssessmentLesson);
       if (!currentModule || !assessmentLesson) {
-        return <div className="p-8 text-center text-slate-500">Module assessment not found.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Module assessment not found.</div>;
       }
       const update = (patch: (l: LessonDraft) => Partial<LessonDraft>) => updateModuleAssessment(currentModule.id, patch);
       return (
@@ -1543,7 +1543,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       const currentLesson = currentModule?.lessons.find((l) => l.id === activeNode.lessonId);
       const assessmentSub = currentLesson?.subLessons?.find(isLessonAssessmentSub);
       if (!currentModule || !currentLesson || !assessmentSub) {
-        return <div className="p-8 text-center text-slate-500">Lesson assessment not found.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Lesson assessment not found.</div>;
       }
       const update = (patch: (s: LessonDraft) => Partial<LessonDraft>) => updateLessonAssessment(currentModule.id, currentLesson.id, patch);
       return (
@@ -1608,7 +1608,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       const index = activeSessionPlans.findIndex((p) => p.id === activeNode.sessionPlanId);
       const plan = activeSessionPlans[index];
       if (!plan) {
-        return <div className="p-8 text-center text-slate-500">Session not found. Please select another item from the sidebar.</div>;
+        return <div className="p-8 text-center text-muted-foreground">Session not found. Please select another item from the sidebar.</div>;
       }
       return (
         <SessionPlanEditorStage
@@ -1660,7 +1660,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans antialiased text-slate-800">
+    <div className="flex h-screen flex-col overflow-hidden bg-muted font-sans antialiased text-foreground">
       {/* Top Header */}
       <CreatorHeader
         phase={currentPhase}
@@ -1684,9 +1684,9 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
       {/* Emergency Auto-Saved Draft Prompt Banner */}
       {emergencyDraftToRestore && (
-        <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 z-10 shrink-0 shadow-2xs animate-in fade-in">
+        <div className="bg-warning-soft border-b border-warning/30 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-warning z-10 shrink-0 shadow-2xs animate-in fade-in">
           <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-amber-900 font-bold shrink-0 text-[11px]">!</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-warning/20 text-warning font-bold shrink-0 text-[11px]">!</span>
             <span>
               <strong>Auto-saved course draft found</strong> from previous session ({emergencyDraftToRestore.savedAt ? new Date(emergencyDraftToRestore.savedAt).toLocaleTimeString() : 'recently'}). Would you like to restore your changes?
             </span>
@@ -1702,7 +1702,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
             <button
               type="button"
               onClick={discardEmergencyDraft}
-              className="px-3 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg transition"
+              className="px-3 py-1 bg-card hover:bg-warning-soft text-warning border border-warning/30 rounded-lg transition"
             >
               Discard
             </button>
@@ -1712,7 +1712,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
       {/* Learner Preview Mode Full Overlay */}
       {previewSnapshot && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col">
+        <div className="fixed inset-0 z-50 bg-card flex flex-col">
           <ClassroomShell previewCourse={previewSnapshot} isPreview={true} onExitPreview={exitPreview} />
         </div>
       )}
@@ -1745,7 +1745,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         />
 
         {/* Center Main Stage Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-8 md:px-10 lg:px-12 bg-slate-50/70">{renderActiveStage()}</main>
+        <main className="flex-1 overflow-y-auto px-6 py-8 md:px-10 lg:px-12 bg-muted/70">{renderActiveStage()}</main>
       </div>
 
       <ConfirmModal

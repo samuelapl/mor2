@@ -238,10 +238,10 @@ export default function PoliciesPage() {
 
   const toggleClass = (active: boolean) =>
     cn(
-      'relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
+      'relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/20',
       active
         ? 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30'
-        : 'bg-slate-300',
+        : 'bg-input',
     );
 
   const numericThreshold = Math.min(100, Math.max(10, parseInt(attendanceThreshold, 10) || 60));
@@ -253,7 +253,7 @@ export default function PoliciesPage() {
       description={t('policiesPage.manageInstitutionalPoliciesIncludingCour')}
     >
       {/* Navigation Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-3">
         <button
           type="button"
           onClick={() => switchTab('course')}
@@ -261,7 +261,7 @@ export default function PoliciesPage() {
             'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs cursor-pointer',
             activeTab === 'course'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
-              : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
+              : 'bg-card text-secondary-foreground hover:bg-secondary hover:text-foreground border border-border/80',
           )}
         >
           <Clock className="h-4 w-4" />
@@ -275,7 +275,7 @@ export default function PoliciesPage() {
             'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-xs cursor-pointer',
             activeTab === 'live_sessions'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
-              : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80',
+              : 'bg-card text-secondary-foreground hover:bg-secondary hover:text-foreground border border-border/80',
           )}
         >
           <Video className="h-4 w-4" />
@@ -290,10 +290,10 @@ export default function PoliciesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-foreground">
                 {t('policiesPage.courseCompletionRetakeRules')}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {t('policiesPage.appliedGloballyToModuleProgressCalculati')}
               </p>
             </div>
@@ -316,10 +316,10 @@ export default function PoliciesPage() {
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
               {/* Course Progress Policy (Progression Mode Accordion) */}
-              <Card className="lg:col-span-2 border-indigo-100/80 shadow-xs">
+              <Card className="lg:col-span-2 border-primary/25 shadow-xs">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
                       <Compass className="h-5 w-5" />
                     </div>
                     <div>
@@ -347,8 +347,8 @@ export default function PoliciesPage() {
                     className={cn(
                       'rounded-xl border transition-all cursor-pointer overflow-hidden',
                       progressionMode === 'LOCKED'
-                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
+                        ? 'border-primary bg-primary-soft/40 shadow-xs ring-1 ring-ring/20'
+                        : 'border-border bg-card hover:border-input hover:bg-muted/50',
                     )}
                   >
                     <div className="flex items-center justify-between p-4">
@@ -358,21 +358,21 @@ export default function PoliciesPage() {
                             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
                             progressionMode === 'LOCKED'
                               ? 'bg-indigo-600 text-white'
-                              : 'bg-slate-100 text-slate-500',
+                              : 'bg-secondary text-muted-foreground',
                           )}
                         >
                           <Lock className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-slate-900">
+                            <h4 className="text-sm font-semibold text-foreground">
                               {t('policiesPage.lockedProgressionSequential')}
                             </h4>
                             <Badge variant="slate" className="text-[10px] py-0 px-1.5">
                               {t('policiesPage.default')}
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {t('policiesPage.learnersMustCompleteModulesLessonsAnd')}
                           </p>
                         </div>
@@ -383,21 +383,21 @@ export default function PoliciesPage() {
                           name="progressionMode"
                           checked={progressionMode === 'LOCKED'}
                           onChange={() => setProgressionMode('LOCKED')}
-                          className="h-4 w-4 text-indigo-600 accent-indigo-600 cursor-pointer"
+                          className="h-4 w-4 text-primary accent-indigo-600 cursor-pointer"
                         />
                       </div>
                     </div>
 
                     {progressionMode === 'LOCKED' && (
-                      <div className="border-t border-indigo-100 bg-indigo-50/60 px-4 py-3 text-xs text-slate-600 space-y-1.5">
+                      <div className="border-t border-primary/30 bg-primary-soft/60 px-4 py-3 text-xs text-secondary-foreground space-y-1.5">
                         <div className="flex items-start gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                           <span>
                             {t('policiesPage.aModuleOrLessonUnlocksOnly')}
                           </span>
                         </div>
                         <div className="flex items-start gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                           <span>
                             {t('policiesPage.bestSuitedForStepByStep')}
                           </span>
@@ -412,8 +412,8 @@ export default function PoliciesPage() {
                     className={cn(
                       'rounded-xl border transition-all cursor-pointer overflow-hidden',
                       progressionMode === 'OPEN'
-                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50',
+                        ? 'border-primary bg-primary-soft/40 shadow-xs ring-1 ring-ring/20'
+                        : 'border-border bg-card hover:border-input hover:bg-muted/50',
                     )}
                   >
                     <div className="flex items-center justify-between p-4">
@@ -423,21 +423,21 @@ export default function PoliciesPage() {
                             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
                             progressionMode === 'OPEN'
                               ? 'bg-indigo-600 text-white'
-                              : 'bg-slate-100 text-slate-500',
+                              : 'bg-secondary text-muted-foreground',
                           )}
                         >
                           <Unlock className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-slate-900">
+                            <h4 className="text-sm font-semibold text-foreground">
                               {t('policiesPage.openProgressionFlexibleSelfPaced')}
                             </h4>
                             <Badge variant="blue" className="text-[10px] py-0 px-1.5">
                               {t('policiesPage.flexible')}
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {t('policiesPage.allModulesLessonsAndQuizzesAre')}
                           </p>
                         </div>
@@ -448,21 +448,21 @@ export default function PoliciesPage() {
                           name="progressionMode"
                           checked={progressionMode === 'OPEN'}
                           onChange={() => setProgressionMode('OPEN')}
-                          className="h-4 w-4 text-indigo-600 accent-indigo-600 cursor-pointer"
+                          className="h-4 w-4 text-primary accent-indigo-600 cursor-pointer"
                         />
                       </div>
                     </div>
 
                     {progressionMode === 'OPEN' && (
-                      <div className="border-t border-indigo-100 bg-indigo-50/60 px-4 py-3 text-xs text-slate-600 space-y-1.5">
+                      <div className="border-t border-primary/30 bg-primary-soft/60 px-4 py-3 text-xs text-secondary-foreground space-y-1.5">
                         <div className="flex items-start gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                           <span>
                             {t('policiesPage.learnersCanExploreAnyTopicAnd')}
                           </span>
                         </div>
                         <div className="flex items-start gap-2">
-                          <ShieldAlert className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                          <ShieldAlert className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" />
                           <span>
                             {t('policiesPage.theFinalAssessmentAndCertificateRemain')}
                           </span>
@@ -475,7 +475,7 @@ export default function PoliciesPage() {
 
               <Card>
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -487,9 +487,9 @@ export default function PoliciesPage() {
                 </div>
 
                 <div className="mt-6 space-y-3">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                  <div className="flex items-center justify-between text-sm font-semibold text-secondary-foreground">
                     <span>{t('policiesPage.requiredTimeSpent')}</span>
-                    <span className="text-indigo-600 font-bold">{timeSpentPercent}%</span>
+                    <span className="text-primary font-bold">{timeSpentPercent}%</span>
                   </div>
                   <input
                     type="range"
@@ -510,14 +510,14 @@ export default function PoliciesPage() {
                       onChange={(e) =>
                         setTimeSpentPercent(Math.min(100, Math.max(0, Number(e.target.value) || 0)))
                       }
-                      className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                      className="w-24 rounded-lg border border-border px-3 py-1.5 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/10"
                     />
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-subtle-foreground">
                       {t('policiesPage.eGA20MinuteLesson', { value: Math.ceil(20 * 60 * (timeSpentPercent / 100)) })}
                     </span>
                   </div>
                   {timeSpentPercent === 0 ? (
-                    <p className="flex items-center gap-1.5 text-xs text-amber-600">
+                    <p className="flex items-center gap-1.5 text-xs text-warning">
                       <ShieldAlert className="h-3.5 w-3.5" />
                       {t('policiesPage.n0DisablesTheTimeRequirementEntirely')}
                     </p>
@@ -527,7 +527,7 @@ export default function PoliciesPage() {
 
               <Card>
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
                     <RotateCcw className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -542,7 +542,7 @@ export default function PoliciesPage() {
 
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Timer className="h-4 w-4 text-slate-400" />
+                    <Timer className="h-4 w-4 text-subtle-foreground" />
                     <input
                       type="number"
                       min={0}
@@ -550,13 +550,13 @@ export default function PoliciesPage() {
                       onChange={(e) =>
                         setRetakeCooldownMinutes(Math.max(0, Number(e.target.value) || 0))
                       }
-                      className="w-28 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                      className="w-28 rounded-lg border border-border px-3 py-1.5 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/10"
                     />
-                    <span className="text-sm text-slate-600 font-medium">
+                    <span className="text-sm text-secondary-foreground font-medium">
                       {t('policiesPage.minutes')}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {retakeCooldownMinutes === 0
                       ? t('policiesPage.retakesAreDisabledMaxAttemptsReached')
                       : t('policiesPage.aLearnerWhoExhaustsTheirAttempts', { retakeCooldownMinutes })}
@@ -567,7 +567,7 @@ export default function PoliciesPage() {
               {/* Card 4: Global Assessment & Certification Pass Mark */}
               <Card>
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success">
                     <Award className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -586,9 +586,9 @@ export default function PoliciesPage() {
                 </div>
 
                 <div className="mt-6 space-y-4">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                  <div className="flex items-center justify-between text-sm font-semibold text-secondary-foreground">
                     <span>{t('policiesPage.passingThreshold')}</span>
-                    <span className="text-emerald-700 font-bold text-base">{passingScorePercent}%</span>
+                    <span className="text-success font-bold text-base">{passingScorePercent}%</span>
                   </div>
 
                   <input
@@ -612,9 +612,9 @@ export default function PoliciesPage() {
                           Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 50)),
                         )
                       }
-                      className="w-24 rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 font-semibold text-slate-800"
+                      className="w-24 rounded-lg border border-border px-3 py-1.5 text-sm shadow-sm focus:border-success/60 focus:outline-none focus:ring-4 focus:ring-success/10 font-semibold text-foreground"
                     />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       {t('policiesPage.selectPresetStandard')}
                     </span>
                     {[
@@ -632,7 +632,7 @@ export default function PoliciesPage() {
                           'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all shadow-xs border',
                           passingScorePercent === preset.value
                             ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+                            : 'bg-muted text-secondary-foreground border-border hover:bg-secondary',
                         )}
                       >
                         {preset.label}
@@ -640,16 +640,16 @@ export default function PoliciesPage() {
                     ))}
                   </div>
 
-                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 text-xs text-slate-700 space-y-1.5">
+                  <div className="rounded-xl border border-success/30 bg-success-soft/50 p-3.5 text-xs text-secondary-foreground space-y-1.5">
                     <div className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
                       <span>
                         <strong>{t('policiesPage.perAssessmentGate')}</strong>{' '}
                         {t('policiesPage.learnersMustScoreAtLeastOn', { passingScorePercent })}
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
                       <span>
                         <strong>{t('policiesPage.certificationGate')}</strong>{' '}
                         {t('policiesPage.totalCourseGradeSumOfWeighted', { passingScorePercent })}
@@ -663,7 +663,7 @@ export default function PoliciesPage() {
 
           <div className="flex items-center gap-3">
             {coursePolicyUpdatedAt ? (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-subtle-foreground">
                 Last updated {new Date(coursePolicyUpdatedAt).toLocaleString()}
               </p>
             ) : null}
@@ -676,10 +676,10 @@ export default function PoliciesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-foreground">
                 {t('policiesPage.liveSessionsAttendancePolicy')}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {t('policiesPage.definePlatformWideAttendanceVisibilityFo')}
               </p>
             </div>
@@ -703,14 +703,14 @@ export default function PoliciesPage() {
             <div className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
               {/* Card 1: Attendance Visibility */}
-              <div className="relative overflow-hidden rounded-2xl border border-indigo-200/80 bg-white p-6 shadow-soft ring-super-soft">
-                <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-card p-6 shadow-soft ring-super-soft">
+                <div className="flex items-start gap-3 border-b border-border/60 pb-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
                     <Users className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-bold text-foreground">
                         {t('policiesPage.permitAllActorsToViewSession')}
                       </h3>
                       <Badge variant={allowAllViewAttendance ? 'green' : 'slate'}>
@@ -719,21 +719,21 @@ export default function PoliciesPage() {
                           : t('policiesPage.restrictedToStaff')}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {t('policiesPage.determineWhetherLearnersAndNonStaff')}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-5 space-y-4">
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4 border border-slate-200/60">
+                  <div className="flex items-center justify-between rounded-xl bg-muted p-4 border border-border/60">
                     <div className="pr-4">
-                      <p className="text-sm font-semibold text-slate-800">
+                      <p className="text-sm font-semibold text-foreground">
                         {allowAllViewAttendance
                           ? t('policiesPage.publicDynamicAttendanceLog')
                           : t('policiesPage.restrictedStaffAttendanceLog')}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                         {allowAllViewAttendance
                           ? t('policiesPage.allParticipantsIncludingEnrolledLearners')
                           : t('policiesPage.onlyTrainersCourseOwnersTrainingAdminist')}
@@ -756,8 +756,8 @@ export default function PoliciesPage() {
                     </button>
                   </div>
 
-                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 text-xs text-indigo-800 flex items-start gap-2.5">
-                    <Info className="h-4 w-4 shrink-0 text-indigo-600 mt-0.5" />
+                  <div className="rounded-xl border border-primary/30 bg-primary-soft/50 p-3.5 text-xs text-primary flex items-start gap-2.5">
+                    <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                     <span>
                       {t('policiesPage.individualSessionCreatorsCanStillToggle')}
                     </span>
@@ -766,16 +766,16 @@ export default function PoliciesPage() {
               </div>
 
               {/* Card 2: Stay Threshold */}
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
-                <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft">
+                <div className="flex items-start gap-3 border-b border-border/60 pb-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="text-sm font-bold text-foreground">
                       {t('policiesPage.minimumActiveStayThresholdForPresent')}
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {t('policiesPage.requiredPercentageOfTotalSessionDuration')}
                     </p>
                   </div>
@@ -783,9 +783,9 @@ export default function PoliciesPage() {
 
                 <div className="mt-5 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <div className="flex items-center justify-between text-sm font-semibold text-secondary-foreground">
                       <span>{t('policiesPage.thresholdPercentage')}</span>
-                      <span className="text-emerald-700 font-bold text-base">
+                      <span className="text-success font-bold text-base">
                         {numericThreshold}%
                       </span>
                     </div>
@@ -808,27 +808,27 @@ export default function PoliciesPage() {
                           max={100}
                           value={attendanceThreshold}
                           onChange={(e) => setAttendanceThreshold(e.target.value)}
-                          className="w-24 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                          className="w-24 rounded-xl border border-border px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/10"
                         />
-                        <span className="absolute right-3 text-sm text-slate-400 font-semibold">
+                        <span className="absolute right-3 text-sm text-subtle-foreground font-semibold">
                           %
                         </span>
                       </div>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {t('policiesPage.minimum10Maximum100Recommended60')}
                       </span>
                     </div>
                   </div>
 
                   {/* Dynamic calculation preview */}
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-2">
-                    <p className="text-xs font-semibold text-slate-700">
+                  <div className="rounded-xl border border-border/80 bg-muted/70 p-4 space-y-2">
+                    <p className="text-xs font-semibold text-secondary-foreground">
                       {t('policiesPage.qualificationPreview')}
                     </p>
-                    <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                    <ul className="text-xs text-secondary-foreground space-y-1.5 list-disc list-inside">
                       <li>
                         {t('policiesPage.forA60MinuteSessionLearner')}{' '}
-                        <span className="font-semibold text-emerald-700">
+                        <span className="font-semibold text-success">
                           {Math.round(60 * (numericThreshold / 100))}{' '}
                           {t('policiesPage.minutes')}
                         </span>{' '}
@@ -844,22 +844,22 @@ export default function PoliciesPage() {
             </div>
 
             {/* Card 3: Rolling Rescheduler & Day Gap Policy */}
-            <div className="relative overflow-hidden rounded-2xl border border-violet-200/90 bg-white p-6 shadow-soft ring-super-soft">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-slate-100 pb-4">
+            <div className="relative overflow-hidden rounded-2xl border border-accent/25 bg-card p-6 shadow-soft ring-super-soft">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-border/60 pb-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
                     <CalendarClock className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-bold text-foreground">
                         {t('policiesPage.institutionalDayGapBetweenCycles')}
                       </h3>
                       <Badge variant="indigo" className="text-[10px] py-0 px-2 font-bold">
                         {t('policiesPage.rollingCycleEngine')}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500 max-w-2xl leading-relaxed">
+                    <p className="mt-1 text-xs text-muted-foreground max-w-2xl leading-relaxed">
                       {t('policiesPage.whenALiveSessionCompletesThe')}
                     </p>
                   </div>
@@ -869,9 +869,9 @@ export default function PoliciesPage() {
               <div className="mt-6 space-y-6">
                 {/* Day Gap Controls */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                  <div className="flex items-center justify-between text-sm font-semibold text-secondary-foreground">
                     <span>{t('policiesPage.policyDayGapBetweenCycles')}</span>
-                    <span className="text-violet-700 font-bold text-base">
+                    <span className="text-accent font-bold text-base">
                       {rescheduleDayGap} {t('policiesPage.days')}
                     </span>
                   </div>
@@ -886,7 +886,7 @@ export default function PoliciesPage() {
                           'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all border cursor-pointer',
                           rescheduleDayGap === String(preset)
                             ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900',
+                            : 'bg-muted text-secondary-foreground border-border hover:bg-secondary hover:text-foreground',
                         )}
                       >
                         {preset} {t('policiesPage.days')}
@@ -895,7 +895,7 @@ export default function PoliciesPage() {
                     ))}
 
                     <div className="flex items-center gap-2 ml-auto">
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {t('policiesPage.custom')}
                       </span>
                       <input
@@ -904,9 +904,9 @@ export default function PoliciesPage() {
                         max={365}
                         value={rescheduleDayGap}
                         onChange={(e) => setRescheduleDayGap(e.target.value)}
-                        className="w-24 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                        className="w-24 rounded-xl border border-border px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
                       />
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-subtle-foreground">
                         {t('policiesPage.days2')}
                       </span>
                     </div>
@@ -914,56 +914,56 @@ export default function PoliciesPage() {
                 </div>
 
                 {/* Concrete Example Box */}
-                <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-4 space-y-2">
-                  <p className="text-xs font-bold text-violet-900">
+                <div className="rounded-xl border border-accent/30 bg-accent-soft/50 p-4 space-y-2">
+                  <p className="text-xs font-bold text-accent">
                     {t('policiesPage.rollingCycleRuleExample')}
                   </p>
-                  <p className="text-xs text-violet-800 leading-relaxed">
+                  <p className="text-xs text-accent leading-relaxed">
                     {t('policiesPage.ifACourseHas3Sessions', { rescheduleDayGap })}
                   </p>
                 </div>
 
                 {/* Institutional Working Calendar Highlights */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
-                      <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                  <div className="rounded-xl border border-border/80 bg-muted/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
+                      <CalendarCheck className="h-4 w-4 text-success" />
                       <span>{t('policiesPage.mondaySaturdayActive')}</span>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-normal">
                       {t('policiesPage.standardEthiopianPublicSectorRevenueAcad')}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
-                      <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  <div className="rounded-xl border border-border/80 bg-muted/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
+                      <ShieldAlert className="h-4 w-4 text-warning" />
                       <span>{t('policiesPage.sundaysStrictlySkipped')}</span>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-normal">
                       {t('policiesPage.ifAComputedDateLandsOn')}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-800">
-                      <Award className="h-4 w-4 text-indigo-600" />
+                  <div className="rounded-xl border border-border/80 bg-muted/80 p-3.5">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
+                      <Award className="h-4 w-4 text-primary" />
                       <span>{t('policiesPage.statutoryHolidaysSkipped')}</span>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500 leading-normal">
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-normal">
                       {t('policiesPage.nationalHolidaysRegisteredInTheTable')}
                     </p>
                   </div>
                 </div>
 
                 {/* Public Holidays Collapsible Management */}
-                <div className="border-t border-slate-200/80 pt-4">
+                <div className="border-t border-border/80 pt-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">
+                      <h4 className="text-xs font-bold text-foreground">
                         {t('policiesPage.ethiopianStatutoryPublicHolidays')}
                       </h4>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-muted-foreground">
                         {t('policiesPage.registeredHolidaySCurrentlyActiveIn', { count: holidays.length })}
                       </p>
                     </div>
@@ -976,7 +976,7 @@ export default function PoliciesPage() {
                         onClick={() => void handleSeedDefaults()}
                         isLoading={seedingHolidays}
                         loadingText={t('policiesPage.seeding')}
-                        className="text-xs text-violet-700 border-violet-200 hover:bg-violet-50 cursor-pointer"
+                        className="text-xs text-accent border-accent/30 hover:bg-accent-soft cursor-pointer"
                       >
                         {t('policiesPage.seedStandardHolidays')}
                       </Button>
@@ -984,36 +984,36 @@ export default function PoliciesPage() {
                       <button
                         type="button"
                         onClick={() => setShowHolidays(!showHolidays)}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-muted transition-colors cursor-pointer"
                       >
                         {showHolidays
                           ? t('policiesPage.hideTable')
                           : t('policiesPage.manageHolidays')}
                         {showHolidays ? (
-                          <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
+                          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
                         ) : (
-                          <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   {showHolidays && (
-                    <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <div className="mt-4 space-y-4 rounded-xl border border-border bg-muted/50 p-4">
                       {/* Add Holiday Form */}
-                      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex flex-wrap items-center gap-2 border-b border-border/80 pb-3">
                         <input
                           type="text"
                           placeholder={t('policiesPage.holidayNameEGAdwaVictory')}
                           value={newHolidayName}
                           onChange={(e) => setNewHolidayName(e.target.value)}
-                          className="flex-1 min-w-[200px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                          className="flex-1 min-w-[200px] rounded-lg border border-border bg-card px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
                         />
                         <input
                           type="date"
                           value={newHolidayDate}
                           onChange={(e) => setNewHolidayDate(e.target.value)}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs shadow-xs focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
                         />
                         <Button
                           type="button"
@@ -1030,27 +1030,27 @@ export default function PoliciesPage() {
 
                       {/* Holiday List Table */}
                       {loadingHolidays ? (
-                        <p className="text-xs text-slate-400 py-2">
+                        <p className="text-xs text-subtle-foreground py-2">
                           {t('policiesPage.loadingPublicHolidays')}
                         </p>
                       ) : holidays.length === 0 ? (
-                        <div className="text-center py-4 text-xs text-slate-500">
+                        <div className="text-center py-4 text-xs text-muted-foreground">
                           <p>{t('policiesPage.noPublicHolidaysRegisteredYet')}</p>
-                          <p className="mt-1 text-[11px] text-slate-400">
+                          <p className="mt-1 text-[11px] text-subtle-foreground">
                             {t('policiesPage.clickSeedStandardHolidaysAboveTo')}
                           </p>
                         </div>
                       ) : (
-                        <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                        <div className="max-h-60 overflow-y-auto rounded-lg border border-border bg-card">
                           <table className="w-full text-left text-xs">
-                              <thead className="border-b border-slate-200 bg-slate-100/70 text-slate-600 font-semibold sticky top-0">
+                              <thead className="border-b border-border bg-secondary/70 text-secondary-foreground font-semibold sticky top-0">
                                 <tr>
                                   <th className="px-3 py-2">{t('policiesPage.holidayName')}</th>
                                   <th className="px-3 py-2">{t('policiesPage.date')}</th>
                                   <th className="px-3 py-2 text-right">{t('policiesPage.actions')}</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-100">
+                              <tbody className="divide-y divide-border/60">
                                 {holidays.map((h) => {
                                   const dateStr = new Date(h.holidayDate).toLocaleDateString('en-US', {
                                     year: 'numeric',
@@ -1059,17 +1059,17 @@ export default function PoliciesPage() {
                                     weekday: 'short',
                                   });
                                   return (
-                                    <tr key={h.id} className="hover:bg-slate-50/80">
-                                      <td className="px-3 py-2 font-medium text-slate-800">
+                                    <tr key={h.id} className="hover:bg-muted/80">
+                                      <td className="px-3 py-2 font-medium text-foreground">
                                         {h.nameEn}
-                                        {h.nameAm && <span className="ml-2 text-slate-400">({h.nameAm})</span>}
+                                        {h.nameAm && <span className="ml-2 text-subtle-foreground">({h.nameAm})</span>}
                                       </td>
-                                      <td className="px-3 py-2 text-slate-600">{dateStr}</td>
+                                      <td className="px-3 py-2 text-secondary-foreground">{dateStr}</td>
                                       <td className="px-3 py-2 text-right">
                                         <button
                                           type="button"
                                           onClick={() => void handleDeleteHoliday(h.id)}
-                                          className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                                          className="text-red-500 hover:text-danger p-1 rounded-md hover:bg-danger-soft transition-colors cursor-pointer"
                                           title={t('policiesPage.deleteHoliday')}
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
@@ -1092,7 +1092,7 @@ export default function PoliciesPage() {
 
           <div className="flex items-center gap-3">
             {livePolicyUpdatedAt ? (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-subtle-foreground">
                 Last updated {new Date(livePolicyUpdatedAt).toLocaleString()}
               </p>
             ) : null}

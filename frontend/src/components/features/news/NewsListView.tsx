@@ -108,7 +108,7 @@ export function NewsListView() {
       'whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition',
       active
         ? 'bg-sky-600 text-white shadow-sm'
-        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:text-sky-700 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700',
+        : 'bg-card text-secondary-foreground ring-1 ring-border hover:text-info',
     );
 
   return (
@@ -116,13 +116,13 @@ export function NewsListView() {
       {/* Pinned below the 64px site header from tablet width up; on phones it would eat the screen. */}
       <div
         ref={pinnedBar}
-        className="z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/90 md:sticky md:top-16"
+        className="z-30 border-b border-border/80 bg-card/90 backdrop-blur-xl md:sticky md:top-16"
       >
         <div className="mx-auto max-w-7xl px-4 pb-5 pt-8 sm:px-6 lg:px-8 lg:pt-10">
-          <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+          <span className="text-xs font-bold uppercase tracking-widest text-info">
             {t('latestNewsSection.ministryOfRevenues')}
           </span>
-          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">
             {t('newsListView.newsAnnouncements')}
           </h1>
 
@@ -143,13 +143,13 @@ export function NewsListView() {
               ))}
             </div>
             <label className="relative block w-full lg:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
               <input
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t('newsListView.searchHeadlines')}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none transition focus:border-info/60 focus:ring-4 focus:ring-info/10 text-foreground"
               />
             </label>
           </div>
@@ -178,7 +178,7 @@ export function NewsListView() {
 
         <div ref={listTop}>
           {showFeatured && (
-            <h2 className="mb-5 font-display text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="mb-5 font-display text-lg font-bold text-foreground">
               {t('newsListView.latestNews')}
             </h2>
           )}

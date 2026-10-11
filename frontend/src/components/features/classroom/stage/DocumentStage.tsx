@@ -50,7 +50,7 @@ export function DocumentStage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Stage Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-4 space-y-2">
+      <div className="border-b border-border pb-4 space-y-2">
         <div className="flex items-center gap-2">
           {badgeLabel ? (
             <Badge variant="indigo" className="text-xs">
@@ -58,27 +58,27 @@ export function DocumentStage({
             </Badge>
           ) : null}
           {durationMin ? (
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
               ⏱ {durationMin} min study
             </span>
           ) : null}
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{title}</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">{title}</h2>
       </div>
 
       {/* Main Lecture Notes / Study Content */}
       {content ? (
-        <div className="rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 sm:p-8 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Lecture Notes & Detailed Study Material</h3>
+        <div className="rounded-2xl border border-border/90 bg-card p-6 sm:p-8 shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-border/60">
+            <BookOpen className="h-4 w-4 text-primary" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Lecture Notes & Detailed Study Material</h3>
           </div>
-          <div className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200 prose dark:prose-invert prose-base max-w-none">
-            <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-slate-800 dark:text-slate-200" />
+          <div className="text-[15px] sm:text-base leading-relaxed text-foreground prose dark:prose-invert prose-base max-w-none">
+            <RichContent html={content} className="text-[15px] sm:text-base leading-relaxed text-foreground" />
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <div className="rounded-xl border border-dashed border-border bg-muted/50 p-6 text-center text-sm text-muted-foreground">
           No written lecture notes for this topic. Check attached resources below.
         </div>
       )}
@@ -96,10 +96,10 @@ export function DocumentStage({
           <div
             className={`rounded-2xl border p-5 sm:p-6 transition-all shadow-2xs ${
               isQuizPassed
-                ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                ? 'border-success/30 bg-success-soft/60'
                 : isQuizUnlocked
-                  ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/80 dark:border-indigo-900/50 dark:from-indigo-950/30 dark:via-slate-900 dark:to-violet-950/30 ring-1 ring-indigo-500/20'
-                  : 'border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40'
+                  ? 'border-primary/30 bg-gradient-to-r from-primary-soft/80 via-card to-accent-soft/80 ring-1 ring-ring/20'
+                  : 'border-border bg-muted/70'
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -107,10 +107,10 @@ export function DocumentStage({
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                     isQuizPassed
-                      ? 'border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                      ? 'border-success/30 bg-success-soft text-success'
                       : isQuizUnlocked
-                        ? 'border-indigo-300 bg-indigo-100 text-indigo-700 shadow-2xs dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
-                        : 'border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+                        ? 'border-primary/30 bg-primary-soft text-primary shadow-2xs'
+                        : 'border-border bg-secondary text-subtle-foreground'
                   }`}
                 >
                   {isQuizPassed ? (
@@ -124,21 +124,21 @@ export function DocumentStage({
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{assessment.titleEn}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{assessment.titleEn}</h4>
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                         isQuizPassed
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60'
+                          ? 'bg-success-soft text-success border-success/30'
                           : isQuizUnlocked
-                            ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800/60'
-                            : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                            ? 'bg-primary-soft text-primary border-primary/30'
+                            : 'bg-border text-secondary-foreground border-input'
                       }`}
                     >
                       {isQuizPassed ? 'Assessment Passed' : isQuizUnlocked ? 'Assessment Ready' : 'Assessment Locked'}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {isQuizPassed
                       ? `You successfully passed this checkpoint assessment (Requirement: ${assessment.passingScore}%). Great job!`
                       : isQuizUnlocked
@@ -156,10 +156,10 @@ export function DocumentStage({
                   onClick={() => onTakeQuiz(assessment.id)}
                   className={
                     isQuizPassed
-                      ? 'border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-slate-700'
+                      ? 'border-success/30 bg-card text-success hover:bg-success-soft'
                       : isQuizUnlocked
                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                        : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
+                        : 'bg-border text-subtle-foreground'
                   }
                 >
                   {isQuizPassed ? (

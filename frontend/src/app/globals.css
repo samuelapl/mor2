@@ -25,6 +25,7 @@
   --primary: 79 70 229;
   --primary-foreground: 255 255 255;
   --primary-soft: 238 242 255;
+  --accent: 109 40 217;
   --accent-soft: 245 243 255;
   --success: 4 120 87;
   --success-soft: 236 253 245;
@@ -56,6 +57,7 @@
   --primary: 99 102 241;
   --primary-foreground: 255 255 255;
   --primary-soft: 30 27 75;
+  --accent: 167 139 250;
   --accent-soft: 46 16 101;
   --success: 52 211 153;
   --success-soft: 2 44 34;

@@ -58,13 +58,13 @@ function MediaPreview({
   const embed = youtubeEmbed(src);
   if (embed) {
     return (
-      <div className="aspect-video overflow-hidden rounded-xl border border-slate-200 bg-black">
+      <div className="aspect-video overflow-hidden rounded-xl border border-border bg-black">
         <iframe src={embed} title="Lesson video" className="h-full w-full" allowFullScreen />
       </div>
     );
   }
   if (type === 'VIDEO' || VIDEO_FILE.test(src)) {
-    return <video src={src} controls className="w-full rounded-xl border border-slate-200 bg-black" />;
+    return <video src={src} controls className="w-full rounded-xl border border-border bg-black" />;
   }
   if (type === 'AUDIO' || AUDIO_FILE.test(src)) {
     return <audio src={src} controls className="w-full" />;
@@ -77,7 +77,7 @@ function MediaPreview({
       href={src}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+      className="flex items-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-primary hover:bg-primary-soft"
     >
       <ExternalLink className="h-4 w-4 shrink-0" />
       <span className="truncate">{src}</span>
@@ -136,20 +136,20 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
 
       {!isSub && subLessons.length > 0 && (
         <StageCard title={t('lessonStage.subLessons', { count: subLessons.length })}>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border/60">
             {subLessons.map((s, i) => (
               <li key={s.id}>
                 <button
                   type="button"
                   onClick={() => onSelectNode({ type: 'SUB_LESSON', moduleId, lessonId: lesson.id, subLessonId: s.id })}
-                  className="flex w-full items-center gap-3 py-2.5 text-left text-sm transition hover:text-indigo-700"
+                  className="flex w-full items-center gap-3 py-2.5 text-left text-sm transition hover:text-primary"
                 >
-                  <span className="w-10 shrink-0 text-xs font-bold text-slate-400">
+                  <span className="w-10 shrink-0 text-xs font-bold text-subtle-foreground">
                     {number}.{i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-medium">{s.title}</span>
-                  <span className="shrink-0 text-xs text-slate-400">{formatDuration(s.durationMin, isAmharic)}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                  <span className="shrink-0 text-xs text-subtle-foreground">{formatDuration(s.durationMin, isAmharic)}</span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-subtle-foreground" />
                 </button>
               </li>
             ))}
@@ -161,12 +161,12 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
         <button
           type="button"
           onClick={() => onSelectNode({ type: 'LESSON_ASSESSMENT', moduleId, lessonId: lesson.id })}
-          className="flex w-full items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-left transition hover:bg-amber-50"
+          className="flex w-full items-center gap-3 rounded-2xl border border-warning/30 bg-warning-soft/60 p-4 text-left transition hover:bg-warning-soft"
         >
-          <FileQuestion className="h-5 w-5 shrink-0 text-amber-600" />
+          <FileQuestion className="h-5 w-5 shrink-0 text-warning" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-slate-900">{assessment.titleEn}</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm font-bold text-foreground">{assessment.titleEn}</p>
+            <p className="text-xs text-secondary-foreground">
               {assessment.questions.length} {t('creatorSidebar.questions')} · {assessment.weight ?? 0}% {t('lessonEditorStage.weight')}
             </p>
           </div>

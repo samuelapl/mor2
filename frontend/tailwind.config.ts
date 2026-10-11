@@ -21,7 +21,7 @@ const config: Config = {
         input: token("input"),
         ring: token("ring"),
         primary: { DEFAULT: token("primary"), foreground: token("primary-foreground"), soft: token("primary-soft") },
-        accent: { soft: token("accent-soft") },
+        accent: { DEFAULT: token("accent"), soft: token("accent-soft") },
         success: { DEFAULT: token("success"), soft: token("success-soft") },
         warning: { DEFAULT: token("warning"), soft: token("warning-soft") },
         danger: { DEFAULT: token("danger"), soft: token("danger-soft") },

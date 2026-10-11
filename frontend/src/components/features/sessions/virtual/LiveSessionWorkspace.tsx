@@ -530,7 +530,7 @@ function LiveKitInteractiveLayer({
       {/* Trainer Floating Banner when a quiz is actively running */}
       {isStaff && activeQuiz && !trainerQuizModalOpen && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-indigo-500/50 bg-slate-900/95 px-4 py-2 text-slate-100 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-3 rounded-2xl border border-primary/50 bg-slate-900/95 px-4 py-2 text-slate-100 shadow-xl backdrop-blur-md">
             <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-bold">Quiz In Progress</span>
             <span className="text-xs text-indigo-300">
@@ -939,7 +939,7 @@ export function LiveSessionWorkspace({
         theme="dark"
         title={
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/20 text-red-400 border border-red-500/30">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/20 text-red-400 border border-danger/30">
               <Radio className="h-4 w-4 animate-pulse" />
             </span>
             <span className="truncate text-white font-bold">
@@ -962,8 +962,8 @@ export function LiveSessionWorkspace({
             <div
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-xs ${
                 isPresent
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-800'
+                  ? 'border-success/30 bg-success-soft text-success'
+                  : 'border-warning/30 bg-warning-soft text-warning'
               }`}
               title={`Total stay duration: ${currentStayMinutes}m / ${sessionDurationMinutes}m (${attendancePercentage}%). ${
                 isPresent
@@ -1000,7 +1000,7 @@ export function LiveSessionWorkspace({
               <Users className="h-3.5 w-3.5" />
               Attendees
               {visibility?.canView ? (
-                <span className="ml-0.5 rounded-full bg-indigo-100 px-1.5 py-0.2 text-[10px] font-bold text-indigo-700">
+                <span className="ml-0.5 rounded-full bg-primary-soft px-1.5 py-0.2 text-[10px] font-bold text-primary">
                   Permitted
                 </span>
               ) : null}
@@ -1022,14 +1022,14 @@ export function LiveSessionWorkspace({
 
             {/* Room Mode Toggle — only show for non-LiveKit sessions */}
             {!isLiveKitSession && (
-              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
+              <div className="flex items-center rounded-lg border border-border bg-secondary p-0.5 text-xs">
                 <button
                   type="button"
                   onClick={() => setConferenceMode('interactive')}
                   className={`rounded-md px-2 py-1 font-medium transition ${
                     conferenceMode === 'interactive'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-card text-foreground shadow-xs'
+                      : 'text-secondary-foreground hover:text-foreground'
                   }`}
                 >
                   In-LMS Suite
@@ -1040,8 +1040,8 @@ export function LiveSessionWorkspace({
                     onClick={() => setConferenceMode('embedded')}
                     className={`rounded-md px-2 py-1 font-medium transition ${
                       conferenceMode === 'embedded'
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-card text-foreground shadow-xs'
+                        : 'text-secondary-foreground hover:text-foreground'
                     }`}
                   >
                     Jitsi / External
@@ -1100,7 +1100,7 @@ export function LiveSessionWorkspace({
           {/* Main Stage View */}
           <div className="flex-1 min-h-0 flex flex-col relative bg-slate-950 overflow-hidden">
             {loading ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-slate-400">
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-subtle-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
                 <p className="text-sm font-medium">Connecting to virtual training room…</p>
                 <span className="text-xs text-indigo-300">
@@ -1144,13 +1144,13 @@ export function LiveSessionWorkspace({
               </div>
             ) : isLiveKitSession && !liveKitToken && !standardModeFallback ? (
               /* LiveKit token unavailable — show error state with retry and fallback */
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 text-slate-400 p-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 text-subtle-foreground p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-warning/20">
                   <AlertCircle className="h-6 w-6" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-base font-bold text-slate-100">Live Classroom Room Access</p>
-                  <p className="text-xs text-center text-slate-400 max-w-md">
+                  <p className="text-xs text-center text-subtle-foreground max-w-md">
                     {error ||
                       'Could not fetch your room access token. Make sure the backend is running and you are enrolled in this course.'}
                   </p>
@@ -1208,11 +1208,11 @@ export function LiveSessionWorkspace({
                   <div className="flex items-center gap-2 rounded-xl bg-slate-900/90 backdrop-blur-md px-3 py-1.5 text-xs text-white border border-slate-800 shadow-md">
                     <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="font-semibold">MoR Live Classroom HD</span>
-                    <span className="text-slate-400">·</span>
+                    <span className="text-subtle-foreground">·</span>
                     <span className="text-indigo-300 font-mono">
                       Stay: {currentStayMinutes}m / {sessionDurationMinutes}m
                     </span>
-                    <span className="text-slate-400">·</span>
+                    <span className="text-subtle-foreground">·</span>
                     <span
                       className={
                         isPresent ? 'text-emerald-400 font-bold' : 'text-amber-400 font-semibold'
@@ -1224,7 +1224,7 @@ export function LiveSessionWorkspace({
 
                   <div className="flex items-center gap-2">
                     {handRaised && (
-                      <span className="flex items-center gap-1 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs px-3 py-1 animate-bounce shadow-lg">
+                      <span className="flex items-center gap-1 rounded-xl bg-amber-500 text-foreground font-bold text-xs px-3 py-1 animate-bounce shadow-lg">
                         <Hand className="h-3.5 w-3.5" />
                         Hand Raised
                       </span>
@@ -1242,17 +1242,17 @@ export function LiveSessionWorkspace({
                     </div>
 
                     <div className="relative flex flex-col items-center">
-                      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 shadow-2xl mb-3">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/30 text-indigo-300 border border-primary/30 shadow-2xl mb-3">
                         <Video className="h-9 w-9" />
                       </div>
                       <h4 className="text-base font-bold text-white tracking-wide">
                         {session.titleEn || 'Interactive Training Session'}
                       </h4>
-                      <p className="mt-1 text-xs text-slate-400 max-w-sm">
+                      <p className="mt-1 text-xs text-subtle-foreground max-w-sm">
                         Live presentation feed active. Real-time participant detection and
                         attendance tracking enabled.
                       </p>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 px-3 py-0.5 text-[11px] font-semibold text-indigo-300">
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3 py-0.5 text-[11px] font-semibold text-indigo-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                         Host &amp; Speaker: {trainerDisplayName}
                       </div>
@@ -1287,12 +1287,12 @@ export function LiveSessionWorkspace({
                         className="w-full h-full object-cover -scale-x-100"
                       />
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 p-6 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-slate-400 border border-slate-700 mb-2">
+                      <div className="flex flex-col items-center justify-center text-subtle-foreground p-6 text-center">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-subtle-foreground border border-slate-700 mb-2">
                           <CameraOff className="h-7 w-7" />
                         </div>
-                        <p className="text-xs font-medium text-slate-300">Camera is turned off</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
+                        <p className="text-xs font-medium text-subtle-foreground">Camera is turned off</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
                           Click the Camera button below to turn on your live video
                         </p>
                       </div>
@@ -1324,7 +1324,7 @@ export function LiveSessionWorkspace({
                     className={`gap-1.5 rounded-xl ${
                       micOn
                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                        : 'border-slate-700 text-subtle-foreground hover:bg-slate-800'
                     }`}
                   >
                     {micOn ? (
@@ -1343,13 +1343,13 @@ export function LiveSessionWorkspace({
                     className={`gap-1.5 rounded-xl ${
                       cameraOn
                         ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                        : 'border-slate-700 text-subtle-foreground hover:bg-slate-800'
                     }`}
                   >
                     {cameraOn ? (
                       <Camera className="h-4 w-4" />
                     ) : (
-                      <CameraOff className="h-4 w-4 text-slate-400" />
+                      <CameraOff className="h-4 w-4 text-subtle-foreground" />
                     )}
                     {cameraOn ? 'Stop Video' : 'Start Video'}
                   </Button>
@@ -1362,7 +1362,7 @@ export function LiveSessionWorkspace({
                     className={`gap-1.5 rounded-xl ${
                       screenSharing
                         ? 'bg-indigo-600 text-white'
-                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                        : 'border-slate-700 text-subtle-foreground hover:bg-slate-800'
                     }`}
                   >
                     <Laptop className="h-4 w-4" />
@@ -1376,8 +1376,8 @@ export function LiveSessionWorkspace({
                     onClick={() => setHandRaised(!handRaised)}
                     className={`gap-1.5 rounded-xl ${
                       handRaised
-                        ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold'
-                        : 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                        ? 'bg-amber-500 hover:bg-amber-600 text-foreground font-bold'
+                        : 'border-slate-700 text-subtle-foreground hover:bg-slate-800'
                     }`}
                   >
                     <Hand className="h-4 w-4" />
@@ -1389,7 +1389,7 @@ export function LiveSessionWorkspace({
                     size="sm"
                     variant={activeTab === 'chat' ? 'primary' : 'outline'}
                     onClick={() => setActiveTab(activeTab === 'chat' ? 'video' : 'chat')}
-                    className="gap-1.5 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className="gap-1.5 rounded-xl border-slate-700 text-subtle-foreground hover:bg-slate-800"
                   >
                     <MessageSquare className="h-4 w-4" />
                     Chat
@@ -1400,7 +1400,7 @@ export function LiveSessionWorkspace({
                     size="sm"
                     variant="outline"
                     onClick={toggleFullScreen}
-                    className="gap-1.5 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className="gap-1.5 rounded-xl border-slate-700 text-subtle-foreground hover:bg-slate-800"
                     title={isFullScreen ? 'Exit Fullscreen' : 'Fullscreen'}
                   >
                     {isFullScreen ? (
@@ -1441,8 +1441,8 @@ export function LiveSessionWorkspace({
                     key={msg.id}
                     className={`flex flex-col ${msg.isSelf ? 'items-end' : 'items-start'}`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400">
-                      <span className="font-semibold text-slate-300">{msg.sender}</span>
+                    <div className="flex items-center gap-1.5 mb-1 text-[10px] text-subtle-foreground">
+                      <span className="font-semibold text-subtle-foreground">{msg.sender}</span>
                       <span>·</span>
                       <span>{msg.time}</span>
                     </div>

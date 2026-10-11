@@ -55,7 +55,7 @@ export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
       <Link
         href="/news"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-sky-700 dark:text-slate-400 dark:hover:text-sky-400"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition hover:text-info"
       >
         <ArrowLeft className="h-4 w-4" />
         {t('newsDetailView.allNews')}
@@ -63,7 +63,7 @@ export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
 
       <NewsArticleView news={news} />
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6 dark:border-slate-800">
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
         <NewsReactions newsId={news.id} likeCount={news.likeCount} myReaction={news.myReaction} />
         <NewsShare newsId={news.id} slug={news.slug} headline={news.headline} />
       </div>
@@ -71,8 +71,8 @@ export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
       <NewsComments newsId={news.id} allowComments={news.allowComments} />
 
       {more.length > 0 && (
-        <section className="mt-14 border-t border-slate-200 pt-8 dark:border-slate-800">
-          <h2 className="mb-5 font-display text-lg font-bold text-slate-900 dark:text-white">
+        <section className="mt-14 border-t border-border pt-8">
+          <h2 className="mb-5 font-display text-lg font-bold text-foreground">
             {t('newsDetailView.moreNews')}
           </h2>
           <div className="grid gap-5 sm:grid-cols-3">

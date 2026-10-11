@@ -744,6 +744,8 @@ export class CoursesService {
    * owners can change it and resubmit. Refused while the course has enrollments or scheduled
    * sessions, because a draft's curriculum and session plans can be replaced wholesale, which
    * would wipe learner progress and detach scheduled sessions from their plans.
+   * All course trainers and session-plan trainers are removed; they are assigned again
+   * after the course is re-approved.
    */
   async returnToDraft(id: string, dto: ReturnToDraftDto, approverId: string) {
     const course = await this.findById(id);
@@ -781,6 +783,13 @@ export class CoursesService {
         where: { id },
         data: { status: CourseStatus.DRAFT },
       });
+      // A draft starts without trainers: clear every session-plan host and course trainer.
+      // Safe here because scheduled sessions block the return to draft above.
+      await tx.courseSessionPlan.updateMany({
+        where: { courseId: id },
+        data: { trainerId: null },
+      });
+      await tx.trainerAssignment.deleteMany({ where: { courseId: id } });
       await tx.contentApproval.create({
         data: {
           courseId: id,

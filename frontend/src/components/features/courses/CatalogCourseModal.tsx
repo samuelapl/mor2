@@ -297,17 +297,17 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
       >
         <div className="w-full space-y-7 pb-8">
           {error ? (
-            <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-800 shadow-xs">
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-2xl border border-danger/30 bg-danger-soft/90 p-4 text-xs text-danger shadow-xs">
+              <AlertCircle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-bold text-rose-900">Enrollment Notice</p>
+                <p className="font-bold text-danger">Enrollment Notice</p>
                 <p className="mt-0.5 leading-relaxed">{error}</p>
               </div>
             </div>
           ) : null}
 
           {/* Hero Cover Image & Header Details */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs">
+          <div className="overflow-hidden rounded-2xl border border-border/90 bg-card shadow-xs">
             {course.cover ? (
               <div className="relative h-56 sm:h-64 w-full overflow-hidden bg-slate-900">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -329,7 +329,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
             ) : (
               <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-6 text-white">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="rounded-md bg-indigo-500/30 border border-indigo-400/30 px-2 py-0.5 font-mono text-[11px] font-semibold text-indigo-200">
+                  <span className="rounded-md bg-primary/30 border border-indigo-400/30 px-2 py-0.5 font-mono text-[11px] font-semibold text-indigo-200">
                     {course.code}
                   </span>
                   <span className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/90">{course.category}</span>
@@ -340,20 +340,20 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
             )}
 
             {/* Trainer & Metadata Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-3 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/70 px-5 py-3 text-xs text-secondary-foreground">
               <div className="flex flex-wrap items-center gap-3">
                 {course.trainerId ? (
-                  <div className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-slate-200/80 px-2.5 py-1 font-medium text-slate-700 shadow-2xs">
-                    <UserRound className="h-3.5 w-3.5 text-indigo-600" />
+                  <div className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-border/80 px-2.5 py-1 font-medium text-secondary-foreground shadow-2xs">
+                    <UserRound className="h-3.5 w-3.5 text-primary" />
                     <span>Lead Trainer: {userName(course.trainerId)}</span>
                   </div>
                 ) : null}
-                <div className="inline-flex items-center gap-1.5 text-slate-500">
-                  <Globe2 className="h-3.5 w-3.5 text-slate-400" />
+                <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Globe2 className="h-3.5 w-3.5 text-subtle-foreground" />
                   <span>Language: {course.language || 'English'}</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 text-slate-500">
-                  <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
                   <span>{formatDuration(totalDurationMin, isAmharic)} est. completion</span>
                 </div>
               </div>
@@ -378,69 +378,69 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
           {/* 6-Stat Summary Cards Bar */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <Layers className="h-4 w-4 text-indigo-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Modules</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Modules</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{course.modules.length}</p>
-              <p className="text-[11px] text-slate-400">Structured units</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{course.modules.length}</p>
+              <p className="text-[11px] text-subtle-foreground">Structured units</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <ClipboardPen className="h-4 w-4 text-emerald-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lessons</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Lessons</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{totalLessons}</p>
-              <p className="text-[11px] text-slate-400">Core lectures</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{totalLessons}</p>
+              <p className="text-[11px] text-subtle-foreground">Core lectures</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <ListChecks className="h-4 w-4 text-violet-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sub-Lessons</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Sub-Lessons</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{totalSubLessons}</p>
-              <p className="text-[11px] text-slate-400">Topic deep-dives</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{totalSubLessons}</p>
+              <p className="text-[11px] text-subtle-foreground">Topic deep-dives</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <Clock className="h-4 w-4 text-amber-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Duration</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Duration</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{formatDuration(totalDurationMin, isAmharic)}</p>
-              <p className="text-[11px] text-slate-400">Study estimate</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{formatDuration(totalDurationMin, isAmharic)}</p>
+              <p className="text-[11px] text-subtle-foreground">Study estimate</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <Paperclip className="h-4 w-4 text-blue-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Materials</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Materials</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{totalAttachments}</p>
-              <p className="text-[11px] text-slate-400">Attached files</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{totalAttachments}</p>
+              <p className="text-[11px] text-subtle-foreground">Attached files</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="rounded-xl border border-border/90 bg-card p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-subtle-foreground">
                 <Award className="h-4 w-4 text-rose-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Assessment</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Assessment</span>
               </div>
-              <p className="mt-1 text-lg font-bold text-slate-900">{totalQuestions > 0 ? `${totalQuestions} Qs` : 'Included'}</p>
-              <p className="text-[11px] text-slate-400">{finalAssessment ? `${finalAssessment.passingScore}% pass mark` : 'Certified'}</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{totalQuestions > 0 ? `${totalQuestions} Qs` : 'Included'}</p>
+              <p className="text-[11px] text-subtle-foreground">{finalAssessment ? `${finalAssessment.passingScore}% pass mark` : 'Certified'}</p>
             </div>
           </div>
 
           {/* Delivery Mode & Classroom Selection */}
-          <div className="rounded-2xl border border-indigo-200/90 bg-gradient-to-b from-indigo-50/50 via-white to-white p-5 shadow-xs space-y-4">
+          <div className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary-soft/50 via-card to-card p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Enrollment Options</span>
-                <h3 className="text-base font-bold text-slate-900">Course Training Delivery Mode</h3>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Enrollment Options</span>
+                <h3 className="text-base font-bold text-foreground">Course Training Delivery Mode</h3>
               </div>
-              <span className="text-xs font-medium text-slate-500">Select how you prefer to attend this training</span>
+              <span className="text-xs font-medium text-muted-foreground">Select how you prefer to attend this training</span>
             </div>
 
             {/* Mode Selector */}
@@ -451,30 +451,30 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                   onClick={() => setSelectedDeliveryMode('ONLINE_ONLY')}
                   className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
                     selectedDeliveryMode === 'ONLINE_ONLY'
-                      ? 'border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs'
-                      : 'border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white'
+                      ? 'border-primary bg-card ring-2 ring-ring/20 shadow-xs'
+                      : 'border-border bg-card/70 hover:border-input hover:bg-card'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 border border-sky-200">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-info-soft px-2.5 py-1 text-xs font-semibold text-info border border-info/30">
                         <Laptop className="h-3.5 w-3.5" />
                         🌐 Pure Online
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                          selectedDeliveryMode === 'ONLINE_ONLY' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300'
+                          selectedDeliveryMode === 'ONLINE_ONLY' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-input'
                         }`}
                       >
                         {selectedDeliveryMode === 'ONLINE_ONLY' && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                       </span>
                     </div>
-                    <h4 className="mt-2.5 text-sm font-bold text-slate-900">Self-Paced Online Learning</h4>
-                    <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                    <h4 className="mt-2.5 text-sm font-bold text-foreground">Self-Paced Online Learning</h4>
+                    <p className="mt-1 text-xs text-secondary-foreground leading-relaxed">
                       Study anytime, anywhere with interactive lessons, quizzes, and instant certificate issuance upon passing.
                     </p>
                   </div>
-                  <div className="mt-3 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+                  <div className="mt-3 text-[11px] font-medium text-success flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" />
                     Instant Access Upon Enrollment
                   </div>
@@ -485,52 +485,52 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                   onClick={() => setSelectedDeliveryMode('IN_PERSON_ONLY')}
                   className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
                     selectedDeliveryMode === 'IN_PERSON_ONLY'
-                      ? 'border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-xs'
-                      : 'border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-white'
+                      ? 'border-primary bg-card ring-2 ring-ring/20 shadow-xs'
+                      : 'border-border bg-card/70 hover:border-input hover:bg-card'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning border border-warning/30">
                         <Building2 className="h-3.5 w-3.5" />
                         🏢 In-Person Classroom
                       </span>
                       <span
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                          selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300'
+                          selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-input'
                         }`}
                       >
                         {selectedDeliveryMode === 'IN_PERSON_ONLY' && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                       </span>
                     </div>
-                    <h4 className="mt-2.5 text-sm font-bold text-slate-900">Ministry Branch Classroom Training</h4>
-                    <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                    <h4 className="mt-2.5 text-sm font-bold text-foreground">Ministry Branch Classroom Training</h4>
+                    <p className="mt-1 text-xs text-secondary-foreground leading-relaxed">
                       Attend scheduled instructor-led sessions at an official Ministry training hall with direct trainer guidance.
                     </p>
                   </div>
-                  <div className="mt-3 text-[11px] font-medium text-amber-700 flex items-center gap-1">
+                  <div className="mt-3 text-[11px] font-medium text-warning flex items-center gap-1">
                     <Users className="h-3 w-3" />
                     Limited Classroom Capacity & Seat Reservation
                   </div>
                 </button>
               </div>
             ) : course.deliveryMode === 'IN_PERSON_ONLY' ? (
-              <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
-                <Building2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft/80 p-3.5 text-xs text-warning">
+                <Building2 className="h-4 w-4 text-warning shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">Mandatory In-Person Training</p>
-                  <p className="mt-0.5 text-amber-800">
+                  <p className="mt-0.5 text-warning">
                     This course is exclusively delivered through physical classroom sessions at Ethiopian Ministry of Revenues branch venues. Please
                     reserve your seat in a scheduled session below.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/80 p-3.5 text-xs text-sky-900">
-                <Laptop className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-xl border border-info/30 bg-info-soft/80 p-3.5 text-xs text-info">
+                <Laptop className="h-4 w-4 text-info shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">Pure Online Training</p>
-                  <p className="mt-0.5 text-sky-800">
+                  <p className="mt-0.5 text-info">
                     This course is delivered 100% online through interactive modules, multimedia lessons, and knowledge checks.
                   </p>
                 </div>
@@ -539,23 +539,23 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
 
             {/* In-Person Session Picker */}
             {selectedDeliveryMode === 'IN_PERSON_ONLY' && (
-              <div className="mt-4 space-y-3 pt-3 border-t border-slate-200/80">
+              <div className="mt-4 space-y-3 pt-3 border-t border-border/80">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800">Select Training Venue & Scheduled Session:</span>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-xs font-bold text-foreground">Select Training Venue & Scheduled Session:</span>
+                  <span className="text-[11px] text-muted-foreground">
                     {availableSessions.length} session
                     {availableSessions.length === 1 ? '' : 's'} scheduled
                   </span>
                 </div>
 
                 {loadingSessions ? (
-                  <div className="flex items-center justify-center p-6 text-xs text-slate-500 gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                  <div className="flex items-center justify-center p-6 text-xs text-muted-foreground gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     Loading scheduled classroom sessions…
                   </div>
                 ) : availableSessions.length === 0 ? (
-                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 text-xs text-amber-800 flex items-start gap-2.5">
-                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="rounded-xl border border-warning/25 bg-warning-soft/60 p-4 text-xs text-warning flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">No classroom sessions scheduled yet</p>
                       <p className="mt-0.5">
@@ -582,26 +582,26 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                           }}
                           className={`relative rounded-xl border p-3.5 text-left transition-all ${
                             isFull
-                              ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
+                              ? 'opacity-60 bg-muted border-border cursor-not-allowed'
                               : isSelected
-                                ? 'border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20 cursor-pointer shadow-xs'
-                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer'
+                                ? 'border-primary bg-primary-soft/40 ring-2 ring-ring/20 cursor-pointer shadow-xs'
+                                : 'border-border bg-card hover:border-input hover:bg-muted/60 cursor-pointer'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
-                                <MapPin className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                              <div className="flex items-center gap-1.5 font-bold text-xs text-foreground">
+                                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                                 <span>{venue?.branch || 'Ministry Branch'}</span>
-                                <span className="text-slate-400">·</span>
-                                <span className="font-semibold text-slate-700">{venue?.name || 'Room'}</span>
+                                <span className="text-subtle-foreground">·</span>
+                                <span className="font-semibold text-secondary-foreground">{venue?.name || 'Room'}</span>
                               </div>
-                              {venue?.building ? <p className="text-[11px] text-slate-500 mt-0.5 ml-5">Building: {venue.building}</p> : null}
+                              {venue?.building ? <p className="text-[11px] text-muted-foreground mt-0.5 ml-5">Building: {venue.building}</p> : null}
                             </div>
 
                             <span
                               className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                                isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white'
+                                isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-input bg-card'
                               }`}
                             >
                               {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -609,33 +609,33 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                           </div>
 
                           {/* Date & Time */}
-                          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-secondary-foreground">
                             <span className="inline-flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-slate-400" />
+                              <Calendar className="h-3 w-3 text-subtle-foreground" />
                               {formatDate(session.scheduledAt)}
                             </span>
                             <span>·</span>
                             <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-slate-400" />
+                              <Clock className="h-3 w-3 text-subtle-foreground" />
                               {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
                             </span>
                           </div>
 
                           {/* Trainer & Seat Capacity Meter */}
-                          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                            <span className="text-slate-600 truncate max-w-[130px]">
+                          <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px]">
+                            <span className="text-secondary-foreground truncate max-w-[130px]">
                               {session.trainer ? `${session.trainer.firstName} ${session.trainer.lastName}` : 'Assigned Trainer'}
                             </span>
 
                             {isFull ? (
-                              <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">Classroom Full</span>
+                              <span className="font-bold text-danger bg-danger-soft px-2 py-0.5 rounded-md border border-danger/30">Classroom Full</span>
                             ) : seatsLeft <= 5 ? (
-                              <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                              <span className="font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded-md border border-warning/30">
                                 Only {seatsLeft} seat
                                 {seatsLeft === 1 ? '' : 's'} left
                               </span>
                             ) : (
-                              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              <span className="font-semibold text-success bg-success-soft px-2 py-0.5 rounded-md border border-success/30">
                                 {seatsLeft} of {capacity} seats available
                               </span>
                             )}
@@ -650,61 +650,61 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           </div>
 
           {/* Course Overview */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Course Overview & Scope</h3>
-            <div className="text-sm leading-relaxed text-slate-700">
+          <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Course Overview & Scope</h3>
+            <div className="text-sm leading-relaxed text-secondary-foreground">
               <RichContent html={course.description} />
             </div>
           </div>
 
           {/* Learning Objectives */}
           {course.objectives ? (
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 shadow-xs space-y-2">
-              <div className="flex items-center gap-2 text-indigo-900">
-                <Target className="h-4 w-4 text-indigo-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900">Course Learning Objectives & Outcomes</h3>
+            <div className="rounded-2xl border border-primary/30 bg-primary-soft/60 p-5 shadow-xs space-y-2">
+              <div className="flex items-center gap-2 text-primary">
+                <Target className="h-4 w-4 text-primary" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary">Course Learning Objectives & Outcomes</h3>
               </div>
-              <div className="text-xs text-indigo-950 leading-relaxed">
+              <div className="text-xs text-primary leading-relaxed">
                 <RichContent html={course.objectives} />
               </div>
             </div>
           ) : null}
 
           {/* Detailed Metadata Grid */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 text-xs">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-border/90 bg-muted/70 p-4 text-xs">
             <div>
-              <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">Department / Ministry</span>
-              <div className="font-semibold text-slate-800">
+              <span className="block font-bold uppercase tracking-wider text-[10px] text-subtle-foreground mb-0.5">Department / Ministry</span>
+              <div className="font-semibold text-foreground">
                 <RichContent inline html={course.department} placeholder="Ministry of Revenues" />
               </div>
             </div>
             <div>
-              <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">Target Audience</span>
-              <div className="font-semibold text-slate-800">
+              <span className="block font-bold uppercase tracking-wider text-[10px] text-subtle-foreground mb-0.5">Target Audience</span>
+              <div className="font-semibold text-foreground">
                 <RichContent inline html={course.targetAudience} placeholder="All Staff & Officers" />
               </div>
             </div>
             <div>
-              <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">Delivery Method</span>
-              <div className="font-semibold text-slate-800 capitalize">{(course.deliveryMethod || 'self_paced').replace('_', ' ')}</div>
+              <span className="block font-bold uppercase tracking-wider text-[10px] text-subtle-foreground mb-0.5">Delivery Method</span>
+              <div className="font-semibold text-foreground capitalize">{(course.deliveryMethod || 'self_paced').replace('_', ' ')}</div>
             </div>
             <div>
-              <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">Primary Language</span>
-              <div className="font-semibold text-slate-800">{course.language || 'English'}</div>
+              <span className="block font-bold uppercase tracking-wider text-[10px] text-subtle-foreground mb-0.5">Primary Language</span>
+              <div className="font-semibold text-foreground">{course.language || 'English'}</div>
             </div>
             {course.prerequisites ? (
-              <div className="sm:col-span-2 lg:col-span-4 border-t border-slate-200/70 pt-2.5 mt-1">
-                <span className="block font-bold uppercase tracking-wider text-[10px] text-slate-400 mb-0.5">
+              <div className="sm:col-span-2 lg:col-span-4 border-t border-border/70 pt-2.5 mt-1">
+                <span className="block font-bold uppercase tracking-wider text-[10px] text-subtle-foreground mb-0.5">
                   Prerequisites & Recommended Background
                 </span>
-                <div className="font-normal text-slate-700 leading-relaxed">
+                <div className="font-normal text-secondary-foreground leading-relaxed">
                   <RichContent html={course.prerequisites} />
                 </div>
               </div>
             ) : null}
           </div>
 
-          {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-xs">{error}</div> : null}
+          {error ? <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger shadow-xs">{error}</div> : null}
 
           {/* Prominent Bottom Enroll CTA Banner */}
           <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 sm:p-7 text-white shadow-md flex flex-wrap items-center justify-between gap-5">
@@ -722,7 +722,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
             <Button
               onClick={() => setConfirmOpen(true)}
               disabled={!canEnroll}
-              className="bg-white text-indigo-700 hover:bg-indigo-50 shadow-md font-bold text-sm px-6 py-2.5 shrink-0 transition-transform active:scale-95"
+              className="bg-card text-primary hover:bg-primary-soft shadow-md font-bold text-sm px-6 py-2.5 shrink-0 transition-transform active:scale-95"
             >
               {enrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BookOpen className="h-4 w-4 mr-2" />}
               {enrolling ? 'Enrolling…' : 'Enroll in Course'}
@@ -742,25 +742,25 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
         description={
           <div className="space-y-2">
             <p>
-              You are about to enroll in <strong className="text-slate-900">{course.title}</strong> ({course.code}).
+              You are about to enroll in <strong className="text-foreground">{course.title}</strong> ({course.code}).
             </p>
-            <ul className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+            <ul className="space-y-1 rounded-xl border border-border bg-muted p-3 text-xs">
               <li>
-                <span className="text-slate-500">Delivery: </span>
-                <strong className="text-slate-800">{selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'In-Person Classroom' : 'Pure Online'}</strong>
+                <span className="text-muted-foreground">Delivery: </span>
+                <strong className="text-foreground">{selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'In-Person Classroom' : 'Pure Online'}</strong>
               </li>
               {selectedDeliveryMode === 'IN_PERSON_ONLY' && chosenSession ? (
                 <>
                   <li>
-                    <span className="text-slate-500">Session: </span>
-                    <strong className="text-slate-800">
+                    <span className="text-muted-foreground">Session: </span>
+                    <strong className="text-foreground">
                       {chosenSession.titleEn} · {formatSessionDateTime(chosenSession.scheduledAt)}
                     </strong>
                   </li>
                   {chosenSession.venue ? (
                     <li>
-                      <span className="text-slate-500">Venue: </span>
-                      <strong className="text-slate-800">
+                      <span className="text-muted-foreground">Venue: </span>
+                      <strong className="text-foreground">
                         {chosenSession.venue.name} · {chosenSession.venue.branch}
                       </strong>
                     </li>
@@ -768,7 +768,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                 </>
               ) : null}
             </ul>
-            <p className="text-xs text-slate-500">You will be taken to the course once enrollment is complete.</p>
+            <p className="text-xs text-muted-foreground">You will be taken to the course once enrollment is complete.</p>
           </div>
         }
       />

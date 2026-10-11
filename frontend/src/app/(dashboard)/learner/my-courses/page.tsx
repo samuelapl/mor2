@@ -115,14 +115,14 @@ export default function LearnerCoursesPage() {
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         {/* Delivery Mode Tabs */}
-        <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/70 p-1 text-xs">
+        <div className="inline-flex rounded-xl border border-border bg-secondary/70 p-1 text-xs">
           <button
             type="button"
             onClick={() => setModeFilter('ALL')}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'ALL'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-card text-foreground shadow-2xs'
+                : 'text-secondary-foreground hover:text-foreground'
             }`}
           >
             {t('learnerCoursesPage.allCourses')} ({enrolled.length})
@@ -132,8 +132,8 @@ export default function LearnerCoursesPage() {
             onClick={() => setModeFilter('ONLINE')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'ONLINE'
-                ? 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-card text-info shadow-2xs'
+                : 'text-secondary-foreground hover:text-foreground'
             }`}
           >
             <Laptop className="h-3.5 w-3.5" />
@@ -144,8 +144,8 @@ export default function LearnerCoursesPage() {
             onClick={() => setModeFilter('IN_PERSON')}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all ${
               modeFilter === 'IN_PERSON'
-                ? 'bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-400 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-card text-warning shadow-2xs'
+                : 'text-secondary-foreground hover:text-foreground'
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />

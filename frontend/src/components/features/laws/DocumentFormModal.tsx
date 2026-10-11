@@ -180,7 +180,7 @@ export function DocumentFormModal({
     >
       <form id="document-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 rounded-lg bg-rose-50 text-rose-700 text-xs sm:text-sm border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800">
+          <div className="p-3 rounded-lg bg-danger-soft text-danger text-xs sm:text-sm border border-danger/30">
             {error}
           </div>
         )}
@@ -188,14 +188,14 @@ export function DocumentFormModal({
         {/* 1. Category & Document Number */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.targetCategory')} *
             </label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               required
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -206,7 +206,7 @@ export function DocumentFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.officialDocumentNumber')} *
             </label>
             <input
@@ -215,7 +215,7 @@ export function DocumentFormModal({
               onChange={(e) => setDocumentNumber(e.target.value)}
               placeholder="e.g. 33/1984 or 979/2016"
               required
-              className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -223,7 +223,7 @@ export function DocumentFormModal({
         {/* 2. Titles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.amharicTitlePrimary')}
             </label>
             <input
@@ -231,12 +231,12 @@ export function DocumentFormModal({
               value={titleAm}
               onChange={(e) => setTitleAm(e.target.value)}
               placeholder="ምሳሌ፡ የፌዴራል የታክስ አስተዳደር አዋጅ"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-serif"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-serif"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.englishTitle')} *
             </label>
             <input
@@ -245,7 +245,7 @@ export function DocumentFormModal({
               onChange={(e) => setTitleEn(e.target.value)}
               placeholder="e.g. Federal Tax Administration Proclamation"
               required
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -253,13 +253,13 @@ export function DocumentFormModal({
         {/* 3. Status & Year */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.enforcementStatus')} *
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as LawStatus)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
                 <option key={st} value={st}>
@@ -270,7 +270,7 @@ export function DocumentFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.yearIssued')}
             </label>
             <input
@@ -278,12 +278,12 @@ export function DocumentFormModal({
               value={yearIssued}
               onChange={(e) => setYearIssued(e.target.value ? Number(e.target.value) : '')}
               placeholder="e.g. 2016"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.coverImageGazetaThumbnailUrl')}
             </label>
             <input
@@ -291,20 +291,20 @@ export function DocumentFormModal({
               value={coverImageUrl}
               onChange={(e) => setCoverImageUrl(e.target.value)}
               placeholder="Optional image URL"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
         {/* 4. PDF File Upload */}
-        <div className="p-4 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
-          <label className="block text-xs font-bold text-indigo-900 dark:text-indigo-200 mb-2">
+        <div className="p-4 rounded-xl border border-dashed border-primary/30 bg-primary-soft/50">
+          <label className="block text-xs font-bold text-primary mb-2">
             {t('documentFormModal.pdfDocumentAttachment')} *
           </label>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white shadow-sm transition-colors">
-              <UploadCloud className="w-4 h-4 text-indigo-600" />
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-card border border-input hover:bg-muted text-foreground shadow-sm transition-colors">
+              <UploadCloud className="w-4 h-4 text-primary" />
               <span>{isUploading ? t('documentFormModal.uploading') : t('documentFormModal.choosePdfFile')}</span>
               <input
                 type="file"
@@ -316,14 +316,14 @@ export function DocumentFormModal({
             </label>
 
             {isUploading && (
-              <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+              <div className="flex items-center gap-2 text-xs text-primary">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>{t('documentFormModal.uploadingFileToServer')}</span>
               </div>
             )}
 
             {pdfUrl && !isUploading && (
-              <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-center gap-2 text-xs text-success bg-success-soft px-3 py-1.5 rounded-lg border border-success/30">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="font-medium truncate max-w-xs">{fileName || pdfUrl}</span>
               </div>
@@ -331,15 +331,15 @@ export function DocumentFormModal({
           </div>
 
           {uploadError && (
-            <div className="mt-2 text-xs text-rose-600 flex items-center gap-1">
+            <div className="mt-2 text-xs text-danger flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5" />
               <span>{uploadError}</span>
             </div>
           )}
 
           {/* Or manual URL */}
-          <div className="mt-3 pt-3 border-t border-indigo-200/60 dark:border-indigo-900/40 flex items-center gap-2">
-            <span className="text-[11px] text-slate-500 whitespace-nowrap">
+          <div className="mt-3 pt-3 border-t border-primary/20 flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
               {t('documentFormModal.orDirectUrl')}
             </span>
             <input
@@ -347,7 +347,7 @@ export function DocumentFormModal({
               value={pdfUrl}
               onChange={(e) => setPdfUrl(e.target.value)}
               placeholder="e.g. /file-sample.pdf or https://..."
-              className="flex-1 px-2.5 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="flex-1 px-2.5 py-1 text-xs rounded border border-input bg-card text-foreground"
             />
           </div>
         </div>
@@ -355,7 +355,7 @@ export function DocumentFormModal({
         {/* 5. Summaries */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.amharicSummaryObjectives')}
             </label>
             <textarea
@@ -363,12 +363,12 @@ export function DocumentFormModal({
               value={descriptionAm}
               onChange={(e) => setDescriptionAm(e.target.value)}
               placeholder="የሰነዱ አጭር ማብራሪያ..."
-              className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-serif"
+              className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-serif"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('documentFormModal.englishSummaryObjectives')}
             </label>
             <textarea
@@ -376,7 +376,7 @@ export function DocumentFormModal({
               value={descriptionEn}
               onChange={(e) => setDescriptionEn(e.target.value)}
               placeholder="Brief summary or scope..."
-              className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>

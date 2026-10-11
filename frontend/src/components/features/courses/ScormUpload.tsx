@@ -210,8 +210,8 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
           className={cn(
             'flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-all duration-200',
             dragOver
-              ? 'border-indigo-400 bg-indigo-50/60'
-              : 'border-slate-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/30',
+              ? 'border-ring bg-primary-soft/60'
+              : 'border-input bg-card hover:border-primary/30 hover:bg-primary-soft/30',
           )}
         >
           <input
@@ -229,10 +229,10 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
           {uploading ? (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
-              <p className="mt-4 text-sm font-semibold text-slate-700">
+              <p className="mt-4 text-sm font-semibold text-secondary-foreground">
                 Uploading &amp; parsing SCORM package…
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-subtle-foreground">
                 Extracting imsmanifest.xml and building course structure
               </p>
             </>
@@ -241,10 +241,10 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
                 <Upload className="h-6 w-6" />
               </div>
-              <p className="mt-4 text-sm font-semibold text-slate-800">
+              <p className="mt-4 text-sm font-semibold text-foreground">
                 Click to browse or drag &amp; drop
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 SCORM package (.zip, up to {MAX_SIZE_MB}&nbsp;MB)
               </p>
             </>
@@ -252,7 +252,7 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
         </div>
 
         {error && (
-          <div className="mt-4 rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+          <div className="mt-4 rounded-xl border border-danger/20 bg-danger-soft/80 px-4 py-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -260,7 +260,7 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="mt-5 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-secondary-foreground shadow-sm transition-colors hover:bg-muted"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to options
@@ -279,28 +279,28 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
   return (
     <div className="w-full space-y-5">
       {/* ── Package summary ── */}
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-violet-50/60 p-5">
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary-soft/80 to-accent-soft/60 p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25">
             <FileArchive className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-display text-sm font-bold text-slate-900">
+            <h3 className="truncate font-display text-sm font-bold text-foreground">
               {pkg.title || 'Untitled Package'}
             </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {pkg.schema || 'SCORM'} {pkg.schemaVersion && ` ${pkg.schemaVersion}`}
               {pkg.resourceCount > 0 && ` · ${pkg.resourceCount} resources`}
             </p>
             <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
-              <span className="rounded-full bg-white px-2 py-0.5 text-indigo-700 shadow-sm ring-1 ring-indigo-100">
+              <span className="rounded-full bg-card px-2 py-0.5 text-primary shadow-sm ring-1 ring-ring/20">
                 {stats.moduleCount} {stats.moduleCount === 1 ? 'module' : 'modules'}
               </span>
-              <span className="rounded-full bg-white px-2 py-0.5 text-violet-700 shadow-sm ring-1 ring-violet-100">
+              <span className="rounded-full bg-card px-2 py-0.5 text-accent shadow-sm ring-1 ring-accent/20">
                 {stats.lessonCount} {stats.lessonCount === 1 ? 'lesson' : 'lessons'}
               </span>
               {stats.subLessonCount > 0 && (
-                <span className="rounded-full bg-white px-2 py-0.5 text-slate-600 shadow-sm ring-1 ring-slate-200">
+                <span className="rounded-full bg-card px-2 py-0.5 text-secondary-foreground shadow-sm ring-1 ring-border">
                   {stats.subLessonCount} sub-lessons
                 </span>
               )}
@@ -309,7 +309,7 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
           <button
             type="button"
             onClick={handleReset}
-            className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50"
+            className="shrink-0 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
           >
             Change file
           </button>
@@ -317,44 +317,44 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-danger/20 bg-danger-soft/80 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {/* ── Editable course details ── */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
-        <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-soft">
+        <h4 className="font-display text-xs font-bold uppercase tracking-wider text-subtle-foreground">
           Course Details
         </h4>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-semibold text-slate-600">Title *</span>
+            <span className="text-xs font-semibold text-secondary-foreground">Title *</span>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-slate-600">Code *</span>
+            <span className="text-xs font-semibold text-secondary-foreground">Code *</span>
             <input
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 font-mono text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </label>
         </div>
 
         <label className="mt-3 block">
-          <span className="text-xs font-semibold text-slate-600">Category</span>
+          <span className="text-xs font-semibold text-secondary-foreground">Category</span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
           >
             {COURSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -365,31 +365,31 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
         </label>
 
         <label className="mt-3 block">
-          <span className="text-xs font-semibold text-slate-600">Description</span>
+          <span className="text-xs font-semibold text-secondary-foreground">Description</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="mt-1 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            className="mt-1 w-full resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
           />
         </label>
 
         <label className="mt-3 block">
-          <span className="text-xs font-semibold text-slate-600">Objectives</span>
+          <span className="text-xs font-semibold text-secondary-foreground">Objectives</span>
           <textarea
             value={objectives}
             onChange={(e) => setObjectives(e.target.value)}
             rows={2}
-            className="mt-1 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            className="mt-1 w-full resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
           />
         </label>
       </div>
 
       {/* ── Curriculum tree ── */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-soft">
         <div className="flex items-center gap-2">
-          <FolderTree className="h-4 w-4 text-slate-400" />
-          <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+          <FolderTree className="h-4 w-4 text-subtle-foreground" />
+          <h4 className="font-display text-xs font-bold uppercase tracking-wider text-subtle-foreground">
             Curriculum from SCORM
           </h4>
         </div>
@@ -398,14 +398,14 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
           {preview.curriculum.modules.map((mod, modIdx) => (
             <div
               key={modIdx}
-              className="rounded-xl border border-slate-100 bg-slate-50/60 p-3"
+              className="rounded-xl border border-border/60 bg-muted/60 p-3"
             >
               <div className="flex items-center gap-2">
                 <BookOpen className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-sm font-semibold text-foreground">
                   {mod.title}
                 </span>
-                <span className="ml-auto rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 ring-1 ring-indigo-100">
+                <span className="ml-auto rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary ring-1 ring-ring/20">
                   {mod.lessons.length} {mod.lessons.length === 1 ? 'lesson' : 'lessons'}
                 </span>
               </div>
@@ -421,11 +421,11 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
       </div>
 
       {/* ── Actions ── */}
-      <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-secondary-foreground shadow-sm transition-colors hover:bg-muted"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back
@@ -438,7 +438,7 @@ export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
           className={cn(
             'inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200',
             creating || uploading
-              ? 'cursor-not-allowed bg-slate-400'
+              ? 'cursor-not-allowed bg-subtle-foreground'
               : 'bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 shadow-indigo-500/25 hover:shadow-indigo-500/40',
           )}
         >
@@ -474,12 +474,12 @@ function ScormLessonRow({
   return (
     <li>
       <div
-        className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-white"
+        className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-card"
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
-        <span className="truncate text-xs text-slate-700">{lesson.title}</span>
-        <span className="ml-auto shrink-0 rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-600 ring-1 ring-violet-100">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-input" />
+        <span className="truncate text-xs text-secondary-foreground">{lesson.title}</span>
+        <span className="ml-auto shrink-0 rounded bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent ring-1 ring-accent/20">
           SCORM
         </span>
       </div>

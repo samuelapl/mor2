@@ -50,11 +50,11 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
         meta={
           assessments[0] && (
             <>
-              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700">
+              <span className="rounded-md border border-success/30 bg-success-soft px-1.5 py-0.5 font-semibold text-success">
                 {t('assessmentStage.passMarkThisAssessment', { passingScore: assessments[0].passingScore })}
               </span>
               {policyPassMark !== null && (
-                <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-semibold text-slate-600">
+                <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-semibold text-secondary-foreground">
                   {t('assessmentStage.courseRequiresOverallPolicy', { policyPassMark })}
                 </span>
               )}
@@ -64,12 +64,12 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
       />
 
       {issues.length > 0 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-amber-800">
+        <div className="rounded-2xl border border-warning/30 bg-warning-soft/70 p-4">
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-warning">
             <AlertTriangle className="h-3.5 w-3.5" />
             {t('assessmentStage.checkBeforeApproving')}
           </p>
-          <ul className="list-disc space-y-0.5 pl-5 text-xs text-amber-800">
+          <ul className="list-disc space-y-0.5 pl-5 text-xs text-warning">
             {issues.map((issue, i) => (
               <li key={i}>{issue}</li>
             ))}

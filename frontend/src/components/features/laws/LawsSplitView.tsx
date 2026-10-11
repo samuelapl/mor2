@@ -206,22 +206,22 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
   return (
     <div className="space-y-6">
       {/* ── TOP HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-card border border-border/90 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="p-2 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+            <span className="p-2 rounded-xl bg-primary-soft text-primary">
               <Scale className="w-5 h-5" />
             </span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
               {isAdmin
                 ? t('lawsSplitView.legalRepositoryManagement')
                 : t('lawsSplitView.knowledgeBaseLegalLibrary')}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
             {t('lawsSplitView.taxCustomsLaws')}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-secondary-foreground mt-1 max-w-2xl">
             {t('lawsSplitView.officialFederalDemocraticRepublicOfEthio')}
           </p>
         </div>
@@ -232,7 +232,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
             <>
               <Link
                 href="/laws"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-secondary-foreground bg-secondary hover:bg-input/60 transition-colors"
               >
                 <Eye className="w-4 h-4" />
                 <span>{t('lawsSplitView.learnerPortalView')}</span>
@@ -243,9 +243,9 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                   setEditingCategory(null);
                   setIsCategoryModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-50 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-card border border-input text-foreground hover:bg-muted transition-colors shadow-sm"
               >
-                <Plus className="w-4 h-4 text-indigo-600" />
+                <Plus className="w-4 h-4 text-primary" />
                 <span>{t('lawsSplitView.addCategory')}</span>
               </button>
               <button
@@ -264,7 +264,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
             canManage && (
               <Link
                 href="/laws-management"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-primary-soft text-primary hover:bg-primary/15 border border-primary/30 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 <span>{t('lawsSplitView.manageLegalLaws')}</span>
@@ -280,8 +280,8 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
           className={cn(
             'flex items-center justify-between p-3.5 rounded-xl text-xs sm:text-sm border animate-in fade-in',
             feedbackMessage.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-              : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+              ? 'bg-success-soft text-success border-success/30'
+              : 'bg-danger-soft text-danger border-danger/30',
           )}
         >
           <span>{feedbackMessage.text}</span>
@@ -295,7 +295,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
       )}
 
       {/* ── LEVEL 1: DOMAIN TABS ────────────────────────────────────────────── */}
-      <div className="border-b border-slate-200 dark:border-slate-800">
+      <div className="border-b border-border">
         <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-px" aria-label="Law Domains">
           {LAW_DOMAINS.map((dom) => {
             const active = selectedDomain === dom.key;
@@ -309,8 +309,8 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className={cn(
                   'whitespace-nowrap pb-3 px-3 sm:px-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
                   active
-                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300',
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-input',
                 )}
               >
                 <span>{t(`domain.${dom.key}`)}</span>
@@ -321,7 +321,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
       </div>
 
       {/* ── LEVEL 2: INSTRUMENT PILLS + SEARCH + STATUS FILTER & CATEGORIES ── */}
-      <div className="flex flex-col gap-3.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+      <div className="flex flex-col gap-3.5 p-4 rounded-xl bg-muted border border-border/80">
         {/* Row 1: Instrument Type Pills (left) & Search / Status (right) */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Instrument Type Pills */}
@@ -333,7 +333,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
                 selectedInstrument === 'ALL'
                   ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
+                  : 'bg-card text-secondary-foreground hover:bg-input/60 border border-border',
               )}
             >
               {t('lawsSplitView.allTypes')}
@@ -349,7 +349,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                     'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
                     active
                       ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
+                      : 'bg-card text-secondary-foreground hover:bg-input/60 border border-border',
                   )}
                 >
                   {t(`instrumentType.${inst.key}`)}
@@ -362,13 +362,13 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
           <div className="flex items-center gap-2 shrink-0">
             {/* Search Bar */}
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-subtle-foreground" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('lawsSplitView.searchTitleNumber')}
-                className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-2xs"
               />
             </div>
 
@@ -377,7 +377,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as LawStatus | 'ALL')}
-                className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border border-input bg-card text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-2xs cursor-pointer"
               >
                 <option value="ALL">{t('lawsSplitView.allStatuses')}</option>
                 {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
@@ -391,13 +391,13 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         </div>
 
         {/* Row 2: Category Dropdown Selector Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border/80">
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-400 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary shrink-0">
               <FolderOpen className="w-4 h-4" />
             </div>
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap shrink-0">
+              <span className="text-xs font-bold text-secondary-foreground whitespace-nowrap shrink-0">
                 {t('lawsSplitView.lawCategory')}
               </span>
               <div className="relative flex-1 max-w-xl">
@@ -412,7 +412,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                       if (found) setSelectedCategory(found);
                     }
                   }}
-                  className="w-full text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer truncate shadow-2xs"
+                  className="w-full text-xs sm:text-sm font-semibold rounded-lg border border-input bg-card text-foreground px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer truncate shadow-2xs"
                 >
                   <option value="ALL">
                     {t('lawsSplitView.allCategories')} ({categories.reduce((acc, c) => acc + (c._count?.documents ?? 0), 0)} {t('lawsSplitView.documents')})
@@ -441,16 +441,16 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                       setEditingCategory(selectedCategory);
                       setIsCategoryModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-border hover:bg-muted text-secondary-foreground transition-colors shadow-2xs"
                     title={t('lawsSplitView.editCurrentCategory')}
                   >
-                    <Edit2 className="w-3 h-3 text-indigo-600" />
+                    <Edit2 className="w-3 h-3 text-primary" />
                     <span>{t('lawsSplitView.edit')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeletingCategory(selectedCategory)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-danger/30 hover:bg-danger-soft text-danger transition-colors shadow-2xs"
                     title={t('lawsSplitView.deleteCurrentCategory')}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -464,7 +464,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                   setEditingCategory(null);
                   setIsCategoryModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-soft text-primary border border-primary/30 hover:bg-primary/15 transition-colors shadow-2xs"
               >
                 <Plus className="w-3 h-3" />
                 <span>{t('lawsSplitView.addCategory2')}</span>
@@ -477,10 +477,10 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
       {/* ── DOCUMENTS SHOWCASE (FULL WIDTH PROFESSIONAL LAYOUT) ────────── */}
       <div className="flex flex-col gap-4">
         {/* Category Header Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border/80 shadow-2xs">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary-soft text-primary">
                 {(() => {
                   if (!selectedCategory) {
                     const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedInstrument);
@@ -490,13 +490,13 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                   return inst ? t(`instrumentType.${inst.key}`) : selectedCategory.instrumentType;
                 })()}
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {totalDocs} {t('lawsSplitView.documentSFound')}
               </span>
             </div>
             <h2
               className={cn(
-                'text-lg font-bold text-slate-900 dark:text-white truncate mt-1',
+                'text-lg font-bold text-foreground truncate mt-1',
                 lang === 'am' && 'font-serif',
               )}
             >
@@ -507,7 +507,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 : t('lawsSplitView.allTaxCustomsLawsDecrees')}
             </h2>
             {selectedCategory?.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                 {selectedCategory.description}
               </p>
             )}
@@ -530,19 +530,19 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
 
         {/* Documents List */}
         {isLoadingDocs ? (
-          <div className="p-12 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-400">
-            <Spinner className="size-8 text-indigo-600" />
+          <div className="p-12 flex flex-col items-center justify-center gap-2 bg-card rounded-2xl border border-border/80 text-subtle-foreground">
+            <Spinner className="size-8 text-primary" />
             <span className="text-sm">{t('lawsSplitView.loadingDocuments')}</span>
           </div>
         ) : documents.length === 0 ? (
-          <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+          <div className="p-12 text-center bg-card rounded-2xl border border-border/80 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mx-auto text-subtle-foreground">
               <FileText className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-white">
+            <h3 className="text-base font-bold text-foreground">
               {t('lawsSplitView.noLegalDocumentsUploadedYet')}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
               {t('lawsSplitView.noDecreesMatchTheCurrentCategory')}
             </p>
             {isAdmin && (

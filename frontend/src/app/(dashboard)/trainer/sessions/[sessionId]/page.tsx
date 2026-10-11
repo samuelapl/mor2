@@ -58,7 +58,7 @@ export default function SessionQuizPrepPage() {
     return (
       <PageShell title="Session Preparation" description="Preparing session live quiz questions...">
         <div className="flex h-72 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </PageShell>
     );
@@ -67,8 +67,8 @@ export default function SessionQuizPrepPage() {
   if (error || !session) {
     return (
       <PageShell title="Session Not Found" description="Could not load session details">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-sm font-semibold text-red-700">{error || 'Session not found'}</p>
+        <div className="rounded-2xl border border-danger/30 bg-danger-soft p-6 text-center">
+          <p className="text-sm font-semibold text-danger">{error || 'Session not found'}</p>
           <div className="mt-4">
             <Button variant="outline" size="sm" onClick={() => router.push('/trainer/sessions')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
@@ -93,7 +93,7 @@ export default function SessionQuizPrepPage() {
             variant="outline"
             size="sm"
             onClick={() => router.push('/trainer/sessions')}
-            className="gap-1.5 text-xs text-slate-700 border-slate-200"
+            className="gap-1.5 text-xs text-secondary-foreground border-border"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Sessions
@@ -114,50 +114,50 @@ export default function SessionQuizPrepPage() {
       }
     >
       {/* Session Header Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Session</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">Session</span>
             <Badge variant={session.status === 'LIVE' ? 'green' : session.status === 'SCHEDULED' ? 'blue' : 'slate'} dot>
               {session.status}
             </Badge>
-            <span className="text-xs text-slate-300">|</span>
-            <span className="text-xs font-medium text-slate-500">{session.platform}</span>
+            <span className="text-xs text-subtle-foreground">|</span>
+            <span className="text-xs font-medium text-muted-foreground">{session.platform}</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+              <Calendar className="h-3.5 w-3.5 text-subtle-foreground" />
               <span>
                 {formatSessionDate(session.scheduledAt)} · {formatSessionTime(session.scheduledAt)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-slate-400" />
+              <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
               <span>{session.durationMinutes} mins</span>
             </div>
           </div>
         </div>
 
         {/* Tab switchers */}
-        <div className="flex border-b border-slate-100 pt-2 gap-2">
+        <div className="flex border-b border-border/60 pt-2 gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('quiz')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
-              activeTab === 'quiz' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              activeTab === 'quiz' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
             Prepare Quiz
-            <span className="rounded-full bg-indigo-50 px-1.5 py-0.2 text-[10px] font-bold text-indigo-600">Pre-load</span>
+            <span className="rounded-full bg-primary-soft px-1.5 py-0.2 text-[10px] font-bold text-primary">Pre-load</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('info')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
-              activeTab === 'info' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <Info className="h-3.5 w-3.5" />
@@ -169,14 +169,14 @@ export default function SessionQuizPrepPage() {
       {/* Main Tab Content */}
       <div className="mt-4">
         {activeTab === 'quiz' ? (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
+            <div className="mb-4 flex items-center justify-between border-b border-border/60 pb-3">
               <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                <h2 className="text-base font-bold text-foreground flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-indigo-500" />
                   Quiz preparation
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Build quiz groups from the question bank, set the timer and each question&apos;s points. In the live room you can
                   broadcast a prepared group to learners in one click.
                 </p>
@@ -186,18 +186,18 @@ export default function SessionQuizPrepPage() {
             <PreparedQuizManager sessionId={session.id} courseId={session.courseId} />
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Session Description</h3>
-            <div className="text-xs text-slate-600 leading-relaxed">
+          <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Session Description</h3>
+            <div className="text-xs text-secondary-foreground leading-relaxed">
               <RichContent html={session.descriptionEn} placeholder="No description provided for this session." />
             </div>
             {session.descriptionAm && (
-              <div className="text-xs text-slate-600 leading-relaxed font-amharic">
+              <div className="text-xs text-secondary-foreground leading-relaxed font-amharic">
                 <RichContent html={session.descriptionAm} />
               </div>
             )}
-            <h3 className="pt-2 text-sm font-bold text-slate-900">Session Objectives</h3>
-            <div className="text-xs text-slate-600 leading-relaxed">
+            <h3 className="pt-2 text-sm font-bold text-foreground">Session Objectives</h3>
+            <div className="text-xs text-secondary-foreground leading-relaxed">
               <RichContent html={session.objectivesEn} placeholder="No objectives provided for this session." />
             </div>
           </div>

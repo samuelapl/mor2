@@ -20,9 +20,9 @@ function getInitials(name: string): string {
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 last:border-0">
-      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</span>
-      <span className="text-sm text-slate-700">{value}</span>
+    <div className="flex items-center justify-between gap-4 border-b border-border/60 py-3 last:border-0">
+      <span className="text-xs font-semibold uppercase tracking-wide text-subtle-foreground">{label}</span>
+      <span className="text-sm text-secondary-foreground">{value}</span>
     </div>
   );
 }
@@ -77,12 +77,12 @@ export function UserDetailModal({
               </div>
             )}
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-slate-900">{user.name}</p>
-              <p className="truncate text-sm text-slate-500">{user.email}</p>
+              <p className="truncate text-base font-semibold text-foreground">{user.name}</p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border/60">
             <Row label="Phone" value={user.phone || '—'} />
             <Row label="Department" value={user.department || '—'} />
             <Row label="TIN" value={user.tin || '—'} />
@@ -93,7 +93,7 @@ export function UserDetailModal({
                   <select
                     value={user.role}
                     onChange={(event) => onChangeRole(user.id, event.target.value as Role)}
-                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-400"
+                    className="rounded-lg border border-border bg-card px-2.5 py-1 text-sm text-secondary-foreground shadow-sm outline-none focus:border-ring"
                   >
                     {options.map((r) => (
                       <option key={r.name} value={r.name.toLowerCase()}>
@@ -113,7 +113,7 @@ export function UserDetailModal({
               <Row
                 label="Primary Venue"
                 value={
-                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                     <Building2 className="h-3.5 w-3.5 text-indigo-500" />
                     {user.primaryVenue.branch} — {user.primaryVenue.name}
                   </span>
@@ -132,7 +132,7 @@ export function UserDetailModal({
           </div>
 
           {canManage ? (
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+            <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
               {user.status === 'suspended' ? (
                 <Button
                   size="sm"

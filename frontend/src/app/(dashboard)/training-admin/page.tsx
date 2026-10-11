@@ -148,14 +148,14 @@ export default function TrainingAdminDashboardPage() {
           label={t('trainingAdminDashboardPage.publishedCatalog')}
           value={publishedCourses}
           hint={t('trainingAdminDashboardPage.availableToLearners')}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-soft text-success"
         />
         <StatCard
           icon={UsersRound}
           label={t('trainingAdminDashboardPage.activeEnrollments')}
           value={activeEnrollments}
           hint={t('trainingAdminDashboardPage.currentlyInProgress')}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-soft text-info"
         />
         <StatCard
           icon={Video}
@@ -164,21 +164,21 @@ export default function TrainingAdminDashboardPage() {
           hint={
             t('trainingAdminDashboardPage.upcomingScheduled', { count: upcomingSessions.length })
           }
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-primary-soft text-primary"
         />
       </div>
 
       {/* Graphical Insights: Charts */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Pipeline Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('trainingAdminDashboardPage.courseCatalogPipeline')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('trainingAdminDashboardPage.statusOfCoursesAcrossDevelopmentAnd')}
                 </p>
               </div>
@@ -195,8 +195,8 @@ export default function TrainingAdminDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span className="font-medium text-emerald-600">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
+            <span className="font-medium text-success">
               {t('trainingAdminDashboardPage.published2', { publishedCourses })}
             </span>
             <span>
@@ -206,14 +206,14 @@ export default function TrainingAdminDashboardPage() {
         </div>
 
         {/* Live Training Sessions Vertical Bar Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('trainingAdminDashboardPage.liveTrainingSchedule')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('trainingAdminDashboardPage.overviewOfLiveClassesAndFacilitator')}
                 </p>
               </div>
@@ -233,11 +233,11 @@ export default function TrainingAdminDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('trainingAdminDashboardPage.completed', { count: completedSessions.length })}
             </span>
-            <span className="font-medium text-indigo-600">
+            <span className="font-medium text-primary">
               {t('trainingAdminDashboardPage.scheduled', { count: upcomingSessions.length })}
             </span>
           </div>
@@ -293,7 +293,7 @@ export default function TrainingAdminDashboardPage() {
         {sessionsLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="h-36 animate-pulse rounded-2xl bg-slate-100" />
+              <div key={n} className="h-36 animate-pulse rounded-2xl bg-secondary" />
             ))}
           </div>
         ) : upcomingSessions.length > 0 ? (
@@ -312,7 +312,7 @@ export default function TrainingAdminDashboardPage() {
               return (
                 <div
                   key={session.id}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card"
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
@@ -321,12 +321,12 @@ export default function TrainingAdminDashboardPage() {
                           ? t('trainerDashboardPage.liveNow2')
                           : t('trainerDashboardPage.scheduled')}
                       </Badge>
-                      <span className="text-[11px] font-medium text-slate-400">
+                      <span className="text-[11px] font-medium text-subtle-foreground">
                         {session.durationMinutes} {t('trainerDashboardPage.mins')}
                       </span>
                     </div>
 
-                    <h4 className="mt-3 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h4 className="mt-3 font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {isAmharic && session.titleAm ? session.titleAm : session.titleEn}
                     </h4>
                     {(() => {
@@ -334,24 +334,24 @@ export default function TrainingAdminDashboardPage() {
                       const cTitle =
                         isAmharic && (c as any)?.titleAm ? (c as any).titleAm : c?.title;
                       return cTitle ? (
-                        <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
+                        <p className="mt-1 text-xs text-muted-foreground truncate">{cTitle}</p>
                       ) : null;
                     })()}
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                    <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <Calendar className="h-3.5 w-3.5 text-subtle-foreground" />
                         {dateStr}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
                         {timeStr}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-5 border-t border-slate-100 pt-3 flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
+                  <div className="mt-5 border-t border-border/60 pt-3 flex items-center justify-between">
+                    <span className="text-xs text-subtle-foreground">
                       {t('trainingAdminDashboardPage.sessionId')} {session.id.slice(0, 6)}
                     </span>
                     <Link href="/training-admin/sessions">
@@ -365,14 +365,14 @@ export default function TrainingAdminDashboardPage() {
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-subtle-foreground">
               <Video className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-xs font-semibold text-slate-700">
+            <p className="mt-3 text-xs font-semibold text-secondary-foreground">
               {t('learnerLiveSessionsPage.noLiveSessionsScheduled')}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-subtle-foreground">
               {t('trainingAdminDashboardPage.scheduleInteractiveWebinarsOrClassroomSe')}
             </p>
           </div>
@@ -400,21 +400,21 @@ export default function TrainingAdminDashboardPage() {
               {publishNextPage.pageItems.map((course) => (
                 <div
                   key={course.id}
-                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft"
+                  className="rounded-2xl border border-border/80 bg-card p-5 shadow-soft ring-super-soft"
                 >
                   <div className="flex items-center justify-between">
                     <Badge variant="blue">{t('trainingAdminDashboardPage.approved')}</Badge>
-                    <span className="text-xs text-slate-400">{course.code}</span>
+                    <span className="text-xs text-subtle-foreground">{course.code}</span>
                   </div>
-                  <h4 className="mt-3 font-display text-sm font-bold text-slate-900 line-clamp-1">
+                  <h4 className="mt-3 font-display text-sm font-bold text-foreground line-clamp-1">
                     {isAmharic && (course as any).titleAm ? (course as any).titleAm : course.title}
                   </h4>
-                  <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                     {course.description ||
                       (t('trainingAdminDashboardPage.noDescriptionProvided'))}
                   </p>
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                    <span className="text-xs text-slate-400">{course.category}</span>
+                  <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+                    <span className="text-xs text-subtle-foreground">{course.category}</span>
                     <Link href="/courses">
                       <Button size="sm" variant="outline">
                         {t('trainingAdminDashboardPage.publishCourse')}
@@ -435,8 +435,8 @@ export default function TrainingAdminDashboardPage() {
             />
           </>
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <p className="text-xs text-subtle-foreground">
               {t('trainingAdminDashboardPage.noCoursesCurrentlyWaitingForPublication')}
             </p>
           </div>

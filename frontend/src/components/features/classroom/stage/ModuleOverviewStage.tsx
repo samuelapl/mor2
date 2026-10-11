@@ -35,7 +35,7 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Hero Banner */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-5">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 sm:p-8 shadow-xs space-y-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="indigo" className="text-xs font-semibold">
             Module {moduleIndex + 1} Overview
@@ -56,39 +56,39 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
         </div>
 
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
             Module {moduleIndex + 1}: {cleanModuleTitle(module.title)}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Carefully review the module overview, key learning objectives, and attached study references before starting.
           </p>
         </div>
 
         {/* Quick Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-            <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-border/60">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted border border-border/60">
+            <Layers className="h-4 w-4 text-primary shrink-0" />
             <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Lessons & Topics</p>
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              <p className="text-[10px] font-semibold text-subtle-foreground uppercase">Lessons & Topics</p>
+              <p className="text-xs font-bold text-foreground">
                 {totalLessons} Lessons {totalSubLessons > 0 ? `· ${totalSubLessons} Topics` : ''}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted border border-border/60">
+            <Clock className="h-4 w-4 text-warning shrink-0" />
             <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Module Duration</p>
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{formatDuration(totalDurationMin, isAmharic)}</p>
+              <p className="text-[10px] font-semibold text-subtle-foreground uppercase">Module Duration</p>
+              <p className="text-xs font-bold text-foreground">{formatDuration(totalDurationMin, isAmharic)}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted border border-border/60">
+            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
             <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Progress</p>
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              <p className="text-[10px] font-semibold text-subtle-foreground uppercase">Progress</p>
+              <p className="text-xs font-bold text-foreground">
                 {completedLessons} of {totalLessons} done
               </p>
             </div>
@@ -97,12 +97,12 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
       </div>
 
       {hasDescription ? (
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-3">
-          <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-            <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Module Overview & Description</h2>
+        <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-foreground">
+            <BookOpen className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Module Overview & Description</h2>
           </div>
-          <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed max-w-none">
+          <div className="text-sm text-secondary-foreground leading-relaxed max-w-none">
             <RichContent html={module.description!} />
           </div>
         </div>
@@ -110,13 +110,13 @@ export function ModuleOverviewStage({ module, moduleIndex, moduleProgress, onSta
 
       {/* Module Learning Objectives */}
       {hasObjectives ? (
-        <div className="rounded-2xl border border-indigo-200/90 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/30 p-6 shadow-xs space-y-3">
-          <div className="flex items-center gap-2 text-indigo-950 dark:text-indigo-200">
-            <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-950 dark:text-indigo-200">Module Learning Objectives</h2>
+        <div className="rounded-2xl border border-primary/25 bg-primary-soft/50 p-6 shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-primary">
+            <Target className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-wider text-primary">Module Learning Objectives</h2>
           </div>
-          <p className="text-xs text-indigo-800/90 dark:text-indigo-300">By the end of this module, you should understand and be able to apply:</p>
-          <div className="text-sm text-indigo-950 dark:text-slate-200 leading-relaxed bg-white/80 dark:bg-slate-900/80 rounded-xl border border-indigo-100 dark:border-indigo-900/50 p-4 shadow-2xs">
+          <p className="text-xs text-primary/90">By the end of this module, you should understand and be able to apply:</p>
+          <div className="text-sm text-primary leading-relaxed bg-card/80 rounded-xl border border-primary/30 p-4 shadow-2xs">
             <RichContent html={module.objectives!} />
           </div>
         </div>

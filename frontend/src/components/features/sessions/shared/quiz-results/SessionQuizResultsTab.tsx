@@ -60,19 +60,19 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
   if (loading && !data) {
     return (
       <div className="flex h-56 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
   if (error) {
-    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>;
+    return <div className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>;
   }
   if (!data || data.quizzes.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-        <ClipboardList className="h-8 w-8 text-slate-300" />
-        <p className="mt-2 text-sm font-semibold text-slate-700">No quiz results for this session</p>
-        <p className="mt-1 text-xs text-slate-500">Results appear here once questions are broadcast and learners answer them.</p>
+      <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border bg-card px-6 py-12 text-center">
+        <ClipboardList className="h-8 w-8 text-subtle-foreground" />
+        <p className="mt-2 text-sm font-semibold text-secondary-foreground">No quiz results for this session</p>
+        <p className="mt-1 text-xs text-muted-foreground">Results appear here once questions are broadcast and learners answer them.</p>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
-          icon={<Users className="h-4 w-4 text-slate-400" />}
+          icon={<Users className="h-4 w-4 text-subtle-foreground" />}
           label="Answered"
           value={`${stats.answeredLearners} / ${stats.total}`}
           hint="Learners who answered at least one question"
@@ -100,22 +100,22 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
         />
       </div>
 
-      <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+      <div className="space-y-4 rounded-2xl border border-border/90 bg-card p-5 shadow-xs">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[220px] flex-1">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search learner name or email…"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-border bg-muted/50 py-2 pl-8 pr-3 text-xs text-foreground placeholder:text-subtle-foreground focus:border-ring focus:bg-card focus:outline-none"
             />
           </div>
           <select
             value={quizFilter}
             onChange={(e) => setQuizFilter(e.target.value)}
             aria-label="Quiz"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 focus:outline-none"
+            className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-secondary-foreground focus:border-ring focus:outline-none"
           >
             <option value={ALL}>All quizzes</option>
             {data.quizzes.map((q) => (
@@ -125,7 +125,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
               </option>
             ))}
           </select>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px]">
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-muted p-0.5 text-[11px]">
             {(['ALL', 'ANSWERED', 'MISSED'] as const).map((f) => (
               <button
                 key={f}
@@ -133,7 +133,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
                 onClick={() => setAnsweredFilter(f)}
                 className={cn(
                   'rounded-md px-2.5 py-1 font-medium transition',
-                  answeredFilter === f ? 'bg-white font-semibold text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900',
+                  answeredFilter === f ? 'bg-card font-semibold text-foreground shadow-xs' : 'text-secondary-foreground hover:text-foreground',
                 )}
               >
                 {f === 'ALL' ? 'All' : f === 'ANSWERED' ? 'Answered' : "Didn't answer"}
@@ -144,7 +144,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary"
           >
             <RefreshCw className={cn('h-3 w-3', loading && 'animate-spin')} />
             Refresh
@@ -152,28 +152,28 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
         </div>
 
         {learners.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-xs text-slate-400">
+          <div className="rounded-xl border border-dashed border-border bg-muted/50 px-4 py-8 text-center text-xs text-subtle-foreground">
             No learners match the search or filter.
           </div>
         ) : (
-          <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200/80">
+          <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/80">
             {learners.map((learner) => {
               const open = expanded === learner.userId;
               const shown = learner.quizzes.filter((r) => quizzes.some((q) => q.id === r.quizId));
               return (
-                <li key={learner.userId} className="bg-white">
+                <li key={learner.userId} className="bg-card">
                   <button
                     type="button"
                     onClick={() => setExpanded(open ? null : learner.userId)}
                     aria-expanded={open}
-                    className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50/70"
+                    className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/70"
                   >
                     <div className="min-w-[180px] flex-1">
-                      <p className="text-sm font-semibold text-slate-900">{learner.name}</p>
-                      <p className="text-[11px] text-slate-500">{learner.email}</p>
+                      <p className="text-sm font-semibold text-foreground">{learner.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{learner.email}</p>
                     </div>
                     {learner.attendance && (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary-foreground">
                         {learner.attendance.toLowerCase()}
                       </span>
                     )}
@@ -182,28 +182,28 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
                         const quiz = data.quizzes.find((q) => q.id === r.quizId)!;
                         return (
                           <span key={r.quizId} className="flex items-center gap-1" title={quiz.title}>
-                            {quizzes.length > 1 && <span className="max-w-[120px] truncate text-[10px] text-slate-400">{quiz.title}</span>}
+                            {quizzes.length > 1 && <span className="max-w-[120px] truncate text-[10px] text-subtle-foreground">{quiz.title}</span>}
                             <QuizScoreBadge quiz={quiz} result={r} />
                           </span>
                         );
                       })}
                     </div>
-                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-slate-400 transition', open && 'rotate-180')} />
+                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-subtle-foreground transition', open && 'rotate-180')} />
                   </button>
                   {open && (
-                    <div className="space-y-4 border-t border-slate-100 bg-slate-50/40 px-4 py-4">
+                    <div className="space-y-4 border-t border-border/60 bg-muted/40 px-4 py-4">
                       {shown.map((r) => {
                         const quiz = data.quizzes.find((q) => q.id === r.quizId)!;
                         return (
                           <div key={r.quizId} className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600">{quiz.title}</h4>
+                              <h4 className="text-xs font-bold uppercase tracking-wide text-secondary-foreground">{quiz.title}</h4>
                               {quiz.graded && (
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                                <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[10px] font-bold text-warning">
                                   Graded · {quiz.weight}% · pass {quiz.passingScore}%
                                 </span>
                               )}
-                              <span className="text-[11px] text-slate-500">
+                              <span className="text-[11px] text-muted-foreground">
                                 {r.correct}/{quiz.questions.length} correct
                                 {r.recorded ? ` · recorded grade ${r.recorded.score}%` : ''}
                               </span>
@@ -226,13 +226,13 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
 
 function StatCard({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+    <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-500">{label}</span>
+        <span className="text-xs font-semibold text-muted-foreground">{label}</span>
         {icon}
       </div>
-      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-      <p className="mt-0.5 text-[11px] text-slate-400">{hint}</p>
+      <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-0.5 text-[11px] text-subtle-foreground">{hint}</p>
     </div>
   );
 }

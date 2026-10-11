@@ -306,16 +306,16 @@ export default function TrainerAttendancePage() {
     >
       <div className="space-y-6">
         {/* Session Selector & Context Bar */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {t('trainerAttendancePage.selectSession')}
               </span>
               <select
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-800 focus:border-indigo-500 focus:bg-white focus:outline-none max-w-md"
+                className="rounded-xl border border-border bg-muted px-3.5 py-2 text-sm font-semibold text-foreground focus:border-ring focus:bg-card focus:outline-none max-w-md"
               >
                 {sessions.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -342,7 +342,7 @@ export default function TrainerAttendancePage() {
                 variant="outline"
                 onClick={handleSendReport}
                 disabled={sendingReport || !selectedSessionId}
-                className="text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary-soft"
               >
                 <Send className="h-3.5 w-3.5" />
                 {sendingReport
@@ -367,14 +367,14 @@ export default function TrainerAttendancePage() {
           </div>
 
           {activeSession && (
-            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100 text-xs text-slate-600">
-              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border/60 text-xs text-secondary-foreground">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
                 <CalendarDays className="h-4 w-4 text-indigo-500" />
                 {formatDate(activeSession.scheduledAt)} at {formatTime(activeSession.scheduledAt)}
               </span>
               <span>·</span>
               <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
                 {activeSession.durationMinutes} min
               </span>
               <span>·</span>
@@ -387,10 +387,10 @@ export default function TrainerAttendancePage() {
               {isInPersonSession(activeSession) && (
                 <>
                   <span>·</span>
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                    <Building2 className="h-3.5 w-3.5 text-amber-700" />
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-warning bg-warning-soft px-2.5 py-1 rounded-lg border border-warning/30">
+                    <Building2 className="h-3.5 w-3.5 text-warning" />
                     <span>In-Person Classroom:</span>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-bold text-foreground">
                       {activeSession.venue?.branch || 'Ministry Center'} ·{' '}
                       {activeSession.venue?.name || 'Classroom'} (Max:{' '}
                       {activeSession.venue?.capacity ?? 30} seats)
@@ -404,66 +404,66 @@ export default function TrainerAttendancePage() {
 
         {/* Attendance Statistics Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('trainerAttendancePage.enrolledStudents')}
               </span>
-              <Users className="h-4 w-4 text-slate-400" />
+              <Users className="h-4 w-4 text-subtle-foreground" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{totalStudents}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-2 text-2xl font-bold text-foreground">{totalStudents}</p>
+            <p className="text-[11px] text-subtle-foreground mt-0.5">
               {t('trainerAttendancePage.totalEligible')}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('trainerAttendancePage.present')}
               </span>
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-emerald-600">{presentCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-2 text-2xl font-bold text-success">{presentCount}</p>
+            <p className="text-[11px] text-subtle-foreground mt-0.5">
               {t('trainerAttendancePage.confirmedCheckIns')}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('trainerAttendancePage.late')}
               </span>
               <Clock className="h-4 w-4 text-amber-500" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-amber-600">{lateCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-2 text-2xl font-bold text-warning">{lateCount}</p>
+            <p className="text-[11px] text-subtle-foreground mt-0.5">
               {t('trainerAttendancePage.checkedInAfterStart')}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('trainerAttendancePage.excusedAbsence')}
               </span>
               <Award className="h-4 w-4 text-sky-500" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-sky-600">{excusedCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-2 text-2xl font-bold text-info">{excusedCount}</p>
+            <p className="text-[11px] text-subtle-foreground mt-0.5">
               {t('trainerAttendancePage.authorizedPermits')}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('trainerAttendancePage.attendanceRate')}
               </span>
               <FileCheck className="h-4 w-4 text-indigo-500" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-indigo-600">{attendanceRate}%</p>
+            <p className="mt-2 text-2xl font-bold text-primary">{attendanceRate}%</p>
             <div className="mt-2">
               <ProgressBar value={attendanceRate} />
             </div>
@@ -471,25 +471,25 @@ export default function TrainerAttendancePage() {
         </div>
 
         {/* Toolbar & Bulk Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
           <div className="relative min-w-[260px] flex-1 max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('trainerAttendancePage.searchLearnerByNameOrEmail')}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-border bg-muted pl-10 pr-4 py-2 text-xs font-medium text-foreground placeholder:text-subtle-foreground focus:border-ring focus:bg-card focus:outline-none"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-400" />
+              <Filter className="h-4 w-4 text-subtle-foreground" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
+                className="rounded-xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-secondary-foreground focus:border-ring focus:bg-card focus:outline-none"
               >
                 <option value="ALL">
                   {t('trainerAttendancePage.allStatuses')} ({studentRoster.length})
@@ -511,13 +511,13 @@ export default function TrainerAttendancePage() {
 
             {/* Quick Bulk Actions */}
             {can('attendance.manage') ? (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+              <div className="flex items-center gap-2 border-l border-border pl-3">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleBulkMarkAll('PRESENT')}
                   disabled={loadingAttendance || studentRoster.length === 0}
-                  className="text-xs text-emerald-700 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100"
+                  className="text-xs text-success border-success/30 bg-success-soft/50 hover:bg-success-soft"
                 >
                   <UserCheck className="h-3.5 w-3.5 mr-1" />
                   Mark All Present
@@ -527,7 +527,7 @@ export default function TrainerAttendancePage() {
                   variant="outline"
                   onClick={() => handleBulkMarkAll('ABSENT')}
                   disabled={loadingAttendance || studentRoster.length === 0}
-                  className="text-xs text-slate-600 hover:text-red-700"
+                  className="text-xs text-secondary-foreground hover:text-danger"
                 >
                   <UserX className="h-3.5 w-3.5 mr-1" />
                   Reset All Absent
@@ -538,19 +538,19 @@ export default function TrainerAttendancePage() {
         </div>
 
         {/* Detailed Attendance Roster Table */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        <div className="rounded-2xl border border-border/90 bg-card shadow-xs overflow-hidden">
           {loadingAttendance ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-subtle-foreground">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-2" />
               <p className="text-xs font-medium">Loading session roster and check-ins…</p>
             </div>
           ) : filteredRoster.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <Users className="h-10 w-10 mx-auto text-slate-300 mb-2" />
-              <p className="text-sm font-semibold text-slate-700">
+            <div className="py-16 text-center text-subtle-foreground">
+              <Users className="h-10 w-10 mx-auto text-subtle-foreground mb-2" />
+              <p className="text-sm font-semibold text-secondary-foreground">
                 {t('trainerAttendancePage.noLearnersFound')}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-subtle-foreground mt-0.5">
                 {t('trainerAttendancePage.noLearnersMatchTheCurrentFilter')}
               </p>
             </div>
@@ -570,57 +570,57 @@ export default function TrainerAttendancePage() {
                 const sessionDur = activeSession?.durationMinutes || 30;
 
                 return (
-                  <tr key={learner.userId} className="hover:bg-slate-50/70 transition-colors">
-                    <Td className="font-semibold text-slate-900">
+                  <tr key={learner.userId} className="hover:bg-muted/70 transition-colors">
+                    <Td className="font-semibold text-foreground">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
                           {learner.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">{learner.name}</p>
-                          <p className="text-[11px] text-slate-400 sm:hidden">{learner.email}</p>
+                          <p className="text-sm font-bold text-foreground">{learner.name}</p>
+                          <p className="text-[11px] text-subtle-foreground sm:hidden">{learner.email}</p>
                         </div>
                       </div>
                     </Td>
 
-                    <Td className="text-xs text-slate-500 font-mono hidden sm:table-cell">
+                    <Td className="text-xs text-muted-foreground font-mono hidden sm:table-cell">
                       {learner.email}
                     </Td>
 
                     <Td className="text-xs">
                       {learner.checkInMethod ? (
                         <div className="space-y-0.5">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary">
                             {learner.checkInMethod === 'VIRTUAL' ? (
-                              <CheckCircle2 className="h-3 w-3 text-indigo-600" />
+                              <CheckCircle2 className="h-3 w-3 text-primary" />
                             ) : (
-                              <MapPin className="h-3 w-3 text-indigo-600" />
+                              <MapPin className="h-3 w-3 text-primary" />
                             )}
                             {learner.checkInMethod}
                           </span>
                           {learner.joinedAt && (
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-subtle-foreground">
                               Joined: {formatTime(learner.joinedAt)}
                             </p>
                           )}
                           {learner.rejoinCount > 0 && (
-                            <p className="text-[10px] font-semibold text-amber-700">
+                            <p className="text-[10px] font-semibold text-warning">
                               Rejoined {learner.rejoinCount}x
                             </p>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-xs italic">Manual tracking</span>
+                        <span className="text-subtle-foreground text-xs italic">Manual tracking</span>
                       )}
                     </Td>
 
                     <Td className="text-xs">
                       <div className="flex items-center gap-1.5 font-mono">
-                        <Clock className="h-3 w-3 text-slate-400" />
-                        <span className="font-semibold text-slate-800">
+                        <Clock className="h-3 w-3 text-subtle-foreground" />
+                        <span className="font-semibold text-foreground">
                           {learner.durationMinutes}m / {sessionDur}m
                         </span>
-                        <span className="text-[11px] text-slate-500 font-sans">
+                        <span className="text-[11px] text-muted-foreground font-sans">
                           ({learner.percentage}%)
                         </span>
                       </div>
@@ -681,7 +681,7 @@ export default function TrainerAttendancePage() {
                               disabled={isLoading}
                               onClick={() => handleMarkStatus(learner.userId, 'ABSENT')}
                               className={`h-7 px-2.5 text-xs ${
-                                learner.status === 'ABSENT' ? 'bg-slate-700 text-white' : ''
+                                learner.status === 'ABSENT' ? 'bg-secondary-foreground text-background' : ''
                               }`}
                             >
                               Absent
@@ -707,14 +707,14 @@ export default function TrainerAttendancePage() {
                             variant="ghost"
                             onClick={() => handleOpenOverride(learner.record!.id, learner.name)}
                             title="Attendance Override"
-                            className="h-7 px-2 text-[11px] text-slate-400 hover:text-slate-700"
+                            className="h-7 px-2 text-[11px] text-subtle-foreground hover:text-secondary-foreground"
                           >
                             <ShieldAlert className="h-3 w-3" />
                           </Button>
                         ) : null}
 
                         {!can('attendance.manage') && !can('attendance.override') ? (
-                          <span className="text-xs text-slate-400 italic">View only</span>
+                          <span className="text-xs text-subtle-foreground italic">View only</span>
                         ) : null}
                       </div>
                     </Td>
@@ -740,20 +740,20 @@ export default function TrainerAttendancePage() {
       {/* Override Modal */}
       {overrideModalOpen && overrideTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">Override Attendance Record</h3>
-            <p className="mt-1 text-xs text-slate-500">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-border">
+            <h3 className="text-base font-bold text-foreground">Override Attendance Record</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
               Applying an override to{' '}
-              <span className="font-semibold text-slate-800">{overrideTarget.name}</span> will
+              <span className="font-semibold text-foreground">{overrideTarget.name}</span> will
               update their verified status with an audit log.
             </p>
 
             <div className="mt-4 space-y-3">
-              <label className="text-xs font-semibold text-slate-700 block">Override Status</label>
+              <label className="text-xs font-semibold text-secondary-foreground block">Override Status</label>
               <select
                 value={overrideStatus}
                 onChange={(e) => setOverrideStatus(e.target.value as BackendAttendanceStatus)}
-                className="w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                className="w-full rounded-xl border border-border p-2.5 text-sm"
               >
                 <option value="PRESENT">PRESENT</option>
                 <option value="LATE">LATE</option>

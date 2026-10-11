@@ -16,7 +16,7 @@
  *
  * Anything without a mapping (gradients, odd shades, text-white on colored buttons, solid status
  * fills, dark: classes whose light partner is in another literal) is left unchanged and listed in
- * the report for manual review. Files in scripts/theme-allowlist.json are skipped.
+ * the report for manual review. Files allow-listed as a whole in scripts/theme-allowlist.json are skipped.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,7 +28,7 @@ import ts from 'typescript';
 const NEUTRAL = new Set(['slate', 'gray']);
 const STATUS = {
   emerald: 'success', green: 'success',
-  amber: 'warning', yellow: 'warning',
+  amber: 'warning', yellow: 'warning', orange: 'warning',
   red: 'danger', rose: 'danger',
   sky: 'info', blue: 'info', cyan: 'info',
   indigo: 'primary',
@@ -61,6 +61,7 @@ const withOpacity = (name, base, extra) => {
  */
 function tokenFor({ utility, family, shade, opacity, variants }) {
   const kind = utility.startsWith('border') ? 'border' : utility;
+  if (kind === 'from' || kind === 'via' || kind === 'to') return softStop(family, shade);
   if (family === 'white') {
     if (kind === 'bg' && (opacity == null || opacity >= 40)) return { name: 'card' };
     return null; // text-white / border-white / faint white overlays sit on colored surfaces
@@ -72,7 +73,10 @@ function tokenFor({ utility, family, shade, opacity, variants }) {
       case 'bg':
         if (shade === 50) return { name: 'muted' };
         if (shade === 100) return { name: 'secondary' };
-        return null; // slate-200 tracks, always-dark slate-800/900 stages: review by hand
+        if (shade === 200 && variants.length === 0) return { name: 'border' }; // tracks, pills, dividers (hover → secondary)
+        if (shade === 300) return { name: 'input' };
+        if (shade === 400) return { name: 'subtle-foreground' }; // neutral dots
+        return null; // always-dark slate-800/900 stages: review by hand
       case 'text':
       case 'fill':
       case 'stroke':
@@ -104,13 +108,20 @@ function tokenFor({ utility, family, shade, opacity, variants }) {
 
   const status = STATUS[family] ?? (['violet', 'purple'].includes(family) ? 'accent' : null);
   if (!status) return null;
-  if (status === 'accent') return kind === 'bg' && shade === 50 ? { name: 'accent-soft' } : null;
+  if (status === 'accent') {
+    if (kind === 'bg') return shade === 50 || shade === 100 ? { name: 'accent-soft' } : null;
+    if (kind === 'text') return shade >= 600 && shade <= 950 ? { name: 'accent' } : null;
+    if (kind === 'border') return shade >= 100 && shade <= 300 ? { name: 'accent', opacity: 30 } : null;
+    if (kind === 'ring') return shade >= 100 && shade <= 200 && opacity == null ? { name: 'accent', opacity: 20 } : null;
+    return null;
+  }
   switch (kind) {
     case 'text':
     case 'fill':
     case 'stroke':
     case 'decoration':
-      return shade >= 600 && shade <= 800 ? { name: status } : null; // 500 icons would darken in light mode
+      // 500 icons would darken in light mode; 900/950 text on soft tints would vanish in dark mode
+      return shade >= 600 && shade <= 950 ? { name: status } : null;
     case 'bg':
       if (shade === 50 || shade === 100) return { name: `${status}-soft` };
       // A solid fill's hover/active shade has no token; converting it would remove the hover.
@@ -120,11 +131,13 @@ function tokenFor({ utility, family, shade, opacity, variants }) {
     case 'divide':
       if (shade >= 100 && shade <= 300) return { name: status, opacity: 30 };
       if (status === 'primary' && shade >= 400 && shade <= 500 && opacity == null) return { name: 'ring' };
+      if (shade >= 500 && shade <= 700) return { name: status }; // selected / accent edges
       return null;
     case 'ring':
     case 'outline':
       if (status === 'primary' && shade >= 300 && shade <= 600) return { name: 'ring' };
       if (shade >= 500 && shade <= 700) return { name: status };
+      if (shade >= 100 && shade <= 200 && opacity == null) return { name: status === 'primary' ? 'ring' : status, opacity: 20 };
       return null;
     default:
       return null; // from-/via-/to- gradients, ring-offset
@@ -133,10 +146,55 @@ function tokenFor({ utility, family, shade, opacity, variants }) {
 
 // An element painted with a gradient or white text sits on a colored surface: its colors are
 // deliberate, so the whole literal is left for review.
-const COLORED_SURFACE = /^!?(?:(?!dark:)[\w-]+:)*(?:text-white(?:\/\d+)?|bg-[\w-]*gradient[\w-]*|from-\S+)$/;
+const COLORED_SURFACE = new RegExp(
+  `^!?(?:(?!dark:)[\\w-]+:)*(?:text-white(?:/\\d+)?|bg-(?!gradient-to-)[\\w-]*gradient[\\w-]*|(?:from|via|to)-(?:black|(?:${FAMILIES})-(?:[2-9]00|950))(?:/\\d+)?)$`,
+);
 // Small white dots / switch knobs sit on colored tracks.
 const WHITE_DOT = /(^|\s)rounded-full\b/;
 const SMALL_SIZE = /(^|\s)(h|w|size)-(0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6)\b/;
+
+/**
+ * Token for a hover:/focus:/active: class whose plain mapping is missing or would equal the base
+ * class (e.g. bg-indigo-50 hover:bg-indigo-100 → both primary-soft). Uses opacity for the effect.
+ */
+function stateTokenFor({ utility, family, shade }) {
+  const kind = utility.startsWith('border') ? 'border' : utility;
+  if (NEUTRAL.has(family)) {
+    if (kind === 'bg' && shade === 100) return { name: 'secondary' };
+    if (kind === 'bg' && shade >= 200 && shade <= 300) return { name: 'input', opacity: 60 }; // a step above secondary
+    if (kind === 'border' && shade === 400) return { name: 'subtle-foreground', opacity: 60 };
+    return null;
+  }
+  const status = STATUS[family];
+  if (!status) return null;
+  if (kind === 'bg' && (shade === 50 || shade === 100 || shade === 200)) return { name: status, opacity: 15 };
+  if (kind === 'bg' && status === 'primary' && shade === 700) return { name: 'primary', opacity: 90 };
+  if (kind === 'text' && shade >= 600 && shade <= 900) return { name: status, opacity: 80 };
+  if (kind === 'border' && shade >= 300 && shade <= 500) return { name: status === 'primary' ? 'ring' : status, opacity: 60 };
+  if (kind === 'ring' && shade >= 100 && shade <= 300) return { name: status === 'primary' ? 'ring' : status, opacity: 20 };
+  return null;
+}
+
+/** True when the literal's base (no-variant) class for the same utility maps to `value`. */
+function sameAsBase(words, p, value, pieces) {
+  return words.some((o) => {
+    if (pieces[o.index] === `${p.utility}-${value}`) return true; // base already converted
+    const b = o.parsed;
+    if (!b || b.variants.length || b.utility !== p.utility) return false;
+    const t = tokenFor(b);
+    return t && withOpacity(t.name, b.opacity, t.opacity) === value;
+  });
+}
+
+/** Pale gradient stop → surface token (saturated stops are brand art and stay raw). */
+function softStop(family, shade) {
+  if (family === 'white') return { name: 'card' };
+  if (shade == null || shade > 100) return null;
+  if (NEUTRAL.has(family)) return { name: shade === 50 ? 'muted' : 'secondary' };
+  if (['violet', 'purple', 'fuchsia'].includes(family)) return { name: 'accent-soft' };
+  const status = STATUS[family];
+  return status ? { name: `${status}-soft` } : null;
+}
 
 /** Rewrites one class string. Returns { text, converted, unmapped: [token] }. */
 export function convertClasses(text, { partialFirst = false, partialLast = false } = {}) {
@@ -162,14 +220,25 @@ export function convertClasses(text, { partialFirst = false, partialLast = false
       const dv = d.parsed.variants.filter((v) => v !== 'dark').join(':');
       return d.parsed.utility === p.utility && dv === variantKey && !removed.has(d.index);
     });
-    const token = coloredSurface || (whiteDot && p.family === 'white') ? null : tokenFor(p);
+    let token = coloredSurface || (whiteDot && p.family === 'white') ? null : tokenFor(p);
+    if (!coloredSurface && p.variants.length && (!token || sameAsBase(words, p, withOpacity(token.name, p.opacity, token.opacity), pieces))) {
+      const state = stateTokenFor(p);
+      if (state) token = { ...state, state: true };
+    }
     if (!token) {
       // text-white & co. without a dark partner are deliberate (colored buttons); only report pairs
       if (partners.length || (!coloredSurface && p.family !== 'white')) unmapped.push(p.token);
       continue;
     }
+    // A state token sets its own strength; the old class's opacity was tuned for the old shade.
+    const value = withOpacity(token.name, token.state ? null : p.opacity, token.opacity);
+    // hover:/focus: shade that lands on the same token as the base class would lose its effect.
+    if (p.variants.length && sameAsBase(words, p, value, pieces)) {
+      unmapped.push(p.token);
+      continue;
+    }
     const prefix = p.variants.length ? `${p.variants.join(':')}:` : '';
-    pieces[w.index] = `${p.important}${prefix}${p.utility}-${withOpacity(token.name, p.opacity, token.opacity)}`;
+    pieces[w.index] = `${p.important}${prefix}${p.utility}-${value}`;
     for (const d of partners) removed.add(d.index);
     converted++;
   }
@@ -203,9 +272,20 @@ function selfTest() {
     ['placeholder:text-slate-400', 'placeholder:text-subtle-foreground'],
     ['bg-indigo-600 text-white hover:bg-indigo-700', 'bg-indigo-600 text-white hover:bg-indigo-700'],
     ['bg-indigo-600 hover:bg-indigo-500', 'bg-primary hover:bg-indigo-500'],
+    ['bg-indigo-50 group-hover:bg-indigo-100', 'bg-primary-soft group-hover:bg-primary/15'],
+    ['text-indigo-600 hover:text-indigo-800', 'text-primary hover:text-primary/80'],
+    ['bg-indigo-600 hover:bg-indigo-700', 'bg-primary hover:bg-primary/90'],
+    ['hover:bg-slate-200/60 dark:hover:bg-slate-700', 'hover:bg-input/60'],
+    ['bg-secondary hover:bg-slate-200 dark:hover:bg-slate-700', 'bg-secondary hover:bg-input/60'],
+    ['bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700', 'bg-secondary hover:bg-input/60'],
+    ['focus:border-rose-400 focus:ring-rose-200', 'focus:border-danger/60 focus:ring-danger/20'],
+    ['bg-slate-50 hover:bg-slate-100', 'bg-muted hover:bg-secondary'],
     ['bg-brand-gradient text-white', 'bg-brand-gradient text-white'],
     ['bg-white/10 text-white', 'bg-white/10 text-white'],
     ['from-indigo-500 to-violet-600', 'from-indigo-500 to-violet-600'],
+    ['border border-slate-200/90 bg-gradient-to-r from-slate-50 via-indigo-50/20 to-white', 'border border-border/90 bg-gradient-to-r from-muted via-primary-soft/20 to-card'],
+    ['bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950 dark:to-violet-950', 'bg-gradient-to-br from-primary-soft to-accent-soft'],
+    ['bg-gradient-to-r from-indigo-600 to-violet-600 text-white', 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white'],
     ['dark:bg-slate-900', 'dark:bg-slate-900'],
     ['!text-slate-500', '!text-muted-foreground'],
     ['group-hover:text-rose-600 dark:group-hover:text-rose-400', 'group-hover:text-danger'],
@@ -213,6 +293,11 @@ function selfTest() {
     ['inline-block h-5 w-5 rounded-full bg-white shadow', 'inline-block h-5 w-5 rounded-full bg-white shadow'],
     ['h-12 w-12 rounded-full bg-white', 'h-12 w-12 rounded-full bg-card'],
     ['h-3.5 w-3.5 text-amber-500', 'h-3.5 w-3.5 text-amber-500'],
+    ['bg-indigo-50 text-indigo-900', 'bg-primary-soft text-primary'],
+    ['text-purple-700 bg-purple-50 border-purple-200 ring-1 ring-violet-100', 'text-accent bg-accent-soft border-accent/30 ring-1 ring-accent/20'],
+    ['border-2 border-indigo-600', 'border-2 border-primary'],
+    ['h-2 rounded-full bg-slate-200', 'h-2 rounded-full bg-border'],
+    ['bg-orange-50 text-orange-700 ring-1 ring-indigo-100', 'bg-warning-soft text-warning ring-1 ring-ring/20'],
     ['border-indigo-200/60 dark:border-indigo-800', 'border-primary/20'],
   ];
   let failed = 0;
@@ -250,10 +335,11 @@ if (opt.targets.length === 0) {
 
 const ROOT = process.cwd();
 const allowlistPath = path.join(ROOT, 'scripts/theme-allowlist.json');
+// Whole-file entries (no "allowed" list) are skipped; class-level entries are still converted.
 const skipped = new Set(
-  (fs.existsSync(allowlistPath) ? JSON.parse(fs.readFileSync(allowlistPath, 'utf8')).files ?? [] : []).map((e) =>
-    path.resolve(ROOT, e.file),
-  ),
+  (fs.existsSync(allowlistPath) ? JSON.parse(fs.readFileSync(allowlistPath, 'utf8')).files ?? [] : [])
+    .filter((e) => !e.allowed)
+    .map((e) => path.resolve(ROOT, e.file)),
 );
 
 function listFiles(target) {

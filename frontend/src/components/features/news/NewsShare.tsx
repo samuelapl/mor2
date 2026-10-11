@@ -67,11 +67,11 @@ export function NewsShare({ newsId, slug, headline }: { newsId: string; slug: st
   };
 
   const iconButton =
-    'inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300';
+    'inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-secondary-foreground transition hover:border-info/30 hover:text-info';
 
   return (
     <div className="flex items-center gap-2">
-      <span className="mr-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <span className="mr-1 text-xs font-medium text-muted-foreground">
         {t('newsShare.share')}
       </span>
       {canNativeShare && (
@@ -105,7 +105,7 @@ export function NewsShare({ newsId, slug, headline }: { newsId: string; slug: st
         aria-label={t('newsShare.copyLink')}
         title={t('newsShare.copyLink')}
       >
-        {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Link2 className="h-4 w-4" />}
+        {copied ? <Check className="h-4 w-4 text-success" /> : <Link2 className="h-4 w-4" />}
       </button>
     </div>
   );

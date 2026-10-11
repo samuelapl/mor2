@@ -141,7 +141,7 @@ export function EditSessionModal({
   };
 
   const inputClass =
-    'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+    'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -192,37 +192,37 @@ export function EditSessionModal({
       <div className="w-full py-4">
         <form
           onSubmit={handleSubmit}
-          className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs"
+          className="space-y-5 rounded-2xl border border-border/90 bg-card p-6 shadow-xs"
         >
           {/* Associated Course Display (Read-Only) */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 flex items-center justify-between">
+          <div className="rounded-xl border border-border bg-muted/60 p-3.5 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Course
               </p>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-foreground">
                 {currentCourse?.code || session.course?.code} —{' '}
                 {currentCourse?.title || session.course?.title || session.course?.titleEn}
               </p>
             </div>
-            <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+            <span className="rounded-md bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary">
               {session.platform}
             </span>
           </div>
 
           {/* Searchable Assigned Trainer Selection */}
-          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2.5">
+          <div className="rounded-xl border border-primary/30 bg-primary-soft/40 p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                <UserCheck className="h-4 w-4 text-indigo-600" />
+              <label className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <UserCheck className="h-4 w-4 text-primary" />
                 Assigned Trainer (Instructor &amp; Host) *
               </label>
               {trainersLoading ? (
-                <span className="text-[11px] font-medium text-indigo-600 animate-pulse">
+                <span className="text-[11px] font-medium text-primary animate-pulse">
                   Loading trainers…
                 </span>
               ) : availableTrainers.length > 0 ? (
-                <span className="text-[11px] text-slate-500 font-medium">
+                <span className="text-[11px] text-muted-foreground font-medium">
                   {availableTrainers.length} qualified trainers available
                 </span>
               ) : null}
@@ -238,7 +238,7 @@ export function EditSessionModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
               Session Title (English) *
             </label>
             <input
@@ -251,7 +251,7 @@ export function EditSessionModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
               Session Title (አማርኛ)
             </label>
             <input
@@ -283,15 +283,15 @@ export function EditSessionModal({
           </div>
 
           {/* Reschedule Date & Time Section */}
-          <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+          <div className="rounded-xl border border-warning/30 bg-warning-soft/40 p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-amber-600" />
-              <p className="text-xs font-bold text-amber-900">Schedule &amp; Timing</p>
+              <CalendarDays className="h-4 w-4 text-warning" />
+              <p className="text-xs font-bold text-warning">Schedule &amp; Timing</p>
             </div>
             <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">Date *</label>
                 <input
                   required
                   type="date"
@@ -301,7 +301,7 @@ export function EditSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                   Start Time (EAT) *
                 </label>
                 <input
@@ -313,7 +313,7 @@ export function EditSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                   Duration (min) *
                 </label>
                 <input
@@ -329,7 +329,7 @@ export function EditSessionModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Session Status
               </label>
               <select
@@ -342,7 +342,7 @@ export function EditSessionModal({
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
-              <p className="mt-1 text-[11px] text-amber-800">
+              <p className="mt-1 text-[11px] text-warning">
                 Updating the date/time reschedules the session for enrolled participants and
                 notifies learners.
               </p>
@@ -351,7 +351,7 @@ export function EditSessionModal({
 
           {/* Video Platform Selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
               Virtual Classroom Platform
             </label>
             <select
@@ -371,27 +371,27 @@ export function EditSessionModal({
 
           {/* Platform URL & Generator */}
           {platformType === 'LIVEKIT' ? (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1 text-xs">
-              <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-                <MonitorPlay className="h-3.5 w-3.5 text-indigo-600" />
+            <div className="rounded-xl border border-primary/30 bg-primary-soft/70 p-3.5 space-y-1 text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-primary">
+                <MonitorPlay className="h-3.5 w-3.5 text-primary" />
                 <span>Native In-LMS LiveKit Room</span>
               </div>
-              <p className="text-indigo-700">
+              <p className="text-primary">
                 Participants join directly in the ELTMS workspace with WebRTC audio/video and
                 automatic attendance.
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/70 p-3.5 space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-secondary-foreground">
                   Meeting URL {platformType === 'JITSI' ? '(Auto-generated)' : ''}
                 </label>
                 {platformType === 'JITSI' && (
                   <button
                     type="button"
                     onClick={() => setExternalUrl(generateJitsiUrl())}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition"
                   >
                     <RefreshCw className="h-3 w-3" />
                     Regenerate room code
@@ -410,7 +410,7 @@ export function EditSessionModal({
           )}
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
               Room Passcode (Optional)
             </label>
             <input
@@ -423,19 +423,19 @@ export function EditSessionModal({
           </div>
 
           {/* Live Attendance Configuration */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2.5">
-            <p className="text-xs font-bold text-slate-800">Live Session Attendance Policy</p>
-            <p className="text-xs text-slate-500 leading-relaxed">
+          <div className="rounded-xl border border-border bg-muted/70 p-4 space-y-2.5">
+            <p className="text-xs font-bold text-foreground">Live Session Attendance Policy</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Attendance calculation and Minimum Active Stay Threshold for &quot;Present&quot;
               status are governed centrally by institutional policy configured in System Admin
               Policies.
             </p>
-            <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer pt-1">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer pt-1">
               <input
                 type="checkbox"
                 checked={allowViewAttendance}
                 onChange={(e) => setAllowViewAttendance(e.target.checked)}
-                className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                className="h-4 w-4 rounded text-primary focus:ring-ring border-input"
               />
               <span>
                 Permit participants (all actors) to view attendees and attendance modal for this
@@ -445,7 +445,7 @@ export function EditSessionModal({
           </div>
 
           {error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+            <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>
           ) : null}
 
           <div className="flex justify-end gap-2 pt-2">

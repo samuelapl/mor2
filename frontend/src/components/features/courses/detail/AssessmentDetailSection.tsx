@@ -15,7 +15,7 @@ export function AssessmentDetailSection({ assessments }: AssessmentDetailSection
 
   if (assessments.length === 0) {
     return (
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-subtle-foreground">
         {t('assessmentDetailSection.noAssessmentHasBeenAttachedYet')}
       </p>
     );
@@ -25,46 +25,46 @@ export function AssessmentDetailSection({ assessments }: AssessmentDetailSection
     <div className="space-y-6">
       {assessments.map((assessment) => (
         <div key={assessment.id} className="space-y-4">
-          <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 via-white to-slate-50/70 p-4 shadow-2xs">
-            <h5 className="font-bold text-slate-900 text-sm">{assessment.titleEn}</h5>
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary-soft/70 via-card to-muted/70 p-4 shadow-2xs">
+            <h5 className="font-bold text-foreground text-sm">{assessment.titleEn}</h5>
             {assessment.descriptionEn ? (
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{assessment.descriptionEn}</p>
+              <p className="text-xs text-secondary-foreground mt-1 leading-relaxed">{assessment.descriptionEn}</p>
             ) : null}
           </div>
 
           {/* Metrics cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-              <p className="text-slate-500 font-medium">{t('assessmentDetailSection.gradeWeight')}</p>
-              <p className="text-lg font-bold text-indigo-700 mt-1">{assessment.weight ?? 0}%</p>
+            <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60 shadow-2xs">
+              <p className="text-muted-foreground font-medium">{t('assessmentDetailSection.gradeWeight')}</p>
+              <p className="text-lg font-bold text-primary mt-1">{assessment.weight ?? 0}%</p>
             </div>
-            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-              <p className="text-slate-500 font-medium">{t('assessmentDetailSection.passingScore')}</p>
-              <p className="text-lg font-bold text-emerald-600 mt-1">{assessment.passingScore}%</p>
+            <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60 shadow-2xs">
+              <p className="text-muted-foreground font-medium">{t('assessmentDetailSection.passingScore')}</p>
+              <p className="text-lg font-bold text-success mt-1">{assessment.passingScore}%</p>
             </div>
-            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-              <p className="text-slate-500 font-medium">{t('assessmentDetailSection.timeLimit')}</p>
-              <p className="text-lg font-bold text-slate-900 mt-1">
+            <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60 shadow-2xs">
+              <p className="text-muted-foreground font-medium">{t('assessmentDetailSection.timeLimit')}</p>
+              <p className="text-lg font-bold text-foreground mt-1">
                 {assessment.timeLimitMinutes
                   ? `${assessment.timeLimitMinutes} ${t('lessonEditorStage.min')}`
                   : t('assessmentDetailSection.noLimit')}
               </p>
             </div>
-            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-              <p className="text-slate-500 font-medium">{t('assessmentDetailSection.attemptsAllowed')}</p>
-              <p className="text-lg font-bold text-slate-900 mt-1">{assessment.maxAttempts}</p>
+            <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60 shadow-2xs">
+              <p className="text-muted-foreground font-medium">{t('assessmentDetailSection.attemptsAllowed')}</p>
+              <p className="text-lg font-bold text-foreground mt-1">{assessment.maxAttempts}</p>
             </div>
-            <div className="rounded-xl bg-slate-50/80 p-3.5 border border-slate-100 shadow-2xs">
-              <p className="text-slate-500 font-medium">{t('assessmentDetailSection.totalQuestions')}</p>
-              <p className="text-lg font-bold text-indigo-600 mt-1">{assessment.questions.length}</p>
+            <div className="rounded-xl bg-muted/80 p-3.5 border border-border/60 shadow-2xs">
+              <p className="text-muted-foreground font-medium">{t('assessmentDetailSection.totalQuestions')}</p>
+              <p className="text-lg font-bold text-primary mt-1">{assessment.questions.length}</p>
             </div>
           </div>
 
           {/* Assessment Attached Reference File */}
           {assessment.resourceUrl ? (
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-3.5 space-y-2">
-              <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
+            <div className="rounded-xl border border-primary/30 bg-primary-soft/30 p-3.5 space-y-2">
+              <p className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                <Paperclip className="h-3.5 w-3.5 text-primary" />
                 {t('assessmentDetailSection.examReferenceMaterial')}
               </p>
               <AttachmentCard
@@ -79,12 +79,12 @@ export function AssessmentDetailSection({ assessments }: AssessmentDetailSection
 
           {/* All Questions Preview */}
           <div className="space-y-3 pt-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <p className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
               {t('assessmentDetailSection.examQuestionsPreview', { count: assessment.questions.length })}
             </p>
 
             {assessment.questions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-amber-800 text-xs">
+              <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-4 text-warning text-xs">
                 {t('assessmentDetailSection.noQuestionsAddedToThisAssessment')}
               </div>
             ) : (

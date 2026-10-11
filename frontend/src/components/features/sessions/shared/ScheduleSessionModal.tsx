@@ -378,7 +378,7 @@ export function ScheduleSessionModal({
   };
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10";
+    "w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10";
 
   return (
     <WorkspaceDetailOverlay
@@ -397,7 +397,7 @@ export function ScheduleSessionModal({
     >
       <div className="w-full py-4">
         {/* ── Delivery Mode Tabs ── */}
-        <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200/90 bg-slate-50/80 p-1.5 shadow-2xs">
+        <div className="mb-5 flex items-center justify-between rounded-2xl border border-border/90 bg-muted/80 p-1.5 shadow-2xs">
           <button
             type="button"
             onClick={() => {
@@ -407,8 +407,8 @@ export function ScheduleSessionModal({
             className={cn(
               "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition",
               sessionType === "VIRTUAL"
-                ? "bg-white text-indigo-700 shadow-xs"
-                : "text-slate-500 hover:text-slate-800",
+                ? "bg-card text-primary shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Video className="h-4 w-4" />
@@ -422,8 +422,8 @@ export function ScheduleSessionModal({
             className={cn(
               "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition",
               sessionType === "IN_PERSON"
-                ? "bg-white text-indigo-700 shadow-xs"
-                : "text-slate-500 hover:text-slate-800",
+                ? "bg-card text-primary shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Building2 className="h-4 w-4" />
@@ -434,14 +434,14 @@ export function ScheduleSessionModal({
         {/* Course delivery mode advisory badge */}
         {selectedCourse ? (
           <div className="mb-4 flex items-center gap-2 text-xs">
-            <span className="font-semibold text-slate-500">Course Delivery Setting:</span>
+            <span className="font-semibold text-muted-foreground">Course Delivery Setting:</span>
             <Badge
               variant="outline"
               className={cn(
                 "font-medium",
-                selectedCourse.deliveryMode === "ONLINE_ONLY" && "bg-sky-50 text-sky-700 border-sky-200",
-                selectedCourse.deliveryMode === "IN_PERSON_ONLY" && "bg-amber-50 text-amber-700 border-amber-200",
-                selectedCourse.deliveryMode === "BOTH" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                selectedCourse.deliveryMode === "ONLINE_ONLY" && "bg-info-soft text-info border-info/30",
+                selectedCourse.deliveryMode === "IN_PERSON_ONLY" && "bg-warning-soft text-warning border-warning/30",
+                selectedCourse.deliveryMode === "BOTH" && "bg-success-soft text-success border-success/30",
               )}
             >
               {selectedCourse.deliveryMode === "ONLINE_ONLY"
@@ -457,10 +457,10 @@ export function ScheduleSessionModal({
         {/* VIRTUAL SESSION FLOW (EXISTING LIVEKIT/VIDEO PLATFORMS)      */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {sessionType === "VIRTUAL" ? (
-          <form onSubmit={handleVirtualSubmit} className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+          <form onSubmit={handleVirtualSubmit} className="space-y-5 rounded-2xl border border-border/90 bg-card p-6 shadow-xs">
             {/* Searchable Course Selection */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Course (Search &amp; Select) *
               </label>
               <SearchableCourseSelect
@@ -477,8 +477,8 @@ export function ScheduleSessionModal({
             </div>
 
             {plannedSessions.length > 0 && (
-              <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 space-y-2">
-                <label className="block text-xs font-bold text-slate-800">Planned session from the course</label>
+              <div className="rounded-xl border border-info/30 bg-info-soft/50 p-4 space-y-2">
+                <label className="block text-xs font-bold text-foreground">Planned session from the course</label>
                 <select
                   value={sessionPlanId}
                   onChange={(event) => pickPlannedSession(event.target.value)}
@@ -495,23 +495,23 @@ export function ScheduleSessionModal({
                     );
                   })}
                 </select>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-muted-foreground">
                   Picking one fills in its title and description, and creates its weighted quizzes for the trainer to prepare.
                 </p>
               </div>
             )}
 
             {/* Searchable Assigned Trainer Selection */}
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2.5">
+            <div className="rounded-xl border border-primary/30 bg-primary-soft/40 p-4 space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                  <UserCheck className="h-4 w-4 text-indigo-600" />
+                <label className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                  <UserCheck className="h-4 w-4 text-primary" />
                   Assigned Trainer (Instructor &amp; Host) *
                 </label>
                 {!canPickTrainer ? null : trainersLoading ? (
-                  <span className="text-[11px] font-medium text-indigo-600 animate-pulse">Loading trainers…</span>
+                  <span className="text-[11px] font-medium text-primary animate-pulse">Loading trainers…</span>
                 ) : availableTrainers.length > 0 ? (
-                  <span className="text-[11px] text-slate-500 font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     {availableTrainers.length} qualified trainers available
                   </span>
                 ) : null}
@@ -526,20 +526,20 @@ export function ScheduleSessionModal({
                   loading={trainersLoading}
                 />
               ) : (
-                <div className="flex items-center gap-3 rounded-xl border border-indigo-200 bg-white px-3.5 py-2.5">
+                <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-card px-3.5 py-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
                     {currentUser?.name?.charAt(0) ?? "?"}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{currentUser?.name} (you)</p>
-                    <p className="text-[11px] text-slate-500">You host the sessions you schedule for your assigned courses.</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{currentUser?.name} (you)</p>
+                    <p className="text-[11px] text-muted-foreground">You host the sessions you schedule for your assigned courses.</p>
                   </div>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Session Title (English) *
               </label>
               <input
@@ -552,7 +552,7 @@ export function ScheduleSessionModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Session Title (አማርኛ)
               </label>
               <input
@@ -585,7 +585,7 @@ export function ScheduleSessionModal({
 
             {/* Video Platform Selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Virtual Classroom Platform
               </label>
               <select
@@ -605,26 +605,26 @@ export function ScheduleSessionModal({
 
             {/* Platform URL & Generator */}
             {platformType === "LIVEKIT" ? (
-              <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1 text-xs">
-                <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-                  <MonitorPlay className="h-3.5 w-3.5 text-indigo-600" />
+              <div className="rounded-xl border border-primary/30 bg-primary-soft/70 p-3.5 space-y-1 text-xs">
+                <div className="flex items-center gap-1.5 font-semibold text-primary">
+                  <MonitorPlay className="h-3.5 w-3.5 text-primary" />
                   <span>Native In-LMS LiveKit Room</span>
                 </div>
-                <p className="text-indigo-700">
+                <p className="text-primary">
                   Participants join directly in the ELTMS workspace with native WebRTC audio, video, screen sharing, and automated attendance tracking.
                 </p>
               </div>
             ) : (
-              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
+              <div className="rounded-xl border border-border/60 bg-muted/70 p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-secondary-foreground">
                     Meeting URL {platformType === "JITSI" ? "(Auto-generated)" : ""}
                   </label>
                   {platformType === "JITSI" && (
                     <button
                       type="button"
                       onClick={() => setExternalUrl(generateJitsiUrl())}
-                      className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition"
                     >
                       <RefreshCw className="h-3 w-3" />
                       New room code
@@ -645,7 +645,7 @@ export function ScheduleSessionModal({
             <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">Date *</label>
                 <input
                   required
                   type="date"
@@ -655,7 +655,7 @@ export function ScheduleSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Start Time (EAT) *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">Start Time (EAT) *</label>
                 <input
                   required
                   type="time"
@@ -665,7 +665,7 @@ export function ScheduleSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Duration (min) *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">Duration (min) *</label>
                 <input
                   required
                   type="number"
@@ -679,7 +679,7 @@ export function ScheduleSessionModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Room Passcode (Optional)
               </label>
               <input
@@ -691,21 +691,21 @@ export function ScheduleSessionModal({
               />
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2.5">
-              <p className="text-xs font-bold text-slate-800">Live Session Attendance Policy</p>
-              <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer pt-1">
+            <div className="rounded-xl border border-border bg-muted/70 p-4 space-y-2.5">
+              <p className="text-xs font-bold text-foreground">Live Session Attendance Policy</p>
+              <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   checked={allowViewAttendance}
                   onChange={(e) => setAllowViewAttendance(e.target.checked)}
-                  className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                  className="h-4 w-4 rounded text-primary focus:ring-ring border-input"
                 />
                 <span>Permit participants to view attendees and attendance modal for this session</span>
               </label>
             </div>
 
             {error ? (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+              <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>
             ) : null}
 
             <div className="flex justify-end gap-2 pt-2">
@@ -723,12 +723,12 @@ export function ScheduleSessionModal({
         {/* IN-PERSON SESSION FLOW (2-STEP MULTI-VENUE BATCH SCHEDULER)   */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {sessionType === "IN_PERSON" && inPersonStep === 1 ? (
-          <div className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-            <div className="rounded-xl bg-indigo-50/80 border border-indigo-100 p-3.5 flex items-center gap-3 text-xs text-indigo-900">
-              <Building2 className="h-5 w-5 text-indigo-600 shrink-0" />
+          <div className="space-y-5 rounded-2xl border border-border/90 bg-card p-6 shadow-xs">
+            <div className="rounded-xl bg-primary-soft/80 border border-primary/30 p-3.5 flex items-center gap-3 text-xs text-primary">
+              <Building2 className="h-5 w-5 text-primary shrink-0" />
               <div>
                 <p className="font-bold">Step 1: In-Person Session Basic Details</p>
-                <p className="text-indigo-700 text-[11px]">
+                <p className="text-primary text-[11px]">
                   Fill in the course, title, and default schedule. In Step 2, you will allocate physical classrooms and instructors across MoR branch venues.
                 </p>
               </div>
@@ -736,7 +736,7 @@ export function ScheduleSessionModal({
 
             {/* Course Selection */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Course (Search &amp; Select) *
               </label>
               <SearchableCourseSelect
@@ -747,7 +747,7 @@ export function ScheduleSessionModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Session Title (English) *
               </label>
               <input
@@ -760,7 +760,7 @@ export function ScheduleSessionModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 Session Title (አማርኛ)
               </label>
               <input
@@ -784,7 +784,7 @@ export function ScheduleSessionModal({
             <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                   Default Date *
                 </label>
                 <input
@@ -796,7 +796,7 @@ export function ScheduleSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                   Default Start Time (EAT) *
                 </label>
                 <input
@@ -808,7 +808,7 @@ export function ScheduleSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                   Duration (min) *
                 </label>
                 <input
@@ -824,10 +824,10 @@ export function ScheduleSessionModal({
             </div>
 
             {error ? (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+              <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>
             ) : null}
 
-            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+            <div className="flex justify-between items-center pt-3 border-t border-border/60">
               <Button type="button" variant="ghost" onClick={onClose}>
                 Cancel
               </Button>

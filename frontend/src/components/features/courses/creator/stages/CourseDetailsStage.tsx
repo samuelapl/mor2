@@ -77,8 +77,8 @@ const DELIVERY_OPTIONS: Array<{
     labelKey: 'deliveryFormatModal.onlineSelfPaced',
     descriptionKey: 'courseDetailsStage.selfPacedDigitalModulesVideoStreams',
     icon: Globe2,
-    iconClass: 'text-indigo-600',
-    selectedClass: 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500',
+    iconClass: 'text-primary',
+    selectedClass: 'border-primary bg-primary-soft/60 shadow-xs ring-1 ring-ring',
     recommended: true,
   },
   {
@@ -86,16 +86,16 @@ const DELIVERY_OPTIONS: Array<{
     labelKey: 'deliveryFormatModal.inPersonClassroom',
     descriptionKey: 'courseDetailsStage.physicalAttendanceAtMinistryBranchRooms',
     icon: Building2,
-    iconClass: 'text-amber-600',
-    selectedClass: 'border-amber-600 bg-amber-50/60 shadow-xs ring-1 ring-amber-500',
+    iconClass: 'text-warning',
+    selectedClass: 'border-warning bg-warning-soft/60 shadow-xs ring-1 ring-warning',
   },
   {
     id: 'BOTH',
     labelKey: 'courseDetailsStage.hybridBlended',
     descriptionKey: 'courseDetailsStage.digitalOnlinePreparationModulesScheduled',
     icon: Layers,
-    iconClass: 'text-emerald-600',
-    selectedClass: 'border-emerald-600 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-500',
+    iconClass: 'text-success',
+    selectedClass: 'border-success bg-success-soft/60 shadow-xs ring-1 ring-success',
   },
 ];
 
@@ -160,16 +160,16 @@ export function CourseDetailsStage({
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200 pb-12">
       {/* Stage Header Banner */}
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-slate-50 p-6 shadow-2xs">
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary-soft/80 via-card to-muted p-6 shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-600/30">
             <BookOpen className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-foreground">
               {t('courseDetailsStage.courseOverviewIdentification')}
             </h2>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-secondary-foreground mt-0.5">
               {t('courseDetailsStage.defineFundamentalCourseInformationDelive')}
             </p>
           </div>
@@ -177,8 +177,8 @@ export function CourseDetailsStage({
       </div>
 
       {/* Basic Identification */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('courseDetailsStage.basicIdentification')}
         </h3>
 
@@ -212,13 +212,13 @@ export function CourseDetailsStage({
               disabled={isEdit || codeLocked}
               className={cn(
                 inputClass,
-                (isEdit || codeLocked) && 'opacity-75 cursor-not-allowed bg-slate-50',
-                codeError && 'border-rose-300 focus:border-rose-400',
+                (isEdit || codeLocked) && 'opacity-75 cursor-not-allowed bg-muted',
+                codeError && 'border-danger/30 focus:border-danger/60',
               )}
             />
-            {codeError && !isEdit && !codeLocked && <p className="mt-1 text-[11px] font-medium text-rose-600">{codeError}</p>}
+            {codeError && !isEdit && !codeLocked && <p className="mt-1 text-[11px] font-medium text-danger">{codeError}</p>}
             {(isEdit || codeLocked) && (
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-subtle-foreground">
                 {t('courseDetailsStage.courseCodeCannotBeChangedOnce')}
               </p>
             )}
@@ -257,8 +257,8 @@ export function CourseDetailsStage({
       </div>
 
       {/* Delivery Mode & Cover */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('courseDetailsStage.deliveryFormatVisualIdentity')}
         </h3>
 
@@ -283,50 +283,50 @@ export function CourseDetailsStage({
                     isSelected
                       ? opt.selectedClass
                       : enabled
-                        ? 'cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
-                        : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60',
+                        ? 'cursor-pointer border-border bg-card hover:border-input hover:bg-muted/50'
+                        : 'cursor-not-allowed border-border bg-muted opacity-60',
                   )}
                 >
-                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
+                  <div className="flex items-center gap-2 font-bold text-xs text-foreground">
                     <Icon className={cn('h-4 w-4', opt.iconClass)} /> {t(opt.labelKey)}
                     {enabled ? (
                       opt.recommended && (
-                        <span className="ml-auto rounded-full border border-indigo-200 bg-indigo-50 px-1.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700">
+                        <span className="ml-auto rounded-full border border-primary/30 bg-primary-soft px-1.5 text-[9px] font-bold uppercase tracking-wider text-primary">
                           {t('courseDetailsStage.recommended')}
                         </span>
                       )
                     ) : (
-                      <span className="ml-auto rounded-full border border-slate-200 bg-slate-100 px-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                      <span className="ml-auto rounded-full border border-border bg-secondary px-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                         {t('deliveryFormatModal.comingSoon')}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">{t(opt.descriptionKey)}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">{t(opt.descriptionKey)}</p>
                 </button>
               );
             })}
           </div>
           {!isDeliveryModeEnabled(deliveryMode) && (
-            <p className="mt-2 text-[11px] font-medium text-amber-700">
+            <p className="mt-2 text-[11px] font-medium text-warning">
               {t('courseDetailsStage.thisDeliveryModeIsNoLonger')}
             </p>
           )}
         </div>
 
         {deliveryMode === 'ONLINE_ONLY' && onToggleOnlineSessions && (
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/50 p-3.5">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-info/30 bg-info-soft/50 p-3.5">
             <input
               type="checkbox"
               checked={hasOnlineSessions}
               onChange={(e) => onToggleOnlineSessions(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-0.5 h-4 w-4 rounded border-input text-primary focus:ring-ring"
             />
             <span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <Video className="h-4 w-4 text-sky-600" />
+              <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <Video className="h-4 w-4 text-info" />
                 {t('courseDetailsStage.includeOnlineSessions')}
               </span>
-              <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
+              <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
                 {t('courseDetailsStage.planLiveOnlineSessionsNowWith')}
               </span>
             </span>
@@ -337,7 +337,7 @@ export function CourseDetailsStage({
           <label className={labelClass}>{t('courseDetailsStage.courseCoverImage')}</label>
           <div className="flex flex-wrap items-center gap-4 mt-1.5">
             {coverPreview && (
-              <div className="relative h-24 w-40 overflow-hidden rounded-xl border border-slate-200 shadow-2xs">
+              <div className="relative h-24 w-40 overflow-hidden rounded-xl border border-border shadow-2xs">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coverPreview} alt="Cover preview" className="h-full w-full object-cover" />
                 <button
@@ -370,7 +370,7 @@ export function CourseDetailsStage({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:border-indigo-200 transition"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-secondary-foreground shadow-xs hover:bg-muted hover:border-primary/30 transition"
             >
               <Upload className="h-4 w-4 text-indigo-500" />
               <span>{coverPreview ? t('courseDetailsStage.changeCoverImage') : t('courseDetailsStage.uploadCoverImage')}</span>
@@ -380,8 +380,8 @@ export function CourseDetailsStage({
       </div>
 
       {/* Description & Objectives */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('courseDetailsStage.descriptionLearningObjectives')}
         </h3>
 
@@ -403,7 +403,7 @@ export function CourseDetailsStage({
             <label className={labelClass}>
               {t('courseDetailsStage.courseLearningObjectives')} <span className="text-rose-500">*</span>
             </label>
-            <span className="text-[11px] text-slate-400">Min. 10 characters</span>
+            <span className="text-[11px] text-subtle-foreground">Min. 10 characters</span>
           </div>
           <RichEditor
             value={objectives}
@@ -412,7 +412,7 @@ export function CourseDetailsStage({
             minHeight={120}
           />
           {resolvedObjectivesText.length > 0 && resolvedObjectivesText.length < 10 && (
-            <p className="mt-1 text-xs text-amber-600 font-medium">
+            <p className="mt-1 text-xs text-warning font-medium">
               {t('courseDetailsStage.pleaseEnterAtLeast10Characters')}
             </p>
           )}
@@ -420,8 +420,8 @@ export function CourseDetailsStage({
       </div>
 
       {/* Audience & Prerequisites */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('courseDetailsStage.audiencePrerequisites')}
         </h3>
 

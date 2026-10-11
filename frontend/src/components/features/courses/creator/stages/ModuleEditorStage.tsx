@@ -96,28 +96,28 @@ export function ModuleEditorStage({
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200 pb-12">
       {/* Module Banner */}
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-slate-50 p-6 shadow-2xs">
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary-soft/80 via-card to-muted p-6 shadow-2xs">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-600/30">
               <Layers className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">
                 {t('creatorSidebar.module', { value: moduleIndex + 1 })}
               </span>
-              <h2 className="text-lg font-bold text-slate-900 truncate">
+              <h2 className="text-lg font-bold text-foreground truncate">
                 {module.title.trim() || t('creatorSidebar.untitledModule')}
               </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground border border-border">
               {instructionalLessons.length} {t('moduleEditorStage.lessons')}
             </span>
             {moduleAssessment && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-success-soft text-success border border-success/25">
                 {t('moduleEditorStage.assessmentAttached')} ({moduleAssessment.quizWeight ?? 20}%)
               </span>
             )}
@@ -126,8 +126,8 @@ export function ModuleEditorStage({
       </div>
 
       {/* Module Metadata Form */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-foreground border-b border-border/60 pb-2.5">
           {t('moduleEditorStage.moduleParameters')}
         </h3>
 
@@ -149,9 +149,9 @@ export function ModuleEditorStage({
           <div>
             <label className={labelClass}>{t('moduleEditorStage.moduleDuration')}</label>
             {/* Derived from the lessons; set study time on each lesson / sub-lesson instead. */}
-            <div className={cn(inputClass, 'flex items-center justify-between bg-slate-50 text-slate-700')}>
+            <div className={cn(inputClass, 'flex items-center justify-between bg-muted text-secondary-foreground')}>
               <span className="font-semibold">{formatDuration(moduleMinutes, isAmharic)}</span>
-              <Clock className="h-4 w-4 text-slate-400" />
+              <Clock className="h-4 w-4 text-subtle-foreground" />
             </div>
           </div>
         </div>
@@ -196,9 +196,9 @@ export function ModuleEditorStage({
       </div>
 
       {/* Module Contents Quick Overview */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-          <h3 className="text-sm font-bold text-slate-900">
+      <div className="rounded-2xl border border-border/80 bg-card p-5 md:p-6 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+          <h3 className="text-sm font-bold text-foreground">
             {t('moduleEditorStage.moduleContentsUnits')}
           </h3>
           <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export function ModuleEditorStage({
               onClick={onAddLesson}
               className="gap-1.5 text-xs font-semibold"
             >
-              <Plus className="h-3.5 w-3.5 text-indigo-600" />
+              <Plus className="h-3.5 w-3.5 text-primary" />
               <span>{t('moduleEditorStage.addLesson')}</span>
             </Button>
             {!moduleAssessment && (
@@ -218,9 +218,9 @@ export function ModuleEditorStage({
                 variant="outline"
                 size="sm"
                 onClick={onAddModuleAssessment}
-                className="gap-1.5 text-xs font-semibold text-emerald-800 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70"
+                className="gap-1.5 text-xs font-semibold text-success border-success/30 bg-success-soft/50 hover:bg-success-soft/70"
               >
-                <Award className="h-3.5 w-3.5 text-emerald-600" />
+                <Award className="h-3.5 w-3.5 text-success" />
                 <span>{t('lessonEditorStage.addAssessment')}</span>
               </Button>
             )}
@@ -235,24 +235,24 @@ export function ModuleEditorStage({
               role="button"
               tabIndex={0}
               onClick={() => onSelectLesson(les.id)}
-              className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-indigo-50/40 hover:border-indigo-200 transition cursor-pointer group"
+              className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/50 hover:bg-primary-soft/40 hover:border-primary/30 transition cursor-pointer group"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-card border border-border text-xs font-bold text-secondary-foreground">
                   {lIdx + 1}
                 </span>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">
+                  <h4 className="text-xs font-bold text-foreground truncate">
                     {les.title.trim() || t('creatorSidebar.lesson', { value: lIdx + 1 })}
                   </h4>
-                  <span className="text-[11px] text-slate-500 font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     {les.contentType || 'DOCUMENT'} • {les.durationMin || 15} {t('lessonEditorStage.min')}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-indigo-600 font-bold group-hover:underline">
+                <span className="text-[11px] text-primary font-bold group-hover:underline">
                   {t('moduleEditorStage.openEditor')} &rarr;
                 </span>
                 {instructionalLessons.length > 1 && (
@@ -262,7 +262,7 @@ export function ModuleEditorStage({
                       e.stopPropagation();
                       onDeleteLesson(les.id);
                     }}
-                    className="p-1 text-slate-400 hover:text-rose-600 rounded transition"
+                    className="p-1 text-subtle-foreground hover:text-danger rounded transition"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -277,24 +277,24 @@ export function ModuleEditorStage({
               role="button"
               tabIndex={0}
               onClick={onSelectModuleAssessment}
-              className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-100/60 transition cursor-pointer group"
+              className="flex items-center justify-between p-3 rounded-xl border border-success/30 bg-success-soft/40 hover:bg-success-soft/60 transition cursor-pointer group"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
                   <Award className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-emerald-950 truncate">
+                  <h4 className="text-xs font-bold text-success truncate">
                     {t('moduleEditorStage.moduleAssessmentCheckpoint')}
                   </h4>
-                  <span className="text-[11px] text-emerald-700 font-medium">
+                  <span className="text-[11px] text-success font-medium">
                     {moduleAssessment.quizQuestions?.length || 0} {t('creatorSidebar.questions')} • {moduleAssessment.quizWeight ?? 20}% {t('lessonEditorStage.weight')}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-emerald-800 font-bold group-hover:underline">
+                <span className="text-[11px] text-success font-bold group-hover:underline">
                   {t('lessonEditorStage.editQuestions')} &rarr;
                 </span>
                 <button
@@ -303,7 +303,7 @@ export function ModuleEditorStage({
                     e.stopPropagation();
                     onDeleteModuleAssessment();
                   }}
-                  className="p-1 text-emerald-700 hover:text-rose-600 rounded transition"
+                  className="p-1 text-success hover:text-danger rounded transition"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

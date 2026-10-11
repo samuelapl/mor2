@@ -230,17 +230,17 @@ export function StepReviewSubmit({
   return (
     <div className="space-y-7">
       {/* ── Header Banner & Quick Controls ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-gradient-to-r from-slate-50 via-indigo-50/20 to-white p-5 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/90 bg-gradient-to-r from-muted via-primary-soft/20 to-card p-5 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-xs">
               4
             </span>
-            <h3 className="font-display text-lg font-bold text-slate-900">
+            <h3 className="font-display text-lg font-bold text-foreground">
               Review & Submit Course
             </h3>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             A high-level overview of your course before you submit it for approval.
           </p>
         </div>
@@ -251,7 +251,7 @@ export function StepReviewSubmit({
             variant="outline"
             size="sm"
             onClick={expandAll}
-            className="gap-1.5 text-xs text-slate-700 hover:text-indigo-700 border-slate-200 bg-white shadow-2xs"
+            className="gap-1.5 text-xs text-secondary-foreground hover:text-primary border-border bg-card shadow-2xs"
           >
             <Maximize2 className="h-3.5 w-3.5" />
             Expand All
@@ -261,7 +261,7 @@ export function StepReviewSubmit({
             variant="outline"
             size="sm"
             onClick={collapseAll}
-            className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200 bg-white shadow-2xs"
+            className="gap-1.5 text-xs text-secondary-foreground hover:text-foreground border-border bg-card shadow-2xs"
           >
             <Minimize2 className="h-3.5 w-3.5" />
             Collapse All
@@ -271,52 +271,52 @@ export function StepReviewSubmit({
 
       {/* ── Summary Stats Badges Bar ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Modules
           </p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{modules.length}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{modules.length}</p>
         </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Lessons
           </p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{totalLessons}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{totalLessons}</p>
         </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Sub-Lessons
           </p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{totalSubLessons}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{totalSubLessons}</p>
         </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Attachments
           </p>
-          <p className="mt-1 text-xl font-bold text-indigo-600">{totalAttachments}</p>
+          <p className="mt-1 text-xl font-bold text-primary">{totalAttachments}</p>
         </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Questions
           </p>
-          <p className="mt-1 text-xl font-bold text-emerald-600">{questions.length}</p>
+          <p className="mt-1 text-xl font-bold text-success">{questions.length}</p>
         </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-xl border border-border/90 bg-card p-3 shadow-2xs">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
             Est. Time
           </p>
-          <p className="mt-1 text-xl font-bold text-slate-900">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {formatDuration(totalEstimatedDurationMin)}
           </p>
         </div>
       </div>
 
       {/* ── Section 1: Course Details Overview ── */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-indigo-600" />
-            <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
+            <BookOpen className="h-4 w-4 text-primary" />
+            <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-wide">
               1. General Course Information
             </h4>
           </div>
@@ -326,7 +326,7 @@ export function StepReviewSubmit({
               variant="ghost"
               size="sm"
               onClick={() => onNavigateToStep(0)}
-              className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+              className="gap-1.5 text-xs text-primary hover:text-primary/80 hover:bg-primary-soft"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit Step 1
@@ -338,14 +338,14 @@ export function StepReviewSubmit({
           {/* Cover Image */}
           <div className="w-full md:w-52 shrink-0">
             {coverPreview ? (
-              <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-2xs aspect-video md:aspect-[4/3]">
+              <div className="relative overflow-hidden rounded-xl border border-border shadow-2xs aspect-video md:aspect-[4/3]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coverPreview} alt="Course Cover" className="h-full w-full object-cover" />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center aspect-video md:aspect-[4/3]">
-                <BookOpen className="h-8 w-8 text-slate-300 mb-1" />
-                <p className="text-xs text-slate-400 font-medium">No cover image</p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/80 p-6 text-center aspect-video md:aspect-[4/3]">
+                <BookOpen className="h-8 w-8 text-subtle-foreground mb-1" />
+                <p className="text-xs text-subtle-foreground font-medium">No cover image</p>
               </div>
             )}
           </div>
@@ -353,14 +353,14 @@ export function StepReviewSubmit({
           {/* Title & Metadata */}
           <div className="space-y-3 flex-1 min-w-0">
             <div className="space-y-1">
-              <span className="inline-block rounded-md bg-indigo-50 px-2.5 py-0.5 font-mono text-xs font-bold text-indigo-700 border border-indigo-100 uppercase tracking-wider">
+              <span className="inline-block rounded-md bg-primary-soft px-2.5 py-0.5 font-mono text-xs font-bold text-primary border border-primary/30 uppercase tracking-wider">
                 <RichContent inline html={code} placeholder="NO-CODE" />
               </span>
-              <h2 className="text-xl font-bold text-slate-900 leading-snug">
+              <h2 className="text-xl font-bold text-foreground leading-snug">
                 <RichContent inline html={title} placeholder="Untitled Course" />
               </h2>
               {titleAm ? (
-                <p className="text-sm text-slate-600 font-medium">
+                <p className="text-sm text-secondary-foreground font-medium">
                   የስልጠና ርዕስ (አማርኛ): <RichContent inline html={titleAm} />
                 </p>
               ) : null}
@@ -369,7 +369,7 @@ export function StepReviewSubmit({
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <Badge
                 variant="outline"
-                className="border-slate-300 text-slate-700 bg-slate-50 font-medium"
+                className="border-input text-secondary-foreground bg-muted font-medium"
               >
                 {category}
               </Badge>
@@ -382,10 +382,10 @@ export function StepReviewSubmit({
               <Badge
                 className={cn(
                   'font-medium',
-                  deliveryMode === 'ONLINE_ONLY' && 'bg-sky-50 text-sky-700 border-sky-200',
+                  deliveryMode === 'ONLINE_ONLY' && 'bg-info-soft text-info border-info/30',
                   deliveryMode === 'IN_PERSON_ONLY' &&
-                    'bg-amber-50 text-amber-700 border-amber-200',
-                  deliveryMode === 'BOTH' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    'bg-warning-soft text-warning border-warning/30',
+                  deliveryMode === 'BOTH' && 'bg-success-soft text-success border-success/30',
                 )}
                 variant="outline"
               >
@@ -398,22 +398,22 @@ export function StepReviewSubmit({
             </div>
 
             {/* Department / Audience / Prerequisites */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 text-xs">
-              <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                <span className="font-semibold text-slate-500 block mb-0.5">Department:</span>
-                <span className="text-slate-800 font-medium">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border/60 text-xs">
+              <div className="rounded-lg bg-muted/80 p-2.5 border border-border/60">
+                <span className="font-semibold text-muted-foreground block mb-0.5">Department:</span>
+                <span className="text-foreground font-medium">
                   <RichContent inline html={department} placeholder="Not specified" />
                 </span>
               </div>
-              <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                <span className="font-semibold text-slate-500 block mb-0.5">Target Audience:</span>
-                <span className="text-slate-800 font-medium">
+              <div className="rounded-lg bg-muted/80 p-2.5 border border-border/60">
+                <span className="font-semibold text-muted-foreground block mb-0.5">Target Audience:</span>
+                <span className="text-foreground font-medium">
                   <RichContent inline html={targetAudience} placeholder="Not specified" />
                 </span>
               </div>
-              <div className="rounded-lg bg-slate-50/80 p-2.5 border border-slate-100">
-                <span className="font-semibold text-slate-500 block mb-0.5">Prerequisites:</span>
-                <span className="text-slate-800 font-medium">
+              <div className="rounded-lg bg-muted/80 p-2.5 border border-border/60">
+                <span className="font-semibold text-muted-foreground block mb-0.5">Prerequisites:</span>
+                <span className="text-foreground font-medium">
                   <RichContent inline html={prerequisites} placeholder="None" />
                 </span>
               </div>
@@ -422,17 +422,17 @@ export function StepReviewSubmit({
         </div>
 
         {/* Course Description */}
-        <div className="space-y-1.5 pt-2 border-t border-slate-100">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        <div className="space-y-1.5 pt-2 border-t border-border/60">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Course Description
           </p>
           {description && stripHtmlTags(description) ? (
             <div
-              className="text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none bg-slate-50/50 p-4 rounded-xl border border-slate-100"
+              className="text-sm text-secondary-foreground leading-relaxed prose prose-sm max-w-none bg-muted/50 p-4 rounded-xl border border-border/60"
               dangerouslySetInnerHTML={{ __html: description }}
             />
           ) : (
-            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-800 italic">
+            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic">
               ⚠ No course description provided.
             </div>
           )}
@@ -440,18 +440,18 @@ export function StepReviewSubmit({
 
         {/* Course Learning Objectives */}
         <div className="space-y-1.5">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Learning Objectives & Outcomes
           </p>
           {objectives && stripHtmlTags(objectives) ? (
-            <div className="rounded-xl bg-blue-50/60 p-4 border border-blue-100/90 space-y-1">
+            <div className="rounded-xl bg-info-soft/60 p-4 border border-info/25 space-y-1">
               <div
-                className="text-sm text-blue-950 leading-relaxed prose prose-sm max-w-none"
+                className="text-sm text-info leading-relaxed prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: objectives }}
               />
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-800 italic">
+            <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 p-3 text-xs text-warning italic">
               ⚠ No learning objectives specified.
             </div>
           )}
@@ -459,16 +459,16 @@ export function StepReviewSubmit({
       </div>
 
       {/* ── Section 2: Complete Curriculum Hierarchy & Attachments ── */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-indigo-600" />
-              <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
+              <Layers className="h-4 w-4 text-primary" />
+              <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-wide">
                 2. Curriculum Structure
               </h4>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Course outline at a glance. Expand a module to see its lessons and sub-lessons.
             </p>
           </div>
@@ -480,7 +480,7 @@ export function StepReviewSubmit({
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateToStep(1)}
-                className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                className="gap-1.5 text-xs text-primary hover:text-primary/80 hover:bg-primary-soft"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit Curriculum
@@ -490,18 +490,18 @@ export function StepReviewSubmit({
         </div>
 
         {modules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-5 text-center text-xs text-amber-800">
+          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-5 text-center text-xs text-warning">
             ⚠ No modules added to this course yet. Go back to Step 2 to add modules and lessons.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-200/90 divide-y divide-slate-200/80">
+          <div className="overflow-hidden rounded-xl border border-border/90 divide-y divide-border/80">
             {modules.map((module, mIdx) => {
               const isModExpanded = expandedModules.has(module.id);
               const lessons = module.lessons.filter((l) => !isModuleAssessmentLesson(l));
               const panelId = `review-module-${module.id}`;
 
               return (
-                <div key={module.id} className="bg-white">
+                <div key={module.id} className="bg-card">
                   <button
                     type="button"
                     onClick={() => toggleModule(module.id)}
@@ -509,7 +509,7 @@ export function StepReviewSubmit({
                     aria-controls={panelId}
                     className={cn(
                       'group flex w-full items-center gap-3 px-4 py-3.5 text-left transition sm:px-5',
-                      isModExpanded ? 'bg-indigo-50/40' : 'hover:bg-slate-50',
+                      isModExpanded ? 'bg-primary-soft/40' : 'hover:bg-muted',
                     )}
                   >
                     <span
@@ -517,35 +517,35 @@ export function StepReviewSubmit({
                         'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition',
                         isModExpanded
                           ? 'bg-indigo-600 text-white shadow-2xs'
-                          : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100',
+                          : 'bg-primary-soft text-primary group-hover:bg-primary/15',
                       )}
                     >
                       {mIdx + 1}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-sm font-semibold text-slate-900">
+                      <span className="line-clamp-2 text-sm font-semibold text-foreground">
                         {module.title.trim() || (
-                          <span className="font-normal italic text-amber-600">Untitled Module</span>
+                          <span className="font-normal italic text-warning">Untitled Module</span>
                         )}
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-slate-500">
+                      <span className="mt-0.5 block text-[11px] text-muted-foreground">
                         {lessons.length} lesson{lessons.length !== 1 ? 's' : ''}
-                        <span className="mx-1.5 text-slate-300">•</span>
+                        <span className="mx-1.5 text-subtle-foreground">•</span>
                         {formatDuration(calculateModuleDuration(module))}
                       </span>
                     </span>
                     <ChevronDown
                       className={cn(
-                        'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
-                        isModExpanded && 'rotate-180 text-indigo-600',
+                        'h-4 w-4 shrink-0 text-subtle-foreground transition-transform duration-200',
+                        isModExpanded && 'rotate-180 text-primary',
                       )}
                     />
                   </button>
 
                   {isModExpanded && (
-                    <div id={panelId} className="border-t border-slate-100 bg-slate-50/50 px-4 py-3 sm:px-5">
+                    <div id={panelId} className="border-t border-border/60 bg-muted/50 px-4 py-3 sm:px-5">
                       {lessons.length === 0 ? (
-                        <p className="py-1.5 pl-11 text-xs italic text-amber-700">No lessons in this module yet.</p>
+                        <p className="py-1.5 pl-11 text-xs italic text-warning">No lessons in this module yet.</p>
                       ) : (
                         <ol className="space-y-0.5">
                           {lessons.map((lesson, lIdx) => {
@@ -553,25 +553,25 @@ export function StepReviewSubmit({
                             return (
                               <li key={lesson.id}>
                                 <div className="flex items-baseline gap-3 rounded-lg px-2 py-1.5">
-                                  <span className="w-9 shrink-0 text-right font-mono text-[11px] font-semibold text-indigo-600/80">
+                                  <span className="w-9 shrink-0 text-right font-mono text-[11px] font-semibold text-primary/80">
                                     {mIdx + 1}.{lIdx + 1}
                                   </span>
-                                  <span className="min-w-0 text-sm font-medium text-slate-800">
+                                  <span className="min-w-0 text-sm font-medium text-foreground">
                                     {withoutOutlineNumber(lesson.title, `${mIdx + 1}.${lIdx + 1}`) || (
-                                      <span className="font-normal italic text-amber-600">Untitled Lesson</span>
+                                      <span className="font-normal italic text-warning">Untitled Lesson</span>
                                     )}
                                   </span>
                                 </div>
                                 {subLessons.length > 0 && (
-                                  <ul className="mb-1 ml-[3.25rem] space-y-0.5 border-l-2 border-slate-200 pl-4">
+                                  <ul className="mb-1 ml-[3.25rem] space-y-0.5 border-l-2 border-border pl-4">
                                     {subLessons.map((sub, sIdx) => (
                                       <li key={sub.id} className="flex items-baseline gap-2.5 py-1">
-                                        <span className="shrink-0 font-mono text-[10px] text-slate-400">
+                                        <span className="shrink-0 font-mono text-[10px] text-subtle-foreground">
                                           {mIdx + 1}.{lIdx + 1}.{sIdx + 1}
                                         </span>
-                                        <span className="min-w-0 text-[13px] text-slate-600">
+                                        <span className="min-w-0 text-[13px] text-secondary-foreground">
                                           {withoutOutlineNumber(sub.title, `${mIdx + 1}.${lIdx + 1}.${sIdx + 1}`) || (
-                                            <span className="italic text-amber-600">Untitled Sub-lesson</span>
+                                            <span className="italic text-warning">Untitled Sub-lesson</span>
                                           )}
                                         </span>
                                       </li>
@@ -593,16 +593,16 @@ export function StepReviewSubmit({
       </div>
 
       {/* ── Section 3: Final Assessment & Completion Rules ── */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-indigo-600" />
-              <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-wide">
                 3. Final Assessment & Evaluation Rules
               </h4>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {quizTitle || 'Comprehensive Final Examination'}
             </p>
           </div>
@@ -613,7 +613,7 @@ export function StepReviewSubmit({
               variant="ghost"
               size="sm"
               onClick={() => onNavigateToStep(2)}
-              className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+              className="gap-1.5 text-xs text-primary hover:text-primary/80 hover:bg-primary-soft"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit Assessment
@@ -624,27 +624,27 @@ export function StepReviewSubmit({
         {/* Assessment Parameter Metric Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {[
-            { label: 'Grade Weight', value: `${finalAssessmentWeight}%`, tone: 'text-indigo-700' },
-            { label: 'Passing Score', value: `${passMark}%`, tone: 'text-emerald-600', note: 'Global policy' },
-            { label: 'Time Limit', value: timeLimitMinutes ? formatDuration(timeLimitMinutes) : 'No limit', tone: 'text-slate-900' },
-            { label: 'Attempts Allowed', value: String(attemptsAllowed), tone: 'text-slate-900' },
+            { label: 'Grade Weight', value: `${finalAssessmentWeight}%`, tone: 'text-primary' },
+            { label: 'Passing Score', value: `${passMark}%`, tone: 'text-success', note: 'Global policy' },
+            { label: 'Time Limit', value: timeLimitMinutes ? formatDuration(timeLimitMinutes) : 'No limit', tone: 'text-foreground' },
+            { label: 'Attempts Allowed', value: String(attemptsAllowed), tone: 'text-foreground' },
             {
               label: 'Questions',
               value: String(questions.length),
-              tone: 'text-indigo-600',
+              tone: 'text-primary',
               note: `${questions.reduce((sum, q) => sum + (q.points || 10), 0)} pts total`,
             },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+            <div key={stat.label} className="rounded-xl border border-border/80 bg-muted/70 p-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
               <p className={cn('mt-1 text-lg font-bold', stat.tone)}>{stat.value}</p>
-              {stat.note ? <p className="mt-0.5 text-[10px] font-medium text-slate-500">{stat.note}</p> : null}
+              {stat.note ? <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">{stat.note}</p> : null}
             </div>
           ))}
         </div>
 
         {questions.length === 0 && (
-          <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-3.5 text-xs text-amber-800">
+          <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/70 p-3.5 text-xs text-warning">
             ⚠ No final assessment questions added yet. Learners will complete the course without a final exam.
           </div>
         )}
@@ -652,11 +652,11 @@ export function StepReviewSubmit({
 
       {/* Course Assessment Weight Allocation Summary */}
       {totalAssessmentsCount > 0 && (
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
             <div className="flex items-center gap-2">
-              <Scale className="h-4 w-4 text-indigo-600" />
-              <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
+              <Scale className="h-4 w-4 text-primary" />
+              <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-wide">
                 Course Assessment Weighting Summary ({totalAssessmentsCount} assessment{totalAssessmentsCount !== 1 ? 's' : ''})
               </h4>
             </div>
@@ -664,8 +664,8 @@ export function StepReviewSubmit({
               className={cn(
                 'text-xs font-bold px-2.5 py-1 rounded-lg border',
                 totalAllocatedWeight === 100
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200',
+                  ? 'bg-success-soft text-success border-success/30'
+                  : 'bg-warning-soft text-warning border-warning/30',
               )}
             >
               Total Weight: {totalAllocatedWeight}% / 100% {totalAllocatedWeight === 100 ? '✓ Balanced' : '⚠ Action Needed'}
@@ -676,27 +676,27 @@ export function StepReviewSubmit({
             {curriculumQuizzes.map((q, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/80"
+                className="flex items-center justify-between bg-card px-3 py-2 rounded-lg border border-border/80"
               >
-                <span className="text-slate-700 font-medium">
+                <span className="text-secondary-foreground font-medium">
                   {q.moduleTitle} • {q.title}
                 </span>
                 <div className="flex items-center gap-3">
-                  <span className="text-slate-500">Pass: {q.passMark}%</span>
-                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                  <span className="text-muted-foreground">Pass: {q.passMark}%</span>
+                  <span className="font-bold text-primary bg-primary-soft px-2 py-0.5 rounded">
                     Weight: {q.weight}%
                   </span>
                 </div>
               </div>
             ))}
             {hasFinalAssessment && (
-              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-indigo-200">
-                <span className="text-indigo-900 font-semibold">
+              <div className="flex items-center justify-between bg-card px-3 py-2 rounded-lg border border-primary/30">
+                <span className="text-primary font-semibold">
                   Final Assessment • {quizTitle || 'Final Exam'}
                 </span>
                 <div className="flex items-center gap-3">
-                  <span className="text-slate-500">Pass: {passMark}%</span>
-                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                  <span className="text-muted-foreground">Pass: {passMark}%</span>
+                  <span className="font-bold text-primary bg-primary-soft px-2 py-0.5 rounded">
                     Weight: {finalAssessmentWeight}%
                   </span>
                 </div>
@@ -705,7 +705,7 @@ export function StepReviewSubmit({
           </div>
 
           {totalAllocatedWeight !== 100 && (
-            <p className="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+            <p className="text-xs text-warning bg-warning-soft p-2.5 rounded-lg border border-warning/30">
               ⚠ The sum of assessment weights is {totalAllocatedWeight}%. For balanced course grading, please allocate weights so that the total equals exactly 100%.
             </p>
           )}

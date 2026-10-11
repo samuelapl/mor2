@@ -73,14 +73,14 @@ export function StudioSidebar({
   return (
     <aside
       className={cn(
-        'flex h-full w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-slate-50/70 lg:w-96 dark:border-slate-800 dark:bg-slate-900/60',
+        'flex h-full w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/70 lg:w-96',
         className,
       )}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Bank Structure</span>
+      <div className="flex shrink-0 items-center justify-between border-b border-border/80 bg-card/80 p-4">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank Structure</span>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-slate-200/60 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+          <span className="rounded-full border border-border/60 bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
             {modules.length} module{modules.length === 1 ? '' : 's'}
           </span>
           {onClose && (
@@ -88,7 +88,7 @@ export function StudioSidebar({
               type="button"
               onClick={onClose}
               aria-label="Close curriculum"
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+              className="rounded-lg p-1 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -108,21 +108,21 @@ export function StudioSidebar({
                   'group flex items-center gap-3 rounded-2xl border p-2.5 transition',
                   active
                     ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                    : 'border-slate-200/80 bg-white text-slate-800 shadow-2xs hover:border-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+                    : 'border-border/80 bg-card text-foreground shadow-2xs hover:border-primary/30',
                 )}
               >
                 <button type="button" onClick={() => onSelectNode(node)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                   <span
                     className={cn(
                       'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-                      active ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300',
+                      active ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary group-hover:bg-primary/15',
                     )}
                   >
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold">{label}</span>
-                    <span className={cn('block truncate text-[11px]', active ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400')}>
+                    <span className={cn('block truncate text-[11px]', active ? 'text-indigo-100' : 'text-muted-foreground')}>
                       {hint}
                     </span>
                   </span>
@@ -130,7 +130,7 @@ export function StudioSidebar({
                 <span
                   className={cn(
                     'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold',
-                    active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                    active ? 'bg-white/20 text-white' : 'bg-secondary text-secondary-foreground',
                   )}
                 >
                   {questionCounts[countKey] || 0}
@@ -143,7 +143,7 @@ export function StudioSidebar({
                     title={`Add ${label} question`}
                     className={cn(
                       'shrink-0 rounded-md p-1 transition',
-                      active ? 'text-white/80 hover:bg-white/20 hover:text-white' : 'text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30',
+                      active ? 'text-white/80 hover:bg-white/20 hover:text-white' : 'text-subtle-foreground hover:bg-primary-soft hover:text-primary',
                     )}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -154,16 +154,16 @@ export function StudioSidebar({
           })}
         </div>
 
-        <p className="px-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Curriculum</p>
+        <p className="px-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">Curriculum</p>
 
         {loading ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-2xl border border-slate-200/60 bg-white dark:border-slate-800 dark:bg-slate-900" />
+              <div key={i} className="h-12 animate-pulse rounded-2xl border border-border/60 bg-card" />
             ))}
           </div>
         ) : modules.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:bg-slate-900/60">
+          <div className="rounded-2xl border border-dashed border-input bg-card/60 p-4 text-center text-xs text-subtle-foreground">
             This course has no modules yet. Use Course Level or Reusable Global questions.
           </div>
         ) : (
@@ -182,14 +182,14 @@ export function StudioSidebar({
             return (
               <div
                 key={mod.id}
-                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900"
+                className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xs"
               >
                 <div
                   className={cn(
                     'flex items-center gap-1 p-2 transition',
                     isModActive
-                      ? 'border-b border-indigo-100 bg-indigo-50/70 text-indigo-900 dark:border-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100'
-                      : 'text-slate-800 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60',
+                      ? 'border-b border-primary/30 bg-primary-soft/70 text-primary'
+                      : 'text-foreground hover:bg-muted',
                   )}
                 >
                   <button
@@ -197,7 +197,7 @@ export function StudioSidebar({
                     onClick={() => hasLessons && onToggleModule(mod.id)}
                     disabled={!hasLessons}
                     aria-label={isExpanded ? 'Collapse lessons' : 'Expand lessons'}
-                    className="rounded p-1 text-slate-400 hover:text-slate-600 disabled:invisible"
+                    className="rounded p-1 text-subtle-foreground hover:text-secondary-foreground disabled:invisible"
                   >
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </button>
@@ -207,7 +207,7 @@ export function StudioSidebar({
                     title={moduleNode.title}
                     className="min-w-0 flex-1 text-left"
                   >
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Module {modIdx + 1}</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">Module {modIdx + 1}</span>
                     <span className="block truncate text-xs font-bold">{cleanModuleTitle}</span>
                   </button>
                   <span className={countPillClass(isModActive)} title={`${questionCounts[`module_${mod.id}`] || 0} questions attached to this module`}>
@@ -225,7 +225,7 @@ export function StudioSidebar({
                 </div>
 
                 {isExpanded && hasLessons && (
-                  <div className="space-y-0.5 border-t border-slate-100 bg-slate-50/40 px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900/40">
+                  <div className="space-y-0.5 border-t border-border/60 bg-muted/40 px-2 py-1.5">
                     {mod.lessons!.map((les, lesIdx) => {
                       const isLesActive = activeNode.type === 'LESSON' && activeNode.id === les.id;
                       const isLesExpanded = expandedLessons.has(les.id);
@@ -247,7 +247,7 @@ export function StudioSidebar({
                               onClick={() => hasSubLessons && onToggleLesson(les.id)}
                               disabled={!hasSubLessons}
                               aria-label={isLesExpanded ? 'Collapse sub-lessons' : 'Expand sub-lessons'}
-                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 transition hover:text-slate-700 disabled:invisible"
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-subtle-foreground transition hover:text-secondary-foreground disabled:invisible"
                             >
                               {isLesExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                             </button>
@@ -275,7 +275,7 @@ export function StudioSidebar({
                           </div>
 
                           {isLesExpanded && hasSubLessons && (
-                            <div className="ml-3.5 mt-0.5 space-y-0.5 border-l border-slate-200 pl-2 dark:border-slate-700">
+                            <div className="ml-3.5 mt-0.5 space-y-0.5 border-l border-border pl-2">
                               {les.subLessons!.map((sub, subIdx) => {
                                 const isSubActive = activeNode.type === 'SUB_LESSON' && activeNode.id === sub.id;
                                 const cleanSubTitle = getCleanSubLessonTitle(sub.titleEn);
@@ -328,23 +328,23 @@ export function StudioSidebar({
       </div>
 
       {/* Question mix for this course */}
-      <div className="shrink-0 border-t border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="shrink-0 border-t border-border/80 bg-card/80 p-4">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Question mix</span>
-          <span className="font-semibold text-slate-700 dark:text-slate-300">{total} total</span>
+          <span className="font-bold uppercase tracking-wider text-muted-foreground">Question mix</span>
+          <span className="font-semibold text-secondary-foreground">{total} total</span>
         </div>
-        <div className="flex h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div className="flex h-2 overflow-hidden rounded-full bg-secondary">
           {total > 0 &&
             typeStats.map((s) => (
               <div key={s.label} className={s.color} style={{ width: `${(s.count / total) * 100}%` }} title={`${s.label}: ${s.count}`} />
             ))}
         </div>
-        <div className="mt-2.5 grid grid-cols-3 gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="mt-2.5 grid grid-cols-3 gap-1 text-[11px] text-muted-foreground">
           {typeStats.map((s) => (
             <span key={s.label} className="flex min-w-0 items-center gap-1.5">
               <span className={cn('h-2 w-2 shrink-0 rounded-full', s.color)} />
               <span className="truncate">{s.label}</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{s.count}</span>
+              <span className="font-semibold text-secondary-foreground">{s.count}</span>
             </span>
           ))}
         </div>

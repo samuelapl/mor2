@@ -34,7 +34,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
 
   return (
     <section className="mt-10">
-      <h2 className="mb-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+      <h2 className="mb-4 font-display text-lg font-bold text-foreground">
         {t('newsGallery.photoGallery')}
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -43,7 +43,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
             <button
               type="button"
               onClick={() => setOpenIndex(index)}
-              className="block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              className="block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-info"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -56,7 +56,7 @@ export function NewsGallery({ images }: { images: ApiNewsImage[] }) {
             {image.caption && (
               <figcaption
                 lang={newsTextLang(image.caption)}
-                className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400"
+                className="mt-1.5 line-clamp-2 text-xs text-muted-foreground"
               >
                 {image.caption}
               </figcaption>

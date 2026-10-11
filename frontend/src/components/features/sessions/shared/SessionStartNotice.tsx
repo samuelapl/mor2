@@ -19,7 +19,7 @@ export function SessionStartNotice({ date, time, now }: { date: string; time: st
     <div
       className={cn(
         'flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs',
-        past ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-indigo-200 bg-indigo-50/70 text-indigo-900',
+        past ? 'border-danger/30 bg-danger-soft text-danger' : 'border-primary/30 bg-primary-soft/70 text-primary',
       )}
     >
       {past ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <Clock className="mt-0.5 h-4 w-4 shrink-0" />}

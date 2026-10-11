@@ -194,7 +194,7 @@ export default function SystemAdminDashboardPage() {
           label={t('systemAdminDashboardPage.totalCourses')}
           value={coursesCount}
           hint={t('systemAdminDashboardPage.published', { publishedCount })}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-soft text-info"
         />
         <StatCard
           icon={CheckCircle2}
@@ -203,28 +203,28 @@ export default function SystemAdminDashboardPage() {
           hint={
             t('systemAdminDashboardPage.certificatesIssued2', { certificatesCount })
           }
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-soft text-success"
         />
         <StatCard
           icon={Video}
           label={t('systemAdminDashboardPage.activeLiveSessions')}
           value={activeSessions}
           hint={t('systemAdminDashboardPage.scheduledOrBroadcastReady')}
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-primary-soft text-primary"
         />
       </div>
 
       {/* Graphical Insights: Charts */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* User Role Distribution Vertical Bar Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('systemAdminDashboardPage.userRoleDistribution')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('systemAdminDashboardPage.allocationOfPlatformAccountsAcrossAccess')}
                 </p>
               </div>
@@ -241,23 +241,23 @@ export default function SystemAdminDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-subtle-foreground flex items-center justify-between">
             <span>{t('systemAdminDashboardPage.liveDatabaseRecord')}</span>
-            <span className="font-medium text-slate-600">
+            <span className="font-medium text-secondary-foreground">
               {roleSegments.filter((r) => r.value > 0).length} {t('systemAdminDashboardPage.activeRolesInDb')}
             </span>
           </div>
         </div>
 
         {/* Platform Engagement Metrics Bar Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('systemAdminDashboardPage.platformOperationsGrowth')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('systemAdminDashboardPage.engagementAndPublishingStatistics')}
                 </p>
               </div>
@@ -273,13 +273,13 @@ export default function SystemAdminDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('systemAdminDashboardPage.totalEnrollments2', { enrollmentsCount })}
             </span>
             <Link
               href="/system-admin/audit-logs"
-              className="font-semibold text-indigo-600 hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               {t('systemAdminDashboardPage.reviewAuditLogs')}
             </Link>
@@ -309,7 +309,7 @@ export default function SystemAdminDashboardPage() {
                           <CardDescription className="text-xs">{link.description}</CardDescription>
                         </div>
                       </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+                      <ArrowRight className="h-4 w-4 shrink-0 text-subtle-foreground transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-indigo-500" />
                     </Card>
                   </Link>
                 );
@@ -333,29 +333,29 @@ export default function SystemAdminDashboardPage() {
               </Link>
             }
           >
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
-              <ul className="divide-y divide-slate-100/80">
+            <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft ring-super-soft">
+              <ul className="divide-y divide-border/50">
                 {recentLogs.map((log) => (
                   <li
                     key={log.id}
-                    className="flex items-start justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-slate-50/70"
+                    className="flex items-start justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-muted/70"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-800">
-                        <span className="font-semibold text-slate-900">
+                      <p className="text-xs text-foreground">
+                        <span className="font-semibold text-foreground">
                           {log.user
                             ? `${log.user.firstName} ${log.user.lastName}`
                             : t('systemAdminDashboardPage.systemService')}
                         </span>{' '}
-                        <span className="text-slate-600">{log.action}</span>
+                        <span className="text-secondary-foreground">{log.action}</span>
                         {log.entityId ? (
-                          <span className="font-mono text-[11px] text-slate-400">
+                          <span className="font-mono text-[11px] text-subtle-foreground">
                             {' '}
                             “{log.entityId.slice(0, 8)}…”
                           </span>
                         ) : null}
                       </p>
-                      <span className="mt-1 inline-block text-[11px] text-slate-400">
+                      <span className="mt-1 inline-block text-[11px] text-subtle-foreground">
                         {new Date(log.createdAt).toLocaleString(lang === 'am' ? 'am-ET' : 'en-US')}
                       </span>
                     </div>
@@ -365,7 +365,7 @@ export default function SystemAdminDashboardPage() {
                   </li>
                 ))}
                 {recentLogs.length === 0 ? (
-                  <li className="px-5 py-8 text-center text-xs text-slate-400">
+                  <li className="px-5 py-8 text-center text-xs text-subtle-foreground">
                     {t('systemAdminDashboardPage.noRecentAuditActivityRecorded')}
                   </li>
                 ) : null}

@@ -130,14 +130,14 @@ export function ClassroomSidebar({
       onClick={onClose}
       className="absolute inset-0 z-30 bg-slate-900/40 animate-fade-in md:hidden"
     />
-    <aside className="absolute inset-y-0 left-0 z-40 w-[85vw] max-w-sm shadow-2xl animate-slide-in-left md:static md:z-auto md:w-80 md:shadow-none md:animate-none shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden select-none">
+    <aside className="absolute inset-y-0 left-0 z-40 w-[85vw] max-w-sm shadow-2xl animate-slide-in-left md:static md:z-auto md:w-80 md:shadow-none md:animate-none shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden select-none">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 shrink-0">
+      <div className="p-4 border-b border-border/60 bg-muted/60 shrink-0">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {t('classroomSidebar.courseCurriculum')}
           </p>
-          <span className="text-[11px] font-semibold text-slate-500 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+          <span className="text-[11px] font-semibold text-muted-foreground bg-card px-2 py-0.5 rounded-full border border-border">
             {t('classroomSidebar.modules', { count: course.modules.length })}
           </span>
         </div>
@@ -152,8 +152,8 @@ export function ClassroomSidebar({
             className={cn(
               'w-full flex items-center justify-between p-3 rounded-xl border text-left transition group',
               isCourseOverviewActive
-                ? 'border-indigo-300 bg-indigo-50/80 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs',
+                ? 'border-primary/30 bg-primary-soft/80 text-primary font-semibold ring-1 ring-ring/20 shadow-2xs'
+                : 'border-border bg-card text-secondary-foreground hover:bg-muted shadow-2xs',
             )}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -162,7 +162,7 @@ export function ClassroomSidebar({
                   'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs',
                   isCourseOverviewActive
                     ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-indigo-50 dark:bg-indigo-900/50 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900',
+                    : 'bg-primary-soft border-primary/30 text-primary group-hover:bg-primary/15',
                 )}
               >
                 <BookOpen className="h-3.5 w-3.5" />
@@ -171,15 +171,15 @@ export function ClassroomSidebar({
                 <p className="text-xs font-bold truncate">
                   {t('classroomSidebar.courseOverviewObjectives')}
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-subtle-foreground">
                   {t('classroomSidebar.orientationSyllabus')}
                 </p>
               </div>
             </div>
             {isCourseOverviewActive ? (
-              <CircleDot className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              <CircleDot className="h-3.5 w-3.5 text-primary shrink-0" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <ChevronRight className="h-3.5 w-3.5 text-subtle-foreground shrink-0" />
             )}
           </button>
         )}
@@ -203,8 +203,8 @@ export function ClassroomSidebar({
               className={cn(
                 'rounded-xl border transition-all overflow-hidden',
                 isUnlocked
-                  ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xs'
-                  : 'border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 opacity-70',
+                  ? 'border-border bg-card shadow-2xs'
+                  : 'border-border/60 bg-muted/50 opacity-70',
               )}
             >
               {/* Module Header Bar */}
@@ -213,7 +213,7 @@ export function ClassroomSidebar({
                 onClick={() => isUnlocked && onToggleModule(mod.id)}
                 disabled={!isUnlocked}
                 className={cn(
-                  'w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/80 dark:hover:bg-slate-800/80',
+                  'w-full flex items-center justify-between p-3 text-left transition hover:bg-muted/80',
                   !isUnlocked && 'cursor-not-allowed',
                 )}
               >
@@ -222,17 +222,17 @@ export function ClassroomSidebar({
                     className={cn(
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold font-mono border',
                       isUnlocked
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500',
+                        ? 'bg-primary-soft border-primary/30 text-primary'
+                        : 'bg-secondary border-border text-subtle-foreground',
                     )}
                   >
                     {mIdx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                    <p className="text-xs font-bold text-foreground truncate">
                       {t('classroomSidebar.module')} {mIdx + 1}: {cleanModuleTitle(mod.title)}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-subtle-foreground mt-0.5">
                       {t('classroomSidebar.lessonsCompleted', { completedLessons, totalLessons })}
                     </p>
                   </div>
@@ -240,20 +240,20 @@ export function ClassroomSidebar({
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
                   {!isUnlocked ? (
-                    <Lock className="h-3.5 w-3.5 text-slate-400" />
+                    <Lock className="h-3.5 w-3.5 text-subtle-foreground" />
                   ) : isModuleComplete ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                   ) : isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                    <ChevronDown className="h-4 w-4 text-subtle-foreground" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                    <ChevronRight className="h-4 w-4 text-subtle-foreground" />
                   )}
                 </div>
               </button>
 
               {/* Module Expanded Content */}
               {isExpanded && isUnlocked ? (
-                <div className="p-2 pt-0 space-y-1.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40">
+                <div className="p-2 pt-0 space-y-1.5 border-t border-border/60 bg-muted/40">
                   {/* Module Overview Item (only if module has description, objectives, or attachments) */}
                   {(() => {
                     const moduleOverviewItem = flatItems.find(
@@ -268,15 +268,15 @@ export function ClassroomSidebar({
                         className={cn(
                           'w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium',
                           isModOverviewActive
-                            ? 'bg-indigo-50 text-indigo-950 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xs',
+                            ? 'bg-primary-soft text-primary font-semibold ring-1 ring-ring/20 shadow-2xs'
+                            : 'text-secondary-foreground hover:bg-card hover:shadow-2xs',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Layers
                             className={cn(
                               'h-3.5 w-3.5 shrink-0',
-                              isModOverviewActive ? 'text-indigo-600' : 'text-indigo-500',
+                              isModOverviewActive ? 'text-primary' : 'text-indigo-500',
                             )}
                           />
                           <span className="truncate">
@@ -285,9 +285,9 @@ export function ClassroomSidebar({
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isModOverviewActive ? (
-                            <CircleDot className="h-3.5 w-3.5 text-indigo-600" />
+                            <CircleDot className="h-3.5 w-3.5 text-primary" />
                           ) : (
-                            <div className="h-2 w-2 rounded-full border border-slate-300" />
+                            <div className="h-2 w-2 rounded-full border border-input" />
                           )}
                         </div>
                       </button>
@@ -330,10 +330,10 @@ export function ClassroomSidebar({
                           className={cn(
                             'w-full flex items-center justify-between gap-1.5 px-2.5 py-2 rounded-lg text-left transition text-xs font-medium group',
                             isLessonActive
-                              ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200 font-semibold ring-1 ring-indigo-500/20 shadow-2xs'
+                              ? 'bg-primary-soft text-primary font-semibold ring-1 ring-ring/20 shadow-2xs'
                               : isLessonUnlocked
-                                ? 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xs'
-                                : 'text-slate-400 cursor-not-allowed',
+                                ? 'text-secondary-foreground hover:bg-card hover:shadow-2xs'
+                                : 'text-subtle-foreground cursor-not-allowed',
                           )}
                         >
                           {/* Main Lesson Select Action */}
@@ -359,19 +359,19 @@ export function ClassroomSidebar({
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             {lesson.durationMin ? (
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] text-subtle-foreground">
                                 {lesson.durationMin}m
                               </span>
                             ) : null}
 
                             {!isLessonUnlocked ? (
-                              <Lock className="h-3 w-3 text-slate-400" />
+                              <Lock className="h-3 w-3 text-subtle-foreground" />
                             ) : isLessonCompleted ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                             ) : isLessonActive ? (
-                              <CircleDot className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                              <CircleDot className="h-3.5 w-3.5 text-primary" />
                             ) : (
-                              <div className="h-2 w-2 rounded-full border border-slate-300 dark:border-slate-600" />
+                              <div className="h-2 w-2 rounded-full border border-input" />
                             )}
 
                             {/* Dropdown Chevron for Lessons with Sub-lessons */}
@@ -380,7 +380,7 @@ export function ClassroomSidebar({
                                 type="button"
                                 onClick={(e) => toggleLesson(lesson.id, e)}
                                 title={isLessonExpanded ? t('classroomSidebar.collapseSubLessons') : t('classroomSidebar.expandSubLessons')}
-                                className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition"
+                                className="p-0.5 rounded text-subtle-foreground hover:text-secondary-foreground hover:bg-input/60 transition"
                               >
                                 {isLessonExpanded ? (
                                   <ChevronDown className="h-3.5 w-3.5" />
@@ -394,7 +394,7 @@ export function ClassroomSidebar({
 
                         {/* Sub-lessons list (Indented Dropdown) */}
                         {hasSubLessons && isLessonExpanded && (
-                          <div className="pl-5 space-y-1 border-l border-indigo-100 dark:border-indigo-900/50 ml-3.5 transition-all">
+                          <div className="pl-5 space-y-1 border-l border-primary/30 ml-3.5 transition-all">
                             {subLessons.map((sub, sIdx) => {
                               const subKey = `sub-${sub.id}`;
                               const subItem = itemsByKey.get(subKey);
@@ -411,24 +411,24 @@ export function ClassroomSidebar({
                                   className={cn(
                                     'w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left transition text-[11px]',
                                     isSubActive
-                                      ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-200 font-semibold ring-1 ring-indigo-400/20'
+                                      ? 'bg-primary-soft text-primary font-semibold ring-1 ring-ring/20'
                                       : isSubUnlocked
-                                        ? 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'
-                                        : 'text-slate-400 cursor-not-allowed',
+                                        ? 'text-secondary-foreground hover:bg-card'
+                                        : 'text-subtle-foreground cursor-not-allowed',
                                   )}
                                 >
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
+                                    <div className="h-1.5 w-1.5 rounded-full bg-input shrink-0" />
                                     <span className="truncate">{cleanSubTitle(sub.title)}</span>
                                   </div>
 
                                   <div className="flex items-center gap-1 shrink-0">
                                     {!isSubUnlocked ? (
-                                      <Lock className="h-2.5 w-2.5 text-slate-400" />
+                                      <Lock className="h-2.5 w-2.5 text-subtle-foreground" />
                                     ) : isSubCompleted ? (
                                       <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                                     ) : isSubActive ? (
-                                      <CircleDot className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                                      <CircleDot className="h-3 w-3 text-primary" />
                                     ) : null}
                                   </div>
                                 </button>
@@ -439,7 +439,7 @@ export function ClassroomSidebar({
 
                         {/* Lesson Checkpoint Quiz Item (Directly below sub-lessons) */}
                         {lessonQuizItem && (
-                          <div className="pl-4 ml-3 border-l border-indigo-100 dark:border-indigo-900/50 pt-0.5">
+                          <div className="pl-4 ml-3 border-l border-primary/30 pt-0.5">
                             <button
                               type="button"
                               onClick={() =>
@@ -452,9 +452,9 @@ export function ClassroomSidebar({
                                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs font-semibold'
                                   : lessonQuizItem.unlocked
                                     ? lessonQuizItem.completed
-                                      ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100/70'
-                                      : 'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-900/30'
-                                    : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
+                                      ? 'bg-success-soft/70 border-success/30 text-success hover:bg-success/15'
+                                      : 'bg-card border-primary/30 text-primary hover:bg-primary-soft/60'
+                                    : 'bg-muted border-border/80 text-subtle-foreground cursor-not-allowed',
                               )}
                             >
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -468,7 +468,7 @@ export function ClassroomSidebar({
                                 {!lessonQuizItem.unlocked ? (
                                   <Lock className="h-3 w-3" />
                                 ) : lessonQuizItem.completed ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                                 ) : (
                                   <span className="text-[10px] font-bold">
                                     {t('classroomSidebar.quiz')}
@@ -484,7 +484,7 @@ export function ClassroomSidebar({
 
                   {/* Module Assessment Item (At the end of all lessons in module) */}
                   {moduleQuizItem && (
-                    <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800">
+                    <div className="pt-2 border-t border-border/70">
                       <button
                         type="button"
                         onClick={() => moduleQuizItem.unlocked && onSelectItem(moduleQuizItem)}
@@ -495,9 +495,9 @@ export function ClassroomSidebar({
                             ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
                             : moduleQuizItem.unlocked
                               ? moduleQuizItem.completed
-                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
-                                : 'bg-gradient-to-r from-indigo-50 dark:from-indigo-900/20 to-violet-50 dark:to-violet-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 hover:from-indigo-100 dark:hover:from-indigo-900/40'
-                              : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed',
+                                ? 'bg-success-soft border-success/30 text-success hover:bg-success/15'
+                                : 'bg-gradient-to-r from-primary-soft to-accent-soft border-primary/30 text-primary hover:from-primary/15'
+                              : 'bg-muted border-border text-subtle-foreground cursor-not-allowed',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -511,7 +511,7 @@ export function ClassroomSidebar({
                           {!moduleQuizItem.unlocked ? (
                             <Lock className="h-3.5 w-3.5" />
                           ) : moduleQuizItem.completed ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <CheckCircle2 className="h-4 w-4 text-success" />
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider">
                               {t('classroomSidebar.takeExam')}
@@ -540,11 +540,11 @@ export function ClassroomSidebar({
                 className={cn(
                   'w-full flex items-center gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs',
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white dark:bg-slate-900 border-sky-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300',
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-card border-info/30 text-foreground hover:border-info/60',
                 )}
               >
-                <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border', isActive ? 'bg-sky-400 text-slate-950 border-sky-300' : 'bg-sky-50 border-sky-200 text-sky-700')}>
+                <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border', isActive ? 'bg-sky-400 text-foreground border-info/30' : 'bg-info-soft border-info/30 text-info')}>
                   <Video className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -614,12 +614,12 @@ export function ClassroomSidebar({
                           ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                           : 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                         : finalItem.isInPersonLocked
-                          ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-200 hover:bg-amber-100/80'
+                          ? 'bg-warning-soft/90 border-warning/30 text-warning hover:bg-warning-soft/80'
                           : finalItem.unlocked
                             ? finalItem.completed
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                              ? 'bg-success-soft border-success/30 text-success'
                               : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-transparent'
-                            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700',
+                            : 'bg-muted border-border text-muted-foreground hover:border-input',
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -627,7 +627,7 @@ export function ClassroomSidebar({
                         <Building2
                           className={cn(
                             'h-4 w-4 shrink-0',
-                            isActive ? 'text-white' : 'text-amber-600',
+                            isActive ? 'text-white' : 'text-warning',
                           )}
                         />
                       ) : (
@@ -655,7 +655,7 @@ export function ClassroomSidebar({
                         <span
                           className={cn(
                             'text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1',
-                            isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800',
+                            isActive ? 'bg-white/20 text-white' : 'bg-warning-soft text-warning',
                           )}
                         >
                           In-Person
@@ -691,10 +691,10 @@ export function ClassroomSidebar({
                 className={cn(
                   'w-full flex items-center justify-between gap-2.5 p-3 rounded-xl text-left transition border shadow-2xs group cursor-pointer',
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    ? 'bg-foreground text-background border-foreground shadow-sm'
                     : isUnlocked
                       ? 'bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border-amber-300/80 text-amber-950 hover:border-amber-400 hover:shadow-xs'
-                      : 'bg-slate-50/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/80',
+                      : 'bg-muted/80 border-border text-muted-foreground hover:bg-secondary/70',
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -702,10 +702,10 @@ export function ClassroomSidebar({
                     className={cn(
                       'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition',
                       isActive
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
+                        ? 'bg-amber-400 text-foreground border-warning/30 font-bold'
                         : isUnlocked
-                          ? 'bg-amber-100 border-amber-300 text-amber-700'
-                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500',
+                          ? 'bg-warning-soft border-warning/30 text-warning'
+                          : 'bg-secondary border-border text-subtle-foreground',
                     )}
                   >
                     <Award className="h-4 w-4 shrink-0" />
@@ -726,11 +726,11 @@ export function ClassroomSidebar({
 
                 <div className="flex items-center gap-1 shrink-0">
                   {certItem.isInPersonLocked ? (
-                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-warning bg-warning-soft px-1.5 py-0.5 rounded">
                       In-Person
                     </span>
                   ) : !isUnlocked ? (
-                    <Lock className="h-3.5 w-3.5 text-slate-400" />
+                    <Lock className="h-3.5 w-3.5 text-subtle-foreground" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                   )}

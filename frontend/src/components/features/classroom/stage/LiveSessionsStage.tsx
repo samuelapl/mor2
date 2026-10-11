@@ -100,26 +100,26 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
 
   const statusBadge = (s: ApiLearnerSession) => {
     if (s.status === 'TO_BE_SCHEDULED')
-      return { label: t('liveSessionsStage.toBeScheduled'), tone: 'bg-slate-100 text-slate-600 border-slate-200', icon: CalendarClock };
-    if (s.status === 'LIVE') return { label: t('liveSessionsStage.liveNow'), tone: 'bg-rose-50 text-rose-700 border-rose-200', icon: Radio };
+      return { label: t('liveSessionsStage.toBeScheduled'), tone: 'bg-secondary text-secondary-foreground border-border', icon: CalendarClock };
+    if (s.status === 'LIVE') return { label: t('liveSessionsStage.liveNow'), tone: 'bg-danger-soft text-danger border-danger/30', icon: Radio };
     if (s.status === 'CANCELLED')
-      return { label: t('liveSessionsStage.cancelled'), tone: 'bg-slate-100 text-slate-500 border-slate-200', icon: XCircle };
+      return { label: t('liveSessionsStage.cancelled'), tone: 'bg-secondary text-muted-foreground border-border', icon: XCircle };
     if (s.status === 'COMPLETED')
       return s.attended
-        ? { label: t('liveSessionsStage.attended'), tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 }
-        : { label: t('liveSessionsStage.missed'), tone: 'bg-amber-50 text-amber-800 border-amber-200', icon: XCircle };
-    return { label: t('courseGradeSummary.upcoming'), tone: 'bg-sky-50 text-sky-700 border-sky-200', icon: CalendarClock };
+        ? { label: t('liveSessionsStage.attended'), tone: 'bg-success-soft text-success border-success/30', icon: CheckCircle2 }
+        : { label: t('liveSessionsStage.missed'), tone: 'bg-warning-soft text-warning border-warning/30', icon: XCircle };
+    return { label: t('courseGradeSummary.upcoming'), tone: 'bg-info-soft text-info border-info/30', icon: CalendarClock };
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6 md:p-10">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
           <Video className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('classroomSidebar.liveSessions')}</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-xl font-bold text-foreground">{t('classroomSidebar.liveSessions')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t('liveSessionsStage.onlineSessionsForThisCourseAttend')}
           </p>
         </div>
@@ -130,20 +130,20 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           const badge = statusBadge(s);
           const Icon = badge.icon;
           return (
-            <li key={s.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <li key={s.id} className="rounded-2xl border border-border bg-card p-4 shadow-2xs">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                     {t('liveSessionsStage.session')} {i + 1}
                   </p>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{s.titleEn}</h3>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  <h3 className="font-semibold text-foreground">{s.titleEn}</h3>
+                  <p className="mt-1 text-sm text-secondary-foreground">
                     {s.scheduledAt ? fmt(s.scheduledAt) : t('liveSessionsStage.dateToBeAnnounced')}
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
                   </p>
                   <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
                   {(s.platform || s.trainerName) && (
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {[s.platform ? (PLATFORM_LABEL[s.platform] ?? s.platform) : null, s.trainerName].filter(Boolean).join(' · ')}
                     </p>
                   )}
@@ -157,7 +157,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     <button
                       type="button"
                       onClick={() => setSelectedSession(s)}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary hover:text-primary"
                     >
                       {t('liveSessionsStage.viewSession')}
                     </button>
@@ -184,7 +184,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                           'rounded-lg px-3 py-1.5 text-xs font-semibold transition shadow-xs flex items-center gap-1.5',
                           isTimeReached(s)
                             ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700',
+                            : 'bg-secondary text-muted-foreground border border-border hover:bg-input/60',
                         )}
                       >
                         {joiningSessionId === (s.sessionId || s.id) ? (
@@ -245,7 +245,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     'inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow transition',
                     isTimeReached(selectedSession)
                       ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700',
+                      : 'bg-border text-secondary-foreground border border-input hover:bg-input',
                   )}
                 >
                   {joiningSessionId === (selectedSession.sessionId || selectedSession.id) ? (
@@ -261,9 +261,9 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
             </div>
           }
         >
-          <div className="space-y-4 py-2 text-sm text-slate-700 dark:text-slate-300">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-              <span className="text-xs font-medium text-slate-500">{t('liveSessionsStage.sessionStatus')}</span>
+          <div className="space-y-4 py-2 text-sm text-secondary-foreground">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border/80">
+              <span className="text-xs font-medium text-muted-foreground">{t('liveSessionsStage.sessionStatus')}</span>
               {(() => {
                 const b = statusBadge(selectedSession);
                 const Icon = b.icon;
@@ -277,8 +277,8 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
             </div>
 
             {!isTimeReached(selectedSession) && (
-              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-medium">
-                <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/30 text-warning text-xs font-medium">
+                <Clock className="h-4 w-4 shrink-0 text-warning" />
                 <span>
                   {t('liveSessionsStage.theScheduledTimeHasNotBeen')}
                 </span>
@@ -286,54 +286,54 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="p-3 rounded-xl border border-border/60 bg-muted/50">
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                   <CalendarClock className="h-3.5 w-3.5" />
                   {t('liveSessionsStage.scheduledTime')}
                 </span>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
+                <p className="mt-1 font-semibold text-foreground text-xs">
                   {selectedSession.scheduledAt ? fmt(selectedSession.scheduledAt) : t('liveSessionsStage.toBeAnnounced')}
                 </p>
                 <StartsInBadge seconds={selectedSession.startsInSeconds} className="mt-1" />
               </div>
 
-              <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="p-3 rounded-xl border border-border/60 bg-muted/50">
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                   <Clock className="h-3.5 w-3.5" />
                   {t('liveSessionsStage.duration')}
                 </span>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
+                <p className="mt-1 font-semibold text-foreground text-xs">
                   {selectedSession.durationMinutes ? `${selectedSession.durationMinutes} ${t('liveSessionsStage.minutes')}` : t('liveSessionsStage.standardLesson')}
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="p-3 rounded-xl border border-border/60 bg-muted/50">
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                   <Globe className="h-3.5 w-3.5" />
                   {t('liveSessionsStage.platform')}
                 </span>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
+                <p className="mt-1 font-semibold text-foreground text-xs">
                   {selectedSession.platform ? (PLATFORM_LABEL[selectedSession.platform] ?? selectedSession.platform) : t('liveSessionsStage.virtualClassroom')}
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="p-3 rounded-xl border border-border/60 bg-muted/50">
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                   <User className="h-3.5 w-3.5" />
                   {t('liveSessionsStage.trainer')}
                 </span>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
+                <p className="mt-1 font-semibold text-foreground text-xs">
                   {selectedSession.trainerName || t('liveSessionsStage.assignedCourseTrainer')}
                 </p>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
+            <div className="p-3 rounded-xl bg-warning-soft border border-warning/30 text-xs text-warning">
               <p className="font-semibold flex items-center gap-1.5">
-                <Info className="h-4 w-4 shrink-0 text-amber-600" />
+                <Info className="h-4 w-4 shrink-0 text-warning" />
                 {t('liveSessionsStage.certificateRequirementPolicy')}
               </p>
-              <p className="mt-1 leading-relaxed text-amber-700 dark:text-amber-400">
+              <p className="mt-1 leading-relaxed text-warning">
                 {t('liveSessionsStage.learnersAreRequiredToAttendAll')}
               </p>
             </div>

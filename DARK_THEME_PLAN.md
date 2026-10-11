@@ -74,7 +74,7 @@ shadcn names + `success` / `warning` / `info` (the app uses green/amber/sky stat
 | `ring` | Focus ring | indigo-500 `99 102 241` | indigo-400 `129 140 248` |
 | `primary` / `primary-foreground` | Brand actions, links | indigo-600 `79 70 229` / white | indigo-500 `99 102 241` / white |
 | `primary-soft` | Tinted primary backgrounds | indigo-50 `238 242 255` | indigo-950 `30 27 75` |
-| `accent-soft` | Violet tint (gradients) | violet-50 `245 243 255` | violet-950 `46 16 101` |
+| `accent` / `accent-soft` | Violet text / tint (added `accent` in Phase 4.1) | violet-700 `109 40 217` / violet-50 `245 243 255` | violet-400 `167 139 250` / violet-950 `46 16 101` |
 | `success` / `success-soft` | Published, approved, passed | emerald-700 `4 120 87` / emerald-50 `236 253 245` | emerald-400 `52 211 153` / emerald-950 `2 44 34` |
 | `warning` / `warning-soft` | Pending, draft, due | amber-700 `180 83 9` / amber-50 `255 251 235` | amber-400 `251 191 36` / amber-950 `69 26 3` |
 | `danger` / `danger-soft` (shadcn: `destructive`) | Rejected, delete, errors | rose-700 `190 18 60` / rose-50 `255 241 242` | rose-400 `251 113 133` / rose-950 `76 5 25` |
@@ -261,9 +261,9 @@ Tick each route once its step is finished. Also open the modals and drawers reac
 | 1 | Tokens + theme store + toggle fixes | [x] | [x] | Done |
 | 2 | Shared UI / layout / charts | [x] | [x] | Done |
 | 3 | Codemod (`scripts/theme-tokens.mjs`) | [x] | n/a | Done |
-| 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [ ] | [ ] | Pending |
+| 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [x] | [ ] | Converted, awaiting browser check |
 | — | Every route checked in both themes (section 6) | n/a | [ ] | Pending |
-| 5 | `theme:check` guard | [ ] | n/a | Pending |
+| 5 | `theme:check` guard | [x] | n/a | Done (0 violations, runs in prebuild) |
 
 ## 8. Notes for the New Session
 

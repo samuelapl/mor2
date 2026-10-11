@@ -250,42 +250,42 @@ export default function TrainingAdminVenuesPage() {
     >
       {/* ── Key Metrics Overview ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Venues</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{venues.length}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-subtle-foreground">Total Venues</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{venues.length}</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Building2 className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total MoR Seat Capacity</p>
-            <p className="mt-1 text-2xl font-bold text-indigo-600">{totalCapacity}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-subtle-foreground">Total MoR Seat Capacity</p>
+            <p className="mt-1 text-2xl font-bold text-primary">{totalCapacity}</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Users className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Classrooms</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-600">{activeCount}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-subtle-foreground">Active Classrooms</p>
+            <p className="mt-1 text-2xl font-bold text-success">{activeCount}</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success-soft text-success">
             <CheckCircle2 className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Branches Covered</p>
-            <p className="mt-1 text-2xl font-bold text-purple-600">{branchesList.length}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-subtle-foreground">Branches Covered</p>
+            <p className="mt-1 text-2xl font-bold text-accent">{branchesList.length}</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-soft text-accent">
             <MapPin className="h-6 w-6" />
           </div>
         </div>
@@ -296,23 +296,23 @@ export default function TrainingAdminVenuesPage() {
         title="Training Venue Directory"
         description="Filter and search all registered training halls, computer labs, and rooms by branch."
       >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
           <div className="flex flex-1 items-center gap-3">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-subtle-foreground" />
               <input
                 type="text"
                 placeholder="Search venue name, building, room..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-xs placeholder:text-subtle-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
               />
             </div>
 
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+              className="rounded-xl border border-border bg-card py-2 px-3 text-xs font-medium text-secondary-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
             >
               <option value="ALL">All Branches</option>
               {MOR_BRANCHES.map((b) => (
@@ -325,7 +325,7 @@ export default function TrainingAdminVenuesPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as any)}
-              className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+              className="rounded-xl border border-border bg-card py-2 px-3 text-xs font-medium text-secondary-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
             >
               <option value="ALL">All Status</option>
               <option value="ACTIVE">Active Only</option>
@@ -338,7 +338,7 @@ export default function TrainingAdminVenuesPage() {
             size="sm"
             onClick={loadVenues}
             disabled={loading}
-            className="gap-1.5 text-xs text-slate-600 hover:text-slate-900 border-slate-200"
+            className="gap-1.5 text-xs text-secondary-foreground hover:text-foreground border-border"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             Refresh
@@ -348,7 +348,7 @@ export default function TrainingAdminVenuesPage() {
         {/* ── Venues Grid ── */}
         <div className="mt-5">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-subtle-foreground">
               <RefreshCw className="h-8 w-8 animate-spin mb-3 text-indigo-500" />
               <p className="text-sm">Loading venues from database...</p>
             </div>
@@ -372,17 +372,17 @@ export default function TrainingAdminVenuesPage() {
                 <div
                   key={venue.id}
                   className={cn(
-                    "flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-xs transition hover:shadow-md",
+                    "flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-xs transition hover:shadow-md",
                     venue.isActive
-                      ? "border-slate-200/90 hover:border-indigo-300"
-                      : "border-slate-200/60 bg-slate-50/50 opacity-80",
+                      ? "border-border/90 hover:border-primary/30"
+                      : "border-border/60 bg-muted/50 opacity-80",
                   )}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border border-indigo-100">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary border border-primary/30">
                             <MapPin className="h-3 w-3" />
                             {venue.branch}
                           </span>
@@ -393,7 +393,7 @@ export default function TrainingAdminVenuesPage() {
                             {venue.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </div>
-                        <h4 className="mt-2 text-base font-bold text-slate-900 leading-snug">
+                        <h4 className="mt-2 text-base font-bold text-foreground leading-snug">
                           {venue.name}
                         </h4>
                       </div>
@@ -402,7 +402,7 @@ export default function TrainingAdminVenuesPage() {
                         <button
                           type="button"
                           onClick={() => openEditModal(venue)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                          className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
                           title="Edit Venue"
                         >
                           <Edit3 className="h-4 w-4" />
@@ -410,7 +410,7 @@ export default function TrainingAdminVenuesPage() {
                         <button
                           type="button"
                           onClick={() => setDeletingVenue(venue)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                          className="rounded-lg p-1.5 text-subtle-foreground hover:bg-danger-soft hover:text-danger transition"
                           title="Delete Venue"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -419,30 +419,30 @@ export default function TrainingAdminVenuesPage() {
                     </div>
 
                     {venue.building ? (
-                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-subtle-foreground shrink-0" />
                         {venue.building}
                       </p>
                     ) : null}
 
                     {/* Capacity badge */}
-                    <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 border border-slate-100">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                    <div className="flex items-center gap-2 rounded-xl bg-muted p-2.5 border border-border/60">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">
                         <Users className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+                        <p className="text-[11px] font-medium text-subtle-foreground uppercase tracking-wider">
                           Room Capacity
                         </p>
-                        <p className="text-sm font-bold text-slate-900">
-                          {venue.capacity} <span className="text-xs font-normal text-slate-500">Learner Seats</span>
+                        <p className="text-sm font-bold text-foreground">
+                          {venue.capacity} <span className="text-xs font-normal text-muted-foreground">Learner Seats</span>
                         </p>
                       </div>
                     </div>
 
                     {/* Facilities badges */}
                     <div>
-                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                      <p className="text-[11px] font-semibold text-subtle-foreground uppercase tracking-wider mb-1.5">
                         Equipped Facilities
                       </p>
                       {venue.facilities && venue.facilities.length > 0 ? (
@@ -450,7 +450,7 @@ export default function TrainingAdminVenuesPage() {
                           {venue.facilities.map((fac) => (
                             <span
                               key={fac}
-                              className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                              className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
                             >
                               <Sparkles className="h-2.5 w-2.5 text-amber-500" />
                               {fac}
@@ -458,7 +458,7 @@ export default function TrainingAdminVenuesPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400 italic">No special facilities specified</p>
+                        <p className="text-xs text-subtle-foreground italic">No special facilities specified</p>
                       )}
                     </div>
                   </div>
@@ -472,17 +472,17 @@ export default function TrainingAdminVenuesPage() {
       {/* ── Create / Edit Venue Modal ── */}
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="relative w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <Building2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-foreground">
                     {editingVenue ? "Edit Venue & Facility" : "Register Training Venue"}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Configure physical room details, seating capacity, and equipment.
                   </p>
                 </div>
@@ -490,7 +490,7 @@ export default function TrainingAdminVenuesPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -498,7 +498,7 @@ export default function TrainingAdminVenuesPage() {
 
             <form onSubmit={handleSaveVenue} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-secondary-foreground mb-1">
                   Venue Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -507,19 +507,19 @@ export default function TrainingAdminVenuesPage() {
                   placeholder="e.g. Hall A - Executive Training Lab"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-subtle-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-secondary-foreground mb-1">
                     MoR Branch / Region <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formBranch}
                     onChange={(e) => setFormBranch(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
                   >
                     {MOR_BRANCHES.map((b) => (
                       <option key={b} value={b}>
@@ -531,7 +531,7 @@ export default function TrainingAdminVenuesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-secondary-foreground mb-1">
                     Seat Capacity <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -541,14 +541,14 @@ export default function TrainingAdminVenuesPage() {
                     required
                     value={formCapacity}
                     onChange={(e) => setFormCapacity(parseInt(e.target.value) || 0)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
 
               {formBranch === "OTHER" ? (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-secondary-foreground mb-1">
                     Specify Branch Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -557,13 +557,13 @@ export default function TrainingAdminVenuesPage() {
                     placeholder="e.g. Semera Branch"
                     value={formCustomBranch}
                     onChange={(e) => setFormCustomBranch(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               ) : null}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-secondary-foreground mb-1">
                   Building & Room Details
                 </label>
                 <input
@@ -571,13 +571,13 @@ export default function TrainingAdminVenuesPage() {
                   placeholder="e.g. Main MoR Tower, 3rd Floor, Room 302"
                   value={formBuilding}
                   onChange={(e) => setFormBuilding(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-subtle-foreground focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
               </div>
 
               {/* Facilities Checklist */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="block text-xs font-semibold text-secondary-foreground mb-2">
                   Equipped Classroom Facilities
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -589,17 +589,17 @@ export default function TrainingAdminVenuesPage() {
                         className={cn(
                           "flex items-center gap-2 rounded-xl border p-2.5 text-xs font-medium cursor-pointer transition select-none",
                           isChecked
-                            ? "border-indigo-400 bg-indigo-50/80 text-indigo-900"
-                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                            ? "border-ring bg-primary-soft/80 text-primary"
+                            : "border-border bg-card text-secondary-foreground hover:bg-muted",
                         )}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleFacilityToggle(label)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-ring"
                         />
-                        <Icon className={cn("h-3.5 w-3.5", isChecked ? "text-indigo-600" : "text-slate-400")} />
+                        <Icon className={cn("h-3.5 w-3.5", isChecked ? "text-primary" : "text-subtle-foreground")} />
                         <span className="truncate">{label}</span>
                       </label>
                     );
@@ -608,10 +608,10 @@ export default function TrainingAdminVenuesPage() {
               </div>
 
               {/* Active Toggle */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex items-center justify-between rounded-xl border border-border bg-muted p-3">
                 <div>
-                  <p className="text-xs font-semibold text-slate-900">Active for Scheduling</p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-xs font-semibold text-foreground">Active for Scheduling</p>
+                  <p className="text-[11px] text-muted-foreground">
                     If disabled, trainers will not be able to allocate in-person sessions to this venue.
                   </p>
                 </div>
@@ -622,12 +622,12 @@ export default function TrainingAdminVenuesPage() {
                     onChange={(e) => setFormIsActive(e.target.checked)}
                     className="peer sr-only"
                   />
-                  <div className="peer h-5 w-9 rounded-full bg-slate-200 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-indigo-600 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                  <div className="peer h-5 w-9 rounded-full bg-border after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-input after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                 </label>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border/60">
                 <Button
                   type="button"
                   variant="outline"

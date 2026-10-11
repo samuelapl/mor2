@@ -11,9 +11,9 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -35,18 +35,18 @@ export default function ResetPasswordForm() {
   // Guard: if someone navigates here directly without email/code, redirect back
   if (!email || !code) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-card px-4 py-12">
         <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
         <div className="absolute top-4 right-4 z-20">
           <LanguageToggle />
         </div>
         <div className="relative w-full max-w-md text-center">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
-            <p className="text-sm text-slate-500">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-xl shadow-slate-200/60">
+            <p className="text-sm text-muted-foreground">
               {t('resetPasswordForm.thisLinkIsIncomplete')}
               <Link
                 href="/forgot-password"
-                className="font-semibold text-indigo-500 hover:text-indigo-700"
+                className="font-semibold text-indigo-500 hover:text-primary"
               >
                 {t('resetPasswordForm.requestANewCode')}
               </Link>
@@ -85,24 +85,24 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-card px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
       <div className="absolute top-4 right-4 z-20">
         <LanguageToggle />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           {done ? (
             /* ── Success state ── */
             <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-white/20">
                 <CheckCircle className="h-7 w-7" />
               </div>
-              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
                 {t('resetPasswordForm.passwordUpdated')}
               </h1>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {t('resetPasswordForm.yourPasswordHasBeenResetSign')}
               </p>
               <Link
@@ -119,10 +119,10 @@ export default function ResetPasswordForm() {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
                   <KeyRound className="h-7 w-7" />
                 </div>
-                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+                <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
                   {t('resetPasswordForm.setANewPassword')}
                 </h1>
-                <p className="mt-1.5 text-sm text-slate-500">
+                <p className="mt-1.5 text-sm text-muted-foreground">
                   {t('resetPasswordForm.atLeast8CharactersWithA')}
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default function ResetPasswordForm() {
                     {t('firstLoginForm.newPassword')}
                   </label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -152,7 +152,7 @@ export default function ResetPasswordForm() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none dark:hover:text-slate-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle-foreground transition-colors hover:text-secondary-foreground focus:outline-none"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -165,7 +165,7 @@ export default function ResetPasswordForm() {
                     {t('firstLoginForm.confirmPassword')}
                   </label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                     <input
                       id="confirm"
                       type={showConfirm ? 'text' : 'password'}
@@ -182,7 +182,7 @@ export default function ResetPasswordForm() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none dark:hover:text-slate-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle-foreground transition-colors hover:text-secondary-foreground focus:outline-none"
                       aria-label={showConfirm ? 'Hide password' : 'Show password'}
                     >
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -191,10 +191,10 @@ export default function ResetPasswordForm() {
                 </div>
 
                 {error && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+                  <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
                     {error}{' '}
                     {error.includes('expired') || error.includes('Invalid') ? (
-                      <Link href="/forgot-password" className="underline hover:text-red-800">
+                      <Link href="/forgot-password" className="underline hover:text-danger">
                         {t('resetPasswordForm.requestANewCode2')}
                       </Link>
                     ) : null}
@@ -212,10 +212,10 @@ export default function ResetPasswordForm() {
                 </button>
               </form>
 
-              <p className="mt-5 text-center text-sm text-slate-500">
+              <p className="mt-5 text-center text-sm text-muted-foreground">
                 <Link
                   href={`/verify-code?email=${encodeURIComponent(email)}`}
-                  className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
+                  className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-primary"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   {t('resetPasswordForm.backToCodeEntry')}

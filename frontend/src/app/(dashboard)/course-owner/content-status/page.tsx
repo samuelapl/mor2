@@ -84,8 +84,8 @@ export default function ContentStatusPage() {
           {pageItems.map((course) => (
             <tr key={course.id}>
               <Td>
-                <span className="font-medium text-slate-900">{course.title}</span>
-                <span className="block text-[11px] text-slate-400">
+                <span className="font-medium text-foreground">{course.title}</span>
+                <span className="block text-[11px] text-subtle-foreground">
                   {course.code} · {course.category}
                 </span>
               </Td>
@@ -99,13 +99,13 @@ export default function ContentStatusPage() {
               </Td>
               <Td className="max-w-[260px]">
                 {course.status === 'rejected' && course.rejectionReason ? (
-                  <span className="text-xs text-red-600">{course.rejectionReason}</span>
+                  <span className="text-xs text-danger">{course.rejectionReason}</span>
                 ) : course.lastRejectionReason ? (
-                  <span className="text-xs text-amber-700">
+                  <span className="text-xs text-warning">
                     {t('contentStatusPage.previous')} {course.lastRejectionReason}
                   </span>
                 ) : (
-                  <span className="text-xs text-slate-400">—</span>
+                  <span className="text-xs text-subtle-foreground">—</span>
                 )}
               </Td>
               <Td className="text-right">

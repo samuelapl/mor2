@@ -47,14 +47,14 @@ export default function SystemSettingsPage() {
   }, []);
 
   const inputClass =
-    'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+    'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
   const toggleClass = (active: boolean) =>
     cn(
       'relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 cursor-pointer',
       active
         ? 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-indigo-500/30'
-        : 'bg-slate-300',
+        : 'bg-input',
     );
 
   const save = async () => {
@@ -85,26 +85,26 @@ export default function SystemSettingsPage() {
     >
       <div className="max-w-2xl space-y-6 pb-8">
         {errorMessage && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+          <div className="rounded-2xl border border-danger/30 bg-danger-soft p-4 text-xs font-semibold text-danger">
             {errorMessage}
           </div>
         )}
 
         {/* General System Information */}
-        <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
+        <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
               {t('systemSettingsPage.systemName')}
             </label>
             <input
               value={t('systemSettingsPage.ministryOfRevenuesLearningManagementSyst')}
               readOnly
-              className={cn(inputClass, 'bg-slate-50')}
+              className={cn(inputClass, 'bg-muted')}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('systemSettingsPage.defaultLanguage')}
               </label>
               <select
@@ -117,7 +117,7 @@ export default function SystemSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('systemSettingsPage.sessionTimeoutMinutes')}
               </label>
               <input
@@ -133,7 +133,7 @@ export default function SystemSettingsPage() {
         </div>
 
         {/* Platform Integration Toggles */}
-        <div className="divide-y divide-slate-100/80 rounded-2xl border border-slate-200/80 bg-white shadow-soft ring-super-soft">
+        <div className="divide-y divide-border/50 rounded-2xl border border-border/80 bg-card shadow-soft ring-super-soft">
           {[
             {
               label: t('systemSettingsPage.emailNotifications'),
@@ -156,8 +156,8 @@ export default function SystemSettingsPage() {
           ].map((setting) => (
             <div key={setting.label} className="flex items-center justify-between px-6 py-4">
               <div>
-                <p className="text-sm font-medium text-slate-900">{setting.label}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{setting.description}</p>
+                <p className="text-sm font-medium text-foreground">{setting.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{setting.description}</p>
               </div>
               <button
                 type="button"

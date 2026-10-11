@@ -33,12 +33,12 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
   const me = data?.learners[0];
 
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+    <div className="mt-3 border-t border-border/60 pt-3">
       <button
         type="button"
         onClick={() => void toggle()}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-indigo-700 dark:text-indigo-400"
+        className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-primary"
       >
         <span className="inline-flex items-center gap-1.5">
           <ClipboardCheck className="h-4 w-4" />
@@ -51,12 +51,12 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
         <div className="mt-3 space-y-4">
           {loading ? (
             <div className="flex h-20 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             </div>
           ) : error ? (
-            <p className="text-sm text-rose-600">{error}</p>
+            <p className="text-sm text-danger">{error}</p>
           ) : !data?.available || !me || data.quizzes.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {t('mySessionQuizResults.noQuizWasRunInThis')}
             </p>
           ) : (
@@ -65,17 +65,17 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
               return (
                 <div key={quiz.id} className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{quiz.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{quiz.title}</h4>
                     <QuizScoreBadge quiz={quiz} result={result} />
                     {quiz.graded && (
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[11px] text-muted-foreground">
                         {quiz.weight}% {t('mySessionQuizResults.ofTheCourseGrade')} · {t('mySessionQuizResults.pass')}{' '}
                         {quiz.passingScore}%
                       </span>
                     )}
                   </div>
                   {result.answered === 0 ? (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {quiz.graded
                         ? t('mySessionQuizResults.youDidnTAnswerThisQuiz')
                         : t('mySessionQuizResults.youDidnTAnswerThisQuiz2')}

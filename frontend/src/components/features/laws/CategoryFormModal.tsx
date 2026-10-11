@@ -115,7 +115,7 @@ export function CategoryFormModal({
     >
       <form id="category-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 rounded-lg bg-rose-50 text-rose-700 text-xs sm:text-sm border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800">
+          <div className="p-3 rounded-lg bg-danger-soft text-danger text-xs sm:text-sm border border-danger/30">
             {error}
           </div>
         )}
@@ -123,13 +123,13 @@ export function CategoryFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Domain */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('categoryFormModal.lawDomain')} *
             </label>
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value as LawDomain)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {LAW_DOMAINS.map((d) => (
                 <option key={d.key} value={d.key}>
@@ -141,13 +141,13 @@ export function CategoryFormModal({
 
           {/* Instrument Type */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('categoryFormModal.instrumentType')} *
             </label>
             <select
               value={instrumentType}
               onChange={(e) => setInstrumentType(e.target.value as LawInstrumentType)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {LAW_INSTRUMENT_TYPES.map((it) => (
                 <option key={it.key} value={it.key}>
@@ -160,7 +160,7 @@ export function CategoryFormModal({
 
         {/* English Name */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-xs font-semibold text-secondary-foreground mb-1">
             {t('categoryFormModal.categoryNameEnglish')} *
           </label>
           <input
@@ -169,13 +169,13 @@ export function CategoryFormModal({
             onChange={(e) => setNameEn(e.target.value)}
             placeholder="e.g. Value Added Tax Proclamation"
             required
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
         {/* Amharic Name */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-xs font-semibold text-secondary-foreground mb-1">
             {t('categoryFormModal.categoryNameAmharic')}
           </label>
           <input
@@ -183,14 +183,14 @@ export function CategoryFormModal({
             value={nameAm}
             onChange={(e) => setNameAm(e.target.value)}
             placeholder="ምሳሌ፡ የተጨማሪ እሴት ታክስ አዋጅ"
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-serif"
+            className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-serif"
           />
         </div>
 
         {/* Description & Order */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('categoryFormModal.description')}
             </label>
             <input
@@ -198,12 +198,12 @@ export function CategoryFormModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('categoryFormModal.optionalDescription')}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1">
               {t('categoryFormModal.displayOrder')}
             </label>
             <input
@@ -211,7 +211,7 @@ export function CategoryFormModal({
               value={order}
               onChange={(e) => setOrder(Number(e.target.value))}
               min={0}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>

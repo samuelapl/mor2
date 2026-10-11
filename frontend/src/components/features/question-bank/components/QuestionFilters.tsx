@@ -4,7 +4,12 @@ import { RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import type { ScopeFilter } from '../types';
-import { cardClass, filterInputClass, filterLabelClass } from '../styles';
+import {
+  filterInputClass,
+  filterLabelClass,
+  filterSearchIconClass,
+  filterSearchInputClass,
+} from '../styles';
 
 interface QuestionFiltersProps {
   searchQuery: string;
@@ -29,21 +34,21 @@ export function QuestionFilters({
   refreshing,
 }: QuestionFiltersProps) {
   return (
-    <div className={cn(cardClass, 'p-4')}>
+    <div>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <div className="min-w-0 flex-1">
           <label htmlFor="qb-question-search" className={filterLabelClass}>
             Search
           </label>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search className={filterSearchIconClass} />
             <input
               id="qb-question-search"
               type="text"
               placeholder="Search questions or answer options…"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className={cn(filterInputClass, 'pl-9')}
+              className={filterSearchInputClass}
             />
           </div>
         </div>
@@ -79,7 +84,7 @@ export function QuestionFilters({
           </select>
         </div>
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={onRefresh}
           disabled={refreshing}
           title="Refresh Question Bank"

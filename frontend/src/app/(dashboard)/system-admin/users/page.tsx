@@ -191,7 +191,7 @@ export default function UsersPage() {
         checked={selectedIds.has(user.id)}
         onChange={() => toggleSelected(user.id)}
         aria-label={`Select ${user.name}`}
-        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+        className="h-4 w-4 cursor-pointer rounded border-input accent-indigo-600"
       />
     ) : null;
 
@@ -262,7 +262,7 @@ export default function UsersPage() {
         disabled={busy || busyUserId === user.id}
         onClick={() => setDeleteTarget(user)}
         aria-label={`Delete ${user.name}`}
-        className="text-red-600 hover:border-red-300 hover:text-red-700"
+        className="text-danger hover:border-danger/30 hover:text-danger/80"
       >
         <Trash2 className="h-3.5 w-3.5" /> Delete
       </Button>
@@ -369,13 +369,13 @@ export default function UsersPage() {
       />
 
       {selectedUsers.length > 0 ? (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-indigo-200/80 bg-indigo-50/70 px-4 py-2.5 text-sm text-indigo-900">
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/25 bg-primary-soft/70 px-4 py-2.5 text-sm text-primary">
           <span className="font-semibold">{selectedUsers.length} selected</span>
           {selectedUsers.length < selectableFiltered.length ? (
             <button
               type="button"
               onClick={() => setSelectedIds(new Set(selectableFiltered.map((user) => user.id)))}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+              className="text-xs font-semibold text-primary hover:text-primary/80"
             >
               Select all {selectableFiltered.length} matching
             </button>
@@ -383,7 +383,7 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+            className="text-xs font-semibold text-muted-foreground hover:text-secondary-foreground"
           >
             Clear
           </button>
@@ -401,7 +401,7 @@ export default function UsersPage() {
               variant="outline"
               disabled={busy}
               onClick={() => setBulkAction('delete')}
-              className="text-red-600 hover:border-red-300 hover:text-red-700"
+              className="text-danger hover:border-danger/30 hover:text-danger/80"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </Button>
@@ -427,7 +427,7 @@ export default function UsersPage() {
                           disabled={selectableOnPage.length === 0}
                           onChange={togglePage}
                           aria-label="Select all on this page"
-                          className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-indigo-600"
+                          className="h-4 w-4 cursor-pointer rounded border-input accent-indigo-600"
                         />
                       ),
                     },
@@ -443,17 +443,17 @@ export default function UsersPage() {
           >
             {pageItems.map((user) => (
               <Fragment key={user.id}>
-                <tr className={selectedIds.has(user.id) ? 'bg-indigo-50/40' : undefined}>
+                <tr className={selectedIds.has(user.id) ? 'bg-primary-soft/40' : undefined}>
                   {canManage ? <Td className="w-10">{selectBox(user)}</Td> : null}
                   <Td>
-                    <span className="font-medium text-slate-900">{user.name}</span>
-                    <span className="block text-[11px] text-slate-400">{user.phone}</span>
+                    <span className="font-medium text-foreground">{user.name}</span>
+                    <span className="block text-[11px] text-subtle-foreground">{user.phone}</span>
                   </Td>
                   <Td>
-                    <span className="text-slate-500">{user.email}</span>
+                    <span className="text-muted-foreground">{user.email}</span>
                   </Td>
                   <Td>
-                    <span className="text-slate-500">{user.department || '—'}</span>
+                    <span className="text-muted-foreground">{user.department || '—'}</span>
                   </Td>
                   <Td>
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -470,7 +470,7 @@ export default function UsersPage() {
                       <select
                         value={user.role}
                         onChange={(event) => void changeRole(user.id, event.target.value as Role)}
-                        className="rounded-xl border border-slate-200/90 bg-white px-2.5 py-1.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                        className="rounded-xl border border-border/90 bg-card px-2.5 py-1.5 text-sm text-secondary-foreground shadow-sm outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/10"
                       >
                         {roleOptions.map((item) => {
                           const isBuiltIn = ROLES.includes(item.name.toLowerCase() as Role);
@@ -519,10 +519,10 @@ export default function UsersPage() {
             {pageItems.map((user) => (
               <div
                 key={user.id}
-                className={`rounded-2xl border bg-white p-4 shadow-soft ring-super-soft ${
+                className={`rounded-2xl border bg-card p-4 shadow-soft ring-super-soft ${
                   selectedIds.has(user.id)
-                    ? 'border-indigo-300 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200/80'
+                    ? 'border-primary/30 ring-2 ring-ring/20'
+                    : 'border-border/80'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -539,8 +539,8 @@ export default function UsersPage() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
-                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   {selectBox(user)}
                 </div>
@@ -550,7 +550,7 @@ export default function UsersPage() {
                   </Badge>
                   <UserStatusBadge status={user.status} />
                 </div>
-                <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
                   <Button
                     size="sm"
                     variant="outline"
@@ -597,8 +597,8 @@ export default function UsersPage() {
           </div>
         }
       >
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{deleteTarget?.name}</span>{' '}
+        <p className="text-sm text-secondary-foreground">
+          <span className="font-semibold text-foreground">{deleteTarget?.name}</span>{' '}
           {t('usersPage.willBeRemovedFromTheUsers')}
         </p>
       </Modal>
@@ -637,7 +637,7 @@ export default function UsersPage() {
         }
       >
         {bulkAction === 'suspend' ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-secondary-foreground">
             {suspendableSelected.length} active user(s) will be signed out and blocked from signing
             in until reactivated.
             {selectedUsers.length > suspendableSelected.length
@@ -645,16 +645,16 @@ export default function UsersPage() {
               : ''}
           </p>
         ) : (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-secondary-foreground">
             {selectedUsers.length} user(s) will be removed from the users list and can no longer
             sign in. Their course history, certificates and audit records are kept, and their emails
             can be registered again.
           </p>
         )}
-        <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs text-slate-600">
+        <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-muted/70 p-3 text-xs text-secondary-foreground">
           {(bulkAction === 'suspend' ? suspendableSelected : selectedUsers).map((user) => (
             <li key={user.id}>
-              <span className="font-semibold text-slate-800">{user.name}</span> · {user.email}
+              <span className="font-semibold text-foreground">{user.name}</span> · {user.email}
             </li>
           ))}
         </ul>

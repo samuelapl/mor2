@@ -105,8 +105,8 @@ export function PendingCourseApprovals() {
           {pageItems.map((course) => (
             <tr key={course.id}>
               <Td>
-                <span className="font-medium text-slate-900">{course.title}</span>
-                <span className="block text-[11px] text-slate-400">{course.code}</span>
+                <span className="font-medium text-foreground">{course.title}</span>
+                <span className="block text-[11px] text-subtle-foreground">{course.code}</span>
               </Td>
               <Td>{userName(course.ownerId)}</Td>
               <Td className="whitespace-nowrap">{course.createdAt}</Td>

@@ -31,8 +31,20 @@ interface FilterBarProps {
   compact?: boolean;
 }
 
-const inputClass =
-  'h-10 w-full rounded-xl border border-border/90 bg-card px-3 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
+/**
+ * Underlined filter field: no box, just a bottom border that turns primary on focus.
+ * Exported so hand-built filter rows can match the shared bar.
+ */
+export const filterInputClass =
+  'h-10 w-full rounded-none border-0 border-b border-border bg-transparent px-1 text-sm text-foreground outline-none transition-colors placeholder:text-subtle-foreground hover:border-muted-foreground focus:border-primary [&>option]:bg-card [&>option]:text-foreground';
+
+/** Search field variant: leaves room for a magnifier icon at `left-1`. */
+export const filterSearchInputClass = `${filterInputClass} pl-7`;
+
+export const filterSearchIconClass =
+  'pointer-events-none absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground';
+
+export const filterLabelClass = 'mb-1 block text-xs font-medium text-muted-foreground';
 
 export function FilterBar({
   search,
@@ -44,12 +56,12 @@ export function FilterBar({
   compact = false,
 }: FilterBarProps) {
   const labelClass = cn(
-    'mb-1.5 block text-xs font-semibold text-secondary-foreground',
+    filterLabelClass,
     compact && 'sr-only sm:not-sr-only',
   );
 
   return (
-    <div className="mb-5 rounded-2xl border border-border/80 bg-card p-4 shadow-soft ring-super-soft">
+    <div className="mb-5">
       <div
         className={cn(
           'flex gap-3',
@@ -61,13 +73,13 @@ export function FilterBar({
             Search
           </label>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
+            <Search className={filterSearchIconClass} />
             <input
               id="list-search"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder={searchPlaceholder}
-              className={`${inputClass} pl-9`}
+              className={filterSearchInputClass}
             />
           </div>
         </div>
@@ -80,7 +92,7 @@ export function FilterBar({
               id={select.id}
               value={select.value}
               onChange={(event) => select.onChange(event.target.value)}
-              className={inputClass}
+              className={filterInputClass}
             >
               {select.options.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -92,7 +104,7 @@ export function FilterBar({
         ))}
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           onClick={onClear}
           disabled={!hasActiveFilters}
           aria-label="Clear filters"

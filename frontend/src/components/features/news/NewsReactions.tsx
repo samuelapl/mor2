@@ -60,7 +60,7 @@ export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsPr
       'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition disabled:opacity-60',
       active
         ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
-        : 'border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+        : 'border-border bg-card text-secondary-foreground hover:border-info/30 hover:text-info',
     );
 
   return (

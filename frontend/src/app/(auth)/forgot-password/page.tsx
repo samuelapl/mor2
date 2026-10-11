@@ -11,7 +11,7 @@ import LanguageToggle from '@/components/shared/LanguageToggle';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 px-3.5 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-300 shadow-sm outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-card px-4 py-12 transition-colors duration-200">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70 dark:opacity-30" />
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
         <LanguageToggle />
@@ -51,16 +51,16 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 sm:p-8">
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <KeyRound className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
               {t('forgotPasswordPage.forgotYourPassword')}
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {t('forgotPasswordPage.enterYourEmailAndWeLl')}
             </p>
           </div>
@@ -68,11 +68,11 @@ export default function ForgotPasswordPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('forgotPasswordPage.emailAddress')}
               </label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                 <input
                   id="email"
                   type="email"
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
+              <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
                 {error}
               </div>
             )}
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             <Link
               href="/login"
               className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"

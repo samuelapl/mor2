@@ -24,9 +24,9 @@ export function QuizGroupBar({ quizzes, activeQuizId, busy, onSelect, onCreate }
         type="button"
         onClick={onCreate}
         disabled={busy}
-        className="flex min-w-[200px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 text-xs font-semibold text-slate-500 transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-700 disabled:opacity-50"
+        className="flex min-w-[200px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border bg-muted/60 px-4 py-4 text-xs font-semibold text-muted-foreground transition hover:border-primary/30 hover:bg-primary-soft/50 hover:text-primary disabled:opacity-50"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-xs ring-1 ring-slate-200">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-card shadow-xs ring-1 ring-border">
           <Plus className="h-4 w-4" />
         </span>
         New quiz group
@@ -45,17 +45,17 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
       onClick={onSelect}
       aria-pressed={active}
       className={cn(
-        'group relative min-w-[230px] shrink-0 rounded-2xl border bg-white p-4 text-left transition',
+        'group relative min-w-[230px] shrink-0 rounded-2xl border bg-card p-4 text-left transition',
         active
-          ? 'border-indigo-400 shadow-md ring-4 ring-indigo-500/10'
-          : 'border-slate-200 shadow-2xs hover:border-indigo-200 hover:shadow-xs',
+          ? 'border-ring shadow-md ring-4 ring-ring/10'
+          : 'border-border shadow-2xs hover:border-primary/30 hover:shadow-xs',
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-            graded ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600',
+            graded ? 'bg-warning-soft text-warning' : 'bg-secondary text-secondary-foreground',
           )}
         >
           {graded ? <GraduationCap className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
@@ -64,9 +64,9 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
         {status.kind === 'ready' && <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-label="Ready" />}
       </div>
 
-      <p className={cn('mt-2.5 truncate text-sm font-bold', active ? 'text-indigo-900' : 'text-slate-900')}>{quiz.title}</p>
+      <p className={cn('mt-2.5 truncate text-sm font-bold', active ? 'text-primary' : 'text-foreground')}>{quiz.title}</p>
 
-      <div className="mt-2 flex items-center gap-3 text-[11px] font-medium text-slate-500">
+      <div className="mt-2 flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <ListChecks className="h-3.5 w-3.5" />
           {quiz.questions.length} {quiz.questions.length === 1 ? 'question' : 'questions'}
@@ -79,13 +79,13 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
 
       {status.kind !== 'practice' && (
         <div className="mt-3">
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
             <div
               className={cn('h-full rounded-full transition-all', status.kind === 'ready' ? 'bg-emerald-500' : 'bg-amber-400')}
               style={{ width: `${status.kind === 'empty' ? 0 : Math.min(100, (status.total / status.required) * 100)}%` }}
             />
           </div>
-          <p className={cn('mt-1 text-[10px] font-semibold', status.kind === 'ready' ? 'text-emerald-700' : 'text-amber-700')}>
+          <p className={cn('mt-1 text-[10px] font-semibold', status.kind === 'ready' ? 'text-success' : 'text-warning')}>
             {status.kind === 'empty' ? `0 / ${status.required} points` : `${status.total} / ${status.required} points`}
           </p>
         </div>
@@ -97,12 +97,12 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
 /** Shown when the session has no quiz groups yet. */
 export function NoQuizGroups({ busy, onCreate }: { busy: boolean; onCreate: () => void }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-6 py-14 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-8 ring-indigo-50/50">
+    <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border bg-gradient-to-b from-card to-muted/80 px-6 py-14 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary ring-8 ring-indigo-50/50">
         <Sparkles className="h-6 w-6" />
       </span>
-      <h3 className="mt-5 text-base font-bold text-slate-900">No quiz groups yet</h3>
-      <p className="mt-1.5 max-w-md text-sm text-slate-500">
+      <h3 className="mt-5 text-base font-bold text-foreground">No quiz groups yet</h3>
+      <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
         Create a quiz group, pick questions from the course question bank and set a timer. You can broadcast it to learners from
         the live room.
       </p>

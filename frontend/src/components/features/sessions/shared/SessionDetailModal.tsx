@@ -136,9 +136,9 @@ export function SessionDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                    className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary-soft"
                   >
-                    <FileCheck className="h-3.5 w-3.5 text-indigo-600" />
+                    <FileCheck className="h-3.5 w-3.5 text-primary" />
                     Prepare Quiz
                   </Button>
                 </Link>
@@ -156,9 +156,9 @@ export function SessionDetailModal({
                     setAttendanceModalOpen(true);
                   }
                 }}
-                className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary-soft"
               >
-                <ClipboardCheck className="h-3.5 w-3.5 text-indigo-600" />
+                <ClipboardCheck className="h-3.5 w-3.5 text-primary" />
                 View Attendance
               </Button>
             )}
@@ -167,7 +167,7 @@ export function SessionDetailModal({
               (isInPersonSession(session) ? (
                 <Badge
                   variant="outline"
-                  className="bg-amber-50 text-amber-800 border-amber-200 text-xs py-1 px-2.5"
+                  className="bg-warning-soft text-warning border-warning/30 text-xs py-1 px-2.5"
                 >
                   📍 Physical Venue Session
                 </Badge>
@@ -193,54 +193,54 @@ export function SessionDetailModal({
       >
         <div className="w-full space-y-6 pb-8">
           {/* Key Schedule & Delivery Information */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">
               Schedule &amp; Delivery Information
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+              <div className="flex items-start gap-3 rounded-xl bg-muted p-3.5 border border-border/60">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium text-slate-400">Scheduled Time</p>
-                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                  <p className="text-[11px] font-medium text-subtle-foreground">Scheduled Time</p>
+                  <p className="text-xs font-semibold text-foreground mt-0.5">
                     {formatDate(session.scheduledAt)}
                   </p>
-                  <p className="text-[11px] text-slate-500">{formatTime(session.scheduledAt)}</p>
+                  <p className="text-[11px] text-muted-foreground">{formatTime(session.scheduledAt)}</p>
                   <StartsInBadge seconds={session.startsInSeconds} className="mt-1" />
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+              <div className="flex items-start gap-3 rounded-xl bg-muted p-3.5 border border-border/60">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium text-slate-400">Session Duration</p>
-                  <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                  <p className="text-[11px] font-medium text-subtle-foreground">Session Duration</p>
+                  <p className="text-xs font-semibold text-foreground mt-0.5">
                     {session.durationMinutes} Minutes
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     Threshold: {session.attendanceThreshold ?? 60}% required
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+              <div className="flex items-start gap-3 rounded-xl bg-muted p-3.5 border border-border/60">
                 {isInPersonSession(session) ? (
                   <>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
                       <Building2 className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-medium text-slate-400">
+                      <p className="text-[11px] font-medium text-subtle-foreground">
                         Physical Training Venue
                       </p>
-                      <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                      <p className="text-xs font-semibold text-foreground mt-0.5">
                         {session.venue?.name || 'In-Person Classroom'}
                       </p>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-muted-foreground">
                         {session.venue
                           ? `${session.venue.branch} • ${session.venue.capacity} Seats`
                           : 'Classroom Venue'}
@@ -249,17 +249,17 @@ export function SessionDetailModal({
                   </>
                 ) : (
                   <>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                       <Video className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-medium text-slate-400">
+                      <p className="text-[11px] font-medium text-subtle-foreground">
                         Conferencing Platform
                       </p>
-                      <p className="text-xs font-semibold text-slate-900 mt-0.5">
+                      <p className="text-xs font-semibold text-foreground mt-0.5">
                         {session.platform || 'IN-LMS (LiveKit / WebRTC)'}
                       </p>
-                      <p className="text-[11px] text-slate-500">Interactive live classroom</p>
+                      <p className="text-[11px] text-muted-foreground">Interactive live classroom</p>
                     </div>
                   </>
                 )}
@@ -269,51 +269,51 @@ export function SessionDetailModal({
 
           {/* Course & Assigned Instructor */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
-              <div className="flex items-center gap-2 text-slate-500">
-                <BookOpen className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">
                   Course
                 </span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{courseTitle}</p>
-              <p className="text-xs text-slate-500">
-                Course Code: <span className="font-semibold text-slate-700">{course?.code}</span>
+              <p className="text-sm font-bold text-foreground">{courseTitle}</p>
+              <p className="text-xs text-muted-foreground">
+                Course Code: <span className="font-semibold text-secondary-foreground">{course?.code}</span>
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
-              <div className="flex items-center gap-2 text-slate-500">
-                <User className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <User className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">
                   Designated Trainer / Instructor
                 </span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{trainerDisplayName}</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-bold text-foreground">{trainerDisplayName}</p>
+              <p className="text-xs text-muted-foreground">
                 {trainerObj?.email || 'Platform Assigned Instructor'}
               </p>
             </div>
           </div>
 
           {/* Meeting Room Access Credentials */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">
               Meeting Room Access
             </h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {session.meetingId && (
-                <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 border border-slate-100">
-                  <span className="text-[11px] text-slate-400 font-medium">Meeting ID</span>
-                  <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">
+                <div className="rounded-xl bg-muted px-3.5 py-2.5 border border-border/60">
+                  <span className="text-[11px] text-subtle-foreground font-medium">Meeting ID</span>
+                  <p className="text-xs font-mono font-semibold text-foreground mt-0.5">
                     {session.meetingId}
                   </p>
                 </div>
               )}
               {session.meetingPassword && (
-                <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 border border-slate-100">
-                  <span className="text-[11px] text-slate-400 font-medium">Meeting Password</span>
-                  <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">
+                <div className="rounded-xl bg-muted px-3.5 py-2.5 border border-border/60">
+                  <span className="text-[11px] text-subtle-foreground font-medium">Meeting Password</span>
+                  <p className="text-xs font-mono font-semibold text-foreground mt-0.5">
                     {session.meetingPassword}
                   </p>
                 </div>
@@ -322,13 +322,13 @@ export function SessionDetailModal({
 
             {session.externalUrl ? (
               <div className="pt-2">
-                <span className="text-[11px] text-slate-400 font-medium">External Join Link</span>
+                <span className="text-[11px] text-subtle-foreground font-medium">External Join Link</span>
                 <div className="mt-1 flex items-center gap-2">
                   <a
                     href={session.externalUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 underline break-all font-mono"
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 underline break-all font-mono"
                   >
                     <ExternalLink className="h-3 w-3 shrink-0" />
                     {session.externalUrl}
@@ -340,17 +340,17 @@ export function SessionDetailModal({
 
           {/* Session Description and Objectives (separate, as in course preparation) */}
           {session.descriptionEn && (
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Session Description</h3>
-              <div className="text-xs leading-relaxed text-slate-600">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">Session Description</h3>
+              <div className="text-xs leading-relaxed text-secondary-foreground">
                 <RichContent html={session.descriptionEn} />
               </div>
             </div>
           )}
           {session.objectivesEn && (
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Session Objectives</h3>
-              <div className="text-xs leading-relaxed text-slate-600">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">Session Objectives</h3>
+              <div className="text-xs leading-relaxed text-secondary-foreground">
                 <RichContent html={session.objectivesEn} />
               </div>
             </div>
@@ -358,13 +358,13 @@ export function SessionDetailModal({
 
           {/* Amharic Title & Description if present */}
           {session.titleAm && (
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-subtle-foreground">
                 የርዕስ መረጃ (Amharic)
               </h3>
-              <p className="text-xs font-semibold text-slate-900">{session.titleAm}</p>
+              <p className="text-xs font-semibold text-foreground">{session.titleAm}</p>
               {session.descriptionAm && (
-                <div className="text-xs text-slate-600">
+                <div className="text-xs text-secondary-foreground">
                   <RichContent html={session.descriptionAm} />
                 </div>
               )}

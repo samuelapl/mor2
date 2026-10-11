@@ -121,7 +121,7 @@ export default function NewsManagementPage() {
                 'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition',
                 active
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:text-indigo-700 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700',
+                  : 'bg-card text-secondary-foreground ring-1 ring-border hover:text-primary',
               )}
             >
               {s === 'ALL' ? t('newsListView.all') : t(NEWS_STATUS_LABELS[s])}
@@ -129,7 +129,7 @@ export default function NewsManagementPage() {
                 <span
                   className={cn(
                     'rounded-full px-1.5 text-[10px] tabular-nums',
-                    active ? 'bg-white/25' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+                    active ? 'bg-white/25' : 'bg-warning-soft text-warning',
                   )}
                 >
                   {pendingCount}
@@ -208,7 +208,7 @@ export default function NewsManagementPage() {
                     <div className="min-w-0">
                       <p
                         lang={newsTextLang(n.headline)}
-                        className="line-clamp-2 font-semibold text-slate-900 dark:text-white"
+                        className="line-clamp-2 font-semibold text-foreground"
                       >
                         {n.isFeatured && (
                           <Star className="mr-1 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -227,7 +227,7 @@ export default function NewsManagementPage() {
                 </Td>
                 <Td className="whitespace-nowrap text-xs">{formatNewsDate(n.updatedAt, lang)}</Td>
                 <Td className="hidden whitespace-nowrap text-xs tabular-nums lg:table-cell">
-                  <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-3 text-muted-foreground">
                     <EngagementStat icon={ThumbsUp} value={n.likeCount} label={t('newsEditor.likes')} />
                     <EngagementStat icon={ThumbsDown} value={n.dislikeCount} label={t('newsEditor.dislikes')} />
                     <EngagementStat icon={MessageCircle} value={n.commentCount} label={t('newsComments.comments')} />
@@ -240,7 +240,7 @@ export default function NewsManagementPage() {
                       href={newsPath(n.slug)}
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                      className="inline-flex rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground"
                       aria-label={t('newsEditor.viewPublicPage')}
                       title={t('newsEditor.viewPublicPage')}
                     >

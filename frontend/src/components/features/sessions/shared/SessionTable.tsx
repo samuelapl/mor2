@@ -72,7 +72,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
     >
       {sorted.length === 0 ? (
         <tr>
-          <Td colSpan={6} className="py-12 text-center text-xs text-slate-400">
+          <Td colSpan={6} className="py-12 text-center text-xs text-subtle-foreground">
             No sessions scheduled.
           </Td>
         </tr>
@@ -92,15 +92,15 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
               {/* Schedule Column (Date, Time, Duration) */}
               <Td className="whitespace-nowrap w-[170px]">
                 <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <Calendar className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                     <span>{formatDate(row.session.scheduledAt)}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                    <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Clock className="h-3 w-3 text-subtle-foreground shrink-0" />
                     <span>{formatTime(row.session.scheduledAt)}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="font-medium text-slate-600">
+                    <span className="text-subtle-foreground">•</span>
+                    <span className="font-medium text-secondary-foreground">
                       {row.session.durationMinutes}m
                     </span>
                   </div>
@@ -113,31 +113,31 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p
-                      className="truncate text-xs font-semibold text-slate-900"
+                      className="truncate text-xs font-semibold text-foreground"
                       title={stripHtmlTags(row.session.titleEn)}
                     >
                       {stripHtmlTags(row.session.titleEn)}
                     </p>
                     {isInPersonSession(row.session) ? (
-                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 border border-amber-200">
+                      <span className="shrink-0 rounded bg-warning-soft px-1.5 py-0.5 text-[9px] font-semibold text-warning border border-warning/30">
                         In-Person
                       </span>
                     ) : (
-                      <span className="shrink-0 rounded bg-sky-50 px-1.5 py-0.5 text-[9px] font-semibold text-sky-700 border border-sky-200">
+                      <span className="shrink-0 rounded bg-info-soft px-1.5 py-0.5 text-[9px] font-semibold text-info border border-info/30">
                         Virtual
                       </span>
                     )}
                   </div>
                   {isInPersonSession(row.session) && row.session.venue ? (
                     <p
-                      className="mt-0.5 truncate text-[11px] font-medium text-amber-800"
+                      className="mt-0.5 truncate text-[11px] font-medium text-warning"
                       title={`${row.session.venue.branch} — ${row.session.venue.name} (${row.session.venue.capacity} seats)`}
                     >
                       📍 {row.session.venue.branch} — {row.session.venue.name}
                     </p>
                   ) : (
                     <p
-                      className="mt-0.5 truncate text-[11px] text-slate-500"
+                      className="mt-0.5 truncate text-[11px] text-muted-foreground"
                       title={stripHtmlTags(row.session.descriptionEn) || 'Live Classroom Session'}
                     >
                       {stripHtmlTags(row.session.descriptionEn) || 'Live Classroom Session'}
@@ -150,14 +150,14 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
               <Td className="min-w-[180px] max-w-[240px]">
                 <div className="min-w-0">
                   <p
-                    className="truncate text-xs font-medium text-slate-800"
+                    className="truncate text-xs font-medium text-foreground"
                     title={row.courseTitle}
                   >
                     {row.courseTitle}
                   </p>
                   <div className="mt-1 flex items-center gap-1">
                     <span
-                      className="inline-block max-w-[170px] truncate rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-600 border border-slate-200/60"
+                      className="inline-block max-w-[170px] truncate rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] font-medium text-secondary-foreground border border-border/60"
                       title={row.courseCode}
                     >
                       {row.courseCode}
@@ -178,11 +178,11 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
 
                   return (
                     <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700 border border-slate-200">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground border border-border">
                         {getInitials(resolvedTrainer)}
                       </div>
                       <span
-                        className="truncate text-xs font-medium text-slate-700 max-w-[110px]"
+                        className="truncate text-xs font-medium text-secondary-foreground max-w-[110px]"
                         title={resolvedTrainer}
                       >
                         {resolvedTrainer}
@@ -195,7 +195,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
               {/* Status */}
               <Td className="whitespace-nowrap w-[130px]">
                 {row.session.status === 'LIVE' ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200/80">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success border border-success/25">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />

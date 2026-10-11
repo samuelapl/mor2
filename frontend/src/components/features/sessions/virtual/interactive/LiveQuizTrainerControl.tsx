@@ -2118,11 +2118,11 @@ export function LiveQuizTrainerControl({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4 animate-in fade-in duration-200">
-      <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col rounded-3xl border border-slate-200/90 bg-white text-slate-800 shadow-2xl overflow-hidden">
+      <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col rounded-3xl border border-border/90 bg-card text-foreground shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border/60 bg-card px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/80">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary border border-primary/25">
               {viewMode === 'report' ? (
                 <BarChart3 className="h-4 w-4" />
               ) : viewMode === 'history' ? (
@@ -2133,7 +2133,7 @@ export function LiveQuizTrainerControl({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-base font-bold text-foreground">
                   {viewMode === 'broadcast' && activeQuiz
                     ? 'Live Classroom Question Monitor'
                     : viewMode === 'report'
@@ -2143,12 +2143,12 @@ export function LiveQuizTrainerControl({
                     : 'Live Classroom Quiz & Polls'}
                 </h3>
                 {viewMode === 'broadcast' && activeQuiz && (
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200 animate-pulse">
+                  <span className="rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success border border-success/30 animate-pulse">
                     ● LIVE BROADCAST ACTIVE
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {viewMode === 'broadcast' && activeQuiz
                   ? 'Real-time responses, audience distribution, and question flow control'
                   : viewMode === 'report'
@@ -2163,7 +2163,7 @@ export function LiveQuizTrainerControl({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
             >
               <X className="h-5 w-5" />
             </button>
@@ -2171,21 +2171,21 @@ export function LiveQuizTrainerControl({
         </div>
 
         {/* Body Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/40">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-muted/40">
           {viewMode === 'broadcast' && activeQuiz ? (
             /* Dedicated Live Broadcast Page */
             <div className="space-y-4 animate-in fade-in duration-200">
               {/* Broadcast Top Navigation Bar */}
-              <div className="flex items-center justify-between border-b border-slate-200/90 pb-3 flex-wrap gap-2">
+              <div className="flex items-center justify-between border-b border-border/90 pb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setViewMode('selection')}
-                    className="gap-2 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-xs"
+                    className="gap-2 border-primary/30 text-primary bg-card hover:bg-primary-soft font-bold text-xs shadow-xs"
                     title="Return to Question Selection to browse questions, queue, or edit"
                   >
-                    <ArrowLeft className="h-4 w-4 text-indigo-600" />
+                    <ArrowLeft className="h-4 w-4 text-primary" />
                     Back to Question Selection
                   </Button>
                   <Button
@@ -2195,10 +2195,10 @@ export function LiveQuizTrainerControl({
                       setViewMode('report');
                       if (sessionId) loadBackendReport();
                     }}
-                    className="gap-1.5 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-xs"
+                    className="gap-1.5 border-primary/30 text-primary bg-card hover:bg-primary-soft font-bold text-xs shadow-xs"
                     title="Open Live Session Quiz & Polls Report"
                   >
-                    <BarChart3 className="h-4 w-4 text-indigo-600" />
+                    <BarChart3 className="h-4 w-4 text-primary" />
                     Session Report
                   </Button>
                   <Button
@@ -2208,35 +2208,35 @@ export function LiveQuizTrainerControl({
                       setViewMode('history');
                       if (sessionId) loadBackendReport();
                     }}
-                    className="gap-1.5 border-purple-200 text-purple-700 bg-white hover:bg-purple-50 font-bold text-xs shadow-xs"
+                    className="gap-1.5 border-accent/30 text-accent bg-card hover:bg-accent-soft font-bold text-xs shadow-xs"
                     title="Open Broadcasted Quiz History"
                   >
-                    <History className="h-4 w-4 text-purple-600" />
+                    <History className="h-4 w-4 text-accent" />
                     History ({quizHistory.length})
                   </Button>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
                   {stagedQueue.length > 1 ? (
-                    <div className="flex items-center gap-1 rounded-lg border border-indigo-200/80 bg-white p-0.5 shadow-2xs">
+                    <div className="flex items-center gap-1 rounded-lg border border-primary/25 bg-card p-0.5 shadow-2xs">
                       <button
                         type="button"
                         disabled={currentQueueIndex <= 0}
                         onClick={() => setCurrentQueueIndex((prev) => Math.max(0, prev - 1))}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-secondary-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition"
                         title="Inspect previous question (trainer monitor only)"
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
                         Previous
                       </button>
-                      <span className="px-2 py-0.5 text-xs font-bold font-mono text-indigo-800 bg-indigo-50 rounded">
+                      <span className="px-2 py-0.5 text-xs font-bold font-mono text-primary bg-primary-soft rounded">
                         Question {currentQueueIndex + 1} of {stagedQueue.length}
                       </span>
                       <button
                         type="button"
                         disabled={currentQueueIndex >= stagedQueue.length - 1}
                         onClick={() => setCurrentQueueIndex((prev) => Math.min(stagedQueue.length - 1, prev + 1))}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-secondary-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition"
                         title="Inspect next question (trainer monitor only)"
                       >
                         Next
@@ -2248,9 +2248,9 @@ export function LiveQuizTrainerControl({
               </div>
 
               {/* Active Quiz Monitor Banner */}
-              <div className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-5 space-y-4 shadow-sm">
+              <div className="rounded-2xl border border-primary/30 bg-primary-soft/60 p-5 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
                     <span>Live Question Active in Room</span>
                   </div>
@@ -2260,13 +2260,13 @@ export function LiveQuizTrainerControl({
                       <div
                         className={`flex items-center gap-1.5 text-xs font-mono font-bold px-2.5 py-1 rounded-lg border shadow-2xs ${
                           activeRemainingSeconds <= 5
-                            ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
-                            : 'bg-white text-slate-700 border-slate-200'
+                            ? 'bg-danger-soft text-danger border-danger/30 animate-pulse'
+                            : 'bg-card text-secondary-foreground border-border'
                         }`}
                       >
                         <Clock
                           className={`h-3.5 w-3.5 ${
-                            activeRemainingSeconds <= 5 ? 'text-red-600' : 'text-indigo-600'
+                            activeRemainingSeconds <= 5 ? 'text-danger' : 'text-primary'
                           }`}
                         />
                         <span>
@@ -2284,8 +2284,8 @@ export function LiveQuizTrainerControl({
                         onClick={() => setAutoAdvanceEnabled(!autoAdvanceEnabled)}
                         className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition shadow-2xs ${
                           autoAdvanceEnabled
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            ? 'bg-success-soft text-success border-success/30 hover:bg-success/15'
+                            : 'bg-card text-secondary-foreground border-border hover:bg-muted'
                         }`}
                         title={
                           autoAdvanceEnabled
@@ -2296,8 +2296,8 @@ export function LiveQuizTrainerControl({
                         <Zap
                           className={`h-3 w-3 ${
                             autoAdvanceEnabled
-                              ? 'fill-emerald-600 text-emerald-600'
-                              : 'text-slate-400'
+                              ? 'fill-success text-success'
+                              : 'text-subtle-foreground'
                           }`}
                         />
                         <span>Auto-advance: {autoAdvanceEnabled ? 'ON' : 'OFF'}</span>
@@ -2305,34 +2305,34 @@ export function LiveQuizTrainerControl({
                     )}
 
 
-                    <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                      <Users className="h-3.5 w-3.5 text-indigo-600" />
+                    <div className="flex items-center gap-1.5 text-xs text-secondary-foreground font-semibold bg-card px-2.5 py-1 rounded-lg border border-border shadow-2xs">
+                      <Users className="h-3.5 w-3.5 text-primary" />
                       <span>{totalResponses} responses</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm md:text-base font-bold text-slate-900">
+                  <p className="text-sm md:text-base font-bold text-foreground">
                     {stripHtmlTags(displayedQuiz?.titleEn || activeQuiz.titleEn)}
                   </p>
                   {displayedQuiz?.titleAm || activeQuiz.titleAm ? (
-                    <p className="text-xs text-slate-500 mt-0.5 font-amharic">
+                    <p className="text-xs text-muted-foreground mt-0.5 font-amharic">
                       {displayedQuiz?.titleAm || activeQuiz.titleAm}
                     </p>
                   ) : null}
                 </div>
 
                 {/* View Switcher: Distribution Bars vs Learner Responses */}
-                <div className="flex items-center justify-between border-y border-indigo-100/90 py-2 flex-wrap gap-2">
-                  <div className="flex rounded-xl bg-white p-1 border border-indigo-200/80 shadow-2xs">
+                <div className="flex items-center justify-between border-y border-primary/25 py-2 flex-wrap gap-2">
+                  <div className="flex rounded-xl bg-card p-1 border border-primary/25 shadow-2xs">
                     <button
                       type="button"
                       onClick={() => setActiveQuizViewMode('distribution')}
                       className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition ${
                         activeQuizViewMode === 'distribution'
                           ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          : 'text-secondary-foreground hover:text-foreground'
                       }`}
                     >
                       <BarChart3 className="h-3.5 w-3.5" />
@@ -2344,7 +2344,7 @@ export function LiveQuizTrainerControl({
                       className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition ${
                         activeQuizViewMode === 'responses'
                           ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          : 'text-secondary-foreground hover:text-foreground'
                       }`}
                     >
                       <Users className="h-3.5 w-3.5" />
@@ -2353,17 +2353,17 @@ export function LiveQuizTrainerControl({
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs flex-wrap">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100/80 text-emerald-900 font-bold px-2 py-0.5 text-[11px] border border-emerald-200">
-                      <UserCheck className="h-3 w-3 text-emerald-700" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-success-soft/80 text-success font-bold px-2 py-0.5 text-[11px] border border-success/30">
+                      <UserCheck className="h-3 w-3 text-success" />
                       {activeCorrectCount} Correct
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-rose-100/80 text-rose-900 font-bold px-2 py-0.5 text-[11px] border border-rose-200">
-                      <UserX className="h-3 w-3 text-rose-700" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-danger-soft/80 text-danger font-bold px-2 py-0.5 text-[11px] border border-danger/30">
+                      <UserX className="h-3 w-3 text-danger" />
                       {activeIncorrectCount} Incorrect
                     </span>
                     {activeUnansweredLearners.length > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100/80 text-amber-900 font-bold px-2 py-0.5 text-[11px] border border-amber-200">
-                        <Clock className="h-3 w-3 text-amber-700" />
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-warning-soft/80 text-warning font-bold px-2 py-0.5 text-[11px] border border-warning/30">
+                        <Clock className="h-3 w-3 text-warning" />
                         {activeUnansweredLearners.length} Waiting
                       </span>
                     )}
@@ -2382,32 +2382,32 @@ export function LiveQuizTrainerControl({
                       return (
                         <div
                           key={opt.id}
-                          className="rounded-xl border border-slate-200/80 bg-white p-2.5 space-y-1.5 shadow-2xs"
+                          className="rounded-xl border border-border/80 bg-card p-2.5 space-y-1.5 shadow-2xs"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-slate-800 flex items-center gap-2">
-                              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-[11px] font-bold text-indigo-700 border border-indigo-100">
+                            <span className="font-semibold text-foreground flex items-center gap-2">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary-soft text-[11px] font-bold text-primary border border-primary/30">
                                 {String.fromCharCode(65 + idx)}
                               </span>
                               {stripHtmlTags(opt.textEn)}
                               {isRevealed && isCorrect && (
-                                <span className="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.2 text-[10px] font-bold">
+                                <span className="inline-flex items-center gap-1 rounded bg-success-soft text-success px-1.5 py-0.2 text-[10px] font-bold">
                                   <CheckCircle2 className="h-3 w-3" /> Correct
                                 </span>
                               )}
                             </span>
-                            <span className="text-slate-500 font-mono text-[11px] font-medium">
+                            <span className="text-muted-foreground font-mono text-[11px] font-medium">
                               {votes} ({percent}%)
                             </span>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                             <div
                               className={`h-full transition-all duration-500 rounded-full ${
                                 isRevealed
                                   ? isCorrect
                                     ? 'bg-emerald-500'
-                                    : 'bg-slate-400'
-                                  : 'bg-indigo-600'
+                                    : 'bg-subtle-foreground'
+                                  : 'bg-primary'
                               }`}
                               style={{ width: `${percent}%` }}
                             />
@@ -2421,32 +2421,32 @@ export function LiveQuizTrainerControl({
                   <div className="space-y-3 pt-1">
                     {/* Sub-filters & Search Bar */}
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700">
-                        <Users className="h-3.5 w-3.5 text-indigo-600" />
+                      <div className="flex items-center gap-1.5 bg-secondary px-3 py-1 rounded-lg border border-border text-xs font-semibold text-secondary-foreground">
+                        <Users className="h-3.5 w-3.5 text-primary" />
                         <span>All ({activeLearnerResponses.length})</span>
                       </div>
 
                       <div className="relative min-w-[180px]">
-                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-subtle-foreground" />
                         <input
                           type="text"
                           value={responseSearchQuery}
                           onChange={(e) => setResponseSearchQuery(e.target.value)}
                           placeholder="Search respondent..."
-                          className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-white focus:border-indigo-500 outline-none"
+                          className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg border border-border bg-card focus:border-ring outline-none"
                         />
                       </div>
                     </div>
 
                     {/* List of responses */}
                     {filteredActiveResponses.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-slate-300 bg-white/60 p-6 text-center text-xs text-slate-500">
+                      <div className="rounded-xl border border-dashed border-input bg-card/60 p-6 text-center text-xs text-muted-foreground">
                         {responseSearchQuery
                           ? 'No respondent matches the search query.'
                           : 'Waiting for learner responses...'}
                       </div>
                     ) : (
-                      <div className="max-h-96 overflow-y-auto space-y-2 rounded-xl bg-white/70 p-2 border border-slate-200/80">
+                      <div className="max-h-96 overflow-y-auto space-y-2 rounded-xl bg-card/70 p-2 border border-border/80">
                         {filteredActiveResponses.map((resp) => {
                           const isExpanded = expandedRespondentId === resp.userId;
                           return (
@@ -2454,8 +2454,8 @@ export function LiveQuizTrainerControl({
                               key={resp.userId}
                               className={`rounded-xl border transition-all ${
                                 isExpanded
-                                  ? 'bg-white border-indigo-300 shadow-sm'
-                                  : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                                  ? 'bg-card border-primary/30 shadow-sm'
+                                  : 'bg-card border-border hover:border-input shadow-2xs'
                               }`}
                             >
                               {/* Respondent Header (clickable row) */}
@@ -2464,20 +2464,20 @@ export function LiveQuizTrainerControl({
                                 onClick={() =>
                                   setExpandedRespondentId(isExpanded ? null : resp.userId)
                                 }
-                                className="w-full flex items-center justify-between p-3 text-left transition hover:bg-slate-50/50 rounded-xl"
+                                className="w-full flex items-center justify-between p-3 text-left transition hover:bg-muted/50 rounded-xl"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700 border border-indigo-100">
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary border border-primary/30">
                                     {getInitials(resp.userName)}
                                   </span>
                                   <div className="truncate">
-                                    <p className="text-xs font-bold text-slate-800 truncate">
+                                    <p className="text-xs font-bold text-foreground truncate">
                                       {resp.userName}
                                     </p>
-                                    <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                                       {resp.responseDurationSeconds !== undefined && (
-                                        <span className="inline-flex items-center gap-1 font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">
-                                          <Clock className="h-3 w-3 text-slate-400" />
+                                        <span className="inline-flex items-center gap-1 font-mono text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded text-[10px]">
+                                          <Clock className="h-3 w-3 text-subtle-foreground" />
                                           {resp.responseDurationSeconds}s
                                         </span>
                                       )}
@@ -2495,23 +2495,23 @@ export function LiveQuizTrainerControl({
                                     <span
                                       className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border ${
                                         resp.totalCorrect === resp.totalGraded
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          ? 'bg-success-soft text-success border-success/30'
                                           : resp.totalCorrect > 0
-                                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                                          ? 'bg-warning-soft text-warning border-warning/30'
+                                          : 'bg-danger-soft text-danger border-danger/30'
                                       }`}
                                     >
                                       {resp.totalCorrect === resp.totalGraded ? (
-                                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                        <CheckCircle2 className="h-3 w-3 text-success" />
                                       ) : (
-                                        <UserX className="h-3 w-3 text-rose-600" />
+                                        <UserX className="h-3 w-3 text-danger" />
                                       )}
                                       {resp.totalCorrect}/{resp.totalGraded}
                                     </span>
                                   )}
-                                  <div className="text-slate-400 hover:text-slate-600 p-1">
+                                  <div className="text-subtle-foreground hover:text-secondary-foreground p-1">
                                     {isExpanded ? (
-                                      <ChevronUp className="h-4 w-4 text-indigo-600" />
+                                      <ChevronUp className="h-4 w-4 text-primary" />
                                     ) : (
                                       <ChevronDown className="h-4 w-4" />
                                     )}
@@ -2521,8 +2521,8 @@ export function LiveQuizTrainerControl({
 
                               {/* Accordion Content: List of all asked questions with learner's response & correct answer */}
                               {isExpanded && (
-                                <div className="border-t border-slate-100 p-3 pt-2.5 space-y-2.5 bg-slate-50/40 rounded-b-xl">
-                                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1">
+                                <div className="border-t border-border/60 p-3 pt-2.5 space-y-2.5 bg-muted/40 rounded-b-xl">
+                                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
                                     Question Breakdown ({resp.questionBreakdown.length}{' '}
                                     {resp.questionBreakdown.length === 1 ? 'question' : 'questions'})
                                   </div>
@@ -2532,30 +2532,30 @@ export function LiveQuizTrainerControl({
                                       return (
                                         <div
                                           key={item.question.id || idx}
-                                          className={`p-2.5 rounded-lg border text-xs bg-white ${
+                                          className={`p-2.5 rounded-lg border text-xs bg-card ${
                                             isCorrect === true
-                                              ? 'border-emerald-200 bg-emerald-50/20'
+                                              ? 'border-success/30 bg-success-soft/20'
                                               : isCorrect === false
-                                              ? 'border-rose-200 bg-rose-50/20'
-                                              : 'border-slate-200'
+                                              ? 'border-danger/30 bg-danger-soft/20'
+                                              : 'border-border'
                                           }`}
                                         >
                                           {/* Question Title & Status */}
                                           <div className="flex items-start justify-between gap-2 mb-2">
-                                            <div className="font-semibold text-slate-800 leading-snug">
-                                              <span className="text-indigo-600 mr-1.5 font-bold">
+                                            <div className="font-semibold text-foreground leading-snug">
+                                              <span className="text-primary mr-1.5 font-bold">
                                                 Q{idx + 1}.
                                               </span>
                                               {stripHtmlTags(item.question.titleEn)}
                                             </div>
                                             {isCorrect === true ? (
-                                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-success bg-success-soft px-1.5 py-0.5 rounded border border-success/30">
+                                                <CheckCircle2 className="h-3 w-3 text-success" />
                                                 Correct
                                               </span>
                                             ) : isCorrect === false ? (
-                                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                                                <UserX className="h-3 w-3 text-rose-600" />
+                                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-danger bg-danger-soft px-1.5 py-0.5 rounded border border-danger/30">
+                                                <UserX className="h-3 w-3 text-danger" />
                                                 Incorrect
                                               </span>
                                             ) : null}
@@ -2567,17 +2567,17 @@ export function LiveQuizTrainerControl({
                                             <div
                                               className={`p-2 rounded border ${
                                                 isCorrect === true
-                                                  ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950'
+                                                  ? 'bg-success-soft/50 border-success/30 text-success'
                                                   : isCorrect === false
-                                                  ? 'bg-rose-50/50 border-rose-200 text-rose-950'
-                                                  : 'bg-slate-50 border-slate-200 text-slate-800'
+                                                  ? 'bg-danger-soft/50 border-danger/30 text-danger'
+                                                  : 'bg-muted border-border text-foreground'
                                               }`}
                                             >
-                                              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                              <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
                                                 Learner's Response
                                               </span>
                                               {item.selectedOptions.length === 0 ? (
-                                                <span className="italic text-slate-400">
+                                                <span className="italic text-subtle-foreground">
                                                   No answer selected
                                                 </span>
                                               ) : (
@@ -2596,12 +2596,12 @@ export function LiveQuizTrainerControl({
                                             </div>
 
                                             {/* Correct Answer */}
-                                            <div className="p-2 rounded border bg-emerald-50/40 border-emerald-200 text-emerald-950">
-                                              <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                                            <div className="p-2 rounded border bg-success-soft/40 border-success/30 text-success">
+                                              <span className="block text-[10px] font-bold uppercase tracking-wider text-success mb-1">
                                                 Correct Answer
                                               </span>
                                               {item.correctOptions.length === 0 ? (
-                                                <span className="italic text-slate-400">
+                                                <span className="italic text-subtle-foreground">
                                                   No answer key specified
                                                 </span>
                                               ) : (
@@ -2609,7 +2609,7 @@ export function LiveQuizTrainerControl({
                                                   {item.correctOptions.map((opt) => (
                                                     <div
                                                       key={opt.id}
-                                                      className="flex items-start gap-1 font-medium text-emerald-900"
+                                                      className="flex items-start gap-1 font-medium text-success"
                                                     >
                                                       <span className="font-bold">[{opt.letter}]</span>
                                                       <span>{stripHtmlTags(opt.textEn)}</span>
@@ -2635,19 +2635,19 @@ export function LiveQuizTrainerControl({
 
                 {/* Explanation Banner for Trainer on Reveal */}
                 {isRevealed && (activeQuiz.explanationEn || (activeQuiz as any).explanation) && (
-                  <div className="rounded-xl border border-indigo-200 bg-white/95 p-3.5 text-xs space-y-1.5 shadow-2xs">
-                    <div className="flex items-center gap-1.5 font-bold text-indigo-950">
-                      <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+                  <div className="rounded-xl border border-primary/30 bg-card/95 p-3.5 text-xs space-y-1.5 shadow-2xs">
+                    <div className="flex items-center gap-1.5 font-bold text-primary">
+                      <BookOpen className="h-3.5 w-3.5 text-primary" />
                       <span>Answer Explanation (Revealed to Learners):</span>
                     </div>
-                    <p className="text-slate-700 leading-relaxed pl-5 font-medium">
+                    <p className="text-secondary-foreground leading-relaxed pl-5 font-medium">
                       {stripHtmlTags(activeQuiz.explanationEn || (activeQuiz as any).explanation)}
                     </p>
                   </div>
                 )}
 
                 {/* Action Buttons for Active Quiz */}
-                <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-indigo-100 flex-wrap">
+                <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-primary/30 flex-wrap">
                   <div>
                     {!isRevealed ? (
                       <Button
@@ -2659,8 +2659,8 @@ export function LiveQuizTrainerControl({
                         Reveal Answers to Room
                       </Button>
                     ) : (
-                      <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <span className="text-xs text-success font-semibold flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
                         Answers Revealed to Learners
                       </span>
                     )}
@@ -2683,7 +2683,7 @@ export function LiveQuizTrainerControl({
                       size="sm"
                       variant="outline"
                       onClick={handleCloseQuiz}
-                      className="gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-100 bg-white text-xs"
+                      className="gap-1.5 border-border text-secondary-foreground hover:bg-secondary bg-card text-xs"
                     >
                       <X className="h-3.5 w-3.5" />
                       End &amp; Dismiss
@@ -2696,14 +2696,14 @@ export function LiveQuizTrainerControl({
             /* DEDICATED LIVE SESSION REPORT PAGE (Just like Live Monitor) */
             <div className="space-y-4 animate-in fade-in duration-200">
               {/* Report Top Navigation Bar */}
-              <div className="flex items-center justify-between border-b border-slate-200/90 pb-3 flex-wrap gap-2">
+              <div className="flex items-center justify-between border-b border-border/90 pb-3 flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setViewMode('selection')}
-                  className="gap-2 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-xs"
+                  className="gap-2 border-primary/30 text-primary bg-card hover:bg-primary-soft font-bold text-xs shadow-xs"
                 >
-                  <ArrowLeft className="h-4 w-4 text-indigo-600" />
+                  <ArrowLeft className="h-4 w-4 text-primary" />
                   Back to Question Selection
                 </Button>
 
@@ -2713,9 +2713,9 @@ export function LiveQuizTrainerControl({
                       size="sm"
                       variant="outline"
                       onClick={() => setViewMode('broadcast')}
-                      className="gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold text-xs shadow-2xs"
+                      className="gap-1.5 border-success/30 text-success bg-success-soft hover:bg-success/15 font-bold text-xs shadow-2xs"
                     >
-                      <MonitorPlay className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                      <MonitorPlay className="h-3.5 w-3.5 text-success animate-pulse" />
                       View Live Monitor
                     </Button>
                   )}
@@ -2726,10 +2726,10 @@ export function LiveQuizTrainerControl({
                       setViewMode('history');
                       if (sessionId) loadBackendReport();
                     }}
-                    className="gap-1.5 border-purple-200 text-purple-700 bg-white hover:bg-purple-50 font-bold text-xs shadow-2xs"
+                    className="gap-1.5 border-accent/30 text-accent bg-card hover:bg-accent-soft font-bold text-xs shadow-2xs"
                     title="Open Broadcasted Quiz History"
                   >
-                    <History className="h-3.5 w-3.5 text-purple-600" />
+                    <History className="h-3.5 w-3.5 text-accent" />
                     History ({quizHistory.length})
                   </Button>
                   <Button
@@ -2738,10 +2738,10 @@ export function LiveQuizTrainerControl({
                     variant="outline"
                     onClick={() => sessionId && loadBackendReport()}
                     disabled={loadingBackendReport}
-                    className="gap-1.5 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs h-8"
+                    className="gap-1.5 text-xs bg-card border-border text-secondary-foreground hover:bg-muted shadow-2xs h-8"
                   >
                     <RefreshCw
-                      className={`h-3.5 w-3.5 ${loadingBackendReport ? 'animate-spin text-indigo-600' : ''}`}
+                      className={`h-3.5 w-3.5 ${loadingBackendReport ? 'animate-spin text-primary' : ''}`}
                     />
                     Refresh
                   </Button>
@@ -2761,36 +2761,36 @@ export function LiveQuizTrainerControl({
               {/* 3 Summary KPI Cards: QUESTIONS, ROOM ACCURACY, LEARNERS (TOTAL ANSWERS removed as requested) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Questions */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 space-y-1 shadow-2xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <div className="rounded-2xl border border-border/80 bg-card p-4 space-y-1 shadow-2xs">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-secondary-foreground">
                       Questions
                     </span>
-                    <FileText className="h-4 w-4 text-indigo-600" />
+                    <FileText className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="text-2xl font-black text-slate-900">
+                  <div className="text-2xl font-black text-foreground">
                     {sessionTotalQuestions}
                   </div>
-                  <p className="text-[11px] text-slate-400">Broadcasted across all quiz groups</p>
+                  <p className="text-[11px] text-subtle-foreground">Broadcasted across all quiz groups</p>
                 </div>
 
                 {/* Room Accuracy */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 space-y-1 shadow-2xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <div className="rounded-2xl border border-border/80 bg-card p-4 space-y-1 shadow-2xs">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-secondary-foreground">
                       Room Accuracy
                     </span>
-                    <Award className="h-4 w-4 text-amber-600" />
+                    <Award className="h-4 w-4 text-warning" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-slate-900">
+                    <span className="text-2xl font-black text-foreground">
                       {sessionOverallAccuracy}%
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500">
+                    <span className="text-[11px] font-semibold text-muted-foreground">
                       ({sessionTotalCorrect}/{sessionTotalResponses || 0})
                     </span>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden mt-1">
+                  <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden mt-1">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         sessionOverallAccuracy >= 70
@@ -2805,41 +2805,41 @@ export function LiveQuizTrainerControl({
                 </div>
 
                 {/* Learners */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 space-y-1 shadow-2xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <div className="rounded-2xl border border-border/80 bg-card p-4 space-y-1 shadow-2xs">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-secondary-foreground">
                       Learners
                     </span>
-                    <UserCheck className="h-4 w-4 text-indigo-600" />
+                    <UserCheck className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="text-2xl font-black text-slate-900">
+                  <div className="text-2xl font-black text-foreground">
                     {sessionLearnersCount}
                   </div>
-                  <p className="text-[11px] text-slate-400">Participating attendees</p>
+                  <p className="text-[11px] text-subtle-foreground">Participating attendees</p>
                 </div>
               </div>
 
               {/* (Learner Performance Leaderboard completely removed as requested) */}
 
               {/* Quiz Groups Accordion Breakdown */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+              <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground flex items-center gap-1.5">
+                      <BookOpen className="h-3.5 w-3.5 text-primary" />
                       Session Quiz Groups Breakdown
                     </h5>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-subtle-foreground">
                       Review questions, poll percentages, and learner responses by prepared quiz group
                     </p>
                   </div>
-                  <span className="text-xs text-slate-500 font-semibold">
+                  <span className="text-xs text-muted-foreground font-semibold">
                     {sessionQuizGroups.length} Quiz Group{sessionQuizGroups.length === 1 ? '' : 's'}
                   </span>
                 </div>
 
                 {sessionQuizGroups.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center text-xs text-slate-500">
+                  <div className="rounded-xl border border-dashed border-border bg-muted/60 p-6 text-center text-xs text-muted-foreground">
                     No quizzes have been broadcasted in this session yet. Switch to Question Selection to broadcast.
                   </div>
                 ) : (
@@ -2851,8 +2851,8 @@ export function LiveQuizTrainerControl({
                           key={group.id}
                           className={`rounded-2xl border transition-all ${
                             group.isActive
-                              ? 'border-indigo-300 bg-indigo-50/20 shadow-xs'
-                              : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                              ? 'border-primary/30 bg-primary-soft/20 shadow-xs'
+                              : 'border-border bg-card hover:border-input shadow-2xs'
                           }`}
                         >
                           {/* Quiz Group Accordion Header */}
@@ -2860,29 +2860,29 @@ export function LiveQuizTrainerControl({
                             onClick={() =>
                               setExpandedQuizGroupId(isGroupExpanded ? null : group.id)
                             }
-                            className="flex items-center justify-between p-4 cursor-pointer select-none gap-3 rounded-2xl hover:bg-slate-50/60 transition"
+                            className="flex items-center justify-between p-4 cursor-pointer select-none gap-3 rounded-2xl hover:bg-muted/60 transition"
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 font-bold text-xs shadow-2xs">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary border border-primary/30 font-bold text-xs shadow-2xs">
                                 <Sparkles className="h-4 w-4" />
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="text-sm font-bold text-slate-900 truncate">
+                                  <h4 className="text-sm font-bold text-foreground truncate">
                                     {group.title}
                                   </h4>
                                   {group.isActive ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success border border-success/30">
                                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
                                       Live Broadcast Active
                                     </span>
                                   ) : (
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
+                                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground border border-border">
                                       Completed
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
                                   {group.questions.length} Question{group.questions.length === 1 ? '' : 's'} •{' '}
                                   {group.totalResponses} submission{group.totalResponses === 1 ? '' : 's'} •{' '}
                                   {group.accuracy}% accuracy
@@ -2892,16 +2892,16 @@ export function LiveQuizTrainerControl({
 
                             <div className="flex items-center gap-3 shrink-0">
                               <div className="text-right hidden sm:block">
-                                <span className="text-xs font-bold text-slate-900">
+                                <span className="text-xs font-bold text-foreground">
                                   {group.questions.length} Qs
                                 </span>
-                                <div className="text-[11px] font-semibold text-slate-500">
+                                <div className="text-[11px] font-semibold text-muted-foreground">
                                   {group.accuracy}% accuracy
                                 </div>
                               </div>
-                              <div className="rounded-lg p-1 text-slate-400 hover:text-slate-600">
+                              <div className="rounded-lg p-1 text-subtle-foreground hover:text-secondary-foreground">
                                 {isGroupExpanded ? (
-                                  <ChevronUp className="h-5 w-5 text-indigo-600" />
+                                  <ChevronUp className="h-5 w-5 text-primary" />
                                 ) : (
                                   <ChevronDown className="h-5 w-5" />
                                 )}
@@ -2911,8 +2911,8 @@ export function LiveQuizTrainerControl({
 
                           {/* Quiz Group Accordion Body: Lists all questions in this group */}
                           {isGroupExpanded && (
-                            <div className="border-t border-slate-100 p-4 pt-3 space-y-3 bg-slate-50/40 rounded-b-2xl animate-in fade-in duration-150">
-                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-1">
+                            <div className="border-t border-border/60 p-4 pt-3 space-y-3 bg-muted/40 rounded-b-2xl animate-in fade-in duration-150">
+                              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-1">
                                 Questions in this Quiz Group ({group.questions.length})
                               </div>
                               <div className="space-y-3">
@@ -2921,25 +2921,25 @@ export function LiveQuizTrainerControl({
                                   return (
                                     <div
                                       key={q.id || qIdx}
-                                      className="rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden"
+                                      className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden"
                                     >
                                       {/* Question Title Header (clickable to expand question details) */}
                                       <div
                                         onClick={() =>
                                           setExpandedReportQuestionId(isQExpanded ? null : q.id)
                                         }
-                                        className="flex items-center justify-between p-3.5 cursor-pointer select-none gap-3 hover:bg-slate-50/70 transition"
+                                        className="flex items-center justify-between p-3.5 cursor-pointer select-none gap-3 hover:bg-muted/70 transition"
                                       >
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 font-bold text-xs text-indigo-800 border border-indigo-200">
+                                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-soft font-bold text-xs text-primary border border-primary/30">
                                             Q{qIdx + 1}
                                           </span>
                                           <div className="min-w-0">
-                                            <p className="text-xs font-bold text-slate-900 leading-snug">
+                                            <p className="text-xs font-bold text-foreground leading-snug">
                                               {stripHtmlTags(q.titleEn)}
                                             </p>
                                             {q.titleAm && (
-                                              <p className="text-[11px] font-amharic text-slate-500">
+                                              <p className="text-[11px] font-amharic text-muted-foreground">
                                                 {q.titleAm}
                                               </p>
                                             )}
@@ -2948,27 +2948,27 @@ export function LiveQuizTrainerControl({
 
                                         <div className="flex items-center gap-3 shrink-0">
                                           <div className="text-right">
-                                            <span className="text-xs font-bold text-slate-900">
+                                            <span className="text-xs font-bold text-foreground">
                                               {q.totalResponses} response{q.totalResponses === 1 ? '' : 's'}
                                             </span>
-                                            <div className="text-[10px] font-semibold text-slate-500">
+                                            <div className="text-[10px] font-semibold text-muted-foreground">
                                               {q.accuracy}% correct ({q.correctCount}/{q.totalResponses})
                                             </div>
                                           </div>
                                           {isQExpanded ? (
-                                            <ChevronUp className="h-4 w-4 text-indigo-600" />
+                                            <ChevronUp className="h-4 w-4 text-primary" />
                                           ) : (
-                                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                                            <ChevronDown className="h-4 w-4 text-subtle-foreground" />
                                           )}
                                         </div>
                                       </div>
 
                                       {/* Question Details: Poll Percentages & Learner Responses */}
                                       {isQExpanded && (
-                                        <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-4 animate-in fade-in duration-150">
+                                        <div className="border-t border-border/60 bg-muted/50 p-4 space-y-4 animate-in fade-in duration-150">
                                           {/* Option Poll Breakdown with working percentages */}
                                           <div className="space-y-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                               Poll Distribution ({q.totalResponses} response{q.totalResponses === 1 ? '' : 's'})
                                             </span>
                                             <div className="space-y-1.5">
@@ -2985,30 +2985,30 @@ export function LiveQuizTrainerControl({
                                                     key={opt.id}
                                                     className={`rounded-lg border p-2.5 text-xs space-y-1.5 transition ${
                                                       isCorrect
-                                                        ? 'border-emerald-200 bg-emerald-50/30'
-                                                        : 'border-slate-200 bg-white'
+                                                        ? 'border-success/30 bg-success-soft/30'
+                                                        : 'border-border bg-card'
                                                     }`}
                                                   >
                                                     <div className="flex items-center justify-between gap-2">
-                                                      <span className="font-semibold text-slate-800 flex items-center gap-2 min-w-0">
-                                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-100 text-[10px] font-bold text-slate-700">
+                                                      <span className="font-semibold text-foreground flex items-center gap-2 min-w-0">
+                                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-secondary-foreground">
                                                           {String.fromCharCode(65 + optIdx)}
                                                         </span>
                                                         <span className="truncate">{stripHtmlTags(opt.textEn)}</span>
                                                         {isCorrect && (
-                                                          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                                                          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-success bg-success-soft px-2 py-0.5 rounded-full border border-success/30">
                                                             ✓ Correct Answer
                                                           </span>
                                                         )}
                                                       </span>
-                                                      <span className="text-slate-600 font-mono text-xs font-bold shrink-0">
+                                                      <span className="text-secondary-foreground font-mono text-xs font-bold shrink-0">
                                                         {votes} ({percent}%)
                                                       </span>
                                                     </div>
-                                                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                                                    <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                                                       <div
                                                         className={`h-full rounded-full transition-all duration-500 ${
-                                                          isCorrect ? 'bg-emerald-500' : 'bg-indigo-600'
+                                                          isCorrect ? 'bg-emerald-500' : 'bg-primary'
                                                         }`}
                                                         style={{ width: `${percent}%` }}
                                                       />
@@ -3021,15 +3021,15 @@ export function LiveQuizTrainerControl({
 
                                           {/* Learner Responses - Simplified & Redesigned */}
                                           <div className="space-y-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                               Learner Responses ({q.answers.length})
                                             </span>
                                             {q.answers.length === 0 ? (
-                                              <p className="text-xs text-slate-400 py-2 italic bg-white p-3 rounded-lg border border-slate-200">
+                                              <p className="text-xs text-subtle-foreground py-2 italic bg-card p-3 rounded-lg border border-border">
                                                 No responses recorded for this question yet.
                                               </p>
                                             ) : (
-                                              <div className="max-h-56 overflow-y-auto space-y-1.5 rounded-xl bg-white p-2.5 border border-slate-200">
+                                              <div className="max-h-56 overflow-y-auto space-y-1.5 rounded-xl bg-card p-2.5 border border-border">
                                                 {q.answers.map((a) => {
                                                   const selectedOptions = a.selectedOptionIds.map((oid) => {
                                                     const opt = q.options.find(
@@ -3060,19 +3060,19 @@ export function LiveQuizTrainerControl({
                                                   return (
                                                     <div
                                                       key={a.userId}
-                                                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 border border-slate-200/80 text-xs hover:bg-slate-100/60 transition gap-2"
+                                                      className="flex items-center justify-between p-2 rounded-lg bg-muted/80 border border-border/80 text-xs hover:bg-secondary/60 transition gap-2"
                                                     >
                                                       <div className="flex items-center gap-2.5 min-w-0">
-                                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-800 border border-indigo-200">
+                                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary border border-primary/30">
                                                           {getInitials(a.userName)}
                                                         </span>
                                                         <div className="min-w-0 truncate">
-                                                          <p className="font-bold text-slate-800 truncate">
+                                                          <p className="font-bold text-foreground truncate">
                                                             {a.userName}
                                                           </p>
                                                           <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                                                             {selectedOptions.length === 0 ? (
-                                                              <span className="text-[10px] italic text-slate-400">
+                                                              <span className="text-[10px] italic text-subtle-foreground">
                                                                 No response
                                                               </span>
                                                             ) : (
@@ -3081,10 +3081,10 @@ export function LiveQuizTrainerControl({
                                                                   key={opt.id}
                                                                   className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold border ${
                                                                     a.isCorrect === true
-                                                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                                                      ? 'bg-success-soft text-success border-success/30'
                                                                       : a.isCorrect === false
-                                                                      ? 'bg-rose-50 text-rose-800 border-rose-200'
-                                                                      : 'bg-slate-100 text-slate-700 border-slate-200'
+                                                                      ? 'bg-danger-soft text-danger border-danger/30'
+                                                                      : 'bg-secondary text-secondary-foreground border-border'
                                                                   }`}
                                                                 >
                                                                   <span className="font-bold">[{opt.letter}]</span>
@@ -3098,23 +3098,23 @@ export function LiveQuizTrainerControl({
 
                                                       <div className="flex items-center gap-2 shrink-0">
                                                         {a.responseDurationSeconds !== undefined && (
-                                                          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                                                            <Clock className="h-3 w-3 text-slate-400" />
+                                                          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-card px-1.5 py-0.5 rounded border border-border">
+                                                            <Clock className="h-3 w-3 text-subtle-foreground" />
                                                             {a.responseDurationSeconds}s
                                                           </span>
                                                         )}
                                                         {a.isCorrect === true ? (
-                                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-success bg-success-soft px-2 py-0.5 rounded-md border border-success/30">
+                                                            <CheckCircle2 className="h-3 w-3 text-success" />
                                                             Correct
                                                           </span>
                                                         ) : a.isCorrect === false ? (
-                                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
-                                                            <UserX className="h-3 w-3 text-rose-600" />
+                                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-danger bg-danger-soft px-2 py-0.5 rounded-md border border-danger/30">
+                                                            <UserX className="h-3 w-3 text-danger" />
                                                             Incorrect
                                                           </span>
                                                         ) : (
-                                                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                          <span className="text-[10px] font-semibold text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded">
                                                             Submitted
                                                           </span>
                                                         )}
@@ -3144,14 +3144,14 @@ export function LiveQuizTrainerControl({
             /* DEDICATED BROADCASTED HISTORY PAGE */
             <div className="space-y-4 animate-in fade-in duration-200">
               {/* History Top Navigation Bar */}
-              <div className="flex items-center justify-between border-b border-slate-200/90 pb-3 flex-wrap gap-2">
+              <div className="flex items-center justify-between border-b border-border/90 pb-3 flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setViewMode('selection')}
-                  className="gap-2 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-xs"
+                  className="gap-2 border-primary/30 text-primary bg-card hover:bg-primary-soft font-bold text-xs shadow-xs"
                 >
-                  <ArrowLeft className="h-4 w-4 text-indigo-600" />
+                  <ArrowLeft className="h-4 w-4 text-primary" />
                   Back to Question Selection
                 </Button>
 
@@ -3161,9 +3161,9 @@ export function LiveQuizTrainerControl({
                       size="sm"
                       variant="outline"
                       onClick={() => setViewMode('broadcast')}
-                      className="gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold text-xs shadow-2xs"
+                      className="gap-1.5 border-success/30 text-success bg-success-soft hover:bg-success/15 font-bold text-xs shadow-2xs"
                     >
-                      <MonitorPlay className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                      <MonitorPlay className="h-3.5 w-3.5 text-success animate-pulse" />
                       View Live Monitor
                     </Button>
                   )}
@@ -3174,9 +3174,9 @@ export function LiveQuizTrainerControl({
                       setViewMode('report');
                       if (sessionId) loadBackendReport();
                     }}
-                    className="gap-1.5 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 font-bold text-xs shadow-2xs"
+                    className="gap-1.5 border-primary/30 text-primary bg-card hover:bg-primary-soft font-bold text-xs shadow-2xs"
                   >
-                    <BarChart3 className="h-3.5 w-3.5 text-indigo-600" />
+                    <BarChart3 className="h-3.5 w-3.5 text-primary" />
                     Live Session Report
                   </Button>
                   <Button
@@ -3185,10 +3185,10 @@ export function LiveQuizTrainerControl({
                     variant="outline"
                     onClick={() => sessionId && loadBackendReport()}
                     disabled={loadingBackendReport}
-                    className="gap-1.5 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs h-8"
+                    className="gap-1.5 text-xs bg-card border-border text-secondary-foreground hover:bg-muted shadow-2xs h-8"
                   >
                     <RefreshCw
-                      className={`h-3.5 w-3.5 ${loadingBackendReport ? 'animate-spin text-indigo-600' : ''}`}
+                      className={`h-3.5 w-3.5 ${loadingBackendReport ? 'animate-spin text-primary' : ''}`}
                     />
                     Refresh
                   </Button>
@@ -3197,51 +3197,51 @@ export function LiveQuizTrainerControl({
 
               {/* Summary Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                <div className="rounded-2xl border border-accent/30 bg-accent-soft/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-accent">
                     <History className="h-3.5 w-3.5" />
                     <span>Quiz Batches</span>
                   </div>
-                  <p className="text-xl font-extrabold text-purple-950 mt-1">
+                  <p className="text-xl font-extrabold text-accent mt-1">
                     {historyBatchesGroupedByLabel.length}
                   </p>
-                  <p className="text-[10px] text-purple-600 mt-0.5">
+                  <p className="text-[10px] text-accent mt-0.5">
                     Distinct labels broadcasted
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                <div className="rounded-2xl border border-primary/30 bg-primary-soft/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary">
                     <FileQuestion className="h-3.5 w-3.5" />
                     <span>Total Questions</span>
                   </div>
-                  <p className="text-xl font-extrabold text-indigo-950 mt-1">
+                  <p className="text-xl font-extrabold text-primary mt-1">
                     {historyBatchesGroupedByLabel.reduce((sum, g) => sum + g.totalQuestions, 0)}
                   </p>
-                  <p className="text-[10px] text-indigo-600 mt-0.5">
+                  <p className="text-[10px] text-primary mt-0.5">
                     Across completed batches
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                <div className="rounded-2xl border border-info/30 bg-info-soft/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-info">
                     <Users className="h-3.5 w-3.5" />
                     <span>Total Submissions</span>
                   </div>
-                  <p className="text-xl font-extrabold text-blue-950 mt-1">
+                  <p className="text-xl font-extrabold text-info mt-1">
                     {historyBatchesGroupedByLabel.reduce((sum, g) => sum + g.totalResponses, 0)}
                   </p>
-                  <p className="text-[10px] text-blue-600 mt-0.5">
+                  <p className="text-[10px] text-info mt-0.5">
                     Student answers recorded
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                <div className="rounded-2xl border border-success/30 bg-success-soft/50 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-success">
                     <Award className="h-3.5 w-3.5" />
                     <span>Avg Accuracy</span>
                   </div>
-                  <p className="text-xl font-extrabold text-emerald-950 mt-1">
+                  <p className="text-xl font-extrabold text-success mt-1">
                     {historyBatchesGroupedByLabel.length > 0
                       ? Math.round(
                           historyBatchesGroupedByLabel.reduce(
@@ -3252,7 +3252,7 @@ export function LiveQuizTrainerControl({
                       : 0}
                     %
                   </p>
-                  <p className="text-[10px] text-emerald-600 mt-0.5">
+                  <p className="text-[10px] text-success mt-0.5">
                     Overall batch performance
                   </p>
                 </div>
@@ -3260,19 +3260,19 @@ export function LiveQuizTrainerControl({
 
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-subtle-foreground" />
                 <input
                   type="text"
                   value={historySearchQuery}
                   onChange={(e) => setHistorySearchQuery(e.target.value)}
                   placeholder="Search broadcasted quiz batches by label or learner name..."
-                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-8 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                  className="w-full rounded-xl border border-border bg-card pl-10 pr-8 py-2.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                 />
                 {historySearchQuery && (
                   <button
                     type="button"
                     onClick={() => setHistorySearchQuery('')}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-2.5 text-subtle-foreground hover:text-secondary-foreground"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -3281,13 +3281,13 @@ export function LiveQuizTrainerControl({
 
               {/* Grouped Batches List */}
               {filteredHistoryBatches.length === 0 ? (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-10 text-center space-y-3">
-                  <History className="mx-auto h-9 w-9 text-slate-300" />
+                <div className="rounded-2xl border-2 border-dashed border-border bg-muted/50 p-10 text-center space-y-3">
+                  <History className="mx-auto h-9 w-9 text-subtle-foreground" />
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">
+                    <h4 className="text-xs font-bold text-foreground">
                       No Broadcasted Quiz History
                     </h4>
-                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">
+                    <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-1">
                       {historySearchQuery
                         ? 'No broadcasted batches matched your search query.'
                         : 'Quizzes broadcasted from the Question Bank or Prepared Quizzes will be archived here grouped by their label, with full student score tables ready for LMS gradebook submission.'}
@@ -3297,7 +3297,7 @@ export function LiveQuizTrainerControl({
                     size="sm"
                     variant="outline"
                     onClick={() => setViewMode('selection')}
-                    className="gap-1.5 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 font-semibold"
+                    className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary-soft font-semibold"
                   >
                     <BookOpen className="h-3.5 w-3.5" />
                     Select Questions to Broadcast
@@ -3315,48 +3315,48 @@ export function LiveQuizTrainerControl({
                         key={batchGroup.label}
                         className={`rounded-2xl border transition shadow-2xs overflow-hidden ${
                           isExpanded
-                            ? 'border-indigo-300 bg-white ring-1 ring-indigo-500/20'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
+                            ? 'border-primary/30 bg-card ring-1 ring-ring/20'
+                            : 'border-border bg-card hover:border-input'
                         }`}
                       >
                         {/* Batch Header Bar */}
                         <div
-                          className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/40 cursor-pointer"
+                          className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gradient-to-r from-muted/70 via-card to-muted/40 cursor-pointer"
                           onClick={() =>
                             setExpandedHistoryGroupLabel(isExpanded ? null : batchGroup.label)
                           }
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-200/70 shadow-2xs">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent border border-accent/20 shadow-2xs">
                               <Sparkles className="h-5 w-5" />
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="rounded-md bg-purple-100 border border-purple-200 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                                <span className="rounded-md bg-accent-soft border border-accent/30 px-2 py-0.5 text-[10px] font-bold text-accent">
                                   Batch #{bIdx + 1}
                                 </span>
-                                <h4 className="text-sm font-bold text-slate-900 truncate">
+                                <h4 className="text-sm font-bold text-foreground truncate">
                                   {batchGroup.label}
                                 </h4>
-                                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">
                                   {batchGroup.totalQuestions} Question{batchGroup.totalQuestions > 1 ? 's' : ''}
                                 </span>
-                                <span className="rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                <span className="rounded-md bg-info-soft border border-info/30 px-2 py-0.5 text-[10px] font-semibold text-info">
                                   {batchGroup.studentResults.length} Learners
                                 </span>
                                 <span
                                   className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${
                                     batchGroup.averageAccuracy >= 70
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      ? 'bg-success-soft border-success/30 text-success'
                                       : batchGroup.averageAccuracy >= 40
-                                      ? 'bg-amber-50 border-amber-200 text-amber-800'
-                                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                                      ? 'bg-warning-soft border-warning/30 text-warning'
+                                      : 'bg-danger-soft border-danger/30 text-danger'
                                   }`}
                                 >
                                   {batchGroup.averageAccuracy}% Accuracy
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                              <p className="text-[11px] text-subtle-foreground mt-0.5 truncate">
                                 {batchGroup.completedAt
                                   ? `Completed ${new Date(batchGroup.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                                   : 'Completed in this session'}{' '}
@@ -3375,14 +3375,14 @@ export function LiveQuizTrainerControl({
                               onClick={() => handleSubmitBatchResults(batchGroup)}
                               className={`gap-1.5 font-bold text-xs shadow-xs h-8 px-3 transition ${
                                 isSubmitted
-                                  ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 cursor-default'
+                                  ? 'bg-success-soft border border-success/30 text-success cursor-default'
                                   : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                               }`}
                               title="Submit compiled learner quiz results to LMS gradebook"
                             >
                               {isSubmitted ? (
                                 <>
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                                   Submitted to LMS
                                 </>
                               ) : isSubmitting ? (
@@ -3405,10 +3405,10 @@ export function LiveQuizTrainerControl({
                               variant="outline"
                               onClick={() => handleExportBatchCSV(batchGroup)}
                               disabled={batchGroup.studentResults.length === 0}
-                              className="gap-1.5 text-xs bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs h-8"
+                              className="gap-1.5 text-xs bg-card border-border text-secondary-foreground hover:bg-muted shadow-2xs h-8"
                               title="Download spreadsheet of student scores for this batch"
                             >
-                              <Download className="h-3.5 w-3.5 text-slate-600" />
+                              <Download className="h-3.5 w-3.5 text-secondary-foreground" />
                               CSV
                             </Button>
 
@@ -3418,7 +3418,7 @@ export function LiveQuizTrainerControl({
                               onClick={() =>
                                 setExpandedHistoryGroupLabel(isExpanded ? null : batchGroup.label)
                               }
-                              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition"
+                              className="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-secondary-foreground transition"
                             >
                               {isExpanded ? (
                                 <ChevronUp className="h-5 w-5" />
@@ -3431,17 +3431,17 @@ export function LiveQuizTrainerControl({
 
                         {/* Batch Details Accordion Body */}
                         {isExpanded && (
-                          <div className="border-t border-slate-100 p-4 space-y-4 bg-slate-50/30 animate-in fade-in duration-150">
+                          <div className="border-t border-border/60 p-4 space-y-4 bg-muted/30 animate-in fade-in duration-150">
                             {/* Sub-tab Switcher: Student Results vs Questions Review */}
-                            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 pb-3">
-                              <div className="flex rounded-lg bg-slate-100 p-0.5 border border-slate-200/80">
+                            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-border pb-3">
+                              <div className="flex rounded-lg bg-secondary p-0.5 border border-border/80">
                                 <button
                                   type="button"
                                   onClick={() => setHistoryGroupSubTab('results')}
                                   className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition ${
                                     historyGroupSubTab === 'results'
-                                      ? 'bg-white text-indigo-600 shadow-2xs'
-                                      : 'text-slate-600 hover:text-slate-900'
+                                      ? 'bg-card text-primary shadow-2xs'
+                                      : 'text-secondary-foreground hover:text-foreground'
                                   }`}
                                 >
                                   <Users className="h-3.5 w-3.5" />
@@ -3452,8 +3452,8 @@ export function LiveQuizTrainerControl({
                                   onClick={() => setHistoryGroupSubTab('questions')}
                                   className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition ${
                                     historyGroupSubTab === 'questions'
-                                      ? 'bg-white text-indigo-600 shadow-2xs'
-                                      : 'text-slate-600 hover:text-slate-900'
+                                      ? 'bg-card text-primary shadow-2xs'
+                                      : 'text-secondary-foreground hover:text-foreground'
                                   }`}
                                 >
                                   <FileQuestion className="h-3.5 w-3.5" />
@@ -3461,7 +3461,7 @@ export function LiveQuizTrainerControl({
                                 </button>
                               </div>
 
-                              <span className="text-[11px] text-slate-500">
+                              <span className="text-[11px] text-muted-foreground">
                                 Showing all data recorded for &quot;{batchGroup.label}&quot;
                               </span>
                             </div>
@@ -3470,13 +3470,13 @@ export function LiveQuizTrainerControl({
                             {historyGroupSubTab === 'results' && (
                               <div className="space-y-2">
                                 {batchGroup.studentResults.length === 0 ? (
-                                  <div className="py-6 text-center text-xs text-slate-500">
+                                  <div className="py-6 text-center text-xs text-muted-foreground">
                                     No student submissions recorded for this batch yet.
                                   </div>
                                 ) : (
-                                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
+                                  <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-2xs">
                                     <table className="w-full text-left text-xs">
-                                      <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                      <thead className="border-b border-border/60 bg-muted/80 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                         <tr>
                                           <th className="px-3.5 py-2.5">Learner</th>
                                           <th className="px-3 py-2.5 text-center">Answered</th>
@@ -3487,15 +3487,15 @@ export function LiveQuizTrainerControl({
                                           <th className="px-3 py-2.5 text-right">Details</th>
                                         </tr>
                                       </thead>
-                                      <tbody className="divide-y divide-slate-100">
+                                      <tbody className="divide-y divide-border/60">
                                         {batchGroup.studentResults.map((student) => {
                                           const isStudentExpanded = expandedStudentId === student.userId;
                                           return (
                                             <React.Fragment key={student.userId}>
-                                              <tr className="hover:bg-slate-50/60 transition">
-                                                <td className="px-3.5 py-2.5 font-semibold text-slate-900">
+                                              <tr className="hover:bg-muted/60 transition">
+                                                <td className="px-3.5 py-2.5 font-semibold text-foreground">
                                                   <div className="flex items-center gap-2">
-                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
                                                       {student.userName.charAt(0).toUpperCase()}
                                                     </div>
                                                     <span className="truncate max-w-[140px] sm:max-w-[180px]">
@@ -3503,26 +3503,26 @@ export function LiveQuizTrainerControl({
                                                     </span>
                                                   </div>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center font-mono text-slate-600">
+                                                <td className="px-3 py-2.5 text-center font-mono text-secondary-foreground">
                                                   {student.answeredCount} / {student.totalQuestions}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center font-bold font-mono text-indigo-700">
+                                                <td className="px-3 py-2.5 text-center font-bold font-mono text-primary">
                                                   {student.correctCount} / {student.totalQuestions}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center">
                                                   <span
                                                     className={`inline-block rounded-md px-2 py-0.5 font-bold font-mono text-[10px] ${
                                                       student.scorePercent >= 70
-                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        ? 'bg-success-soft text-success'
                                                         : student.scorePercent >= 40
-                                                        ? 'bg-amber-100 text-amber-800'
-                                                        : 'bg-rose-100 text-rose-800'
+                                                        ? 'bg-warning-soft text-warning'
+                                                        : 'bg-danger-soft text-danger'
                                                     }`}
                                                   >
                                                     {student.scorePercent}%
                                                   </span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center text-slate-500 font-mono text-[11px]">
+                                                <td className="px-3 py-2.5 text-center text-muted-foreground font-mono text-[11px]">
                                                   {student.totalDurationSeconds > 0
                                                     ? `${student.totalDurationSeconds}s`
                                                     : '-'}
@@ -3531,13 +3531,13 @@ export function LiveQuizTrainerControl({
                                                   <span
                                                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
                                                       student.status === 'PASSED'
-                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                                        : 'bg-amber-50 border-amber-200 text-amber-700'
+                                                        ? 'bg-success-soft border-success/30 text-success'
+                                                        : 'bg-warning-soft border-warning/30 text-warning'
                                                     }`}
                                                   >
                                                     {student.status === 'PASSED' ? (
                                                       <>
-                                                        <Check className="h-3 w-3 text-emerald-600" />
+                                                        <Check className="h-3 w-3 text-success" />
                                                         Passed
                                                       </>
                                                     ) : (
@@ -3553,7 +3553,7 @@ export function LiveQuizTrainerControl({
                                                         isStudentExpanded ? null : student.userId,
                                                       )
                                                     }
-                                                    className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                                                    className="text-xs text-primary hover:text-primary/80 font-semibold"
                                                   >
                                                     {isStudentExpanded ? 'Hide' : 'Review'}
                                                   </button>
@@ -3562,41 +3562,41 @@ export function LiveQuizTrainerControl({
                                               {/* Expanded per-student answer details */}
                                               {isStudentExpanded && (
                                                 <tr>
-                                                  <td colSpan={7} className="bg-slate-50/90 px-4 py-3 border-y border-slate-200">
+                                                  <td colSpan={7} className="bg-muted/90 px-4 py-3 border-y border-border">
                                                     <div className="space-y-2">
-                                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                                         Question Answers by {student.userName}:
                                                       </span>
                                                       <div className="space-y-1.5">
                                                         {student.breakdown.map((item, qIdx) => (
                                                           <div
                                                             key={item.questionId || qIdx}
-                                                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs"
+                                                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-2 text-xs"
                                                           >
                                                             <div className="flex items-center gap-2 min-w-0">
-                                                              <span className="font-bold text-slate-500 font-mono text-[10px]">
+                                                              <span className="font-bold text-muted-foreground font-mono text-[10px]">
                                                                 Q{qIdx + 1}:
                                                               </span>
-                                                              <span className="font-medium text-slate-800 truncate">
+                                                              <span className="font-medium text-foreground truncate">
                                                                 {item.questionTitle}
                                                               </span>
                                                             </div>
                                                             <div className="flex items-center gap-2 shrink-0">
-                                                              <span className="text-[11px] text-slate-600 font-semibold">
+                                                              <span className="text-[11px] text-secondary-foreground font-semibold">
                                                                 Selected: {item.selectedOptionTexts.join(', ') || 'No answer'}
                                                               </span>
                                                               {item.isCorrect === true ? (
-                                                                <span className="inline-flex items-center gap-0.5 text-emerald-700 text-[10px] font-bold">
-                                                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                                <span className="inline-flex items-center gap-0.5 text-success text-[10px] font-bold">
+                                                                  <CheckCircle2 className="h-3 w-3 text-success" />
                                                                   Correct
                                                                 </span>
                                                               ) : item.isCorrect === false ? (
-                                                                <span className="inline-flex items-center gap-0.5 text-rose-700 text-[10px] font-bold">
-                                                                  <X className="h-3 w-3 text-rose-600" />
+                                                                <span className="inline-flex items-center gap-0.5 text-danger text-[10px] font-bold">
+                                                                  <X className="h-3 w-3 text-danger" />
                                                                   Incorrect
                                                                 </span>
                                                               ) : (
-                                                                <span className="text-slate-400 text-[10px]">Unscored</span>
+                                                                <span className="text-subtle-foreground text-[10px]">Unscored</span>
                                                               )}
                                                             </div>
                                                           </div>
@@ -3624,19 +3624,19 @@ export function LiveQuizTrainerControl({
                                   return (
                                     <div
                                       key={q.id || qIdx}
-                                      className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2.5 shadow-2xs"
+                                      className="rounded-xl border border-border bg-card p-3.5 space-y-2.5 shadow-2xs"
                                     >
                                       <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-center gap-2 min-w-0">
-                                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-indigo-100 font-mono text-[10px] font-bold text-indigo-800">
+                                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-primary-soft font-mono text-[10px] font-bold text-primary">
                                             {qIdx + 1}
                                           </span>
-                                          <p className="text-xs font-bold text-slate-900 leading-snug">
+                                          <p className="text-xs font-bold text-foreground leading-snug">
                                             {stripHtmlTags(q.titleEn)}
                                           </p>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                          <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
                                             {q.correctCount} / {totalQResponses} Correct ({q.accuracy}%)
                                           </span>
                                         </div>
@@ -3654,14 +3654,14 @@ export function LiveQuizTrainerControl({
                                               key={opt.id || oIdx}
                                               className={`relative overflow-hidden rounded-lg border p-2 text-xs transition ${
                                                 isCorrect
-                                                  ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950 font-semibold'
-                                                  : 'border-slate-200 bg-slate-50/60 text-slate-700'
+                                                  ? 'border-success/30 bg-success-soft/70 text-success font-semibold'
+                                                  : 'border-border bg-muted/60 text-secondary-foreground'
                                               }`}
                                             >
                                               {/* Distribution background bar */}
                                               <div
                                                 className={`absolute inset-y-0 left-0 transition-all ${
-                                                  isCorrect ? 'bg-emerald-200/40' : 'bg-slate-200/50'
+                                                  isCorrect ? 'bg-emerald-200/40' : 'bg-border/50'
                                                 }`}
                                                 style={{ width: `${pct}%` }}
                                               />
@@ -3671,14 +3671,14 @@ export function LiveQuizTrainerControl({
                                                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
                                                       isCorrect
                                                         ? 'bg-emerald-600 text-white'
-                                                        : 'bg-slate-200 text-slate-600'
+                                                        : 'bg-border text-secondary-foreground'
                                                     }`}
                                                   >
                                                     {String.fromCharCode(65 + oIdx)}
                                                   </span>
                                                   <span className="truncate">{stripHtmlTags(opt.textEn)}</span>
                                                   {isCorrect && (
-                                                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                                                    <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
                                                   )}
                                                 </div>
                                                 <span className="font-mono text-[10px] font-bold shrink-0">
@@ -3692,8 +3692,8 @@ export function LiveQuizTrainerControl({
 
                                       {/* Explanation */}
                                       {q.explanationEn && (
-                                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-[11px] text-slate-600">
-                                          <strong className="text-slate-700">Explanation: </strong>
+                                        <div className="rounded-lg bg-muted border border-border p-2 text-[11px] text-secondary-foreground">
+                                          <strong className="text-secondary-foreground">Explanation: </strong>
                                           {stripHtmlTags(q.explanationEn)}
                                         </div>
                                       )}
@@ -3722,7 +3722,7 @@ export function LiveQuizTrainerControl({
                     </div>
                     <div className="min-w-0 truncate">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="rounded bg-emerald-500/20 text-emerald-300 border border-success/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                           Live Question Active
                         </span>
                         {stagedQueue.length > 1 && (
@@ -3745,31 +3745,31 @@ export function LiveQuizTrainerControl({
                   <Button
                     size="sm"
                     onClick={() => setViewMode('broadcast')}
-                    className="gap-1.5 bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-xs shadow-md shrink-0 ml-3"
+                    className="gap-1.5 bg-card text-primary hover:bg-primary-soft font-bold text-xs shadow-md shrink-0 ml-3"
                   >
-                    <MonitorPlay className="h-4 w-4 text-indigo-600" />
+                    <MonitorPlay className="h-4 w-4 text-primary" />
                     View Live Broadcast Monitor →
                   </Button>
                 </div>
               )}
 
               {/* Prominent Active Course Identity Banner */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-white to-indigo-50/60 border border-indigo-100 p-4 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-primary-soft/90 via-card to-primary-soft/60 border border-primary/30 p-4 shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 border border-indigo-200/80 shadow-2xs">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card text-primary border border-primary/25 shadow-2xs">
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-xs font-mono font-bold text-indigo-800 border border-indigo-200/60">
+                      <span className="rounded-md bg-primary-soft px-2 py-0.5 text-xs font-mono font-bold text-primary border border-primary/20">
                         {courseInfo?.code || 'COURSE'}
                       </span>
-                      <h4 className="text-sm font-bold text-slate-900">
+                      <h4 className="text-sm font-bold text-foreground">
                         {courseInfo?.titleEn || courseInfo?.title || 'Live Course Session'}
                       </h4>
                     </div>
                     {courseInfo?.titleAm && (
-                      <p className="text-xs text-slate-500 font-amharic mt-0.5">
+                      <p className="text-xs text-muted-foreground font-amharic mt-0.5">
                         {courseInfo.titleAm}
                       </p>
                     )}
@@ -3777,11 +3777,11 @@ export function LiveQuizTrainerControl({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="rounded-lg bg-white px-2.5 py-1 text-xs text-slate-700 font-semibold border border-slate-200 shadow-2xs">
+                  <span className="rounded-lg bg-card px-2.5 py-1 text-xs text-secondary-foreground font-semibold border border-border shadow-2xs">
                     {modules.length} Modules in Curriculum
                   </span>
                   {!activeQuiz && stagedQueue.length > 0 && (
-                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs text-emerald-800 font-bold">
+                    <span className="rounded-lg bg-success-soft border border-success/30 px-2.5 py-1 text-xs text-success font-bold">
                       {stagedQueue.length} Ready in Quiz Queue
                     </span>
                   )}
@@ -3792,14 +3792,14 @@ export function LiveQuizTrainerControl({
               <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   {/* Tab Switcher */}
-                  <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
+                  <div className="flex rounded-xl bg-secondary p-1 border border-border/80">
                     <button
                       type="button"
                       onClick={() => setTab('prepared')}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                         tab === 'prepared'
-                          ? 'bg-white text-indigo-600 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-card text-primary shadow-xs'
+                          : 'text-secondary-foreground hover:text-foreground'
                       }`}
                     >
                       <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
@@ -3808,8 +3808,8 @@ export function LiveQuizTrainerControl({
                         <span
                           className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
                             tab === 'prepared'
-                              ? 'bg-indigo-100 text-indigo-700'
-                              : 'bg-slate-200 text-slate-600'
+                              ? 'bg-primary-soft text-primary'
+                              : 'bg-border text-secondary-foreground'
                           }`}
                         >
                           {totalPreparedCount}
@@ -3821,8 +3821,8 @@ export function LiveQuizTrainerControl({
                       onClick={() => setTab('bank')}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                         tab === 'bank'
-                          ? 'bg-white text-indigo-600 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-card text-primary shadow-xs'
+                          : 'text-secondary-foreground hover:text-foreground'
                       }`}
                     >
                       <BookOpen className="h-3.5 w-3.5" />
@@ -3833,8 +3833,8 @@ export function LiveQuizTrainerControl({
                       onClick={() => setTab('custom')}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                         tab === 'custom'
-                          ? 'bg-white text-indigo-600 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-card text-primary shadow-xs'
+                          : 'text-secondary-foreground hover:text-foreground'
                       }`}
                     >
                       <HelpCircle className="h-3.5 w-3.5" />
@@ -3846,7 +3846,7 @@ export function LiveQuizTrainerControl({
                         setViewMode('report');
                         if (sessionId) loadBackendReport();
                       }}
-                      className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition hover:bg-slate-200/60"
+                      className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-secondary-foreground hover:text-foreground transition hover:bg-input/60"
                       title="Open full Live Session Quiz & Polls Report"
                     >
                       <BarChart3 className="h-3.5 w-3.5 text-indigo-500" />
@@ -3858,13 +3858,13 @@ export function LiveQuizTrainerControl({
                         setViewMode('history');
                         if (sessionId) loadBackendReport();
                       }}
-                      className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition hover:bg-slate-200/60"
+                      className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-secondary-foreground hover:text-foreground transition hover:bg-input/60"
                       title="View all previously broadcasted quiz batches grouped by label and student results"
                     >
                       <History className="h-3.5 w-3.5 text-indigo-500" />
                       Broadcasted History
                       {quizHistory.length > 0 && (
-                        <span className="rounded-full bg-purple-100 text-purple-700 px-1.5 py-0.2 text-[10px] font-bold">
+                        <span className="rounded-full bg-accent-soft text-accent px-1.5 py-0.2 text-[10px] font-bold">
                           {quizHistory.length}
                         </span>
                       )}
@@ -3873,10 +3873,10 @@ export function LiveQuizTrainerControl({
                       <button
                         type="button"
                         onClick={() => setViewMode('broadcast')}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition border border-emerald-200 ml-1"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-success bg-success-soft hover:bg-success/15 transition border border-success/30 ml-1"
                         title="Return to the active question broadcast view"
                       >
-                        <MonitorPlay className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                        <MonitorPlay className="h-3.5 w-3.5 text-success animate-pulse" />
                         Live Monitor
                       </button>
                     )}
@@ -3884,9 +3884,9 @@ export function LiveQuizTrainerControl({
 
                   {/* Timer preset selection in minutes (Hidden during broadcasting) */}
                   {!activeQuiz && (tab === 'bank' || tab === 'custom') && (
-                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-                      <Clock className="h-3.5 w-3.5 text-slate-500" />
-                      <span className="text-xs text-slate-500 font-medium">Timer:</span>
+                    <div className="flex items-center gap-1.5 bg-card px-2.5 py-1 rounded-xl border border-border shadow-2xs">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-medium">Timer:</span>
                       {[1, 2, 3, 5, 10].map((m) => (
                         <button
                           key={m}
@@ -3895,7 +3895,7 @@ export function LiveQuizTrainerControl({
                           className={`rounded-md px-2 py-0.5 text-xs font-bold transition ${
                             timerMinutes === m
                               ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+                              : 'bg-muted text-secondary-foreground hover:bg-secondary border border-border/60'
                           }`}
                         >
                           {m}m
@@ -3907,11 +3907,11 @@ export function LiveQuizTrainerControl({
 
                 {/* Staged Broadcast Queue (Hidden during active broadcasting) */}
                 {!activeQuiz && stagedQueue.length > 0 && (
-                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-3 shadow-xs">
+                  <div className="rounded-2xl border border-primary/30 bg-primary-soft/50 p-4 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
-                        <ListOrdered className="h-4 w-4 text-indigo-600" />
-                        <span className="text-xs font-bold text-indigo-950">
+                        <ListOrdered className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-bold text-primary">
                           Quiz Questions Ready to Broadcast ({stagedQueue.length} Question
                           {stagedQueue.length > 1 ? 's' : ''})
                         </span>
@@ -3923,7 +3923,7 @@ export function LiveQuizTrainerControl({
                             setStagedQueue([]);
                             setSelectedQuestion(null);
                           }}
-                          className="text-[11px] text-slate-500 hover:text-red-600 transition ml-2 font-medium"
+                          className="text-[11px] text-muted-foreground hover:text-danger transition ml-2 font-medium"
                         >
                           Clear Queue
                         </button>
@@ -3931,9 +3931,9 @@ export function LiveQuizTrainerControl({
                     </div>
 
                     {/* Quiz Batch Label Input */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-indigo-100 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 shrink-0">
-                        <Tag className="h-3.5 w-3.5 text-indigo-600" />
+                    <div className="flex items-center gap-2 pt-2 border-t border-primary/30 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-primary shrink-0">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
                         <span>Quiz Batch Label:</span>
                       </div>
                       <input
@@ -3941,13 +3941,13 @@ export function LiveQuizTrainerControl({
                         value={bankQuizLabel}
                         onChange={(e) => setBankQuizLabel(e.target.value)}
                         placeholder={`Quiz Label (e.g. Quiz ${quizHistory.length + 1}, Chapter 1 Check)...`}
-                        className="flex-1 max-w-sm rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                        className="flex-1 max-w-sm rounded-xl border border-primary/30 bg-card px-3 py-1.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs font-medium"
                       />
                       {bankQuizLabel && (
                         <button
                           type="button"
                           onClick={() => setBankQuizLabel('')}
-                          className="text-slate-400 hover:text-slate-600"
+                          className="text-subtle-foreground hover:text-secondary-foreground"
                           title="Clear label"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -3984,10 +3984,10 @@ export function LiveQuizTrainerControl({
                             key={q.id || idx}
                             className={`rounded-xl border transition shadow-2xs ${
                               isCurrentlyActive
-                                ? 'border-emerald-400 bg-emerald-50/70 ring-1 ring-emerald-500/20'
+                                ? 'border-emerald-400 bg-success-soft/70 ring-1 ring-success/20'
                                 : isPreviouslyBroadcasted
-                                  ? 'border-purple-300 bg-purple-50/50 ring-1 ring-purple-400/20'
-                                  : 'border-indigo-100 bg-white hover:border-indigo-200'
+                                  ? 'border-accent/30 bg-accent-soft/50 ring-1 ring-purple-400/20'
+                                  : 'border-primary/30 bg-card hover:border-indigo-200'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
@@ -3998,36 +3998,36 @@ export function LiveQuizTrainerControl({
                                       ? 'bg-emerald-600 text-white'
                                       : isPreviouslyBroadcasted
                                         ? 'bg-purple-600 text-white'
-                                        : 'bg-indigo-100 text-indigo-800'
+                                        : 'bg-primary-soft text-primary'
                                   }`}
                                 >
                                   #{idx + 1}
                                 </span>
 
                                 {isCurrentlyActive && (
-                                  <span className="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
+                                  <span className="inline-flex items-center gap-1 rounded bg-success-soft text-success border border-success/30 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
                                     Active Now
                                   </span>
                                 )}
 
                                 {isPreviouslyBroadcasted && (
-                                  <span className="inline-flex items-center gap-1 rounded bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
-                                    <CheckCircle2 className="h-2.5 w-2.5 text-purple-600" />
+                                  <span className="inline-flex items-center gap-1 rounded bg-accent-soft text-accent border border-accent/30 px-1.5 py-0.5 text-[9px] font-bold shrink-0">
+                                    <CheckCircle2 className="h-2.5 w-2.5 text-accent" />
                                     Previously Broadcasted
                                   </span>
                                 )}
 
-                                <span className="truncate text-slate-800 font-semibold flex-1">
+                                <span className="truncate text-foreground font-semibold flex-1">
                                   {stripHtmlTags(q.question)}
                                 </span>
 
                                 {q.module ? (
-                                  <span className="hidden md:inline-block shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600 font-medium">
+                                  <span className="hidden md:inline-block shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[9px] text-secondary-foreground font-medium">
                                     {q.module.titleEn}
                                   </span>
                                 ) : (
-                                  <span className="hidden md:inline-block shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500">
+                                  <span className="hidden md:inline-block shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">
                                     Course General
                                   </span>
                                 )}
@@ -4041,8 +4041,8 @@ export function LiveQuizTrainerControl({
                                   onClick={() => setExpandedQueueIdx(isExpanded ? null : idx)}
                                   className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition ${
                                     isExpanded
-                                      ? 'bg-indigo-100 text-indigo-800'
-                                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                      ? 'bg-primary-soft text-primary'
+                                      : 'text-secondary-foreground hover:bg-secondary hover:text-foreground'
                                   }`}
                                   title={
                                     isExpanded
@@ -4100,7 +4100,7 @@ export function LiveQuizTrainerControl({
                                       subLessonId: q.subLessonId || 'NONE',
                                     });
                                   }}
-                                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition"
+                                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-secondary-foreground hover:bg-primary-soft hover:text-primary transition"
                                   title="Edit question text, options, and curriculum node"
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
@@ -4118,7 +4118,7 @@ export function LiveQuizTrainerControl({
                                     }
                                     if (expandedQueueIdx === idx) setExpandedQueueIdx(null);
                                   }}
-                                  className="p-1 text-slate-400 hover:text-red-600 transition rounded-lg hover:bg-red-50"
+                                  className="p-1 text-subtle-foreground hover:text-danger transition rounded-lg hover:bg-danger-soft"
                                   title="Remove from queue"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -4128,11 +4128,11 @@ export function LiveQuizTrainerControl({
 
                             {/* Expanded Question Details Panel */}
                             {isExpanded && (
-                              <div className="border-t border-indigo-100 bg-slate-50/70 p-3.5 space-y-2.5 text-xs animate-in fade-in duration-150">
+                              <div className="border-t border-primary/30 bg-muted/70 p-3.5 space-y-2.5 text-xs animate-in fade-in duration-150">
                                 {/* Curriculum Node Breadcrumb */}
-                                <div className="flex items-center gap-1.5 text-[11px] text-slate-600 flex-wrap">
-                                  <span className="font-semibold text-slate-500">Curriculum:</span>
-                                  <span className="rounded bg-white px-2 py-0.5 border border-slate-200 font-mono text-[10px] text-slate-700">
+                                <div className="flex items-center gap-1.5 text-[11px] text-secondary-foreground flex-wrap">
+                                  <span className="font-semibold text-muted-foreground">Curriculum:</span>
+                                  <span className="rounded bg-card px-2 py-0.5 border border-border font-mono text-[10px] text-secondary-foreground">
                                     {q.module?.titleEn
                                       ? `Module: ${q.module.titleEn}`
                                       : 'Course General'}
@@ -4141,18 +4141,18 @@ export function LiveQuizTrainerControl({
                                       ? ` > Sub-lesson: ${q.subLesson.titleEn}`
                                       : ''}
                                   </span>
-                                  <span className="rounded bg-indigo-50 px-2 py-0.5 text-indigo-700 font-semibold text-[10px]">
+                                  <span className="rounded bg-primary-soft px-2 py-0.5 text-primary font-semibold text-[10px]">
                                     {q.type === 'TRUE_FALSE' ? 'True / False' : 'Multiple Choice'}
                                   </span>
                                 </div>
 
                                 {/* Full Question Text */}
                                 <div>
-                                  <p className="font-bold text-slate-900 leading-snug">
+                                  <p className="font-bold text-foreground leading-snug">
                                     {stripHtmlTags(q.question)}
                                   </p>
                                   {(q as any).titleAm && (
-                                    <p className="font-amharic text-slate-600 text-[11px] mt-0.5">
+                                    <p className="font-amharic text-secondary-foreground text-[11px] mt-0.5">
                                       {(q as any).titleAm}
                                     </p>
                                   )}
@@ -4160,7 +4160,7 @@ export function LiveQuizTrainerControl({
 
                                 {/* Options List */}
                                 <div className="space-y-1">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     Options &amp; Correct Answer:
                                   </span>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
@@ -4169,23 +4169,23 @@ export function LiveQuizTrainerControl({
                                         key={oIdx}
                                         className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 border text-xs ${
                                           opt.isCorrect
-                                            ? 'border-emerald-300 bg-emerald-50 text-emerald-900 font-bold shadow-2xs'
-                                            : 'border-slate-200 bg-white text-slate-700'
+                                            ? 'border-success/30 bg-success-soft text-success font-bold shadow-2xs'
+                                            : 'border-border bg-card text-secondary-foreground'
                                         }`}
                                       >
                                         <span
                                           className={`flex h-4 w-4 items-center justify-center rounded text-[10px] font-bold ${
                                             opt.isCorrect
                                               ? 'bg-emerald-600 text-white'
-                                              : 'bg-slate-100 text-slate-600'
+                                              : 'bg-secondary text-secondary-foreground'
                                           }`}
                                         >
                                           {String.fromCharCode(65 + oIdx)}
                                         </span>
                                         <span className="flex-1 truncate">{opt.text}</span>
                                         {opt.isCorrect && (
-                                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-bold shrink-0">
-                                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                          <span className="inline-flex items-center gap-1 text-[10px] text-success font-bold shrink-0">
+                                            <CheckCircle2 className="h-3 w-3 text-success" />
                                             Correct Answer
                                           </span>
                                         )}
@@ -4196,8 +4196,8 @@ export function LiveQuizTrainerControl({
 
                                 {/* Explanation if present */}
                                 {(q as any).explanation && (
-                                  <div className="rounded-lg bg-white border border-slate-200 p-2.5 text-[11px] text-slate-700">
-                                    <span className="font-bold text-indigo-700 block mb-0.5">
+                                  <div className="rounded-lg bg-card border border-border p-2.5 text-[11px] text-secondary-foreground">
+                                    <span className="font-bold text-primary block mb-0.5">
                                       Explanation:
                                     </span>
                                     {stripHtmlTags((q as any).explanation)}
@@ -4205,7 +4205,7 @@ export function LiveQuizTrainerControl({
                                 )}
 
                                 {/* Direct Broadcast This Question button */}
-                                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200/80">
+                                <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/80">
                                   <Button
                                     type="button"
                                     size="sm"
@@ -4228,7 +4228,7 @@ export function LiveQuizTrainerControl({
                     </div>
 
                     {/* Queue Broadcast Action Bar */}
-                    <div className="flex items-center justify-end pt-1 border-t border-indigo-100/80">
+                    <div className="flex items-center justify-end pt-1 border-t border-primary/25">
                       <Button
                         size="sm"
                         disabled={Boolean(activeQuiz)}
@@ -4264,19 +4264,19 @@ export function LiveQuizTrainerControl({
                   <div className="space-y-4">
                     {/* Search Bar */}
                     <div className="relative">
-                      <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                      <Search className="absolute left-3.5 top-3 h-4 w-4 text-subtle-foreground" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={`Search questions in ${courseInfo?.code || 'course'} by keyword or choice...`}
-                        className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-8 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                        className="w-full rounded-xl border border-border bg-card pl-10 pr-8 py-2.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                       />
                       {searchQuery && (
                         <button
                           type="button"
                           onClick={() => setSearchQuery('')}
-                          className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3 top-2.5 text-subtle-foreground hover:text-secondary-foreground"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -4284,10 +4284,10 @@ export function LiveQuizTrainerControl({
                     </div>
 
                     {/* Dedicated Curriculum Hierarchy Filter Bar */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-xs">
+                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          <Filter className="h-3.5 w-3.5 text-indigo-600" />
+                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <Filter className="h-3.5 w-3.5 text-primary" />
                           <span>
                             Curriculum Hierarchy Filter for {courseInfo?.code || 'Course'}
                           </span>
@@ -4305,7 +4305,7 @@ export function LiveQuizTrainerControl({
                               setSelectedSubLessonId('ALL');
                               setSearchQuery('');
                             }}
-                            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold hover:underline"
+                            className="text-xs text-primary hover:text-primary/80 font-semibold hover:underline"
                           >
                             Reset Filter
                           </button>
@@ -4316,7 +4316,7 @@ export function LiveQuizTrainerControl({
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                         {/* 1. Module Selector */}
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
                             1. Module
                           </label>
                           <select
@@ -4326,7 +4326,7 @@ export function LiveQuizTrainerControl({
                               setSelectedLessonId('ALL');
                               setSelectedSubLessonId('ALL');
                             }}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                            className="w-full rounded-xl border border-border bg-card px-2.5 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                           >
                             <option value="ALL">All Modules ({modules.length})</option>
                             <option value="COURSE_GENERAL">Course General (No Module)</option>
@@ -4341,7 +4341,7 @@ export function LiveQuizTrainerControl({
 
                         {/* 2. Lesson Selector */}
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
                             2. Lesson
                           </label>
                           <select
@@ -4356,7 +4356,7 @@ export function LiveQuizTrainerControl({
                               setSelectedLessonId(e.target.value);
                               setSelectedSubLessonId('ALL');
                             }}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs disabled:opacity-40 disabled:bg-slate-50"
+                            className="w-full rounded-xl border border-border bg-card px-2.5 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs disabled:opacity-40 disabled:bg-muted"
                           >
                             <option value="ALL">
                               {selectedModuleId === 'ALL'
@@ -4375,7 +4375,7 @@ export function LiveQuizTrainerControl({
 
                         {/* 3. Sub-lesson Selector */}
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
                             3. Sub-lesson
                           </label>
                           <select
@@ -4384,7 +4384,7 @@ export function LiveQuizTrainerControl({
                             }
                             value={selectedSubLessonId}
                             onChange={(e) => setSelectedSubLessonId(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs disabled:opacity-40 disabled:bg-slate-50"
+                            className="w-full rounded-xl border border-border bg-card px-2.5 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs disabled:opacity-40 disabled:bg-muted"
                           >
                             <option value="ALL">
                               {selectedLessonId === 'ALL'
@@ -4403,13 +4403,13 @@ export function LiveQuizTrainerControl({
 
                         {/* 4. Question Type */}
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
                             4. Question Type
                           </label>
                           <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                            className="w-full rounded-xl border border-border bg-card px-2.5 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                           >
                             <option value="ALL">All Types</option>
                             <option value="MULTIPLE_CHOICE">Multiple Choice</option>
@@ -4419,30 +4419,30 @@ export function LiveQuizTrainerControl({
                       </div>
 
                       {/* Active Level Breadcrumb */}
-                      <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
+                      <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
                         <span className="font-semibold">Active Level:</span>
-                        <strong className="text-indigo-900 font-mono truncate">
+                        <strong className="text-primary font-mono truncate">
                           {curriculumBreadcrumb}
                         </strong>
-                        <span className="text-slate-400">
+                        <span className="text-subtle-foreground">
                           ({filteredQuestions.length} questions available)
                         </span>
                       </div>
                     </div>
 
                     {/* Amount of Questions & Random Selection Bar */}
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5 shadow-2xs">
+                    <div className="rounded-2xl border border-border bg-muted/70 p-3.5 space-y-2.5 shadow-2xs">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <ListOrdered className="h-4 w-4 text-indigo-600" />
-                          <span className="text-xs font-bold text-slate-700">
+                          <ListOrdered className="h-4 w-4 text-primary" />
+                          <span className="text-xs font-bold text-secondary-foreground">
                             Amount of Questions:
                           </span>
-                          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+                          <div className="flex items-center rounded-lg border border-border bg-card p-0.5 shadow-2xs">
                             <button
                               type="button"
                               onClick={() => setQuestionAmount((prev) => Math.max(1, prev - 1))}
-                              className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 flex items-center justify-center font-bold text-xs"
+                              className="h-6 w-6 rounded text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center justify-center font-bold text-xs"
                             >
                               -
                             </button>
@@ -4457,7 +4457,7 @@ export function LiveQuizTrainerControl({
                                   setQuestionAmount(val);
                                 }
                               }}
-                              className="w-10 bg-transparent text-center text-xs font-bold text-slate-900 outline-none"
+                              className="w-10 bg-transparent text-center text-xs font-bold text-foreground outline-none"
                             />
                             <button
                               type="button"
@@ -4466,7 +4466,7 @@ export function LiveQuizTrainerControl({
                                   Math.min(Math.max(1, filteredQuestions.length), prev + 1),
                                 )
                               }
-                              className="h-6 w-6 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 flex items-center justify-center font-bold text-xs"
+                              className="h-6 w-6 rounded text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center justify-center font-bold text-xs"
                             >
                               +
                             </button>
@@ -4482,7 +4482,7 @@ export function LiveQuizTrainerControl({
                                 className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition ${
                                   questionAmount === amt
                                     ? 'bg-indigo-600 text-white shadow-xs'
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    : 'bg-card border border-border text-secondary-foreground hover:bg-muted'
                                 }`}
                               >
                                 {amt}
@@ -4490,7 +4490,7 @@ export function LiveQuizTrainerControl({
                             ))}
                           </div>
 
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[11px] text-muted-foreground">
                             ({filteredQuestions.length} available)
                           </span>
                         </div>
@@ -4503,7 +4503,7 @@ export function LiveQuizTrainerControl({
                             variant="outline"
                             disabled={filteredQuestions.length === 0}
                             onClick={handleGenerateRandom}
-                            className="gap-1.5 border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs shadow-2xs"
+                            className="gap-1.5 border-border bg-card text-secondary-foreground hover:bg-secondary text-xs shadow-2xs"
                             title="Randomly select questions into quiz queue"
                           >
                             <Shuffle className="h-3.5 w-3.5" />
@@ -4541,9 +4541,9 @@ export function LiveQuizTrainerControl({
                       </div>
 
                       {/* Quiz Batch Label Input */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80 flex-wrap">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 shrink-0">
-                          <Tag className="h-3.5 w-3.5 text-indigo-600" />
+                      <div className="flex items-center gap-2 pt-2 border-t border-border/80 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-secondary-foreground shrink-0">
+                          <Tag className="h-3.5 w-3.5 text-primary" />
                           <span>Quiz Batch Label:</span>
                         </div>
                         <input
@@ -4551,13 +4551,13 @@ export function LiveQuizTrainerControl({
                           value={bankQuizLabel}
                           onChange={(e) => setBankQuizLabel(e.target.value)}
                           placeholder={`Enter quiz label (e.g. Quiz ${quizHistory.length + 1}, Mid-Session Check)...`}
-                          className="flex-1 min-w-[200px] max-w-sm rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                          className="flex-1 min-w-[200px] max-w-sm rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs font-medium"
                         />
                         {bankQuizLabel && (
                           <button
                             type="button"
                             onClick={() => setBankQuizLabel('')}
-                            className="text-slate-400 hover:text-slate-600"
+                            className="text-subtle-foreground hover:text-secondary-foreground"
                             title="Clear label"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -4568,15 +4568,15 @@ export function LiveQuizTrainerControl({
 
                     {/* Questions List */}
                     {loadingQuestions ? (
-                      <div className="py-8 text-center text-xs text-slate-500">
+                      <div className="py-8 text-center text-xs text-muted-foreground">
                         Loading question bank…
                       </div>
                     ) : filteredQuestions.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-500 space-y-2">
-                        <p className="text-slate-800 font-semibold">
+                      <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-xs text-muted-foreground space-y-2">
+                        <p className="text-foreground font-semibold">
                           No questions found under &quot;{curriculumBreadcrumb}&quot;.
                         </p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-subtle-foreground">
                           Switch to &quot;Instant Custom Question&quot; to add questions for this
                           level, or prepare questions in the Question Bank workspace.
                         </p>
@@ -4593,12 +4593,12 @@ export function LiveQuizTrainerControl({
                               key={q.id}
                               className={`rounded-2xl border p-3.5 transition space-y-2 ${
                                 isStaged
-                                  ? 'border-indigo-400 bg-indigo-50/40 ring-1 ring-indigo-500/20 shadow-xs'
+                                  ? 'border-ring bg-primary-soft/40 ring-1 ring-ring/20 shadow-xs'
                                   : isPreviouslyBroadcasted
-                                    ? 'border-purple-200 bg-purple-50/25 hover:border-purple-300 shadow-2xs'
+                                    ? 'border-accent/30 bg-accent-soft/25 hover:border-purple-300 shadow-2xs'
                                     : isSelected
-                                      ? 'border-indigo-300 bg-indigo-50/20'
-                                      : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                                      ? 'border-primary/30 bg-primary-soft/20'
+                                      : 'border-border bg-card hover:border-input shadow-2xs'
                               }`}
                             >
                               <div className="flex items-start justify-between gap-3">
@@ -4607,7 +4607,7 @@ export function LiveQuizTrainerControl({
                                     type="checkbox"
                                     checked={isStaged}
                                     onChange={() => handleToggleQuestionInQueue(q)}
-                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    className="h-4 w-4 rounded border-input text-primary focus:ring-ring cursor-pointer"
                                     title="Add/Remove from broadcast queue"
                                   />
                                 </div>
@@ -4618,48 +4618,48 @@ export function LiveQuizTrainerControl({
                                 >
                                   <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                                     {q.module && (
-                                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-info-soft border border-info/30 px-2 py-0.5 text-[10px] font-semibold text-info">
                                         <FolderOpen className="h-2.5 w-2.5" />
                                         {q.module.titleEn}
                                       </span>
                                     )}
 
                                     {q.lesson && (
-                                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-success-soft border border-success/30 px-2 py-0.5 text-[10px] font-semibold text-success">
                                         <FileText className="h-2.5 w-2.5" />
                                         {q.lesson.titleEn}
                                       </span>
                                     )}
 
                                     {q.subLesson && (
-                                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-warning-soft border border-warning/30 px-2 py-0.5 text-[10px] font-semibold text-warning">
                                         {q.subLesson.titleEn}
                                       </span>
                                     )}
 
-                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                    <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">
                                       {q.type === 'TRUE_FALSE' ? 'True/False' : 'Multiple Choice'}
                                     </span>
-                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                    <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
                                       {q.category || 'General'}
                                     </span>
 
                                     {activeQuiz?.id === q.id && (
-                                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-success-soft border border-success/30 px-2 py-0.5 text-[10px] font-bold text-success">
                                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
                                         Active Now
                                       </span>
                                     )}
 
                                     {activeQuiz?.id !== q.id && isPreviouslyBroadcasted && (
-                                      <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 border border-purple-300 px-2 py-0.5 text-[10px] font-bold text-purple-800">
-                                        <CheckCircle2 className="h-2.5 w-2.5 text-purple-600" />
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-accent-soft border border-accent/30 px-2 py-0.5 text-[10px] font-bold text-accent">
+                                        <CheckCircle2 className="h-2.5 w-2.5 text-accent" />
                                         Previously Broadcasted
                                       </span>
                                     )}
                                   </div>
 
-                                  <p className="text-xs font-semibold text-slate-900 leading-relaxed">
+                                  <p className="text-xs font-semibold text-foreground leading-relaxed">
                                     {stripHtmlTags(q.question)}
                                   </p>
                                 </div>
@@ -4675,8 +4675,8 @@ export function LiveQuizTrainerControl({
                                     }}
                                     className={`gap-1.5 text-xs h-7 px-2.5 font-medium border shadow-2xs ${
                                       selectedQuestion?.id === q.id
-                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                        ? 'bg-primary-soft border-primary/30 text-primary'
+                                        : 'bg-card border-border text-secondary-foreground hover:bg-muted'
                                     }`}
                                     title="View question options and correct answer before broadcasting"
                                   >
@@ -4700,9 +4700,9 @@ export function LiveQuizTrainerControl({
                                     }}
                                     className={`gap-1 font-semibold text-xs px-2.5 py-1 h-7 transition shadow-xs ${
                                       isPreviouslyBroadcasted
-                                        ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed opacity-80'
+                                        ? 'bg-secondary text-muted-foreground border border-border cursor-not-allowed opacity-80'
                                         : activeQuiz
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        ? 'bg-border text-subtle-foreground cursor-not-allowed'
                                         : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                                     }`}
                                     title={
@@ -4715,7 +4715,7 @@ export function LiveQuizTrainerControl({
                                   >
                                     {isPreviouslyBroadcasted ? (
                                       <>
-                                        <CheckCircle2 className="h-3 w-3 text-purple-600" />
+                                        <CheckCircle2 className="h-3 w-3 text-accent" />
                                         Broadcasted
                                       </>
                                     ) : activeQuiz ? (
@@ -4732,13 +4732,13 @@ export function LiveQuizTrainerControl({
 
                               {/* Options & Details Preview */}
                               {selectedQuestion?.id === q.id && (
-                                <div className="pt-2 border-t border-slate-100 space-y-2">
+                                <div className="pt-2 border-t border-border/60 space-y-2">
                                   {/* Curriculum details */}
-                                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600 flex-wrap">
-                                    <span className="font-semibold text-slate-500">
+                                  <div className="flex items-center gap-1.5 text-[11px] text-secondary-foreground flex-wrap">
+                                    <span className="font-semibold text-muted-foreground">
                                       Curriculum Assignment:
                                     </span>
-                                    <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-700">
+                                    <span className="rounded bg-secondary px-2 py-0.5 font-mono text-[10px] text-secondary-foreground">
                                       {(q.module as any)?.title || q.module?.titleEn
                                         ? `Module: ${(q.module as any)?.title || q.module?.titleEn}`
                                         : 'Course General'}
@@ -4747,7 +4747,7 @@ export function LiveQuizTrainerControl({
                                         ? ` > Sub-lesson: ${(q.subLesson as any)?.title || q.subLesson?.titleEn}`
                                         : ''}
                                     </span>
-                                    <span className="rounded bg-indigo-50 px-2 py-0.5 text-indigo-700 font-semibold text-[10px]">
+                                    <span className="rounded bg-primary-soft px-2 py-0.5 text-primary font-semibold text-[10px]">
                                       {q.points || 10} points
                                     </span>
                                   </div>
@@ -4755,7 +4755,7 @@ export function LiveQuizTrainerControl({
                                   {/* Options */}
                                   {Array.isArray(q.options) && q.options.length > 0 && (
                                     <div className="space-y-1">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                         Options (Correct answer highlighted in green):
                                       </span>
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
@@ -4776,23 +4776,23 @@ export function LiveQuizTrainerControl({
                                               key={idx}
                                               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs border ${
                                                 isCorrect
-                                                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900 font-semibold shadow-2xs'
-                                                  : 'border-slate-200 bg-slate-50/60 text-slate-700'
+                                                  ? 'border-success/30 bg-success-soft text-success font-semibold shadow-2xs'
+                                                  : 'border-border bg-muted/60 text-secondary-foreground'
                                               }`}
                                             >
                                               <span
                                                 className={`flex h-4 w-4 items-center justify-center rounded text-[10px] font-bold ${
                                                   isCorrect
                                                     ? 'bg-emerald-600 text-white'
-                                                    : 'bg-slate-200 text-slate-600'
+                                                    : 'bg-border text-secondary-foreground'
                                                 }`}
                                               >
                                                 {String.fromCharCode(65 + idx)}
                                               </span>
                                               <span className="truncate flex-1">{cleanText}</span>
                                               {isCorrect && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-bold shrink-0">
-                                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                <span className="inline-flex items-center gap-1 text-[10px] text-success font-bold shrink-0">
+                                                  <CheckCircle2 className="h-3 w-3 text-success" />
                                                   Correct Answer
                                                 </span>
                                               )}
@@ -4805,8 +4805,8 @@ export function LiveQuizTrainerControl({
 
                                   {/* Explanation */}
                                   {q.explanation && (
-                                    <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-700">
-                                      <span className="font-bold text-indigo-700 block mb-0.5">
+                                    <div className="rounded-lg bg-muted border border-border p-2.5 text-[11px] text-secondary-foreground">
+                                      <span className="font-bold text-primary block mb-0.5">
                                         Explanation:
                                       </span>
                                       {stripHtmlTags(q.explanation)}
@@ -4822,13 +4822,13 @@ export function LiveQuizTrainerControl({
 
                     {/* Permanent Question Bank Broadcast Control Bar (Hidden during active broadcasting) */}
                     {!activeQuiz && (
-                      <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-10">
+                      <div className="rounded-2xl border border-border bg-card p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-10">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
-                            <Play className="h-4 w-4 fill-indigo-600" />
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary border border-primary/30">
+                            <Play className="h-4 w-4 fill-primary" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">
+                            <p className="text-xs font-bold text-foreground truncate">
                               {stagedQueue.length > 1
                                 ? `Sequenced Quiz: ${stagedQueue.length} Questions Queued`
                                 : stagedQueue.length === 1
@@ -4839,7 +4839,7 @@ export function LiveQuizTrainerControl({
                                       ? `Ready: "${stripHtmlTags(filteredQuestions[0].question)}"`
                                       : 'No Questions Available'}
                             </p>
-                            <p className="text-[11px] text-slate-500 truncate">
+                            <p className="text-[11px] text-muted-foreground truncate">
                               {stagedQueue.length > 1
                                 ? `Timer: ${timerMinutes} mins total for all questions`
                                 : filteredQuestions.length > 0
@@ -4851,20 +4851,20 @@ export function LiveQuizTrainerControl({
 
                         <div className="flex items-center gap-2 shrink-0 flex-wrap">
                           {/* Inline Batch Label Input */}
-                          <div className="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 shadow-2xs">
-                            <Tag className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                          <div className="hidden sm:flex items-center gap-1.5 bg-card border border-border rounded-xl px-2.5 py-1 shadow-2xs">
+                            <Tag className="h-3.5 w-3.5 text-primary shrink-0" />
                             <input
                               type="text"
                               value={bankQuizLabel}
                               onChange={(e) => setBankQuizLabel(e.target.value)}
                               placeholder={`Label (e.g. Quiz ${quizHistory.length + 1})...`}
-                              className="w-32 md:w-44 bg-transparent text-xs text-slate-800 placeholder:text-slate-400 outline-none font-medium"
+                              className="w-32 md:w-44 bg-transparent text-xs text-foreground placeholder:text-subtle-foreground outline-none font-medium"
                             />
                             {bankQuizLabel && (
                               <button
                                 type="button"
                                 onClick={() => setBankQuizLabel('')}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-subtle-foreground hover:text-secondary-foreground"
                               >
                                 <X className="h-3 w-3" />
                               </button>
@@ -4880,7 +4880,7 @@ export function LiveQuizTrainerControl({
                                 setStagedQueue([]);
                                 setSelectedQuestion(null);
                               }}
-                              className="text-xs border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                              className="text-xs border-border bg-card text-secondary-foreground hover:bg-secondary"
                             >
                               Clear Queue ({stagedQueue.length})
                             </Button>
@@ -4921,36 +4921,36 @@ export function LiveQuizTrainerControl({
                 {tab === 'custom' ? (
                   <div className="space-y-4">
                     {customAddedSuccess && (
-                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800 flex items-center justify-between gap-2 shadow-xs">
+                      <div className="rounded-xl border border-success/30 bg-success-soft p-3 text-xs font-semibold text-success flex items-center justify-between gap-2 shadow-xs">
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                           <span>{customAddedSuccess}</span>
                         </div>
-                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                        <span className="rounded bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success">
                           Total: {stagedQueue.length} In Queue
                         </span>
                       </div>
                     )}
 
                     {/* Save to Question Bank Permission Toggle / Checkbox */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-xs">
+                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
                       <label className="flex items-start gap-3 cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={saveToQuestionBank}
                           onChange={(e) => setSaveToQuestionBank(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="mt-0.5 h-4 w-4 rounded border-input text-primary focus:ring-ring cursor-pointer"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-bold text-slate-900">
+                            <span className="text-xs font-bold text-foreground">
                               Save this custom question to Question Bank for future reuse
                             </span>
                             <span
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                                 saveToQuestionBank
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                                  : 'border-slate-200 bg-slate-100 text-slate-600'
+                                  ? 'border-success/30 bg-success-soft text-success'
+                                  : 'border-border bg-secondary text-secondary-foreground'
                               }`}
                             >
                               {saveToQuestionBank
@@ -4958,7 +4958,7 @@ export function LiveQuizTrainerControl({
                                 : 'Forbidden (Live Session Only)'}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                          <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                             {saveToQuestionBank
                               ? 'Allowed: This question will be permanently saved into the course Question Bank and can be reused in future quizzes, exams, and live sessions.'
                               : 'Forbidden (Default): This question will only be used in this live training session without being automatically saved to the course question bank.'}
@@ -4968,16 +4968,16 @@ export function LiveQuizTrainerControl({
 
                       {/* Target Curriculum (Only shown when saving to Question Bank is allowed/ticked) */}
                       {saveToQuestionBank && (
-                        <div className="pt-3 border-t border-slate-100 space-y-2.5 animate-in fade-in duration-200">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                            <Layers className="h-3.5 w-3.5 text-indigo-600" />
+                        <div className="pt-3 border-t border-border/60 space-y-2.5 animate-in fade-in duration-200">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-secondary-foreground flex items-center gap-1.5">
+                            <Layers className="h-3.5 w-3.5 text-primary" />
                             Assign Question to Curriculum Node for {courseInfo?.code || 'Course'}
                           </span>
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             {/* Module */}
                             <div>
-                              <label className="text-[10px] font-semibold text-slate-500 mb-1 block">
+                              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">
                                 Module
                               </label>
                               <select
@@ -4987,7 +4987,7 @@ export function LiveQuizTrainerControl({
                                   setCustomTargetLessonId('NONE');
                                   setCustomTargetSubLessonId('NONE');
                                 }}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                                className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                               >
                                 <option value="NONE">Course General (No Module)</option>
                                 {modules.map((m, idx) => (
@@ -5000,7 +5000,7 @@ export function LiveQuizTrainerControl({
 
                             {/* Lesson */}
                             <div>
-                              <label className="text-[10px] font-semibold text-slate-500 mb-1 block">
+                              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">
                                 Lesson
                               </label>
                               <select
@@ -5013,7 +5013,7 @@ export function LiveQuizTrainerControl({
                                   setCustomTargetLessonId(e.target.value);
                                   setCustomTargetSubLessonId('NONE');
                                 }}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs disabled:opacity-40 disabled:bg-slate-50"
+                                className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs disabled:opacity-40 disabled:bg-muted"
                               >
                                 <option value="NONE">General to Module</option>
                                 {customActiveLessons.map((l, idx) => (
@@ -5026,7 +5026,7 @@ export function LiveQuizTrainerControl({
 
                             {/* Sub-lesson */}
                             <div>
-                              <label className="text-[10px] font-semibold text-slate-500 mb-1 block">
+                              <label className="text-[10px] font-semibold text-muted-foreground mb-1 block">
                                 Sub-lesson
                               </label>
                               <select
@@ -5036,7 +5036,7 @@ export function LiveQuizTrainerControl({
                                 }
                                 value={customTargetSubLessonId}
                                 onChange={(e) => setCustomTargetSubLessonId(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs disabled:opacity-40 disabled:bg-slate-50"
+                                className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs disabled:opacity-40 disabled:bg-muted"
                               >
                                 <option value="NONE">General to Lesson</option>
                                 {customActiveSubLessons.map((s, idx) => (
@@ -5053,7 +5053,7 @@ export function LiveQuizTrainerControl({
 
                     {/* Question Type Selector based on DB Lookup Categories */}
                     <div>
-                      <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      <label className="text-xs font-semibold text-secondary-foreground block mb-1">
                         Question Type
                       </label>
                       <select
@@ -5072,7 +5072,7 @@ export function LiveQuizTrainerControl({
                             setCorrectOptionIdx(0);
                           }
                         }}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs font-medium"
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs font-medium"
                       >
                         {questionTypeOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
@@ -5084,7 +5084,7 @@ export function LiveQuizTrainerControl({
 
                     {/* Question Texts */}
                     <div>
-                      <label className="text-xs font-semibold text-slate-700">
+                      <label className="text-xs font-semibold text-secondary-foreground">
                         Question Text (English) *
                       </label>
                       <input
@@ -5092,12 +5092,12 @@ export function LiveQuizTrainerControl({
                         value={customTitleEn}
                         onChange={(e) => setCustomTitleEn(e.target.value)}
                         placeholder="e.g. What is the deadline for filing VAT declarations in Ethiopia?"
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-slate-700">
+                      <label className="text-xs font-semibold text-secondary-foreground">
                         Question Text (Amharic - Optional)
                       </label>
                       <input
@@ -5105,14 +5105,14 @@ export function LiveQuizTrainerControl({
                         value={customTitleAm}
                         onChange={(e) => setCustomTitleAm(e.target.value)}
                         placeholder="የተጨማሪ እሴት ታክስ ማስታወቂያ ማቅረቢያ የመጨረሻ ቀን መቼ ነው?"
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 font-amharic shadow-2xs"
+                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 font-amharic shadow-2xs"
                       />
                     </div>
 
                     {/* Options List based on Question Type */}
                     {customQuestionType === 'SHORT_ANSWER' ? (
                       <div>
-                        <label className="text-xs font-semibold text-slate-700">
+                        <label className="text-xs font-semibold text-secondary-foreground">
                           Expected Correct Answer / Key Words
                         </label>
                         <input
@@ -5120,12 +5120,12 @@ export function LiveQuizTrainerControl({
                           value={customOptions[0] || ''}
                           onChange={(e) => setCustomOptions([e.target.value])}
                           placeholder="e.g. 30 days"
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                          className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                         />
                       </div>
                     ) : customQuestionType === 'TRUE_FALSE' ? (
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-700 block">
+                        <label className="text-xs font-semibold text-secondary-foreground block">
                           Options (Select the correct answer)
                         </label>
                         <div className="grid grid-cols-2 gap-3">
@@ -5134,8 +5134,8 @@ export function LiveQuizTrainerControl({
                               key={label}
                               className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition ${
                                 correctOptionIdx === idx
-                                  ? 'border-emerald-400 bg-emerald-50/50 text-emerald-950 font-bold shadow-xs'
-                                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                  ? 'border-emerald-400 bg-success-soft/50 text-success font-bold shadow-xs'
+                                  : 'border-border bg-card hover:bg-muted text-secondary-foreground'
                               }`}
                             >
                               <input
@@ -5143,11 +5143,11 @@ export function LiveQuizTrainerControl({
                                 name="correctOption"
                                 checked={correctOptionIdx === idx}
                                 onChange={() => setCorrectOptionIdx(idx)}
-                                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                                className="h-4 w-4 text-success focus:ring-success border-input cursor-pointer"
                               />
                               <span className="text-xs">{label}</span>
                               {correctOptionIdx === idx && (
-                                <span className="ml-auto text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold">
+                                <span className="ml-auto text-[10px] bg-success-soft text-success px-1.5 py-0.5 rounded-full font-bold">
                                   Correct
                                 </span>
                               )}
@@ -5158,14 +5158,14 @@ export function LiveQuizTrainerControl({
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-semibold text-slate-700">
+                          <label className="text-xs font-semibold text-secondary-foreground">
                             Options (Select radio for correct answer)
                           </label>
                           {customOptions.length < 5 && (
                             <button
                               type="button"
                               onClick={() => setCustomOptions([...customOptions, ''])}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
+                              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-semibold"
                             >
                               <Plus className="h-3.5 w-3.5" /> Add Option
                             </button>
@@ -5179,7 +5179,7 @@ export function LiveQuizTrainerControl({
                               name="correctOption"
                               checked={correctOptionIdx === idx}
                               onChange={() => setCorrectOptionIdx(idx)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                              className="h-4 w-4 text-primary focus:ring-ring border-input cursor-pointer"
                               title="Mark as correct answer"
                             />
                             <input
@@ -5191,10 +5191,10 @@ export function LiveQuizTrainerControl({
                                 updated[idx] = e.target.value;
                                 setCustomOptions(updated);
                               }}
-                              className={`flex-1 rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs ${
+                              className={`flex-1 rounded-xl border bg-card px-3 py-2 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs ${
                                 correctOptionIdx === idx
-                                  ? 'border-emerald-300 ring-2 ring-emerald-500/20 bg-emerald-50/20'
-                                  : 'border-slate-200'
+                                  ? 'border-success/30 ring-2 ring-success/20 bg-success-soft/20'
+                                  : 'border-border'
                               }`}
                             />
                             {customOptions.length > 2 && (
@@ -5205,7 +5205,7 @@ export function LiveQuizTrainerControl({
                                   setCustomOptions(updated);
                                   if (correctOptionIdx >= updated.length) setCorrectOptionIdx(0);
                                 }}
-                                className="p-1.5 text-slate-400 hover:text-red-500"
+                                className="p-1.5 text-subtle-foreground hover:text-red-500"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -5216,7 +5216,7 @@ export function LiveQuizTrainerControl({
                     )}
 
                     <div>
-                      <label className="text-xs font-semibold text-slate-700">
+                      <label className="text-xs font-semibold text-secondary-foreground">
                         Explanation (Shown on reveal)
                       </label>
                       <input
@@ -5224,24 +5224,24 @@ export function LiveQuizTrainerControl({
                         value={customExplanation}
                         onChange={(e) => setCustomExplanation(e.target.value)}
                         placeholder="e.g. VAT declarations must be submitted within 30 days following the end of the accounting period."
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-subtle-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                       />
                     </div>
 
                     {/* Form Buttons */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 flex-wrap gap-2">
-                      <span className="text-xs text-slate-500">
+                    <div className="flex items-center justify-between pt-3 border-t border-border flex-wrap gap-2">
+                      <span className="text-xs text-muted-foreground">
                         {stagedQueue.length > 0 ? (
-                          <span className="text-emerald-700 font-semibold">
+                          <span className="text-success font-semibold">
                             {stagedQueue.length} question{stagedQueue.length > 1 ? 's' : ''} added
                             to quiz queue
                           </span>
                         ) : saveToQuestionBank ? (
-                          <span className="text-emerald-700 font-medium">
+                          <span className="text-success font-medium">
                             Allowed to save to Question Bank
                           </span>
                         ) : (
-                          <span className="text-slate-500 font-medium">
+                          <span className="text-muted-foreground font-medium">
                             Live session only (saving to bank forbidden)
                           </span>
                         )}
@@ -5252,7 +5252,7 @@ export function LiveQuizTrainerControl({
                           size="sm"
                           disabled={!customTitleEn.trim()}
                           onClick={handleAddCustomQuestionToQueue}
-                          className="gap-1.5 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-semibold text-xs shadow-xs rounded-xl px-3.5 py-2"
+                          className="gap-1.5 bg-card border border-primary/30 text-primary hover:bg-primary-soft font-semibold text-xs shadow-xs rounded-xl px-3.5 py-2"
                         >
                           <Plus className="h-3.5 w-3.5" />+ Add Question to Quiz Queue
                         </Button>
@@ -5279,18 +5279,18 @@ export function LiveQuizTrainerControl({
         {/* Queued Question Edit Modal */}
         {editingQueueItem !== null && (
           <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/20 p-4 animate-in fade-in duration-150">
-            <div className="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-3xl border border-slate-200 bg-white text-slate-800 shadow-2xl overflow-hidden">
+            <div className="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-3xl border border-border bg-card text-foreground shadow-2xl overflow-hidden">
               {/* Modal Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <div className="flex items-center justify-between border-b border-border/60 bg-card px-6 py-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary border border-primary/30">
                     <Pencil className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">
+                    <h4 className="text-sm font-bold text-foreground">
                       Edit Queued Question #{editingQueueItem.index + 1}
                     </h4>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Update question, options, correct answer, or curriculum location
                     </p>
                   </div>
@@ -5298,23 +5298,23 @@ export function LiveQuizTrainerControl({
                 <button
                   type="button"
                   onClick={() => setEditingQueueItem(null)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                  className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/40">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-muted/40">
                 {/* Target Curriculum selectors */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-3.5 space-y-2.5 shadow-2xs">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                <div className="rounded-2xl border border-border bg-card p-3.5 space-y-2.5 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                     Curriculum Level for Question
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {/* Module */}
                     <div>
-                      <label className="text-[10px] text-slate-500 mb-0.5 block font-medium">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block font-medium">
                         Module
                       </label>
                       <select
@@ -5327,7 +5327,7 @@ export function LiveQuizTrainerControl({
                             subLessonId: 'NONE',
                           });
                         }}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                        className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10"
                       >
                         <option value="NONE">Course General</option>
                         {modules.map((m, mIdx) => (
@@ -5340,7 +5340,7 @@ export function LiveQuizTrainerControl({
 
                     {/* Lesson */}
                     <div>
-                      <label className="text-[10px] text-slate-500 mb-0.5 block font-medium">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block font-medium">
                         Lesson
                       </label>
                       <select
@@ -5355,7 +5355,7 @@ export function LiveQuizTrainerControl({
                             subLessonId: 'NONE',
                           });
                         }}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-40 disabled:bg-slate-50"
+                        className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:opacity-40 disabled:bg-muted"
                       >
                         <option value="NONE">General to Module</option>
                         {editTargetLessons.map((l, lIdx) => (
@@ -5368,7 +5368,7 @@ export function LiveQuizTrainerControl({
 
                     {/* Sub-lesson */}
                     <div>
-                      <label className="text-[10px] text-slate-500 mb-0.5 block font-medium">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block font-medium">
                         Sub-lesson
                       </label>
                       <select
@@ -5382,7 +5382,7 @@ export function LiveQuizTrainerControl({
                             subLessonId: e.target.value,
                           });
                         }}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-40 disabled:bg-slate-50"
+                        className="w-full rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:opacity-40 disabled:bg-muted"
                       >
                         <option value="NONE">General to Lesson</option>
                         {editTargetSubLessons.map((s, sIdx) => (
@@ -5397,7 +5397,7 @@ export function LiveQuizTrainerControl({
 
                 {/* Question Text (English) */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-secondary-foreground">
                     Question Text (English) *
                   </label>
                   <input
@@ -5406,13 +5406,13 @@ export function LiveQuizTrainerControl({
                     onChange={(e) =>
                       setEditingQueueItem({ ...editingQueueItem, titleEn: e.target.value })
                     }
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 shadow-2xs"
+                    className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-xs text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/10 shadow-2xs"
                   />
                 </div>
 
                 {/* Question Text (Amharic) */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-secondary-foreground">
                     Question Text (Amharic - Optional)
                   </label>
                   <input
@@ -5421,14 +5421,14 @@ export function LiveQuizTrainerControl({
                     onChange={(e) =>
                       setEditingQueueItem({ ...editingQueueItem, titleAm: e.target.value })
                     }
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 font-amharic shadow-2xs"
+                    className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-xs text-foreground outline-none focus:border-ring font-amharic shadow-2xs"
                   />
                 </div>
 
                 {/* Options List */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">
+                    <label className="text-xs font-semibold text-secondary-foreground">
                       Options (Select radio for correct answer)
                     </label>
                     {editingQueueItem.options.length < 6 && (
@@ -5443,7 +5443,7 @@ export function LiveQuizTrainerControl({
                             ],
                           })
                         }
-                        className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
+                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-semibold"
                       >
                         <Plus className="h-3 w-3" /> Add Option
                       </button>
@@ -5459,7 +5459,7 @@ export function LiveQuizTrainerControl({
                         onChange={() =>
                           setEditingQueueItem({ ...editingQueueItem, correctOptionIdx: oIdx })
                         }
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                        className="h-4 w-4 text-primary focus:ring-ring border-input cursor-pointer"
                         title="Mark as correct answer"
                       />
                       <input
@@ -5470,10 +5470,10 @@ export function LiveQuizTrainerControl({
                           updated[oIdx] = e.target.value;
                           setEditingQueueItem({ ...editingQueueItem, options: updated });
                         }}
-                        className={`flex-1 rounded-xl border bg-white px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-indigo-500 shadow-2xs ${
+                        className={`flex-1 rounded-xl border bg-card px-3 py-1.5 text-xs text-foreground outline-none focus:border-ring shadow-2xs ${
                           editingQueueItem.correctOptionIdx === oIdx
-                            ? 'border-emerald-300 ring-2 ring-emerald-500/20 bg-emerald-50/20'
-                            : 'border-slate-200'
+                            ? 'border-success/30 ring-2 ring-success/20 bg-success-soft/20'
+                            : 'border-border'
                         }`}
                       />
                       {editingQueueItem.options.length > 2 && (
@@ -5489,7 +5489,7 @@ export function LiveQuizTrainerControl({
                               correctOptionIdx: newCorrect,
                             });
                           }}
-                          className="p-1 text-slate-400 hover:text-red-500"
+                          className="p-1 text-subtle-foreground hover:text-red-500"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -5500,7 +5500,7 @@ export function LiveQuizTrainerControl({
 
                 {/* Explanation */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-secondary-foreground">
                     Explanation (Shown on reveal)
                   </label>
                   <input
@@ -5510,18 +5510,18 @@ export function LiveQuizTrainerControl({
                       setEditingQueueItem({ ...editingQueueItem, explanation: e.target.value })
                     }
                     placeholder="Provide an explanation for the correct answer..."
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-500 shadow-2xs"
+                    className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-xs text-foreground outline-none focus:border-ring shadow-2xs"
                   />
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-white px-6 py-3.5">
+              <div className="flex items-center justify-end gap-2.5 border-t border-border/60 bg-card px-6 py-3.5">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setEditingQueueItem(null)}
-                  className="border-slate-200 text-slate-600 hover:bg-slate-100 text-xs"
+                  className="border-border text-secondary-foreground hover:bg-secondary text-xs"
                 >
                   Cancel
                 </Button>

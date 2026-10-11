@@ -52,28 +52,28 @@ export function ReviewHeader({
   const hasOverflow = can.archive || can.delete;
 
   return (
-    <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/80 bg-white px-4 shadow-2xs lg:px-6">
+    <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border/80 bg-card px-4 shadow-2xs lg:px-6">
       {/* Left: back, code, status, title */}
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-muted hover:text-foreground"
           title={t('reviewHeader.back')}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="shrink-0 rounded border border-indigo-200/60 bg-indigo-50 px-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+            <span className="shrink-0 rounded border border-primary/20 bg-primary-soft px-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-primary">
               {course.code}
             </span>
             <CourseStatusBadge status={course.published ? 'published' : course.status} />
-            <span className="hidden shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 sm:inline">
+            <span className="hidden shrink-0 rounded border border-border bg-muted px-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground sm:inline">
               {t(delivery)}
             </span>
           </div>
-          <h1 className="mt-0.5 truncate text-xs font-bold text-slate-900 lg:text-sm" title={course.title}>
+          <h1 className="mt-0.5 truncate text-xs font-bold text-foreground lg:text-sm" title={course.title}>
             {course.title}
           </h1>
         </div>
@@ -208,7 +208,7 @@ function OverflowMenu({ items, busy }: { items: OverflowItem[]; busy: boolean })
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-30 mt-1.5 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 top-full z-30 mt-1.5 w-48 overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg"
         >
           {items.map(({ key, label, icon: Icon, onClick, danger }) => (
             <button
@@ -221,7 +221,7 @@ function OverflowMenu({ items, busy }: { items: OverflowItem[]; busy: boolean })
               }}
               className={cn(
                 'flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium transition',
-                danger ? 'text-rose-600 hover:bg-rose-50' : 'text-slate-700 hover:bg-slate-50',
+                danger ? 'text-danger hover:bg-danger-soft' : 'text-secondary-foreground hover:bg-muted',
               )}
             >
               <Icon className="h-3.5 w-3.5" />

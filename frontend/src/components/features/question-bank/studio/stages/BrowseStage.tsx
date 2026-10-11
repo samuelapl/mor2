@@ -48,14 +48,14 @@ export function BrowseStage({ filters, editor, modules, loading, onRefresh }: Br
         title={node.title}
         description={
           <span className="flex flex-wrap items-center gap-1 text-xs font-medium">
-            {NodeIcon && <NodeIcon className="h-3.5 w-3.5 text-slate-400" />}
+            {NodeIcon && <NodeIcon className="h-3.5 w-3.5 text-subtle-foreground" />}
             {trail.map((part, i) => (
               <span key={i} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight className="h-3 w-3 text-slate-300" />}
+                {i > 0 && <ChevronRight className="h-3 w-3 text-subtle-foreground" />}
                 <span className="max-w-[220px] truncate">{part}</span>
               </span>
             ))}
-            <span className="mx-1.5 text-slate-300">•</span>
+            <span className="mx-1.5 text-subtle-foreground">•</span>
             <span>
               {filters.filteredQuestions.length} question{filters.filteredQuestions.length === 1 ? '' : 's'}
             </span>

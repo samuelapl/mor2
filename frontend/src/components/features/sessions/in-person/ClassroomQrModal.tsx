@@ -79,7 +79,7 @@ function ClassroomQrPattern({ code, size = 200 }: { code: string; size?: number 
   }, [hash]);
 
   return (
-    <div className="rounded-2xl border-2 border-slate-900/10 bg-white p-4 shadow-lg flex items-center justify-center">
+    <div className="rounded-2xl border-2 border-foreground/10 bg-white p-4 shadow-lg flex items-center justify-center">
       <svg
         width={size}
         height={size}
@@ -152,7 +152,7 @@ export function ClassroomQrModal({
       }}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border/90 bg-card shadow-2xl">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-6 text-white text-center">
           <button
@@ -188,37 +188,37 @@ export function ClassroomQrModal({
           </div>
 
           {/* 6-Digit PIN Display */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="rounded-2xl border border-border bg-muted/80 p-4 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Session Check-In PIN Code
             </p>
             <div className="flex items-center justify-center gap-3">
-              <span className="font-mono text-3xl font-extrabold tracking-widest text-indigo-900 bg-white px-4 py-1.5 rounded-xl border border-indigo-200 shadow-2xs">
+              <span className="font-mono text-3xl font-extrabold tracking-widest text-primary bg-card px-4 py-1.5 rounded-xl border border-primary/30 shadow-2xs">
                 {pinCode}
               </span>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleCopyPin}
-                className="gap-1.5 text-xs text-slate-700"
+                className="gap-1.5 text-xs text-secondary-foreground"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? "Copied" : "Copy"}
               </Button>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Learners can scan the QR code above or type this PIN in their LMS dashboard to verify physical attendance.
             </p>
           </div>
 
           {/* Live Check-In Progress */}
-          <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3.5 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-emerald-900 font-semibold">
-              <Users className="h-4 w-4 text-emerald-600" />
+          <div className="rounded-xl border border-success/25 bg-success-soft/70 p-3.5 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-success font-semibold">
+              <Users className="h-4 w-4 text-success" />
               <span>Checked In:</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm">
+              <span className="font-bold text-foreground text-sm">
                 {presentCount} / {totalStudents}
               </span>
               <Badge variant={attendancePercent >= 80 ? "green" : "blue"}>
@@ -229,7 +229,7 @@ export function ClassroomQrModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 flex justify-end">
+        <div className="border-t border-border/60 bg-muted px-6 py-4 flex justify-end">
           <Button onClick={onClose} className="bg-indigo-600 hover:bg-indigo-700 text-white">
             Done
           </Button>

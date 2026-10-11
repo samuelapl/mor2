@@ -117,16 +117,16 @@ export const LAW_INSTRUMENT_TYPES: { key: LawInstrumentType }[] = [
 
 export const LAW_STATUS_CONFIG: Record<LawStatus, { badgeClass: string }> = {
   IN_FORCE: {
-    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+    badgeClass: 'bg-success-soft text-success border-success/30',
   },
   REPEALED: {
-    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800',
+    badgeClass: 'bg-danger-soft text-danger border-danger/30',
   },
   AMENDED: {
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+    badgeClass: 'bg-warning-soft text-warning border-warning/30',
   },
   DRAFT: {
-    badgeClass: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/60 dark:text-slate-400 dark:border-slate-700',
+    badgeClass: 'bg-muted text-secondary-foreground border-border',
   },
 };
 

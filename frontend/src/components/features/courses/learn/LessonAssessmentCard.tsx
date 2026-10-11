@@ -34,10 +34,10 @@ export function LessonAssessmentCard({
       className={cn(
         'rounded-2xl border p-5 shadow-2xs transition-all mt-4',
         isPassed
-          ? 'border-emerald-200 bg-emerald-50/70'
+          ? 'border-success/30 bg-success-soft/70'
           : isQuizUnlocked
-            ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-sky-50/40 to-indigo-50/80'
-            : 'border-slate-200/80 bg-slate-50/70',
+            ? 'border-primary/30 bg-gradient-to-r from-primary-soft/90 via-info-soft/40 to-primary-soft/80'
+            : 'border-border/80 bg-muted/70',
       )}
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -49,7 +49,7 @@ export function LessonAssessmentCard({
                 ? 'border-emerald-300 bg-emerald-600 text-white'
                 : isQuizUnlocked
                   ? 'border-indigo-300 bg-indigo-600 text-white'
-                  : 'border-slate-300 bg-slate-200 text-slate-500',
+                  : 'border-input bg-border text-muted-foreground',
             )}
           >
             <BookOpenCheck className="h-5 w-5" />
@@ -59,19 +59,19 @@ export function LessonAssessmentCard({
               <span
                 className={cn(
                   'text-xs font-bold uppercase tracking-wider',
-                  isPassed ? 'text-emerald-800' : isQuizUnlocked ? 'text-indigo-800' : 'text-slate-500',
+                  isPassed ? 'text-success' : isQuizUnlocked ? 'text-primary' : 'text-muted-foreground',
                 )}
               >
                 {isPassed ? 'Quiz Passed' : isQuizUnlocked ? 'Lesson Checkpoint Ready' : 'Checkpoint Locked'}
               </span>
-              <span className="text-[11px] text-slate-600 font-medium">
-                Passing Score: <strong className="text-slate-900">{assessment.passingScore}%</strong>
+              <span className="text-[11px] text-secondary-foreground font-medium">
+                Passing Score: <strong className="text-foreground">{assessment.passingScore}%</strong>
               </span>
             </div>
-            <h4 className={cn('text-sm font-bold', isQuizUnlocked || isPassed ? 'text-slate-900' : 'text-slate-600')}>
+            <h4 className={cn('text-sm font-bold', isQuizUnlocked || isPassed ? 'text-foreground' : 'text-secondary-foreground')}>
               {assessment.titleEn || 'Lesson Assessment'}
             </h4>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-secondary-foreground">
               {isPassed
                 ? 'You have completed this lesson quiz requirement.'
                 : isQuizUnlocked
@@ -89,7 +89,7 @@ export function LessonAssessmentCard({
               size="sm"
               variant="outline"
               onClick={onTakeQuiz}
-              className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs border-emerald-300 text-emerald-800 hover:bg-emerald-100/70"
+              className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs border-success/30 text-success hover:bg-success-soft/70"
             >
               <BookOpenCheck className="h-4 w-4" />
               <span>Review / Retake Quiz</span>
@@ -109,7 +109,7 @@ export function LessonAssessmentCard({
               size="sm"
               variant="outline"
               disabled
-              className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs opacity-60 cursor-not-allowed bg-slate-100 text-slate-500 border-slate-300"
+              className="w-full sm:w-auto font-semibold gap-1.5 shadow-2xs opacity-60 cursor-not-allowed bg-secondary text-muted-foreground border-input"
             >
               <Lock className="h-3.5 w-3.5" />
               <span>Quiz Locked</span>

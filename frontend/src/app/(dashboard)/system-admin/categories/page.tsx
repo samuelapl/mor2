@@ -178,7 +178,7 @@ export default function CategoriesPage() {
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${
               activeType === tab.type
                 ? 'border-indigo-600 bg-indigo-600 text-white shadow'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                : 'border-border bg-card text-secondary-foreground hover:border-ring hover:text-primary'
             }`}
           >
             {tab.label}
@@ -189,13 +189,13 @@ export default function CategoriesPage() {
       {/* Header row */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{currentTab.description}</p>
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-sm text-muted-foreground">{currentTab.description}</p>
+          <p className="mt-0.5 text-xs text-subtle-foreground">
             {items.length} total · {items.filter((i) => i.isActive).length} active
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-secondary-foreground">
             <input
               type="checkbox"
               checked={showInactive}
@@ -215,7 +215,7 @@ export default function CategoriesPage() {
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+            <div key={i} className="h-14 animate-pulse rounded-xl bg-secondary" />
           ))}
         </div>
       ) : displayed.length === 0 ? (
@@ -224,10 +224,10 @@ export default function CategoriesPage() {
           description={`Add your first ${currentTab.label.toLowerCase()} to get started.`}
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <tr className="border-b border-border/60 bg-muted text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3">Value / Slug</th>
                 <th className="px-4 py-3">English Label</th>
                 <th className="px-4 py-3">Amharic Label</th>
@@ -240,16 +240,16 @@ export default function CategoriesPage() {
               {displayed.map((item) => (
                 <tr
                   key={item.id}
-                  className={`border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 ${!item.isActive ? 'opacity-50' : ''}`}
+                  className={`border-b border-border/60 last:border-0 transition-colors hover:bg-muted ${!item.isActive ? 'opacity-50' : ''}`}
                 >
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                     {item.value}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {item.labelEn}
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{item.labelAm}</td>
-                  <td className="px-4 py-3 text-slate-500">{item.sortOrder}</td>
+                  <td className="px-4 py-3 text-secondary-foreground">{item.labelAm}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.sortOrder}</td>
                   <td className="px-4 py-3">
                     <Badge variant={item.isActive ? 'green' : 'slate'}>
                       {item.isActive ? 'Active' : 'Inactive'}
@@ -261,7 +261,7 @@ export default function CategoriesPage() {
                         type="button"
                         title={item.isActive ? 'Deactivate' : 'Activate'}
                         onClick={() => void toggleActive(item)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
                       >
                         {item.isActive ? (
                           <ToggleRight className="h-4 w-4 text-green-500" />
@@ -273,7 +273,7 @@ export default function CategoriesPage() {
                         type="button"
                         title="Edit"
                         onClick={() => openEdit(item)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-primary transition-colors"
                       >
                         <Edit3 className="h-4 w-4" />
                       </button>
@@ -281,7 +281,7 @@ export default function CategoriesPage() {
                         type="button"
                         title="Delete"
                         onClick={() => setDeleteTarget(item)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
+                        className="rounded-lg p-1.5 text-subtle-foreground hover:bg-danger-soft hover:text-danger transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -297,23 +297,23 @@ export default function CategoriesPage() {
       {/* Create / Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-6">
+          <div className="w-full max-w-lg rounded-2xl bg-card shadow-2xl p-6">
             <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/40">
-                <Tag className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft">
+                <Tag className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                <h2 className="text-base font-semibold text-foreground">
                   {editing ? 'Edit Category' : `New ${currentTab.label.replace(/s$/, '')}`}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{activeType}</p>
+                <p className="text-xs text-muted-foreground">{activeType}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               {!editing && (
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <label className="mb-1 block text-xs font-semibold text-secondary-foreground">
                     Value / Slug <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -321,9 +321,9 @@ export default function CategoriesPage() {
                     value={form.value}
                     onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
                     placeholder="e.g. TAX_LAW (auto-uppercased)"
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-white font-mono"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 text-foreground font-mono"
                   />
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-subtle-foreground">
                     Unique key — used internally. Cannot be changed after creation.
                   </p>
                 </div>
@@ -331,7 +331,7 @@ export default function CategoriesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <label className="mb-1 block text-xs font-semibold text-secondary-foreground">
                     English Label <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -339,11 +339,11 @@ export default function CategoriesPage() {
                     value={form.labelEn}
                     onChange={(e) => setForm((f) => ({ ...f, labelEn: e.target.value }))}
                     placeholder="e.g. Tax Law"
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-white"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <label className="mb-1 block text-xs font-semibold text-secondary-foreground">
                     Amharic Label <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -351,13 +351,13 @@ export default function CategoriesPage() {
                     value={form.labelAm}
                     onChange={(e) => setForm((f) => ({ ...f, labelAm: e.target.value }))}
                     placeholder="e.g. የግብር ህግ"
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-white"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 text-foreground"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <label className="mb-1 block text-xs font-semibold text-secondary-foreground">
                   Description (optional)
                 </label>
                 <textarea
@@ -365,13 +365,13 @@ export default function CategoriesPage() {
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
                   placeholder="Brief description..."
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none text-slate-900 dark:text-white"
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 resize-none text-foreground"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <label className="mb-1 block text-xs font-semibold text-secondary-foreground">
                     Sort Order
                   </label>
                   <input
@@ -379,11 +379,11 @@ export default function CategoriesPage() {
                     min={0}
                     value={form.sortOrder}
                     onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) }))}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-white"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 text-foreground"
                   />
                 </div>
                 <div className="flex items-end pb-2">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-secondary-foreground">
                     <input
                       type="checkbox"
                       checked={form.isActive}

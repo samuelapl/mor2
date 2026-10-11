@@ -34,13 +34,13 @@ export function StudioHeader(props: StudioHeaderProps) {
   const { lang, changeLanguage } = useTranslation();
 
   return (
-    <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-3 shadow-2xs sm:px-4 lg:px-6 dark:border-slate-800 dark:bg-slate-900">
+    <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border/80 bg-card px-3 shadow-2xs sm:px-4 lg:px-6">
       {/* Left: exit, sidebar toggle, course switcher */}
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={props.onExit}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-muted hover:text-foreground"
           title="Exit Question Bank Studio"
           aria-label="Exit Question Bank Studio"
         >
@@ -49,7 +49,7 @@ export function StudioHeader(props: StudioHeaderProps) {
         <button
           type="button"
           onClick={props.onToggleSidebar}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 lg:hidden dark:border-slate-700 dark:hover:bg-slate-800"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-muted hover:text-foreground lg:hidden"
           title="Show curriculum"
           aria-label="Show curriculum"
         >
@@ -59,13 +59,13 @@ export function StudioHeader(props: StudioHeaderProps) {
       </div>
 
       {/* Center: where you are */}
-      <div className="hidden items-center gap-1 rounded-2xl border border-slate-200/60 bg-slate-100/80 p-1 md:flex dark:border-slate-700/60 dark:bg-slate-800/80">
+      <div className="hidden items-center gap-1 rounded-2xl border border-border/60 bg-secondary/80 p-1 md:flex">
         <span
           className={cn(
             'flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold',
             stage === 'BROWSE'
-              ? 'border border-slate-200/60 bg-white font-bold text-indigo-700 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-400'
-              : 'text-slate-600 dark:text-slate-400',
+              ? 'border border-border/60 bg-card font-bold text-primary shadow-2xs'
+              : 'text-secondary-foreground',
           )}
         >
           <Library className="h-3.5 w-3.5" />
@@ -73,7 +73,7 @@ export function StudioHeader(props: StudioHeaderProps) {
           <span className="rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">{questionCount}</span>
         </span>
         {stage === 'COMPOSE' && (
-          <span className="flex items-center gap-2 rounded-xl border border-indigo-200/70 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300">
+          <span className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary">
             <PenLine className="h-3.5 w-3.5" />
             Composing
           </span>
@@ -85,10 +85,10 @@ export function StudioHeader(props: StudioHeaderProps) {
         <button
           type="button"
           onClick={() => void changeLanguage(lang === 'en' ? 'am' : 'en')}
-          className="hidden items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50 sm:flex dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="hidden items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-bold text-secondary-foreground transition hover:bg-muted sm:flex"
           title="Switch Language"
         >
-          <Globe2 className="h-3.5 w-3.5 text-slate-500" />
+          <Globe2 className="h-3.5 w-3.5 text-muted-foreground" />
           <span>{lang === 'en' ? 'አማ' : 'EN'}</span>
         </button>
       </div>
@@ -136,53 +136,53 @@ function CourseSwitcher({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="group flex min-w-0 max-w-[140px] items-center gap-2 rounded-xl px-2 py-1 text-left transition hover:bg-slate-50 min-[420px]:max-w-[200px] sm:max-w-xs xl:max-w-sm dark:hover:bg-slate-800"
+        className="group flex min-w-0 max-w-[140px] items-center gap-2 rounded-xl px-2 py-1 text-left transition hover:bg-muted min-[420px]:max-w-[200px] sm:max-w-xs xl:max-w-sm"
       >
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="shrink-0 rounded border border-violet-200/60 bg-violet-50 px-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:border-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
+            <span className="shrink-0 rounded border border-accent/20 bg-accent-soft px-1.5 text-[10px] font-bold uppercase tracking-wider text-accent">
               Question Bank
             </span>
             {currentCourse?.code && (
-              <span className="shrink-0 rounded border border-indigo-200/60 bg-indigo-50 px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300">
+              <span className="shrink-0 rounded border border-primary/20 bg-primary-soft px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">
                 {currentCourse.code}
               </span>
             )}
           </div>
-          <p className="mt-0.5 truncate text-xs font-bold text-slate-900 lg:text-sm dark:text-white">
+          <p className="mt-0.5 truncate text-xs font-bold text-foreground lg:text-sm">
             {currentCourse ? currentCourse.title || currentCourse.titleEn : 'Select a course'}
           </p>
         </div>
         <ChevronDown
-          className={cn('h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-600', open && 'rotate-180')}
+          className={cn('h-4 w-4 shrink-0 text-subtle-foreground transition group-hover:text-secondary-foreground', open && 'rotate-180')}
         />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-2 w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-900">
-          <div className="space-y-2.5 border-b border-slate-100 p-3 dark:border-slate-800">
+        <div className="absolute left-0 top-full z-30 mt-2 w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xl ring-1 ring-foreground/5">
+          <div className="space-y-2.5 border-b border-border/60 p-3">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
               <input
                 autoFocus
                 type="text"
                 value={courseSearch}
                 onChange={(e) => onCourseSearchChange(e.target.value)}
                 placeholder="Search by course code or title…"
-                className="h-9 w-full rounded-xl border border-slate-200/90 bg-slate-50 pl-9 pr-8 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="h-9 w-full rounded-xl border border-border/90 bg-muted pl-9 pr-8 text-sm text-secondary-foreground outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:bg-card focus:ring-4 focus:ring-ring/10"
               />
               {courseSearch && (
                 <button
                   type="button"
                   onClick={() => onCourseSearchChange('')}
                   aria-label="Clear course search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-subtle-foreground hover:text-secondary-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <div className="flex h-8 items-center gap-0.5 rounded-xl border border-slate-200/90 bg-slate-100/80 p-0.5 text-[11px] font-semibold dark:border-slate-700 dark:bg-slate-800/80">
+            <div className="flex h-8 items-center gap-0.5 rounded-xl border border-border/90 bg-secondary/80 p-0.5 text-[11px] font-semibold">
               <button
                 type="button"
                 onClick={() => onCourseFilterModeChange('ALL')}
@@ -204,7 +204,7 @@ function CourseSwitcher({
 
           <ul role="listbox" className="max-h-80 overflow-y-auto p-1.5">
             {courses.length === 0 ? (
-              <li className="px-3 py-6 text-center text-xs text-slate-400">No matching courses found</li>
+              <li className="px-3 py-6 text-center text-xs text-subtle-foreground">No matching courses found</li>
             ) : (
               courses.map((c) => {
                 const active = c.id === selectedCourseId;
@@ -221,15 +221,15 @@ function CourseSwitcher({
                       className={cn(
                         'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition',
                         active
-                          ? 'bg-indigo-50 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200'
-                          : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800',
+                          ? 'bg-primary-soft text-primary'
+                          : 'text-secondary-foreground hover:bg-muted',
                       )}
                     >
-                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] font-bold text-secondary-foreground">
                         {c.code || '—'}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-xs font-semibold">{c.title || c.titleEn}</span>
-                      {active && <Check className="h-4 w-4 shrink-0 text-indigo-600" />}
+                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
                     </button>
                   </li>
                 );

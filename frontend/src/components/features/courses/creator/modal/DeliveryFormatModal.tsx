@@ -53,7 +53,7 @@ export function DeliveryFormatModal({
       icon: Globe2,
       featuresKeys: ['deliveryFormatModal.moduleByModuleLinearProgression', 'deliveryFormatModal.automatedCheckpointFinalQuizzes', 'deliveryFormatModal.instantDigitalCompletionCertificates'],
       accentColor: 'indigo',
-      badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
+      badgeBg: 'bg-primary-soft text-primary border-primary/20',
     },
     {
       id: 'IN_PERSON_ONLY',
@@ -63,7 +63,7 @@ export function DeliveryFormatModal({
       icon: Building2,
       featuresKeys: ['deliveryFormatModal.venueRoomBookingIntegration', 'deliveryFormatModal.qrCodeAndPinAttendanceTracking', 'deliveryFormatModal.onSiteTrainerEvaluationGrading'],
       accentColor: 'amber',
-      badgeBg: 'bg-amber-50 text-amber-800 border-amber-200/60',
+      badgeBg: 'bg-warning-soft text-warning border-warning/20',
     },
     {
       id: 'BOTH',
@@ -73,7 +73,7 @@ export function DeliveryFormatModal({
       icon: Layers,
       featuresKeys: ['deliveryFormatModal.fullSelfPacedDigitalModules', 'deliveryFormatModal.virtualSessionsLivekitZoomOrVenue', 'deliveryFormatModal.comprehensiveAssessmentOfficialCertifica'],
       accentColor: 'emerald',
-      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/60',
+      badgeBg: 'bg-success-soft text-success border-success/20',
     },
   ];
 
@@ -114,10 +114,10 @@ export function DeliveryFormatModal({
                 className={cn(
                   'relative rounded-2xl border p-5 text-left transition flex flex-col justify-between group',
                   !enabled
-                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60 grayscale'
+                    ? 'cursor-not-allowed border-border bg-muted opacity-60 grayscale'
                     : isSelected
-                      ? 'cursor-pointer border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                      : 'cursor-pointer border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50 shadow-2xs',
+                      ? 'cursor-pointer border-primary bg-primary-soft/30 ring-2 ring-ring/20 shadow-md'
+                      : 'cursor-pointer border-border bg-card hover:border-primary/30 hover:bg-muted/50 shadow-2xs',
                 )}
               >
                 <div>
@@ -127,7 +127,7 @@ export function DeliveryFormatModal({
                         'flex h-11 w-11 items-center justify-center rounded-xl transition',
                         isSelected
                           ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                          : 'bg-slate-100 text-slate-700 group-hover:bg-indigo-100 group-hover:text-indigo-700',
+                          : 'bg-secondary text-secondary-foreground group-hover:bg-primary-soft group-hover:text-primary',
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -137,7 +137,7 @@ export function DeliveryFormatModal({
                       <span
                         className={cn(
                           'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border',
-                          enabled ? opt.badgeBg : 'bg-slate-100 text-slate-500 border-slate-200',
+                          enabled ? opt.badgeBg : 'bg-secondary text-muted-foreground border-border',
                         )}
                       >
                         {enabled ? t(opt.badgeKey) : t('deliveryFormatModal.comingSoon')}
@@ -147,7 +147,7 @@ export function DeliveryFormatModal({
                           'flex h-5 w-5 items-center justify-center rounded-full border transition',
                           isSelected
                             ? 'border-indigo-600 bg-indigo-600 text-white'
-                            : 'border-slate-300 bg-white',
+                            : 'border-input bg-card',
                         )}
                       >
                         {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
@@ -155,22 +155,22 @@ export function DeliveryFormatModal({
                     </div>
                   </div>
 
-                  <h3 className="mt-3.5 text-base font-bold text-slate-900">
+                  <h3 className="mt-3.5 text-base font-bold text-foreground">
                     {t(opt.titleKey)}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  <p className="mt-1 text-xs text-secondary-foreground leading-relaxed">
                     {t(opt.descriptionKey)}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
+                <div className="mt-4 pt-3 border-t border-border/60 space-y-1.5">
                   {opt.featuresKeys.map(
                     (feat, fIdx) => (
                       <div
                         key={fIdx}
-                        className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium"
+                        className="flex items-center gap-1.5 text-[11px] text-secondary-foreground font-medium"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                         <span>{t(feat)}</span>
                       </div>
                     ),
@@ -181,7 +181,7 @@ export function DeliveryFormatModal({
           })}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-slate-200/80 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+        <div className="mt-6 pt-4 border-t border-border/80 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
           <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">
             {t('deliveryFormatModal.cancel')}
           </Button>

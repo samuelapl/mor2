@@ -70,9 +70,9 @@ export interface ModuleDraft {
 }
 
 export const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-xs outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-export const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700';
+export const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 let uidCounter = 0;
 export const uid = (prefix = 'id') => `${prefix}-${Date.now()}-${++uidCounter}`;

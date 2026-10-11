@@ -160,7 +160,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <main className="relative min-h-screen bg-slate-50 text-slate-700 antialiased selection:bg-sky-600 selection:text-white dark:bg-slate-950 dark:text-slate-300">
+    <main className="relative min-h-screen bg-background text-secondary-foreground antialiased selection:bg-sky-600 selection:text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(#0284c7_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] dark:opacity-[0.05]" />
 
       <PublicHeader />
@@ -169,19 +169,19 @@ export default function LandingPage() {
       <section className="relative overflow-hidden px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-20 lg:px-8 lg:pb-12">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-sky-50 px-4 py-1.5 text-xs font-semibold text-sky-800 shadow-sm backdrop-blur dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-info/25 bg-info-soft px-4 py-1.5 text-xs font-semibold text-info shadow-sm backdrop-blur">
               <ShieldCheck className="h-4 w-4 text-amber-500" />
               <span>{t('landingPage.unifiedNationalTaxCustomsTrainingPlatfor')}</span>
             </div>
 
-            <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
+            <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
               {t('landingPage.learningManagementSystemFor')}{' '}
-              <span className="bg-gradient-to-r from-sky-600 via-blue-700 to-amber-500 bg-clip-text text-transparent dark:from-sky-400 dark:via-blue-400 dark:to-amber-400">
+              <span className="bg-gradient-to-r from-info via-info to-warning bg-clip-text text-transparent">
                 {t('landingPage.ministryOfRevenues')}
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-400 sm:text-lg">
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-secondary-foreground sm:text-lg">
               {t('landingPage.aSingleStandardizedInfrastructureBridgin')}
             </p>
 
@@ -196,7 +196,7 @@ export default function LandingPage() {
 
               <a
                 href="#learner-flow"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300/90 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-xl border border-input/90 bg-card px-6 py-3.5 text-sm font-semibold text-secondary-foreground shadow-sm transition hover:bg-muted"
               >
                 {t('landingPage.howItWorks')}
               </a>
@@ -207,65 +207,65 @@ export default function LandingPage() {
           <div className="mt-12 w-full">
             <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4 lg:gap-8 xl:gap-10">
                 {/* 1. Accredited Courses */}
-                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm transition hover:-translate-y-1 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-800 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 group-hover:scale-110 transition-transform">
+                <div className="group relative overflow-hidden rounded-2xl border border-border/90 bg-card p-5 sm:p-6 shadow-sm transition hover:-translate-y-1 hover:border-info/30 hover:shadow-md text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-info-soft text-info group-hover:scale-110 transition-transform">
                     <BookOpen className="h-5 w-5" />
                   </div>
-                  <div className="font-display text-3xl font-extrabold tracking-tight text-sky-700 dark:text-sky-400 sm:text-4xl">
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-info sm:text-4xl">
                     {stats?.courses ? `${stats.courses}+` : '7+'}
                   </div>
-                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                  <div className="mt-2.5 text-xs font-bold text-foreground sm:text-sm">
                     {t('landingPage.accreditedCourses')}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 text-[11px] text-muted-foreground">
                     {t('landingPage.taxCustomsPolicy')}
                   </div>
                 </div>
 
                 {/* 2. Active MoR Personnel */}
-                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-emerald-800 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                <div className="group relative overflow-hidden rounded-2xl border border-border/90 bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-success/30 hover:shadow-md text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-success-soft text-success group-hover:scale-110 transition-transform">
                     <Users className="h-5 w-5" />
                   </div>
-                  <div className="font-display text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 sm:text-4xl">
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-success sm:text-4xl">
                     {stats?.staff ? `${stats.staff}+` : '22+'}
                   </div>
-                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                  <div className="mt-2.5 text-xs font-bold text-foreground sm:text-sm">
                     {t('landingPage.activeMorPersonnel')}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 text-[11px] text-muted-foreground">
                     {t('landingPage.acrossAllRegionalBranches')}
                   </div>
                 </div>
 
                 {/* 3. Live Sessions Completed */}
-                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-violet-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-violet-800 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 group-hover:scale-110 transition-transform">
+                <div className="group relative overflow-hidden rounded-2xl border border-border/90 bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-accent/30 hover:shadow-md text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent group-hover:scale-110 transition-transform">
                     <Video className="h-5 w-5" />
                   </div>
-                  <div className="font-display text-3xl font-extrabold tracking-tight text-violet-600 dark:text-violet-400 sm:text-4xl">
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-accent sm:text-4xl">
                     {stats?.sessions ? `${stats.sessions}+` : '17+'}
                   </div>
-                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                  <div className="mt-2.5 text-xs font-bold text-foreground sm:text-sm">
                     {t('landingPage.liveSessionsCompleted')}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 text-[11px] text-muted-foreground">
                     {t('landingPage.trainerLedInteractive')}
                   </div>
                 </div>
 
                 {/* 4. Verifiable Credentials */}
-                <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-amber-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-amber-800 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 group-hover:scale-110 transition-transform">
+                <div className="group relative overflow-hidden rounded-2xl border border-border/90 bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-warning/30 hover:shadow-md text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-warning-soft text-warning group-hover:scale-110 transition-transform">
                     <Award className="h-5 w-5" />
                   </div>
-                  <div className="font-display text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 sm:text-4xl">
+                  <div className="font-display text-3xl font-extrabold tracking-tight text-warning sm:text-4xl">
                     {stats?.certificates ? `${stats.certificates}+` : '1+'}
                   </div>
-                  <div className="mt-2.5 text-xs font-bold text-slate-900 dark:text-white sm:text-sm">
+                  <div className="mt-2.5 text-xs font-bold text-foreground sm:text-sm">
                     {t('landingPage.verifiableCredentials')}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 text-[11px] text-muted-foreground">
                     {t('landingPage.qrAuthenticated')}
                   </div>
                 </div>
@@ -278,13 +278,13 @@ export default function LandingPage() {
       <section id="capabilities" className="scroll-mt-16 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 sm:pb-20 lg:px-8 lg:pt-10 lg:pb-24">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+            <p className="text-xs font-bold uppercase tracking-widest text-info">
               {t('landingPage.enterpriseArchitecture')}
             </p>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
               {t('landingPage.builtForInstitutionalGovernanceAndScale')}
             </h2>
-            <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
+            <p className="mt-4 text-sm leading-relaxed text-secondary-foreground sm:text-base">
               {t('landingPage.replaceScatteredSpreadsheetsAndUnverifie')}
             </p>
           </div>
@@ -295,13 +295,13 @@ export default function LandingPage() {
               return (
                 <div
                   key={feat.title}
-                  className="group relative rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-sky-800"
+                  className="group relative rounded-2xl border border-border/90 bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:border-info/30 hover:shadow-md"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600 transition group-hover:bg-sky-600 group-hover:text-white dark:bg-sky-950/50 dark:text-sky-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-info-soft text-info transition group-hover:bg-sky-600 group-hover:text-white">
                     <Icon className="h-6 w-6" />
                   </div>
-                  <h3 className="mt-5 font-display text-base font-bold text-slate-950 dark:text-white">{feat.title}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{feat.description}</p>
+                  <h3 className="mt-5 font-display text-base font-bold text-foreground">{feat.title}</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-secondary-foreground sm:text-sm">{feat.description}</p>
                 </div>
               );
             })}
@@ -312,18 +312,18 @@ export default function LandingPage() {
       {/* LEARNER JOURNEY: STEP-BY-STEP FLOW FROM SIGNUP TO CERTIFICATE */}
       <section
         id="learner-flow"
-        className="scroll-mt-16 bg-slate-100/60 px-4 py-20 dark:bg-slate-900/40 sm:px-6 lg:px-8 lg:py-28"
+        className="scroll-mt-16 bg-secondary/60 px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1 text-xs font-semibold text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
-              <GraduationCap className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-info/30 bg-info-soft px-3.5 py-1 text-xs font-semibold text-info">
+              <GraduationCap className="h-4 w-4 text-info" />
               <span>{t('landingPage.learnerJourney')}</span>
             </div>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
               {t('landingPage.fromSignupToVerifiedCertification')}
             </h2>
-            <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
+            <p className="mt-4 text-sm leading-relaxed text-secondary-foreground sm:text-base">
               {t('landingPage.aSeamless5StepPathwayFor')}
             </p>
           </div>
@@ -335,32 +335,32 @@ export default function LandingPage() {
               return (
                 <div
                   key={item.step}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-800"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-border/90 bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-info/30 hover:shadow-md"
                 >
                   <div>
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-4">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-sm shadow-sky-600/20">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <span className="font-mono text-2xl font-black text-slate-300 dark:text-slate-700">
+                      <span className="font-mono text-2xl font-black text-subtle-foreground">
                         {item.step}
                       </span>
                     </div>
 
-                    <div className="mt-4 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">
+                    <div className="mt-4 inline-block rounded-md bg-info-soft px-2 py-0.5 text-[10px] font-bold text-info">
                       {item.tag}
                     </div>
 
-                    <h3 className="mt-2.5 font-display text-sm font-bold text-slate-950 dark:text-white">
+                    <h3 className="mt-2.5 font-display text-sm font-bold text-foreground">
                       {item.title}
                     </h3>
 
-                    <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-xs leading-relaxed text-secondary-foreground">
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="mt-6 flex items-center gap-1.5 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+                  <div className="mt-6 flex items-center gap-1.5 text-[11px] font-semibold text-info">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>
                       {idx === 4
@@ -374,7 +374,7 @@ export default function LandingPage() {
           </div>
 
           {/* Action Callout */}
-          <div className="mt-12 overflow-hidden rounded-3xl border border-sky-200 bg-gradient-to-r from-sky-600 via-blue-700 to-sky-800 p-8 text-white shadow-xl dark:border-sky-900 sm:p-10">
+          <div className="mt-12 overflow-hidden rounded-3xl border border-info/30 bg-gradient-to-r from-sky-600 via-blue-700 to-sky-800 p-8 text-white shadow-xl sm:p-10">
             <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
               <div className="space-y-2 text-center sm:text-left">
                 <h3 className="font-display text-xl font-bold sm:text-2xl">
@@ -387,7 +387,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-bold text-sky-700 shadow-md transition hover:bg-sky-50 active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-card px-5 py-3 text-xs font-bold text-info shadow-md transition hover:bg-info-soft active:scale-[0.98]"
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>{t('landingPage.createAccount')}</span>
@@ -429,12 +429,12 @@ export default function LandingPage() {
                   </h2>
 
                   {/* Description */}
-                  <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
+                  <p className="mt-4 text-sm leading-relaxed text-subtle-foreground sm:text-base">
                     {t('landingPage.engineeredForMinistryBranchTrainingFacil')}
                   </p>
 
                   {/* Features */}
-                  <div className="mt-6 grid grid-cols-1 gap-3 text-xs text-slate-300 sm:grid-cols-2">
+                  <div className="mt-6 grid grid-cols-1 gap-3 text-xs text-subtle-foreground sm:grid-cols-2">
                     {/* Windows Compatibility */}
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
@@ -476,13 +476,13 @@ export default function LandingPage() {
                   <h4 className="mt-4 font-display text-lg font-bold text-white">MoR-LMS-Setup.exe</h4>
 
                   {/* Version */}
-                  <p className="mt-1 text-xs text-slate-400">{t('landingPage.version240WindowsInstaller')}</p>
+                  <p className="mt-1 text-xs text-subtle-foreground">{t('landingPage.version240WindowsInstaller')}</p>
 
                   {/* Download Button */}
                   <a
                     href="/downloads/MoR-LMS-Setup.exe"
                     download
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs font-bold text-slate-950 shadow-md transition hover:bg-slate-100 active:scale-95"
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-card px-6 py-3.5 text-xs font-bold text-foreground shadow-md transition hover:bg-secondary active:scale-95"
                   >
                     <Download className="h-4 w-4" />
 
@@ -490,7 +490,7 @@ export default function LandingPage() {
                   </a>
 
                   {/* Additional Information */}
-                  <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+                  <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
                     {t('landingPage.compatibleWithSupported64BitWindows')}
                   </p>
                 </div>
@@ -503,17 +503,17 @@ export default function LandingPage() {
       {/* FAQ SECTION */}
       <section
         id="faq"
-        className="scroll-mt-16 bg-slate-50/50 px-4 py-20 dark:bg-slate-900/30 sm:px-6 lg:px-8"
+        className="scroll-mt-16 bg-muted/50 px-4 py-20 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+            <span className="text-xs font-bold uppercase tracking-widest text-info">
               {t('landingPage.clearAnswers')}
             </span>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-foreground">
               {t('landingPage.frequentlyAskedQuestions')}
             </h2>
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-3 text-sm text-secondary-foreground">
               {t('landingPage.keyOperationalAndTechnicalQuestionsRegar')}
             </p>
           </div>
@@ -527,25 +527,25 @@ export default function LandingPage() {
                   className={cn(
                     'overflow-hidden rounded-2xl border transition',
                     open
-                      ? 'border-sky-300 bg-sky-50/30 dark:border-sky-900/80 dark:bg-sky-950/20'
-                      : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
+                      ? 'border-info/30 bg-info-soft/30'
+                      : 'border-border bg-card',
                   )}
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(open ? null : index)}
-                    className="flex w-full items-center justify-between gap-4 p-5 text-left text-sm font-bold text-slate-950 dark:text-white"
+                    className="flex w-full items-center justify-between gap-4 p-5 text-left text-sm font-bold text-foreground"
                   >
                     <span>{faq.question}</span>
                     <ChevronDown
                       className={cn(
-                        'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
-                        open && 'rotate-180 text-sky-600 dark:text-sky-400',
+                        'h-4 w-4 shrink-0 text-subtle-foreground transition-transform duration-200',
+                        open && 'rotate-180 text-info',
                       )}
                     />
                   </button>
 
-                  {open && <div className="px-5 pb-5 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{faq.answer}</div>}
+                  {open && <div className="px-5 pb-5 pt-1 text-xs leading-relaxed text-secondary-foreground sm:text-sm">{faq.answer}</div>}
                 </div>
               );
             })}

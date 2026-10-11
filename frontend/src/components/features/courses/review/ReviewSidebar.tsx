@@ -119,8 +119,8 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
         onClick={() => onSelectNode(n)}
         title={nodeIssues?.join('\n')}
         className={cn(
-          'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400',
-          active ? 'bg-indigo-600 font-semibold text-white shadow-xs' : 'text-slate-700 hover:bg-white',
+          'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-ring',
+          active ? 'bg-indigo-600 font-semibold text-white shadow-xs' : 'text-secondary-foreground hover:bg-card',
         )}
         style={{ marginLeft: indent * 14 }}
       >
@@ -136,7 +136,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
       <>
         <FileQuestion className="h-3.5 w-3.5 shrink-0 opacity-80" />
         <span className="min-w-0 flex-1 truncate">{a.titleEn || label}</span>
-        <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">{a.weight ?? 0}%</span>
+        <span className="shrink-0 rounded bg-foreground/5 px-1 text-[10px] font-bold">{a.weight ?? 0}%</span>
       </>,
       indent,
     );
@@ -150,17 +150,17 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
     ) : null;
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-slate-50/70">
-      <div className="shrink-0 border-b border-slate-200/80 bg-white/80 p-4">
+    <aside className="flex h-full w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/70">
+      <div className="shrink-0 border-b border-border/80 bg-card/80 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('creatorSidebar.courseStructure')}</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('creatorSidebar.courseStructure')}</span>
           {issueCount > 0 ? (
-            <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+            <span className="flex items-center gap-1 rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-[11px] font-semibold text-warning">
               <AlertTriangle className="h-3 w-3" />
               {issueCount} {t(issueCount === 1 ? 'reviewSidebar.issueUnit' : 'reviewSidebar.issuesUnit')}
             </span>
           ) : (
-            <span className="rounded-full border border-slate-200/60 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+            <span className="rounded-full border border-border/60 bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
               {course.modules.length} {t('creatorSidebar.modules')}
             </span>
           )}
@@ -185,7 +185,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                 <button
                   type="button"
                   onClick={() => toggle(m.id)}
-                  className="flex h-6 w-5 shrink-0 items-center justify-center text-slate-400 hover:text-slate-700"
+                  className="flex h-6 w-5 shrink-0 items-center justify-center text-subtle-foreground hover:text-secondary-foreground"
                   aria-label={isCollapsed ? 'Expand module' : 'Collapse module'}
                 >
                   {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -194,7 +194,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                   {node(
                     { type: 'MODULE', moduleId: m.id },
                     <>
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-black/5 text-[10px] font-bold">{mIdx + 1}</span>
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-foreground/5 text-[10px] font-bold">{mIdx + 1}</span>
                       <span className="min-w-0 flex-1 truncate font-semibold">{m.title || t('reviewSidebar.untitledModule')}</span>
                       <span className="shrink-0 text-[10px] opacity-70">{m.lessons.length}</span>
                       {fileBadge(getItemAttachments(m).length)}
@@ -219,7 +219,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                             <button
                               type="button"
                               onClick={(e) => toggleLesson(l.id, e)}
-                              className="flex h-5 w-4 shrink-0 items-center justify-center text-slate-400 hover:text-slate-700 ml-1.5"
+                              className="flex h-5 w-4 shrink-0 items-center justify-center text-subtle-foreground hover:text-secondary-foreground ml-1.5"
                               aria-label={isLessonCollapsed ? 'Expand sub-lessons' : 'Collapse sub-lessons'}
                             >
                               {isLessonCollapsed ? (
@@ -238,7 +238,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                                   {mIdx + 1}.{lIdx + 1} {cleanLessonTitle(l.title) || t('reviewSidebar.untitledLesson')}
                                 </span>
                                 {hasSubLessons && isLessonCollapsed && (
-                                  <span className="shrink-0 rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600">
+                                  <span className="shrink-0 rounded-full bg-border/80 px-1.5 py-0.2 text-[10px] font-semibold text-secondary-foreground">
                                     {subLessons.length}
                                   </span>
                                 )}
@@ -251,7 +251,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                         </div>
 
                         {hasSubLessons && !isLessonCollapsed && (
-                          <div className="border-l border-slate-200 ml-5 pl-2 space-y-0.5 my-0.5">
+                          <div className="border-l border-border ml-5 pl-2 space-y-0.5 my-0.5">
                             {subLessons.map((s) => {
                               const SubIcon = lessonIcon(s.contentType);
                               return (
@@ -290,8 +290,8 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
         })}
 
         {(course.sessionPlans?.length ?? 0) > 0 && (
-          <div className="space-y-0.5 border-t border-slate-200/80 pt-2">
-            <p className="flex items-center gap-1.5 px-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700">
+          <div className="space-y-0.5 border-t border-border/80 pt-2">
+            <p className="flex items-center gap-1.5 px-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-info">
               <Video className="h-3 w-3" />
               {t('creatorSidebar.onlineSessions')}
             </p>
@@ -302,10 +302,10 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                   {node(
                     { type: 'SESSION_PLAN', sessionPlanId: plan.id },
                     <>
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-black/5 text-[10px] font-bold">{i + 1}</span>
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-foreground/5 text-[10px] font-bold">{i + 1}</span>
                       <span className="min-w-0 flex-1 truncate">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                       {plan.quizzes.length > 0 && (
-                        <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">
+                        <span className="shrink-0 rounded bg-foreground/5 px-1 text-[10px] font-bold">
                           {plan.quizzes.length}Q · {weight}%
                         </span>
                       )}
@@ -317,7 +317,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
           </div>
         )}
 
-        <div className="space-y-1 border-t border-slate-200/80 pt-2">
+        <div className="space-y-1 border-t border-border/80 pt-2">
           {assessments.final.length > 0 ? (
             node(
               { type: 'FINAL_ASSESSMENT' },
@@ -326,13 +326,13 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                 <span className="min-w-0 flex-1 truncate font-semibold">
                   {assessments.final[0].titleEn || t('reviewSidebar.finalAssessment')}
                 </span>
-                <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">
+                <span className="shrink-0 rounded bg-foreground/5 px-1 text-[10px] font-bold">
                   {assessments.final.reduce((n, a) => n + (a.weight ?? 0), 0)}%
                 </span>
               </>,
             )
           ) : (
-            <p className="flex items-center gap-2 px-2 py-1.5 text-xs italic text-slate-400">
+            <p className="flex items-center gap-2 px-2 py-1.5 text-xs italic text-subtle-foreground">
               <Award className="h-3.5 w-3.5" />
               {t('reviewSidebar.noFinalAssessment')}
             </p>

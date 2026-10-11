@@ -44,7 +44,7 @@ export function ClassroomFooter({
   const canAdvance = isTimeMet && !isCurrentQuizIncomplete;
 
   return (
-    <footer className="sticky bottom-0 z-30 flex h-16 shrink-0 items-center justify-between border-t border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 sm:px-6 backdrop-blur shadow-sm">
+    <footer className="sticky bottom-0 z-30 flex h-16 shrink-0 items-center justify-between border-t border-border/90 bg-card/95 px-4 sm:px-6 backdrop-blur shadow-sm">
       {/* Previous Button */}
       <div>
         {previousItem ? (
@@ -53,7 +53,7 @@ export function ClassroomFooter({
             variant="outline"
             size="sm"
             onClick={() => onNavigate(previousItem)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-700"
+            className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground hover:text-primary hover:border-primary/30"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>{t('classroomFooter.previous')}</span>
@@ -65,18 +65,18 @@ export function ClassroomFooter({
 
       {/* Center: Time Requirement Tracker */}
       {hasTimeReq && (
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 text-xs font-medium text-secondary-foreground bg-muted px-3 py-1.5 rounded-full border border-border">
           <Clock className="h-3.5 w-3.5 text-indigo-500" />
           <span>{t('classroomFooter.studyTime')}</span>
-          <span className="font-mono font-bold text-slate-900 dark:text-white">
+          <span className="font-mono font-bold text-foreground">
             {formatMMSS(spentSeconds)} / {formatMMSS(requiredSeconds)}
           </span>
           {isTimeMet ? (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-success">
               <CheckCircle2 className="h-3 w-3" /> {t('classroomFooter.met')}
             </span>
           ) : (
-            <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+            <span className="text-[11px] text-warning font-semibold">
               {t('classroomFooter.inProgress')}
             </span>
           )}
@@ -123,7 +123,7 @@ export function ClassroomFooter({
             variant="outline"
             size="sm"
             disabled
-            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40"
+            className="text-xs font-semibold text-success border-success/30 bg-success-soft"
           >
             <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
             {t('classroomFooter.curriculumFinished')}

@@ -46,12 +46,12 @@ export function VideoEmbed({ url }: VideoEmbedProps) {
   }
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+    <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary-soft/50 p-4">
       <div className="flex items-center gap-3">
-        <PlayCircle className="h-6 w-6 text-indigo-600" />
+        <PlayCircle className="h-6 w-6 text-primary" />
         <div>
-          <p className="text-xs font-semibold text-slate-800">External Video Stream / Resource</p>
-          <p className="text-[11px] text-slate-500 truncate max-w-md">{url}</p>
+          <p className="text-xs font-semibold text-foreground">External Video Stream / Resource</p>
+          <p className="text-[11px] text-muted-foreground truncate max-w-md">{url}</p>
         </div>
       </div>
       <a

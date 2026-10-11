@@ -38,11 +38,11 @@ export function NewsArticleView({ news }: { news: NewsArticleData }) {
       <div className="mt-6">
         <NewsCategoryBadge category={news.category} />
       </div>
-      <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-slate-950 dark:text-white sm:text-3xl">
+      <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
         {news.headline}
       </h1>
       {(date || news.source) && (
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm text-muted-foreground">
           {date}
           {news.source ? ` (${news.source})` : ''}
         </p>

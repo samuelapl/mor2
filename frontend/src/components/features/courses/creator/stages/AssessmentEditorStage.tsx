@@ -234,14 +234,14 @@ export function AssessmentEditorStage({
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/90 bg-card p-5 shadow-xs">
         <div className="flex items-center gap-3">
           <div
             className={cn(
               'flex h-11 w-11 items-center justify-center rounded-xl shadow-xs',
-              scope === 'FINAL_ASSESSMENT' && 'bg-indigo-50 text-indigo-600 border border-indigo-100',
-              scope === 'MODULE_ASSESSMENT' && 'bg-emerald-50 text-emerald-600 border border-emerald-100',
-              scope === 'LESSON_ASSESSMENT' && 'bg-amber-50 text-amber-600 border border-amber-100',
+              scope === 'FINAL_ASSESSMENT' && 'bg-primary-soft text-primary border border-primary/30',
+              scope === 'MODULE_ASSESSMENT' && 'bg-success-soft text-success border border-success/30',
+              scope === 'LESSON_ASSESSMENT' && 'bg-warning-soft text-warning border border-warning/30',
             )}
           >
             {scope === 'FINAL_ASSESSMENT' ? (
@@ -254,19 +254,19 @@ export function AssessmentEditorStage({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-display text-lg font-bold text-slate-900">{meta.title}</h2>
+              <h2 className="font-display text-lg font-bold text-foreground">{meta.title}</h2>
               <span
                 className={cn(
                   'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                  scope === 'FINAL_ASSESSMENT' && 'bg-indigo-100 text-indigo-800',
-                  scope === 'MODULE_ASSESSMENT' && 'bg-emerald-100 text-emerald-800',
-                  scope === 'LESSON_ASSESSMENT' && 'bg-amber-100 text-amber-800',
+                  scope === 'FINAL_ASSESSMENT' && 'bg-primary-soft text-primary',
+                  scope === 'MODULE_ASSESSMENT' && 'bg-success-soft text-success',
+                  scope === 'LESSON_ASSESSMENT' && 'bg-warning-soft text-warning',
                 )}
               >
                 {meta.badge}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">{meta.subtitle}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{meta.subtitle}</p>
           </div>
         </div>
 
@@ -276,8 +276,8 @@ export function AssessmentEditorStage({
               className={cn(
                 'rounded-xl px-3 py-1.5 text-xs font-bold shadow-2xs border',
                 totalAllocatedWeight === 100
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-800',
+                  ? 'border-success/30 bg-success-soft text-success'
+                  : 'border-warning/30 bg-warning-soft text-warning',
               )}
             >
               {t('assessmentEditorStage.totalWeight')} {totalAllocatedWeight}% / 100%
@@ -287,8 +287,8 @@ export function AssessmentEditorStage({
       </div>
 
       {/* Rules & Parameters Configuration */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-5">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-5">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {t('assessmentEditorStage.gradingRulesConfiguration')}
         </h4>
 
@@ -308,10 +308,10 @@ export function AssessmentEditorStage({
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-secondary-foreground">
                 {t('assessmentEditorStage.courseGradeWeight')}
               </label>
-              <span className="text-[10px] text-slate-400 font-medium">
+              <span className="text-[10px] text-subtle-foreground font-medium">
                 {t('assessmentEditorStage.upToAvailable', { value: Math.max(0, maxWeight) })}
               </span>
             </div>
@@ -321,12 +321,12 @@ export function AssessmentEditorStage({
               max={Math.max(0, maxWeight)}
               value={weight}
               onChange={(e) => setWeight(Math.max(0, Math.min(Math.max(0, maxWeight), parseInt(e.target.value, 10) || 0)))}
-              className={cn(inputClass, mismatch && 'border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-200')}
+              className={cn(inputClass, mismatch && 'border-danger/30 bg-danger-soft/40 focus:border-danger/60 focus:ring-danger/20')}
               placeholder="e.g. 20"
               aria-invalid={Boolean(mismatch)}
             />
             {mismatch && (
-              <p className="mt-1.5 text-[11px] font-medium text-rose-600">
+              <p className="mt-1.5 text-[11px] font-medium text-danger">
                 {t('assessmentEditorStage.questionPointsTotalButThisAssessment', { total: mismatch.total, required: mismatch.required })}
               </p>
             )}
@@ -350,7 +350,7 @@ export function AssessmentEditorStage({
               />
             </div>
             {policyPassMark !== null && passMark < policyPassMark && (
-              <p className="mt-1.5 text-[11px] leading-snug text-amber-700">
+              <p className="mt-1.5 text-[11px] leading-snug text-warning">
                 {t('assessmentEditorStage.theCourseNeedsAOverallGrade', { policyPassMark, passMark })}
               </p>
             )}
@@ -384,20 +384,20 @@ export function AssessmentEditorStage({
         </div>
 
         {scope === 'FINAL_ASSESSMENT' && (
-          <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-slate-100">
+          <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border/60">
             {setAllowEarlySubmission && (
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allowEarlySubmission}
                   onChange={(e) => setAllowEarlySubmission(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                 />
                 <div>
-                  <p className="text-xs font-bold text-slate-800">
+                  <p className="text-xs font-bold text-foreground">
                     {t('assessmentEditorStage.allowEarlySubmission')}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     {t('assessmentEditorStage.learnersCanManuallySubmitAnytimeBefore')}
                   </p>
                 </div>
@@ -410,13 +410,13 @@ export function AssessmentEditorStage({
                   type="checkbox"
                   checked={autoSubmitOnExpire}
                   onChange={(e) => setAutoSubmitOnExpire(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                 />
                 <div>
-                  <p className="text-xs font-bold text-slate-800">
+                  <p className="text-xs font-bold text-foreground">
                     {t('assessmentEditorStage.autoSubmitWhenTimeExpires')}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     {t('assessmentEditorStage.serverAutomaticallyGradesAnswersWhenDead')}
                   </p>
                 </div>
@@ -428,18 +428,18 @@ export function AssessmentEditorStage({
 
       {/* Reference Documents / Attachments (Optional for Final or Module Assessment) */}
       {onFileUpload && onFileRemove && (
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
                 {t('assessmentEditorStage.assessmentReferenceDocumentsOptional')}
               </h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {t('assessmentEditorStage.attachFormulaSheetsCaseStudiesOr')}
               </p>
             </div>
             {uploading && (
-              <span className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
+              <span className="flex items-center gap-1.5 text-xs text-primary font-medium">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading…
               </span>
             )}
@@ -466,7 +466,7 @@ export function AssessmentEditorStage({
       {/* Questions Bank List */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {t('assessmentEditorStage.questions')} ({questions.length})
           </h4>
           <div className="flex flex-wrap items-center gap-2">
@@ -474,7 +474,7 @@ export function AssessmentEditorStage({
               <span
                 className={cn(
                   'rounded-lg border px-2 py-1 text-[11px] font-bold',
-                  mismatch ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                  mismatch ? 'border-danger/30 bg-danger-soft text-danger' : 'border-success/30 bg-success-soft text-success',
                 )}
               >
                 {t('assessmentEditorStage.points')} {pointsTotal} / {weight}
@@ -523,12 +523,12 @@ export function AssessmentEditorStage({
         </div>
 
         {questions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
-            <FileQuestion className="mx-auto h-8 w-8 text-slate-400" />
-            <p className="mt-2 text-sm font-semibold text-slate-700">
+          <div className="rounded-2xl border border-dashed border-border bg-muted/50 p-8 text-center">
+            <FileQuestion className="mx-auto h-8 w-8 text-subtle-foreground" />
+            <p className="mt-2 text-sm font-semibold text-secondary-foreground">
               {t('assessmentEditorStage.noQuestionsAddedYet')}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {t('assessmentEditorStage.addMultipleChoiceTrueFalseOr')}
             </p>
             <Button size="sm" onClick={addQuestion} className="mt-4 gap-1.5">
@@ -539,10 +539,10 @@ export function AssessmentEditorStage({
           questions.map((q, qIdx) => (
             <div
               key={q.id}
-              className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4"
+              className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-4"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <span className="text-xs font-bold text-indigo-700">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+                <span className="text-xs font-bold text-primary">
                   {t('assessmentEditorStage.question')} {qIdx + 1}
                 </span>
 
@@ -550,7 +550,7 @@ export function AssessmentEditorStage({
                   <select
                     value={q.type}
                     onChange={(e) => setQuestionType(qIdx, e.target.value as QuestionType)}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
+                    className="rounded-lg border border-border bg-muted px-2.5 py-1 text-xs font-medium text-secondary-foreground"
                   >
                     {questionTypeOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -562,7 +562,7 @@ export function AssessmentEditorStage({
                   <select
                     value={q.category || ''}
                     onChange={(e) => patchQuestion(qIdx, { category: e.target.value })}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
+                    className="rounded-lg border border-border bg-muted px-2.5 py-1 text-xs font-medium text-secondary-foreground"
                   >
                     <option value="">{t('assessmentEditorStage.selectCategoryOptional')}</option>
                     {dynamicCategories.map((c) => (
@@ -572,8 +572,8 @@ export function AssessmentEditorStage({
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
-                    <span className="font-medium text-slate-600">{t('assessmentEditorStage.pts')}</span>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="font-medium text-secondary-foreground">{t('assessmentEditorStage.pts')}</span>
                     <input
                       type="number"
                       min={1}
@@ -583,16 +583,16 @@ export function AssessmentEditorStage({
                       onChange={(e) =>
                         patchQuestion(qIdx, { points: Math.max(1, parseInt(e.target.value, 10) || 1) })
                       }
-                      className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-xs text-center font-bold"
+                      className="w-14 rounded-lg border border-border px-2 py-1 text-xs text-center font-bold"
                     />
                   </div>
 
-                  <div className="flex items-center gap-0.5 border-l border-slate-200 pl-2">
+                  <div className="flex items-center gap-0.5 border-l border-border pl-2">
                     <button
                       type="button"
                       disabled={qIdx === 0}
                       onClick={() => moveQuestion(qIdx, -1)}
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                      className="rounded p-1 text-subtle-foreground hover:bg-secondary disabled:opacity-30"
                       title="Move up"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
@@ -601,7 +601,7 @@ export function AssessmentEditorStage({
                       type="button"
                       disabled={qIdx === questions.length - 1}
                       onClick={() => moveQuestion(qIdx, 1)}
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                      className="rounded p-1 text-subtle-foreground hover:bg-secondary disabled:opacity-30"
                       title="Move down"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
@@ -609,7 +609,7 @@ export function AssessmentEditorStage({
                     <button
                       type="button"
                       onClick={() => removeQuestion(qIdx)}
-                      className="rounded p-1 text-rose-500 hover:bg-rose-50"
+                      className="rounded p-1 text-rose-500 hover:bg-danger-soft"
                       title="Delete question"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -631,16 +631,16 @@ export function AssessmentEditorStage({
               </div>
 
               {/* Optional Question Image */}
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 space-y-2">
+              <div className="rounded-xl border border-border/60 bg-muted/50 p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700">
+                  <span className="text-xs font-semibold text-secondary-foreground">
                     {t('assessmentEditorStage.questionImageDiagramOptional')}
                   </span>
                   {q.imageUrl && (
                     <button
                       type="button"
                       onClick={() => patchQuestion(qIdx, { imageUrl: undefined })}
-                      className="text-[11px] text-rose-600 hover:underline"
+                      className="text-[11px] text-danger hover:underline"
                     >
                       {t('assessmentEditorStage.removeImage')}
                     </button>
@@ -648,17 +648,17 @@ export function AssessmentEditorStage({
                 </div>
 
                 {q.imageUrl ? (
-                  <div className="relative inline-block rounded-lg overflow-hidden border border-slate-200">
+                  <div className="relative inline-block rounded-lg overflow-hidden border border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={q.imageUrl}
                       alt="Question diagram"
-                      className="max-h-48 rounded-lg object-contain bg-white"
+                      className="max-h-48 rounded-lg object-contain bg-card"
                     />
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer w-fit rounded-lg border border-dashed border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
-                    <Upload className="h-3.5 w-3.5 text-slate-400" />
+                  <label className="flex items-center gap-2 cursor-pointer w-fit rounded-lg border border-dashed border-input bg-card px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-muted transition">
+                    <Upload className="h-3.5 w-3.5 text-subtle-foreground" />
                     <span>{t('assessmentEditorStage.uploadImageDiagram')}</span>
                     <input
                       type="file"
@@ -692,7 +692,7 @@ export function AssessmentEditorStage({
                         onClick={() =>
                           patchQuestion(qIdx, { options: [...q.options, ''] })
                         }
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                        className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1"
                       >
                         <Plus className="h-3 w-3" /> {t('assessmentEditorStage.addChoice')}
                       </button>
@@ -708,7 +708,7 @@ export function AssessmentEditorStage({
                             name={`correct-${q.id}`}
                             checked={q.correctIndex === optIdx}
                             onChange={() => patchQuestion(qIdx, { correctIndex: optIdx })}
-                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                            className="h-4 w-4 text-success focus:ring-success"
                           />
                         </label>
                         <input
@@ -720,7 +720,7 @@ export function AssessmentEditorStage({
                           className={cn(
                             inputClass,
                             q.correctIndex === optIdx &&
-                              'border-emerald-300 bg-emerald-50/30 text-emerald-950 font-medium',
+                              'border-success/30 bg-success-soft/30 text-success font-medium',
                           )}
                         />
                         {q.type === 'multiple_choice' && q.options.length > 2 && (
@@ -737,7 +737,7 @@ export function AssessmentEditorStage({
                                 correctIndex: nextCorrect,
                               });
                             }}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded"
+                            className="p-1 text-subtle-foreground hover:text-danger rounded"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -788,7 +788,7 @@ export function AssessmentEditorStage({
               variant="outline"
               size="md"
               onClick={addQuestion}
-              className="gap-2 border-dashed border-2 border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 dark:text-indigo-300 w-full py-4 text-sm font-semibold rounded-2xl shadow-xs transition-all hover:scale-[1.005]"
+              className="gap-2 border-dashed border-2 border-primary/30 bg-primary-soft/50 hover:bg-primary-soft/70 text-primary w-full py-4 text-sm font-semibold rounded-2xl shadow-xs transition-all hover:scale-[1.005]"
             >
               <Plus className="h-5 w-5" />
               {t('assessmentEditorStage.addAnotherQuestion')}

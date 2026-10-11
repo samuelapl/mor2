@@ -25,13 +25,13 @@ export function FinalAssessmentCard({
     <div
       className={cn(
         'rounded-2xl border p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 transition-all',
-        contentCompleted ? 'border-indigo-300 bg-gradient-to-br from-indigo-50/60 to-violet-50/60' : 'border-slate-200 bg-slate-50/70 opacity-80',
+        contentCompleted ? 'border-primary/30 bg-gradient-to-br from-primary-soft/60 to-accent-soft/60' : 'border-border bg-muted/70 opacity-80',
       )}
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <BookOpenCheck className="h-5 w-5 text-indigo-600" />
-          <h3 className="text-sm font-bold text-slate-900">Comprehensive Final Assessment</h3>
+          <BookOpenCheck className="h-5 w-5 text-primary" />
+          <h3 className="text-sm font-bold text-foreground">Comprehensive Final Assessment</h3>
           {finalAssessment.passed ? (
             <Badge variant="green" dot>
               Passed
@@ -45,7 +45,7 @@ export function FinalAssessmentCard({
             </Badge>
           )}
         </div>
-        <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
+        <p className="text-xs text-secondary-foreground max-w-xl leading-relaxed">
           {finalAssessment.passed
             ? 'Congratulations! You have passed the final assessment and unlocked your certification.'
             : contentCompleted
@@ -57,7 +57,7 @@ export function FinalAssessmentCard({
       <div className="flex items-center gap-3">
         {finalAssessment.passed ? (
           <Button size="sm" variant="outline" onClick={onOpenAssessment}>
-            <Award className="h-4 w-4 mr-1 text-emerald-600" />
+            <Award className="h-4 w-4 mr-1 text-success" />
             Review / Retake
           </Button>
         ) : contentCompleted ? (
@@ -70,7 +70,7 @@ export function FinalAssessmentCard({
             size="sm"
             variant="outline"
             onClick={onLockedClick}
-            className="border-slate-300 text-slate-500 hover:border-amber-300 hover:text-amber-800 hover:bg-amber-50"
+            className="border-input text-muted-foreground hover:border-warning/30 hover:text-warning hover:bg-warning-soft"
             title="Click to check completion requirements"
           >
             <Lock className="h-3.5 w-3.5 mr-1" />

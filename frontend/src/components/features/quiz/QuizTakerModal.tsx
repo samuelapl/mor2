@@ -302,7 +302,7 @@ export function QuizTakerModal({
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
             <BookOpenCheck className="h-7 w-7" />
           </div>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-500">
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
             No assessment is set up for this course yet. Please check back later.
           </p>
           <Button className="mt-6" onClick={onClose}>
@@ -314,19 +314,19 @@ export function QuizTakerModal({
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
             <BookOpenCheck className="h-7 w-7" />
           </div>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-500">
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
             This assessment has {assessment.questions.length} questions. You need at least{' '}
             {assessment.passingScore}% to pass.
           </p>
           {assessment.resourceUrl ? (
-            <div className="mt-4 flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 text-left shadow-2xs">
+            <div className="mt-4 flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary-soft/70 p-3.5 text-left shadow-2xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <FileText className="h-5 w-5 text-indigo-600 shrink-0" />
+                <FileText className="h-5 w-5 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-indigo-950 truncate">
+                  <p className="text-xs font-bold text-primary truncate">
                     {assessment.fileName || 'Assessment Reference Sheet / Study Material'}
                   </p>
-                  <p className="text-[11px] text-indigo-700">
+                  <p className="text-[11px] text-primary">
                     Reference material provided for this assessment
                   </p>
                 </div>
@@ -381,7 +381,7 @@ export function QuizTakerModal({
                     ? `Passed! ${result.correctCount}/${result.totalQuestions} correct`
                     : `Not passed · ${result.correctCount}/${result.totalQuestions} correct`}
                 </Badge>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+                <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
                   {result.passed
                     ? 'Congratulations! You passed the assessment. Review your answers below.'
                     : `You need at least ${assessment.passingScore}% to continue. Review your choices below and try again.`}
@@ -413,11 +413,11 @@ export function QuizTakerModal({
               {/* Per-question review */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Answer Review
                   </h4>
                   {!showCorrectAnswers ? (
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-subtle-foreground">
                       Correct answers are shown once you pass
                     </span>
                   ) : null}
@@ -433,18 +433,18 @@ export function QuizTakerModal({
                       className={cn(
                         'rounded-2xl border p-4 shadow-sm',
                         !showCorrectAnswers
-                          ? 'border-slate-200/80 bg-white'
+                          ? 'border-border/80 bg-card'
                           : isCorrect
-                            ? 'border-emerald-200 bg-emerald-50/40'
-                            : 'border-rose-200 bg-rose-50/40',
+                            ? 'border-success/30 bg-success-soft/40'
+                            : 'border-danger/30 bg-danger-soft/40',
                       )}
                     >
-                      <div className="flex items-start gap-2 text-sm font-semibold text-slate-800">
+                      <div className="flex items-start gap-2 text-sm font-semibold text-foreground">
                         <span
                           className={cn(
                             'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white shadow-sm',
                             !showCorrectAnswers
-                              ? 'bg-slate-400'
+                              ? 'bg-subtle-foreground'
                               : isCorrect
                                 ? 'bg-emerald-500'
                                 : 'bg-rose-500',
@@ -466,14 +466,14 @@ export function QuizTakerModal({
                       {isShortAnswer ? (
                         <div className="mt-3 space-y-1.5 pl-8 text-xs">
                           <p>
-                            <span className="font-semibold text-slate-600">Your answer: </span>
+                            <span className="font-semibold text-secondary-foreground">Your answer: </span>
                             <span
                               className={
                                 !showCorrectAnswers
-                                  ? 'text-slate-700'
+                                  ? 'text-secondary-foreground'
                                   : isCorrect
-                                    ? 'text-emerald-700'
-                                    : 'text-rose-700'
+                                    ? 'text-success'
+                                    : 'text-danger'
                               }
                             >
                               {String(review?.selectedOption ?? '—')}
@@ -481,8 +481,8 @@ export function QuizTakerModal({
                           </p>
                           {showCorrectAnswers && !isCorrect ? (
                             <p>
-                              <span className="font-semibold text-slate-600">Correct answer: </span>
-                              <span className="text-emerald-700">
+                              <span className="font-semibold text-secondary-foreground">Correct answer: </span>
+                              <span className="text-success">
                                 {String(review?.correctAnswer ?? '—')}
                               </span>
                             </p>
@@ -500,18 +500,18 @@ export function QuizTakerModal({
                                 className={cn(
                                   'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs',
                                   isCorrectOption
-                                    ? 'border-emerald-300 bg-emerald-100/70 text-emerald-900 font-medium'
+                                    ? 'border-success/30 bg-success-soft/70 text-success font-medium'
                                     : isSelected
                                       ? showCorrectAnswers
-                                        ? 'border-rose-300 bg-rose-100/70 text-rose-900'
-                                        : 'border-indigo-300 bg-indigo-50 text-indigo-900'
-                                      : 'border-slate-200 bg-white text-slate-600',
+                                        ? 'border-danger/30 bg-danger-soft/70 text-danger'
+                                        : 'border-primary/30 bg-primary-soft text-primary'
+                                      : 'border-border bg-card text-secondary-foreground',
                                 )}
                               >
                                 {isCorrectOption ? (
-                                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                  <Check className="h-3.5 w-3.5 shrink-0 text-success" />
                                 ) : isSelected && showCorrectAnswers ? (
-                                  <X className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                                  <X className="h-3.5 w-3.5 shrink-0 text-danger" />
                                 ) : (
                                   <span className="h-3.5 w-3.5 shrink-0" />
                                 )}
@@ -536,16 +536,16 @@ export function QuizTakerModal({
       ) : (
         <div className="space-y-5">
           {/* Active Attempt Timer & Status Banner */}
-          <div className="sticky top-0 z-20 -mt-2 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-sm backdrop-blur-md">
+          <div className="sticky top-0 z-20 -mt-2 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/90 bg-card/95 p-3.5 shadow-sm backdrop-blur-md">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <BookOpenCheck className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-xs font-bold text-slate-800">
+                <p className="text-xs font-bold text-foreground">
                   Attempt {attempt?.attemptNumber ?? 1} of {assessment.maxAttempts}
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-muted-foreground">
                   Passing score: {assessment.passingScore}%
                 </p>
               </div>
@@ -556,10 +556,10 @@ export function QuizTakerModal({
                 className={cn(
                   'flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors',
                   remainingSec <= 60
-                    ? 'animate-pulse bg-red-100 text-red-700 ring-1 ring-red-300'
+                    ? 'animate-pulse bg-danger-soft text-danger ring-1 ring-red-300'
                     : remainingSec <= 300
-                      ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300'
-                      : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/70',
+                      ? 'bg-warning-soft text-warning ring-1 ring-amber-300'
+                      : 'bg-primary-soft text-primary ring-1 ring-indigo-200/70',
                 )}
               >
                 <Clock className="h-4 w-4" />
@@ -570,14 +570,14 @@ export function QuizTakerModal({
 
           {/* Reference Material if attached */}
           {assessment.resourceUrl ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 shadow-2xs">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary-soft/60 p-3 shadow-2xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                <FileText className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-indigo-900 truncate">
+                  <p className="text-xs font-bold text-primary truncate">
                     {assessment.fileName || 'Exam Reference Document / Study Formula Sheet'}
                   </p>
-                  <p className="text-[10px] text-indigo-700">
+                  <p className="text-[10px] text-primary">
                     Official reference material permitted during assessment
                   </p>
                 </div>
@@ -587,7 +587,7 @@ export function QuizTakerModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 shadow-2xs transition shrink-0"
+                className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-card px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary-soft shadow-2xs transition shrink-0"
               >
                 <Download className="h-3 w-3" />
                 View Reference
@@ -596,8 +596,8 @@ export function QuizTakerModal({
           ) : null}
 
           {autoSubmitted ? (
-            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+            <div className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger-soft p-3 text-xs text-danger">
+              <Loader2 className="h-4 w-4 animate-spin text-danger" />
               <span>Time has expired! Submitting your answers automatically...</span>
             </div>
           ) : null}
@@ -606,9 +606,9 @@ export function QuizTakerModal({
           {assessment.questions.map((question, index) => (
             <div
               key={question.id}
-              className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
+              className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm"
             >
-              <div className="flex items-start gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <div className="flex items-start gap-2 text-sm font-semibold text-foreground">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-[11px] font-bold text-white shadow-sm">
                   {index + 1}
                 </span>
@@ -616,11 +616,11 @@ export function QuizTakerModal({
               </div>
 
               {question.imageUrl ? (
-                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2">
+                <div className="mt-3 overflow-hidden rounded-xl border border-border bg-muted p-2">
                   <img
                     src={question.imageUrl}
                     alt={`Question ${index + 1} Diagram`}
-                    className="max-h-72 w-full object-contain rounded-lg bg-white dark:bg-slate-900"
+                    className="max-h-72 w-full object-contain rounded-lg bg-card"
                   />
                 </div>
               ) : null}
@@ -632,7 +632,7 @@ export function QuizTakerModal({
                     setAnswers((prev) => ({ ...prev, [index]: event.target.value }))
                   }
                   placeholder="Type your answer…"
-                  className="mt-3 w-full rounded-xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                  className="mt-3 w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10"
                 />
               ) : (
                 <div className="mt-3 space-y-2">
@@ -647,7 +647,7 @@ export function QuizTakerModal({
                           'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150',
                           selected
                             ? 'border-indigo-500 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25'
-                            : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-slate-700/50',
+                            : 'border-border/80 bg-card text-secondary-foreground shadow-sm hover:border-primary/30 hover:bg-primary-soft/40',
                         )}
                       >
                         <span
@@ -655,7 +655,7 @@ export function QuizTakerModal({
                             'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
                             selected
                               ? 'border-white text-white'
-                              : 'border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-400',
+                              : 'border-input text-subtle-foreground',
                           )}
                         >
                           {optionIndex + 1}
@@ -668,13 +668,13 @@ export function QuizTakerModal({
               )}
             </div>
           ))}
-          <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 px-4 py-3 shadow-lg backdrop-blur-md">
+          <div className="sticky bottom-0 flex items-center justify-between rounded-2xl border border-border/80 bg-card/90 px-4 py-3 shadow-lg backdrop-blur-md">
             <div>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <p className="text-xs font-semibold text-secondary-foreground">
                 {answeredCount}/{assessment.questions.length} answered
               </p>
               {answeredCount < assessment.questions.length ? (
-                <p className="text-[10px] text-slate-400">Early submission permitted</p>
+                <p className="text-[10px] text-subtle-foreground">Early submission permitted</p>
               ) : null}
             </div>
             <Button
@@ -694,23 +694,23 @@ export function QuizTakerModal({
   if (embedded) {
     if (!open) return null;
     return (
-      <div className="w-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden min-h-[520px]">
+      <div className="w-full flex flex-col bg-card rounded-2xl border border-border/90 shadow-sm overflow-hidden min-h-[520px]">
         {/* Top Header Bar */}
-        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border/90 bg-card/95 backdrop-blur-md">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition shadow-2xs"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition shadow-2xs"
               title="Back to Course"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+              <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
                 {assessment?.titleEn ?? 'Assessment'}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {assessment
                   ? `${courseTitle} · Passing score: ${assessment.passingScore}% · ${assessment.maxAttempts} max attempts`
                   : courseTitle}
@@ -720,7 +720,7 @@ export function QuizTakerModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
             title="Close"
           >
             <X className="h-4 w-4" />

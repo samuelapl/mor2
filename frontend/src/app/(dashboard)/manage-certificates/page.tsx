@@ -255,27 +255,27 @@ export default function ManageCertificatesPage() {
           className={cn(
             'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
             statusFilter === 'ALL'
-              ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/25 ring-1 ring-indigo-500/20'
-              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+              ? 'border-ring bg-primary-soft/40 ring-1 ring-ring/20'
+              : 'border-border bg-card',
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t('manageCertificatesPage.totalIssued')}
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-soft text-primary">
               <Award className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold text-foreground">
               {statsLoading ? '...' : (stats?.totalIssued ?? total)}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-subtle-foreground">
               {t('manageCertificatesPage.certificates')}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             {t('manageCertificatesPage.acrossAllPublishedCourses')}
           </p>
         </div>
@@ -289,20 +289,20 @@ export default function ManageCertificatesPage() {
           className={cn(
             'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
             statusFilter === 'ACTIVE'
-              ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/25 ring-1 ring-emerald-500/20'
-              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+              ? 'border-success bg-success-soft/40 ring-1 ring-success/20'
+              : 'border-border bg-card',
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t('manageCertificatesPage.activeValid')}
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-success-soft text-success">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold text-foreground">
               {statsLoading ? '...' : (stats?.activeCount ?? 0)}
             </span>
             <Badge variant="green" className="text-[10px] py-0 px-1.5">
@@ -311,53 +311,53 @@ export default function ManageCertificatesPage() {
                 : '100%'}
             </Badge>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             {t('manageCertificatesPage.fullyVerifiedCompliant')}
           </p>
         </div>
 
         {/* Certificate Downloads */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:shadow-md">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t('manageCertificatesPage.totalDownloads')}
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-info-soft text-info">
               <Download className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold text-foreground">
               {statsLoading ? '...' : (stats?.totalDownloads ?? 0)}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-subtle-foreground">
               {t('manageCertificatesPage.downloads')}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             {t('manageCertificatesPage.pdfExportAuditEvents')}
           </p>
         </div>
 
         {/* Certified Learners */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:shadow-md">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t('manageCertificatesPage.certifiedLearners')}
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-soft text-accent">
               <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold text-foreground">
               {statsLoading ? '...' : (stats?.uniqueLearners ?? 0)}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-subtle-foreground">
               {t('manageCertificatesPage.graduates')}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             {t('manageCertificatesPage.distinctGraduatedUsers')}
           </p>
         </div>
@@ -371,29 +371,29 @@ export default function ManageCertificatesPage() {
           className={cn(
             'cursor-pointer group relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]',
             statusFilter === 'REVOKED' || statusFilter === 'EXPIRED'
-              ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/25 ring-1 ring-rose-500/20'
-              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900',
+              ? 'border-danger bg-danger-soft/40 ring-1 ring-danger/20'
+              : 'border-border bg-card',
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t('manageCertificatesPage.revokedExpired')}
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-danger-soft text-danger">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold text-foreground">
               {statsLoading
                 ? '...'
                 : (stats?.revokedCount ?? 0) + (stats?.expiredCount ?? 0)}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-subtle-foreground">
               {stats?.revokedCount ?? 0} {t('manageCertificatesPage.revoked')}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+          <p className="mt-1 text-[11px] text-danger">
             {stats?.expiredCount ?? 0} {t('manageCertificatesPage.expiredCertificates')}
           </p>
         </div>
@@ -403,13 +403,13 @@ export default function ManageCertificatesPage() {
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-subtle-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('manageCertificatesPage.searchCertificateVerificationCodeStudent')}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-10 pr-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
+              className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-2 text-sm text-foreground placeholder-subtle-foreground focus:outline-hidden focus:ring-2 focus:ring-ring/20 shadow-2xs"
             />
           </div>
 
@@ -420,7 +420,7 @@ export default function ManageCertificatesPage() {
                 void loadData();
                 void loadStats();
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-muted transition"
               title="Refresh"
             >
               <RefreshCw className={cn('h-3.5 w-3.5', (loading || statsLoading) && 'animate-spin')} />
@@ -431,7 +431,7 @@ export default function ManageCertificatesPage() {
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex flex-wrap gap-2 border-b border-border pb-3">
           {[
             { key: 'ALL', label: t('manageCertificatesPage.allIssued') },
             { key: 'ACTIVE', label: t('certificateCard.active') },
@@ -449,7 +449,7 @@ export default function ManageCertificatesPage() {
                 'rounded-lg px-3.5 py-1.5 text-xs font-semibold transition',
                 statusFilter === tab.key
                   ? 'bg-indigo-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700',
+                  : 'bg-secondary text-secondary-foreground hover:bg-input/60',
               )}
             >
               {tab.label}
@@ -459,10 +459,10 @@ export default function ManageCertificatesPage() {
       </div>
 
       {/* Main Table Content */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-sm text-secondary-foreground">
+            <thead className="bg-muted text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-5 py-3.5">
                   {t('manageCertificatesPage.certificate')}
@@ -484,22 +484,22 @@ export default function ManageCertificatesPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border/60">
               {loading && certificates.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-5 py-12 text-center text-subtle-foreground">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-indigo-500" />
                     <span>{t('manageCertificatesPage.loadingCertificates')}</span>
                   </td>
                 </tr>
               ) : certificates.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-5 py-12 text-center text-subtle-foreground">
                     <Award className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">
+                    <p className="font-semibold text-secondary-foreground">
                       {t('manageCertificatesPage.noCertificatesFound')}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-subtle-foreground mt-1">
                       {t('manageCertificatesPage.certificatesAreAutomaticallyGeneratedWhe')}
                     </p>
                   </td>
@@ -512,14 +512,14 @@ export default function ManageCertificatesPage() {
                   return (
                     <tr
                       key={cert.id}
-                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                      className="hover:bg-muted/60 transition-colors"
                     >
                       {/* Certificate # and code */}
                       <td className="px-5 py-4">
-                        <div className="font-mono font-bold text-slate-900 dark:text-white">
+                        <div className="font-mono font-bold text-foreground">
                           {cert.certificateNumber}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-subtle-foreground font-mono mt-0.5">
                           <span>Code: {cert.verificationCode}</span>
                         </div>
                       </td>
@@ -527,24 +527,24 @@ export default function ManageCertificatesPage() {
                       {/* Learner */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold shrink-0">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-primary text-xs font-bold shrink-0">
                             {cert.user?.firstName?.[0] || 'U'}
                           </div>
                           <div>
-                            <div className="font-medium text-slate-800 dark:text-slate-100">
+                            <div className="font-medium text-foreground">
                               {cert.user?.firstName} {cert.user?.lastName}
                             </div>
-                            <div className="text-[11px] text-slate-400">{cert.user?.email}</div>
+                            <div className="text-[11px] text-subtle-foreground">{cert.user?.email}</div>
                           </div>
                         </div>
                       </td>
 
                       {/* Course */}
                       <td className="px-5 py-4">
-                        <div className="font-medium text-slate-800 dark:text-slate-100 line-clamp-1 max-w-xs">
+                        <div className="font-medium text-foreground line-clamp-1 max-w-xs">
                           {cert.course?.title || cert.course?.titleEn}
                         </div>
-                        <div className="text-xs text-slate-400 font-mono">
+                        <div className="text-xs text-subtle-foreground font-mono">
                           {cert.course?.code}
                         </div>
                       </td>
@@ -552,12 +552,12 @@ export default function ManageCertificatesPage() {
                       {/* Dates */}
                       <td className="px-5 py-4 text-xs">
                         <div>
-                          <span className="text-slate-400">{t('manageCertificatesPage.issued')} </span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          <span className="text-subtle-foreground">{t('manageCertificatesPage.issued')} </span>
+                          <span className="font-semibold text-secondary-foreground">
                             {formatDate(cert.issuedAt)}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
+                        <div className="text-[11px] text-subtle-foreground mt-0.5">
                           <span>{t('manageCertificatesPage.expires')} </span>
                           <span>{formatDate(cert.expiresAt)}</span>
                         </div>
@@ -592,7 +592,7 @@ export default function ManageCertificatesPage() {
                               setPreviewLang('en');
                             }}
                             title={t('manageCertificatesPage.previewCertificate')}
-                            className="h-8 px-2.5 gap-1 text-slate-700 dark:text-slate-300"
+                            className="h-8 px-2.5 gap-1 text-secondary-foreground"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             <span className="hidden md:inline">{t('manageCertificatesPage.preview')}</span>
@@ -605,7 +605,7 @@ export default function ManageCertificatesPage() {
                             onClick={() => handleDownload(cert, 'en')}
                             disabled={downloading}
                             title={t('certificateCard.downloadCertificatePdf')}
-                            className="h-8 px-2.5 gap-1 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                            className="h-8 px-2.5 gap-1 text-primary border-primary/30 hover:bg-primary-soft"
                           >
                             <Download className="h-3.5 w-3.5" />
                             <span className="hidden md:inline">{t('certificateCard.download')}</span>
@@ -618,7 +618,7 @@ export default function ManageCertificatesPage() {
                             rel="noreferrer"
                             title="Verify Public Credential"
                           >
-                            <Button size="sm" variant="ghost" className="h-8 px-2 text-slate-500 hover:text-indigo-600">
+                            <Button size="sm" variant="ghost" className="h-8 px-2 text-muted-foreground hover:text-primary">
                               <ShieldCheck className="h-3.5 w-3.5" />
                             </Button>
                           </a>
@@ -629,7 +629,7 @@ export default function ManageCertificatesPage() {
                             variant="ghost"
                             onClick={() => handleOpenAudit(cert)}
                             title="Audit History"
-                            className="h-8 px-2 text-slate-500 hover:text-slate-700"
+                            className="h-8 px-2 text-muted-foreground hover:text-secondary-foreground"
                           >
                             <History className="h-3.5 w-3.5" />
                           </Button>
@@ -644,7 +644,7 @@ export default function ManageCertificatesPage() {
                                 setReissueReason('');
                               }}
                               title="Reissue / Restore Certificate"
-                              className="h-8 px-2.5 gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              className="h-8 px-2.5 gap-1 text-success border-success/30 hover:bg-success-soft"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
                               <span className="hidden md:inline">{t('manageCertificatesPage.reissue')}</span>
@@ -658,7 +658,7 @@ export default function ManageCertificatesPage() {
                                 setRevokeReason('');
                               }}
                               title="Revoke Certificate"
-                              className="h-8 px-2 text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                              className="h-8 px-2 text-danger border-danger/30 hover:bg-danger-soft"
                             >
                               <ShieldAlert className="h-3.5 w-3.5" />
                             </Button>
@@ -674,7 +674,7 @@ export default function ManageCertificatesPage() {
         </div>
 
         {/* Pagination Bar */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-4">
+        <div className="border-t border-border p-4">
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -733,7 +733,7 @@ export default function ManageCertificatesPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
+                <Button size="sm" variant="outline" className="gap-1.5 text-secondary-foreground">
                   <ExternalLink className="h-4 w-4" />
                   {t('manageCertificatesPage.verifyLink')}
                 </Button>
@@ -744,14 +744,14 @@ export default function ManageCertificatesPage() {
           <div className="w-full space-y-6 pb-12">
             {/* Status alerts */}
             {previewCert.status === 'REVOKED' && (
-              <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
-                <XCircle className="h-5 w-5 shrink-0 text-red-600" />
+              <div className="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger-soft p-4 text-danger">
+                <XCircle className="h-5 w-5 shrink-0 text-danger" />
                 <div>
                   <p className="font-bold text-sm">
                     {t('manageCertificatesPage.thisCertificateIsRevoked')}
                   </p>
                   {previewCert.revokedReason && (
-                    <p className="text-xs text-red-700 mt-0.5">
+                    <p className="text-xs text-danger mt-0.5">
                       {t('manageCertificatesPage.revocationReason')} {previewCert.revokedReason}
                     </p>
                   )}
@@ -759,7 +759,7 @@ export default function ManageCertificatesPage() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/5 dark:bg-slate-950/40 p-4 shadow-inner overflow-hidden flex items-center justify-center">
+            <div className="rounded-2xl border border-border bg-muted p-4 shadow-inner overflow-hidden flex items-center justify-center">
               <div className="w-full max-w-4xl">
                 <CertificateRenderer
                   template={previewCert.template}
@@ -789,13 +789,13 @@ export default function ManageCertificatesPage() {
         subtitle={t('manageCertificatesPage.revokingWillInvalidateThisCertificateAnd')}
       >
         <div className="space-y-4 pt-2">
-          <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-800">
+          <div className="rounded-xl border border-danger/30 bg-danger-soft/50 p-3 text-xs text-danger">
             <span className="font-bold">{t('manageCertificatesPage.target')} </span>
             {revokingCert?.certificateNumber} ({revokingCert?.user?.firstName} {revokingCert?.user?.lastName})
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1.5">
               {t('manageCertificatesPage.revocationReasonRequiredForAuditLog')}
             </label>
             <textarea
@@ -803,7 +803,7 @@ export default function ManageCertificatesPage() {
               value={revokeReason}
               onChange={(e) => setRevokeReason(e.target.value)}
               placeholder={t('manageCertificatesPage.enterJustificationForRevokingThisCertifi')}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20"
+              className="w-full rounded-xl border border-border bg-card p-2.5 text-xs text-foreground placeholder-subtle-foreground focus:outline-hidden focus:ring-2 focus:ring-danger/20"
             />
           </div>
 
@@ -836,13 +836,13 @@ export default function ManageCertificatesPage() {
         subtitle={t('manageCertificatesPage.reissuingRestoresAnActiveStatusGenerates')}
       >
         <div className="space-y-4 pt-2">
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-xs text-emerald-800">
+          <div className="rounded-xl border border-success/30 bg-success-soft/50 p-3 text-xs text-success">
             <span className="font-bold">{t('manageCertificatesPage.target2')} </span>
             {reissuingCert?.certificateNumber} ({reissuingCert?.user?.firstName} {reissuingCert?.user?.lastName})
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-secondary-foreground mb-1.5">
               {t('manageCertificatesPage.reissueNoteReason')}
             </label>
             <textarea
@@ -850,7 +850,7 @@ export default function ManageCertificatesPage() {
               value={reissueReason}
               onChange={(e) => setReissueReason(e.target.value)}
               placeholder={t('manageCertificatesPage.enterNoteExplainingTheReissueE')}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-border bg-card p-2.5 text-xs text-foreground placeholder-subtle-foreground focus:outline-hidden focus:ring-2 focus:ring-success/20"
             />
           </div>
 
@@ -883,12 +883,12 @@ export default function ManageCertificatesPage() {
       >
         <div className="space-y-4 pt-2">
           {auditLoading ? (
-            <div className="py-8 text-center text-slate-400">
+            <div className="py-8 text-center text-subtle-foreground">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-indigo-500" />
               <span>{t('manageCertificatesPage.loadingAuditLogs')}</span>
             </div>
           ) : auditLogs.length === 0 ? (
-            <div className="py-8 text-center text-slate-400">
+            <div className="py-8 text-center text-subtle-foreground">
               <History className="h-6 w-6 mx-auto mb-2 opacity-40" />
               <p>{t('manageCertificatesPage.noAuditLogsRecordedForThis')}</p>
             </div>
@@ -897,19 +897,19 @@ export default function ManageCertificatesPage() {
               {auditLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-3 space-y-1 text-xs"
+                  className="rounded-xl border border-border bg-muted/60 p-3 space-y-1 text-xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                      <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" />
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-primary" />
                       {log.action}
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-subtle-foreground">
                       {formatDateTime(log.createdAt)}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="h-3 w-3" />
                     <span>
                       {log.user
@@ -919,7 +919,7 @@ export default function ManageCertificatesPage() {
                   </div>
 
                   {log.newValues && (
-                    <div className="mt-1 rounded bg-white dark:bg-slate-900 p-2 font-mono text-[10px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
+                    <div className="mt-1 rounded bg-card p-2 font-mono text-[10px] text-secondary-foreground border border-border/60">
                       {JSON.stringify(log.newValues, null, 2)}
                     </div>
                   )}

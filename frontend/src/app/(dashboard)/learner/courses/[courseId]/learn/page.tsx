@@ -15,7 +15,7 @@ export default function LearnCoursePage({ params }: LearnPageProps) {
 
   if (!courseId) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
         Course ID is missing.
       </div>
     );

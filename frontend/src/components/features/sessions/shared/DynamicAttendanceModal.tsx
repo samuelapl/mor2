@@ -183,7 +183,7 @@ export function DynamicAttendanceModal({
       onClose={onClose}
       title={
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Users className="h-4 w-4" />
           </span>
           <span className="truncate">
@@ -244,8 +244,8 @@ export function DynamicAttendanceModal({
     >
       <div className="space-y-6 pb-8">
         {flashMessage && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <div className="rounded-2xl border border-success/30 bg-success-soft px-4 py-3 text-sm font-semibold text-success flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
             <span>{flashMessage}</span>
           </div>
         )}
@@ -253,26 +253,26 @@ export function DynamicAttendanceModal({
         {loading ? (
           <div className="py-24 text-center">
             <RefreshCw className="mx-auto h-8 w-8 animate-spin text-indigo-500" />
-            <p className="mt-3 text-sm font-medium text-slate-600">
+            <p className="mt-3 text-sm font-medium text-secondary-foreground">
               Verifying attendance permissions and calculating session stay metrics…
             </p>
           </div>
         ) : !visibility?.canView ? (
           /* Locked State when Admin does NOT permit viewing */
-          <div className="rounded-3xl border border-amber-200 bg-amber-50/50 p-10 text-center max-w-xl mx-auto my-12 shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 mb-4">
+          <div className="rounded-3xl border border-warning/30 bg-warning-soft/50 p-10 text-center max-w-xl mx-auto my-12 shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning-soft text-warning mb-4">
               <Lock className="h-7 w-7" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">
+            <h3 className="text-lg font-bold text-foreground">
               Session Attendance Viewing Restricted
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">
               The system administrator has not permitted session attendance to be viewed by general
               actors for this session.
             </p>
-            <div className="mt-6 rounded-2xl border border-amber-200/80 bg-white p-4 text-xs text-slate-600 text-left space-y-2">
-              <div className="flex items-center gap-2 font-semibold text-amber-900">
-                <ShieldCheck className="h-4 w-4 text-amber-600" />
+            <div className="mt-6 rounded-2xl border border-warning/25 bg-card p-4 text-xs text-secondary-foreground text-left space-y-2">
+              <div className="flex items-center gap-2 font-semibold text-warning">
+                <ShieldCheck className="h-4 w-4 text-warning" />
                 Administrative Policy Rule:
               </div>
               <p>
@@ -292,16 +292,16 @@ export function DynamicAttendanceModal({
           /* Permitted State: Show Full Dynamic Attendance Roster & Calculation */
           <>
             {/* Calculation Rule Banner */}
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-xs text-indigo-900 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+            <div className="rounded-2xl border border-primary/30 bg-primary-soft/70 p-4 text-xs text-primary flex flex-wrap items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs">
                   {threshold}%
                 </span>
                 <div>
-                  <p className="font-semibold text-slate-900">
+                  <p className="font-semibold text-foreground">
                     Attendance Calculation Rule: $\ge {threshold}\%$ Active Stay = Present
                   </p>
-                  <p className="text-slate-600 text-[11px] mt-0.5">
+                  <p className="text-secondary-foreground text-[11px] mt-0.5">
                     Total session length is {report?.session.durationMinutes || 30} minutes.
                     Learners staying at least{' '}
                     {Math.round(((report?.session.durationMinutes || 30) * threshold) / 100)}{' '}
@@ -317,61 +317,61 @@ export function DynamicAttendanceModal({
 
             {/* Quick Metrics Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-                <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
+                <div className="flex items-center justify-between text-muted-foreground text-xs font-semibold">
                   <span>Total Enrolled</span>
                   <Users className="h-4 w-4 text-indigo-500" />
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-900">
+                <p className="mt-2 text-2xl font-bold text-foreground">
                   {report?.summary.totalEnrolled ?? 0}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Registered learners</p>
+                <p className="text-[11px] text-subtle-foreground mt-0.5">Registered learners</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-                <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
+                <div className="flex items-center justify-between text-muted-foreground text-xs font-semibold">
                   <span>Verified Present</span>
                   <UserCheck className="h-4 w-4 text-emerald-500" />
                 </div>
-                <p className="mt-2 text-2xl font-bold text-emerald-600">
+                <p className="mt-2 text-2xl font-bold text-success">
                   {report?.summary.present ?? 0}
                 </p>
-                <p className="text-[11px] text-emerald-700/80 mt-0.5 font-medium">
+                <p className="text-[11px] text-success/80 mt-0.5 font-medium">
                   Stayed $\ge {threshold}\%$ of session
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-                <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
+                <div className="flex items-center justify-between text-muted-foreground text-xs font-semibold">
                   <span>Marked Absent</span>
                   <UserX className="h-4 w-4 text-rose-500" />
                 </div>
-                <p className="mt-2 text-2xl font-bold text-rose-600">
+                <p className="mt-2 text-2xl font-bold text-danger">
                   {report?.summary.absent ?? 0}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Stayed &lt; {threshold}%</p>
+                <p className="text-[11px] text-subtle-foreground mt-0.5">Stayed &lt; {threshold}%</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-                <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <div className="rounded-2xl border border-border/90 bg-card p-4 shadow-xs">
+                <div className="flex items-center justify-between text-muted-foreground text-xs font-semibold">
                   <span>Attendance Rate</span>
                   <Percent className="h-4 w-4 text-indigo-500" />
                 </div>
-                <p className="mt-2 text-2xl font-bold text-indigo-600">
+                <p className="mt-2 text-2xl font-bold text-primary">
                   {report?.summary.attendanceRate ?? 0}%
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Overall qualification</p>
+                <p className="text-[11px] text-subtle-foreground mt-0.5">Overall qualification</p>
               </div>
             </div>
 
             {/* Attendee Roster Table */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">
+                  <h4 className="text-sm font-bold text-foreground">
                     Live Session Attendees &amp; Interval Audit
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Shows when each learner joined, left, rejoined, total active minutes, and
                     calculated status.
                   </p>
@@ -381,12 +381,12 @@ export function DynamicAttendanceModal({
                   placeholder="Filter learner name or email…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-indigo-400 focus:bg-white transition"
+                  className="rounded-xl border border-border bg-muted px-3 py-1.5 text-xs text-foreground outline-none focus:border-ring focus:bg-card transition"
                 />
               </div>
 
               {filteredAttendees.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-10 text-center text-xs text-slate-400">
+                <div className="rounded-xl border border-dashed border-border bg-muted/50 py-10 text-center text-xs text-subtle-foreground">
                   No attendees matching filter recorded yet.
                 </div>
               ) : (
@@ -414,43 +414,43 @@ export function DynamicAttendanceModal({
                       att.percentage ?? Math.min(100, Math.round((stayMin / sessionDur) * 100));
 
                     return (
-                      <tr key={att.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={att.id} className="hover:bg-muted/80 transition-colors">
                         <Td>
                           <div>
-                            <p className="font-semibold text-slate-900 text-xs">{fullName}</p>
-                            <p className="text-[10px] text-slate-400">{att.user?.email || '—'}</p>
+                            <p className="font-semibold text-foreground text-xs">{fullName}</p>
+                            <p className="text-[10px] text-subtle-foreground">{att.user?.email || '—'}</p>
                           </div>
                         </Td>
-                        <Td className="text-xs text-slate-600 font-mono">
+                        <Td className="text-xs text-secondary-foreground font-mono">
                           {formatDateTime(att.joinedAt)}
                         </Td>
-                        <Td className="text-xs text-slate-500 font-mono">
+                        <Td className="text-xs text-muted-foreground font-mono">
                           {formatDateTime(att.leftAt)}
                         </Td>
                         <Td>
                           {(att.rejoinCount ?? 0) > 0 ? (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200/60">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-warning-soft px-2 py-0.5 text-[10px] font-semibold text-warning border border-warning/20">
                               Rejoined {att.rejoinCount}x
                             </span>
                           ) : att.joinedAt ? (
-                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+                            <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground">
                               Single session
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400">Never joined</span>
+                            <span className="text-[10px] text-subtle-foreground">Never joined</span>
                           )}
                         </Td>
                         <Td>
                           <div className="flex items-center gap-1.5">
-                            <Clock className="h-3 w-3 text-slate-400" />
-                            <span className="font-semibold text-slate-900 text-xs">
+                            <Clock className="h-3 w-3 text-subtle-foreground" />
+                            <span className="font-semibold text-foreground text-xs">
                               {stayMin}m / {sessionDur}m
                             </span>
                           </div>
                         </Td>
                         <Td>
                           <div className="flex items-center gap-2">
-                            <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="w-16 bg-secondary rounded-full h-1.5 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${
                                   pct >= threshold ? 'bg-emerald-500' : 'bg-rose-400'
@@ -458,7 +458,7 @@ export function DynamicAttendanceModal({
                                 style={{ width: `${Math.min(100, pct)}%` }}
                               />
                             </div>
-                            <span className="font-mono text-xs font-bold text-slate-700">
+                            <span className="font-mono text-xs font-bold text-secondary-foreground">
                               {pct}%
                             </span>
                           </div>

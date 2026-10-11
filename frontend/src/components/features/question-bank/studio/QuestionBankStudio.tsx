@@ -103,7 +103,7 @@ export function QuestionBankStudio({ role }: QuestionBankStudioProps) {
 
   return (
     <StudioPortal>
-      <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+      <div className="flex h-screen flex-col overflow-hidden bg-muted font-sans text-foreground antialiased">
         <StudioHeader
           role={role}
           stage={stage}
@@ -129,11 +129,11 @@ export function QuestionBankStudio({ role }: QuestionBankStudioProps) {
           {sidebarOpen && (
             <div className="fixed inset-0 z-40 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Curriculum">
               <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-              <StudioSidebar {...sidebarProps} onClose={() => setSidebarOpen(false)} className="relative max-w-[88vw] bg-slate-50 shadow-2xl dark:bg-slate-900" />
+              <StudioSidebar {...sidebarProps} onClose={() => setSidebarOpen(false)} className="relative max-w-[88vw] bg-muted shadow-2xl" />
             </div>
           )}
 
-          <main className="flex-1 overflow-y-auto bg-slate-50/70 px-4 py-6 sm:px-6 md:px-10 md:py-8 lg:px-12 dark:bg-slate-950">
+          <main className="flex-1 overflow-y-auto bg-muted/70 px-4 py-6 sm:px-6 md:px-10 md:py-8 lg:px-12">
             {stage === 'COMPOSE' ? (
               <ComposeStage
                 editor={editor}

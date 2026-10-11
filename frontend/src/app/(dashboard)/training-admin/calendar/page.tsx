@@ -46,7 +46,7 @@ export default function CalendarPage() {
       description={t('calendarPage.upcomingLiveTrainingSessionsAcrossAll')}
     >
       {loading ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <TableSkeleton columns={6} rows={5} />
         </div>
       ) : (

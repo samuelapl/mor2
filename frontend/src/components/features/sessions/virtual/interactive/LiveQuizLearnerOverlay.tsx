@@ -460,7 +460,7 @@ export function LiveQuizLearnerOverlay({
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-subtle-foreground">
               {isRevealed
                 ? 'Answers Revealed • Click to view'
                 : submitted
@@ -478,18 +478,18 @@ export function LiveQuizLearnerOverlay({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs pointer-events-auto animate-in fade-in duration-200">
-      <div className="relative flex flex-col w-full max-w-xl max-h-[90vh] sm:max-h-[86vh] rounded-3xl border border-slate-200/90 bg-white text-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative flex flex-col w-full max-w-xl max-h-[90vh] sm:max-h-[86vh] rounded-3xl border border-border/90 bg-card text-foreground shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
 
         {/* Modal Header */}
-        <div className="border-b border-slate-100 px-5 pt-3.5 pb-3 shrink-0 bg-white">
+        <div className="border-b border-border/60 px-5 pt-3.5 pb-3 shrink-0 bg-card">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 shadow-2xs">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary border border-primary/25 shadow-2xs">
                 <FileQuestion className="h-3.5 w-3.5" />
               </span>
               <div className="min-w-0">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 truncate block">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary truncate block">
                   {currentQuestion.trainerName
                     ? `${currentQuestion.trainerName} asks:`
                     : 'Live Classroom Question'}
@@ -503,8 +503,8 @@ export function LiveQuizLearnerOverlay({
                 <span
                   className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                     secondsRemaining <= 5
-                      ? 'border-red-300 bg-red-50 text-red-700 animate-pulse'
-                      : 'border-slate-200 bg-slate-100 text-slate-700'
+                      ? 'border-danger/30 bg-danger-soft text-danger animate-pulse'
+                      : 'border-border bg-secondary text-secondary-foreground'
                   }`}
                 >
                   <Clock className="h-3 w-3" />
@@ -513,15 +513,15 @@ export function LiveQuizLearnerOverlay({
               )}
 
               {isLocked && !isRevealed && (
-                <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700">
+                <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-primary/30 bg-primary-soft text-primary">
                   <Clock className="h-3 w-3 text-indigo-500 animate-pulse" />
                   Waiting for Reveal
                 </span>
               )}
 
               {isRevealed && (
-                <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800">
-                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border border-success/30 bg-success-soft text-success">
+                  <CheckCircle2 className="h-3 w-3 text-success" />
                   Answers Revealed
                 </span>
               )}
@@ -530,7 +530,7 @@ export function LiveQuizLearnerOverlay({
               <button
                 type="button"
                 onClick={() => setIsMinimized(true)}
-                className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                className="rounded-lg p-1.5 text-subtle-foreground hover:text-secondary-foreground hover:bg-secondary transition"
                 title="Minimize question (dock to corner)"
               >
                 <Minus className="h-4 w-4" />
@@ -540,7 +540,7 @@ export function LiveQuizLearnerOverlay({
               <button
                 type="button"
                 onClick={onDismiss}
-                className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                className="rounded-lg p-1.5 text-subtle-foreground hover:text-secondary-foreground hover:bg-secondary transition"
                 title="Dismiss question"
               >
                 <X className="h-4 w-4" />
@@ -550,8 +550,8 @@ export function LiveQuizLearnerOverlay({
 
           {/* Multi-Question Quick Switcher Pills (allows learner to jump between questions anytime) */}
           {allQuestions.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-2 mt-2 border-t border-slate-100/90 no-scrollbar">
-              <span className="text-[11px] font-semibold text-slate-500 shrink-0 mr-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-2 mt-2 border-t border-border/55 no-scrollbar">
+              <span className="text-[11px] font-semibold text-muted-foreground shrink-0 mr-1">
                 Questions:
               </span>
               {allQuestions.map((q, qIdx) => {
@@ -573,10 +573,10 @@ export function LiveQuizLearnerOverlay({
                       isSelectedTab
                         ? 'bg-indigo-600 text-white shadow-xs'
                         : isRevealedTab
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                          ? 'bg-success-soft text-success border border-success/30 hover:bg-success/15'
                           : isAnswered
-                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold'
-                            : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
+                            ? 'bg-secondary text-secondary-foreground hover:bg-input/60 font-semibold'
+                            : 'bg-muted text-muted-foreground border border-border hover:bg-secondary'
                     }`}
                   >
                     <span>Q{qIdx + 1}</span>
@@ -592,11 +592,11 @@ export function LiveQuizLearnerOverlay({
         <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 space-y-4">
           {/* Question Text */}
           <div className="space-y-1">
-            <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-snug break-words">
+            <h4 className="text-base sm:text-lg font-bold text-foreground leading-snug break-words">
               {stripHtmlTags(currentQuestion.titleEn)}
             </h4>
             {currentQuestion.titleAm && (
-              <p className="text-xs sm:text-sm text-slate-600 font-amharic leading-relaxed break-words pt-1">
+              <p className="text-xs sm:text-sm text-secondary-foreground font-amharic leading-relaxed break-words pt-1">
                 {stripHtmlTags(currentQuestion.titleAm)}
               </p>
             )}
@@ -613,27 +613,27 @@ export function LiveQuizLearnerOverlay({
               const votePercent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
 
               let borderClass =
-                'border-slate-200 bg-slate-50/70 hover:bg-slate-100/80 hover:border-slate-300 text-slate-800';
+                'border-border bg-muted/70 hover:bg-secondary/80 hover:border-input text-foreground';
               if (!isLocked && isSelected) {
                 borderClass =
-                  'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20';
+                  'border-primary bg-primary-soft/80 text-primary ring-2 ring-ring/20';
               }
               if (isLocked && !isRevealed) {
                 if (isSelected) {
                   borderClass =
-                    'border-indigo-500 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-2xs font-semibold';
+                    'border-ring bg-primary-soft/80 text-primary ring-2 ring-ring/20 shadow-2xs font-semibold';
                 } else {
-                  borderClass = 'border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60';
+                  borderClass = 'border-border/80 bg-muted/40 text-muted-foreground opacity-60';
                 }
               }
               if (isRevealed) {
                 if (isThisCorrect) {
                   borderClass =
-                    'border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs';
+                    'border-success bg-success-soft text-success ring-2 ring-success/20 shadow-xs';
                 } else if (isSelectedWrong) {
-                  borderClass = 'border-red-400 bg-red-50 text-red-950 ring-1 ring-red-400/20';
+                  borderClass = 'border-red-400 bg-danger-soft text-danger ring-1 ring-red-400/20';
                 } else {
-                  borderClass = 'border-slate-200/80 bg-slate-50/40 text-slate-500 opacity-60';
+                  borderClass = 'border-border/80 bg-muted/40 text-muted-foreground opacity-60';
                 }
               }
 
@@ -649,7 +649,7 @@ export function LiveQuizLearnerOverlay({
                   {isRevealed && totalVotes > 0 && (
                     <div
                       className={`absolute top-0 bottom-0 left-0 transition-all duration-700 opacity-20 pointer-events-none ${
-                        isThisCorrect ? 'bg-emerald-400' : 'bg-slate-400'
+                        isThisCorrect ? 'bg-emerald-400' : 'bg-subtle-foreground'
                       }`}
                       style={{ width: `${votePercent}%` }}
                     />
@@ -664,17 +664,17 @@ export function LiveQuizLearnerOverlay({
                             ? 'bg-red-500 text-white shadow-2xs'
                             : isSelected
                               ? 'bg-indigo-600 text-white shadow-2xs'
-                              : 'bg-white border border-slate-200 text-slate-600'
+                              : 'bg-card border border-border text-secondary-foreground'
                       }`}
                     >
                       {String.fromCharCode(65 + idx)}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-semibold text-slate-900 break-words whitespace-normal leading-snug">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground break-words whitespace-normal leading-snug">
                         {stripHtmlTags(opt.textEn)}
                       </p>
                       {opt.textAm && (
-                        <p className="text-[11px] sm:text-xs text-slate-500 font-amharic break-words whitespace-normal leading-relaxed mt-0.5">
+                        <p className="text-[11px] sm:text-xs text-muted-foreground font-amharic break-words whitespace-normal leading-relaxed mt-0.5">
                           {stripHtmlTags(opt.textAm)}
                         </p>
                       )}
@@ -684,26 +684,26 @@ export function LiveQuizLearnerOverlay({
                   {/* Right Indicator */}
                   <div className="relative z-10 shrink-0 flex items-center gap-2 mt-0.5">
                     {isRevealed && totalVotes > 0 ? (
-                      <span className="text-xs font-mono font-bold text-slate-600">
+                      <span className="text-xs font-mono font-bold text-secondary-foreground">
                         {votePercent}%
                       </span>
                     ) : null}
 
                     {isRevealed && isThisCorrect && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success border border-success/30">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                         {isSelected ? 'Correct!' : 'Correct'}
                       </span>
                     )}
                     {isRevealed && isSelectedWrong && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-800 border border-red-200">
-                        <XCircle className="h-3.5 w-3.5 text-red-600" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-danger-soft px-2 py-0.5 text-[11px] font-bold text-danger border border-danger/30">
+                        <XCircle className="h-3.5 w-3.5 text-danger" />
                         Your Answer
                       </span>
                     )}
                     {isLocked && !isRevealed && isSelected && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-2 py-0.5 text-[11px] font-bold text-indigo-800 border border-indigo-200">
-                        <Check className="h-3 w-3 text-indigo-600" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-0.5 text-[11px] font-bold text-primary border border-primary/30">
+                        <Check className="h-3 w-3 text-primary" />
                         Your Choice
                       </span>
                     )}
@@ -720,15 +720,15 @@ export function LiveQuizLearnerOverlay({
 
           {/* Waiting for Trainer Reveal Banner */}
           {isLocked && !isRevealed && (
-            <div className="flex items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3.5 text-xs text-indigo-950 shadow-2xs animate-in fade-in">
+            <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/70 p-3.5 text-xs text-primary shadow-2xs animate-in fade-in">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
                 <Clock className="h-4 w-4" />
               </span>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-indigo-950 text-xs">
+                <p className="font-bold text-primary text-xs">
                   {submitted ? 'Response Recorded' : 'Time Expired'}
                 </p>
-                <p className="text-[11px] text-indigo-700 mt-0.5 leading-relaxed">
+                <p className="text-[11px] text-primary mt-0.5 leading-relaxed">
                   {submitted
                     ? 'Your response has been registered. You can proceed to the next question, or wait for the trainer to reveal the correct answers.'
                     : 'The question timer ended. The trainer will reveal the correct answers to the room shortly.'}
@@ -742,21 +742,21 @@ export function LiveQuizLearnerOverlay({
             <div
               className={`rounded-2xl p-4 text-xs space-y-2 border shadow-xs animate-in fade-in duration-200 ${
                 isCorrect
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
+                  ? 'border-success/30 bg-success-soft text-success'
                   : selectedOptionIds.length > 0
-                    ? 'border-amber-200 bg-amber-50 text-amber-950'
-                    : 'border-slate-200 bg-slate-50 text-slate-900'
+                    ? 'border-warning/30 bg-warning-soft text-warning'
+                    : 'border-border bg-muted text-foreground'
               }`}
             >
               <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
                 {isCorrect ? (
                   <>
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                     <span>Great job! You selected the correct answer.</span>
                   </>
                 ) : selectedOptionIds.length > 0 ? (
                   <>
-                    <XCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                    <XCircle className="h-4 w-4 text-danger shrink-0" />
                     <span>
                       Not quite. The correct answer is{' '}
                       <span className="font-extrabold underline">
@@ -772,7 +772,7 @@ export function LiveQuizLearnerOverlay({
                   </>
                 ) : (
                   <>
-                    <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                    <Clock className="h-4 w-4 text-warning shrink-0" />
                     <span>
                       Time expired before you answered. The correct answer was{' '}
                       <span className="font-extrabold underline">
@@ -793,26 +793,26 @@ export function LiveQuizLearnerOverlay({
 
           {/* Question Explanation Box (Always shown when revealed) */}
           {isRevealed && (
-            <div className="rounded-2xl border border-indigo-200 bg-indigo-50/80 p-4 text-xs space-y-2 shadow-2xs animate-in fade-in duration-200">
-              <div className="flex items-center gap-2 font-bold text-indigo-950 text-xs">
+            <div className="rounded-2xl border border-primary/30 bg-primary-soft/80 p-4 text-xs space-y-2 shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-2 font-bold text-primary text-xs">
                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-600 text-white shadow-2xs">
                   <BookOpen className="h-3 w-3" />
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-indigo-950">
+                <span className="text-xs sm:text-sm font-bold text-primary">
                   Explanation for the Correct Answer:
                 </span>
               </div>
               {resolvedExplanationEn ? (
-                <p className="text-slate-800 leading-relaxed text-xs sm:text-sm pl-7 font-medium">
+                <p className="text-foreground leading-relaxed text-xs sm:text-sm pl-7 font-medium">
                   {stripHtmlTags(resolvedExplanationEn)}
                 </p>
               ) : (
-                <p className="text-slate-700 leading-relaxed text-xs sm:text-sm pl-7">
+                <p className="text-secondary-foreground leading-relaxed text-xs sm:text-sm pl-7">
                   {fallbackExplanation}
                 </p>
               )}
               {resolvedExplanationAm && (
-                <p className="text-slate-600 font-amharic leading-relaxed text-xs sm:text-sm pl-7 border-t border-indigo-100/70 pt-2 mt-2">
+                <p className="text-secondary-foreground font-amharic leading-relaxed text-xs sm:text-sm pl-7 border-t border-primary/20 pt-2 mt-2">
                   {stripHtmlTags(resolvedExplanationAm)}
                 </p>
               )}
@@ -821,7 +821,7 @@ export function LiveQuizLearnerOverlay({
         </div>
 
         {/* Footer Actions & Multi-Question Navigation */}
-        <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100 bg-white shrink-0 flex-wrap">
+        <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-border/60 bg-card shrink-0 flex-wrap">
           {/* Previous / Next Navigation Controls */}
           {allQuestions.length > 1 ? (
             <div className="flex items-center gap-1.5">
@@ -831,14 +831,14 @@ export function LiveQuizLearnerOverlay({
                 variant="outline"
                 disabled={safeIndex === 0}
                 onClick={() => setViewingIndex((prev) => Math.max(0, prev - 1))}
-                className="gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold h-8 px-2.5 shadow-2xs"
+                className="gap-1 border-border bg-card text-secondary-foreground hover:bg-secondary disabled:opacity-40 text-xs font-semibold h-8 px-2.5 shadow-2xs"
                 title="Go to previous question"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
                 Previous
               </Button>
 
-              <span className="text-[11px] font-mono font-bold text-slate-500 px-1.5">
+              <span className="text-[11px] font-mono font-bold text-muted-foreground px-1.5">
                 {safeIndex + 1}/{allQuestions.length}
               </span>
 
@@ -850,7 +850,7 @@ export function LiveQuizLearnerOverlay({
                 onClick={() =>
                   setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))
                 }
-                className="gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold h-8 px-2.5 shadow-2xs"
+                className="gap-1 border-border bg-card text-secondary-foreground hover:bg-secondary disabled:opacity-40 text-xs font-semibold h-8 px-2.5 shadow-2xs"
                 title="Go to next question"
               >
                 Next
@@ -858,17 +858,17 @@ export function LiveQuizLearnerOverlay({
               </Button>
             </div>
           ) : (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted-foreground">
               {!isLocked ? (
                 <span>Select an option and submit</span>
               ) : !isRevealed ? (
-                <span className="flex items-center gap-1.5 text-slate-600 font-medium">
-                  <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-secondary-foreground font-medium">
+                  <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
                   {submitted ? 'Response submitted' : 'Time expired'}
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
-                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="flex items-center gap-1.5 text-secondary-foreground font-semibold">
+                  <Check className="h-3.5 w-3.5 text-success" />
                   {isCorrect ? 'Correct answer!' : 'Answers revealed'}
                 </span>
               )}
@@ -895,8 +895,8 @@ export function LiveQuizLearnerOverlay({
               </div>
             ) : !isRevealed ? (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-xl">
-                  <Check className="h-3.5 w-3.5 text-indigo-600" />
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-soft border border-primary/30 px-3 py-1 rounded-xl">
+                  <Check className="h-3.5 w-3.5 text-primary" />
                   Quiz Submitted ({answeredCount} of {allQuestions.length} answered) · Waiting for Trainer Reveal
                 </span>
 
@@ -907,7 +907,7 @@ export function LiveQuizLearnerOverlay({
                       variant="outline"
                       disabled={safeIndex === 0}
                       onClick={() => setViewingIndex((prev) => Math.max(0, prev - 1))}
-                      className="h-8 px-2.5 text-xs border-slate-200 bg-white"
+                      className="h-8 px-2.5 text-xs border-border bg-card"
                     >
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </Button>
@@ -916,7 +916,7 @@ export function LiveQuizLearnerOverlay({
                       variant="outline"
                       disabled={safeIndex >= allQuestions.length - 1}
                       onClick={() => setViewingIndex((prev) => Math.min(allQuestions.length - 1, prev + 1))}
-                      className="h-8 px-2.5 text-xs border-slate-200 bg-white"
+                      className="h-8 px-2.5 text-xs border-border bg-card"
                     >
                       <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
@@ -941,7 +941,7 @@ export function LiveQuizLearnerOverlay({
                   size="sm"
                   variant="outline"
                   onClick={onDismiss}
-                  className="border-slate-200 text-slate-700 hover:bg-slate-100 bg-white text-xs h-8 px-3"
+                  className="border-border text-secondary-foreground hover:bg-secondary bg-card text-xs h-8 px-3"
                 >
                   Dismiss
                 </Button>

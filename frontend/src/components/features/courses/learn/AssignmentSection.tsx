@@ -43,30 +43,30 @@ export function AssignmentSection({
   onSubmitAndNext,
 }: AssignmentSectionProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-orange-200/90 bg-orange-50/30 p-5">
+    <div className="space-y-4 rounded-2xl border border-warning/25 bg-warning-soft/30 p-5">
       {/* Header */}
       <div className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-700">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning-soft text-warning">
           <ClipboardList className="h-4 w-4" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900">Assignment Brief & Instructions</h4>
-          <p className="text-[11px] text-slate-500">
+          <h4 className="text-sm font-bold text-foreground">Assignment Brief & Instructions</h4>
+          <p className="text-[11px] text-muted-foreground">
             Review assignment requirements, download template resources, and upload your completed solution.
           </p>
         </div>
       </div>
 
       {item.content ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-[15px] sm:text-base leading-relaxed text-slate-800 shadow-2xs">
-          <RichContent html={item.content} className="text-[15px] sm:text-base leading-relaxed text-slate-800" />
+        <div className="rounded-xl border border-border bg-card p-5 text-[15px] sm:text-base leading-relaxed text-foreground shadow-2xs">
+          <RichContent html={item.content} className="text-[15px] sm:text-base leading-relaxed text-foreground" />
         </div>
       ) : null}
 
       {/* Attached Starter Templates */}
       {attachedTemplates.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Starter Templates & Brief Materials ({attachedTemplates.length}):
           </p>
           <div className="grid gap-2">
@@ -78,10 +78,10 @@ export function AssignmentSection({
       ) : null}
 
       {/* Student Submission Card */}
-      <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-3">
+      <div className="rounded-xl border border-border/90 bg-card p-4 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-            <UploadCloud className="h-4 w-4 text-indigo-600" />
+          <h5 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground flex items-center gap-1.5">
+            <UploadCloud className="h-4 w-4 text-primary" />
             Your Solution Submission
           </h5>
           {submission ? (
@@ -89,17 +89,17 @@ export function AssignmentSection({
               Uploaded
             </Badge>
           ) : (
-            <span className="text-[11px] text-slate-400">PDF, Word, Excel, CSV, or ZIP</span>
+            <span className="text-[11px] text-subtle-foreground">PDF, Word, Excel, CSV, or ZIP</span>
           )}
         </div>
 
         {submission ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="rounded-xl border border-success/30 bg-success-soft/50 p-3.5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <FileCheck className="h-6 w-6 text-emerald-600 shrink-0" />
+              <FileCheck className="h-6 w-6 text-success shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 truncate">{submission.fileName}</p>
-                <p className="text-[11px] text-emerald-800">
+                <p className="text-xs font-bold text-foreground truncate">{submission.fileName}</p>
+                <p className="text-[11px] text-success">
                   {formatFileSize(submission.sizeBytes)} · Submitted {new Date(submission.submittedAt).toLocaleDateString()} at{' '}
                   {new Date(submission.submittedAt).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -113,7 +113,7 @@ export function AssignmentSection({
                 href={submission.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shrink-0"
+                className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-secondary-foreground hover:bg-muted transition shrink-0"
               >
                 <ExternalLink className="h-3 w-3" />
                 View File
@@ -122,7 +122,7 @@ export function AssignmentSection({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-200"
+                  className="h-7 text-xs text-danger hover:bg-danger-soft hover:text-danger/80 border-danger/30"
                   onClick={onRemove}
                   title="Remove and re-upload"
                 >
@@ -134,17 +134,17 @@ export function AssignmentSection({
           </div>
         ) : (
           <div>
-            <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/20 transition-all">
+            <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/50 p-5 text-center cursor-pointer hover:border-primary/30 hover:bg-primary-soft/20 transition-all">
               {isUploading ? (
-                <div className="flex items-center gap-2 text-xs font-medium text-indigo-600">
+                <div className="flex items-center gap-2 text-xs font-medium text-primary">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   Uploading your assignment work…
                 </div>
               ) : (
                 <>
-                  <UploadCloud className="h-7 w-7 text-slate-400 mb-1" />
-                  <p className="text-xs font-semibold text-slate-700">Click to select your assignment file to upload</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Supports .pdf, .docx, .xlsx, .csv, .zip up to 50MB</p>
+                  <UploadCloud className="h-7 w-7 text-subtle-foreground mb-1" />
+                  <p className="text-xs font-semibold text-secondary-foreground">Click to select your assignment file to upload</p>
+                  <p className="text-[11px] text-subtle-foreground mt-0.5">Supports .pdf, .docx, .xlsx, .csv, .zip up to 50MB</p>
                   <input
                     type="file"
                     className="hidden"
@@ -163,15 +163,15 @@ export function AssignmentSection({
         )}
 
         {uploadErr ? (
-          <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+          <div className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft p-2.5 text-xs text-danger">
+            <AlertCircle className="h-4 w-4 shrink-0 text-danger" />
             <span>{uploadErr}</span>
           </div>
         ) : null}
 
         {error ? (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
-            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+          <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft p-2.5 text-xs text-warning">
+            <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
             <span>{error}</span>
           </div>
         ) : null}

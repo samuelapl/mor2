@@ -21,7 +21,7 @@ export function StartsInBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-700',
+        'inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary-soft px-1.5 py-0.5 text-[11px] font-semibold text-primary',
         className,
       )}
     >

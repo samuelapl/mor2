@@ -21,15 +21,15 @@ export function StageHeader({ eyebrow, title, description, actions, onBack, back
           <button
             type="button"
             onClick={onBack}
-            className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-400"
+            className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             {backLabel}
           </button>
         )}
-        <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{eyebrow}</p>
-        <h2 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{title}</h2>
-        {description && <div className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{description}</div>}
+        <p className="text-[11px] font-bold uppercase tracking-wider text-primary">{eyebrow}</p>
+        <h2 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-foreground">{title}</h2>
+        {description && <div className="mt-1.5 text-sm text-muted-foreground">{description}</div>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>

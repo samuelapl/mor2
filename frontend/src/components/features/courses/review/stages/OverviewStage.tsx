@@ -2,7 +2,20 @@
 
 import { formatDuration, getCourseDurationMinutes } from '@/lib/duration';
 import { useMemo } from 'react';
-import { BookOpen, Paperclip, Pencil, Trash2, UserPlus, UserRound } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  FileQuestion,
+  Layers,
+  ListTree,
+  Paperclip,
+  Pencil,
+  Scale,
+  Trash2,
+  UserPlus,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
@@ -75,67 +88,76 @@ export function OverviewStage({
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <Stat label={t('creatorSidebar.modules')} value={course.modules.length} />
-        <Stat label={t('moduleEditorStage.lessons')} value={stats.lessons} />
-        <Stat label={t('overviewStage.subLessons')} value={stats.subLessons} />
-        <Stat label={t('overviewStage.files')} value={stats.files} tone="text-indigo-600" />
-        <Stat label={t('assessmentEditorStage.questions')} value={stats.questions} tone="text-emerald-600" />
-        <Stat label={t('overviewStage.weights')} value={`${stats.weight}%`} tone={stats.weight === 100 ? 'text-emerald-600' : 'text-amber-600'} />
-        <Stat label={t('overviewStage.estTime')} value={duration} />
+      {/* auto-fit: cards wrap to a new row instead of squeezing values like "1 hr 20 mins" */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))]">
+        <Stat icon={Layers} label={t('creatorSidebar.modules')} value={course.modules.length} />
+        <Stat icon={BookOpen} label={t('moduleEditorStage.lessons')} value={stats.lessons} />
+        <Stat icon={ListTree} label={t('overviewStage.subLessons')} value={stats.subLessons} />
+        <Stat icon={Paperclip} label={t('overviewStage.files')} value={stats.files} />
+        <Stat icon={FileQuestion} label={t('assessmentEditorStage.questions')} value={stats.questions} />
+        <Stat
+          icon={Scale}
+          label={t('overviewStage.weights')}
+          value={`${stats.weight}%`}
+          // Weights must total 100%: the only stat whose colour carries meaning.
+          tone={stats.weight === 100 ? 'text-success' : 'text-warning'}
+        />
+        <Stat icon={Clock} label={t('overviewStage.estTime')} value={duration} />
       </div>
 
       {/* Details */}
-      <section className="space-y-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-indigo-600" />
-            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-slate-900">
+      <section className="space-y-8 rounded-2xl border border-border/80 bg-card p-6 shadow-xs sm:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">
+              <BookOpen className="h-4 w-4" />
+            </span>
+            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
               {t('overviewStage.courseOverviewAttributes')}
             </h2>
           </div>
           {canEdit && (
-            <Button variant="ghost" size="sm" onClick={onEdit} className="gap-1.5 text-xs text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800">
+            <Button variant="ghost" size="sm" onClick={onEdit} className="gap-1.5 text-xs text-primary hover:bg-primary-soft hover:text-primary/80">
               <Pencil className="h-3.5 w-3.5" />
               {t('overviewStage.editDetails')}
             </Button>
           )}
         </div>
 
-        <div className="flex flex-col items-start gap-6 md:flex-row">
-          <div className="w-full shrink-0 md:w-52">
+        <div className="flex flex-col items-start gap-8 md:flex-row">
+          <div className="w-full shrink-0 md:w-56">
             {course.cover ? (
-              <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-200 shadow-2xs md:aspect-[4/3]">
+              <div className="relative aspect-video overflow-hidden rounded-xl border border-border shadow-2xs md:aspect-[4/3]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={course.cover} alt="Course cover" className="h-full w-full object-cover" />
               </div>
             ) : (
-              <div className="flex aspect-video flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center md:aspect-[4/3]">
-                <BookOpen className="mb-1 h-8 w-8 text-slate-300" />
-                <p className="text-xs font-medium text-slate-400">{t('overviewStage.noCoverImage')}</p>
+              <div className="flex aspect-video flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/80 p-6 text-center md:aspect-[4/3]">
+                <BookOpen className="mb-1 h-8 w-8 text-subtle-foreground" />
+                <p className="text-xs font-medium text-subtle-foreground">{t('overviewStage.noCoverImage')}</p>
               </div>
             )}
           </div>
 
-          <div className="min-w-0 flex-1 space-y-3">
-            <h3 className="text-xl font-bold leading-snug text-slate-900">
+          <div className="min-w-0 flex-1 space-y-4">
+            <h3 className="text-xl font-bold leading-snug text-foreground">
               <RichContent inline html={course.title} placeholder={t('overviewStage.untitledCourse')} />
             </h3>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-slate-300 bg-slate-50 font-medium text-slate-700">
+              <Badge variant="outline" className="border-input bg-muted font-medium text-secondary-foreground">
                 {course.category}
               </Badge>
               <Badge variant={courseLevelVariant(course.level)} className="font-bold tracking-wider">
                 {courseLevelLabel(course.level, isAmharic)}
               </Badge>
               <Chip>
-                <UserRound className="h-3.5 w-3.5 text-indigo-600" />
+                <UserRound className="h-3.5 w-3.5 text-primary" />
                 {t('overviewStage.owner')} {userName(course.ownerId)}
               </Chip>
               {sessionTrainers.map(({ plan, number, trainerId }) =>
                 trainerId ? (
                   <Chip key={plan.id}>
-                    <UserRound className="h-3.5 w-3.5 text-indigo-600" />
+                    <UserRound className="h-3.5 w-3.5 text-primary" />
                     <span title={plan.titleEn}>
                       {t('overviewStage.session', { number })} {userName(trainerId)}
                     </span>
@@ -144,7 +166,7 @@ export function OverviewStage({
                   <span
                     key={plan.id}
                     title={plan.titleEn}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning"
                   >
                     {t('overviewStage.sessionNoTrainerAssigned', { number })}
                   </span>
@@ -152,14 +174,14 @@ export function OverviewStage({
               )}
               {otherTrainers.length > 0 && (
                 <Chip>
-                  <UserRound className="h-3.5 w-3.5 text-indigo-600" />
+                  <UserRound className="h-3.5 w-3.5 text-primary" />
                   {plans.length > 0 ? t('overviewStage.courseTrainers') : t('overviewStage.trainers')}{' '}
                   {otherTrainers.map(userName).join(', ')}
                 </Chip>
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 text-xs sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-3">
               <Field label={t('overviewStage.department')} html={course.department} empty={t('overviewStage.notSpecified')} />
               <Field
                 label={t('overviewStage.targetAudience')}
@@ -186,10 +208,10 @@ export function OverviewStage({
 
       {/* Course-level files (module/lesson files are listed with their curriculum item) */}
       {courseFiles.length > 0 && (
-        <section className="space-y-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <Paperclip className="h-4 w-4 text-indigo-600" />
-            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-slate-900">
+        <section className="space-y-4 rounded-2xl border border-border/90 bg-card p-6 shadow-xs">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+            <Paperclip className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
               {t('overviewStage.courseReferenceMaterials', { count: courseFiles.length })}
             </h2>
           </div>
@@ -204,18 +226,31 @@ export function OverviewStage({
   );
 }
 
-function Stat({ label, value, tone = 'text-slate-900' }: { label: string; value: string | number; tone?: string }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  tone = 'text-foreground',
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  tone?: string;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${tone}`}>{value}</p>
+    <div className="rounded-xl border border-border/80 bg-card px-4 py-3.5 shadow-2xs">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p className={`mt-2 whitespace-nowrap font-display text-xl font-bold tabular-nums ${tone}`}>{value}</p>
     </div>
   );
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700">
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/90 px-2.5 py-1 text-xs font-medium text-secondary-foreground">
       {children}
     </span>
   );
@@ -223,9 +258,11 @@ function Chip({ children }: { children: React.ReactNode }) {
 
 function Field({ label, html, empty }: { label: string; html?: string; empty: string }) {
   return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50/80 p-2.5">
-      <span className="mb-0.5 block font-semibold text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800">
+    <div className="rounded-xl border border-border/60 bg-muted/40 p-4">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-sm font-medium leading-relaxed text-foreground">
         <RichContent inline html={html} placeholder={empty} />
       </span>
     </div>
@@ -235,19 +272,20 @@ function Field({ label, html, empty }: { label: string; html?: string; empty: st
 function RichBlock({ label, html, missing, tone }: { label: string; html?: string; missing: string; tone?: 'blue' }) {
   const hasContent = Boolean(html && stripHtmlTags(html));
   return (
-    <div className="space-y-1.5 border-t border-slate-100 pt-2">
-      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
+    <div className="space-y-3 border-t border-border/60 pt-6">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
       {hasContent ? (
         <div
           className={
             tone === 'blue'
-              ? 'prose prose-sm max-w-none rounded-xl border border-blue-100/90 bg-blue-50/60 p-4 text-sm leading-relaxed text-blue-950'
-              : 'prose prose-sm max-w-none rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-700'
+              ? // Info accent on the edge only; body text stays in text colour so it reads in both themes.
+                'prose prose-sm max-w-none rounded-xl border border-border/60 border-l-4 border-l-info bg-info-soft/40 px-5 py-4 text-sm leading-relaxed text-foreground'
+              : 'prose prose-sm max-w-none rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm leading-relaxed text-secondary-foreground'
           }
           dangerouslySetInnerHTML={{ __html: html! }}
         />
       ) : (
-        <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs italic text-amber-800">{missing}</div>
+        <div className="rounded-xl border border-dashed border-warning/30 bg-warning-soft/60 px-5 py-4 text-xs italic text-warning">{missing}</div>
       )}
     </div>
   );

@@ -22,13 +22,13 @@ export function LessonTimeIndicator({ spent, required, satisfied }: LessonTimeIn
   const pct = Math.min(100, Math.round((spent / required) * 100));
 
   return (
-    <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
+    <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1">
       <Clock className="h-3 w-3 shrink-0" />
-      <span className={cn('font-medium', satisfied ? 'text-emerald-600' : 'text-indigo-600 font-semibold')}>
+      <span className={cn('font-medium', satisfied ? 'text-success' : 'text-primary font-semibold')}>
         {formatMMSS(spent)} / {formatMMSS(required)}
       </span>
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200">
-        <div className={cn('h-full rounded-full', satisfied ? 'bg-emerald-500' : 'bg-indigo-500')} style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-border">
+        <div className={cn('h-full rounded-full', satisfied ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${pct}%` }} />
       </div>
       {satisfied ? <Badge variant="green">Time met</Badge> : null}
     </div>

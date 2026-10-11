@@ -16,9 +16,9 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 pl-10 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 /** Matches the backend's resend cooldown. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -30,13 +30,13 @@ const submitClass =
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-card px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
       <div className="absolute top-4 right-4 z-20">
         <LanguageToggle />
       </div>
       <div className="relative w-full max-w-md animate-fade-in-up">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-slate-200/60 sm:p-8">
           {children}
         </div>
       </div>
@@ -46,7 +46,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
   return (
-    <li className={`flex items-center gap-1.5 ${met ? 'text-emerald-600' : 'text-slate-400'}`}>
+    <li className={`flex items-center gap-1.5 ${met ? 'text-success' : 'text-subtle-foreground'}`}>
       <Check className={`h-3 w-3 ${met ? 'opacity-100' : 'opacity-30'}`} />
       {children}
     </li>
@@ -93,9 +93,9 @@ export default function FirstLoginForm() {
   if (challenge === null) {
     return (
       <Shell>
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-muted-foreground">
           {t('firstLoginForm.yourPasswordChangeSessionHasExpired')}
-          <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-700">
+          <Link href="/login" className="font-semibold text-indigo-500 hover:text-primary">
             {t('firstLoginForm.signInAgain')}
           </Link>{' '}
           {t('firstLoginForm.toGetANewCode')}
@@ -184,16 +184,16 @@ export default function FirstLoginForm() {
   const messages = (
     <>
       {notice && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-700">
+        <div className="rounded-xl border border-success/30 bg-success-soft px-3.5 py-2.5 text-xs text-success">
           {notice}
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
           {error}{' '}
           {sessionExpired ? (
-            <Link href="/login" className="underline hover:text-red-800">
+            <Link href="/login" className="underline hover:text-danger">
               {t('firstLoginForm.goToSignIn')}
             </Link>
           ) : null}
@@ -209,12 +209,12 @@ export default function FirstLoginForm() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
             <ShieldCheck className="h-7 w-7" />
           </div>
-          <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
             {t('firstLoginForm.verifyYourEmail')}
           </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {t('firstLoginForm.yourAccountWasCreatedByAn')}
-            <span className="font-semibold text-slate-800">{challenge.email}</span>
+            <span className="font-semibold text-foreground">{challenge.email}</span>
             {t('firstLoginForm.enterItBelowToContinue')}
           </p>
         </div>
@@ -225,7 +225,7 @@ export default function FirstLoginForm() {
               {t('firstLoginForm.verificationCode')}
             </label>
             <div className="relative">
-              <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
               <input
                 id="code"
                 inputMode="numeric"
@@ -244,7 +244,7 @@ export default function FirstLoginForm() {
             </div>
             <div className="mt-1.5 text-right text-xs">
               {cooldown > 0 ? (
-                <span className="text-slate-500">
+                <span className="text-muted-foreground">
                   {t('firstLoginForm.resendCodeInS', { cooldown })}
                 </span>
               ) : (
@@ -252,7 +252,7 @@ export default function FirstLoginForm() {
                   type="button"
                   onClick={handleResend}
                   disabled={resending}
-                  className="font-semibold text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
+                  className="font-semibold text-indigo-500 hover:text-primary disabled:opacity-50"
                 >
                   {resending
                     ? t('firstLoginForm.sending')
@@ -271,10 +271,10 @@ export default function FirstLoginForm() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-slate-500">
+        <p className="mt-5 text-center text-sm text-muted-foreground">
           <Link
             href="/login"
-            className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
+            className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             {t('firstLoginForm.backToSignIn')}
@@ -290,10 +290,10 @@ export default function FirstLoginForm() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
           <KeyRound className="h-7 w-7" />
         </div>
-        <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground">
           {t('firstLoginForm.setYourOwnPassword')}
         </h1>
-        <p className="mt-1.5 text-sm text-slate-500">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {t('firstLoginForm.emailVerifiedChooseANewPassword')}
         </p>
       </div>
@@ -304,7 +304,7 @@ export default function FirstLoginForm() {
             {t('firstLoginForm.newPassword')}
           </label>
           <div className="relative">
-            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
             <input
               id="password"
               type="password"
@@ -327,7 +327,7 @@ export default function FirstLoginForm() {
             {t('firstLoginForm.confirmPassword')}
           </label>
           <div className="relative">
-            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
             <input
               id="confirm"
               type="password"
@@ -364,11 +364,11 @@ export default function FirstLoginForm() {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-slate-500">
+      <p className="mt-5 text-center text-sm text-muted-foreground">
         <button
           type="button"
           onClick={backToCode}
-          className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
+          className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-primary"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           {t('firstLoginForm.backToVerification')}

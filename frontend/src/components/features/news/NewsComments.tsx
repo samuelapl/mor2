@@ -126,14 +126,14 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
   };
 
   return (
-    <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
-      <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
+    <section className="mt-12 border-t border-border pt-8">
+      <h2 className="font-display text-lg font-bold text-foreground">
         {t('newsComments.comments')}{' '}
-        <span className="text-sm font-medium text-slate-400">({total})</span>
+        <span className="text-sm font-medium text-subtle-foreground">({total})</span>
       </h2>
 
       {!allowComments ? (
-        <p className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+        <p className="mt-4 inline-flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
           <Lock className="h-4 w-4" />
           {t('newsComments.commentsAreClosedForThisNews')}
         </p>
@@ -144,10 +144,10 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_LENGTH))}
             rows={3}
             placeholder={t('newsComments.writeAComment')}
-            className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            className="w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm outline-none transition focus:border-info/60 focus:ring-4 focus:ring-info/10"
           />
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs tabular-nums text-slate-400">
+            <span className="text-xs tabular-nums text-subtle-foreground">
               {draft.length}/{MAX_LENGTH}
             </span>
             <Button type="submit" size="sm" isLoading={posting} disabled={!draft.trim()}>
@@ -156,8 +156,8 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
           </div>
         </form>
       ) : (
-        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-          <Link href={loginHref} className="font-semibold text-sky-700 hover:underline dark:text-sky-400">
+        <p className="mt-4 text-sm text-muted-foreground">
+          <Link href={loginHref} className="font-semibold text-info hover:underline">
             {t('newsComments.signIn')}
           </Link>{' '}
           {t('newsComments.toJoinTheConversation')}
@@ -171,20 +171,20 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
               // eslint-disable-next-line @next/next/no-img-element
               <img src={c.author.avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
             ) : (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-info-soft text-sm font-semibold text-info">
                 {c.author.name.charAt(0)}
               </div>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">{c.author.name}</span>
-                <span className="text-xs text-slate-400">{formatNewsDate(c.createdAt, lang)}</span>
+                <span className="text-sm font-semibold text-foreground">{c.author.name}</span>
+                <span className="text-xs text-subtle-foreground">{formatNewsDate(c.createdAt, lang)}</span>
                 {c.isMine && (
                   <div className="ml-auto flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => startEdit(c)}
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                      className="rounded p-1 text-subtle-foreground hover:bg-secondary hover:text-primary"
                       title={t('newsComments.editComment')}
                       aria-label={t('newsComments.editComment')}
                     >
@@ -193,7 +193,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                     <button
                       type="button"
                       onClick={() => setDeletingId(c.id)}
-                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                      className="rounded p-1 text-subtle-foreground hover:bg-danger-soft hover:text-danger"
                       title={t('newsComments.deleteComment')}
                       aria-label={t('newsComments.deleteComment')}
                     >
@@ -208,10 +208,10 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                     value={editDraft}
                     onChange={(e) => setEditDraft(e.target.value.slice(0, MAX_LENGTH))}
                     rows={3}
-                    className="w-full resize-y rounded-xl border border-indigo-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-700 dark:bg-slate-900 dark:text-slate-200"
+                    className="w-full resize-y rounded-xl border border-primary/30 bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                   />
                   <div className="flex items-center justify-between">
-                    <span className="text-xs tabular-nums text-slate-400">
+                    <span className="text-xs tabular-nums text-subtle-foreground">
                       {editDraft.length}/{MAX_LENGTH}
                     </span>
                     <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
                 /* Plain text only — never rendered as HTML. */
                 <p
                   lang={newsTextLang(c.content)}
-                  className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                  className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-secondary-foreground"
                 >
                   {c.content}
                 </p>
@@ -251,7 +251,7 @@ export function NewsComments({ newsId, allowComments }: { newsId: string; allowC
       </ul>
 
       {!loading && comments.length === 0 && allowComments && (
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-subtle-foreground">
           {t('newsComments.noCommentsYet')}
         </p>
       )}

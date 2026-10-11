@@ -98,7 +98,7 @@ export default function NewsCommentsModerationPage() {
       actions={
         <Link
           href={`/news-management/${id}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           {t('newsCommentsModerationPage.backToTheNews')}
@@ -122,11 +122,11 @@ export default function NewsCommentsModerationPage() {
             {items.map((c) => (
               <TableRow key={c.id} className={c.isHidden ? 'opacity-60' : undefined}>
                 <Td className="whitespace-nowrap">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <p className="text-sm font-semibold text-foreground">
                     {c.user.firstName} {c.user.lastName}
                   </p>
-                  <p className="text-xs text-slate-500">{c.user.email}</p>
-                  <p className="text-xs text-slate-400">{formatNewsDate(c.createdAt, lang)}</p>
+                  <p className="text-xs text-muted-foreground">{c.user.email}</p>
+                  <p className="text-xs text-subtle-foreground">{formatNewsDate(c.createdAt, lang)}</p>
                 </Td>
                 <Td>
                   <p
@@ -147,7 +147,7 @@ export default function NewsCommentsModerationPage() {
                   <button
                     type="button"
                     onClick={() => void toggleHidden(c)}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                    className="rounded-lg p-1.5 text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground"
                     aria-label={c.isHidden ? t('newsCommentsModerationPage.show') : t('newsCommentsModerationPage.hide')}
                     title={c.isHidden ? t('newsCommentsModerationPage.show') : t('newsCommentsModerationPage.hide')}
                   >
@@ -156,7 +156,7 @@ export default function NewsCommentsModerationPage() {
                   <button
                     type="button"
                     onClick={() => setDeleting(c)}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                    className="rounded-lg p-1.5 text-subtle-foreground hover:bg-danger-soft hover:text-danger"
                     aria-label={t('newsComments.delete')}
                     title={t('newsComments.delete')}
                   >

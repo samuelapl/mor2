@@ -15,7 +15,7 @@ export function NewsCover({
     return (
       <div
         className={cn(
-          'flex items-center justify-center bg-gradient-to-br from-sky-100 to-amber-50 text-sky-700/60 dark:from-slate-800 dark:to-slate-900 dark:text-slate-600',
+          'flex items-center justify-center bg-gradient-to-br from-info-soft to-warning-soft text-info/60',
           className,
         )}
         aria-hidden

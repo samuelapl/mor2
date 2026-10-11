@@ -8,11 +8,11 @@ export default function NewsNotFound() {
   const { t } = useTranslation('news');
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-24 text-center">
-      <Newspaper className="h-10 w-10 text-slate-300 dark:text-slate-700" />
-      <h1 className="mt-4 font-display text-2xl font-bold text-slate-900 dark:text-white">
+      <Newspaper className="h-10 w-10 text-subtle-foreground" />
+      <h1 className="mt-4 font-display text-2xl font-bold text-foreground">
         {t('newsNotFound.newsNotFound')}
       </h1>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm text-muted-foreground">
         {t('newsNotFound.thisNewsMayHaveBeenRemoved')}
       </p>
       <Link

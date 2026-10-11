@@ -37,7 +37,7 @@ export function QuizStage({
 }: QuizStageProps) {
   if (!assessment) {
     return (
-      <div className="max-w-2xl mx-auto py-12 text-center text-slate-400">
+      <div className="max-w-2xl mx-auto py-12 text-center text-subtle-foreground">
         Assessment information not found.
       </div>
     );
@@ -57,29 +57,29 @@ export function QuizStage({
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div className="border-b border-slate-200 dark:border-slate-800 pb-4 space-y-2">
+        <div className="border-b border-border pb-4 space-y-2">
           <div className="flex items-center gap-2">
             <Badge variant="amber" className="text-xs">
               In-Person Evaluation
             </Badge>
-            <span className="text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60">
+            <span className="text-xs font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded-full border border-warning/30">
               Administered at Training Venue
             </span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{assessment.titleEn}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{courseTitle}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">{assessment.titleEn}</h2>
+          <p className="text-sm text-muted-foreground">{courseTitle}</p>
         </div>
 
         {/* Main Box */}
-        <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50/60 to-white dark:border-amber-900/40 dark:from-amber-950/20 dark:to-slate-900 p-8 space-y-6 shadow-sm">
+        <div className="rounded-2xl border border-warning/30 bg-gradient-to-b from-warning-soft/60 to-card p-8 space-y-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300 bg-amber-100 text-amber-700 shadow-sm dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-warning/30 bg-warning-soft text-warning shadow-sm">
               <Building2 className="h-8 w-8" />
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">In-Person Classroom Evaluation</h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+              <h3 className="text-lg font-bold text-foreground">In-Person Classroom Evaluation</h3>
+              <p className="text-xs text-secondary-foreground mt-1 leading-relaxed">
                 This course requires in-person attendance and practical evaluation. The final
                 assessment is administered directly in the classroom by your assigned trainer.
                 Digital submission is disabled for physical practicum courses.
@@ -89,25 +89,25 @@ export function QuizStage({
 
           {/* 3-Stat Info Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                 Passing Score
               </p>
-              <p className="text-base font-bold text-slate-900 dark:text-white mt-1">{assessment.passingScore}%</p>
+              <p className="text-base font-bold text-foreground mt-1">{assessment.passingScore}%</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                 Evaluation Format
               </p>
-              <p className="text-base font-bold text-amber-700 dark:text-amber-400 mt-1">In-Person Exam</p>
+              <p className="text-base font-bold text-warning mt-1">In-Person Exam</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
                 Status
               </p>
-              <p className="text-base font-bold text-amber-700 dark:text-amber-400 mt-1">Trainer Administered 🏛️</p>
+              <p className="text-base font-bold text-warning mt-1">Trainer Administered 🏛️</p>
             </div>
           </div>
 
@@ -117,7 +117,7 @@ export function QuizStage({
               type="button"
               size="md"
               disabled
-              className="w-full sm:w-auto font-semibold shadow-sm bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+              className="w-full sm:w-auto font-semibold shadow-sm bg-secondary text-subtle-foreground border border-border cursor-not-allowed"
             >
               <Building2 className="h-4 w-4 mr-2" /> Conducted In-Person by Trainer
             </Button>
@@ -130,52 +130,52 @@ export function QuizStage({
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-4 space-y-2">
+      <div className="border-b border-border pb-4 space-y-2">
         <div className="flex items-center gap-2">
           <Badge variant={isPassed ? 'green' : isFinal ? 'blue' : 'indigo'} className="text-xs">
             {badgeText}
           </Badge>
           {isPassed ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+            <span className="flex items-center gap-1 text-xs font-semibold text-success bg-success-soft px-2 py-0.5 rounded-full border border-success/30">
               <CheckCircle2 className="h-3 w-3" /> Passed
             </span>
           ) : (
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
               Passing requirement: {assessment.passingScore}%
             </span>
           )}
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{assessment.titleEn}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{courseTitle}</p>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">{assessment.titleEn}</h2>
+        <p className="text-sm text-muted-foreground">{courseTitle}</p>
       </div>
 
       {/* Main Checkpoint Box */}
       <div
         className={`rounded-2xl border p-8 space-y-6 shadow-sm transition ${
           isPassed
-            ? 'border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+            ? 'border-success/30 bg-success-soft/40'
             : unlocked
-              ? 'border-indigo-200 bg-gradient-to-b from-indigo-50/60 to-white dark:border-indigo-900/50 dark:from-indigo-950/30 dark:to-slate-900'
-              : 'border-slate-200 bg-slate-50 opacity-75 dark:border-slate-800 dark:bg-slate-900/50'
+              ? 'border-primary/30 bg-gradient-to-b from-primary-soft/60 to-card'
+              : 'border-border bg-muted opacity-75'
         }`}
       >
         <div className="flex items-center gap-4">
           <div
             className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${
               isPassed
-                ? 'border-emerald-300 bg-emerald-100 text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                ? 'border-success/30 bg-success-soft text-success shadow-sm'
                 : unlocked
-                  ? 'border-indigo-300 bg-indigo-100 text-indigo-700 shadow-sm dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
-                  : 'border-slate-300 bg-slate-200 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+                  ? 'border-primary/30 bg-primary-soft text-primary shadow-sm'
+                  : 'border-input bg-border text-subtle-foreground'
             }`}
           >
             {isPassed ? (
               <Award className="h-8 w-8" />
             ) : unlocked ? (
               isFinal ? (
-                <GraduationCap className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                <GraduationCap className="h-8 w-8 text-primary" />
               ) : (
-                <BookOpenCheck className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                <BookOpenCheck className="h-8 w-8 text-primary" />
               )
             ) : (
               <Lock className="h-8 w-8" />
@@ -183,14 +183,14 @@ export function QuizStage({
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-bold text-foreground">
               {isPassed
                 ? 'Assessment Passed!'
                 : unlocked
                   ? 'Ready to Begin Assessment'
                   : 'Assessment Locked'}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {isPassed
                 ? `You passed this assessment. You can review your questions or retake to practice further.`
                 : unlocked
@@ -204,33 +204,33 @@ export function QuizStage({
 
         {/* 3-Stat Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
               Passing Score
             </p>
-            <p className="text-base font-bold text-slate-900 dark:text-white mt-1">{assessment.passingScore}%</p>
+            <p className="text-base font-bold text-foreground mt-1">{assessment.passingScore}%</p>
           </div>
 
-          <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Result</p>
+          <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">Result</p>
             <p
               className={`text-base font-bold mt-1 ${
-                isPassed ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
+                isPassed ? 'text-success' : 'text-muted-foreground'
               }`}
             >
               {isPassed ? 'Passed ✅' : 'Incomplete'}
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-3.5 shadow-2xs">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status</p>
-            <p className="text-base font-bold text-slate-900 dark:text-white mt-1">
+          <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">Status</p>
+            <p className="text-base font-bold text-foreground mt-1">
               {isPassed ? (
-                <span className="text-emerald-600 dark:text-emerald-400">Passed</span>
+                <span className="text-success">Passed</span>
               ) : unlocked ? (
-                <span className="text-indigo-600 dark:text-indigo-400">Unlocked 🚀</span>
+                <span className="text-primary">Unlocked 🚀</span>
               ) : (
-                <span className="text-slate-400">Locked 🔒</span>
+                <span className="text-subtle-foreground">Locked 🔒</span>
               )}
             </p>
           </div>
@@ -257,7 +257,7 @@ export function QuizStage({
             onClick={onStartQuiz}
             className={`w-full sm:w-auto font-semibold shadow-sm ${
               isPassed
-                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700'
+                ? 'bg-secondary text-secondary-foreground hover:bg-input/60 border border-input'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >

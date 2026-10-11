@@ -69,17 +69,17 @@ function CreateCourseContent() {
               type="button"
               onClick={() => setMode(option.key)}
               className={cn(
-                'group flex flex-col items-start rounded-2xl border border-slate-200/80 bg-white p-6 text-left shadow-soft ring-super-soft transition-all duration-200',
-                'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lift',
+                'group flex flex-col items-start rounded-2xl border border-border/80 bg-card p-6 text-left shadow-soft ring-super-soft transition-all duration-200',
+                'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift',
               )}
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-110">
                 <option.icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 font-display text-sm font-semibold text-slate-900">
+              <h3 className="mt-4 font-display text-sm font-semibold text-foreground">
                 {option.title}
               </h3>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">{option.description}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
             </button>
           ))}
         </div>

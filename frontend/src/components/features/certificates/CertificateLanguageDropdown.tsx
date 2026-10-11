@@ -61,21 +61,21 @@ export function CertificateLanguageDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700/60 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+        className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-secondary-foreground shadow-2xs hover:bg-muted transition focus:outline-hidden focus:ring-2 focus:ring-ring/20"
         title="Select Certificate Language"
       >
-        <Globe className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+        <Globe className="h-3.5 w-3.5 text-primary shrink-0" />
         <span className="flex items-center gap-1.5">
           {selectedOption.flag && <span>{selectedOption.flag}</span>}
           <span>{selectedOption.nativeLabel}</span>
-          <span className="text-[10px] text-slate-400">({selectedOption.code.toUpperCase()})</span>
+          <span className="text-[10px] text-subtle-foreground">({selectedOption.code.toUpperCase()})</span>
         </span>
-        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-400 transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-3.5 w-3.5 text-subtle-foreground transition-transform duration-200', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 shadow-2xl z-[80] animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-700 mb-1">
+        <div className="absolute right-0 mt-1.5 w-56 rounded-xl border border-border bg-card p-1.5 shadow-2xl z-[80] animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-subtle-foreground border-b border-border/60 mb-1">
             Certificate Language
           </div>
           <div className="space-y-0.5">
@@ -97,23 +97,23 @@ export function CertificateLanguageDropdown({
                   className={cn(
                     'w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition',
                     isSelected
-                      ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold'
+                      ? 'bg-primary-soft text-primary font-bold'
                       : isAvailable
-                        ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                        : 'text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60',
+                        ? 'text-secondary-foreground hover:bg-muted'
+                        : 'text-subtle-foreground cursor-not-allowed opacity-60',
                   )}
                 >
                   <div className="flex items-center gap-2">
                     {lang.flag && <span>{lang.flag}</span>}
                     <div>
                       <div className="font-medium">{lang.nativeLabel}</div>
-                      <div className="text-[10px] text-slate-400">{lang.label}</div>
+                      <div className="text-[10px] text-subtle-foreground">{lang.label}</div>
                     </div>
                   </div>
                   {isSelected ? (
-                    <Check className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <Check className="h-3.5 w-3.5 text-primary shrink-0" />
                   ) : !isAvailable ? (
-                    <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-sm">
+                    <span className="text-[9px] font-semibold text-warning bg-warning-soft px-1.5 py-0.5 rounded-sm">
                       Coming soon
                     </span>
                   ) : null}

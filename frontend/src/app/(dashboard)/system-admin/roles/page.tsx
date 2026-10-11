@@ -259,11 +259,11 @@ export default function RolesPermissionsPage() {
               <Card key={role.id} className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 font-display text-sm font-semibold text-slate-900">
-                      {locked ? <Lock className="h-3.5 w-3.5 text-slate-400" /> : null}
+                    <p className="flex items-center gap-1.5 font-display text-sm font-semibold text-foreground">
+                      {locked ? <Lock className="h-3.5 w-3.5 text-subtle-foreground" /> : null}
                       {getRoleLabel(role.label, role.name)}
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                       {role.description ||
                         t('rolesPermissionsPage.noDescriptionProvided')}
                     </p>
@@ -274,7 +274,7 @@ export default function RolesPermissionsPage() {
                       title={t('rolesPermissionsPage.deleteRole')}
                       disabled={deletingId === role.id}
                       onClick={() => setRoleToDelete(role)}
-                      className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      className="shrink-0 rounded-lg p-1.5 text-subtle-foreground transition-colors hover:bg-danger-soft hover:text-danger disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -284,7 +284,7 @@ export default function RolesPermissionsPage() {
                 <button
                   type="button"
                   onClick={() => setExpandedCardId(expanded ? null : role.id)}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                  className="flex items-center justify-between gap-2 rounded-xl border border-border/80 bg-muted/70 px-3 py-2 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary"
                 >
                   <span>
                     {t('rolesPermissionsPage.ofPermissions', { count: role.permissionCodes.length, count2: allPermissions.length })}
@@ -299,7 +299,7 @@ export default function RolesPermissionsPage() {
                 {expanded ? (
                   <div className="flex flex-wrap gap-1.5">
                     {role.permissionCodes.length === 0 ? (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-subtle-foreground">
                         {t('rolesPermissionsPage.noPermissionsGranted')}
                       </span>
                     ) : (
@@ -331,7 +331,7 @@ export default function RolesPermissionsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* Role list panel */}
           <Card padded={false} className="h-fit overflow-hidden">
-            <div className="border-b border-slate-200/80 px-4 py-3">
+            <div className="border-b border-border/80 px-4 py-3">
               <CardTitle>{t('rolesPermissionsPage.roles')}</CardTitle>
               <CardDescription>
                 {t('rolesPermissionsPage.selectARoleToViewOr')}
@@ -351,7 +351,7 @@ export default function RolesPermissionsPage() {
                         'flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors',
                         active
                           ? 'bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-md shadow-indigo-500/20'
-                          : 'text-slate-600 hover:bg-slate-50',
+                          : 'text-secondary-foreground hover:bg-muted',
                       )}
                     >
                       <span className="flex items-center gap-2">
@@ -359,7 +359,7 @@ export default function RolesPermissionsPage() {
                           <Lock
                             className={cn(
                               'h-3.5 w-3.5',
-                              active ? 'text-white/80' : 'text-slate-400',
+                              active ? 'text-white/80' : 'text-subtle-foreground',
                             )}
                           />
                         ) : null}
@@ -368,7 +368,7 @@ export default function RolesPermissionsPage() {
                       <span
                         className={cn(
                           'text-[11px] tabular-nums',
-                          active ? 'text-white/80' : 'text-slate-400',
+                          active ? 'text-white/80' : 'text-subtle-foreground',
                         )}
                       >
                         {role.permissionCodes.length}/{allPermissions.length}
@@ -380,7 +380,7 @@ export default function RolesPermissionsPage() {
                         title={t('rolesPermissionsPage.deleteRole')}
                         disabled={deletingId === role.id}
                         onClick={() => setRoleToDelete(role)}
-                        className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        className="shrink-0 rounded-lg p-2 text-subtle-foreground transition-colors hover:bg-danger-soft hover:text-danger disabled:opacity-50"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -394,12 +394,12 @@ export default function RolesPermissionsPage() {
           {/* Permission matrix panel */}
           {selectedRole ? (
             <Card padded={false} className="overflow-hidden">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/80 px-5 py-4">
                 <div>
                   <CardTitle>{getRoleLabel(selectedRole.label, selectedRole.name)}</CardTitle>
                   <CardDescription>
                     {t('rolesPermissionsPage.landingDashboard')}{' '}
-                    <code className="text-slate-500">{selectedRole.dashboardPath}</code>
+                    <code className="text-muted-foreground">{selectedRole.dashboardPath}</code>
                   </CardDescription>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -435,7 +435,7 @@ export default function RolesPermissionsPage() {
                 </div>
               </div>
 
-              <div className="max-h-[65vh] divide-y divide-slate-100/80 overflow-y-auto">
+              <div className="max-h-[65vh] divide-y divide-border/50 overflow-y-auto">
                 {Object.entries(registry).map(([resource, permissions]) => {
                   const checkedCount = permissions.filter((p) =>
                     isLocked ? true : draftIds.has(p.id),
@@ -443,10 +443,10 @@ export default function RolesPermissionsPage() {
                   return (
                     <div key={resource} className="px-5 py-4">
                       <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {humanizeResource(resource, isAmharic)}
                         </h3>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-subtle-foreground">
                           {t('rolesPermissionsPage.ofChecked', { count: permissions.length, checkedCount })}
                         </span>
                       </div>
@@ -459,8 +459,8 @@ export default function RolesPermissionsPage() {
                               className={cn(
                                 'flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors',
                                 isLocked
-                                  ? 'cursor-not-allowed border-slate-100 bg-slate-50/70'
-                                  : 'cursor-pointer border-slate-200/80 hover:border-indigo-200 hover:bg-indigo-50/30',
+                                  ? 'cursor-not-allowed border-border/60 bg-muted/70'
+                                  : 'cursor-pointer border-border/80 hover:border-primary/30 hover:bg-primary-soft/30',
                               )}
                             >
                               <input
@@ -468,17 +468,17 @@ export default function RolesPermissionsPage() {
                                 checked={checked}
                                 disabled={isLocked}
                                 onChange={() => toggle(permission.id)}
-                                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60"
+                                className="mt-0.5 h-4 w-4 shrink-0 rounded border-input text-primary focus:ring-ring disabled:opacity-60"
                               />
                               <span className="min-w-0">
-                                <span className="block font-medium text-slate-800">
+                                <span className="block font-medium text-foreground">
                                   {isAmharic
                                     ? amServerLabel('permissions', permission.code) ||
                                       permission.description ||
                                       permission.code
                                     : (permission.description ?? permission.code)}
                                 </span>
-                                <span className="block truncate font-mono text-[11px] text-slate-400">
+                                <span className="block truncate font-mono text-[11px] text-subtle-foreground">
                                   {permission.code}
                                 </span>
                               </span>
@@ -520,32 +520,32 @@ export default function RolesPermissionsPage() {
         }
       >
         <div className="w-full space-y-6">
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+          <div className="rounded-2xl border border-border/90 bg-card p-6 shadow-xs space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('rolesPermissionsPage.roleCodeName')}
               </label>
               <input
-                className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-mono"
+                className="w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10 font-mono"
                 placeholder="e.g. REGIONAL_COORDINATOR"
                 value={newRoleName}
                 onChange={(e) => setNewRoleName(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-subtle-foreground">
                 {t('rolesPermissionsPage.uniqueUppercaseIdentifierUsedByBackend')}
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
                 {t('rolesPermissionsPage.displayLabel')}
               </label>
               <input
-                className="w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10"
                 placeholder="e.g. Regional Coordinator"
                 value={newRoleLabel}
                 onChange={(e) => setNewRoleLabel(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-subtle-foreground">
                 {t('rolesPermissionsPage.humanReadableTitleShownInUser')}
               </p>
             </div>
@@ -562,7 +562,7 @@ export default function RolesPermissionsPage() {
         description={
           <>
             {t('rolesPermissionsPage.areYouSureYouWantTo')}{' '}
-            <span className="font-semibold text-slate-800">&quot;{roleToDelete?.label}&quot;</span>?{' '}
+            <span className="font-semibold text-foreground">&quot;{roleToDelete?.label}&quot;</span>?{' '}
             {t('rolesPermissionsPage.thisActionCannotBeUndoneAnd')}
           </>
         }

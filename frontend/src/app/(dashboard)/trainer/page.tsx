@@ -229,35 +229,35 @@ export default function TrainerDashboardPage() {
           hint={
             t('trainerDashboardPage.totalScheduled', { count: allSessions.length })
           }
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-primary-soft text-primary"
         />
         <StatCard
           icon={UsersRound}
           label={t('trainerDashboardPage.totalLearners')}
           value={totalEnrolledLearners}
           hint={t('trainerDashboardPage.acrossAssignedCourses')}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-soft text-info"
         />
         <StatCard
           icon={FileQuestion}
           label={t('trainerDashboardPage.quizzesReady')}
           value={quizzes.length}
           hint={t('trainerDashboardPage.fromQuestionBank')}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-soft text-success"
         />
       </div>
 
       {/* Graphical Section: Session Distribution + Course Enrollments */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Session Distribution Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('trainerDashboardPage.liveSessionDistribution')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('trainerDashboardPage.breakdownOfScheduledAndCompletedTraining')}
                 </p>
               </div>
@@ -277,25 +277,25 @@ export default function TrainerDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('trainerDashboardPage.completedTraining', { count: completedSessions.length })}
             </span>
-            <span className="font-medium text-indigo-600">
+            <span className="font-medium text-primary">
               {t('trainerDashboardPage.upcoming2', { count: upcomingSessions.length })}
             </span>
           </div>
         </div>
 
         {/* Course Enrollment Breakdown */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-display text-sm font-bold text-slate-900">
+                <h4 className="font-display text-sm font-bold text-foreground">
                   {t('trainerDashboardPage.enrollmentByCourse')}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {t('trainerDashboardPage.studentEnrollmentAcrossYourTrainingCatal')}
                 </p>
               </div>
@@ -311,13 +311,13 @@ export default function TrainerDashboardPage() {
               />
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
+          <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground flex items-center justify-between">
             <span>
               {t('trainerDashboardPage.totalEnrolledStudents', { totalEnrolledLearners })}
             </span>
             <Link
               href="/trainer/sessions"
-              className="font-semibold text-indigo-600 hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               {t('trainerDashboardPage.viewSessionsAttendance')}
             </Link>
@@ -372,7 +372,7 @@ export default function TrainerDashboardPage() {
         {sessionsLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2].map((n) => (
-              <div key={n} className="h-36 animate-pulse rounded-2xl bg-slate-100" />
+              <div key={n} className="h-36 animate-pulse rounded-2xl bg-secondary" />
             ))}
           </div>
         ) : upcomingSessions.length > 0 ? (
@@ -391,7 +391,7 @@ export default function TrainerDashboardPage() {
               return (
                 <div
                   key={session.id}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card"
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
@@ -400,12 +400,12 @@ export default function TrainerDashboardPage() {
                           ? t('trainerDashboardPage.liveNow2')
                           : t('trainerDashboardPage.scheduled')}
                       </Badge>
-                      <span className="text-[11px] font-medium text-slate-400">
+                      <span className="text-[11px] font-medium text-subtle-foreground">
                         {session.durationMinutes} {t('trainerDashboardPage.mins')}
                       </span>
                     </div>
 
-                    <h4 className="mt-3 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h4 className="mt-3 font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {isAmharic ? session.titleAm || session.titleEn : session.titleEn}
                     </h4>
                     {(() => {
@@ -413,23 +413,23 @@ export default function TrainerDashboardPage() {
                       const cTitle =
                         isAmharic && (c as any)?.titleAm ? (c as any).titleAm : c?.title;
                       return cTitle ? (
-                        <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
+                        <p className="mt-1 text-xs text-muted-foreground truncate">{cTitle}</p>
                       ) : null;
                     })()}
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                    <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <Calendar className="h-3.5 w-3.5 text-subtle-foreground" />
                         {dateStr}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
                         {timeStr}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-3">
+                  <div className="mt-5 flex items-center gap-2 border-t border-border/60 pt-3">
                     {isInPersonSession(session) ? (
                       <Link href="/trainer/attendance" className="flex-1">
                         <Button
@@ -471,14 +471,14 @@ export default function TrainerDashboardPage() {
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-subtle-foreground">
               <Presentation className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-xs font-semibold text-slate-700">
+            <p className="mt-3 text-xs font-semibold text-secondary-foreground">
               {t('trainerDashboardPage.noScheduledSessions')}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-subtle-foreground">
               {t('trainerDashboardPage.scheduleLiveVideoSessionsForYour')}
             </p>
           </div>
@@ -533,13 +533,13 @@ export default function TrainerDashboardPage() {
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-secondary-foreground">
               {t('trainerDashboardPage.filterByCourse')}
             </label>
             <select
               value={selectedCourseId}
               onChange={(event) => setSelectedCourseId(event.target.value)}
-              className="rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+              className="rounded-xl border border-border/90 bg-card px-3 py-2 text-sm text-secondary-foreground shadow-sm outline-none focus:border-ring focus:ring-4 focus:ring-ring/10"
             >
               <option value="">{t('trainerDashboardPage.selectACourse')}</option>
               {assigned.map((course) => (
@@ -551,11 +551,11 @@ export default function TrainerDashboardPage() {
           </div>
 
           {learners && learners.length > 0 && (
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>
                 {t('trainerDashboardPage.studentsEnrolled', { count: learners.length })}
               </span>
-              <span className="font-semibold text-emerald-600">
+              <span className="font-semibold text-success">
                 {t('trainerDashboardPage.completed2', { count: learners.filter((l) => l.progressPercent >= 100).length })}
               </span>
             </div>
@@ -565,21 +565,21 @@ export default function TrainerDashboardPage() {
         {learnersError ? (
           <p className="text-sm text-red-500">{learnersError}</p>
         ) : learners === null ? (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <p className="text-xs text-subtle-foreground">
               {t('trainerDashboardPage.chooseACourseAboveToInspect')}
             </p>
           </div>
         ) : learners.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <p className="text-xs text-subtle-foreground">
               {t('trainerDashboardPage.noEnrolledLearnersInThisCourse')}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200/80 bg-white dark:bg-slate-900 p-4">
-              <h5 className="font-display text-xs font-bold text-slate-900 dark:text-white mb-2">
+            <div className="rounded-2xl border border-border/80 bg-card p-4">
+              <h5 className="font-display text-xs font-bold text-foreground mb-2">
                 {t('trainerDashboardPage.learnerProgressDistribution')}
               </h5>
               <VerticalBarChart
@@ -601,17 +601,17 @@ export default function TrainerDashboardPage() {
               {learnersPage.pageItems.map((learner) => (
                 <tr key={learner.userId}>
                   <Td>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-foreground">
                       {learner.firstName} {learner.lastName}
                     </span>
                   </Td>
                   <Td>
-                    <span className="text-sm text-slate-500">{learner.email}</span>
+                    <span className="text-sm text-muted-foreground">{learner.email}</span>
                   </Td>
                   <Td className="w-56">
                     <div className="flex items-center gap-3">
                       <ProgressBar value={learner.progressPercent} className="flex-1" />
-                      <span className="w-10 text-right text-xs font-medium text-slate-600">
+                      <span className="w-10 text-right text-xs font-medium text-secondary-foreground">
                         {learner.progressPercent}%
                       </span>
                     </div>

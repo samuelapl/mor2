@@ -4,14 +4,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
-  Award,
-  BookOpen,
   Building2,
   Calendar,
-  CheckCircle2,
   Clock,
-  ExternalLink,
-  Laptop,
   MapPin,
   PlayCircle,
   Video,
@@ -25,10 +20,8 @@ import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
-import { StatCard } from '@/components/ui/StatCard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ProgressRing } from '@/components/ui/charts';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
@@ -87,13 +80,6 @@ export default function LearnerDashboardPage() {
 
   const nextUpPercent = nextUp ? percentOf(nextUp.id) : 0;
 
-  // Donut status segments for learning progress
-  const learningSegments = [
-    { label: 'Completed', value: completed.length, color: '#10b981' },
-    { label: 'In Progress', value: inProgress.length, color: '#6366f1' },
-    { label: 'Not Started', value: notStarted.length, color: '#94a3b8' },
-  ];
-
   // Compute counts for online vs in-person courses
   const { onlineCount, inPersonCount } = useMemo(() => {
     let on = 0;
@@ -119,50 +105,23 @@ export default function LearnerDashboardPage() {
         t('learnerDashboardPage.trackYourLearningJourneyResumeActive')
       }
     >
-      {/* KPI Stat Cards: 2×2 on phones and tablets, one row on desktop */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard
-          icon={BookOpen}
-          label={tCommon('myCourses')}
-          value={enrolled.length}
-          hint={
-            t('learnerDashboardPage.onlineInPerson', { onlineCount, inPersonCount })
-          }
-        />
-        <StatCard
-          icon={Building2}
-          label={t('learnerDashboardPage.inPersonClassroom')}
-          value={inPersonCount}
-          hint={t('learnerDashboardPage.regionalBranchVenues')}
-          iconClassName="bg-amber-50 text-amber-700"
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label={tCommon('completed')}
-          value={completed.length}
-          hint={t('learnerDashboardPage.finishedCourses')}
-          iconClassName="bg-emerald-50 text-emerald-600"
-        />
-        <StatCard
-          icon={Award}
-          label={tCommon('averageProgress')}
-          value={`${avgProgress}%`}
-          hint={t('learnerDashboardPage.platformAverage')}
-          iconClassName="bg-indigo-50 text-indigo-600"
-        />
-      </div>
-
-      {/* Hero Learning Section: Continue Learning + Progress Analytics */}
+      {/* Hero Learning Section: Continue Learning + Progress summary.
+          The progress card is the single place for course counts; with no
+          enrollments the hero spans the full width and the zeros are hidden. */}
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
         {/* Continue Learning Hero Card */}
-        <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl shadow-indigo-950/20 lg:col-span-2">
-          <div className="pointer-events-none absolute -right-12 -bottom-12 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl shadow-indigo-950/20 ${
+            nextUp ? 'lg:col-span-2' : 'lg:col-span-3'
+          }`}
+        >
+          <div className="pointer-events-none absolute -right-12 -bottom-12 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
           <div className="pointer-events-none absolute left-1/3 top-0 h-40 w-40 rounded-full bg-violet-500/15 blur-2xl" />
 
           <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
             <div>
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-semibold text-indigo-200 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/30 px-3 py-1 text-xs font-semibold text-indigo-200 backdrop-blur-sm">
                   <PlayCircle className="h-3.5 w-3.5 text-indigo-300" />
                   {nextUpPercent > 0 ? 'Continue Learning' : 'Start Learning'}
                 </span>
@@ -213,22 +172,22 @@ export default function LearnerDashboardPage() {
                 <Link href={`/learner/courses/${nextUp.id}/learn`}>
                   <Button
                     size="md"
-                    className="bg-white text-indigo-950 font-semibold hover:bg-indigo-50 shadow-md shadow-white/10"
+                    className="bg-card text-primary font-semibold hover:bg-primary-soft shadow-md shadow-white/10"
                   >
-                    <PlayCircle className="h-4 w-4 text-indigo-700" />
+                    <PlayCircle className="h-4 w-4 text-primary" />
                     {nextUpPercent > 0
                       ? t('learnerDashboardPage.resumeCourse')
                       : t('learnerDashboardPage.startCourse')}
                   </Button>
                 </Link>
               ) : null}
-              <Link href="/learner/my-courses">
+              <Link href={nextUp ? '/learner/my-courses' : '/learner/catalog'}>
                 <Button
                   variant="outline"
                   size="md"
                   className="border-white/20 text-white hover:bg-white/10"
                 >
-                  {tCommon('myCourses')}
+                  {nextUp ? tCommon('myCourses') : t('learnerCatalogPage.availableCourses')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -237,12 +196,15 @@ export default function LearnerDashboardPage() {
         </div>
 
         {/* Learning Progress Ring & Distribution Card */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft ring-super-soft">
+        {nextUp ? (
+        <div className="flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-6 shadow-soft ring-super-soft">
           <div>
-            <h4 className="font-display text-sm font-bold text-slate-900">
-              Overall Completion Status
+            <h4 className="font-display text-sm font-bold text-foreground">
+              {tCommon('myCourses')} · {enrolled.length}
             </h4>
-            <p className="mt-0.5 text-xs text-slate-500">Across your enrolled courses</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t('learnerDashboardPage.onlineInPerson', { onlineCount, inPersonCount })}
+            </p>
 
             <div className="mt-4 flex justify-center">
               <ProgressRing
@@ -255,27 +217,28 @@ export default function LearnerDashboardPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center">
+          <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-muted p-3 text-center">
             <div>
-              <p className="text-[11px] font-semibold text-emerald-700">Completed</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+              <p className="text-[11px] font-semibold text-success">Completed</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-foreground">
                 {completed.length}
               </p>
             </div>
-            <div className="border-x border-slate-200">
-              <p className="text-[11px] font-semibold text-indigo-700">In Progress</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+            <div className="border-x border-border">
+              <p className="text-[11px] font-semibold text-primary">In Progress</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-foreground">
                 {inProgress.length}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500">Not Started</p>
-              <p className="mt-0.5 font-display text-lg font-bold text-slate-900">
+              <p className="text-[11px] font-semibold text-muted-foreground">Not Started</p>
+              <p className="mt-0.5 font-display text-lg font-bold text-foreground">
                 {notStarted.length}
               </p>
             </div>
           </div>
         </div>
+        ) : null}
       </div>
 
       {/* Upcoming Scheduled Live Sessions */}
@@ -294,7 +257,7 @@ export default function LearnerDashboardPage() {
         {sessionsLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2].map((n) => (
-              <div key={n} className="h-32 animate-pulse rounded-2xl bg-slate-100" />
+              <div key={n} className="h-32 animate-pulse rounded-2xl bg-secondary" />
             ))}
           </div>
         ) : upcomingSessions.length > 0 ? (
@@ -309,7 +272,7 @@ export default function LearnerDashboardPage() {
               return (
                 <div
                   key={session.id}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card"
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-soft ring-super-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
@@ -320,62 +283,44 @@ export default function LearnerDashboardPage() {
                             ? '🏢 IN-PERSON CLASSROOM'
                             : 'VIRTUAL LECTURE'}
                       </Badge>
-                      <span className="text-[11px] font-medium text-slate-400">
+                      <span className="text-[11px] font-medium text-subtle-foreground">
                         {session.durationMinutes} mins
                       </span>
                     </div>
 
-                    <h4 className="mt-3 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h4 className="mt-3 font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {lang === 'am' && session.titleAm ? session.titleAm : session.titleEn}
                     </h4>
                     {(() => {
                       const cTitle = courses.find((c) => c.id === session.courseId)?.title;
                       return cTitle ? (
-                        <p className="mt-1 text-xs text-slate-500 truncate">{cTitle}</p>
+                        <p className="mt-1 text-xs text-muted-foreground truncate">{cTitle}</p>
                       ) : null;
                     })()}
 
                     {/* Venue tag for in-person */}
                     {session.venue && (
-                      <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
-                        <MapPin className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning-soft/80 px-2.5 py-1 rounded-lg border border-warning/30">
+                        <MapPin className="h-3.5 w-3.5 text-warning shrink-0" />
                         <span className="truncate">
                           {session.venue.branch} · {session.venue.name}
                         </span>
                       </div>
                     )}
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                    <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <Calendar className="h-3.5 w-3.5 text-subtle-foreground" />
                         {dateStr}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <Clock className="h-3.5 w-3.5 text-subtle-foreground" />
                         {timeStr}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-3">
-                    <Button
-                      size="sm"
-                      onClick={() => setActiveLiveSession(session)}
-                      className={
-                        isLive ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white' : 'flex-1'
-                      }
-                    >
-                      <Video className="h-3.5 w-3.5" />
-                      {isLive ? 'Join Live (In-LMS)' : 'Join Session'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setDetailSessionId(session.id)}
-                      title="Session Details"
-                    >
-                      Details
-                    </Button>
+                  <div className="mt-5 flex items-center gap-2 border-t border-border/60 pt-3">
                     {isPerson ? (
                       <>
                         <Link href="/learner/live-sessions" className="flex-1">
@@ -437,62 +382,18 @@ export default function LearnerDashboardPage() {
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-8 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-subtle-foreground">
               <Video className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-xs font-semibold text-slate-700">No scheduled sessions</p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-3 text-xs font-semibold text-secondary-foreground">No scheduled sessions</p>
+            <p className="mt-1 text-xs text-subtle-foreground">
               Your trainers have not scheduled any upcoming live video sessions for your courses
               yet.
             </p>
           </div>
         )}
       </PageSection>
-
-      {/* Quick Navigation Cards */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <Link href="/learner/live-sessions" className="group">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-indigo-200 group-hover:shadow-card">
-            <div className="pointer-events-none absolute right-0 top-0 h-20 w-20 rounded-bl-full bg-gradient-to-bl from-indigo-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25">
-                  <Video className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-display text-sm font-semibold text-slate-900">
-                    {tCommon('liveSessions')}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {upcomingSessions.length} available sessions
-                  </p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-indigo-500" />
-            </div>
-          </div>
-        </Link>
-        <Link href="/learner/certificates" className="group">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft ring-super-soft transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-amber-200 group-hover:shadow-card">
-            <div className="pointer-events-none absolute right-0 top-0 h-20 w-20 rounded-bl-full bg-gradient-to-bl from-amber-400/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/25">
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-display text-sm font-semibold text-slate-900">
-                    {tCommon('certificates')}
-                  </p>
-                  <p className="text-xs text-slate-500">{completed.length} earned certificates</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-amber-500" />
-            </div>
-          </div>
-        </Link>
-      </div>
 
       {/* Full-Screen Workspaces */}
       {activeLiveSession ? (

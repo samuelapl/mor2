@@ -78,7 +78,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
   if (isLoading && quizzes.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -170,7 +170,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
           </>
         }
       >
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-secondary-foreground">
           The quiz group and its {deleting?.questions.length ?? 0} selected questions are removed from this session. The questions
           stay in the question bank.
         </p>
@@ -189,9 +189,9 @@ function SummaryChip({
   children: React.ReactNode;
 }) {
   const tones = {
-    slate: 'bg-slate-100 text-slate-700',
-    green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-    amber: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
+    slate: 'bg-secondary text-secondary-foreground',
+    green: 'bg-success-soft text-success ring-1 ring-success/20',
+    amber: 'bg-warning-soft text-warning ring-1 ring-warning/20',
   };
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${tones[tone]}`}>

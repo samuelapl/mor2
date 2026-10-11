@@ -26,16 +26,16 @@ export function LatestNewsSection() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+            <span className="text-xs font-bold uppercase tracking-widest text-info">
               {t('latestNewsSection.ministryOfRevenues')}
             </span>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-foreground">
               {t('latestNewsSection.latestNews')}
             </h2>
           </div>
           <Link
             href="/news"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:underline dark:text-sky-400"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-info hover:underline"
           >
             {t('latestNewsSection.viewAllNews')}
             <ArrowRight className="h-4 w-4" />

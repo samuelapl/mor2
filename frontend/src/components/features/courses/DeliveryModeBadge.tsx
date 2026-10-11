@@ -3,9 +3,9 @@ import type { CourseDeliveryMode } from "@/types";
 import { cn } from "@/lib/utils";
 
 const STYLES: Record<CourseDeliveryMode, { label: string; icon: typeof Laptop; className: string }> = {
-  ONLINE_ONLY: { label: "Online", icon: Laptop, className: "bg-sky-50 text-sky-700 border-sky-200" },
-  IN_PERSON_ONLY: { label: "In-Person", icon: Building2, className: "bg-amber-50 text-amber-800 border-amber-200" },
-  BOTH: { label: "Online & In-Person", icon: Repeat, className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  ONLINE_ONLY: { label: "Online", icon: Laptop, className: "bg-info-soft text-info border-info/30" },
+  IN_PERSON_ONLY: { label: "In-Person", icon: Building2, className: "bg-warning-soft text-warning border-warning/30" },
+  BOTH: { label: "Online & In-Person", icon: Repeat, className: "bg-success-soft text-success border-success/30" },
 };
 
 /**

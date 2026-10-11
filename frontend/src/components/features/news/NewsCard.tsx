@@ -24,7 +24,7 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
     return (
       <Link
         href={newsPath(news.slug)}
-        className="group flex gap-3 rounded-xl p-2 transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+        className="group flex gap-3 rounded-xl p-2 transition hover:bg-muted"
       >
         <NewsCover
           src={news.coverImageUrl}
@@ -34,11 +34,11 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
         <div className="min-w-0">
           <p
             lang={textLang}
-            className="line-clamp-2 text-sm font-semibold text-slate-900 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-400"
+            className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-info"
           >
             {news.headline}
           </p>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{date}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">{date}</p>
         </div>
       </Link>
     );
@@ -49,7 +49,7 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
     <Link
       href={newsPath(news.slug)}
       className={cn(
-        'group flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900',
+        'group flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',
         isHero ? 'flex-col lg:flex-row' : 'flex-col',
       )}
     >
@@ -69,7 +69,7 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <NewsCategoryBadge category={news.category} />
           {news.isFeatured && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warning">
               <Star className="h-3 w-3 fill-current" />
               {t('newsCard.featured')}
             </span>
@@ -78,13 +78,13 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
         <h3
           lang={textLang}
           className={cn(
-            'mt-3 font-display font-bold leading-snug text-slate-950 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-400',
+            'mt-3 font-display font-bold leading-snug text-foreground group-hover:text-info',
             isHero ? 'text-xl lg:text-2xl' : 'line-clamp-3 text-base',
           )}
         >
           {news.headline}
         </h3>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-xs text-muted-foreground">
           {date}
           {news.source ? ` (${news.source})` : ''}
         </p>
@@ -92,14 +92,14 @@ export function NewsCard({ news, variant = 'default' }: NewsCardProps) {
           <p
             lang={textLang}
             className={cn(
-              'mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300',
+              'mt-3 text-sm leading-relaxed text-secondary-foreground',
               isHero ? 'line-clamp-5' : 'line-clamp-3',
             )}
           >
             {news.summary}
           </p>
         )}
-        <div className="mt-auto flex items-center gap-4 pt-4 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-auto flex items-center gap-4 pt-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <ThumbsUp className="h-3.5 w-3.5" />
             {news.likeCount}

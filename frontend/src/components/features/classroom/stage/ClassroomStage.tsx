@@ -39,7 +39,7 @@ export function ClassroomStage({
 
   if (!activeContent) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-center text-slate-400">
+      <div className="flex h-full items-center justify-center p-8 text-center text-subtle-foreground">
         <p className="text-sm">
           {t('classroomStage.selectALessonTopicOrQuiz')}
         </p>
