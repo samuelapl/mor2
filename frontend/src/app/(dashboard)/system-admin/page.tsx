@@ -356,7 +356,7 @@ export default function SystemAdminDashboardPage() {
                         ) : null}
                       </p>
                       <span className="mt-1 inline-block text-[11px] text-slate-400">
-                        {new Date(log.createdAt).toLocaleString(t('systemAdminDashboardPage.enUs'))}
+                        {new Date(log.createdAt).toLocaleString(lang === 'am' ? 'am-ET' : 'en-US')}
                       </span>
                     </div>
                     <Badge variant="slate" className="shrink-0 text-[10px]">

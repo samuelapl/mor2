@@ -21,54 +21,61 @@ import type { Module } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { cn } from '@/lib/utils';
+import { lookupIn } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { AttachmentCard } from './AttachmentCard';
 import { getItemAttachments } from '../wizard-components';
 import { calculateLessonDuration, calculateModuleDuration, formatDuration } from '@/lib/duration';
+
+/** Content type label (locales courses.contentType.*). English unless `isAmharic` is passed. */
+function contentTypeLabel(type: string, isAmharic?: boolean): string {
+  const key = `courses.contentType.${type}`;
+  return (isAmharic && lookupIn('am', key)) || lookupIn('en', key) || type;
+}
 
 export function getContentTypeBadge(type?: string, isAmharic?: boolean) {
   const norm = (type || '').toUpperCase();
   switch (norm) {
     case 'VIDEO':
       return {
-        label: isAmharic ? 'የቪዲዮ ትምህርት' : 'Video Lesson',
+        label: contentTypeLabel('VIDEO', isAmharic),
         icon: Film,
         color: 'text-purple-700 bg-purple-50 border-purple-200',
       };
     case 'AUDIO':
       return {
-        label: isAmharic ? 'የድምጽ ትምህርት' : 'Audio Lesson',
+        label: contentTypeLabel('AUDIO', isAmharic),
         icon: Headphones,
         color: 'text-amber-700 bg-amber-50 border-amber-200',
       };
     case 'DOCUMENT':
       return {
-        label: isAmharic ? 'ሰነድ / ንባብ' : 'Document / Reading',
+        label: contentTypeLabel('DOCUMENT', isAmharic),
         icon: FileText,
         color: 'text-blue-700 bg-blue-50 border-blue-200',
       };
     case 'PRESENTATION':
       return {
-        label: isAmharic ? 'የስላይድ ማቅረቢያ' : 'Slide Presentation',
+        label: contentTypeLabel('PRESENTATION', isAmharic),
         icon: Presentation,
         color: 'text-orange-700 bg-orange-50 border-orange-200',
       };
     case 'QUIZ':
     case 'ASSESSMENT':
       return {
-        label: isAmharic ? 'የፈተና ምዘና' : 'Quiz Assessment',
+        label: contentTypeLabel('ASSESSMENT', isAmharic),
         icon: FileQuestion,
         color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
       };
     case 'ASSIGNMENT':
       return {
-        label: isAmharic ? 'የተግባር ስራ' : 'Graded Assignment',
+        label: contentTypeLabel('ASSIGNMENT', isAmharic),
         icon: Award,
         color: 'text-rose-700 bg-rose-50 border-rose-200',
       };
     default:
       return {
-        label: isAmharic ? 'ትምህርት' : norm || 'Lesson',
+        label: isAmharic ? contentTypeLabel('LESSON', true) : norm || contentTypeLabel('LESSON'),
         icon: BookOpen,
         color: 'text-slate-700 bg-slate-100 border-slate-200',
       };
@@ -96,7 +103,7 @@ export function CourseCurriculumSection({
   onEdit,
   isAmharic,
 }: CourseCurriculumSectionProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
 
   return (
     <div className="space-y-4">
@@ -105,14 +112,11 @@ export function CourseCurriculumSection({
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-indigo-600" />
             <h4 className="font-display text-sm font-bold text-slate-900 uppercase tracking-wide">
-              {tBilingual('2. Curriculum Structure & Uploaded Materials', '2. የስርዓተ-ትምህርት አወቃቀር እና የተጫኑ ሰነዶች')}
+              {t('courseCurriculumSection.n2CurriculumStructureUploadedMaterials')}
             </h4>
           </div>
           <p className="text-xs text-slate-500">
-            {tBilingual(
-              'Review all modules, lessons, reading notes, and attached documents.',
-              'ሁሉንም ሞጁሎች፣ ትምህርቶች፣ የማንበቢያ ማስታወሻዎች እና የተያያዙ ሰነዶችን ይገምግሙ።',
-            )}
+            {t('courseCurriculumSection.reviewAllModulesLessonsReadingNotes')}
           </p>
         </div>
         {canEdit && onEdit ? (
@@ -124,14 +128,14 @@ export function CourseCurriculumSection({
             className="gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
           >
             <Pencil className="h-3.5 w-3.5" />
-            {tBilingual('Edit Curriculum', 'ስርዓተ-ትምህርት አርትዕ')}
+            {t('courseCurriculumSection.editCurriculum')}
           </Button>
         ) : null}
       </div>
 
       {modules.length === 0 ? (
         <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-5 text-center text-xs text-amber-800">
-          {tBilingual('⚠ No modules added to this course yet.', '⚠ እስካሁን ለዚህ ኮርስ የተጨመረ ሞጁል የለም።')}
+          {t('courseCurriculumSection.noModulesAddedToThisCourse')}
         </div>
       ) : (
         <div className="space-y-5">
@@ -152,13 +156,13 @@ export function CourseCurriculumSection({
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <span className="flex h-7 px-2.5 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-2xs">
-                      {tBilingual(`Module ${mIdx + 1}`, `ሞጁል ${mIdx + 1}`)}
+                      {t('creatorSidebar.module', { value: mIdx + 1 })}
                     </span>
                     <div className="min-w-0 flex-1">
                       <h5 className="font-display text-base font-bold text-slate-900 truncate">
                         {lockedModule ? <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" /> : null}
                         {module.title.trim() || (
-                          <span className="text-amber-600 italic font-normal">{tBilingual('Untitled Module', 'ያልተሰየመ ሞጁል')}</span>
+                          <span className="text-amber-600 italic font-normal">{t('courseCurriculumSection.untitledModule')}</span>
                         )}
                       </h5>
                     </div>
@@ -171,12 +175,12 @@ export function CourseCurriculumSection({
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                       <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                      {module.lessons.length} {tBilingual(module.lessons.length !== 1 ? 'Lessons' : 'Lesson', 'ትምህርቶች')}
+                      {module.lessons.length} {t(module.lessons.length !== 1 ? 'courseCurriculumSection.lessonsUnit' : 'courseCurriculumSection.lessonUnit')}
                     </span>
                     {moduleAttachments.length > 0 ? (
                       <span className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
                         <Paperclip className="h-3.5 w-3.5" />
-                        {moduleAttachments.length} {tBilingual(moduleAttachments.length !== 1 ? 'Attachments' : 'Attachment', 'አባሪዎች')}
+                        {moduleAttachments.length} {t(moduleAttachments.length !== 1 ? 'courseCurriculumSection.attachmentsUnit' : 'courseCurriculumSection.attachmentUnit')}
                       </span>
                     ) : null}
                     <button
@@ -198,7 +202,7 @@ export function CourseCurriculumSection({
                     {module.description && (
                       <div className="rounded-xl border border-slate-100 bg-white p-3.5 text-xs text-slate-600 leading-relaxed shadow-2xs">
                         <span className="font-semibold text-slate-700 block mb-1">
-                          {tBilingual('Module Description:', 'የሞጁል መግለጫ፡')}
+                          {t('courseCurriculumSection.moduleDescription')}
                         </span>
                         {stripHtmlTags(module.description)}
                       </div>
@@ -209,14 +213,11 @@ export function CourseCurriculumSection({
                       <div className="rounded-xl border border-indigo-100/80 bg-indigo-50/30 p-3.5 space-y-2">
                         <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
                           <Paperclip className="h-3.5 w-3.5 text-indigo-600" />
-                          {tBilingual(
-                            `Module Resources & References (${moduleAttachments.length})`,
-                            `የሞጁል አጠቃላይ ሰነዶች (${moduleAttachments.length})`,
-                          )}
+                          {t('courseCurriculumSection.moduleResourcesReferences', { count: moduleAttachments.length })}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {moduleAttachments.map((file, idx) => (
-                            <AttachmentCard key={file.id || file.url || idx} file={file} isAmharic={isAmharic} />
+                            <AttachmentCard key={file.id || file.url || idx} file={file} />
                           ))}
                         </div>
                       </div>
@@ -226,15 +227,12 @@ export function CourseCurriculumSection({
                     <div className="space-y-3">
                       <p className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                         <BookOpen className="h-3.5 w-3.5" />
-                        {tBilingual(
-                          `Lessons in this Module (${module.lessons.length})`,
-                          `በዚህ ሞጁል ውስጥ ያሉ ትምህርቶች (${module.lessons.length})`,
-                        )}
+                        {t('courseCurriculumSection.lessonsInThisModule', { count: module.lessons.length })}
                       </p>
 
                       {module.lessons.length === 0 ? (
                         <p className="text-xs italic text-slate-400 pl-2">
-                          {tBilingual('No lessons added inside this module.', 'በዚህ ሞጁል ውስጥ የተጨመረ ትምህርት የለም።')}
+                          {t('courseCurriculumSection.noLessonsAddedInsideThisModule')}
                         </p>
                       ) : (
                         <div className="space-y-2.5">
@@ -265,7 +263,7 @@ export function CourseCurriculumSection({
                                         {lockedLesson ? <Lock className="mr-1 inline h-3 w-3 text-slate-400" /> : null}
                                         {lesson.title.trim() || (
                                           <span className="text-amber-600 italic font-normal">
-                                            {tBilingual('Untitled Lesson', 'ያልተሰየመ ትምህርት')}
+                                            {t('courseCurriculumSection.untitledLesson')}
                                           </span>
                                         )}
                                       </p>
@@ -313,7 +311,7 @@ export function CourseCurriculumSection({
                                     {lesson.content && (
                                       <div className="rounded-lg border border-slate-200/70 bg-white p-3 shadow-2xs">
                                         <span className="font-semibold text-slate-700 block mb-1">
-                                          {tBilingual('Lesson Notes / Body Text:', 'የትምህርት ማስታወሻዎች / ጽሁፍ፡')}
+                                          {t('courseCurriculumSection.lessonNotesBodyText')}
                                         </span>
                                         <div className="text-slate-600 leading-relaxed max-h-48 overflow-y-auto prose prose-xs max-w-none">
                                           {stripHtmlTags(lesson.content)}
@@ -332,7 +330,7 @@ export function CourseCurriculumSection({
                                           className="inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-indigo-700 font-semibold text-xs hover:bg-indigo-100 transition shrink-0"
                                         >
                                           <ExternalLink className="h-3 w-3" />
-                                          {tBilingual('Open Media', 'ክፈት')}
+                                          {t('courseCurriculumSection.openMedia')}
                                         </a>
                                       </div>
                                     )}
@@ -341,14 +339,11 @@ export function CourseCurriculumSection({
                                     {lessonAttachments.length > 0 && (
                                       <div className="space-y-1.5 pt-1">
                                         <span className="font-bold text-[11px] uppercase tracking-wide text-slate-500">
-                                          {tBilingual(
-                                            `Lesson Attachments (${lessonAttachments.length})`,
-                                            `የትምህርት አባሪዎች (${lessonAttachments.length})`,
-                                          )}
+                                          {t('courseCurriculumSection.lessonAttachments', { count: lessonAttachments.length })}
                                         </span>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                           {lessonAttachments.map((file, idx) => (
-                                            <AttachmentCard key={file.id || file.url || idx} file={file} isAmharic={isAmharic} />
+                                            <AttachmentCard key={file.id || file.url || idx} file={file} />
                                           ))}
                                         </div>
                                       </div>
@@ -359,10 +354,7 @@ export function CourseCurriculumSection({
                                       <div className="space-y-2 pt-2 border-t border-slate-200/60">
                                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
                                           <Layers className="h-3 w-3 text-indigo-600" />
-                                          {tBilingual(
-                                            `Sub-Lessons (${subLessons.length})`,
-                                            `ንዑስ ትምህርቶች (${subLessons.length})`,
-                                          )}
+                                          {t('courseCurriculumSection.subLessons', { count: subLessons.length })}
                                         </p>
                                         <div className="space-y-1.5 pl-2 border-l-2 border-indigo-200">
                                           {subLessons.map((sub, sIdx) => {
@@ -382,7 +374,7 @@ export function CourseCurriculumSection({
                                                     <p className="font-medium text-xs text-slate-800 truncate">
                                                       {sub.title || (
                                                         <span className="italic text-slate-400">
-                                                          {tBilingual('Untitled Sub-lesson', 'ያልተሰየመ ንዑስ ትምህርት')}
+                                                          {t('courseCurriculumSection.untitledSubLesson')}
                                                         </span>
                                                       )}
                                                     </p>
@@ -408,7 +400,7 @@ export function CourseCurriculumSection({
                                                   <div className="pl-7 pt-1">
                                                     <div className="grid grid-cols-1 gap-1.5">
                                                       {subAttachments.map((f, fIdx) => (
-                                                        <AttachmentCard key={f.id || f.url || fIdx} file={f} isAmharic={isAmharic} />
+                                                        <AttachmentCard key={f.id || f.url || fIdx} file={f} />
                                                       ))}
                                                     </div>
                                                   </div>

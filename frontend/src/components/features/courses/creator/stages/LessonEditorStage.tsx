@@ -27,6 +27,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { LessonDraft, WizardContentType } from '../../wizard-types';
 import type { UploadedResource } from '@/types';
@@ -71,18 +72,17 @@ export function LessonEditorStage({
   onSelectLessonAssessment,
   onDeleteLessonAssessment,
 }: LessonEditorStageProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
 
   const CONTENT_TYPES: Array<{
     type: WizardContentType;
-    labelEn: string;
-    labelAm: string;
+    labelKey: NamespaceKey<'courses'>;
     icon: typeof FileText;
   }> = [
-    { type: 'DOCUMENT', labelEn: 'Reading Document', labelAm: 'የንባብ ሰነድ', icon: FileText },
-    { type: 'VIDEO', labelEn: 'Video Lecture', labelAm: 'የቪዲዮ ትምህርት', icon: Video },
-    { type: 'AUDIO', labelEn: 'Audio Lecture', labelAm: 'የድምጽ ትምህርት', icon: Headphones },
-    { type: 'PRESENTATION', labelEn: 'Slide Deck', labelAm: 'ስላይድ', icon: Presentation },
+    { type: 'DOCUMENT', labelKey: 'lessonEditorStage.readingDocument', icon: FileText },
+    { type: 'VIDEO', labelKey: 'lessonEditorStage.videoLecture2', icon: Video },
+    { type: 'AUDIO', labelKey: 'lessonEditorStage.audioLecture2', icon: Headphones },
+    { type: 'PRESENTATION', labelKey: 'lessonEditorStage.slideDeck', icon: Presentation },
   ];
 
   const subLessons = (lesson.subLessons ?? []).filter(
@@ -211,10 +211,7 @@ export function LessonEditorStage({
     if (type === 'PRESENTATION' && !['pdf', 'pptx'].includes(getSlideDeckKind(file.name))) {
       setBlockUploadError((prev) => ({
         ...prev,
-        [blockId]: tBilingual(
-          'Only PDF or PPTX slide decks can be shown in the classroom. Save older .ppt / .odp files as .pptx or PDF first.',
-          'በክላስሩም ውስጥ የሚታዩት PDF ወይም PPTX ስላይዶች ብቻ ናቸው። የቆዩ .ppt / .odp ፋይሎችን መጀመሪያ እንደ .pptx ወይም PDF ያስቀምጡ።',
-        ),
+        [blockId]: t('lessonEditorStage.onlyPdfOrPptxSlideDecks'),
       }));
       return;
     }
@@ -248,8 +245,8 @@ export function LessonEditorStage({
         <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
         <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
           {position === 'top'
-            ? tBilingual('Add Content to Top', 'ከላይ ይዘት ጨምር')
-            : tBilingual('Add Content to Bottom', 'ከታች ይዘት ጨምር')}
+            ? t('lessonEditorStage.addContentToTop')
+            : t('lessonEditorStage.addContentToBottom')}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -259,7 +256,7 @@ export function LessonEditorStage({
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition shadow-2xs"
         >
           <Presentation className="h-3.5 w-3.5 text-indigo-600" />
-          <span>+ {tBilingual('Slide Deck', 'ስላይድ')}</span>
+          <span>+ {t('lessonEditorStage.slideDeck')}</span>
         </button>
         <button
           type="button"
@@ -267,7 +264,7 @@ export function LessonEditorStage({
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-800 bg-white dark:bg-slate-900 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition shadow-2xs"
         >
           <Video className="h-3.5 w-3.5 text-rose-600" />
-          <span>+ {tBilingual('Video Lecture', 'ቪዲዮ')}</span>
+          <span>+ {t('lessonEditorStage.videoLecture')}</span>
         </button>
         <button
           type="button"
@@ -275,7 +272,7 @@ export function LessonEditorStage({
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition shadow-2xs"
         >
           <Headphones className="h-3.5 w-3.5 text-amber-600" />
-          <span>+ {tBilingual('Audio Lecture', 'ድምጽ')}</span>
+          <span>+ {t('lessonEditorStage.audioLecture')}</span>
         </button>
         <button
           type="button"
@@ -283,7 +280,7 @@ export function LessonEditorStage({
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-2xs"
         >
           <FileText className="h-3.5 w-3.5 text-slate-600" />
-          <span>+ {tBilingual('Lecture Notes', 'ጽሑፍ/ማስታወሻ')}</span>
+          <span>+ {t('lessonEditorStage.lectureNotes')}</span>
         </button>
       </div>
     </div>
@@ -335,8 +332,8 @@ export function LessonEditorStage({
               <h2 className="text-lg font-bold text-slate-900 truncate">
                 {lesson.title.trim() ||
                   (isSubLesson
-                    ? tBilingual(`Sub-lesson ${lessonIndex + 1}`, `ንዑስ ትምህርት ${lessonIndex + 1}`)
-                    : tBilingual(`Lesson ${lessonIndex + 1}`, `ትምህርት ${lessonIndex + 1}`))}
+                    ? t('creatorSidebar.subLesson', { value: lessonIndex + 1 })
+                    : t('creatorSidebar.lesson', { value: lessonIndex + 1 }))}
               </h2>
             </div>
           </div>
@@ -346,7 +343,7 @@ export function LessonEditorStage({
               {lesson.contentType || 'DOCUMENT'}
             </span>
             <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
-              {lesson.durationMin || 15} {tBilingual('min', 'ደቂቃ')}
+              {lesson.durationMin || 15} {t('lessonEditorStage.min')}
             </span>
           </div>
         </div>
@@ -355,27 +352,27 @@ export function LessonEditorStage({
       {/* Lesson Settings */}
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
         <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
-          {tBilingual('Lesson Details & Format', 'የትምህርት ዝርዝር እና ቅርጽ')}
+          {t('lessonEditorStage.lessonDetailsFormat')}
         </h3>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <label className={labelClass}>
-              {tBilingual('Lesson Title', 'የትምህርት ርዕስ')} <span className="text-rose-500">*</span>
+              {t('lessonEditorStage.lessonTitle')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
               required
               value={lesson.title}
               onChange={(e) => onUpdateLesson({ title: e.target.value })}
-              placeholder={tBilingual('Enter lesson title…', 'የትምህርት ርዕስ ያስገቡ…')}
+              placeholder={t('lessonEditorStage.enterLessonTitle')}
               className={inputClass}
             />
           </div>
 
           <div>
             <label className={labelClass}>
-              {tBilingual('Duration (Minutes)', 'የሚፈጀው ጊዜ (በደቂቃ)')}
+              {t('lessonEditorStage.durationMinutes')}
             </label>
             <div className="relative">
               <input
@@ -394,7 +391,7 @@ export function LessonEditorStage({
 
         {/* Content Type Selector */}
         <div>
-          <label className={labelClass}>{tBilingual('Lesson Content Type', 'የትምህርት ይዘት ዓይነት')}</label>
+          <label className={labelClass}>{t('lessonEditorStage.lessonContentType')}</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
             {CONTENT_TYPES.map((ct) => {
               const isSelected = (lesson.contentType || 'DOCUMENT') === ct.type;
@@ -427,7 +424,7 @@ export function LessonEditorStage({
                       isSelected ? 'text-indigo-600' : 'text-slate-500',
                     )}
                   />
-                  <span className="text-xs">{tBilingual(ct.labelEn, ct.labelAm)}</span>
+                  <span className="text-xs">{t(ct.labelKey)}</span>
                 </button>
               );
             })}
@@ -440,13 +437,10 @@ export function LessonEditorStage({
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                <span>{tBilingual('Lesson Content Blocks & Ordering', 'የትምህርት ይዘቶች እና ቅደም ተከተል')}</span>
+                <span>{t('lessonEditorStage.lessonContentBlocksOrdering')}</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                {tBilingual(
-                  'Add multiple content pieces (videos, slides, audio, lecture notes), reorder their positions, and arrange how learners experience them.',
-                  'በርካታ ይዘቶችን (ቪዲዮ፣ ስላይድ፣ ድምጽ፣ ማስታወሻ) በአንድ ትምህርት ውስጥ ያቀናብሩ፣ ቅደም ተከተላቸውን ይቀይሩ።',
-                )}
+                {t('lessonEditorStage.addMultipleContentPiecesVideosSlides')}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -462,8 +456,8 @@ export function LessonEditorStage({
                     <ChevronsDownUp className="h-3.5 w-3.5" />
                   )}
                   {allBlocksCollapsed
-                    ? tBilingual('Expand all', 'ሁሉንም ዘርጋ')
-                    : tBilingual('Collapse all', 'ሁሉንም ሰብስብ')}
+                    ? t('lessonEditorStage.expandAll')
+                    : t('lessonEditorStage.collapseAll')}
                 </button>
               )}
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60">
@@ -499,7 +493,7 @@ export function LessonEditorStage({
                       <button
                         type="button"
                         onClick={() => toggleBlockCollapsed(block.id)}
-                        title={isCollapsed ? tBilingual('Expand', 'ዘርጋ') : tBilingual('Collapse', 'ሰብስብ')}
+                        title={isCollapsed ? t('lessonEditorStage.expand') : t('lessonEditorStage.collapse')}
                         aria-expanded={!isCollapsed}
                         className="p-1 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition"
                       >
@@ -540,7 +534,7 @@ export function LessonEditorStage({
                         type="button"
                         disabled={idx === 0}
                         onClick={() => handleMoveBlock(idx, 'up')}
-                        title={tBilingual('Move Up', 'ወደ ላይ ውሰድ')}
+                        title={t('lessonEditorStage.moveUp')}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none transition"
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
@@ -551,7 +545,7 @@ export function LessonEditorStage({
                         type="button"
                         disabled={idx === blocks.length - 1}
                         onClick={() => handleMoveBlock(idx, 'down')}
-                        title={tBilingual('Move Down', 'ወደ ታች ውሰድ')}
+                        title={t('lessonEditorStage.moveDown')}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none transition"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
@@ -561,7 +555,7 @@ export function LessonEditorStage({
                       <button
                         type="button"
                         onClick={() => handleDeleteBlock(block.id)}
-                        title={tBilingual('Delete Block', 'ይዘቱን ሰርዝ')}
+                        title={t('lessonEditorStage.deleteBlock')}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition ml-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -577,10 +571,7 @@ export function LessonEditorStage({
                         <div>
                           <RichEditor
                             value={block.content || ''}
-                            placeholder={tBilingual(
-                              'Write comprehensive lecture notes, definitions, instructions and examples for this block…',
-                              'የትምህርቱን ይዘት፣ ትርጓሜዎች፣ መመሪያዎች እና ምሳሌዎችን በዝርዝር ይጻፉ…',
-                            )}
+                            placeholder={t('lessonEditorStage.writeComprehensiveLectureNotesDefinition')}
                             onChange={(val) => handleUpdateBlock(block.id, { content: val })}
                             minHeight={150}
                           />
@@ -592,7 +583,7 @@ export function LessonEditorStage({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                              {tBilingual('Slide Deck Presentation Source', 'የስላይድ ማቅረቢያ ፋይል ወይም ሊንክ')}
+                              {t('lessonEditorStage.slideDeckPresentationSource')}
                             </label>
                             <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
                               <button
@@ -606,7 +597,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
-                                {tBilingual('Browse & Upload File', 'ፋይል ይጫኑ')}
+                                {t('lessonEditorStage.browseUploadFile')}
                               </button>
                               <button
                                 type="button"
@@ -619,7 +610,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
-                                {tBilingual('Embed / Web URL', 'የድረ-ገጽ አድራሻ (URL)')}
+                                {t('lessonEditorStage.embedWebUrl')}
                               </button>
                             </div>
                           </div>
@@ -657,7 +648,7 @@ export function LessonEditorStage({
                                     />
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50">
                                       <Upload className="h-3 w-3" />
-                                      {isUploading ? tBilingual('Uploading...', 'በመጫን ላይ...') : tBilingual('Replace', 'ቀይር')}
+                                      {isUploading ? t('lessonEditorStage.uploading') : t('lessonEditorStage.replace')}
                                     </span>
                                   </label>
                                   <button
@@ -683,16 +674,16 @@ export function LessonEditorStage({
                                 {isUploading ? (
                                   <>
                                     <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{tBilingual('Uploading slide deck...', 'ስላይድ በመጫን ላይ...')}</span>
+                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingSlideDeck')}</span>
                                   </>
                                 ) : (
                                   <>
                                     <Presentation className="h-6 w-6 text-indigo-600" />
                                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                      {tBilingual('Upload PPTX or PDF Slide Deck', 'PPTX ወይም PDF ስላይድ ይጫኑ')}
+                                      {t('lessonEditorStage.uploadPptxOrPdfSlideDeck')}
                                     </span>
                                     <span className="text-[11px] text-slate-500">
-                                      {tBilingual('Opens directly inside the student classroom', 'ለተማሪዎች በቀጥታ በክላስሩም ውስጥ ይከፈታል')}
+                                      {t('lessonEditorStage.opensDirectlyInsideTheStudentClassroom')}
                                     </span>
                                   </>
                                 )}
@@ -708,7 +699,7 @@ export function LessonEditorStage({
                                 className={inputClass}
                               />
                               <p className="text-[11px] text-slate-500">
-                                {tBilingual('Google Slides, Canva, Microsoft 365, or public slide URLs are supported.', 'የጉግል ስላይድ፣ የካንቫ ወይም ማይክሮሶፍት ስላይድ ሊንክ ማስገባት ይችላሉ።')}
+                                {t('lessonEditorStage.googleSlidesCanvaMicrosoft365Or')}
                               </p>
                             </div>
                           )}
@@ -725,7 +716,7 @@ export function LessonEditorStage({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                              {tBilingual('Video Lecture Source', 'የቪዲዮ ትምህርት ፋይል ወይም ሊንክ')}
+                              {t('lessonEditorStage.videoLectureSource')}
                             </label>
                             <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
                               <button
@@ -739,7 +730,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
-                                {tBilingual('Browse & Upload Video', 'ቪዲዮ ይጫኑ')}
+                                {t('lessonEditorStage.browseUploadVideo')}
                               </button>
                               <button
                                 type="button"
@@ -752,7 +743,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
-                                {tBilingual('YouTube / Embed URL', 'የዩቲዩብ / ቪዲዮ አድራሻ')}
+                                {t('lessonEditorStage.youtubeEmbedUrl')}
                               </button>
                             </div>
                           </div>
@@ -810,16 +801,16 @@ export function LessonEditorStage({
                                 {isUploading ? (
                                   <>
                                     <Loader2 className="h-6 w-6 text-rose-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{tBilingual('Uploading video...', 'ቪዲዮ በመጫን ላይ...')}</span>
+                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingVideo')}</span>
                                   </>
                                 ) : (
                                   <>
                                     <Video className="h-6 w-6 text-rose-600" />
                                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                      {tBilingual('Upload MP4, WebM, MOV Video Lecture', 'የ MP4፣ WebM ወይም MOV ቪዲዮ ይጫኑ')}
+                                      {t('lessonEditorStage.uploadMp4WebmMovVideoLecture')}
                                     </span>
                                     <span className="text-[11px] text-slate-500">
-                                      {tBilingual('Stored securely and streamed in the classroom', 'ደህንነቱ ተጠብቆ በክላስሩም ውስጥ ይጫወታል')}
+                                      {t('lessonEditorStage.storedSecurelyAndStreamedInThe')}
                                     </span>
                                   </>
                                 )}
@@ -835,7 +826,7 @@ export function LessonEditorStage({
                                 className={inputClass}
                               />
                               <p className="text-[11px] text-slate-500">
-                                {tBilingual('YouTube video URLs and direct MP4 streams are supported.', 'የዩቲዩብ ወይም ቀጥታ የ MP4 ሊንክ ማስገባት ይችላሉ።')}
+                                {t('lessonEditorStage.youtubeVideoUrlsAndDirectMp4')}
                               </p>
                             </div>
                           )}
@@ -847,7 +838,7 @@ export function LessonEditorStage({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                              {tBilingual('Audio Lecture Source', 'የድምጽ ትምህርት ፋይል ወይም ሊንክ')}
+                              {t('lessonEditorStage.audioLectureSource')}
                             </label>
                             <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
                               <button
@@ -861,7 +852,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <Upload className="h-3.5 w-3.5" />
-                                {tBilingual('Browse & Upload Audio', 'የድምጽ ፋይል ይጫኑ')}
+                                {t('lessonEditorStage.browseUploadAudio')}
                               </button>
                               <button
                                 type="button"
@@ -874,7 +865,7 @@ export function LessonEditorStage({
                                 )}
                               >
                                 <LinkIcon className="h-3.5 w-3.5" />
-                                {tBilingual('Audio Stream URL', 'የድምጽ አድራሻ (URL)')}
+                                {t('lessonEditorStage.audioStreamUrl')}
                               </button>
                             </div>
                           </div>
@@ -930,13 +921,13 @@ export function LessonEditorStage({
                                 {isUploading ? (
                                   <>
                                     <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
-                                    <span className="text-xs text-slate-600">{tBilingual('Uploading audio...', 'ድምጽ በመጫን ላይ...')}</span>
+                                    <span className="text-xs text-slate-600">{t('lessonEditorStage.uploadingAudio')}</span>
                                   </>
                                 ) : (
                                   <>
                                     <Headphones className="h-6 w-6 text-amber-600" />
                                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                      {tBilingual('Upload MP3, WAV, AAC Audio Lecture', 'የ MP3፣ WAV ወይም AAC የድምጽ ትምህርት ይጫኑ')}
+                                      {t('lessonEditorStage.uploadMp3WavAacAudioLecture')}
                                     </span>
                                   </>
                                 )}
@@ -969,7 +960,7 @@ export function LessonEditorStage({
         {/* Attachments (Separate Handouts & Reference Materials) */}
         <div>
           <label className={labelClass}>
-            {tBilingual('Lesson Handouts & Resources', 'የትምህርት ሰነዶች እና ማጣቀሻዎች')}
+            {t('lessonEditorStage.lessonHandoutsResources')}
           </label>
           <MultiFileUploader
             id={`lesson-files-${lesson.id}`}
@@ -993,7 +984,7 @@ export function LessonEditorStage({
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <h3 className="text-sm font-bold text-slate-900">
-              {tBilingual('Sub-Lessons & Checkpoint Quiz', 'ንዑስ ትምህርቶች እና የክፍለ-ትምህርት ምዘና')}
+              {t('lessonEditorStage.subLessonsCheckpointQuiz')}
             </h3>
 
             <div className="flex items-center gap-2">
@@ -1006,7 +997,7 @@ export function LessonEditorStage({
                   className="gap-1.5 text-xs font-semibold"
                 >
                   <Plus className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{tBilingual('Add Sub-Lesson', 'ንዑስ ትምህርት ጨምር')}</span>
+                  <span>{t('lessonEditorStage.addSubLesson')}</span>
                 </Button>
               )}
 
@@ -1019,7 +1010,7 @@ export function LessonEditorStage({
                   className="gap-1.5 text-xs font-semibold text-amber-800 border-amber-200 bg-amber-50/50 hover:bg-amber-100/70"
                 >
                   <Award className="h-3.5 w-3.5 text-amber-600" />
-                  <span>{tBilingual('Add Assessment', 'ምዘና ጨምር')}</span>
+                  <span>{t('lessonEditorStage.addAssessment')}</span>
                 </Button>
               )}
             </div>
@@ -1040,17 +1031,17 @@ export function LessonEditorStage({
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-900 truncate">
-                      {sub.title.trim() || tBilingual(`Sub-lesson ${sIdx + 1}`, `ንዑስ ትምህርት ${sIdx + 1}`)}
+                      {sub.title.trim() || t('creatorSidebar.subLesson', { value: sIdx + 1 })}
                     </h4>
                     <span className="text-[10px] text-slate-500 font-medium">
-                      {sub.contentType || 'DOCUMENT'} • {sub.durationMin || 10} {tBilingual('min', 'ደቂቃ')}
+                      {sub.contentType || 'DOCUMENT'} • {sub.durationMin || 10} {t('lessonEditorStage.min')}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-indigo-600 font-bold group-hover:underline">
-                    {tBilingual('Edit Sub-lesson', 'ያርትዑ')} &rarr;
+                    {t('lessonEditorStage.editSubLesson')} &rarr;
                   </span>
                   <button
                     type="button"
@@ -1080,17 +1071,17 @@ export function LessonEditorStage({
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-xs font-bold text-amber-950 truncate">
-                      {tBilingual('Lesson Assessment Checkpoint', 'የክፍለ-ትምህርት ምዘና')}
+                      {t('lessonEditorStage.lessonAssessmentCheckpoint')}
                     </h4>
                     <span className="text-[10px] text-amber-700 font-medium">
-                      {lessonAssessment.quizQuestions?.length || 0} {tBilingual('questions', 'ጥያቄዎች')} • {lessonAssessment.quizWeight ?? 20}% {tBilingual('weight', 'ክብደት')}
+                      {lessonAssessment.quizQuestions?.length || 0} {t('creatorSidebar.questions')} • {lessonAssessment.quizWeight ?? 20}% {t('lessonEditorStage.weight')}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-amber-800 font-bold group-hover:underline">
-                    {tBilingual('Edit Questions', 'ጥያቄዎችን ያርትዑ')} &rarr;
+                    {t('lessonEditorStage.editQuestions')} &rarr;
                   </span>
                   <button
                     type="button"

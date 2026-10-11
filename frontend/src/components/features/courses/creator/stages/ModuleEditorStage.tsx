@@ -46,7 +46,7 @@ export function ModuleEditorStage({
   onDeleteLesson,
   onDeleteModuleAssessment,
 }: ModuleEditorStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const moduleMinutes = calculateModuleDuration({ lessons: module.lessons });
 
   const instructionalLessons = module.lessons.filter(
@@ -104,21 +104,21 @@ export function ModuleEditorStage({
             </div>
             <div>
               <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider block">
-                {tBilingual(`Module ${moduleIndex + 1}`, `ሞጁል ${moduleIndex + 1}`)}
+                {t('creatorSidebar.module', { value: moduleIndex + 1 })}
               </span>
               <h2 className="text-lg font-bold text-slate-900 truncate">
-                {module.title.trim() || tBilingual('Untitled Module', 'ርዕስ አልባ ሞጁል')}
+                {module.title.trim() || t('creatorSidebar.untitledModule')}
               </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              {instructionalLessons.length} {tBilingual('Lessons', 'ትምህርቶች')}
+              {instructionalLessons.length} {t('moduleEditorStage.lessons')}
             </span>
             {moduleAssessment && (
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                {tBilingual('Assessment Attached', 'ምዘና ተያይዟል')} ({moduleAssessment.quizWeight ?? 20}%)
+                {t('moduleEditorStage.assessmentAttached')} ({moduleAssessment.quizWeight ?? 20}%)
               </span>
             )}
           </div>
@@ -128,26 +128,26 @@ export function ModuleEditorStage({
       {/* Module Metadata Form */}
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
         <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2.5">
-          {tBilingual('Module Parameters', 'የሞጁል ዝርዝሮች')}
+          {t('moduleEditorStage.moduleParameters')}
         </h3>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <label className={labelClass}>
-              {tBilingual('Module Title', 'የሞጁል ርዕስ')} <span className="text-rose-500">*</span>
+              {t('moduleEditorStage.moduleTitle')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
               required
               value={module.title}
               onChange={(e) => onUpdateModule({ title: e.target.value })}
-              placeholder={tBilingual('e.g. Module 1: Introduction to Tax Law', 'ለምሳሌ፡ ሞጁል 1፡ የታክስ ህግ መሰረታዊ ሀሳቦች')}
+              placeholder={t('moduleEditorStage.eGModule1IntroductionTo')}
               className={inputClass}
             />
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Module Duration', 'የሞጁሉ ቆይታ')}</label>
+            <label className={labelClass}>{t('moduleEditorStage.moduleDuration')}</label>
             {/* Derived from the lessons; set study time on each lesson / sub-lesson instead. */}
             <div className={cn(inputClass, 'flex items-center justify-between bg-slate-50 text-slate-700')}>
               <span className="font-semibold">{formatDuration(moduleMinutes, isAmharic)}</span>
@@ -157,27 +157,27 @@ export function ModuleEditorStage({
         </div>
 
         <div>
-          <label className={labelClass}>{tBilingual('Module Overview & Summary', 'የሞጁል አጠቃላይ ማብራሪያ')}</label>
+          <label className={labelClass}>{t('moduleEditorStage.moduleOverviewSummary')}</label>
           <RichEditor
             value={module.description || ''}
-            placeholder={tBilingual('Briefly describe what this module covers…', 'ይህ ሞጁል ምን እንደሚሸፍን በአጭሩ ያብራሩ…')}
+            placeholder={t('moduleEditorStage.brieflyDescribeWhatThisModuleCovers')}
             onChange={(val) => onUpdateModule({ description: val })}
             minHeight={100}
           />
         </div>
 
         <div>
-          <label className={labelClass}>{tBilingual('Module Learning Objectives', 'የሞጁል የትምህርት ግቦች')}</label>
+          <label className={labelClass}>{t('moduleEditorStage.moduleLearningObjectives')}</label>
           <RichEditor
             value={module.objectives || ''}
-            placeholder={tBilingual('Specify the expected competency outcomes for this module…', 'ከዚህ ሞጁል የሚጠበቁ ብቃቶችን ያስገቡ…')}
+            placeholder={t('moduleEditorStage.specifyTheExpectedCompetencyOutcomesFor')}
             onChange={(val) => onUpdateModule({ objectives: val })}
             minHeight={100}
           />
         </div>
 
         <div>
-          <label className={labelClass}>{tBilingual('Module Attachments & Reference Materials', 'የሞጁሉ ሰነዶች እና ማጣቀሻዎች')}</label>
+          <label className={labelClass}>{t('moduleEditorStage.moduleAttachmentsReferenceMaterials')}</label>
           <MultiFileUploader
             id={`module-files-${module.id}`}
             files={module.resources || module.attachments || []}
@@ -199,7 +199,7 @@ export function ModuleEditorStage({
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <h3 className="text-sm font-bold text-slate-900">
-            {tBilingual('Module Contents & Units', 'በዚህ ሞጁል ውስጥ ያሉ ይዘቶች')}
+            {t('moduleEditorStage.moduleContentsUnits')}
           </h3>
           <div className="flex items-center gap-2">
             <Button
@@ -210,7 +210,7 @@ export function ModuleEditorStage({
               className="gap-1.5 text-xs font-semibold"
             >
               <Plus className="h-3.5 w-3.5 text-indigo-600" />
-              <span>{tBilingual('Add Lesson', 'ትምህርት ጨምር')}</span>
+              <span>{t('moduleEditorStage.addLesson')}</span>
             </Button>
             {!moduleAssessment && (
               <Button
@@ -221,7 +221,7 @@ export function ModuleEditorStage({
                 className="gap-1.5 text-xs font-semibold text-emerald-800 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70"
               >
                 <Award className="h-3.5 w-3.5 text-emerald-600" />
-                <span>{tBilingual('Add Assessment', 'ምዘና ጨምር')}</span>
+                <span>{t('lessonEditorStage.addAssessment')}</span>
               </Button>
             )}
           </div>
@@ -243,17 +243,17 @@ export function ModuleEditorStage({
                 </span>
                 <div className="min-w-0">
                   <h4 className="text-xs font-bold text-slate-900 truncate">
-                    {les.title.trim() || tBilingual(`Lesson ${lIdx + 1}`, `ትምህርት ${lIdx + 1}`)}
+                    {les.title.trim() || t('creatorSidebar.lesson', { value: lIdx + 1 })}
                   </h4>
                   <span className="text-[11px] text-slate-500 font-medium">
-                    {les.contentType || 'DOCUMENT'} • {les.durationMin || 15} {tBilingual('min', 'ደቂቃ')}
+                    {les.contentType || 'DOCUMENT'} • {les.durationMin || 15} {t('lessonEditorStage.min')}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-indigo-600 font-bold group-hover:underline">
-                  {tBilingual('Open Editor', 'ይክፈቱ')} &rarr;
+                  {t('moduleEditorStage.openEditor')} &rarr;
                 </span>
                 {instructionalLessons.length > 1 && (
                   <button
@@ -285,17 +285,17 @@ export function ModuleEditorStage({
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs font-bold text-emerald-950 truncate">
-                    {tBilingual('Module Assessment Checkpoint', 'የሞጁል ማጠቃለያ ምዘና')}
+                    {t('moduleEditorStage.moduleAssessmentCheckpoint')}
                   </h4>
                   <span className="text-[11px] text-emerald-700 font-medium">
-                    {moduleAssessment.quizQuestions?.length || 0} {tBilingual('questions', 'ጥያቄዎች')} • {moduleAssessment.quizWeight ?? 20}% {tBilingual('weight', 'ክብደት')}
+                    {moduleAssessment.quizQuestions?.length || 0} {t('creatorSidebar.questions')} • {moduleAssessment.quizWeight ?? 20}% {t('lessonEditorStage.weight')}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-emerald-800 font-bold group-hover:underline">
-                  {tBilingual('Edit Questions', 'ጥያቄዎችን ያርትዑ')} &rarr;
+                  {t('lessonEditorStage.editQuestions')} &rarr;
                 </span>
                 <button
                   type="button"

@@ -51,7 +51,6 @@
     "latestSecurityAndOperationalEntriesIn": "Latest security and operational entries in the system audit trail.",
     "viewFullTrail": "View full trail",
     "systemService": "System Service",
-    "enUs": "en-US",
     "noRecentAuditActivityRecorded": "No recent audit activity recorded."
   },
   "auditLogsPage": {

@@ -123,7 +123,6 @@
     "notTaken": "Not taken"
   },
   "liveSessionsStage": {
-    "enUs": "en-US",
     "youCanJoin5MinutesBefore": "You can join 5 minutes before the session starts.",
     "failedToConnectToTheSession": "Failed to connect to the session.",
     "toBeScheduled": "To be scheduled",

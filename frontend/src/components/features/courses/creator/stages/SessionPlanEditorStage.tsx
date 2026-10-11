@@ -31,7 +31,7 @@ export function SessionPlanEditorStage({
   defaultPassMark,
   policyPassMark,
 }: SessionPlanEditorStageProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const hasQuizzes = plan.quizzes.length > 0;
   const sessionWeight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
   const remaining = Math.max(0, 100 - totalAllocatedWeight);
@@ -45,7 +45,7 @@ export function SessionPlanEditorStage({
         ...plan.quizzes,
         {
           id: uid('sq'),
-          titleEn: `${plan.titleEn || tBilingual('Session', 'ክፍለ-ጊዜ')} quiz ${plan.quizzes.length + 1}`,
+          titleEn: `${plan.titleEn || t('sessionPlanEditorStage.session')} quiz ${plan.quizzes.length + 1}`,
           // New quizzes take 10%, or whatever is left, so the course total never passes 100%.
           weight: Math.min(10, remaining),
           passingScore: defaultPassMark,
@@ -64,21 +64,18 @@ export function SessionPlanEditorStage({
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {tBilingual(`Online session ${index + 1}`, `የኦንላይን ክፍለ-ጊዜ ${index + 1}`)}
+              {t('sessionPlanEditorStage.onlineSession', { value: index + 1 })}
             </p>
-            <h2 className="font-display text-xl font-bold text-slate-900">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</h2>
+            <h2 className="font-display text-xl font-bold text-slate-900">{plan.titleEn || t('creatorSidebar.untitledSession')}</h2>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
               <CalendarClock className="h-3.5 w-3.5" />
-              {tBilingual(
-                'Placeholder — the date, trainer and platform are set when the session is scheduled after approval.',
-                'ቦታ ያዥ — ቀን፣ አሰልጣኝ እና መድረክ ከጸደቀ በኋላ ሲታቀድ ይወሰናሉ።',
-              )}
+              {t('sessionPlanEditorStage.placeholderTheDateTrainerAndPlatform')}
             </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={onDelete} className="gap-1.5 text-xs text-rose-600 hover:bg-rose-50">
           <Trash2 className="h-3.5 w-3.5" />
-          {tBilingual('Remove session', 'ክፍለ-ጊዜውን አስወግድ')}
+          {t('sessionPlanEditorStage.removeSession')}
         </Button>
       </div>
 
@@ -86,31 +83,31 @@ export function SessionPlanEditorStage({
       <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs md:p-6">
         <div>
           <label className={labelClass}>
-            {tBilingual('Session title', 'የክፍለ-ጊዜ ርዕስ')} <span className="text-rose-500">*</span>
+            {t('sessionPlanEditorStage.sessionTitle')} <span className="text-rose-500">*</span>
           </label>
           <input
             type="text"
             value={plan.titleEn}
             onChange={(e) => onUpdate({ titleEn: e.target.value })}
-            placeholder={tBilingual('e.g. Live Q&A: applying audit procedures', 'ለምሳሌ፡ የቀጥታ ጥያቄና መልስ')}
+            placeholder={t('sessionPlanEditorStage.eGLiveQAApplying')}
             className={inputClass}
           />
         </div>
         <div>
-          <label className={labelClass}>{tBilingual('Session description', 'የክፍለ-ጊዜ ማብራሪያ')}</label>
+          <label className={labelClass}>{t('sessionPlanEditorStage.sessionDescription')}</label>
           <RichEditor
             value={plan.descriptionEn}
             onChange={(val) => onUpdate({ descriptionEn: val })}
-            placeholder={tBilingual('What happens in this session…', 'በዚህ ክፍለ-ጊዜ ምን ይከናወናል…')}
+            placeholder={t('sessionPlanEditorStage.whatHappensInThisSession')}
             minHeight={90}
           />
         </div>
         <div>
-          <label className={labelClass}>{tBilingual('Session objectives', 'የክፍለ-ጊዜ ዓላማዎች')}</label>
+          <label className={labelClass}>{t('sessionPlanEditorStage.sessionObjectives')}</label>
           <RichEditor
             value={plan.objectivesEn}
             onChange={(val) => onUpdate({ objectivesEn: val })}
-            placeholder={tBilingual('By the end of this session learners will…', 'በዚህ ክፍለ-ጊዜ መጨረሻ ሰልጣኞች…')}
+            placeholder={t('sessionPlanEditorStage.byTheEndOfThisSession')}
             minHeight={90}
           />
         </div>
@@ -127,7 +124,7 @@ export function SessionPlanEditorStage({
               disabled={!hasQuizzes && remaining === 0}
               className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
-            <span className="text-sm font-bold text-slate-900">{tBilingual('This session has quizzes', 'ይህ ክፍለ-ጊዜ ፈተናዎች አሉት')}</span>
+            <span className="text-sm font-bold text-slate-900">{t('sessionPlanEditorStage.thisSessionHasQuizzes')}</span>
           </label>
           <WeightBar sessionWeight={sessionWeight} total={totalAllocatedWeight} />
         </div>
@@ -135,14 +132,8 @@ export function SessionPlanEditorStage({
         {!hasQuizzes ? (
           <p className="text-xs text-slate-500">
             {remaining === 0
-              ? tBilingual(
-                  'All 100% of the course weight is already assigned. Lower another assessment to add a quiz here.',
-                  'ሁሉም 100% ክብደት ተመድቧል። እዚህ ፈተና ለመጨመር ሌላ ምዘና ይቀንሱ።',
-                )
-              : tBilingual(
-                  'Quizzes run live during the session and count towards the course grade. A learner who misses one scores 0 for it.',
-                  'ፈተናዎቹ በክፍለ-ጊዜው በቀጥታ ይሰጣሉ እና በኮርስ ውጤት ይቆጠራሉ። ያመለጠው ሰልጣኝ 0 ያገኛል።',
-                )}
+              ? t('sessionPlanEditorStage.all100OfTheCourseWeight')
+              : t('sessionPlanEditorStage.quizzesRunLiveDuringTheSession')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -156,7 +147,7 @@ export function SessionPlanEditorStage({
                       type="text"
                       value={quiz.titleEn}
                       onChange={(e) => updateQuiz(quiz.id, { titleEn: e.target.value })}
-                      placeholder={tBilingual(`Quiz ${i + 1} title`, `የፈተና ${i + 1} ርዕስ`)}
+                      placeholder={t('sessionPlanEditorStage.quizTitle', { value: i + 1 })}
                       className={cn(inputClass, 'flex-1')}
                     />
                     <button
@@ -170,7 +161,7 @@ export function SessionPlanEditorStage({
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div>
-                      <label className={labelClass}>{tBilingual('Weight (%)', 'ክብደት (%)')}</label>
+                      <label className={labelClass}>{t('sessionPlanEditorStage.weight')}</label>
                       <input
                         type="number"
                         min={0}
@@ -179,10 +170,10 @@ export function SessionPlanEditorStage({
                         onChange={(e) => updateQuiz(quiz.id, { weight: Math.max(0, Math.min(maxWeight, parseInt(e.target.value, 10) || 0)) })}
                         className={inputClass}
                       />
-                      <p className="mt-1 text-[10px] text-slate-400">{tBilingual(`Up to ${maxWeight}% available`, `እስከ ${maxWeight}% ይቀራል`)}</p>
+                      <p className="mt-1 text-[10px] text-slate-400">{t('sessionPlanEditorStage.upToAvailable', { maxWeight })}</p>
                     </div>
                     <div>
-                      <label className={labelClass}>{tBilingual('Pass mark (%)', 'ማለፊያ (%)')}</label>
+                      <label className={labelClass}>{t('sessionPlanEditorStage.passMark')}</label>
                       <input
                         type="number"
                         min={1}
@@ -196,7 +187,7 @@ export function SessionPlanEditorStage({
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>{tBilingual('Time limit (min)', 'የጊዜ ገደብ (ደቂቃ)')}</label>
+                      <label className={labelClass}>{t('sessionPlanEditorStage.timeLimitMin')}</label>
                       <input
                         type="number"
                         min={1}
@@ -209,15 +200,12 @@ export function SessionPlanEditorStage({
                   </div>
                   {quiz.weight === 0 && (
                     <p className="text-[11px] text-amber-700">
-                      {tBilingual('A 0% quiz does not affect the course grade.', '0% ፈተና የኮርስ ውጤትን አይነካም።')}
+                      {t('sessionPlanEditorStage.a0QuizDoesNotAffect')}
                     </p>
                   )}
                   {policyPassMark !== null && quiz.passingScore < policyPassMark && (
                     <p className="text-[11px] text-amber-700">
-                      {tBilingual(
-                        `The course needs ${policyPassMark}% overall for the certificate; this quiz's pass mark is lower.`,
-                        `ኮርሱ ለሰርተፊኬት ${policyPassMark}% ይፈልጋል፤ የዚህ ፈተና ማለፊያ ዝቅ ያለ ነው።`,
-                      )}
+                      {t('sessionPlanEditorStage.theCourseNeedsOverallForThe', { policyPassMark })}
                     </p>
                   )}
                 </div>
@@ -225,15 +213,12 @@ export function SessionPlanEditorStage({
             })}
             <Button variant="outline" size="sm" onClick={addQuiz} disabled={remaining === 0} className="gap-1.5 text-xs">
               <Plus className="h-3.5 w-3.5" />
-              {tBilingual('Add quiz', 'ፈተና ጨምር')}
+              {t('sessionPlanEditorStage.addQuiz')}
             </Button>
           </div>
         )}
         <p className="text-[11px] text-slate-400">
-          {tBilingual(
-            'Questions are added from the question bank by the trainer once the session is scheduled.',
-            'ጥያቄዎች ክፍለ-ጊዜው ሲታቀድ በአሰልጣኙ ከጥያቄ ባንክ ይጨመራሉ።',
-          )}
+          {t('sessionPlanEditorStage.questionsAreAddedFromTheQuestion')}
         </p>
       </div>
     </div>
@@ -241,7 +226,7 @@ export function SessionPlanEditorStage({
 }
 
 function WeightBar({ sessionWeight, total }: { sessionWeight: number; total: number }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const others = Math.max(0, total - sessionWeight);
   return (
     <div className="min-w-[220px] space-y-1">
@@ -250,10 +235,7 @@ function WeightBar({ sessionWeight, total }: { sessionWeight: number; total: num
         <div className="h-full bg-indigo-600" style={{ width: `${Math.min(100 - Math.min(100, others), sessionWeight)}%` }} />
       </div>
       <p className={cn('text-[11px] font-semibold', total === 100 ? 'text-emerald-700' : 'text-slate-500')}>
-        {tBilingual(
-          `This session ${sessionWeight}% · course total ${total}% · ${Math.max(0, 100 - total)}% left`,
-          `ይህ ክፍለ-ጊዜ ${sessionWeight}% · ድምር ${total}% · ${Math.max(0, 100 - total)}% ቀሪ`,
-        )}
+        {t('weightBar.thisSessionCourseTotalLeft', { sessionWeight, total, value: Math.max(0, 100 - total) })}
       </p>
     </div>
   );

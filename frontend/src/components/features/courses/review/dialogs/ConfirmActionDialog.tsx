@@ -23,7 +23,7 @@ export function ConfirmActionDialog({
   onConfirm,
   onClose,
 }: ConfirmActionDialogProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const isDelete = action === 'delete';
   const [learnerCount, setLearnerCount] = useState<number | null>(null);
 
@@ -46,26 +46,15 @@ export function ConfirmActionDialog({
   }, [isDelete, courseId]);
 
   const title = isDelete
-    ? tBilingual('Delete Course', 'ኮርስ ሰርዝ')
-    : tBilingual('Archive Course', 'ኮርስ አስቀምጥ');
+    ? t('confirmActionDialog.deleteCourse')
+    : t('confirmActionDialog.archiveCourse');
 
-  const learnerNoticeEn =
-    learnerCount !== null && learnerCount > 0
-      ? ` ⚠️ Notice: This course currently has ${learnerCount} enrolled learner(s). Confirming this deletion will automatically delete and cancel all learner enrollments for this course.`
-      : '';
-
-  const learnerNoticeAm =
-    learnerCount !== null && learnerCount > 0
-      ? ` ⚠️ ማሳሰቢያ፦ ይህ ኮርስ በአሁኑ ወቅት ${learnerCount} የተመዘገቡ ተማሪዎች አሉት። ኮርሱን መሰረዝ የተማሪዎቹን ምዝገባ በራስ-ሰር ይሰርዛል።`
-      : '';
+  const learnerNotice =
+    learnerCount !== null && learnerCount > 0 ? t('confirmActionDialog.learnerNotice', { learnerCount }) : '';
 
   const description = isDelete
-    ? isAmharic
-      ? `"${courseTitle}" ይሰረዝ? ይህ እርምጃ ሊቀለበስ አይችልም እና ሁሉንም ተያያዥ ይዘቶች በቋሚነት ያስወግዳል።${learnerNoticeAm}`
-      : `Delete "${courseTitle}"? This action cannot be undone and will permanently remove all associated course content.${learnerNoticeEn}`
-    : isAmharic
-      ? `"${courseTitle}" ወደ ማህደር ይቀመጥ? ከንቁ ካታሎግ ይወጣል።`
-      : `Archive "${courseTitle}"? It will move out of the active catalog.`;
+    ? t('confirmActionDialog.deleteConfirm', { courseTitle, learnerNotice })
+    : t('confirmActionDialog.archiveItWillMoveOutOf', { courseTitle });
 
   return (
     <ConfirmModal

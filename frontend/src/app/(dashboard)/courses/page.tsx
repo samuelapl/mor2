@@ -30,7 +30,7 @@ export default function CoursesPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const ready = useAuthStore((s) => s.ready);
   const { can } = usePermissions();
-  const { lang, t } = useTranslation();
+  const { lang, t } = useTranslation('courses');
   const isAmharic = lang === 'am';
   const canCreate = can('course.create');
   const canViewAssignedOnly = can('course.view.assigned') && !can('course.view.all');
@@ -74,49 +74,45 @@ export default function CoursesPage() {
   const { page, totalPages, setPage, pageItems, totalItems, pageSize, setPageSize } = usePagination(filtered, 6);
 
   const tabs: { id: StatusTab; label: string; count: number }[] = [
-    { id: 'all', label: isAmharic ? 'ሁሉም' : 'All', count: counts.all },
-    { id: 'draft', label: isAmharic ? 'ረቂቅ' : 'Draft', count: counts.draft },
+    { id: 'all', label: t('contentStatusPage.all'), count: counts.all },
+    { id: 'draft', label: t('contentStatusPage.draft'), count: counts.draft },
     {
       id: 'under_review',
-      label: isAmharic ? 'ማጽደቅ የሚጠብቅ' : 'Pending Approval',
+      label: t('coursesPage.pendingApproval'),
       count: counts.under_review,
     },
-    { id: 'approved', label: isAmharic ? 'የጸደቀ' : 'Approved', count: counts.approved },
-    { id: 'published', label: isAmharic ? 'የታተመ' : 'Published', count: counts.published },
-    { id: 'archived', label: isAmharic ? 'የተቀመጠ' : 'Archived', count: counts.archived },
+    { id: 'approved', label: t('contentStatusPage.approved'), count: counts.approved },
+    { id: 'published', label: t('contentStatusPage.published'), count: counts.published },
+    { id: 'archived', label: t('coursesPage.archived'), count: counts.archived },
   ];
 
   const emptyStateCopy = canViewAssignedOnly
     ? {
-        title: isAmharic ? 'እስካሁን የተመደበልዎ ኮርስ የለም' : 'No courses assigned to you yet',
-        description: isAmharic
-          ? 'የስልጠና አስተዳዳሪ ወደ ኮርስ ሲመድብዎ እዚህ ይታያል።'
-          : 'Once a Training Administrator assigns you to a course, it will appear here.',
+        title: t('coursesPage.noCoursesAssignedToYouYet'),
+        description: t('coursesPage.onceATrainingAdministratorAssignsYou'),
       }
     : canCreate
       ? {
-          title: isAmharic ? 'እስካሁን ምንም ኮርስ የለም' : 'No courses yet',
-          description: isAmharic ? 'ለመጀመር አዲስ ኮርስ ይፍጠሩ ወይም ማጣሪያዎችን ያስተካክሉ።' : 'Create one to get started, or adjust the filters above.',
+          title: t('coursesPage.noCoursesYet'),
+          description: t('coursesPage.createOneToGetStartedOr'),
         }
       : {
-          title: isAmharic ? 'ምንም የተዛመደ ኮርስ የለም' : 'No courses match',
-          description: isAmharic ? 'ሌሎች ኮርሶችን ለማየት ከላይ ያሉትን ማጣሪያዎች ያስተካክሉ።' : 'Adjust the filters above to see other courses.',
+          title: t('coursesPage.noCoursesMatch'),
+          description: t('coursesPage.adjustTheFiltersAboveToSee'),
         };
 
   return (
     <PageShell
       role={currentUser?.role ?? 'course_owner'}
-      title={isAmharic ? 'ኮርሶች' : 'Courses'}
+      title={t('coursesPage.courses')}
       description={
-        isAmharic
-          ? 'ኮርሶችን ያስሱ፣ ይገምግሙ እና ያስተዳድሩ። እዚህ የሚያዩት እንደ ሚናዎ የተወሰነ ነው።'
-          : 'Browse, review, and manage courses. What you see here is scoped to your role.'
+        t('coursesPage.browseReviewAndManageCoursesWhat')
       }
       actions={
         canCreate ? (
           <Button onClick={() => setCreateOpen(true)} className="shadow-sm">
             <Plus className="h-4 w-4" />
-            {isAmharic ? 'አዲስ ኮርስ ፍጠር' : 'Create Course'}
+            {t('coursesPage.createCourse')}
           </Button>
         ) : undefined
       }

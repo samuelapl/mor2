@@ -88,7 +88,7 @@ export function ReviewSubmitStage({
   onSaveDraft,
   onSelectNode,
 }: ReviewSubmitStageProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
 
   // Calculate stats — assessment rows live inline in the draft tree but are saved
   // as separate assessment records, so they are not counted as lessons.
@@ -111,47 +111,44 @@ export function ReviewSubmitStage({
 
   // Blocking problems: anything here prevents submission.
   const issues: { message: string; node: CreatorActiveNode }[] = [];
-  if (!code.trim()) issues.push({ message: tBilingual('Course code is required', 'የኮርስ ኮድ ያስፈልጋል'), node: { type: 'COURSE_DETAILS' } });
-  if (modules.length === 0) issues.push({ message: tBilingual('Add at least one module', 'ቢያንስ አንድ ሞጁል ያክሉ'), node: { type: 'COURSE_DETAILS' } });
+  if (!code.trim()) issues.push({ message: t('reviewSubmitStage.courseCodeIsRequired'), node: { type: 'COURSE_DETAILS' } });
+  if (modules.length === 0) issues.push({ message: t('reviewSubmitStage.addAtLeastOneModule'), node: { type: 'COURSE_DETAILS' } });
 
   const checkQuestions = (qs: Question[] | undefined, weight: number, label: string, node: CreatorActiveNode) => {
     if (!qs || qs.length === 0) {
-      issues.push({ message: `${label}: ${tBilingual('has no questions', 'ጥያቄ የለውም')}`, node });
+      issues.push({ message: `${label}: ${t('reviewSubmitStage.hasNoQuestions')}`, node });
       return;
     }
     const mismatch = pointsMismatch(qs, weight);
     if (mismatch) {
       issues.push({
-        message: `${label}: ${tBilingual(
-          `question points total ${mismatch.total} but the weight is ${mismatch.required}% — they must be equal`,
-          `የጥያቄ ነጥቦች ድምር ${mismatch.total} ነው ክብደቱ ግን ${mismatch.required}% ነው — እኩል መሆን አለባቸው`,
-        )}`,
+        message: `${label}: ${t('reviewSubmitStage.questionPointsTotalButTheWeight', { total: mismatch.total, required: mismatch.required })}`,
         node,
       });
     }
     qs.forEach((q, i) => {
       const n = `${label} · Q${i + 1}`;
-      if (!q.text.trim()) issues.push({ message: `${n}: ${tBilingual('question text is empty', 'የጥያቄ ጽሑፍ ባዶ ነው')}`, node });
+      if (!q.text.trim()) issues.push({ message: `${n}: ${t('reviewSubmitStage.questionTextIsEmpty')}`, node });
       else if (q.type === 'multiple_choice' && q.options.some((o) => !o.trim()))
-        issues.push({ message: `${n}: ${tBilingual('has blank options', 'ባዶ አማራጮች አሉት')}`, node });
+        issues.push({ message: `${n}: ${t('reviewSubmitStage.hasBlankOptions')}`, node });
       else if (q.type === 'short_answer' && !q.answerText?.trim())
-        issues.push({ message: `${n}: ${tBilingual('expected answer is missing', 'የሚጠበቀው መልስ የለም')}`, node });
+        issues.push({ message: `${n}: ${t('reviewSubmitStage.expectedAnswerIsMissing')}`, node });
     });
   };
 
   modules.forEach((m, mIdx) => {
-    const mLabel = m.title.trim() || `${tBilingual('Module', 'ሞጁል')} ${mIdx + 1}`;
+    const mLabel = m.title.trim() || `${t('reviewSubmitStage.module')} ${mIdx + 1}`;
     const moduleNode: CreatorActiveNode = { type: 'MODULE', moduleId: m.id };
-    if (!m.title.trim()) issues.push({ message: `${mLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: moduleNode });
+    if (!m.title.trim()) issues.push({ message: `${mLabel}: ${t('reviewSubmitStage.titleIsMissing')}`, node: moduleNode });
     const lessons = m.lessons.filter((l) => !isModuleAssessmentLesson(l));
-    if (lessons.length === 0) issues.push({ message: `${mLabel}: ${tBilingual('has no lessons', 'ትምህርት የለውም')}`, node: moduleNode });
+    if (lessons.length === 0) issues.push({ message: `${mLabel}: ${t('reviewSubmitStage.hasNoLessons')}`, node: moduleNode });
     m.lessons.filter(isModuleAssessmentLesson).forEach((a) =>
       checkQuestions(a.quizQuestions, a.quizWeight ?? 0, `${mLabel} › ${a.title || 'Module Assessment'}`, { type: 'MODULE_ASSESSMENT', moduleId: m.id }),
     );
     lessons.forEach((l, lIdx) => {
-      const lLabel = `${mLabel} › ${l.title.trim() || `${tBilingual('Lesson', 'ትምህርት')} ${lIdx + 1}`}`;
+      const lLabel = `${mLabel} › ${l.title.trim() || `${t('creatorSidebar.lesson2')} ${lIdx + 1}`}`;
       if (!l.title.trim())
-        issues.push({ message: `${lLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node: { type: 'LESSON', moduleId: m.id, lessonId: l.id } });
+        issues.push({ message: `${lLabel}: ${t('reviewSubmitStage.titleIsMissing')}`, node: { type: 'LESSON', moduleId: m.id, lessonId: l.id } });
       (l.subLessons ?? []).filter((s) => isLessonAssessmentSub(s)).forEach((a) =>
         checkQuestions(a.quizQuestions, a.quizWeight ?? 0, `${lLabel} › ${a.title || 'Lesson Assessment'}`, {
           type: 'LESSON_ASSESSMENT',
@@ -163,21 +160,18 @@ export function ReviewSubmitStage({
   });
   if (questions.length > 0) checkQuestions(questions, finalAssessmentWeight, quizTitle || 'Final Assessment', { type: 'FINAL_ASSESSMENT' });
   sessionPlans.forEach((plan, i) => {
-    const label = plan.titleEn.trim() || `${tBilingual('Online session', 'ኦንላይን ክፍለ-ጊዜ')} ${i + 1}`;
+    const label = plan.titleEn.trim() || `${t('reviewSubmitStage.onlineSession')} ${i + 1}`;
     const node: CreatorActiveNode = { type: 'SESSION_PLAN', sessionPlanId: plan.id };
-    if (!plan.titleEn.trim()) issues.push({ message: `${label}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node });
+    if (!plan.titleEn.trim()) issues.push({ message: `${label}: ${t('reviewSubmitStage.titleIsMissing')}`, node });
     plan.quizzes.forEach((quiz, qi) => {
-      const qLabel = `${label} › ${quiz.titleEn.trim() || `${tBilingual('Quiz', 'ፈተና')} ${qi + 1}`}`;
-      if (!quiz.titleEn.trim()) issues.push({ message: `${qLabel}: ${tBilingual('title is missing', 'ርዕስ የለም')}`, node });
-      if (!quiz.weight) issues.push({ message: `${qLabel}: ${tBilingual('weight is 0%', 'ክብደቱ 0% ነው')}`, node });
+      const qLabel = `${label} › ${quiz.titleEn.trim() || `${t('reviewSubmitStage.quiz')} ${qi + 1}`}`;
+      if (!quiz.titleEn.trim()) issues.push({ message: `${qLabel}: ${t('reviewSubmitStage.titleIsMissing')}`, node });
+      if (!quiz.weight) issues.push({ message: `${qLabel}: ${t('reviewSubmitStage.weightIs0')}`, node });
     });
   });
   if (gradedCourse && calculatedWeights !== 100) {
     issues.push({
-      message: tBilingual(
-        `Assessment weights total ${calculatedWeights}% — they must add up to exactly 100%`,
-        `የምዘና ክብደቶች ድምር ${calculatedWeights}% ነው — በትክክል 100% መሆን አለበት`,
-      ),
+      message: t('reviewSubmitStage.assessmentWeightsTotalTheyMustAdd', { calculatedWeights }),
       node: { type: 'FINAL_ASSESSMENT' },
     });
   }
@@ -194,13 +188,10 @@ export function ReviewSubmitStage({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-bold text-slate-900">
-              {tBilingual('Course Pre-flight Checklist & Submission', 'የኮርስ ዝግጁነት ማረጋገጫ እና ማስረከቢያ')}
+              {t('reviewSubmitStage.coursePreFlightChecklistSubmission')}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              {tBilingual(
-                'Review your syllabus, assessments, and configuration before submitting for approval.',
-                'ለማጽደቅ ከማስገባትዎ በፊት የስርዓተ-ትምህርቱን፣ ምዘናዎችን እና ቅንብሮችን ይገምግሙ።',
-              )}
+              {t('reviewSubmitStage.reviewYourSyllabusAssessmentsAndConfigur')}
             </p>
           </div>
 
@@ -213,7 +204,7 @@ export function ReviewSubmitStage({
               className="gap-1.5 shadow-xs text-xs"
             >
               <Save className="h-3.5 w-3.5" />
-              {tBilingual('Save as Draft', 'ረቂቅ አድርገህ አስቀምጥ')}
+              {t('reviewSubmitStage.saveAsDraft')}
             </Button>
             <Button
               variant="primary"
@@ -223,7 +214,7 @@ export function ReviewSubmitStage({
               className="gap-2 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold px-4"
             >
               <Send className="h-3.5 w-3.5" />
-              {tBilingual('Submit for Approval', 'ለማጽደቅ አስገባ')}
+              {t('reviewSubmitStage.submitForApproval')}
             </Button>
           </div>
         </div>
@@ -247,10 +238,10 @@ export function ReviewSubmitStage({
             )}
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-800">
-                {tBilingual('Course Information', 'የኮርስ መረጃ')}
+                {t('reviewSubmitStage.courseInformation')}
               </p>
               <p className="text-[11px] text-slate-500 truncate">
-                {isTitleValid ? title : tBilingual('Title required', 'ርዕስ ያስፈልጋል')}
+                {isTitleValid ? title : t('reviewSubmitStage.titleRequired')}
               </p>
             </div>
           </div>
@@ -276,11 +267,11 @@ export function ReviewSubmitStage({
             )}
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-800">
-                {tBilingual('Curriculum & Content', 'ስርዓተ-ትምህርት እና ይዘት')}
+                {t('reviewSubmitStage.curriculumContent')}
               </p>
               <p className="text-[11px] text-slate-500">
-                {modules.length} {tBilingual('modules', 'ሞጁሎች')}, {totalLessons}{' '}
-                {tBilingual('lessons', 'ትምህርቶች')}
+                {modules.length} {t('reviewSubmitStage.modules')}, {totalLessons}{' '}
+                {t('creatorSidebar.lessons')}
               </p>
             </div>
           </div>
@@ -302,10 +293,10 @@ export function ReviewSubmitStage({
             )}
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-800">
-                {tBilingual('Assessment Weights', 'የምዘና ክብደት')}
+                {t('reviewSubmitStage.assessmentWeights')}
               </p>
               <p className="text-[11px] text-slate-500">
-                {tBilingual('Total:', 'ድምር:')} {calculatedWeights}%{' '}
+                {t('reviewSubmitStage.total')} {calculatedWeights}%{' '}
                 {isWeightValid
                   ? '✓'
                   : calculatedWeights > 100
@@ -319,7 +310,7 @@ export function ReviewSubmitStage({
         {issues.length > 0 && (
           <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4">
             <p className="mb-2 text-xs font-bold text-rose-700">
-              {tBilingual(`Fix ${issues.length} issue(s) before submitting`, `ከማስገባትዎ በፊት ${issues.length} ችግር(ዎች) ያስተካክሉ`)}
+              {t('reviewSubmitStage.fixIssueSBeforeSubmitting', { count: issues.length })}
             </p>
             <ul className="space-y-1">
               {issues.map((issue, i) => (
@@ -343,13 +334,10 @@ export function ReviewSubmitStage({
       <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
         <div className="border-b border-slate-100 pb-4 mb-6">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
-            {tBilingual('Learner Preview & Detailed Syllabus', 'የተማሪ ቅድመ-እይታ እና ዝርዝር ይዘት')}
+            {t('reviewSubmitStage.learnerPreviewDetailedSyllabus')}
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            {tBilingual(
-              'This matches how enrolled learners experience the course overview and modules.',
-              'ይህ ተማሪዎች ሲመዘገቡ የሚያዩትን አቀራረብ ይከተላል።',
-            )}
+            {t('reviewSubmitStage.thisMatchesHowEnrolledLearnersExperience')}
           </p>
         </div>
 
@@ -357,23 +345,23 @@ export function ReviewSubmitStage({
           <div className="mb-6 space-y-2 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-800">
               <Video className="h-3.5 w-3.5" />
-              {tBilingual(`Planned online sessions (${sessionPlans.length})`, `የታቀዱ የኦንላይን ክፍለ-ጊዜዎች (${sessionPlans.length})`)}
+              {t('reviewSubmitStage.plannedOnlineSessions', { count: sessionPlans.length })}
             </p>
             <ol className="space-y-1.5">
               {sessionPlans.map((plan, i) => (
                 <li key={plan.id} className="flex flex-wrap items-center gap-2 text-sm text-slate-800">
                   <span className="text-xs font-bold text-slate-400">{i + 1}.</span>
-                  <span className="font-medium">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
+                  <span className="font-medium">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                   {plan.quizzes.map((q) => (
                     <span key={q.id} className="rounded-md border border-indigo-200 bg-white px-1.5 text-[11px] font-semibold text-indigo-700">
-                      {q.titleEn} · {q.weight}% · {tBilingual('pass', 'ማለፊያ')} {q.passingScore}%
+                      {q.titleEn} · {q.weight}% · {t('reviewSubmitStage.pass')} {q.passingScore}%
                     </span>
                   ))}
                 </li>
               ))}
             </ol>
             <p className="text-[11px] text-slate-500">
-              {tBilingual('Scheduled with a date, trainer and platform after approval.', 'ከጸደቀ በኋላ ቀን፣ አሰልጣኝ እና መድረክ ይመደብላቸዋል።')}
+              {t('reviewSubmitStage.scheduledWithADateTrainerAnd')}
             </p>
           </div>
         )}

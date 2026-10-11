@@ -17,7 +17,7 @@ import { FilterBar } from '@/components/ui/FilterBar';
 export default function ContentStatusPage() {
   const courses = useCourseStore((s) => s.courses);
   const submitForApproval = useCourseStore((s) => s.submitForApproval);
-  const { t, tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
@@ -37,25 +37,25 @@ export default function ContentStatusPage() {
   return (
     <PageShell
       role="course_owner"
-      title={tBilingual('Content Status', 'የይዘት ሁኔታ')}
-      description={tBilingual('Monitor the approval pipeline and administrator rejection feedback.', 'የማረጋገጫ ሂደቱን እና የአስተዳዳሪ ግብረመልስን ይከታተሉ።')}
+      title={t('contentStatusPage.contentStatus')}
+      description={t('contentStatusPage.monitorTheApprovalPipelineAndAdministrat')}
     >
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder={tBilingual('Search courses or feedback…', 'ኮርሶችን ወይም ግብረመልስን ይፈልጉ…')}
+        searchPlaceholder={t('contentStatusPage.searchCoursesOrFeedback')}
         selects={[
           {
             id: 'status',
-            label: tBilingual('Status', 'ሁኔታ'),
+            label: t('sessionPlanStage.status'),
             value: status,
             onChange: setStatus,
             options: [
-              { value: 'all', label: tBilingual('All', 'ሁሉም') },
-              { value: 'draft', label: tBilingual('Draft', 'ረቂቅ') },
-              { value: 'under_review', label: tBilingual('Pending approval', 'ማረጋገጫ በመጠባበቅ ላይ') },
-              { value: 'approved', label: tBilingual('Approved', 'የጸደቀ') },
-              { value: 'rejected', label: tBilingual('Rejected', 'ውድቅ የተደረገ') },
+              { value: 'all', label: t('contentStatusPage.all') },
+              { value: 'draft', label: t('contentStatusPage.draft') },
+              { value: 'under_review', label: t('contentStatusPage.pendingApproval') },
+              { value: 'approved', label: t('contentStatusPage.approved') },
+              { value: 'rejected', label: t('contentStatusPage.rejected') },
             ],
           },
         ]}
@@ -68,16 +68,16 @@ export default function ContentStatusPage() {
 
       {filtered.length === 0 ? (
         <EmptyState
-          title={tBilingual('No courses', 'ምንም ኮርሶች የሉም')}
-          description={tBilingual('Nothing matches the current filters.', 'ከአሁኑ ማጣሪያዎች ጋር የሚዛመድ ምንም ነገር የለም።')}
+          title={t('contentStatusPage.noCourses')}
+          description={t('contentStatusPage.nothingMatchesTheCurrentFilters')}
         />
       ) : (
         <Table
           columns={[
-            tBilingual('Course', 'ኮርስ'),
-            tBilingual('Approval status', 'የማረጋገጫ ሁኔታ'),
-            tBilingual('Publish status', 'የህትመት ሁኔታ'),
-            tBilingual('Admin feedback', 'የአስተዳዳሪ ግብረመልስ'),
+            t('contentStatusPage.course'),
+            t('contentStatusPage.approvalStatus'),
+            t('contentStatusPage.publishStatus'),
+            t('contentStatusPage.adminFeedback'),
             '',
           ]}
         >
@@ -94,7 +94,7 @@ export default function ContentStatusPage() {
               </Td>
               <Td>
                 <Badge variant={course.published ? 'green' : 'slate'}>
-                  {course.published ? tBilingual('Published', 'የታተመ') : tBilingual('Not published', 'ያልታተመ')}
+                  {course.published ? t('contentStatusPage.published') : t('contentStatusPage.notPublished')}
                 </Badge>
               </Td>
               <Td className="max-w-[260px]">
@@ -102,7 +102,7 @@ export default function ContentStatusPage() {
                   <span className="text-xs text-red-600">{course.rejectionReason}</span>
                 ) : course.lastRejectionReason ? (
                   <span className="text-xs text-amber-700">
-                    {tBilingual('Previous:', 'ቀዳሚ:')} {course.lastRejectionReason}
+                    {t('contentStatusPage.previous')} {course.lastRejectionReason}
                   </span>
                 ) : (
                   <span className="text-xs text-slate-400">—</span>
@@ -112,12 +112,12 @@ export default function ContentStatusPage() {
                 <div className="flex justify-end gap-2">
                   <Button size="sm" variant="outline" onClick={() => router.push(`/courses/${course.id}`)}>
                     <Eye className="h-3.5 w-3.5" />
-                    {tBilingual('Details', 'ዝርዝሮች')}
+                    {t('contentStatusPage.details')}
                   </Button>
                   {course.status === 'draft' || course.status === 'rejected' ? (
                     <Button size="sm" onClick={() => void submitForApproval(course.id)}>
                       <Send className="h-3.5 w-3.5" />
-                      {course.status === 'rejected' ? tBilingual('Resubmit', 'እንደገና አስገባ') : tBilingual('Submit', 'አስገባ')}
+                      {course.status === 'rejected' ? t('contentStatusPage.resubmit') : t('contentStatusPage.submit')}
                     </Button>
                   ) : null}
                 </div>

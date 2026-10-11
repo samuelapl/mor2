@@ -20,14 +20,14 @@ interface AssessmentStageProps {
 
 /** One view for all three assessment tiers: settings, weight, every question and its answer. */
 export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
 
   const eyebrow =
     scope === 'FINAL_ASSESSMENT'
-      ? tBilingual('Final assessment', 'የማጠቃለያ ምዘና')
+      ? t('assessmentStage.finalAssessment')
       : scope === 'MODULE_ASSESSMENT'
-        ? `${tBilingual('Module assessment', 'የሞጁል ምዘና')} · ${parentTitle ?? ''}`
-        : `${tBilingual('Lesson assessment', 'የትምህርት ምዘና')} · ${parentTitle ?? ''}`;
+        ? `${t('assessmentStage.moduleAssessment')} · ${parentTitle ?? ''}`
+        : `${t('assessmentStage.lessonAssessment')} · ${parentTitle ?? ''}`;
 
   const policyPassMark = usePolicyPassMark();
   const issues = assessments.flatMap(assessmentIssues);
@@ -46,16 +46,16 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
       <StageTitle
         icon={scope === 'FINAL_ASSESSMENT' ? <Award className="h-4 w-4" /> : <FileQuestion className="h-4 w-4" />}
         eyebrow={eyebrow}
-        title={assessments[0]?.titleEn || tBilingual('Assessment', 'ምዘና')}
+        title={assessments[0]?.titleEn || t('creatorSidebar.assessment')}
         meta={
           assessments[0] && (
             <>
               <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700">
-                {tBilingual(`Pass mark ${assessments[0].passingScore}% (this assessment)`, `ማለፊያ ${assessments[0].passingScore}% (ይህ ምዘና)`)}
+                {t('assessmentStage.passMarkThisAssessment', { passingScore: assessments[0].passingScore })}
               </span>
               {policyPassMark !== null && (
                 <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-semibold text-slate-600">
-                  {tBilingual(`Course requires ${policyPassMark}% overall (policy)`, `ኮርሱ በአጠቃላይ ${policyPassMark}% ይፈልጋል (ፖሊሲ)`)}
+                  {t('assessmentStage.courseRequiresOverallPolicy', { policyPassMark })}
                 </span>
               )}
             </>
@@ -67,7 +67,7 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
         <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
           <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-amber-800">
             <AlertTriangle className="h-3.5 w-3.5" />
-            {tBilingual('Check before approving', 'ከማጽደቅዎ በፊት ያረጋግጡ')}
+            {t('assessmentStage.checkBeforeApproving')}
           </p>
           <ul className="list-disc space-y-0.5 pl-5 text-xs text-amber-800">
             {issues.map((issue, i) => (
@@ -78,14 +78,14 @@ export function AssessmentStage({ scope, assessments, parentTitle }: AssessmentS
       )}
 
       <StageCard>
-        <AssessmentDetailSection assessments={assessments} isAmharic={isAmharic} />
+        <AssessmentDetailSection assessments={assessments} />
       </StageCard>
 
       {files.length > 0 && (
-        <StageCard title={tBilingual(`Assessment files (${files.length})`, `የምዘና ፋይሎች (${files.length})`)} icon={<Paperclip className="h-4 w-4" />}>
+        <StageCard title={t('assessmentStage.assessmentFiles', { count: files.length })} icon={<Paperclip className="h-4 w-4" />}>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {files.map((file, i) => (
-              <AttachmentCard key={file.id || file.url || i} file={file} isAmharic={isAmharic} />
+              <AttachmentCard key={file.id || file.url || i} file={file} />
             ))}
           </div>
         </StageCard>

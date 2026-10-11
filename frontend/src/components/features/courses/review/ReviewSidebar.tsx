@@ -53,7 +53,7 @@ function cleanLessonTitle(title: string): string {
 }
 
 export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode, issues }: ReviewSidebarProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [collapsedLessons, setCollapsedLessons] = useState<Set<string>>(new Set());
 
@@ -153,15 +153,15 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
     <aside className="flex h-full w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-slate-50/70">
       <div className="shrink-0 border-b border-slate-200/80 bg-white/80 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{tBilingual('Course Structure', 'የኮርስ መዋቅር')}</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('creatorSidebar.courseStructure')}</span>
           {issueCount > 0 ? (
             <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
               <AlertTriangle className="h-3 w-3" />
-              {issueCount} {tBilingual(issueCount === 1 ? 'issue' : 'issues', 'ችግሮች')}
+              {issueCount} {t(issueCount === 1 ? 'reviewSidebar.issueUnit' : 'reviewSidebar.issuesUnit')}
             </span>
           ) : (
             <span className="rounded-full border border-slate-200/60 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-              {course.modules.length} {tBilingual('Modules', 'ሞጁሎች')}
+              {course.modules.length} {t('creatorSidebar.modules')}
             </span>
           )}
         </div>
@@ -172,7 +172,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
           { type: 'OVERVIEW' },
           <>
             <BookOpen className="h-3.5 w-3.5 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">{tBilingual('Course Overview', 'የኮርስ አጠቃላይ እይታ')}</span>
+            <span className="min-w-0 flex-1 truncate">{t('reviewSidebar.courseOverview')}</span>
           </>,
         )}
 
@@ -195,7 +195,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                     { type: 'MODULE', moduleId: m.id },
                     <>
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-black/5 text-[10px] font-bold">{mIdx + 1}</span>
-                      <span className="min-w-0 flex-1 truncate font-semibold">{m.title || tBilingual('Untitled module', 'ርዕስ የሌለው ሞጁል')}</span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">{m.title || t('reviewSidebar.untitledModule')}</span>
                       <span className="shrink-0 text-[10px] opacity-70">{m.lessons.length}</span>
                       {fileBadge(getItemAttachments(m).length)}
                     </>,
@@ -235,7 +235,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                               <>
                                 <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" />
                                 <span className="min-w-0 flex-1 truncate">
-                                  {mIdx + 1}.{lIdx + 1} {cleanLessonTitle(l.title) || tBilingual('Untitled lesson', 'ርዕስ የሌለው ትምህርት')}
+                                  {mIdx + 1}.{lIdx + 1} {cleanLessonTitle(l.title) || t('reviewSidebar.untitledLesson')}
                                 </span>
                                 {hasSubLessons && isLessonCollapsed && (
                                   <span className="shrink-0 rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600">
@@ -275,14 +275,14 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                           assessmentNode(
                             { type: 'LESSON_ASSESSMENT', moduleId: m.id, lessonId: l.id },
                             lessonAssessment,
-                            tBilingual('Lesson Assessment', 'የትምህርት ምዘና'),
+                            t('reviewSidebar.lessonAssessment'),
                             3,
                           )}
                       </React.Fragment>
                     );
                   })}
                   {moduleAssessment &&
-                    assessmentNode({ type: 'MODULE_ASSESSMENT', moduleId: m.id }, moduleAssessment, tBilingual('Module Assessment', 'የሞጁል ምዘና'), 1.5)}
+                    assessmentNode({ type: 'MODULE_ASSESSMENT', moduleId: m.id }, moduleAssessment, t('creatorSidebar.moduleAssessment'), 1.5)}
                 </div>
               )}
             </div>
@@ -293,7 +293,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
           <div className="space-y-0.5 border-t border-slate-200/80 pt-2">
             <p className="flex items-center gap-1.5 px-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700">
               <Video className="h-3 w-3" />
-              {tBilingual('Online Sessions', 'የኦንላይን ክፍለ-ጊዜዎች')}
+              {t('creatorSidebar.onlineSessions')}
             </p>
             {course.sessionPlans!.map((plan, i) => {
               const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
@@ -303,7 +303,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                     { type: 'SESSION_PLAN', sessionPlanId: plan.id },
                     <>
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-black/5 text-[10px] font-bold">{i + 1}</span>
-                      <span className="min-w-0 flex-1 truncate">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
+                      <span className="min-w-0 flex-1 truncate">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                       {plan.quizzes.length > 0 && (
                         <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">
                           {plan.quizzes.length}Q · {weight}%
@@ -324,7 +324,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
               <>
                 <Award className="h-3.5 w-3.5 shrink-0" />
                 <span className="min-w-0 flex-1 truncate font-semibold">
-                  {assessments.final[0].titleEn || tBilingual('Final Assessment', 'የማጠቃለያ ምዘና')}
+                  {assessments.final[0].titleEn || t('reviewSidebar.finalAssessment')}
                 </span>
                 <span className="shrink-0 rounded bg-black/5 px-1 text-[10px] font-bold">
                   {assessments.final.reduce((n, a) => n + (a.weight ?? 0), 0)}%
@@ -334,14 +334,14 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
           ) : (
             <p className="flex items-center gap-2 px-2 py-1.5 text-xs italic text-slate-400">
               <Award className="h-3.5 w-3.5" />
-              {tBilingual('No final assessment', 'የማጠቃለያ ምዘና የለም')}
+              {t('reviewSidebar.noFinalAssessment')}
             </p>
           )}
           {node(
             { type: 'APPROVAL_HISTORY' },
             <>
               <History className="h-3.5 w-3.5 shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{tBilingual('Approval History', 'የማጽደቅ ታሪክ')}</span>
+              <span className="min-w-0 flex-1 truncate">{t('reviewSidebar.approvalHistory')}</span>
             </>,
           )}
         </div>

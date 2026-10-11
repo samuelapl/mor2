@@ -17,6 +17,10 @@
  * --objects [--key-prop labelKey]: instead, converts `{ en: '…', am: '…' }` object literals (config
  * tables, option lists). A pure `{ en, am }` becomes the key string; inside a larger object the en/am
  * pair becomes `labelKey: 'key'`. The code that reads them must then call t() — tsc points to it.
+ *
+ * --suffix-pairs: converts `<base>En: '…', <base>Am: '…'` properties to `<base>Key: 'key'` and
+ * equal-length string arrays `<base>En: [...]`, `<base>Am: [...]` to `<base>Keys: [...]`. Only run it
+ * on UI option tables — API payloads use the same property names.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -31,6 +35,7 @@ for (let i = 0; i < argv.length; i++) {
   if (argv[i] === '--ns') opt.ns = argv[++i];
   else if (argv[i] === '--dry-run') opt.dryRun = true;
   else if (argv[i] === '--objects') opt.objects = true;
+  else if (argv[i] === '--suffix-pairs') opt.suffix = true;
   else if (argv[i] === '--key-prop') opt.keyProp = argv[++i];
   else opt.targets.push(argv[i]);
 }
@@ -248,6 +253,11 @@ function runPass() {
     const skip = (n, why) => report.skipped.push({ at: loc(n), why, code: n.getText(sf).slice(0, 110).replace(/\s+/g, ' ') });
 
     const visit = (node) => {
+      if (opt.suffix) {
+        if (ts.isObjectLiteralExpression(node)) collectSuffixPairs(node);
+        ts.forEachChild(node, visit);
+        return;
+      }
       if (opt.objects) {
         if (ts.isObjectLiteralExpression(node)) collectObject(node);
         ts.forEachChild(node, visit);
@@ -293,6 +303,30 @@ function runPass() {
       sites.push({ node: obj, en, am, source: {}, names, enOnly: false, scope: scopeName(obj, sf), object: pure ? 'pure' : { enP, amP } });
     };
 
+    const collectSuffixPairs = (obj) => {
+      const props = obj.properties.filter((p) => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name));
+      for (const enP of props) {
+        const m = /^(\w+)En$/.exec(enP.name.text);
+        if (!m) continue;
+        const amP = props.find((p) => p.name.text === `${m[1]}Am`);
+        if (!amP) continue;
+        const enI = unwrap(enP.initializer);
+        const amI = unwrap(amP.initializer);
+        if (ts.isArrayLiteralExpression(enI) && ts.isArrayLiteralExpression(amI)) {
+          if (enI.elements.length !== amI.elements.length) { skip(obj, `${m[1]}En/${m[1]}Am arrays differ in length`); continue; }
+          const pairs = enI.elements.map((e, i) => [readText(e, sf, new Map()), readText(amI.elements[i], sf, new Map())]);
+          if (pairs.some(([e, a]) => !e || !a || e.exprs.length || a.exprs.length)) { skip(obj, `${m[1]}En/${m[1]}Am arrays are not plain text`); continue; }
+          sites.push({ node: obj, suffix: { base: m[1], enP, amP, array: true, pairs }, scope: scopeName(obj, sf), source: {}, names: new Map(), en: { text: '', exprs: [] }, am: { text: '', exprs: [] } });
+        } else {
+          const names = new Map();
+          const en = readText(enI, sf, names);
+          const am = readText(amI, sf, names);
+          if (!en || !am || en.exprs.length || am.exprs.length) { skip(obj, `${m[1]}En/${m[1]}Am are not plain text`); continue; }
+          sites.push({ node: obj, suffix: { base: m[1], enP, amP }, scope: scopeName(obj, sf), source: {}, names, en, am });
+        }
+      }
+    };
+
     const collectTernary = (cond) => {
       let test = unwrap(cond.condition);
       let negate = false;
@@ -322,6 +356,8 @@ function runPass() {
       const first = readText(cond.whenTrue, sf, names);
       const second = readText(cond.whenFalse, sf, names);
       if (!first || !second) return; // not text (JSX, numbers, class names…) — leave alone
+      const codeLike = (x) => /^([a-z]{2}(-[A-Z]{2})?|EN|AM)$/.test(x.text);
+      if (codeLike(first) && codeLike(second)) return; // locale / language codes, not text
       const source = uiLanguageSource(checker, ident);
       if (!source) return skip(cond, `\`${ident.text}\` is not the UI language here (prop/param?) — convert by hand`);
       addSite(cond, amFirst ? second : first, amFirst ? first : second, source, names, false);
@@ -341,7 +377,9 @@ function runPass() {
     visit(sf);
 
     // Nested sites (text inside text) are done innermost first; the outer one waits for the next pass.
-    const ready = sites.filter((s) => !sites.some((o) => o !== s && s.node.getStart(sf) <= o.node.getStart(sf) && s.node.end >= o.node.end));
+    const ready = opt.suffix
+      ? sites
+      : sites.filter((s) => !sites.some((o) => o !== s && s.node.getStart(sf) <= o.node.getStart(sf) && s.node.end >= o.node.end));
 
     // Hook declarations that get a namespaced `t`.
     const hookPlans = new Map(); // VariableDeclaration → { ok }
@@ -361,6 +399,26 @@ function runPass() {
         continue;
       }
       if (s.source.anchor) anchorPlans.set(s.source.anchor, true);
+      if (s.suffix) {
+        const { base, enP, amP } = s.suffix;
+        let value;
+        if (s.suffix.array) {
+          const keys = s.suffix.pairs.map(([e, a]) => {
+            const r = keyFor(s.scope, e.text, a.text);
+            report.converted.push({ at: loc(enP), key: `${NS}.${r.key}`, en: e.text, am: a.text, reused: r.reused, enOnly: false });
+            return `${quote}${r.key}${quote}`;
+          });
+          value = `${base}Keys: [${keys.join(', ')}]`;
+        } else {
+          const r = keyFor(s.scope, s.en.text, s.am.text);
+          report.converted.push({ at: loc(enP), key: `${NS}.${r.key}`, en: s.en.text, am: s.am.text, reused: r.reused, enOnly: false });
+          value = `${base}Key: ${quote}${r.key}${quote}`;
+        }
+        edits.push({ start: enP.getStart(sf), end: enP.end, text: value });
+        const after = sf.text.slice(amP.end).match(/^\s*,/)?.[0].length ?? 0;
+        edits.push({ start: amP.getFullStart(), end: amP.end + after, text: '' });
+        continue;
+      }
       const { key, reused } = keyFor(s.scope, s.en.text, s.am.text);
       if (s.object) {
         if (s.object === 'pure') edits.push({ start: s.node.getStart(sf), end: s.node.end, text: `${quote}${key}${quote}` });

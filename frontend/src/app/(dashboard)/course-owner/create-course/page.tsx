@@ -18,7 +18,7 @@ function CreateCourseContent() {
   const searchParams = useSearchParams();
   const courseIdParam = searchParams.get('courseId');
   const courses = useCourseStore((s) => s.courses);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
 
   const editingCourse = useMemo(() => {
     if (!courseIdParam) return null;
@@ -46,31 +46,22 @@ function CreateCourseContent() {
     <>
       <PageShell
         role="course_owner"
-        title={tBilingual('Create New Course', 'አዲስ ኮርስ ፍጠር')}
-        description={tBilingual(
-          "Choose how you'd like to build this course.",
-          'ይህንን ኮርስ እንዴት መገንባት እንደሚፈልጉ ይምረጡ።',
-        )}
+        title={t('createCourseContent.createNewCourse')}
+        description={t('createCourseContent.chooseHowYouDLikeTo')}
       >
         <div className="grid w-full gap-4 sm:grid-cols-2">
           {[
             {
               key: 'manual' as const,
               icon: FilePenLine,
-              title: tBilingual('Create manually', 'በእጅ ፍጠር'),
-              description: tBilingual(
-                'Build the course step by step — details, curriculum, materials and a final assessment.',
-                'ኮርሱን ደረጃ በደረጃ ይገንቡ — ዝርዝሮች፣ ሥርዓተ-ትምህርት፣ የማስተማሪያ ግብዓቶች እና የመጨረሻ ምዘና።',
-              ),
+              title: t('createCourseContent.createManually'),
+              description: t('createCourseContent.buildTheCourseStepByStep'),
             },
             {
               key: 'scorm' as const,
               icon: PackageOpen,
-              title: tBilingual('Upload SCORM', 'SCORM ፋይል ጫን'),
-              description: tBilingual(
-                'Import a ready-made SCORM package as a course.',
-                'የተዘጋጀ የ SCORM ጥቅል እንደ ኮርስ ያስመጡ።',
-              ),
+              title: t('createCourseContent.uploadScorm'),
+              description: t('createCourseContent.importAReadyMadeScormPackage'),
             },
           ].map((option) => (
             <button
@@ -98,11 +89,8 @@ function CreateCourseContent() {
       <WorkspaceDetailOverlay
         open={mode === 'manual'}
         onClose={handleCancelManual}
-        title={tBilingual('Create New Course', 'አዲስ ኮርስ ፍጠር')}
-        subtitle={tBilingual(
-          'Add course details, build your curriculum, attach content, and set up the final assessment.',
-          'የኮርስ ዝርዝሮችን ያክሉ፣ ሥርዓተ-ትምህርትዎን ይገንቡ፣ ይዘቶችን ያያይዙ እና የመጨረሻ ምዘና ያዘጋጁ።',
-        )}
+        title={t('createCourseContent.createNewCourse')}
+        subtitle={t('createCourseContent.addCourseDetailsBuildYourCurriculum')}
       >
         <div className="w-full">
           <CourseCreationWizard
@@ -117,11 +105,8 @@ function CreateCourseContent() {
       <WorkspaceDetailOverlay
         open={mode === 'scorm'}
         onClose={() => setMode(null)}
-        title={tBilingual('Upload SCORM Package', 'የ SCORM ጥቅል ጫን')}
-        subtitle={tBilingual(
-          'Import a ready-made SCORM package as a course.',
-          'የተዘጋጀ የ SCORM ጥቅል እንደ ኮርስ ያስመጡ።',
-        )}
+        title={t('createCourseContent.uploadScormPackage')}
+        subtitle={t('createCourseContent.importAReadyMadeScormPackage')}
       >
         <div className="w-full">
           <ScormUpload

@@ -19,7 +19,7 @@ interface EnrolledCourseActionsProps {
  * Clicks are stopped here so they don't also trigger the card's own navigation.
  */
 export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }: EnrolledCourseActionsProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation("courses");
   return (
     <div className="flex flex-wrap items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
       <Link href={`/learner/courses/${courseId}/learn`}>
@@ -30,12 +30,12 @@ export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }:
             className="border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400"
           >
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-            {tBilingual('Completed', 'የተጠናቀቀ')}
+            {t("enrolledCourseActions.completed")}
           </Button>
         ) : (
           <Button size="sm">
             <PlayCircle className="h-3.5 w-3.5" />
-            {tBilingual('Continue', 'ቀጥል')}
+            {t("enrolledCourseActions.continue")}
           </Button>
         )}
       </Link>
@@ -44,7 +44,7 @@ export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }:
         <Link href="/learner/certificates">
           <Button size="sm" variant="outline">
             <Award className="h-3.5 w-3.5" />
-            {tBilingual('Certificates', 'የምስክር ወረቀቶች')}
+            {t("enrolledCourseActions.certificates")}
           </Button>
         </Link>
       ) : null}
@@ -59,14 +59,14 @@ export function EnrolledCourseActions({ courseId, done, isPerson, onViewVenue }:
               className="gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
             >
               <MapPin className="h-3.5 w-3.5 text-indigo-600" />
-              {tBilingual('Classroom Venue', 'የመማሪያ ክፍል ቦታ')}
+              {t("enrolledCourseActions.classroomVenue")}
             </Button>
           ) : null}
 
           <Link href="/learner/live-sessions">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs">
               <Calendar className="h-3.5 w-3.5 text-indigo-600" />
-              {tBilingual('Sessions & Check-In', 'ክፍለ-ጊዜዎች እና መገኘት ማረጋገጫ')}
+              {t("enrolledCourseActions.sessionsCheckIn")}
             </Button>
           </Link>
         </>

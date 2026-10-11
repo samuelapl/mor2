@@ -74,7 +74,7 @@ export function SessionPlanStage({
   courseTrainerIds = [],
   onRefresh,
 }: SessionPlanStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const userName = useUserName();
   const { can } = usePermissions();
   const policyPassMark = usePolicyPassMark();
@@ -121,15 +121,15 @@ export function SessionPlanStage({
     try {
       await assignSessionPlanTrainer(courseId, plan.id, next);
       if (next) {
-        toast.success(tBilingual('Trainer assigned to this session.', 'ለዚህ ክፍለ-ጊዜ አሰልጣኝ ተመድቧል።'));
+        toast.success(t('sessionPlanStage.trainerAssignedToThisSession'));
         setJustAssigned(true);
       } else {
-        toast.success(tBilingual('Trainer removed from this session.', 'አሰልጣኝ ከዚህ ክፍለ-ጊዜ ተነስቷል።'));
+        toast.success(t('sessionPlanStage.trainerRemovedFromThisSession'));
         setJustAssigned(false);
       }
       onRefresh?.();
     } catch (err: any) {
-      toast.error(err?.message || tBilingual('Failed to update the session trainer.', 'የክፍለ-ጊዜውን አሰልጣኝ ማዘመን አልተቻለም።'));
+      toast.error(err?.message || t('sessionPlanStage.failedToUpdateTheSessionTrainer'));
     } finally {
       setBusy(false);
     }
@@ -137,19 +137,19 @@ export function SessionPlanStage({
 
   // Same checks as the backend publish guard (CoursesService.assertSessionsReadyToPublish).
   const publishBlockers: string[] = [];
-  if (afterApproval && !trainerId) publishBlockers.push(tBilingual('No trainer is assigned to this session yet.', 'ለዚህ ክፍለ-ጊዜ ገና አሰልጣኝ አልተመደበም።'));
-  if (afterApproval && !scheduled) publishBlockers.push(tBilingual('This session is not scheduled yet.', 'ይህ ክፍለ-ጊዜ ገና አልታቀደም።'));
+  if (afterApproval && !trainerId) publishBlockers.push(t('sessionPlanStage.noTrainerIsAssignedToThis'));
+  if (afterApproval && !scheduled) publishBlockers.push(t('sessionPlanStage.thisSessionIsNotScheduledYet'));
   for (const q of plan.quizzes) {
     const prepared = quizAssessments.find((a) => a.id === q.id);
     const questions = prepared?.questions ?? [];
     if (afterApproval && questions.length === 0) {
-      publishBlockers.push(tBilingual(`"${q.titleEn}" has no questions yet.`, `"${q.titleEn}" ገና ጥያቄ የለውም።`));
+      publishBlockers.push(t('sessionPlanStage.hasNoQuestionsYet', { titleEn: q.titleEn }));
     } else if (afterApproval) {
       // One point per percent of course weight, so a 10% quiz totals 10 points.
       const points = questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
       if (points !== q.weight) {
         publishBlockers.push(
-          tBilingual(`"${q.titleEn}" has ${points} of ${q.weight} points assigned.`, `"${q.titleEn}" ${q.weight} ነጥብ ሊኖረው ይገባል፤ ${points} ብቻ ተመድቧል።`),
+          t('sessionPlanStage.hasOfPointsAssigned', { titleEn: q.titleEn, points, weight: q.weight }),
         );
       }
     }
@@ -157,25 +157,25 @@ export function SessionPlanStage({
 
   const formatDate = (iso: string) => formatSessionDateTime(iso, isAmharic ? 'am-ET' : undefined);
   const doneSteps = (trainerId ? 1 : 0) + (scheduled ? 1 : 0);
-  const stepLabels = { done: tBilingual('Done', 'ተጠናቋል'), next: tBilingual('Next', 'ቀጣይ'), pending: tBilingual('Pending', 'በመጠባበቅ ላይ') };
+  const stepLabels = { done: t('sessionPlanStage.done'), next: t('courseReviewShell.next'), pending: t('sessionPlanStage.pending') };
 
   return (
     <div className="space-y-6">
       <StageTitle
         icon={<Video className="h-4 w-4" />}
-        eyebrow={`${tBilingual('Online session', 'የኦንላይን ክፍለ-ጊዜ')} ${index + 1}`}
-        title={plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}
+        eyebrow={`${t('sessionPlanStage.onlineSession')} ${index + 1}`}
+        title={plan.titleEn || t('creatorSidebar.untitledSession')}
         meta={
           <>
             <StatusPill done={Boolean(trainerId)} icon={trainerId ? UserCheck : UserX}>
-              {trainerId ? userName(trainerId) : tBilingual('No trainer yet', 'ገና አሰልጣኝ የለም')}
+              {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerYet')}
             </StatusPill>
             <StatusPill done={Boolean(scheduled)} icon={scheduled ? CalendarCheck : CalendarClock}>
-              {scheduled ? formatDate(scheduled.scheduledAt) : tBilingual('Not scheduled yet', 'ገና አልታቀደም')}
+              {scheduled ? formatDate(scheduled.scheduledAt) : t('sessionPlanStage.notScheduledYet')}
             </StatusPill>
             <span>
-              {plan.quizzes.length} {tBilingual(plan.quizzes.length === 1 ? 'quiz' : 'quizzes', 'ፈተናዎች')} · {weight}%{' '}
-              {tBilingual('of the course grade', 'ከኮርስ ውጤት')}
+              {plan.quizzes.length} {t(plan.quizzes.length === 1 ? 'sessionPlanStage.quizUnit' : 'sessionPlanStage.quizzesUnit')} · {weight}%{' '}
+              {t('sessionPlanStage.ofTheCourseGrade')}
             </span>
           </>
         }
@@ -185,11 +185,11 @@ export function SessionPlanStage({
       <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-indigo-50/80 via-white to-white px-6 py-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">{tBilingual('Get this session ready', 'ክፍለ-ጊዜውን ያዘጋጁ')}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">{t('sessionPlanStage.getThisSessionReady')}</p>
             <p className="mt-0.5 text-sm font-semibold text-slate-800">
               {doneSteps === 2
-                ? tBilingual('All set. This session is ready for publishing.', 'ዝግጁ ነው። ይህ ክፍለ-ጊዜ ለማተም ዝግጁ ነው።')
-                : tBilingual('Two steps before this session can go live.', 'ይህ ክፍለ-ጊዜ ከመጀመሩ በፊት ሁለት ደረጃዎች።')}
+                ? t('sessionPlanStage.allSetThisSessionIsReady')
+                : t('sessionPlanStage.twoStepsBeforeThisSessionCan')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -206,11 +206,11 @@ export function SessionPlanStage({
             done={Boolean(trainerId)}
             active={!trainerId}
             labels={stepLabels}
-            title={tBilingual('Assign a trainer', 'አሰልጣኝ ይመድቡ')}
+            title={t('sessionPlanStage.assignATrainer')}
             description={
               trainerId
-                ? tBilingual(`${userName(trainerId)} will host this session.`, `${userName(trainerId)} ይህን ክፍለ-ጊዜ ያስተናግዳል።`)
-                : tBilingual('Choose who will host this session, below on this page.', 'ይህን ክፍለ-ጊዜ የሚያስተናግደውን ከዚህ በታች ይምረጡ።')
+                ? t('sessionPlanStage.willHostThisSession', { value: userName(trainerId) })
+                : t('sessionPlanStage.chooseWhoWillHostThisSession')
             }
           />
           <Step
@@ -218,11 +218,11 @@ export function SessionPlanStage({
             done={Boolean(scheduled)}
             active={Boolean(trainerId) && !scheduled}
             labels={stepLabels}
-            title={tBilingual('Schedule the session', 'ክፍለ-ጊዜውን ያቅዱ')}
+            title={t('sessionPlanStage.scheduleTheSession')}
             description={
               scheduled
-                ? tBilingual(`Scheduled for ${formatDate(scheduled.scheduledAt)}.`, `ለ${formatDate(scheduled.scheduledAt)} ታቅዷል።`)
-                : tBilingual('Pick the date and time on the Session Scheduling page.', 'ቀን እና ሰዓቱን በክፍለ-ጊዜ ማቀጃ ገጽ ላይ ይምረጡ።')
+                ? t('sessionPlanStage.scheduledFor', { value: formatDate(scheduled.scheduledAt) })
+                : t('sessionPlanStage.pickTheDateAndTimeOn')
             }
             action={
               !scheduled && afterApproval ? (
@@ -230,7 +230,7 @@ export function SessionPlanStage({
                   href={schedulingHref}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
                 >
-                  {tBilingual('Open Session Scheduling', 'የክፍለ-ጊዜ ማቀጃን ክፈት')}
+                  {t('sessionPlanStage.openSessionScheduling')}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               ) : null
@@ -243,10 +243,9 @@ export function SessionPlanStage({
         <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-rose-800">
             <AlertTriangle className="h-3.5 w-3.5" />
-            {tBilingual(
-              `${publishBlockers.length} ${publishBlockers.length === 1 ? 'issue blocks' : 'issues block'} publishing`,
-              `${publishBlockers.length} ችግር(ዎች) ማተምን ያግዳሉ`,
-            )}
+            {t(publishBlockers.length === 1 ? 'sessionPlanStage.blocksPublishingOne' : 'sessionPlanStage.blocksPublishingOther', {
+              count: publishBlockers.length,
+            })}
           </p>
           <ul className="space-y-1 text-xs text-rose-800">
             {publishBlockers.map((b, i) => (
@@ -274,28 +273,25 @@ export function SessionPlanStage({
             <div>
               <p className="text-sm font-bold text-indigo-950">
                 {justAssigned
-                  ? tBilingual('Trainer assigned. Next: schedule the session.', 'አሰልጣኝ ተመድቧል። ቀጣይ፦ ክፍለ-ጊዜውን ያቅዱ።')
-                  : tBilingual('Next: schedule the session.', 'ቀጣይ፦ ክፍለ-ጊዜውን ያቅዱ።')}
+                  ? t('sessionPlanStage.trainerAssignedNextScheduleTheSession')
+                  : t('sessionPlanStage.nextScheduleTheSession')}
               </p>
               <p className="mt-0.5 text-xs leading-relaxed text-indigo-900/80">
-                {tBilingual(
-                  'Go to the Session Scheduling page and schedule this session there. The trainer is filled in for you, and the status here updates automatically once it is scheduled.',
-                  'ወደ ክፍለ-ጊዜ ማቀጃ ገጽ ሄደው ይህን ክፍለ-ጊዜ እዚያ ያቅዱ። አሰልጣኙ በራሱ ይሞላል፤ ከታቀደ በኋላ እዚህ ያለው ሁኔታ በራሱ ይዘምናል።',
-                )}
+                {t('sessionPlanStage.goToTheSessionSchedulingPage')}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {onRefresh && (
               <Button variant="ghost" size="sm" onClick={onRefresh} icon={<RefreshCw className="h-3.5 w-3.5" />}>
-                {tBilingual('Check now', 'አሁን አረጋግጥ')}
+                {t('sessionPlanStage.checkNow')}
               </Button>
             )}
             <Link
               href={schedulingHref}
               className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-700"
             >
-              {tBilingual('Go to Session Scheduling', 'ወደ ክፍለ-ጊዜ ማቀጃ ሂድ')}
+              {t('sessionPlanStage.goToSessionScheduling')}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -303,7 +299,7 @@ export function SessionPlanStage({
       )}
 
       {/* Step 1: trainer assignment. Scheduling itself happens on the Session Scheduling page. */}
-      <StageCard title={tBilingual('Step 1 · Session trainer', 'ደረጃ 1 · የክፍለ-ጊዜ አሰልጣኝ')} icon={<UserCheck className="h-4 w-4" />}>
+      <StageCard title={t('sessionPlanStage.step1SessionTrainer')} icon={<UserCheck className="h-4 w-4" />}>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50 p-3">
           <div className="flex items-center gap-3">
             <div
@@ -315,16 +311,16 @@ export function SessionPlanStage({
               {trainerId ? initials(userName(trainerId)) : <UserX className="h-4 w-4" />}
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">{tBilingual('Trainer for this session', 'የዚህ ክፍለ-ጊዜ አሰልጣኝ')}</p>
+              <p className="text-xs font-medium text-slate-500">{t('sessionPlanStage.trainerForThisSession')}</p>
               <p className="text-sm font-bold text-slate-800">
-                {trainerId ? userName(trainerId) : tBilingual('No trainer assigned yet', 'ገና አሰልጣኝ አልተመደበም')}
+                {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerAssignedYet')}
               </p>
             </div>
           </div>
           {trainerId && (
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               <Check className="h-3.5 w-3.5" />
-              {tBilingual('Assigned', 'ተመድቧል')}
+              {t('sessionPlanStage.assigned')}
             </span>
           )}
         </div>
@@ -332,7 +328,7 @@ export function SessionPlanStage({
         {canAssignTrainer ? (
           <div className="space-y-2">
             <label className="block text-xs font-semibold text-slate-700">
-              {trainerId ? tBilingual('Change trainer', 'አሰልጣኝ ቀይር') : tBilingual('Assign a trainer', 'አሰልጣኝ መድብ')}
+              {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignATrainer2')}
             </label>
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start">
               <div className="flex-1">
@@ -352,59 +348,56 @@ export function SessionPlanStage({
                   onClick={() => void saveTrainer(selectedTrainerId)}
                   className="whitespace-nowrap"
                 >
-                  {trainerId ? tBilingual('Change trainer', 'አሰልጣኝ ቀይር') : tBilingual('Assign trainer', 'አሰልጣኝ መድብ')}
+                  {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignTrainer')}
                 </Button>
                 {trainerId && (
                   <Button variant="outline" size="sm" disabled={busy} onClick={() => void saveTrainer(null)} className="whitespace-nowrap text-rose-600 hover:text-rose-700">
-                    {tBilingual('Remove', 'አስወግድ')}
+                    {t('sessionPlanStage.remove')}
                   </Button>
                 )}
               </div>
             </div>
             <p className="text-[11px] text-slate-400">
-              {tBilingual(
-                'Search by name or email. Each session of a course can have its own trainer.',
-                'በስም ወይም በኢሜይል ይፈልጉ። እያንዳንዱ ክፍለ-ጊዜ የራሱ አሰልጣኝ ሊኖረው ይችላል።',
-              )}
+              {t('sessionPlanStage.searchByNameOrEmailEach')}
             </p>
           </div>
         ) : (
           !trainerId && (
             <p className="text-xs text-slate-500">
-              {tBilingual('A training administrator assigns the trainer for this session.', 'የስልጠና አስተዳዳሪ የዚህን ክፍለ-ጊዜ አሰልጣኝ ይመድባል።')}
+              {t('sessionPlanStage.aTrainingAdministratorAssignsTheTrainer')}
             </p>
           )
         )}
       </StageCard>
 
       {scheduled && (
-        <StageCard title={tBilingual('Step 2 · Scheduled session', 'ደረጃ 2 · የታቀደ ክፍለ-ጊዜ')} icon={<CalendarCheck className="h-4 w-4" />}>
+        <StageCard title={t('sessionPlanStage.step2ScheduledSession')} icon={<CalendarCheck className="h-4 w-4" />}>
           <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <Detail label={tBilingual('Date & time', 'ቀን እና ሰዓት')}>
+            <Detail label={t('sessionPlanStage.dateTime')}>
               {formatDate(scheduled.scheduledAt)}
               <StartsInBadge seconds={scheduled.startsInSeconds} className="mt-1" />
             </Detail>
-            <Detail label={tBilingual('Duration', 'ቆይታ')}>{scheduled.durationMinutes ? `${scheduled.durationMinutes} min` : '—'}</Detail>
-            <Detail label={tBilingual('Platform', 'መድረክ')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
-            <Detail label={tBilingual('Status', 'ሁኔታ')}>{scheduled.status}</Detail>
+            <Detail label={t('sessionPlanStage.duration')}>{scheduled.durationMinutes ? `${scheduled.durationMinutes} min` : '—'}</Detail>
+            <Detail label={t('sessionPlanStage.platform')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
+            <Detail label={t('sessionPlanStage.status')}>{scheduled.status}</Detail>
           </dl>
           <p className="text-[11px] text-slate-400">
-            {tBilingual('Change the date or time on the Session Scheduling page.', 'ቀኑን ወይም ሰዓቱን በክፍለ-ጊዜ ማቀጃ ገጽ ላይ ይቀይሩ።')}{' '}
+            {t('sessionPlanStage.changeTheDateOrTimeOn')}{' '}
             <Link href={schedulingHref} className="font-semibold text-indigo-600 hover:text-indigo-800">
-              {tBilingual('Open', 'ክፈት')}
+              {t('mediaPreview.open')}
             </Link>
           </p>
         </StageCard>
       )}
 
       <StageCard>
-        <RichSection label={tBilingual('Description', 'ማብራሪያ')} html={plan.descriptionEn} missing={tBilingual('No description provided.', 'ማብራሪያ አልተሰጠም።')} />
-        <RichSection label={tBilingual('Objectives', 'ዓላማዎች')} html={plan.objectivesEn} missing={tBilingual('No objectives specified.', 'ዓላማዎች አልተገለጹም።')} />
+        <RichSection label={t('moduleStage.description')} html={plan.descriptionEn} missing={t('moduleStage.noDescriptionProvided')} />
+        <RichSection label={t('sessionPlanStage.objectives')} html={plan.objectivesEn} missing={t('moduleStage.noObjectivesSpecified')} />
       </StageCard>
 
       {plan.quizzes.length === 0 ? (
-        <StageCard title={tBilingual('Session quizzes', 'የክፍለ-ጊዜ ፈተናዎች')} icon={<FileQuestion className="h-4 w-4" />}>
-          <p className="text-sm text-slate-500">{tBilingual('This session has no graded quiz.', 'ይህ ክፍለ-ጊዜ የሚታረም ፈተና የለውም።')}</p>
+        <StageCard title={t('sessionPlanStage.sessionQuizzes')} icon={<FileQuestion className="h-4 w-4" />}>
+          <p className="text-sm text-slate-500">{t('sessionPlanStage.thisSessionHasNoGradedQuiz')}</p>
         </StageCard>
       ) : (
         plan.quizzes.map((q) => {
@@ -414,7 +407,7 @@ export function SessionPlanStage({
             <StageCard key={q.id} title={q.titleEn} icon={<FileQuestion className="h-4 w-4" />}>
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 font-semibold text-indigo-700">
-                  {q.weight}% {tBilingual('weight', 'ክብደት')}
+                  {q.weight}% {t('lessonEditorStage.weight')}
                 </span>
                 <span
                   className={`rounded-md border px-1.5 font-semibold ${
@@ -423,24 +416,21 @@ export function SessionPlanStage({
                       : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   }`}
                 >
-                  {tBilingual('pass', 'ማለፊያ')} {q.passingScore}%
+                  {t('reviewSubmitStage.pass')} {q.passingScore}%
                 </span>
                 {q.timeLimitMinutes ? <span className="text-slate-400">{q.timeLimitMinutes} min</span> : null}
                 <span className="text-slate-400">
-                  · {questions.length} {tBilingual(questions.length === 1 ? 'question' : 'questions', 'ጥያቄዎች')}
+                  · {questions.length} {t(questions.length === 1 ? 'sessionPlanStage.questionUnit' : 'sessionPlanStage.questionsUnit')}
                 </span>
               </div>
               {questions.length === 0 ? (
                 <p className="text-sm text-slate-500">
-                  {tBilingual(
-                    'No questions prepared yet. The trainer adds them from the question bank in the session’s quiz tools.',
-                    'ገና ጥያቄ አልተዘጋጀም። አሰልጣኙ ከጥያቄ ባንክ ይጨምራል።',
-                  )}
+                  {t('sessionPlanStage.noQuestionsPreparedYetTheTrainer')}
                 </p>
               ) : (
                 <div className="space-y-3">
                   {questions.map((question, i) => (
-                    <AssessmentQuestionPreview key={question.id || i} question={question} index={i} isAmharic={isAmharic} />
+                    <AssessmentQuestionPreview key={question.id || i} question={question} index={i} />
                   ))}
                 </div>
               )}
@@ -450,10 +440,7 @@ export function SessionPlanStage({
       )}
 
       <p className="text-[11px] text-slate-400">
-        {tBilingual(
-          'Each session quiz is graded when its session is marked completed; a learner who misses it scores 0. The certificate waits until every session has been held.',
-          'እያንዳንዱ የክፍለ-ጊዜ ፈተና ክፍለ-ጊዜው ሲጠናቀቅ ይታረማል፤ ያመለጠው ሰልጣኝ 0 ያገኛል። ሰርተፊኬቱ ሁሉም ክፍለ-ጊዜዎች እስኪካሄዱ ይጠብቃል።',
-        )}
+        {t('sessionPlanStage.eachSessionQuizIsGradedWhen')}
       </p>
     </div>
   );

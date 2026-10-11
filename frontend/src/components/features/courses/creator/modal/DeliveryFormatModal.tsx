@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { CourseDeliveryMode } from '@/types';
 import { DEFAULT_DELIVERY_MODE, isDeliveryModeEnabled } from '@/constants/delivery-modes';
@@ -31,92 +32,46 @@ export function DeliveryFormatModal({
   onSelect,
   onCancel,
 }: DeliveryFormatModalProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const [selected, setSelected] = useState<CourseDeliveryMode>(isDeliveryModeEnabled(initialMode) ? initialMode : DEFAULT_DELIVERY_MODE);
 
   const options: Array<{
     id: CourseDeliveryMode;
-    titleEn: string;
-    titleAm: string;
-    badgeEn: string;
-    badgeAm: string;
-    descriptionEn: string;
-    descriptionAm: string;
+    titleKey: NamespaceKey<'courses'>;
+    badgeKey: NamespaceKey<'courses'>;
+    descriptionKey: NamespaceKey<'courses'>;
     icon: typeof Globe2;
-    featuresEn: string[];
-    featuresAm: string[];
+    featuresKeys: NamespaceKey<'courses'>[];
     accentColor: string;
     badgeBg: string;
   }> = [
     {
       id: 'ONLINE_ONLY',
-      titleEn: 'Online Self-Paced',
-      titleAm: 'የመስመር ላይ (ራስ-አገዝ)',
-      badgeEn: 'Recommended',
-      badgeAm: 'ተመራጭ',
-      descriptionEn:
-        'Learners study at their own pace using video streams, rich documents, downloadable attachments, and automated quizzes.',
-      descriptionAm:
-        'ሰልጣኞች በራሳቸው ፍጥነት በቪዲዮ፣ በሰነዶች እና በራስ-ሰር በሚታረሙ ፈተናዎች አማካኝነት ይማራሉ።',
+      titleKey: 'deliveryFormatModal.onlineSelfPaced',
+      badgeKey: 'courseDetailsStage.recommended',
+      descriptionKey: 'deliveryFormatModal.learnersStudyAtTheirOwnPace',
       icon: Globe2,
-      featuresEn: [
-        'Module-by-module linear progression',
-        'Automated checkpoint & final quizzes',
-        'Instant digital completion certificates',
-      ],
-      featuresAm: [
-        'ደረጃ በደረጃ የሞዱሎች ቅደም ተከተል',
-        'ራስ-ሰር የፈተና ውጤት እና ማለፊያ',
-        'ወዲያውኑ የሚወርድ ዲጂታል ሰርተፊኬት',
-      ],
+      featuresKeys: ['deliveryFormatModal.moduleByModuleLinearProgression', 'deliveryFormatModal.automatedCheckpointFinalQuizzes', 'deliveryFormatModal.instantDigitalCompletionCertificates'],
       accentColor: 'indigo',
       badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
     },
     {
       id: 'IN_PERSON_ONLY',
-      titleEn: 'In-Person Classroom',
-      titleAm: 'በአካል በክፍል ውስጥ',
-      badgeEn: 'Physical Venues',
-      badgeAm: 'በስልጠና ማዕከል',
-      descriptionEn:
-        'Held at designated Ministry of Revenues training venues and regional branches with scheduled sessions, physical attendance, and classroom practicals.',
-      descriptionAm:
-        'በገቢዎች ሚኒስቴር የስልጠና አዳራሾች ወይም በቅርንጫፎች በአካል የሚሰጥ ስልጠና፤ የመገኘት ምዝገባን እና የክፍል ውስጥ ልምምድን ያካትታል።',
+      titleKey: 'deliveryFormatModal.inPersonClassroom',
+      badgeKey: 'deliveryFormatModal.physicalVenues',
+      descriptionKey: 'deliveryFormatModal.heldAtDesignatedMinistryOfRevenues',
       icon: Building2,
-      featuresEn: [
-        'Venue & room booking integration',
-        'QR code and PIN attendance tracking',
-        'On-site trainer evaluation & grading',
-      ],
-      featuresAm: [
-        'የስልጠና አዳራሽ እና ቦታ መመደብ',
-        'በQR ኮድ እና በPIN የመገኘት ምዝገባ',
-        'በአሰልጣኙ የሚደረግ ቀጥተኛ ግምገማ',
-      ],
+      featuresKeys: ['deliveryFormatModal.venueRoomBookingIntegration', 'deliveryFormatModal.qrCodeAndPinAttendanceTracking', 'deliveryFormatModal.onSiteTrainerEvaluationGrading'],
       accentColor: 'amber',
       badgeBg: 'bg-amber-50 text-amber-800 border-amber-200/60',
     },
     {
       id: 'BOTH',
-      titleEn: 'Hybrid / Blended Learning',
-      titleAm: 'ድብልቅ ስልጠና (ኦንላይን እና በአካል)',
-      badgeEn: 'Blended',
-      badgeAm: 'ድብልቅ',
-      descriptionEn:
-        'The best of both worlds. Learners complete digital self-paced preparation modules and attend scheduled live virtual or in-person workshops.',
-      descriptionAm:
-        'ሁለቱንም ያጣመረ ተመራጭ ዘዴ። ሰልጣኞች ዲጂታል ዝግጅትን በኦንላይን አጠናቀው በታቀዱ የቀጥታ የቪዲዮ ወይም የአካል ውይይቶች ይሳተፋሉ።',
+      titleKey: 'deliveryFormatModal.hybridBlendedLearning',
+      badgeKey: 'deliveryFormatModal.blended',
+      descriptionKey: 'deliveryFormatModal.theBestOfBothWorldsLearners',
       icon: Layers,
-      featuresEn: [
-        'Full self-paced digital modules',
-        'Virtual sessions (LiveKit/Zoom) or venue classes',
-        'Comprehensive assessment & official certification',
-      ],
-      featuresAm: [
-        'ሙሉ የኦንላይን የሞዱል ይዘቶች',
-        'የቀጥታ ስርጭት ወይም የአካል አውደ ጥናቶች',
-        'የተሟላ ምዘና እና ይፋዊ ሰርተፊኬት',
-      ],
+      featuresKeys: ['deliveryFormatModal.fullSelfPacedDigitalModules', 'deliveryFormatModal.virtualSessionsLivekitZoomOrVenue', 'deliveryFormatModal.comprehensiveAssessmentOfficialCertifica'],
       accentColor: 'emerald',
       badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/60',
     },
@@ -130,11 +85,8 @@ export function DeliveryFormatModal({
     <Modal
       open={open}
       onClose={onCancel}
-      title={tBilingual('Select Course Delivery Format', 'የኮርሱን አሰጣጥ ዘዴ ይምረጡ')}
-      subtitle={tBilingual(
-        'Choose how learners will experience this course. You can fine-tune sessions and scheduling at any time.',
-        'ሰልጣኞች ይህንን ኮርስ እንዴት እንደሚማሩ ይምረጡ። የክፍለ-ጊዜ እና የቦታ መርሃ-ግብርን በማንኛውም ጊዜ ማስተካከል ይችላሉ።',
-      )}
+      title={t('deliveryFormatModal.selectCourseDeliveryFormat')}
+      subtitle={t('deliveryFormatModal.chooseHowLearnersWillExperienceThis')}
       size="xl"
     >
       <div className="space-y-4 pt-1">
@@ -188,7 +140,7 @@ export function DeliveryFormatModal({
                           enabled ? opt.badgeBg : 'bg-slate-100 text-slate-500 border-slate-200',
                         )}
                       >
-                        {enabled ? tBilingual(opt.badgeEn, opt.badgeAm) : tBilingual('Coming soon', 'በቅርቡ')}
+                        {enabled ? t(opt.badgeKey) : t('deliveryFormatModal.comingSoon')}
                       </span>
                       <div
                         className={cn(
@@ -204,22 +156,22 @@ export function DeliveryFormatModal({
                   </div>
 
                   <h3 className="mt-3.5 text-base font-bold text-slate-900">
-                    {tBilingual(opt.titleEn, opt.titleAm)}
+                    {t(opt.titleKey)}
                   </h3>
                   <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-                    {tBilingual(opt.descriptionEn, opt.descriptionAm)}
+                    {t(opt.descriptionKey)}
                   </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-                  {(isAmharic ? opt.featuresAm : opt.featuresEn).map(
+                  {opt.featuresKeys.map(
                     (feat, fIdx) => (
                       <div
                         key={fIdx}
                         className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" />
-                        <span>{feat}</span>
+                        <span>{t(feat)}</span>
                       </div>
                     ),
                   )}
@@ -231,14 +183,14 @@ export function DeliveryFormatModal({
 
         <div className="mt-6 pt-4 border-t border-slate-200/80 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
           <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">
-            {tBilingual('Cancel', 'ይቅር')}
+            {t('deliveryFormatModal.cancel')}
           </Button>
           <Button
             variant="primary"
             onClick={handleConfirm}
             className="w-full sm:w-auto px-6 shadow-md shadow-indigo-600/20"
           >
-            {tBilingual('Continue to Studio', 'ወደ ስቱዲዮ ይቀጥሉ')}
+            {t('deliveryFormatModal.continueToStudio')}
           </Button>
         </div>
       </div>

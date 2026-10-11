@@ -43,7 +43,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   // Platform time (EAT), whatever the browser's time zone.
   const fmt = (iso: string) =>
-    `${new Date(iso).toLocaleString(t('liveSessionsStage.enUs'), {
+    `${new Date(iso).toLocaleString(isAmharic ? 'am-ET' : 'en-US', {
       timeZone: APP_TIME_ZONE,
       dateStyle: 'full',
       timeStyle: 'short',

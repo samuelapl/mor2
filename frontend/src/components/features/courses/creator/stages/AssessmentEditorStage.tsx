@@ -114,7 +114,7 @@ export function AssessmentEditorStage({
   onFileRemove,
   courseId,
 }: AssessmentEditorStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const policyPassMark = usePolicyPassMark();
   const { items: dynamicQuestionTypes } = useLookupCategories('QUESTION_TYPE');
   const { items: dynamicCategories } = useLookupCategories('COURSE_CATEGORY');
@@ -203,38 +203,27 @@ export function AssessmentEditorStage({
     switch (scope) {
       case 'FINAL_ASSESSMENT':
         return {
-          title: tBilingual('Final Certification Assessment', 'የመጨረሻ የብቃት ማረጋገጫ ምዘና'),
-          subtitle: tBilingual(
-            'High-stakes final exam required for course completion and certificate issuance.',
-            'ትምህርቱን ለማጠናቀቅ እና ሰርተፍኬት ለመውሰድ የሚያስፈልግ የመጨረሻ ፈተና።',
-          ),
-          badge: tBilingual('Final Exam', 'የመጨረሻ ፈተና'),
+          title: t('assessmentEditorStage.finalCertificationAssessment'),
+          subtitle: t('assessmentEditorStage.highStakesFinalExamRequiredFor'),
+          badge: t('assessmentEditorStage.finalExam'),
           color: 'indigo',
         };
       case 'MODULE_ASSESSMENT':
         return {
-          title: tBilingual(
-            `Module Assessment: ${parentTitle || 'Module'}`,
-            `የሞጁል ምዘና: ${parentTitle || 'ሞጁል'}`,
-          ),
-          subtitle: tBilingual(
-            'Evaluates comprehensive understanding of this module before moving forward.',
-            'ወደሚቀጥለው ከመሄድ በፊት የዚህን ሞጁል ግንዛቤ ይገመግማል።',
-          ),
-          badge: tBilingual('Module Checkpoint', 'የሞጁል መፈተሻ'),
+          title: t('assessmentEditorStage.moduleAssessmentTitle', {
+            title: parentTitle || t('assessmentEditorStage.moduleFallback'),
+          }),
+          subtitle: t('assessmentEditorStage.evaluatesComprehensiveUnderstandingOfThi'),
+          badge: t('assessmentEditorStage.moduleCheckpoint'),
           color: 'emerald',
         };
       case 'LESSON_ASSESSMENT':
         return {
-          title: tBilingual(
-            `Lesson Quiz: ${parentTitle || 'Lesson'}`,
-            `የክፍለ-ትምህርት ጥያቄዎች: ${parentTitle || 'ክፍለ-ትምህርት'}`,
-          ),
-          subtitle: tBilingual(
-            'Formative quiz to reinforce key concepts covered in this lesson.',
-            'በዚህ ክፍል የተሸፈኑ ዋና ዋና ፅንሰ ሀሳቦችን ለማጠናከር የተዘጋጀ ጥያቄ።',
-          ),
-          badge: tBilingual('Lesson Quiz', 'የክፍል ፈተና'),
+          title: t('assessmentEditorStage.lessonQuizTitle', {
+            title: parentTitle || t('assessmentEditorStage.lessonFallback'),
+          }),
+          subtitle: t('assessmentEditorStage.formativeQuizToReinforceKeyConcepts'),
+          badge: t('assessmentEditorStage.lessonQuiz'),
           color: 'amber',
         };
     }
@@ -291,7 +280,7 @@ export function AssessmentEditorStage({
                   : 'border-amber-200 bg-amber-50 text-amber-800',
               )}
             >
-              {tBilingual('Total Weight:', 'አጠቃላይ ድምር:')} {totalAllocatedWeight}% / 100%
+              {t('assessmentEditorStage.totalWeight')} {totalAllocatedWeight}% / 100%
             </span>
           )}
         </div>
@@ -300,13 +289,13 @@ export function AssessmentEditorStage({
       {/* Rules & Parameters Configuration */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-5">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          {tBilingual('Grading & Rules Configuration', 'የውጤት እና ደንብ ውቅረት')}
+          {t('assessmentEditorStage.gradingRulesConfiguration')}
         </h4>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>
-              {tBilingual('Assessment Title', 'የምዘናው ርዕስ')} <span className="text-rose-500">*</span>
+              {t('assessmentEditorStage.assessmentTitle')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -320,10 +309,10 @@ export function AssessmentEditorStage({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-slate-700">
-                {tBilingual('Course Grade Weight (%)', 'የውጤት ክብደት (%)')}
+                {t('assessmentEditorStage.courseGradeWeight')}
               </label>
               <span className="text-[10px] text-slate-400 font-medium">
-                {tBilingual(`Up to ${Math.max(0, maxWeight)}% available`, `እስከ ${Math.max(0, maxWeight)}% ይቀራል`)}
+                {t('assessmentEditorStage.upToAvailable', { value: Math.max(0, maxWeight) })}
               </span>
             </div>
             <input
@@ -338,10 +327,7 @@ export function AssessmentEditorStage({
             />
             {mismatch && (
               <p className="mt-1.5 text-[11px] font-medium text-rose-600">
-                {tBilingual(
-                  `Question points total ${mismatch.total}, but this assessment weighs ${mismatch.required}%. They must be equal (1 point = 1%).`,
-                  `የጥያቄዎቹ ነጥብ ድምር ${mismatch.total} ነው፤ የምዘናው ክብደት ግን ${mismatch.required}% ነው። እኩል መሆን አለባቸው (1 ነጥብ = 1%)።`,
-                )}
+                {t('assessmentEditorStage.questionPointsTotalButThisAssessment', { total: mismatch.total, required: mismatch.required })}
               </p>
             )}
           </div>
@@ -349,7 +335,7 @@ export function AssessmentEditorStage({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label className={labelClass}>{tBilingual('Passing Score (%)', 'የማለፊያ ነጥብ (%)')}</label>
+            <label className={labelClass}>{t('assessmentEditorStage.passingScore')}</label>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -365,16 +351,13 @@ export function AssessmentEditorStage({
             </div>
             {policyPassMark !== null && passMark < policyPassMark && (
               <p className="mt-1.5 text-[11px] leading-snug text-amber-700">
-                {tBilingual(
-                  `The course needs a ${policyPassMark}% overall grade for the certificate. With a ${passMark}% pass mark here, learners can pass this quiz and still miss the certificate.`,
-                  `ለሰርተፊኬት የኮርሱ አጠቃላይ ውጤት ${policyPassMark}% መሆን አለበት። እዚህ ${passMark}% ማለፊያ ቢሆንም ሰልጣኞች ይህን ፈተና አልፈው ሰርተፊኬቱን ሊያጡ ይችላሉ።`,
-                )}
+                {t('assessmentEditorStage.theCourseNeedsAOverallGrade', { policyPassMark, passMark })}
               </p>
             )}
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Time Limit (Minutes)', 'የጊዜ ገደብ (ደቂቃ)')}</label>
+            <label className={labelClass}>{t('assessmentEditorStage.timeLimitMinutes')}</label>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -388,7 +371,7 @@ export function AssessmentEditorStage({
           </div>
 
           <div>
-            <label className={labelClass}>{tBilingual('Maximum Attempts Allowed', 'የሚፈቀደው የሙከራ ብዛት')}</label>
+            <label className={labelClass}>{t('assessmentEditorStage.maximumAttemptsAllowed')}</label>
             <input
               type="number"
               min={1}
@@ -412,13 +395,10 @@ export function AssessmentEditorStage({
                 />
                 <div>
                   <p className="text-xs font-bold text-slate-800">
-                    {tBilingual('Allow Early Submission', 'ቀደም ብሎ ማስረከብ ፍቀድ')}
+                    {t('assessmentEditorStage.allowEarlySubmission')}
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    {tBilingual(
-                      'Learners can manually submit anytime before the timer expires.',
-                      'ተማሪዎች ሰዓቱ ከማለቁ በፊት ማስረከብ ይችላሉ።',
-                    )}
+                    {t('assessmentEditorStage.learnersCanManuallySubmitAnytimeBefore')}
                   </p>
                 </div>
               </label>
@@ -434,13 +414,10 @@ export function AssessmentEditorStage({
                 />
                 <div>
                   <p className="text-xs font-bold text-slate-800">
-                    {tBilingual('Auto-submit When Time Expires', 'ሰዓቱ ሲያልቅ በራስ-ሰር አስረክብ')}
+                    {t('assessmentEditorStage.autoSubmitWhenTimeExpires')}
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    {tBilingual(
-                      'Server automatically grades answers when deadline passes.',
-                      'ጊዜው ሲያልቅ ሲስተሙ በራስ-ሰር ፈትሾ ያስቀምጣል።',
-                    )}
+                    {t('assessmentEditorStage.serverAutomaticallyGradesAnswersWhenDead')}
                   </p>
                 </div>
               </label>
@@ -455,13 +432,10 @@ export function AssessmentEditorStage({
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                {tBilingual('Assessment Reference Documents (Optional)', 'የፈተና ማጣቀሻ ሰነዶች (አማራጭ)')}
+                {t('assessmentEditorStage.assessmentReferenceDocumentsOptional')}
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                {tBilingual(
-                  'Attach formula sheets, case studies, or scenarios for learners during the assessment.',
-                  'በፈተናው ወቅት ተማሪዎች የሚመለከቱትን መመሪያ፣ ኬዝ ስተዲ ወይም ፎርሙላ ሉህ ያያይዙ።',
-                )}
+                {t('assessmentEditorStage.attachFormulaSheetsCaseStudiesOr')}
               </p>
             </div>
             {uploading && (
@@ -493,7 +467,7 @@ export function AssessmentEditorStage({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {tBilingual('Questions', 'ጥያቄዎች')} ({questions.length})
+            {t('assessmentEditorStage.questions')} ({questions.length})
           </h4>
           <div className="flex flex-wrap items-center gap-2">
             {weight > 0 && questions.length > 0 && (
@@ -503,7 +477,7 @@ export function AssessmentEditorStage({
                   mismatch ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
                 )}
               >
-                {tBilingual('Points:', 'ነጥብ:')} {pointsTotal} / {weight}
+                {t('assessmentEditorStage.points')} {pointsTotal} / {weight}
               </span>
             )}
             {mismatch && (
@@ -516,14 +490,11 @@ export function AssessmentEditorStage({
                 title={
                   canDistribute
                     ? undefined
-                    : tBilingual(
-                        `${questions.length} questions need at least ${questions.length}% weight to get 1 point each`,
-                        `${questions.length} ጥያቄዎች እያንዳንዳቸው 1 ነጥብ እንዲያገኙ ቢያንስ ${questions.length}% ክብደት ያስፈልጋል`,
-                      )
+                    : t('assessmentEditorStage.questionsNeedAtLeastWeightTo', { count: questions.length })
                 }
                 className="gap-1.5 shadow-xs text-xs"
               >
-                {tBilingual('Distribute evenly', 'በእኩል አከፋፍል')}
+                {t('assessmentEditorStage.distributeEvenly')}
               </Button>
             )}
             {bankQuestions.length > 0 && (
@@ -542,11 +513,11 @@ export function AssessmentEditorStage({
                 }}
                 className="gap-1.5 shadow-xs text-xs"
               >
-                <Copy className="h-3.5 w-3.5" /> {tBilingual('Import Bank', 'ከባንክ አስገባ')} ({bankQuestions.length})
+                <Copy className="h-3.5 w-3.5" /> {t('assessmentEditorStage.importBank')} ({bankQuestions.length})
               </Button>
             )}
             <Button size="sm" onClick={addQuestion} className="gap-1.5 shadow-xs text-xs">
-              <Plus className="h-4 w-4" /> {tBilingual('Add Question', 'ጥያቄ ጨምር')}
+              <Plus className="h-4 w-4" /> {t('assessmentEditorStage.addQuestion')}
             </Button>
           </div>
         </div>
@@ -555,16 +526,13 @@ export function AssessmentEditorStage({
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
             <FileQuestion className="mx-auto h-8 w-8 text-slate-400" />
             <p className="mt-2 text-sm font-semibold text-slate-700">
-              {tBilingual('No questions added yet', 'እስካሁን ምንም ጥያቄ አልተጨመረም')}
+              {t('assessmentEditorStage.noQuestionsAddedYet')}
             </p>
             <p className="text-xs text-slate-500">
-              {tBilingual(
-                'Add multiple choice, true/false, or short answer questions.',
-                'የመምረጫ፣ እውነት/ሀሰት፣ ወይም አጭር መልስ ጥያቄዎችን ያክሉ።',
-              )}
+              {t('assessmentEditorStage.addMultipleChoiceTrueFalseOr')}
             </p>
             <Button size="sm" onClick={addQuestion} className="mt-4 gap-1.5">
-              <Plus className="h-4 w-4" /> {tBilingual('Add First Question', 'የመጀመሪያ ጥያቄ ጨምር')}
+              <Plus className="h-4 w-4" /> {t('assessmentEditorStage.addFirstQuestion')}
             </Button>
           </div>
         ) : (
@@ -575,7 +543,7 @@ export function AssessmentEditorStage({
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <span className="text-xs font-bold text-indigo-700">
-                  {tBilingual('Question', 'ጥያቄ')} {qIdx + 1}
+                  {t('assessmentEditorStage.question')} {qIdx + 1}
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -596,7 +564,7 @@ export function AssessmentEditorStage({
                     onChange={(e) => patchQuestion(qIdx, { category: e.target.value })}
                     className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
                   >
-                    <option value="">{tBilingual('Select Category (Optional)', 'ምድብ ምረጥ (አማራጭ)')}</option>
+                    <option value="">{t('assessmentEditorStage.selectCategoryOptional')}</option>
                     {dynamicCategories.map((c) => (
                       <option key={c.id || c.value} value={c.value}>
                         {isAmharic && c.labelAm ? c.labelAm : c.labelEn || c.value}
@@ -605,7 +573,7 @@ export function AssessmentEditorStage({
                   </select>
 
                   <div className="flex items-center gap-1 text-xs text-slate-500">
-                    <span className="font-medium text-slate-600">{tBilingual('Pts:', 'ነጥብ:')}</span>
+                    <span className="font-medium text-slate-600">{t('assessmentEditorStage.pts')}</span>
                     <input
                       type="number"
                       min={1}
@@ -653,7 +621,7 @@ export function AssessmentEditorStage({
               {/* Question Text Editor */}
               <div>
                 <label className={labelClass}>
-                  {tBilingual('Question Prompt', 'የጥያቄው ፅሁፍ')} <span className="text-rose-500">*</span>
+                  {t('assessmentEditorStage.questionPrompt')} <span className="text-rose-500">*</span>
                 </label>
                 <CompactRichEditor
                   value={q.text}
@@ -666,7 +634,7 @@ export function AssessmentEditorStage({
               <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700">
-                    {tBilingual('Question Image / Diagram (Optional)', 'የጥያቄው ምስል / ስዕላዊ መግለጫ (አማራጭ)')}
+                    {t('assessmentEditorStage.questionImageDiagramOptional')}
                   </span>
                   {q.imageUrl && (
                     <button
@@ -674,7 +642,7 @@ export function AssessmentEditorStage({
                       onClick={() => patchQuestion(qIdx, { imageUrl: undefined })}
                       className="text-[11px] text-rose-600 hover:underline"
                     >
-                      {tBilingual('Remove Image', 'ምስሉን አስወግድ')}
+                      {t('assessmentEditorStage.removeImage')}
                     </button>
                   )}
                 </div>
@@ -691,7 +659,7 @@ export function AssessmentEditorStage({
                 ) : (
                   <label className="flex items-center gap-2 cursor-pointer w-fit rounded-lg border border-dashed border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
                     <Upload className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{tBilingual('Upload Image / Diagram', 'ምስል ወይም ዲያግራም ስቀል')}</span>
+                    <span>{t('assessmentEditorStage.uploadImageDiagram')}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -716,7 +684,7 @@ export function AssessmentEditorStage({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className={labelClass}>
-                      {tBilingual('Answer Choices (Select the correct answer)', 'የመልስ ምርጫዎች (ትክክለኛውን መልስ ይምረጡ)')}
+                      {t('assessmentEditorStage.answerChoicesSelectTheCorrectAnswer')}
                     </label>
                     {q.type === 'multiple_choice' && q.options.length < 6 && (
                       <button
@@ -726,7 +694,7 @@ export function AssessmentEditorStage({
                         }
                         className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
                       >
-                        <Plus className="h-3 w-3" /> {tBilingual('Add Choice', 'ምርጫ ጨምር')}
+                        <Plus className="h-3 w-3" /> {t('assessmentEditorStage.addChoice')}
                       </button>
                     )}
                   </div>
@@ -784,7 +752,7 @@ export function AssessmentEditorStage({
               {q.type === 'short_answer' && (
                 <div>
                   <label className={labelClass}>
-                    {tBilingual('Expected Correct Answer / Keyword', 'የሚጠበቀው ትክክለኛ መልስ')}
+                    {t('assessmentEditorStage.expectedCorrectAnswerKeyword')}
                   </label>
                   <input
                     type="text"
@@ -799,7 +767,7 @@ export function AssessmentEditorStage({
               {/* Explanation / Solution Details */}
               <div>
                 <label className={labelClass}>
-                  {tBilingual('Explanation / Solution Guide (Shown after review)', 'የመልሱ ማብራሪያ (ከግምገማ በኋላ የሚታይ)')}
+                  {t('assessmentEditorStage.explanationSolutionGuideShownAfterReview')}
                 </label>
                 <input
                   type="text"
@@ -823,7 +791,7 @@ export function AssessmentEditorStage({
               className="gap-2 border-dashed border-2 border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 dark:text-indigo-300 w-full py-4 text-sm font-semibold rounded-2xl shadow-xs transition-all hover:scale-[1.005]"
             >
               <Plus className="h-5 w-5" />
-              {tBilingual('Add Another Question', 'ተጨማሪ ጥያቄ ጨምር')}
+              {t('assessmentEditorStage.addAnotherQuestion')}
             </Button>
           </div>
         )}

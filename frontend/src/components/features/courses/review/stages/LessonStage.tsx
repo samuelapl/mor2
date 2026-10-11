@@ -44,7 +44,7 @@ function MediaPreview({
   contentType?: string;
   files: UploadedResource[];
 }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const type = (contentType ?? '').toUpperCase();
   const mediaFile =
     type === 'VIDEO'
@@ -81,13 +81,13 @@ function MediaPreview({
     >
       <ExternalLink className="h-4 w-4 shrink-0" />
       <span className="truncate">{src}</span>
-      <span className="ml-auto shrink-0 text-xs">{tBilingual('Open', 'ክፈት')}</span>
+      <span className="ml-auto shrink-0 text-xs">{t('mediaPreview.open')}</span>
     </a>
   );
 }
 
 export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesson, assessment, onSelectNode }: LessonStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const files = getItemAttachments(lesson);
   const badge = getContentTypeBadge(lesson.contentType, isAmharic);
   const BadgeIcon = badge.icon;
@@ -98,8 +98,8 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
     <div className="space-y-6">
       <StageTitle
         icon={<FileText className="h-4 w-4" />}
-        eyebrow={`${isSub ? tBilingual('Sub-lesson', 'ንዑስ ትምህርት') : tBilingual('Lesson', 'ትምህርት')} ${number} · ${isSub ? parentLesson!.title : moduleTitle}`}
-        title={lesson.title || tBilingual('Untitled lesson', 'ርዕስ የሌለው ትምህርት')}
+        eyebrow={`${isSub ? t('lessonStage.subLesson') : t('creatorSidebar.lesson2')} ${number} · ${isSub ? parentLesson!.title : moduleTitle}`}
+        title={lesson.title || t('reviewSidebar.untitledLesson')}
         meta={
           <>
             <span className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${badge.color}`}>
@@ -118,24 +118,24 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
 
       <StageCard>
         <RichSection
-          label={tBilingual('Lesson content', 'የትምህርት ይዘት')}
+          label={t('lessonStage.lessonContent')}
           html={lesson.content}
-          missing={tBilingual('No written content for this lesson.', 'ለዚህ ትምህርት የተጻፈ ይዘት የለም።')}
+          missing={t('lessonStage.noWrittenContentForThisLesson')}
         />
       </StageCard>
 
       {files.length > 0 && (
-        <StageCard title={tBilingual(`Lesson files (${files.length})`, `የትምህርት ፋይሎች (${files.length})`)} icon={<Paperclip className="h-4 w-4" />}>
+        <StageCard title={t('lessonStage.lessonFiles', { count: files.length })} icon={<Paperclip className="h-4 w-4" />}>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {files.map((file, i) => (
-              <AttachmentCard key={file.id || file.url || i} file={file} isAmharic={isAmharic} />
+              <AttachmentCard key={file.id || file.url || i} file={file} />
             ))}
           </div>
         </StageCard>
       )}
 
       {!isSub && subLessons.length > 0 && (
-        <StageCard title={tBilingual(`Sub-lessons (${subLessons.length})`, `ንዑስ ትምህርቶች (${subLessons.length})`)}>
+        <StageCard title={t('lessonStage.subLessons', { count: subLessons.length })}>
           <ul className="divide-y divide-slate-100">
             {subLessons.map((s, i) => (
               <li key={s.id}>
@@ -167,7 +167,7 @@ export function LessonStage({ lesson, number, moduleTitle, moduleId, parentLesso
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-slate-900">{assessment.titleEn}</p>
             <p className="text-xs text-slate-600">
-              {assessment.questions.length} {tBilingual('questions', 'ጥያቄዎች')} · {assessment.weight ?? 0}% {tBilingual('weight', 'ክብደት')}
+              {assessment.questions.length} {t('creatorSidebar.questions')} · {assessment.weight ?? 0}% {t('lessonEditorStage.weight')}
             </p>
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-amber-500" />

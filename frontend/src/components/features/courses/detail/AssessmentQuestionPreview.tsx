@@ -9,15 +9,13 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 interface AssessmentQuestionPreviewProps {
   question: ApiAssessmentQuestion;
   index: number;
-  isAmharic?: boolean;
 }
 
 export function AssessmentQuestionPreview({
   question,
   index,
-  isAmharic,
 }: AssessmentQuestionPreviewProps) {
-  const { tBilingual } = useTranslation();
+  const { t, isAmharic } = useTranslation('courses');
   const isMultipleChoice = question.type === 'MULTIPLE_CHOICE' || !question.type;
   const isTrueFalse = question.type === 'TRUE_FALSE';
   const isShortAnswer = question.type === 'SHORT_ANSWER';
@@ -31,15 +29,15 @@ export function AssessmentQuestionPreview({
           </span>
           <Badge variant="slate" className="font-semibold text-slate-700 bg-white border-slate-200">
             {isMultipleChoice
-              ? tBilingual('Multiple Choice', 'ምርጫ')
+              ? t('assessmentQuestionPreview.multipleChoice')
               : isTrueFalse
-                ? tBilingual('True / False', 'እውነት / ሐሰት')
-                : tBilingual('Short Answer', 'አጭር መልስ')}
+                ? t('assessmentQuestionPreview.trueFalse')
+                : t('assessmentQuestionPreview.shortAnswer')}
           </Badge>
         </div>
         {question.points !== undefined && (
           <span className="font-bold text-indigo-700 text-xs">
-            {question.points} {question.points === 1 ? tBilingual('Point', 'ነጥብ') : tBilingual('Points', 'ነጥብ')}
+            {question.points} {question.points === 1 ? t('assessmentQuestionPreview.point') : t('assessmentQuestionPreview.points')}
           </span>
         )}
       </div>
@@ -50,7 +48,7 @@ export function AssessmentQuestionPreview({
         dangerouslySetInnerHTML={{
           __html:
             question.question ||
-            (isAmharic ? '<em>ምንም የጥያቄ ይዘት የለም</em>' : '<em>No question prompt</em>'),
+            (t('assessmentQuestionPreview.emNoQuestionPromptEm')),
         }}
       />
 
@@ -60,7 +58,7 @@ export function AssessmentQuestionPreview({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={question.imageUrl}
-            alt={isAmharic ? 'የጥያቄ ምስል' : 'Question Context'}
+            alt={t('assessmentQuestionPreview.questionContext')}
             className="max-h-48 rounded-lg border border-slate-200 object-cover"
           />
         </div>
@@ -96,7 +94,7 @@ export function AssessmentQuestionPreview({
                     variant="green"
                     className="ml-auto text-xs py-0.5 px-2 bg-emerald-100 text-emerald-800 font-bold border-emerald-200"
                   >
-                    {tBilingual('Correct Answer ✓', 'ትክክለኛ መልስ ✓')}
+                    {t('assessmentQuestionPreview.correctAnswer')}
                   </Badge>
                 )}
               </div>
@@ -124,7 +122,7 @@ export function AssessmentQuestionPreview({
                     : 'bg-white border-slate-200 text-slate-500',
                 )}
               >
-                {opt === 'True' ? tBilingual('True', 'እውነት') : tBilingual('False', 'ሐሰት')}
+                {opt === 'True' ? t('assessmentQuestionPreview.true') : t('assessmentQuestionPreview.false')}
                 {isCorrect && <Check className="h-3.5 w-3.5 text-emerald-600" />}
               </span>
             );
@@ -136,15 +134,12 @@ export function AssessmentQuestionPreview({
       {isShortAnswer && (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
           <span className="font-semibold text-slate-700 block mb-1">
-            {tBilingual(
-              'Expected Keywords & Grading Rubric:',
-              'የሚጠበቁ ቁልፍ ቃላት እና የማረሚያ መስፈርት፡',
-            )}
+            {t('assessmentQuestionPreview.expectedKeywordsGradingRubric')}
           </span>
           <p className="text-slate-600">
             {typeof question.correctAnswer === 'string'
               ? question.correctAnswer
-              : tBilingual('No grading criteria specified.', 'ምንም የማረሚያ መስፈርት አልተገለጸም።')}
+              : t('assessmentQuestionPreview.noGradingCriteriaSpecified')}
           </p>
         </div>
       )}

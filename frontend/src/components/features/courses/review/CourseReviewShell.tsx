@@ -29,7 +29,7 @@ const REVIEW_PERMISSIONS = ['course.view.own', 'course.view.all', 'course.view.a
 
 export function CourseReviewShell({ courseId }: { courseId: string }) {
   const router = useRouter();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const { canAny } = usePermissions();
 
   const { ready, detailLoaded, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
@@ -85,21 +85,22 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
     }
     const first = notReady[0]!;
     const missing = [
-      !sessionPlanTrainerId(first) && tBilingual('no trainer assigned', 'አሰልጣኝ አልተመደበም'),
-      !first.liveSession && tBilingual('not scheduled yet', 'ገና አልታቀደም'),
+      !sessionPlanTrainerId(first) && t('courseReviewShell.noTrainerAssigned'),
+      !first.liveSession && t('courseReviewShell.notScheduledYet'),
     ].filter(Boolean);
     toast.error(
-      tBilingual(
-        `${notReady.length} online session(s) not ready. "${first.titleEn}": ${missing.join(', ')}.`,
-        `${notReady.length} የኦንላይን ክፍለ-ጊዜ(ዎች) ዝግጁ አይደሉም። "${first.titleEn}"፦ ${missing.join('፣ ')}።`,
-      ),
+      t('courseReviewShell.sessionsNotReady', {
+        count: notReady.length,
+        title: first.titleEn,
+        missing: missing.join(t('courseReviewShell.listSeparator')),
+      }),
     );
     select({ type: 'SESSION_PLAN', sessionPlanId: first.id });
   };
 
   if (!ready) {
     return (
-      <FullScreenMessage icon={<Loader2 className="h-6 w-6 animate-spin text-indigo-600" />} title={tBilingual('Loading course…', 'ኮርስ በመጫን ላይ…')} />
+      <FullScreenMessage icon={<Loader2 className="h-6 w-6 animate-spin text-indigo-600" />} title={t('courseReviewShell.loadingCourse')} />
     );
   }
 
@@ -107,8 +108,8 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
     return (
       <FullScreenMessage
         icon={<ShieldAlert className="h-6 w-6 text-rose-500" />}
-        title={tBilingual('You do not have access to course review', 'የኮርስ ግምገማ ፈቃድ የለዎትም')}
-        action={<Button onClick={() => router.push('/')}>{tBilingual('Go home', 'ወደ መነሻ')}</Button>}
+        title={t('courseReviewShell.youDoNotHaveAccessTo')}
+        action={<Button onClick={() => router.push('/')}>{t('courseReviewShell.goHome')}</Button>}
       />
     );
   }
@@ -117,9 +118,9 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
     return (
       <FullScreenMessage
         icon={<ShieldAlert className="h-6 w-6 text-slate-400" />}
-        title={tBilingual('Course not found', 'ኮርሱ አልተገኘም')}
-        subtitle={tBilingual('It may have been deleted, or you may not have access to it.', 'ተሰርዞ ሊሆን ይችላል ወይም ፈቃድ የለዎትም።')}
-        action={<Button onClick={() => router.push('/courses')}>{tBilingual('Back to courses', 'ወደ ኮርሶች')}</Button>}
+        title={t('courseReviewShell.courseNotFound')}
+        subtitle={t('courseReviewShell.itMayHaveBeenDeletedOr')}
+        action={<Button onClick={() => router.push('/courses')}>{t('courseReviewShell.backToCourses')}</Button>}
       />
     );
   }
@@ -249,7 +250,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
           <div className="mx-auto max-w-5xl space-y-6 pb-10">
             {latestRejection && (
               <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800">
-                <p className="font-bold">{tBilingual('Rejected — reason from reviewer', 'ውድቅ ተደርጓል — የገምጋሚ ምክንያት')}</p>
+                <p className="font-bold">{t('courseReviewShell.rejectedReasonFromReviewer')}</p>
                 {/* Reasons are plain text now; older ones were saved as rich-text HTML. */}
                 {/<[a-z][\s\S]*>/i.test(latestRejection) ? (
                   <div className="mt-1" dangerouslySetInnerHTML={{ __html: latestRejection }} />
@@ -262,7 +263,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             {assessmentsLoading && selectedNode.type !== 'OVERVIEW' && selectedNode.type !== 'APPROVAL_HISTORY' ? (
               <div className="flex items-center justify-center gap-2 py-16 text-xs text-slate-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {tBilingual('Loading assessments…', 'ምዘናዎች በመጫን ላይ…')}
+                {t('courseReviewShell.loadingAssessments')}
               </div>
             ) : (
               renderStage()
@@ -272,11 +273,11 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             <nav className="flex items-center justify-between gap-3 border-t border-slate-200 pt-5">
               <Button variant="outline" size="sm" disabled={!prev} onClick={() => prev && select(prev)} className="gap-1.5 text-xs">
                 <ChevronLeft className="h-4 w-4" />
-                {tBilingual('Previous', 'ቀዳሚ')}
+                {t('courseReviewShell.previous')}
               </Button>
               <span className="text-xs text-slate-400">{position >= 0 ? `${position + 1} / ${order.length}` : ''}</span>
               <Button variant="outline" size="sm" disabled={!next} onClick={() => next && select(next)} className="gap-1.5 text-xs">
-                {tBilingual('Next', 'ቀጣይ')}
+                {t('courseReviewShell.next')}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </nav>

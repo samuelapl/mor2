@@ -70,7 +70,7 @@ export function CreatorSidebar({
   onAddSessionPlan,
   onDeleteSessionPlan,
 }: CreatorSidebarProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
   const [collapsedLessons, setCollapsedLessons] = useState<Set<string>>(new Set());
 
@@ -157,9 +157,9 @@ export function CreatorSidebar({
       {/* Sidebar Header / Structure Summary */}
       <div className="p-4 border-b border-slate-200/80 bg-white/80 shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{tBilingual('Course Structure', 'የኮርስ መዋቅር')}</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('creatorSidebar.courseStructure')}</span>
           <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
-            {modules.length} {tBilingual('Modules', 'ሞጁሎች')}
+            {modules.length} {t('creatorSidebar.modules')}
           </span>
         </div>
       </div>
@@ -187,9 +187,9 @@ export function CreatorSidebar({
             <BookOpen className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold truncate">{courseTitle.trim() || tBilingual('Course Overview & Details', 'የኮርስ አጠቃላይ እይታ እና ዝርዝሮች')}</h4>
+            <h4 className="text-xs font-bold truncate">{courseTitle.trim() || t('creatorSidebar.courseOverviewDetails')}</h4>
             <p className={cn('text-[11px] truncate', activeNode.type === 'COURSE_DETAILS' ? 'text-indigo-100' : 'text-slate-500')}>
-              {tBilingual('General settings, goals & syllabus', 'አጠቃላይ ቅንብሮች፣ ግቦች እና ይዘት')}
+              {t('creatorSidebar.generalSettingsGoalsSyllabus')}
             </p>
           </div>
         </div>
@@ -233,22 +233,22 @@ export function CreatorSidebar({
                     className="min-w-0 flex-1"
                   >
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      {tBilingual(`Module ${modIdx + 1}`, `ሞጁል ${modIdx + 1}`)}
+                      {t('creatorSidebar.module', { value: modIdx + 1 })}
                     </span>
-                    <h4 className="text-xs font-bold truncate">{mod.title.trim() || tBilingual('Untitled Module', 'ርዕስ አልባ ሞጁል')}</h4>
+                    <h4 className="text-xs font-bold truncate">{mod.title.trim() || t('creatorSidebar.untitledModule')}</h4>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2">
                   <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">
-                    {instructionalLessons.length} {tBilingual('lessons', 'ትምህርቶች')}
+                    {instructionalLessons.length} {t('creatorSidebar.lessons')}
                   </span>
                   {modules.length > 1 && (
                     <button
                       type="button"
                       onClick={() => onDeleteModule(mod.id)}
                       className="p-1 text-slate-400 hover:text-rose-600 rounded transition"
-                      title={tBilingual('Delete Module', 'ሞጁሉን ሰርዝ')}
+                      title={t('creatorSidebar.deleteModule')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -306,8 +306,8 @@ export function CreatorSidebar({
                                 onClick={(e) => toggleLessonCollapse(lesson.id, e)}
                                 title={
                                   isLessonCollapsed
-                                    ? tBilingual('Expand sub-lessons', 'ንዑስ ክፍሎችን ዘርጋ')
-                                    : tBilingual('Collapse sub-lessons', 'ንዑስ ክፍሎችን አጥፋ')
+                                    ? t('creatorSidebar.expandSubLessons')
+                                    : t('creatorSidebar.collapseSubLessons')
                                 }
                                 className={cn(
                                   'p-0.5 rounded transition shrink-0',
@@ -320,7 +320,7 @@ export function CreatorSidebar({
                               </button>
                             )}
                             <Icon className={cn('h-3.5 w-3.5 shrink-0', isLessonActive(lesson.id) ? 'text-white' : 'text-indigo-600')} />
-                            <span className="truncate">{lesson.title.trim() || tBilingual(`Lesson ${lIdx + 1}`, `ትምህርት ${lIdx + 1}`)}</span>
+                            <span className="truncate">{lesson.title.trim() || t('creatorSidebar.lesson', { value: lIdx + 1 })}</span>
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -332,7 +332,7 @@ export function CreatorSidebar({
                                     ? 'bg-white/20 text-white border-white/30'
                                     : 'bg-slate-100 text-slate-600 border-slate-200',
                                 )}
-                                title={tBilingual(`${subLessons.length} sub-lessons`, `${subLessons.length} ንዑስ ክፍሎች`)}
+                                title={t('creatorSidebar.subLessons', { count: subLessons.length })}
                               >
                                 {subLessons.length}
                               </span>
@@ -384,7 +384,7 @@ export function CreatorSidebar({
                                     <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
                                     <SubIcon className="h-3 w-3 text-slate-500 shrink-0" />
                                     <span className="truncate">
-                                      {sub.title.trim() || tBilingual(`Sub-lesson ${sIdx + 1}`, `ንዑስ ትምህርት ${sIdx + 1}`)}
+                                      {sub.title.trim() || t('creatorSidebar.subLesson', { value: sIdx + 1 })}
                                     </span>
                                   </div>
                                   <button
@@ -406,7 +406,7 @@ export function CreatorSidebar({
                               className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 border border-dashed border-indigo-200 transition"
                             >
                               <Plus className="h-3 w-3" />
-                              <span>{tBilingual('Add Sub-topic', 'ንዑስ ትምህርት ጨምር')}</span>
+                              <span>{t('creatorSidebar.addSubTopic')}</span>
                             </button>
                           </div>
                         )}
@@ -432,7 +432,7 @@ export function CreatorSidebar({
                           >
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               <FileQuestion className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                              <span className="truncate font-semibold">{tBilingual('Lesson Assessment', 'የክፍለ-ትምህርት ምዘና')}</span>
+                              <span className="truncate font-semibold">{t('creatorSidebar.lessonAssessment')}</span>
                             </div>
                             <button
                               type="button"
@@ -470,7 +470,7 @@ export function CreatorSidebar({
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <Award className={cn('h-4 w-4 shrink-0', isModAssessmentActive(mod.id) ? 'text-white' : 'text-emerald-600')} />
-                        <span className="truncate font-bold">{tBilingual('Module Assessment', 'የሞጁል ምዘና')}</span>
+                        <span className="truncate font-bold">{t('creatorSidebar.moduleAssessment')}</span>
                       </div>
                       <button
                         type="button"
@@ -496,7 +496,7 @@ export function CreatorSidebar({
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition"
                     >
                       <Plus className="h-3 w-3" />
-                      <span>{tBilingual('Lesson', 'ትምህርት')}</span>
+                      <span>{t('creatorSidebar.lesson2')}</span>
                     </button>
 
                     {!hasModuleAssessment && (
@@ -506,7 +506,7 @@ export function CreatorSidebar({
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100/80 transition"
                       >
                         <Award className="h-3 w-3" />
-                        <span>{tBilingual('Assessment', 'ምዘና')}</span>
+                        <span>{t('creatorSidebar.assessment')}</span>
                       </button>
                     )}
                   </div>
@@ -523,7 +523,7 @@ export function CreatorSidebar({
           className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-700 bg-indigo-50/40 hover:bg-indigo-50 hover:border-indigo-400 font-bold text-xs transition"
         >
           <Plus className="h-4 w-4" />
-          <span>{tBilingual('Add New Module', 'አዲስ ሞጁል ጨምር')}</span>
+          <span>{t('creatorSidebar.addNewModule')}</span>
         </button>
 
         {/* 3b. Planned Online Sessions */}
@@ -532,7 +532,7 @@ export function CreatorSidebar({
             <div className="flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-700">
                 <Video className="h-3.5 w-3.5" />
-                {tBilingual('Online Sessions', 'የኦንላይን ክፍለ-ጊዜዎች')}
+                {t('creatorSidebar.onlineSessions')}
               </span>
               <span className="text-[10px] font-semibold text-slate-400">{sessionPlans.length}</span>
             </div>
@@ -558,7 +558,7 @@ export function CreatorSidebar({
                   >
                     {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 truncate">{plan.titleEn || tBilingual('Untitled session', 'ርዕስ የሌለው ክፍለ-ጊዜ')}</span>
+                  <span className="min-w-0 flex-1 truncate">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                   {plan.quizzes.length > 0 && (
                     <span
                       className={cn(
@@ -595,7 +595,7 @@ export function CreatorSidebar({
                 className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-sky-300 py-1.5 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-50"
               >
                 <Plus className="h-3 w-3" />
-                {tBilingual('Add session', 'ክፍለ-ጊዜ ጨምር')}
+                {t('creatorSidebar.addSession')}
               </button>
             )}
           </div>
@@ -624,10 +624,10 @@ export function CreatorSidebar({
             </div>
             <div className="min-w-0">
               <h4 className="text-xs font-bold truncate">
-                {finalAssessmentTitle?.trim() || tBilingual('Final Assessment', 'የማጠቃለያ ፈተና እና ደንቦች')}
+                {finalAssessmentTitle?.trim() || t('creatorSidebar.finalAssessment')}
               </h4>
               <p className={cn('text-[11px] truncate', activeNode.type === 'FINAL_ASSESSMENT' ? 'text-indigo-100' : 'text-slate-500')}>
-                {finalQuestionCount} {tBilingual('questions', 'ጥያቄዎች')}
+                {finalQuestionCount} {t('creatorSidebar.questions')}
               </p>
             </div>
           </div>
@@ -663,9 +663,9 @@ export function CreatorSidebar({
             <FileCheck className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold truncate">{tBilingual('Review & Submit', 'ይገምግሙ እና ያቅርቡ')}</h4>
+            <h4 className="text-xs font-bold truncate">{t('creatorSidebar.reviewSubmit')}</h4>
             <p className={cn('text-[11px] truncate', activeNode.type === 'REVIEW_SUBMIT' ? 'text-indigo-100' : 'text-slate-500')}>
-              {tBilingual('Final check & submission', 'የመጨረሻ ማረጋገጫ እና ማቅረቢያ')}
+              {t('creatorSidebar.finalCheckSubmission')}
             </p>
           </div>
         </div>

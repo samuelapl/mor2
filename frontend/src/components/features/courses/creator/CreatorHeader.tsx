@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { CourseDeliveryMode } from '@/types';
 import type { AutosaveStatus, CreatorActiveNode, CreatorPhase } from './types';
@@ -61,59 +62,50 @@ export function CreatorHeader({
   lastSavedAt,
   autosaveBlockedReason,
 }: CreatorHeaderProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
 
   const STEPS: Array<{
     id: CreatorPhase;
-    labelEn: string;
-    labelAm: string;
+    labelKey: NamespaceKey<'courses'>;
     icon: typeof BookOpen;
   }> = [
     {
       id: 'COURSE_DETAILS',
-      labelEn: 'Course Details',
-      labelAm: 'የኮርስ ዝርዝሮች',
+      labelKey: 'creatorHeader.courseDetails',
       icon: BookOpen,
     },
     {
       id: 'CURRICULUM',
-      labelEn: 'Curriculum & Content',
-      labelAm: 'ስርዓተ-ትምህርት እና ይዘት',
+      labelKey: 'reviewSubmitStage.curriculumContent',
       icon: Layers,
     },
     {
       id: 'FINAL_ASSESSMENT',
-      labelEn: 'Final Assessment',
-      labelAm: 'የማጠቃለያ ምዘና',
+      labelKey: 'reviewSidebar.finalAssessment',
       icon: Award,
     },
     {
       id: 'REVIEW_SUBMIT',
-      labelEn: 'Review & Submit',
-      labelAm: 'ይገምግሙ እና ያቅርቡ',
+      labelKey: 'creatorSidebar.reviewSubmit',
       icon: FileCheck,
     },
   ];
 
   const deliveryModeBadge = {
     ONLINE_ONLY: {
-      en: 'Online',
-      am: 'ኦንላይን',
+      labelKey: 'creatorHeader.online',
       bg: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
     },
     IN_PERSON_ONLY: {
-      en: 'In-Person',
-      am: 'በአካል',
+      labelKey: 'creatorHeader.inPerson',
       bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
     },
     BOTH: {
-      en: 'Hybrid',
-      am: 'ድብልቅ',
+      labelKey: 'creatorHeader.hybrid',
       bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
     },
   }[deliveryMode] || {
-    en: 'Hybrid',
-    am: 'ድብልቅ',
+    labelKey: 'creatorHeader.hybrid',
     bg: 'bg-slate-50 text-slate-700 border-slate-200',
   };
 
@@ -125,7 +117,7 @@ export function CreatorHeader({
           type="button"
           onClick={onExit}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition"
-          title={tBilingual('Back to Courses', 'ወደ ኮርሶች ይመለሱ')}
+          title={t('creatorHeader.backToCourses')}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -136,11 +128,11 @@ export function CreatorHeader({
               {code || 'DRAFT'}
             </span>
             <span className={cn('text-[10px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider shrink-0', deliveryModeBadge.bg)}>
-              {tBilingual(deliveryModeBadge.en, deliveryModeBadge.am)}
+              {t(deliveryModeBadge.labelKey as NamespaceKey<'courses'>)}
             </span>
           </div>
           <h1 className="text-xs lg:text-sm font-bold text-slate-900 truncate mt-0.5" title={title}>
-            {title.trim() || tBilingual('Untitled Course Studio', 'ስም ያልተሰጠው የኮርስ ስቱዲዮ')}
+            {title.trim() || t('creatorHeader.untitledCourseStudio')}
           </h1>
           <AutosaveIndicator status={autosaveStatus} error={autosaveError} lastSavedAt={lastSavedAt} blockedReason={autosaveBlockedReason} />
         </div>
@@ -172,7 +164,7 @@ export function CreatorHeader({
               >
                 {idx + 1}
               </span>
-              <span>{tBilingual(step.labelEn, step.labelAm)}</span>
+              <span>{t(step.labelKey)}</span>
             </button>
           );
         })}
@@ -187,10 +179,10 @@ export function CreatorHeader({
           size="sm"
           onClick={onPreview}
           className="gap-1.5 text-xs font-medium"
-          title={tBilingual('Preview as Learner', 'እንደ ተማሪ ይመልከቱ')}
+          title={t('creatorHeader.previewAsLearner')}
         >
           <Eye className="h-3.5 w-3.5 text-slate-500" />
-          <span className="hidden lg:inline">{tBilingual('Preview as Learner', 'እንደ ተማሪ ይመልከቱ')}</span>
+          <span className="hidden lg:inline">{t('creatorHeader.previewAsLearner')}</span>
         </Button>
 
         {/* Global Save Changes button */}
@@ -200,10 +192,10 @@ export function CreatorHeader({
           onClick={onSaveChanges}
           disabled={saving}
           className="gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs shadow-indigo-600/20"
-          title={tBilingual('Save changes to this course immediately', 'የኮርሱን ለውጦች ወዲያውኑ ያስቀምጡ')}
+          title={t('creatorHeader.saveChangesToThisCourseImmediately')}
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          <span>{tBilingual('Save Changes', 'ለውጦችን አስቀምጥ')}</span>
+          <span>{t('creatorHeader.saveChanges')}</span>
         </Button>
 
         <Button
@@ -212,10 +204,10 @@ export function CreatorHeader({
           onClick={onSaveDraft}
           disabled={saving}
           className="gap-1.5 text-xs font-medium"
-          title={tBilingual('Save as Draft and exit studio', 'እንደ ረቂቅ አስቀምጥ እና ውጣ')}
+          title={t('creatorHeader.saveAsDraftAndExitStudio')}
         >
           <FileCheck className="h-3.5 w-3.5 text-slate-500" />
-          <span className="hidden sm:inline">{tBilingual('Save as Draft', 'እንደ ረቂቅ አስቀምጥ')}</span>
+          <span className="hidden sm:inline">{t('creatorHeader.saveAsDraft')}</span>
         </Button>
 
         <Button
@@ -226,7 +218,7 @@ export function CreatorHeader({
           className="gap-1.5 text-xs font-bold shadow-xs shadow-indigo-600/20"
         >
           <Send className="h-3.5 w-3.5" />
-          <span>{isEdit ? tBilingual('Update & Resubmit', 'አዘምን እና እንደገና አቅርብ') : tBilingual('Submit Course', 'ኮርሱን አቅርብ')}</span>
+          <span>{isEdit ? t('creatorHeader.updateResubmit') : t('creatorHeader.submitCourse')}</span>
         </Button>
       </div>
     </header>
@@ -244,7 +236,7 @@ function AutosaveIndicator({
   lastSavedAt?: Date | null;
   blockedReason?: string | null;
 }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const time = lastSavedAt?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   let icon = <Check className="h-3 w-3" />;
@@ -254,25 +246,25 @@ function AutosaveIndicator({
 
   if (status === 'saving') {
     icon = <Loader2 className="h-3 w-3 animate-spin" />;
-    text = tBilingual('Saving…', 'በማስቀመጥ ላይ…');
+    text = t('autosaveIndicator.saving');
   } else if (status === 'error') {
     icon = <CloudOff className="h-3 w-3" />;
-    text = tBilingual('Autosave failed', 'በራስ-ሰር ማስቀመጥ አልተሳካም');
+    text = t('autosaveIndicator.autosaveFailed');
     tone = 'text-rose-600';
     hint = error ?? undefined;
   } else if (status === 'pending' && blockedReason) {
     icon = <CloudOff className="h-3 w-3" />;
-    text = tBilingual('Not saved yet', 'ገና አልተቀመጠም');
+    text = t('autosaveIndicator.notSavedYet');
     tone = 'text-amber-600';
     hint = blockedReason;
   } else if (status === 'pending') {
-    text = tBilingual('Unsaved changes', 'ያልተቀመጡ ለውጦች');
+    text = t('autosaveIndicator.unsavedChanges');
     tone = 'text-amber-600';
   } else if (status === 'saved' && time) {
-    text = `${tBilingual('Saved', 'ተቀምጧል')} ${time}`;
+    text = `${t('autosaveIndicator.saved')} ${time}`;
     tone = 'text-emerald-600';
   } else {
-    text = tBilingual('Autosave on', 'በራስ-ሰር ማስቀመጥ በርቷል');
+    text = t('autosaveIndicator.autosaveOn');
   }
 
   return (

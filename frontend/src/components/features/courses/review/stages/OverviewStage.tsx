@@ -37,7 +37,7 @@ export function OverviewStage({
   onAssignTrainer,
   onRemoveTrainer,
 }: OverviewStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const userName = useUserName();
 
   const courseFiles: UploadedResource[] = useMemo(
@@ -76,13 +76,13 @@ export function OverviewStage({
     <div className="space-y-6">
       {/* Summary */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <Stat label={tBilingual('Modules', 'ሞጁሎች')} value={course.modules.length} />
-        <Stat label={tBilingual('Lessons', 'ትምህርቶች')} value={stats.lessons} />
-        <Stat label={tBilingual('Sub-Lessons', 'ንዑስ ትምህርቶች')} value={stats.subLessons} />
-        <Stat label={tBilingual('Files', 'ፋይሎች')} value={stats.files} tone="text-indigo-600" />
-        <Stat label={tBilingual('Questions', 'ጥያቄዎች')} value={stats.questions} tone="text-emerald-600" />
-        <Stat label={tBilingual('Weights', 'ክብደት')} value={`${stats.weight}%`} tone={stats.weight === 100 ? 'text-emerald-600' : 'text-amber-600'} />
-        <Stat label={tBilingual('Est. Time', 'የሚፈጀው ጊዜ')} value={duration} />
+        <Stat label={t('creatorSidebar.modules')} value={course.modules.length} />
+        <Stat label={t('moduleEditorStage.lessons')} value={stats.lessons} />
+        <Stat label={t('overviewStage.subLessons')} value={stats.subLessons} />
+        <Stat label={t('overviewStage.files')} value={stats.files} tone="text-indigo-600" />
+        <Stat label={t('assessmentEditorStage.questions')} value={stats.questions} tone="text-emerald-600" />
+        <Stat label={t('overviewStage.weights')} value={`${stats.weight}%`} tone={stats.weight === 100 ? 'text-emerald-600' : 'text-amber-600'} />
+        <Stat label={t('overviewStage.estTime')} value={duration} />
       </div>
 
       {/* Details */}
@@ -91,13 +91,13 @@ export function OverviewStage({
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-indigo-600" />
             <h2 className="font-display text-sm font-bold uppercase tracking-wide text-slate-900">
-              {tBilingual('Course Overview & Attributes', 'የኮርስ አጠቃላይ እይታ እና መረጃ')}
+              {t('overviewStage.courseOverviewAttributes')}
             </h2>
           </div>
           {canEdit && (
             <Button variant="ghost" size="sm" onClick={onEdit} className="gap-1.5 text-xs text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800">
               <Pencil className="h-3.5 w-3.5" />
-              {tBilingual('Edit Details', 'መረጃዎችን አርትዕ')}
+              {t('overviewStage.editDetails')}
             </Button>
           )}
         </div>
@@ -112,14 +112,14 @@ export function OverviewStage({
             ) : (
               <div className="flex aspect-video flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center md:aspect-[4/3]">
                 <BookOpen className="mb-1 h-8 w-8 text-slate-300" />
-                <p className="text-xs font-medium text-slate-400">{tBilingual('No cover image', 'የሽፋን ምስል የለም')}</p>
+                <p className="text-xs font-medium text-slate-400">{t('overviewStage.noCoverImage')}</p>
               </div>
             )}
           </div>
 
           <div className="min-w-0 flex-1 space-y-3">
             <h3 className="text-xl font-bold leading-snug text-slate-900">
-              <RichContent inline html={course.title} placeholder={tBilingual('Untitled Course', 'ያልተሰየመ ኮርስ')} />
+              <RichContent inline html={course.title} placeholder={t('overviewStage.untitledCourse')} />
             </h3>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="border-slate-300 bg-slate-50 font-medium text-slate-700">
@@ -130,14 +130,14 @@ export function OverviewStage({
               </Badge>
               <Chip>
                 <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                {tBilingual('Owner:', 'ባለቤት:')} {userName(course.ownerId)}
+                {t('overviewStage.owner')} {userName(course.ownerId)}
               </Chip>
               {sessionTrainers.map(({ plan, number, trainerId }) =>
                 trainerId ? (
                   <Chip key={plan.id}>
                     <UserRound className="h-3.5 w-3.5 text-indigo-600" />
                     <span title={plan.titleEn}>
-                      {tBilingual(`Session ${number}:`, `ክፍለ-ጊዜ ${number}:`)} {userName(trainerId)}
+                      {t('overviewStage.session', { number })} {userName(trainerId)}
                     </span>
                   </Chip>
                 ) : (
@@ -146,40 +146,40 @@ export function OverviewStage({
                     title={plan.titleEn}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
                   >
-                    {tBilingual(`Session ${number}: no trainer assigned`, `ክፍለ-ጊዜ ${number}: አሰልጣኝ አልተመደበም`)}
+                    {t('overviewStage.sessionNoTrainerAssigned', { number })}
                   </span>
                 ),
               )}
               {otherTrainers.length > 0 && (
                 <Chip>
                   <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                  {plans.length > 0 ? tBilingual('Course trainers:', 'የኮርስ አሰልጣኞች:') : tBilingual('Trainers:', 'አሰልጣኞች:')}{' '}
+                  {plans.length > 0 ? t('overviewStage.courseTrainers') : t('overviewStage.trainers')}{' '}
                   {otherTrainers.map(userName).join(', ')}
                 </Chip>
               )}
             </div>
 
             <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 text-xs sm:grid-cols-3">
-              <Field label={tBilingual('Department:', 'ክፍል / መምሪያ:')} html={course.department} empty={tBilingual('Not specified', 'አልተገለጸም')} />
+              <Field label={t('overviewStage.department')} html={course.department} empty={t('overviewStage.notSpecified')} />
               <Field
-                label={tBilingual('Target Audience:', 'የታለመው ተደራሽ:')}
+                label={t('overviewStage.targetAudience')}
                 html={course.targetAudience}
-                empty={tBilingual('All Staff', 'ሁሉም ሰራተኞች')}
+                empty={t('overviewStage.allStaff')}
               />
-              <Field label={tBilingual('Prerequisites:', 'ቅድመ-ሁኔታዎች:')} html={course.prerequisites} empty={tBilingual('None', 'ምንም የለም')} />
+              <Field label={t('overviewStage.prerequisites')} html={course.prerequisites} empty={t('overviewStage.none')} />
             </div>
           </div>
         </div>
 
         <RichBlock
-          label={tBilingual('Course Description', 'የኮርስ ማብራሪያ')}
+          label={t('courseDetailsStage.courseDescription')}
           html={course.description}
-          missing={tBilingual('⚠ No course description provided.', '⚠ የኮርስ ማብራሪያ አልተሰጠም።')}
+          missing={t('overviewStage.noCourseDescriptionProvided')}
         />
         <RichBlock
-          label={tBilingual('Learning Objectives & Outcomes', 'የመማሪያ ዓላማዎች እና ውጤቶች')}
+          label={t('overviewStage.learningObjectivesOutcomes')}
           html={course.objectives}
-          missing={tBilingual('⚠ No learning objectives specified.', '⚠ የመማሪያ ዓላማዎች አልተገለጹም።')}
+          missing={t('overviewStage.noLearningObjectivesSpecified')}
           tone="blue"
         />
       </section>
@@ -190,12 +190,12 @@ export function OverviewStage({
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <Paperclip className="h-4 w-4 text-indigo-600" />
             <h2 className="font-display text-sm font-bold uppercase tracking-wide text-slate-900">
-              {tBilingual(`Course Reference Materials (${courseFiles.length})`, `የኮርስ ማመሳከሪያ ሰነዶች (${courseFiles.length})`)}
+              {t('overviewStage.courseReferenceMaterials', { count: courseFiles.length })}
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {courseFiles.map((file, idx) => (
-              <AttachmentCard key={file.id || file.url || idx} file={file} isAmharic={isAmharic} />
+              <AttachmentCard key={file.id || file.url || idx} file={file} />
             ))}
           </div>
         </section>

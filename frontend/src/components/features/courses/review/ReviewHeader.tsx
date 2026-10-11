@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Archive, ArrowLeft, Check, Globe2, MoreHorizontal, Pencil, Send, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CourseStatusBadge } from '@/components/ui/Badge';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 import type { Course } from '@/types';
@@ -25,10 +26,10 @@ interface ReviewHeaderProps {
   onDelete: () => void;
 }
 
-const DELIVERY_LABEL: Record<string, { en: string; am: string }> = {
-  ONLINE_ONLY: { en: 'Online', am: 'ኦንላይን' },
-  IN_PERSON_ONLY: { en: 'In-person', am: 'በአካል' },
-  BOTH: { en: 'Hybrid', am: 'ድብልቅ' },
+const DELIVERY_LABEL: Record<string, NamespaceKey<'courses'>> = {
+  ONLINE_ONLY: 'creatorHeader.online',
+  IN_PERSON_ONLY: 'reviewHeader.inPerson',
+  BOTH: 'creatorHeader.hybrid',
 };
 
 export function ReviewHeader({
@@ -46,7 +47,7 @@ export function ReviewHeader({
   onArchive,
   onDelete,
 }: ReviewHeaderProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('courses');
   const delivery = DELIVERY_LABEL[course.deliveryMode ?? 'BOTH'] ?? DELIVERY_LABEL.BOTH;
   const hasOverflow = can.archive || can.delete;
 
@@ -58,7 +59,7 @@ export function ReviewHeader({
           type="button"
           onClick={onBack}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
-          title={tBilingual('Back', 'ተመለስ')}
+          title={t('reviewHeader.back')}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -69,7 +70,7 @@ export function ReviewHeader({
             </span>
             <CourseStatusBadge status={course.published ? 'published' : course.status} />
             <span className="hidden shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 sm:inline">
-              {tBilingual(delivery.en, delivery.am)}
+              {t(delivery)}
             </span>
           </div>
           <h1 className="mt-0.5 truncate text-xs font-bold text-slate-900 lg:text-sm" title={course.title}>
@@ -83,19 +84,19 @@ export function ReviewHeader({
         {can.edit && (
           <Button size="sm" variant="outline" onClick={onEdit} className="gap-1.5 text-xs">
             <Pencil className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{tBilingual('Edit course', 'ኮርስ አርትዕ')}</span>
+            <span className="hidden md:inline">{t('reviewHeader.editCourse')}</span>
           </Button>
         )}
         {can.unpublish && (
           <Button size="sm" variant="outline" disabled={busy} onClick={onUnpublish} className="gap-1.5 text-xs">
             <Globe2 className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{tBilingual('Unpublish', 'ከህትመት አንሳ')}</span>
+            <span className="hidden md:inline">{t('reviewHeader.unpublish')}</span>
           </Button>
         )}
         {can.reject && (
           <Button size="sm" variant="danger" disabled={busy} onClick={onReject} className="gap-1.5 text-xs">
             <X className="h-3.5 w-3.5" />
-            {tBilingual('Reject', 'ውድቅ አድርግ')}
+            {t('reviewHeader.reject')}
           </Button>
         )}
 
@@ -106,10 +107,10 @@ export function ReviewHeader({
             disabled={busy}
             onClick={onReturnToDraft}
             className="gap-1.5 text-xs"
-            title={tBilingual('Withdraw the approval so the owner can make changes', 'ባለቤቱ ማስተካከያ እንዲያደርግ ማጽደቁን ሰርዝ')}
+            title={t('reviewHeader.withdrawTheApprovalSoTheOwner')}
           >
             <Undo2 className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{tBilingual('Return to draft', 'ወደ ረቂቅ መልስ')}</span>
+            <span className="hidden md:inline">{t('reviewHeader.returnToDraft')}</span>
           </Button>
         )}
 
@@ -117,9 +118,9 @@ export function ReviewHeader({
           <OverflowMenu
             busy={busy}
             items={[
-              ...(can.archive ? [{ key: 'archive', label: tBilingual('Archive course', 'ኮርስ አስቀምጥ'), icon: Archive, onClick: onArchive }] : []),
+              ...(can.archive ? [{ key: 'archive', label: t('reviewHeader.archiveCourse'), icon: Archive, onClick: onArchive }] : []),
               ...(can.delete
-                ? [{ key: 'delete', label: tBilingual('Delete course', 'ኮርስ ሰርዝ'), icon: Trash2, onClick: onDelete, danger: true }]
+                ? [{ key: 'delete', label: t('reviewHeader.deleteCourse'), icon: Trash2, onClick: onDelete, danger: true }]
                 : []),
             ]}
           />
@@ -129,7 +130,7 @@ export function ReviewHeader({
         {can.submit && (
           <Button size="sm" variant="primary" disabled={busy} onClick={onSubmit} className="gap-1.5 text-xs font-bold">
             <Send className="h-3.5 w-3.5" />
-            {course.status === 'rejected' ? tBilingual('Resubmit for approval', 'ለማጽደቅ በድጋሚ ላክ') : tBilingual('Submit for approval', 'ለማጽደቅ ላክ')}
+            {course.status === 'rejected' ? t('reviewHeader.resubmitForApproval') : t('reviewHeader.submitForApproval')}
           </Button>
         )}
         {can.approve && (
@@ -141,7 +142,7 @@ export function ReviewHeader({
             className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
           >
             <Check className="h-3.5 w-3.5" />
-            {tBilingual('Approve', 'አጽድቅ')}
+            {t('reviewHeader.approve')}
           </Button>
         )}
         {can.publish && (
@@ -152,12 +153,12 @@ export function ReviewHeader({
             className="gap-1.5 bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700"
             title={
               course.trainerId || !(course.sessionPlans?.length ?? 0)
-                ? tBilingual('Publish this course to all learners', 'ይህንን ኮርስ ለሁሉም ሰልጣኞች አትም')
-                : tBilingual('Assign a trainer before publishing', 'ከማተምዎ በፊት አሰልጣኝ ይመድቡ')
+                ? t('reviewHeader.publishThisCourseToAllLearners')
+                : t('reviewHeader.assignATrainerBeforePublishing')
             }
           >
             <Globe2 className="h-3.5 w-3.5" />
-            {tBilingual('Publish course', 'ኮርስ አትም')}
+            {t('reviewHeader.publishCourse')}
           </Button>
         )}
       </div>

@@ -51,7 +51,6 @@
     "latestSecurityAndOperationalEntriesIn": "በስርዓቱ የኦዲት መዝገብ ውስጥ የተመዘገቡ የቅርብ ጊዜ የደህንነት እና የአሰራር ክንውኖች።",
     "viewFullTrail": "ሙሉውን መዝገብ እይ",
     "systemService": "የስርዓት አገልግሎት",
-    "enUs": "am-ET",
     "noRecentAuditActivityRecorded": "ምንም የቅርብ ጊዜ የኦዲት እንቅስቃሴ አልተመዘገበም።"
   },
   "auditLogsPage": {

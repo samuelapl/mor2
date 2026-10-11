@@ -20,7 +20,7 @@ interface ModuleStageProps {
 }
 
 export function ModuleStage({ module, index, assessment, lessonAssessments, onSelectNode }: ModuleStageProps) {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('courses');
   const files = getItemAttachments(module);
   const minutes = calculateModuleDuration(module);
 
@@ -28,32 +28,32 @@ export function ModuleStage({ module, index, assessment, lessonAssessments, onSe
     <div className="space-y-6">
       <StageTitle
         icon={<Layers className="h-4 w-4" />}
-        eyebrow={`${tBilingual('Module', 'ሞጁል')} ${index + 1}`}
-        title={module.title || tBilingual('Untitled module', 'ርዕስ የሌለው ሞጁል')}
+        eyebrow={`${t('reviewSubmitStage.module')} ${index + 1}`}
+        title={module.title || t('reviewSidebar.untitledModule')}
         meta={
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            {formatDuration(minutes, isAmharic)} · {module.lessons.length} {tBilingual('lessons', 'ትምህርቶች')}
+            {formatDuration(minutes, isAmharic)} · {module.lessons.length} {t('creatorSidebar.lessons')}
           </span>
         }
       />
 
       <StageCard>
         <RichSection
-          label={tBilingual('Description', 'ማብራሪያ')}
+          label={t('moduleStage.description')}
           html={module.description}
-          missing={tBilingual('No description provided.', 'ማብራሪያ አልተሰጠም።')}
+          missing={t('moduleStage.noDescriptionProvided')}
         />
         <RichSection
-          label={tBilingual('Learning Objectives', 'የመማሪያ ዓላማዎች')}
+          label={t('moduleStage.learningObjectives')}
           html={module.objectives}
-          missing={tBilingual('No objectives specified.', 'ዓላማዎች አልተገለጹም።')}
+          missing={t('moduleStage.noObjectivesSpecified')}
         />
       </StageCard>
 
-      <StageCard title={tBilingual('Lessons', 'ትምህርቶች')}>
+      <StageCard title={t('moduleEditorStage.lessons')}>
         {module.lessons.length === 0 ? (
-          <p className="text-xs italic text-amber-700">{tBilingual('⚠ This module has no lessons.', '⚠ ይህ ሞጁል ትምህርት የለውም።')}</p>
+          <p className="text-xs italic text-amber-700">{t('moduleStage.thisModuleHasNoLessons')}</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {module.lessons.map((l, i) => {
@@ -97,8 +97,8 @@ export function ModuleStage({ module, index, assessment, lessonAssessments, onSe
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-slate-900">{assessment.titleEn}</p>
             <p className="text-xs text-slate-600">
-              {assessment.questions.length} {tBilingual('questions', 'ጥያቄዎች')} · {assessment.weight ?? 0}% {tBilingual('weight', 'ክብደት')} ·{' '}
-              {tBilingual('pass', 'ማለፊያ')} {assessment.passingScore}%
+              {assessment.questions.length} {t('creatorSidebar.questions')} · {assessment.weight ?? 0}% {t('lessonEditorStage.weight')} ·{' '}
+              {t('reviewSubmitStage.pass')} {assessment.passingScore}%
             </p>
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-emerald-500" />
@@ -106,10 +106,10 @@ export function ModuleStage({ module, index, assessment, lessonAssessments, onSe
       )}
 
       {files.length > 0 && (
-        <StageCard title={tBilingual(`Module files (${files.length})`, `የሞጁል ፋይሎች (${files.length})`)} icon={<Paperclip className="h-4 w-4" />}>
+        <StageCard title={t('moduleStage.moduleFiles', { count: files.length })} icon={<Paperclip className="h-4 w-4" />}>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {files.map((file, i) => (
-              <AttachmentCard key={file.id || file.url || i} file={file} isAmharic={isAmharic} />
+              <AttachmentCard key={file.id || file.url || i} file={file} />
             ))}
           </div>
         </StageCard>

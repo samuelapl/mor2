@@ -4,13 +4,14 @@ import { Download, ExternalLink } from 'lucide-react';
 import type { UploadedResource } from '@/types';
 import { cn } from '@/lib/utils';
 import { formatFileSize, getFileBadge } from '../wizard-components';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface AttachmentCardProps {
   file: UploadedResource;
-  isAmharic?: boolean;
 }
 
-export function AttachmentCard({ file, isAmharic }: AttachmentCardProps) {
+export function AttachmentCard({ file }: AttachmentCardProps) {
+  const { isAmharic, t } = useTranslation('courses');
   const badge = getFileBadge(file);
   const Icon = badge.icon;
   const fileName = file.name || file.url.split('/').pop() || 'Attachment';
@@ -46,10 +47,10 @@ export function AttachmentCard({ file, isAmharic }: AttachmentCardProps) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition shadow-2xs"
-          title={isAmharic ? 'ፋይል በአዲስ ገጽ ክፈት' : 'Open file in new tab'}
+          title={t('attachmentCard.openFileInNewTab')}
         >
           <ExternalLink className="h-3.5 w-3.5" />
-          <span>{isAmharic ? 'ክፈት' : 'Open'}</span>
+          <span>{t('mediaPreview.open')}</span>
         </a>
         <a
           href={file.url}
@@ -57,10 +58,10 @@ export function AttachmentCard({ file, isAmharic }: AttachmentCardProps) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/80 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition shadow-2xs"
-          title={isAmharic ? 'ፋይል አውርድ' : 'Download file'}
+          title={t('attachmentCard.downloadFile')}
         >
           <Download className="h-3.5 w-3.5" />
-          <span>{isAmharic ? 'አውርድ' : 'Download'}</span>
+          <span>{t('attachmentCard.download')}</span>
         </a>
       </div>
     </div>
