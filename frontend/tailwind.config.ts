@@ -15,6 +15,7 @@ const config: Config = {
         card: { DEFAULT: token("card"), foreground: token("card-foreground") },
         popover: { DEFAULT: token("popover"), foreground: token("popover-foreground") },
         muted: { DEFAULT: token("muted"), foreground: token("muted-foreground") },
+        secondary: { DEFAULT: token("secondary"), foreground: token("secondary-foreground") },
         subtle: { foreground: token("subtle-foreground") },
         border: token("border"),
         input: token("input"),

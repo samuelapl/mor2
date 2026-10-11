@@ -61,15 +61,16 @@ shadcn names + `success` / `warning` / `info` (the app uses green/amber/sky stat
 
 | Token (Tailwind class) | Used for | Light (`:root`) | Dark (`.dark`) |
 | :--- | :--- | :--- | :--- |
-| `background` (`bg-background`) | Page background | slate-50 `248 250 252` | slate-950 `2 6 23` |
+| `background` (`bg-background`) | Page background | white `255 255 255` (today's body; slate-50 is still an open option) | slate-950 `2 6 23` |
 | `foreground` (`text-foreground`) | Main text, headings | slate-900 `15 23 42` | slate-100 `241 245 249` |
 | `card` / `card-foreground` | Cards, panels | white `255 255 255` / slate-900 | slate-900 `15 23 42` / slate-100 |
 | `popover` / `popover-foreground` | Modals, dropdowns, menus | white / slate-900 | slate-900 / slate-100 |
 | `muted` (`bg-muted`) | Inner boxes, table headers, hover rows | slate-50 `248 250 252` | slate-800 `30 41 59` |
+| `secondary` / `secondary-foreground` | Chips, icon tiles, hover fills / body text (added in Phase 2) | slate-100 `241 245 249` / slate-700 `51 65 85` | slate-800 `30 41 59` / slate-300 `203 213 225` |
 | `muted-foreground` | Descriptions, labels, hints | slate-500 `100 116 139` | slate-400 `148 163 184` |
 | `subtle-foreground` | Least important text (counts, meta) | slate-400 `148 163 184` | slate-500 `100 116 139` |
-| `border` (`border-border`) | Borders, dividers | slate-200 `226 232 240` | slate-700 `51 65 85` |
-| `input` (`border-input`) | Form field borders | slate-300 `203 213 225` | slate-600 `71 85 105` |
+| `border` (`border-border`) | Borders, dividers | slate-200 `226 232 240` | slate-800 `30 41 59` |
+| `input` (`border-input`) | Form field borders | slate-300 `203 213 225` | slate-700 `51 65 85` |
 | `ring` | Focus ring | indigo-500 `99 102 241` | indigo-400 `129 140 248` |
 | `primary` / `primary-foreground` | Brand actions, links | indigo-600 `79 70 229` / white | indigo-500 `99 102 241` / white |
 | `primary-soft` | Tinted primary backgrounds | indigo-50 `238 242 255` | indigo-950 `30 27 75` |
@@ -258,7 +259,7 @@ Tick each route once its step is finished. Also open the modals and drawers reac
 | Phase | Work | tsc / build | Browser | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | 1 | Tokens + theme store + toggle fixes | [x] | [x] | Done |
-| 2 | Shared UI / layout / charts | [ ] | [ ] | Pending |
+| 2 | Shared UI / layout / charts | [x] | [x] | Done |
 | 3 | Codemod (`scripts/theme-tokens.mjs`) | [ ] | n/a | Pending |
 | 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [ ] | [ ] | Pending |
 | — | Every route checked in both themes (section 6) | n/a | [ ] | Pending |

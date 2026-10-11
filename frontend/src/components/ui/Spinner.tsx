@@ -27,7 +27,7 @@ export function Spinner({ className, label = 'Loading...' }: SpinnerProps) {
   return (
     <div className="inline-flex" role="status" aria-label={label}>
       <svg
-        className={cn('size-6 shrink-0 animate-spin text-slate-700 dark:text-slate-200', className)}
+        className={cn('size-6 shrink-0 animate-spin text-secondary-foreground', className)}
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,7 @@ export function PageLoader({ fullScreen = false }: { fullScreen?: boolean }) {
       className={cn(
         'flex w-full items-center justify-center',
         // h-full centres it in the dashboard content area and in full-screen pages (classroom, course review).
-        fullScreen ? 'min-h-screen bg-slate-50 dark:bg-slate-950' : 'h-full min-h-[60vh]',
+        fullScreen ? 'min-h-screen bg-background' : 'h-full min-h-[60vh]',
       )}
     >
       <Spinner className="size-8" />

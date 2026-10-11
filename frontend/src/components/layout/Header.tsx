@@ -126,7 +126,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
     isAmharic ? (n.bodyAm ?? n.bodyEn) : (n.bodyEn ?? n.bodyAm);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-3 sm:px-6">
       {/* Phones have no sidebar: menu button + logo instead. */}
       <div className="flex min-w-0 items-center gap-1 md:hidden">
         <button
@@ -135,7 +135,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
           aria-label={t('header.openMenu')}
           aria-controls="dashboard-sidebar"
           aria-expanded={drawerOpen}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-secondary-foreground transition-colors hover:bg-secondary"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -147,7 +147,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
             height={32}
             className="h-8 w-8 shrink-0 rounded-full object-contain"
           />
-          <span className="truncate font-display text-sm font-bold text-slate-900 dark:text-white">
+          <span className="truncate font-display text-sm font-bold text-foreground">
             MoR LMS
           </span>
         </Link>
@@ -169,26 +169,26 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
               if (!open) void load();
               setOpen((prev) => !prev);
             }}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 shadow-sm backdrop-blur transition-all hover:border-indigo-200 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md active:scale-95"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border/80 bg-card/70 text-muted-foreground shadow-sm backdrop-blur transition-all hover:border-primary/30 hover:text-primary hover:shadow-md active:scale-95"
           >
             <Bell className="h-4 w-4" />
             {unread > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-slate-800">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-card">
                 {unread > 9 ? '9+' : unread}
               </span>
             ) : null}
           </button>
 
           {open ? (
-            <div className="fixed inset-x-3 top-[4.5rem] z-50 overflow-hidden rounded-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="fixed inset-x-3 top-[4.5rem] z-50 overflow-hidden rounded-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 border border-border/80 bg-popover text-popover-foreground shadow-xl dark:shadow-slate-900/50">
+              <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">
                   {t('notifications')}
                 </p>
                 <button
                   type="button"
                   onClick={() => void readAll()}
-                  className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                   {t('markAllRead')}
@@ -196,7 +196,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
               </div>
               <div className="max-h-[min(24rem,calc(100dvh-9rem))] overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                  <p className="px-4 py-8 text-center text-sm text-subtle-foreground">
                     {t('noNotifications')}
                   </p>
                 ) : (
@@ -206,26 +206,26 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
                       type="button"
                       onClick={() => void readOne(n.id)}
                       className={cn(
-                        'flex w-full items-start gap-3 border-b border-slate-50 dark:border-slate-700/30 px-4 py-3 text-left transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-700/60',
-                        !n.readAt ? 'bg-indigo-50/40 dark:bg-indigo-900/20' : '',
+                        'flex w-full items-start gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors hover:bg-muted/60',
+                        !n.readAt ? 'bg-primary-soft/40' : '',
                       )}
                     >
                       <span
                         className={cn(
                           'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                          n.readAt ? 'bg-slate-200 dark:bg-slate-600' : 'bg-indigo-500',
+                          n.readAt ? 'bg-input' : 'bg-primary',
                         )}
                       />
                       <span className="min-w-0">
-                        <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        <span className="block text-xs font-semibold text-foreground">
                           {title(n)}
                         </span>
                         {bodyText(n) ? (
-                          <span className="mt-0.5 block text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
                             {bodyText(n)}
                           </span>
                         ) : null}
-                        <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
+                        <span className="mt-1 block text-[10px] text-subtle-foreground">
                           {new Date(n.createdAt).toLocaleString()}
                         </span>
                       </span>
@@ -245,30 +245,30 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
             aria-haspopup="true"
             onClick={() => setMenuOpen((prev) => !prev)}
             title={demoUser?.name ?? 'Profile'}
-            className="flex items-center gap-2.5 rounded-xl py-1 sm:border-l sm:border-slate-200/80 sm:dark:border-slate-700/80 sm:pl-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+            className="flex items-center gap-2.5 rounded-xl py-1 sm:border-l sm:border-border/80 sm:pl-3 transition-colors hover:bg-muted cursor-pointer"
           >
             {demoUser?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={demoUser.avatarUrl}
                 alt="Avatar"
-                className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-white/30 dark:ring-white/10"
+                className="h-9 w-9 rounded-xl object-cover shadow-md ring-1 ring-card/30"
               />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 ring-1 ring-white/30 dark:ring-white/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 ring-1 ring-card/30">
                 {getInitials(demoUser?.name ?? roleLabel)}
               </div>
             )}
             <div className="hidden text-left leading-tight lg:block">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{demoUser?.name ?? 'Demo User'}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">{demoUser?.email}</p>
+              <p className="text-sm font-medium text-foreground">{demoUser?.name ?? 'Demo User'}</p>
+              <p className="text-[11px] text-muted-foreground">{demoUser?.email}</p>
             </div>
           </button>
 
           {menuOpen ? (
-            <div className="absolute right-0 top-12 z-50 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50 animate-fade-in-up">
+            <div className="absolute right-0 top-12 z-50 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border/80 bg-popover text-popover-foreground shadow-xl dark:shadow-slate-900/50 animate-fade-in-up">
               {/* Profile summary with avatar, name, and email */}
-              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700/60 px-4 py-3">
+              <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
                 {demoUser?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -277,15 +277,15 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
                     className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-sm"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-sm font-semibold text-sky-600 dark:text-sky-400">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-sm font-semibold text-info">
                     {getInitials(demoUser?.name ?? roleLabel)}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                  <p className="font-semibold text-sm text-foreground truncate">
                     {demoUser?.name ?? 'User'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
                     {demoUser?.email}
                   </p>
                 </div>
@@ -300,9 +300,9 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
                     setMenuOpen(false);
                     setAccountOpen(true);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal text-secondary-foreground transition-colors hover:bg-secondary cursor-pointer"
                 >
-                  <UserCircle className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                  <UserCircle className="h-5 w-5 text-muted-foreground" />
                   <span>{t('header.account')}</span>
                 </button>
 
@@ -314,9 +314,9 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
                     logout();
                     router.push('/login');
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal text-slate-700 dark:text-slate-200 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer group"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal text-secondary-foreground transition-colors hover:bg-danger-soft hover:text-danger cursor-pointer group"
                 >
-                  <LogOut className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400" />
+                  <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-danger" />
                   <span>{t('header.logOut')}</span>
                 </button>
               </div>

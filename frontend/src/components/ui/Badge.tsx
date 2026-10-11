@@ -8,13 +8,13 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 type BadgeVariant = 'slate' | 'amber' | 'blue' | 'green' | 'red' | 'outline' | 'indigo';
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  slate: 'bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-300 ring-slate-600/15 dark:ring-slate-400/20',
-  amber: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-amber-600/25 dark:ring-amber-500/30',
-  blue: 'bg-blue-50/90 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 ring-blue-600/25 dark:ring-blue-500/30',
-  green: 'bg-emerald-50/90 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-emerald-600/25 dark:ring-emerald-500/30',
-  red: 'bg-red-50/90 dark:bg-red-900/30 text-red-700 dark:text-red-400 ring-red-600/25 dark:ring-red-500/30',
-  indigo: 'bg-indigo-50/90 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 ring-indigo-600/25 dark:ring-indigo-500/30',
-  outline: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 ring-slate-400/30 dark:ring-slate-600/50',
+  slate: 'bg-secondary/90 text-secondary-foreground ring-foreground/15',
+  amber: 'bg-warning-soft text-warning ring-warning/25',
+  blue: 'bg-info-soft/90 text-info ring-info/25',
+  green: 'bg-success-soft/90 text-success ring-success/25',
+  red: 'bg-danger-soft/90 text-danger ring-danger/25',
+  indigo: 'bg-primary-soft/90 text-primary ring-primary/25',
+  outline: 'bg-card text-secondary-foreground ring-subtle-foreground/30',
 };
 
 export function statusBadgeVariant(status: string): BadgeVariant {
@@ -70,13 +70,13 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const dotClass: Record<BadgeVariant, string> = {
-    slate: 'bg-slate-500',
-    amber: 'bg-amber-500',
-    blue: 'bg-blue-500',
-    green: 'bg-emerald-500',
-    red: 'bg-red-500',
-    indigo: 'bg-indigo-500',
-    outline: 'bg-slate-400',
+    slate: 'bg-muted-foreground',
+    amber: 'bg-warning',
+    blue: 'bg-info',
+    green: 'bg-success',
+    red: 'bg-danger',
+    indigo: 'bg-primary',
+    outline: 'bg-subtle-foreground',
   };
   return (
     <span

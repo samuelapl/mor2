@@ -159,9 +159,9 @@ export function RichContent({ html, className, placeholder, inline = false, inhe
   if (!sanitized.trim()) {
     if (!placeholder) return null;
     return inline ? (
-      <span className={cn('text-xs italic text-slate-400', className)}>{placeholder}</span>
+      <span className={cn('text-xs italic text-subtle-foreground', className)}>{placeholder}</span>
     ) : (
-      <p className={cn('text-xs italic text-slate-400', className)}>{placeholder}</p>
+      <p className={cn('text-xs italic text-subtle-foreground', className)}>{placeholder}</p>
     );
   }
   return inline ? (

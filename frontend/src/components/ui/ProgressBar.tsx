@@ -16,7 +16,7 @@ export function ProgressBar({ value, className }: ProgressBarProps) {
   return (
     <div
       className={cn(
-        'h-2 w-full overflow-hidden rounded-full bg-slate-100/90 ring-1 ring-inset ring-slate-900/5',
+        'h-2 w-full overflow-hidden rounded-full bg-secondary/90 ring-1 ring-inset ring-foreground/5',
         className,
       )}
     >

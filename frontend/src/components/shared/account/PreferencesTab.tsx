@@ -57,8 +57,8 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
   return (
     <div className="space-y-4">
       <div>
-        <p className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
-          <Globe className="h-4 w-4 text-slate-400" />
+        <p className="mb-2 flex items-center gap-2 text-sm font-medium text-secondary-foreground">
+          <Globe className="h-4 w-4 text-subtle-foreground" />
           {t('preferencesTab.displayLanguage')}
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -71,26 +71,26 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
               className={cn(
                 'flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition disabled:opacity-60',
                 lang === option.key
-                  ? 'border-indigo-400 bg-indigo-50 text-indigo-700 shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                  ? 'border-primary/60 bg-primary-soft text-primary shadow-sm'
+                  : 'border-border bg-card text-secondary-foreground hover:border-input',
               )}
             >
               <span>
                 <span className="block font-medium">{option.label}</span>
-                <span className="text-xs text-slate-400">{option.native}</span>
+                <span className="text-xs text-subtle-foreground">{option.native}</span>
               </span>
-              {lang === option.key ? <Check className="h-4 w-4 text-indigo-600" /> : null}
+              {lang === option.key ? <Check className="h-4 w-4 text-primary" /> : null}
             </button>
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3">
         <div>
-          <p className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <Mail className="h-4 w-4 text-slate-400" />
+          <p className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
+            <Mail className="h-4 w-4 text-subtle-foreground" />
             {t('preferencesTab.emailNotifications')}
           </p>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-subtle-foreground">
             {t('preferencesTab.alsoEmailMeAboutEnrollmentsGrades')}
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
           disabled={!profile || loading || savingEmail}
           className={cn(
             'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-60',
-            emailOn ? 'bg-indigo-600' : 'bg-slate-300',
+            emailOn ? 'bg-primary' : 'bg-input',
           )}
         >
           <span
@@ -115,9 +115,9 @@ export default function PreferencesTab({ profile, loading, onUpdated }: Preferen
         </button>
       </div>
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger">{error}</p>
       ) : null}
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-subtle-foreground">
         {t('preferencesTab.yourLanguageChoiceIsSavedTo')}
       </p>
     </div>

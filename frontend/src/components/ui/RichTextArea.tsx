@@ -68,7 +68,7 @@ export function RichTextArea({
         },
         blockquote: {
           HTMLAttributes: {
-            class: 'border-l-2 border-indigo-400 pl-3 italic my-1 text-slate-600',
+            class: 'border-l-2 border-primary/50 pl-3 italic my-1 text-secondary-foreground',
           },
         },
       }),
@@ -76,7 +76,7 @@ export function RichTextArea({
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
-          'before:content-[attr(data-placeholder)] before:text-slate-400 before:float-left before:pointer-events-none',
+          'before:content-[attr(data-placeholder)] before:text-subtle-foreground before:float-left before:pointer-events-none',
       }),
     ],
     content: value || '',
@@ -85,8 +85,8 @@ export function RichTextArea({
       attributes: {
         ...(id ? { id } : {}),
         class: cn(
-          'rich-content prose prose-sm max-w-none px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none',
-          disabled && 'bg-slate-50 text-slate-500 cursor-not-allowed',
+          'rich-content prose prose-sm max-w-none px-3.5 py-2.5 text-sm text-foreground focus:outline-none',
+          disabled && 'bg-muted text-muted-foreground cursor-not-allowed',
         ),
         style: `min-height: ${calculatedMinHeight}px;`,
       },
@@ -179,22 +179,22 @@ export function RichTextArea({
   return (
     <div className={cn('w-full space-y-1.5', className)}>
       {label && (
-        <label htmlFor={id} className="block text-xs font-semibold text-slate-600">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={id} className="block text-xs font-semibold text-secondary-foreground">
+          {label} {required && <span className="text-danger">*</span>}
         </label>
       )}
 
       <div
         className={cn(
-          'overflow-hidden rounded-xl border bg-white transition shadow-xs',
+          'overflow-hidden rounded-xl border bg-card transition shadow-xs',
           error
-            ? 'border-red-300 ring-2 ring-red-500/10 focus-within:border-red-500'
-            : 'border-slate-200/90 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10',
-          disabled && 'opacity-75 bg-slate-50',
+            ? 'border-danger/40 ring-2 ring-danger/10 focus-within:border-danger'
+            : 'border-border/90 focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/10',
+          disabled && 'opacity-75 bg-muted',
         )}
       >
         {/* Interactive Formatting Toolbar */}
-        <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 bg-slate-50/80 px-2 py-1 select-none">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-border/60 bg-muted/80 px-2 py-1 select-none">
           {toolbarButtons.map((btn) => {
             const Icon = btn.icon;
             const active = editor ? btn.isActive(editor) : false;
@@ -207,8 +207,8 @@ export function RichTextArea({
                 onClick={() => editor && btn.run(editor)}
                 title={btn.title}
                 className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-200/70 hover:text-slate-900 disabled:opacity-40',
-                  active && 'bg-indigo-100 text-indigo-700 font-bold hover:bg-indigo-150',
+                  'flex h-7 w-7 items-center justify-center rounded-md text-secondary-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-40',
+                  active && 'bg-primary/10 text-primary font-bold hover:bg-primary/15',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -216,7 +216,7 @@ export function RichTextArea({
             );
           })}
 
-          <div className="h-4 w-px bg-slate-200 mx-1" />
+          <div className="h-4 w-px bg-border mx-1" />
 
           {/* Clear format button */}
           <button
@@ -225,7 +225,7 @@ export function RichTextArea({
             disabled={disabled || !editor}
             onClick={() => editor && editor.chain().focus().unsetAllMarks().clearNodes().run()}
             title="Clear Formatting"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800 disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-40"
           >
             <RemoveFormatting className="h-3.5 w-3.5" />
           </button>
@@ -237,7 +237,7 @@ export function RichTextArea({
             disabled={disabled || !editor || !editor.can().undo()}
             onClick={() => editor && editor.chain().focus().undo().run()}
             title="Undo (Ctrl+Z)"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800 disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-30"
           >
             <Undo className="h-3.5 w-3.5" />
           </button>
@@ -247,7 +247,7 @@ export function RichTextArea({
             disabled={disabled || !editor || !editor.can().redo()}
             onClick={() => editor && editor.chain().focus().redo().run()}
             title="Redo (Ctrl+Y)"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800 disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-30"
           >
             <Redo className="h-3.5 w-3.5" />
           </button>
@@ -257,7 +257,7 @@ export function RichTextArea({
         <EditorContent editor={editor} />
       </div>
 
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
   );
 }

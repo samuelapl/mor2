@@ -48,7 +48,7 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
       subtitle={t('accountModal.manageYourProfileSecurityAndPreferences')}
       size="lg"
     >
-      <div className="mb-5 flex gap-1 border-b border-slate-100 pb-3">
+      <div className="mb-5 flex gap-1 border-b border-border/60 pb-3">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -57,8 +57,8 @@ export default function AccountModal({ open, onClose }: AccountModalProps) {
             className={cn(
               'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
               tab === t.key
-                ? 'bg-indigo-50 text-indigo-600'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                ? 'bg-primary-soft text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
             {t.label}

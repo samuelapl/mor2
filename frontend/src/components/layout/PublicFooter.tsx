@@ -9,7 +9,7 @@ export default function PublicFooter() {
   const { t } = useTranslation('common');
 
   return (
-    <footer className="border-t border-slate-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-950">
+    <footer className="border-t border-border bg-background py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-3">
@@ -21,41 +21,41 @@ export default function PublicFooter() {
               className="h-9 w-9 object-contain"
             />
             <div>
-              <p className="font-display text-sm font-bold text-slate-950 dark:text-white">
+              <p className="font-display text-sm font-bold text-foreground">
                 MoR LMS
               </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              <p className="text-[10px] text-muted-foreground">
                 {t('publicFooter.ministryOfRevenuesEthiopia')}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <Link href="/#capabilities" className="hover:text-sky-700 dark:hover:text-sky-400">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-muted-foreground">
+            <Link href="/#capabilities" className="hover:text-info">
               {t('publicFooter.capabilities')}
             </Link>
-            <Link href="/#roles" className="hover:text-sky-700 dark:hover:text-sky-400">
+            <Link href="/#roles" className="hover:text-info">
               {t('publicFooter.roles')}
             </Link>
-            <Link href="/#how-it-works" className="hover:text-sky-700 dark:hover:text-sky-400">
+            <Link href="/#how-it-works" className="hover:text-info">
               {t('publicFooter.workflow')}
             </Link>
-            <Link href="/news" className="hover:text-sky-700 dark:hover:text-sky-400">
+            <Link href="/news" className="hover:text-info">
               {t('publicFooter.news')}
             </Link>
             <Link
               href="/#desktop"
               data-desktop-app-only="true"
-              className="hover:text-sky-700 dark:hover:text-sky-400"
+              className="hover:text-info"
             >
               {t('publicFooter.windowsClient')}
             </Link>
-            <Link href="/login" className="hover:text-sky-700 dark:hover:text-sky-400">
+            <Link href="/login" className="hover:text-info">
               {t('publicFooter.signIn')}
             </Link>
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-subtle-foreground">
             © {new Date().getFullYear()}{' '}
             {t('publicFooter.ministryOfRevenuesAllRightsReserved')}
           </p>

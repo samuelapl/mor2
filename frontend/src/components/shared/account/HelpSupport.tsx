@@ -55,27 +55,27 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
     >
       <div className="space-y-6">
         <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-subtle-foreground">
             {t('helpSupport.frequentlyAskedQuestions')}
           </h3>
-          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          <div className="divide-y divide-border/60 rounded-xl border border-border">
             {faqs.map((item, index) => (
               <div key={item.q}>
                 <button
                   type="button"
                   onClick={() => setExpanded(expanded === index ? null : index)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-secondary-foreground hover:bg-muted"
                 >
                   {item.q}
                   <ChevronDown
                     className={cn(
-                      'h-4 w-4 shrink-0 text-slate-400 transition-transform',
+                      'h-4 w-4 shrink-0 text-subtle-foreground transition-transform',
                       expanded === index && 'rotate-180',
                     )}
                   />
                 </button>
                 {expanded === index ? (
-                  <p className="px-4 pb-3 text-sm text-slate-500">{item.a}</p>
+                  <p className="px-4 pb-3 text-sm text-muted-foreground">{item.a}</p>
                 ) : null}
               </div>
             ))}
@@ -83,29 +83,29 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-subtle-foreground">
             {t('helpSupport.contactSupport')}
           </h3>
-          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600">
+          <div className="space-y-2 rounded-xl border border-border bg-muted/60 p-4 text-sm text-secondary-foreground">
             <p className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-slate-400" /> support@mor.gov.et
+              <Mail className="h-4 w-4 text-subtle-foreground" /> support@mor.gov.et
             </p>
             <p className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-slate-400" /> +251 11 000 0000
+              <Phone className="h-4 w-4 text-subtle-foreground" /> +251 11 000 0000
             </p>
           </div>
         </section>
 
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-subtle-foreground">
             <Keyboard className="h-3.5 w-3.5" />{' '}
             {t('helpSupport.keyboardShortcuts')}
           </h3>
-          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          <div className="divide-y divide-border/60 rounded-xl border border-border">
             {shortcuts.map((s) => (
               <div key={s.keys} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                <span className="text-slate-500">{s.action}</span>
-                <kbd className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                <span className="text-muted-foreground">{s.action}</span>
+                <kbd className="rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
                   {s.keys}
                 </kbd>
               </div>
@@ -113,7 +113,7 @@ export default function HelpSupport({ open, onClose }: HelpSupportProps) {
           </div>
         </section>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-subtle-foreground">
           {t('helpSupport.morLearningManagementSystemV10')}
         </p>
       </div>

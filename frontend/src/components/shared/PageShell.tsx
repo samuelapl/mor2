@@ -41,19 +41,19 @@ export default function PageShell({
       >
         <div>
           {role ? (
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 dark:border-indigo-800/60 bg-white/70 dark:bg-slate-900/70 px-3 py-1 shadow-xs backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/70 px-3 py-1 shadow-xs backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
                 {tRole(role)}
               </p>
             </div>
           ) : null}
-          <h1 className="mt-4 font-display text-2xl font-bold sm:text-[28px] leading-tight tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mt-4 font-display text-2xl font-bold sm:text-[28px] leading-tight tracking-tight text-foreground">
             {renderText(title)}
           </h1>
           {description ? (
             <p
-              className={`mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400 ${
+              className={`mt-2 text-sm leading-relaxed text-muted-foreground ${
                 centered ? 'mx-auto max-w-2xl' : 'max-w-2xl'
               }`}
             >

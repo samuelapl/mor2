@@ -52,7 +52,7 @@ export function VerticalBarChart({
 
   if (items.length === 0) {
     return (
-      <div className={cn('py-10 text-center text-xs text-slate-400 italic', className)}>
+      <div className={cn('py-10 text-center text-xs text-subtle-foreground italic', className)}>
         {emptyText}
       </div>
     );
@@ -64,7 +64,7 @@ export function VerticalBarChart({
       <div className="relative flex items-stretch gap-2" style={{ height }}>
         {/* Y-Axis scale labels */}
         {showGrid && (
-          <div className="flex flex-col justify-between text-[10px] font-mono text-slate-400 shrink-0 select-none pr-1 text-right w-6 h-full pb-6 pt-2">
+          <div className="flex flex-col justify-between text-[10px] font-mono text-subtle-foreground shrink-0 select-none pr-1 text-right w-6 h-full pb-6 pt-2">
             {ticks.map((tick, idx) => (
               <span key={idx} className="leading-none">
                 {tick}
@@ -78,10 +78,10 @@ export function VerticalBarChart({
           {/* Background Grid Lines */}
           {showGrid && (
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6 pt-2">
-              <div className="w-full border-b border-dashed border-slate-200/80 dark:border-slate-800" />
-              <div className="w-full border-b border-dashed border-slate-200/80 dark:border-slate-800" />
-              <div className="w-full border-b border-dashed border-slate-200/80 dark:border-slate-800" />
-              <div className="w-full border-b border-slate-300 dark:border-slate-700" />
+              <div className="w-full border-b border-dashed border-border/80" />
+              <div className="w-full border-b border-dashed border-border/80" />
+              <div className="w-full border-b border-dashed border-border/80" />
+              <div className="w-full border-b border-input" />
             </div>
           )}
 
@@ -103,13 +103,13 @@ export function VerticalBarChart({
                 >
                   {/* Floating Tooltip */}
                   {isHovered && (
-                    <div className="absolute -top-12 z-30 pointer-events-none whitespace-nowrap rounded-lg bg-slate-900 dark:bg-slate-800 text-white px-2.5 py-1 text-xs shadow-lg ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute -top-12 z-30 pointer-events-none whitespace-nowrap rounded-lg bg-foreground text-background px-2.5 py-1 text-xs shadow-lg ring-1 ring-background/10 animate-in fade-in zoom-in-95 duration-150">
                       <div className="font-semibold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
                         <span>{item.label}</span>
                       </div>
-                      <div className="text-[11px] text-slate-300 flex items-center justify-between gap-3 mt-0.5">
-                        <span className="font-mono font-bold text-white">{safeVal} {unitLabel || ''}</span>
+                      <div className="text-[11px] text-background/75 flex items-center justify-between gap-3 mt-0.5">
+                        <span className="font-mono font-bold text-background">{safeVal} {unitLabel || ''}</span>
                         <span>{shareOfTotal}%</span>
                       </div>
                     </div>
@@ -119,15 +119,15 @@ export function VerticalBarChart({
                   <span
                     className={cn(
                       'text-[11px] font-bold font-mono transition-all duration-200 mb-1',
-                      safeVal > 0 ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600',
-                      isHovered && 'scale-110 -translate-y-0.5 text-indigo-600 dark:text-indigo-400 font-extrabold',
+                      safeVal > 0 ? 'text-foreground' : 'text-subtle-foreground',
+                      isHovered && 'scale-110 -translate-y-0.5 text-primary font-extrabold',
                     )}
                   >
                     {safeVal}
                   </span>
 
                   {/* Vertical Column Track */}
-                  <div className="w-full h-full max-w-[42px] bg-slate-100/70 dark:bg-slate-800/40 rounded-t-xl overflow-hidden flex items-end p-0.5 border border-slate-200/50 dark:border-slate-800/60 shadow-2xs">
+                  <div className="w-full h-full max-w-[42px] bg-secondary/70 rounded-t-xl overflow-hidden flex items-end p-0.5 border border-border/50 shadow-2xs">
                     {/* The Animated Colored Vertical Bar Pillar */}
                     <div
                       className={cn(
@@ -151,7 +151,7 @@ export function VerticalBarChart({
       {/* X-Axis Labels Row */}
       <div
         className={cn(
-          'flex items-start justify-around gap-2 sm:gap-4 px-1 border-t border-slate-200 dark:border-slate-800 pt-2.5',
+          'flex items-start justify-around gap-2 sm:gap-4 px-1 border-t border-border pt-2.5',
           showGrid ? 'pl-8' : 'pl-1',
         )}
       >
@@ -178,15 +178,15 @@ export function VerticalBarChart({
                   className={cn(
                     'text-[11px] font-semibold truncate transition-colors leading-tight',
                     isHovered
-                      ? 'text-indigo-600 dark:text-indigo-400 font-bold'
-                      : 'text-slate-700 dark:text-slate-300',
+                      ? 'text-primary font-bold'
+                      : 'text-secondary-foreground',
                   )}
                 >
                   {item.label}
                 </span>
               </div>
               {item.subLabel && (
-                <span className="text-[10px] text-slate-400 truncate max-w-full mt-0.5">
+                <span className="text-[10px] text-subtle-foreground truncate max-w-full mt-0.5">
                   {item.subLabel}
                 </span>
               )}

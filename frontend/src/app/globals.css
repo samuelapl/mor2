@@ -16,6 +16,8 @@
   --popover-foreground: 15 23 42;
   --muted: 248 250 252;
   --muted-foreground: 100 116 139;
+  --secondary: 241 245 249;
+  --secondary-foreground: 51 65 85;
   --subtle-foreground: 148 163 184;
   --border: 226 232 240;
   --input: 203 213 225;
@@ -45,9 +47,11 @@
   --popover-foreground: 241 245 249;
   --muted: 30 41 59;
   --muted-foreground: 148 163 184;
+  --secondary: 30 41 59;
+  --secondary-foreground: 203 213 225;
   --subtle-foreground: 100 116 139;
-  --border: 51 65 85;
-  --input: 71 85 105;
+  --border: 30 41 59;
+  --input: 51 65 85;
   --ring: 129 140 248;
   --primary: 99 102 241;
   --primary-foreground: 255 255 255;

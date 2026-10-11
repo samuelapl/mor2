@@ -85,7 +85,7 @@ export function DonutChart({
             cy="50"
             r={radius}
             fill="none"
-            stroke="#f1f5f9"
+            className="stroke-secondary"
             strokeWidth={strokeWidth}
           />
 
@@ -95,7 +95,7 @@ export function DonutChart({
               cy="50"
               r={radius}
               fill="none"
-              stroke="#e2e8f0"
+              className="stroke-border"
               strokeWidth={strokeWidth}
               strokeDasharray="4 4"
             />
@@ -126,10 +126,10 @@ export function DonutChart({
 
         {/* Center label & number */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-2">
-          <span className="font-display text-xl font-bold tracking-tight text-slate-900 leading-none">
+          <span className="font-display text-xl font-bold tracking-tight text-foreground leading-none">
             {total === 0 ? '—' : displayCenterValue}
           </span>
-          <span className="mt-1 text-[11px] font-medium text-slate-500 uppercase tracking-wider max-w-[80px] truncate leading-tight">
+          <span className="mt-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider max-w-[80px] truncate leading-tight">
             {total === 0 ? emptyText : displayCenterLabel}
           </span>
         </div>
@@ -139,7 +139,7 @@ export function DonutChart({
       {showLegend && (
         <div className="flex flex-1 flex-col gap-2 w-full max-w-xs">
           {segments.length === 0 || total === 0 ? (
-            <p className="text-xs text-slate-400 italic py-2 text-center sm:text-left">
+            <p className="text-xs text-subtle-foreground italic py-2 text-center sm:text-left">
               {emptyText}
             </p>
           ) : (
@@ -151,8 +151,8 @@ export function DonutChart({
                   className={cn(
                     'flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer text-xs',
                     isHovered
-                      ? 'bg-slate-100/90 font-semibold'
-                      : 'hover:bg-slate-50 text-slate-600',
+                      ? 'bg-secondary/90 font-semibold'
+                      : 'hover:bg-muted text-secondary-foreground',
                   )}
                   onMouseEnter={() => setHoveredIdx(seg.idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
@@ -162,14 +162,14 @@ export function DonutChart({
                       className="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm"
                       style={{ backgroundColor: seg.color }}
                     />
-                    <span className="truncate text-slate-800 font-medium">{seg.label}</span>
+                    <span className="truncate text-foreground font-medium">{seg.label}</span>
                     {seg.subLabel && (
-                      <span className="text-[10px] text-slate-400">({seg.subLabel})</span>
+                      <span className="text-[10px] text-subtle-foreground">({seg.subLabel})</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0 font-display">
-                    <span className="font-bold text-slate-900">{seg.value}</span>
-                    <span className="text-slate-400 text-[11px] w-8 text-right">
+                    <span className="font-bold text-foreground">{seg.value}</span>
+                    <span className="text-subtle-foreground text-[11px] w-8 text-right">
                       {seg.percent}%
                     </span>
                   </div>

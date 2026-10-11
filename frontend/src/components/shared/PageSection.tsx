@@ -38,11 +38,11 @@ export default function PageSection({
         }`}
       >
         <div>
-          <h2 className="font-display text-base font-bold tracking-tight text-slate-900">
+          <h2 className="font-display text-base font-bold tracking-tight text-foreground">
             {renderText(title)}
           </h2>
           {description ? (
-            <p className="mt-1 text-xs text-slate-500">{renderText(description)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{renderText(description)}</p>
           ) : null}
         </div>
         {action}

@@ -29,7 +29,7 @@ export function BarChart({
 
   if (items.length === 0) {
     return (
-      <div className={cn('py-8 text-center text-xs text-slate-400 italic', className)}>
+      <div className={cn('py-8 text-center text-xs text-subtle-foreground italic', className)}>
         {emptyText}
       </div>
     );
@@ -44,17 +44,17 @@ export function BarChart({
         return (
           <div key={idx} className="space-y-1.5 group">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-700 truncate max-w-[200px] sm:max-w-[320px] group-hover:text-slate-900 transition-colors">
+              <span className="font-medium text-secondary-foreground truncate max-w-[200px] sm:max-w-[320px] group-hover:text-foreground transition-colors">
                 {item.label}
               </span>
               <div className="flex items-center gap-2 shrink-0">
                 {item.subLabel && (
-                  <span className="text-[11px] text-slate-400">{item.subLabel}</span>
+                  <span className="text-[11px] text-subtle-foreground">{item.subLabel}</span>
                 )}
-                <span className="font-display font-bold text-slate-900">{item.value}</span>
+                <span className="font-display font-bold text-foreground">{item.value}</span>
               </div>
             </div>
-            <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-900/5">
+            <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden ring-1 ring-foreground/5">
               <div
                 className="h-full rounded-full transition-all duration-500 ease-out group-hover:opacity-90"
                 style={{

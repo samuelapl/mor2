@@ -116,30 +116,30 @@ export function Pagination({
       role="navigation"
       aria-label="Pagination Navigation"
       className={cn(
-        'mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-2xs backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between',
+        'mt-5 flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/95 px-4 py-3 shadow-2xs backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
     >
       {/* Information text & Page Size Selector */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         {showTotal && (
           <div className="flex items-center gap-1 font-medium">
             {totalItems !== undefined && rangeEnd !== null ? (
               <span>
                 {tRich('pagination.showingRange', {
                   range: (
-                    <strong className="font-semibold text-slate-800 dark:text-slate-200">
+                    <strong className="font-semibold text-foreground">
                       {rangeStart} - {rangeEnd}
                     </strong>
                   ),
-                  total: <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalItems}</strong>,
+                  total: <strong className="font-semibold text-foreground">{totalItems}</strong>,
                 })}
               </span>
             ) : (
               <span>
                 {tRich('pagination.pageOf', {
-                  page: <strong className="font-semibold text-slate-800 dark:text-slate-200">{safePage}</strong>,
-                  pages: <strong className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</strong>,
+                  page: <strong className="font-semibold text-foreground">{safePage}</strong>,
+                  pages: <strong className="font-semibold text-foreground">{totalPages}</strong>,
                 })}
               </span>
             )}
@@ -148,15 +148,15 @@ export function Pagination({
 
         {/* Page Size Selector */}
         {onPageSizeChange && pageSize && (
-          <div className="flex items-center gap-1.5 border-l border-slate-200/90 dark:border-slate-800 pl-3">
-            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-1.5 border-l border-border/90 pl-3">
+            <span className="text-[11px] text-subtle-foreground">
               {t('pagination.perPage')}
             </span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               aria-label={t('pagination.itemsPerPage')}
-              className="h-7 cursor-pointer rounded-lg border border-slate-200/90 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 px-2 py-0 text-xs font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300 outline-none transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/10"
+              className="h-7 cursor-pointer rounded-lg border border-border/90 bg-muted/70 px-2 py-0 text-xs font-semibold text-secondary-foreground outline-none transition hover:border-input focus:border-ring focus:bg-card focus:ring-2 focus:ring-ring/10"
             >
               {resolvedPageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -179,7 +179,7 @@ export function Pagination({
             title={t('pagination.firstPage')}
             aria-label={t('pagination.firstPage')}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 dark:text-slate-200 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-border/80 bg-card text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40',
               safePage <= 1 ? 'hidden sm:flex' : '',
             )}
           >
@@ -193,7 +193,7 @@ export function Pagination({
           disabled={safePage <= 1}
           onClick={() => onPageChange(safePage - 1)}
           aria-label={t('pagination.previousPage')}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 items-center gap-1 rounded-xl border border-border/80 bg-card px-2.5 text-xs font-medium text-secondary-foreground shadow-2xs transition-all hover:bg-muted hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           <span className="hidden xs:inline sm:inline">{t('previous')}</span>
@@ -211,7 +211,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.max(1, safePage - 3))}
                     title={t('pagination.jumpBack3Pages')}
                     aria-label="Previous pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 dark:text-slate-300 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
                   >
                     •••
                   </button>
@@ -226,7 +226,7 @@ export function Pagination({
                     onClick={() => onPageChange(Math.min(totalPages, safePage + 3))}
                     title={t('pagination.jumpForward3Pages')}
                     aria-label="Next pages ellipsis"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 dark:text-slate-300 transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-subtle-foreground hover:bg-secondary hover:text-secondary-foreground transition"
                   >
                     •••
                   </button>
@@ -246,7 +246,7 @@ export function Pagination({
                     'flex h-8 min-w-8 items-center justify-center rounded-xl px-2.5 text-xs font-semibold transition-all duration-150 active:scale-95',
                     isCurrent
                       ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-500/25 ring-2 ring-indigo-500/20'
-                      : 'border border-transparent text-slate-600 dark:text-slate-300 hover:border-slate-200/80 hover:bg-slate-100 hover:text-slate-900',
+                      : 'border border-transparent text-secondary-foreground hover:border-border/80 hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {item}
@@ -257,7 +257,7 @@ export function Pagination({
         )}
 
         {/* Mobile-only page counter display */}
-        <div className="flex items-center px-2 text-xs font-semibold text-slate-700 sm:hidden">
+        <div className="flex items-center px-2 text-xs font-semibold text-secondary-foreground sm:hidden">
           {safePage} / {totalPages}
         </div>
 
@@ -267,7 +267,7 @@ export function Pagination({
           disabled={safePage >= totalPages}
           onClick={() => onPageChange(safePage + 1)}
           aria-label={t('pagination.nextPage')}
-          className="flex h-8 items-center gap-1 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 items-center gap-1 rounded-xl border border-border/80 bg-card px-2.5 text-xs font-medium text-secondary-foreground shadow-2xs transition-all hover:bg-muted hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40"
         >
           <span className="hidden xs:inline sm:inline">{t('next')}</span>
           <ChevronRight className="h-3.5 w-3.5" />
@@ -282,7 +282,7 @@ export function Pagination({
             title={t('pagination.lastPage')}
             aria-label={t('pagination.lastPage')}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 dark:text-slate-200 active:scale-95 disabled:pointer-events-none disabled:opacity-40',
+              'flex h-8 w-8 items-center justify-center rounded-xl border border-border/80 bg-card text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40',
               safePage >= totalPages ? 'hidden sm:flex' : '',
             )}
           >

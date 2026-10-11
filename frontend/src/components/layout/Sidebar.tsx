@@ -138,7 +138,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
       aria-modal={drawer ? true : undefined}
       aria-label={t('sidebar.mainMenu')}
       className={cn(
-        'shrink-0 flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 transition-[width] duration-200',
+        'shrink-0 flex-col overflow-hidden border-r border-border bg-card text-secondary-foreground transition-[width] duration-200',
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] shadow-2xl animate-slide-in-left md:relative md:z-auto md:shadow-none md:animate-none'
           : 'relative hidden md:flex',
@@ -147,7 +147,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
     >
       <div
         className={cn(
-          'relative flex h-16 items-center gap-2 border-b border-slate-200 dark:border-slate-800 px-5',
+          'relative flex h-16 items-center gap-2 border-b border-border px-5',
           collapsed && 'justify-center px-3',
         )}
       >
@@ -168,10 +168,10 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
           />
           {!collapsed ? (
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate font-display text-sm font-bold tracking-tight text-slate-900 dark:text-white">
+              <p className="truncate font-display text-sm font-bold tracking-tight text-foreground">
                 MoR LMS
               </p>
-              <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="truncate text-[11px] text-muted-foreground">
                 {t('sidebar.learningManagementSystem')}
               </p>
             </div>
@@ -182,7 +182,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
             type="button"
             onClick={onMobileClose}
             aria-label={t('sidebar.closeMenu')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -195,7 +195,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
               ? t('sidebar.expandSidebar')
               : t('sidebar.collapseSidebar')
           }
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-subtle-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
       </div>
 
       {!collapsed ? (
-        <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
           {t('sidebar.navigation')}
         </p>
       ) : null}
@@ -235,11 +235,11 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                     'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     collapsed && 'justify-center px-0',
                     groupActive
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400" />
+                  <Icon className="h-4 w-4 shrink-0 text-subtle-foreground group-hover:text-primary" />
                   {!collapsed ? <span className="flex-1 text-left">{translatedLabel}</span> : null}
                   {!collapsed ? (
                     <ChevronDown
@@ -251,7 +251,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                   <div
                     className={cn(
                       'mt-1 space-y-1',
-                      collapsed ? '' : 'ml-4 border-l border-slate-200 dark:border-slate-800 pl-3',
+                      collapsed ? '' : 'ml-4 border-l border-border pl-3',
                     )}
                   >
                     {item.children.map((child) => {
@@ -268,13 +268,13 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                             collapsed && 'justify-center px-0',
                             active
                               ? 'bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20'
-                              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                           )}
                         >
                           <ChildIcon
                             className={cn(
                               'h-4 w-4 shrink-0 transition-colors',
-                              active ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400',
+                              active ? 'text-white' : 'text-subtle-foreground group-hover:text-primary',
                             )}
                           />
                           {!collapsed ? childTranslated : null}
@@ -298,13 +298,13 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                 collapsed && 'justify-center px-0',
                 active
                   ? 'bg-gradient-to-r from-indigo-500/90 to-violet-500/80 text-white shadow-lg shadow-indigo-500/20'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200',
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
               <Icon
                 className={cn(
                   'h-4 w-4 shrink-0 transition-colors',
-                  active ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400',
+                  active ? 'text-white' : 'text-subtle-foreground group-hover:text-primary',
                 )}
               />
               {!collapsed ? translatedLabel : null}
@@ -316,7 +316,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
         })}
       </nav>
 
-      <div className="relative border-t border-slate-200 dark:border-slate-800 p-3 space-y-1">
+      <div className="relative border-t border-border p-3 space-y-1">
         {/* On phones the header has no room for these, so the drawer carries them. */}
         <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:hidden">
           <LanguageToggle placement="up-start" />
@@ -328,11 +328,11 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
           onClick={() => logout()}
           title={collapsed ? (t('header.logOut')) : undefined}
           className={cn(
-            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300',
+            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger-soft hover:text-danger/80',
             collapsed && 'justify-center px-0',
           )}
         >
-          <LogOut className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+          <LogOut className="h-4 w-4 shrink-0 text-danger" />
           {!collapsed ? (t('header.logOut')) : null}
         </Link>
       </div>

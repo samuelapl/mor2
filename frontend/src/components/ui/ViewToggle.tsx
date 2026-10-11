@@ -12,7 +12,7 @@ interface ViewToggleProps {
 
 export function ViewToggle({ view, onChange }: ViewToggleProps) {
   return (
-    <div className="flex items-center rounded-xl border border-slate-200/80 bg-white p-1 shadow-sm">
+    <div className="flex items-center rounded-xl border border-border/80 bg-card p-1 shadow-sm">
       <button
         type="button"
         onClick={() => onChange('table')}
@@ -20,7 +20,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
           'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
           view === 'table'
             ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm'
-            : 'text-slate-500 hover:text-slate-900',
+            : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <TableIcon className="h-3.5 w-3.5" /> Table
@@ -32,7 +32,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
           'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
           view === 'grid'
             ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm'
-            : 'text-slate-500 hover:text-slate-900',
+            : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <LayoutGrid className="h-3.5 w-3.5" /> Grid

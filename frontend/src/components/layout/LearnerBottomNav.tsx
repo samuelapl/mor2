@@ -42,14 +42,14 @@ export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
     cn(
       'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors',
       active
-        ? 'text-indigo-600 dark:text-indigo-400'
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200',
+        ? 'text-primary'
+        : 'text-muted-foreground hover:text-foreground',
     );
 
   return (
     <nav
       aria-label={t('learnerBottomNav.learnerNavigation')}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="flex h-16 items-stretch">
         {tabs.map(({ href, icon: Icon, labelKey }) => {
@@ -64,7 +64,7 @@ export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
               <span
                 className={cn(
                   'flex h-7 w-12 items-center justify-center rounded-full transition-colors',
-                  active && 'bg-indigo-50 dark:bg-indigo-500/15',
+                  active && 'bg-primary-soft',
                 )}
               >
                 <Icon className="h-5 w-5" />

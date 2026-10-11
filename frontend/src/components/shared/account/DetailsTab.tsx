@@ -12,9 +12,9 @@ type BadgeVariant = Parameters<typeof Badge>[0]['variant'];
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 last:border-0">
-      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</span>
-      <span className="text-sm text-slate-700">{value}</span>
+    <div className="flex items-center justify-between gap-4 border-b border-border/60 py-3 last:border-0">
+      <span className="text-xs font-semibold uppercase tracking-wide text-subtle-foreground">{label}</span>
+      <span className="text-sm text-secondary-foreground">{value}</span>
     </div>
   );
 }
@@ -29,7 +29,7 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
 
   if (loading || !profile) {
     return (
-      <div className="flex items-center justify-center py-12 text-slate-400">
+      <div className="flex items-center justify-center py-12 text-subtle-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
     );
@@ -50,7 +50,7 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
   const status = statusOf(profile);
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-border/60">
       <Row label={t('email')} value={profile.email} />
       <Row
         label={t('publicFooter.roles')}

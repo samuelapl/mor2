@@ -57,7 +57,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   if (!ready || !currentUser || blocked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">
+      <div className="flex min-h-screen items-center justify-center bg-muted text-sm text-muted-foreground">
         Loading workspace…
       </div>
     );

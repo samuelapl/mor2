@@ -9,9 +9,9 @@ import { passwordIssues } from '@/constants/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 const EMPTY_FORM = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
@@ -25,7 +25,7 @@ function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
       <button
         type="button"
         onClick={() => setVisible((prev) => !prev)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle-foreground transition-colors hover:text-secondary-foreground focus:outline-none"
         aria-label={
           visible
             ? t('passwordInput.hidePassword')
@@ -120,7 +120,7 @@ export default function SecurityTab() {
       </div>
 
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger">{error}</p>
       ) : null}
 
       <Button

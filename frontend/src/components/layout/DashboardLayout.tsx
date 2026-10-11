@@ -30,18 +30,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   // When inside the classroom or course review, cover everything (no dashboard sidebar, no dashboard header)
   if (isClassroom || isCourseReview) {
-    return <div className="relative h-dvh w-screen overflow-hidden bg-slate-50 dark:bg-slate-900">{children}</div>;
+    return <div className="relative h-dvh w-screen overflow-hidden bg-muted">{children}</div>;
   }
 
   // Regular dashboard layout
   return (
-    <div className="relative flex h-dvh overflow-hidden bg-slate-50/70 dark:bg-slate-950">
+    <div className="relative flex h-dvh overflow-hidden bg-background">
       <Sidebar mobileOpen={drawerOpen} onMobileClose={() => setDrawerOpen(false)} />
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-white dark:bg-slate-900">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-card">
         <Header onMenuClick={() => setDrawerOpen(true)} menuOpen={drawerOpen} />
         <main
           className={cn(
-            'flex-1 overflow-y-auto overflow-x-hidden bg-slate-50/50 dark:bg-slate-950',
+            'flex-1 overflow-y-auto overflow-x-hidden bg-background',
             // Room for the bottom tab bar (and the iPhone home indicator) on phones.
             isLearnerArea && 'pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0',
           )}

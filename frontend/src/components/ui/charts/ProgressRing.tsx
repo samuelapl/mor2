@@ -37,7 +37,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#f1f5f9"
+          className="stroke-secondary"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -55,16 +55,16 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
-        <span className="font-display text-2xl font-bold tracking-tight text-slate-900 leading-none">
+        <span className="font-display text-2xl font-bold tracking-tight text-foreground leading-none">
           {safePercent}%
         </span>
         {subtitle && (
-          <span className="mt-1 text-[10px] font-medium text-slate-400 uppercase tracking-wider leading-tight">
+          <span className="mt-1 text-[10px] font-medium text-subtle-foreground uppercase tracking-wider leading-tight">
             {subtitle}
           </span>
         )}
         {title && (
-          <span className="mt-0.5 text-xs font-semibold text-slate-600 truncate max-w-[80px]">
+          <span className="mt-0.5 text-xs font-semibold text-secondary-foreground truncate max-w-[80px]">
             {title}
           </span>
         )}

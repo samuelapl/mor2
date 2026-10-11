@@ -2,7 +2,7 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('animate-pulse rounded-lg bg-slate-200/80', className)} {...props} />;
+  return <div className={cn('animate-pulse rounded-lg bg-border/80', className)} {...props} />;
 }
 
 export function TableSkeleton({
@@ -17,16 +17,16 @@ export function TableSkeleton({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs',
+        'overflow-hidden rounded-2xl border border-border/90 bg-card shadow-xs',
         className,
       )}
     >
-      <div className="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3.5 flex gap-4">
+      <div className="border-b border-border/80 bg-muted/80 px-4 py-3.5 flex gap-4">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={`th-${i}`} className={cn('h-3.5', i === 0 ? 'w-36' : 'flex-1')} />
         ))}
       </div>
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-border/60">
         {Array.from({ length: rows }).map((_, r) => (
           <div key={`tr-${r}`} className="px-4 py-4 flex items-center gap-4">
             {Array.from({ length: columns }).map((_, c) => (
@@ -51,7 +51,7 @@ export function CardSkeleton({ count = 3, className }: { count?: number; classNa
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`card-skel-${i}`}
-          className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4"
+          className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-4"
         >
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-xl" />
@@ -77,7 +77,7 @@ export function StatCardSkeleton({ count = 4, className }: { count?: number; cla
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`stat-skel-${i}`}
-          className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3"
+          className="rounded-2xl border border-border/90 bg-card p-5 shadow-xs space-y-3"
         >
           <div className="flex justify-between items-center">
             <Skeleton className="h-3.5 w-24" />

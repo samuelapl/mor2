@@ -10,9 +10,9 @@ import type { ApiUser } from '@/lib/api/types';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10';
+  'w-full rounded-xl border border-border/90 bg-card px-3.5 py-2.5 text-sm text-secondary-foreground shadow-sm outline-none transition placeholder:text-subtle-foreground focus:border-ring focus:ring-4 focus:ring-ring/10';
 
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-secondary-foreground';
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase();
@@ -111,7 +111,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-slate-400">
+      <div className="flex items-center justify-center py-12 text-subtle-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
     );
@@ -126,7 +126,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
             <img
               src={avatarUrl}
               alt="Avatar"
-              className="h-16 w-16 rounded-full object-cover shadow-md ring-2 ring-white"
+              className="h-16 w-16 rounded-full object-cover shadow-md ring-2 ring-popover"
             />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-lg font-semibold text-white shadow-md">
@@ -137,7 +137,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 transition hover:text-indigo-600 disabled:opacity-50"
+            className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-card text-muted-foreground shadow ring-1 ring-border transition hover:text-primary disabled:opacity-50"
             aria-label={t('profileTab.changeAvatar')}
           >
             {uploadingAvatar ? (
@@ -155,10 +155,10 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
           />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-900">
+          <p className="truncate text-sm font-medium text-foreground">
             {form.firstName} {form.lastName}
           </p>
-          <p className="truncate text-xs text-slate-500">{profile?.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
         </div>
       </div>
 
@@ -203,7 +203,7 @@ export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabPr
       </div>
 
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger">{error}</p>
       ) : null}
 
       <Button

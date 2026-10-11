@@ -34,10 +34,10 @@ export function ConfirmModal({
   const Icon = variant === 'danger' ? AlertCircle : AlertTriangle;
   const iconColor =
     variant === 'danger'
-      ? 'text-rose-600 bg-rose-50 border-rose-100'
+      ? 'text-danger bg-danger-soft border-danger/20'
       : variant === 'warning'
-        ? 'text-amber-600 bg-amber-50 border-amber-100'
-        : 'text-indigo-600 bg-indigo-50 border-indigo-100';
+        ? 'text-warning bg-warning-soft border-warning/20'
+        : 'text-primary bg-primary-soft border-primary/20';
 
   return (
     <Modal
@@ -71,7 +71,7 @@ export function ConfirmModal({
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-slate-600 leading-relaxed">{description}</div>
+          <div className="text-sm text-secondary-foreground leading-relaxed">{description}</div>
         </div>
       </div>
     </Modal>

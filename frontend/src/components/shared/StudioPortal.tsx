@@ -21,7 +21,7 @@ export function StudioPortal({ children }: { children: ReactNode }) {
 
   if (!mounted) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950">{children}</div>,
+    <div className="fixed inset-0 z-[100] bg-background">{children}</div>,
     document.body,
   );
 }

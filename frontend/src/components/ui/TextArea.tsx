@@ -20,8 +20,8 @@ export function TextArea({ id, value, onChange, placeholder, rows = 3, label, er
   return (
     <div className={cn('w-full space-y-1.5', className)}>
       {label && (
-        <label htmlFor={id} className="block text-xs font-semibold text-slate-600">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={id} className="block text-xs font-semibold text-secondary-foreground">
+          {label} {required && <span className="text-danger">*</span>}
         </label>
       )}
       <textarea
@@ -34,14 +34,14 @@ export function TextArea({ id, value, onChange, placeholder, rows = 3, label, er
         disabled={disabled}
         aria-invalid={Boolean(error)}
         className={cn(
-          'block w-full resize-y rounded-xl border bg-white px-3 py-2 text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400',
+          'block w-full resize-y rounded-xl border bg-card px-3 py-2 text-sm text-foreground shadow-xs outline-none transition placeholder:text-subtle-foreground',
           error
-            ? 'border-red-300 ring-2 ring-red-500/10 focus:border-red-500'
-            : 'border-slate-200/90 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10',
-          disabled && 'bg-slate-50 opacity-75',
+            ? 'border-danger/40 ring-2 ring-danger/10 focus:border-danger'
+            : 'border-border/90 focus:border-ring focus:ring-4 focus:ring-ring/10',
+          disabled && 'bg-muted opacity-75',
         )}
       />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
     </div>
   );
 }

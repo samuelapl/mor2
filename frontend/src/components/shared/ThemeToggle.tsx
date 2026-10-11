@@ -34,20 +34,20 @@ export function ThemeToggle() {
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-label="Toggle theme"
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 shadow-sm backdrop-blur transition-all hover:border-indigo-200 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md active:scale-95"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/80 bg-card/70 text-muted-foreground shadow-sm backdrop-blur transition-all hover:border-primary/30 hover:text-primary hover:shadow-md active:scale-95"
       >
         <Icon className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-[80] w-40 overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/60 animate-scale-in">
+        <div className="absolute right-0 top-11 z-[80] w-40 overflow-hidden rounded-xl border border-border/80 bg-popover shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/60 animate-scale-in">
           {OPTIONS.map(({ value, icon: Ic, labelKey }) => (
             <button
               key={value}
               type="button"
               onClick={() => { setTheme(value); setOpen(false); }}
               className={cn(
-                'flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/60',
-                theme === value ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-slate-700 dark:text-slate-300',
+                'flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-muted',
+                theme === value ? 'text-primary font-medium' : 'text-secondary-foreground',
               )}
             >
               <Ic className="h-4 w-4" />
