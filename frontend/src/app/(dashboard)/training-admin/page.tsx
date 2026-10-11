@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -13,9 +13,8 @@ import {
   Video,
 } from 'lucide-react';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useDashboardStats } from '@/lib/api/useDashboardStats';
-import { fetchLiveSessions } from '@/lib/api/monitoring';
-import type { ApiLiveSession } from '@/lib/api/types';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -34,29 +33,16 @@ export default function TrainingAdminDashboardPage() {
   const { lang } = useTranslation();
   const isAmharic = lang === 'am';
 
-  const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const sessionList = useLiveSessionStore((s) => s.sessions);
+  const sessionsLoaded = useLiveSessionStore((s) => s.sessionsLoaded);
+  const loadSessions = useLiveSessionStore((s) => s.loadSessions);
+  // This dashboard showed the first 50 sessions; the server order is the same for any limit.
+  const sessions = useMemo(() => sessionList.slice(0, 50), [sessionList]);
+  const sessionsLoading = !sessionsLoaded;
 
   useEffect(() => {
-    let cancelled = false;
-    setSessionsLoading(true);
-    fetchLiveSessions({ limit: 50 })
-      .then((res) => {
-        if (!cancelled) {
-          setSessions(res.data);
-          setSessionsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSessions([]);
-          setSessionsLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadSessions();
+  }, [loadSessions]);
 
   const published = courses.filter((c) => c.published);
   const underReview = courses.filter((c) => c.status === 'under_review');

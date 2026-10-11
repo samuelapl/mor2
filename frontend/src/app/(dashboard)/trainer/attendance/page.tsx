@@ -27,10 +27,9 @@ import {
   X,
   Send,
 } from 'lucide-react';
-import type { ApiAttendance, ApiLiveSession, BackendAttendanceStatus } from '@/lib/api/types';
+import type { ApiAttendance, BackendAttendanceStatus } from '@/lib/api/types';
 import {
   bulkMarkAttendance,
-  fetchLiveSessions,
   fetchSessionAttendance,
   markAttendance,
   overrideAttendance,
@@ -38,6 +37,7 @@ import {
 } from '@/lib/api/monitoring';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useUserName, useUserStore } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
@@ -68,10 +68,8 @@ export default function TrainerAttendancePage() {
   const userName = useUserName();
   const { can } = usePermissions();
   const { tBilingual } = useTranslation();
-  const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
   const [attendanceRecords, setAttendanceRecords] = useState<ApiAttendance[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -98,25 +96,27 @@ export default function TrainerAttendancePage() {
     [courses, currentUser],
   );
 
-  // Load live sessions
+  // Live sessions for the trainer's assigned courses (all sessions when none are assigned)
+  const sessionList = useLiveSessionStore((s) => s.sessions);
+  const fetchSessions = useLiveSessionStore((s) => s.loadSessions);
+  const sessions = useMemo(
+    () =>
+      assignedCourses.length > 0
+        ? sessionList.filter((s) => assignedCourses.some((c) => c.id === s.courseId))
+        : sessionList,
+    [sessionList, assignedCourses],
+  );
+
   const loadSessions = async () => {
-    setLoadingSessions(true);
-    try {
-      const res = await fetchLiveSessions({ limit: 100 });
-      let my = res.data;
-      if (assignedCourses.length > 0) {
-        my = res.data.filter((s) => assignedCourses.some((c) => c.id === s.courseId));
-      }
-      setSessions(my);
-      if (my.length > 0 && !selectedSessionId) {
-        setSelectedSessionId(my[0].id);
-      }
-    } catch {
-      setSessions([]);
-    } finally {
-      setLoadingSessions(false);
-    }
+    await fetchSessions();
   };
+
+  // Pick the first session once the list arrives
+  useEffect(() => {
+    if (sessions.length > 0 && !selectedSessionId) {
+      setSelectedSessionId(sessions[0].id);
+    }
+  }, [sessions, selectedSessionId]);
 
   useEffect(() => {
     void loadSessions();

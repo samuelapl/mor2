@@ -16,11 +16,11 @@ import {
   PlayCircle,
   Video,
 } from 'lucide-react';
-import { fetchUpcomingSessions } from '@/lib/api/monitoring';
 import type { ApiLiveSession, ApiVenue } from '@/lib/api/types';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
 import PageShell from '@/components/shared/PageShell';
@@ -45,8 +45,10 @@ export default function LearnerDashboardPage() {
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress } = useCourseProgress(enrolled.map((c) => c.id));
 
-  const [upcomingSessions, setUpcomingSessions] = useState<ApiLiveSession[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const upcomingSessions = useLiveSessionStore((s) => s.upcoming);
+  const upcomingLoaded = useLiveSessionStore((s) => s.upcomingLoaded);
+  const loadUpcoming = useLiveSessionStore((s) => s.loadUpcoming);
+  const sessionsLoading = !upcomingLoaded;
 
   // Modals / Workspaces
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
@@ -59,25 +61,8 @@ export default function LearnerDashboardPage() {
   } | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    setSessionsLoading(true);
-    fetchUpcomingSessions()
-      .then((res) => {
-        if (!cancelled) {
-          setUpcomingSessions(res.data);
-          setSessionsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setUpcomingSessions([]);
-          setSessionsLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadUpcoming();
+  }, [loadUpcoming]);
 
   const percentOf = (courseId: string) => progress[courseId]?.stats.overallPercent ?? 0;
   const completed = enrolled.filter((c) => percentOf(c.id) >= 100);

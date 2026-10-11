@@ -15,7 +15,8 @@ import {
   Video,
 } from 'lucide-react';
 import type { ApiAuditLog } from '@/lib/api/types';
-import { fetchAuditLogs, fetchLiveSessions } from '@/lib/api/monitoring';
+import { fetchAuditLogs } from '@/lib/api/monitoring';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { useDashboardStats } from '@/lib/api/useDashboardStats';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -40,22 +41,17 @@ export default function SystemAdminDashboardPage() {
   const { lang, t } = useTranslation();
   const isAmharic = lang === 'am';
 
-  const [activeSessions, setActiveSessions] = useState(0);
+  const sessions = useLiveSessionStore((s) => s.sessions);
+  const loadSessions = useLiveSessionStore((s) => s.loadSessions);
+  const activeSessions = useMemo(
+    () => sessions.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE').length,
+    [sessions],
+  );
   const [recentLogs, setRecentLogs] = useState<ApiAuditLog[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    fetchLiveSessions({ limit: 100 })
-      .then((res) => {
-        if (!cancelled) {
-          setActiveSessions(
-            res.data.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE').length,
-          );
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setActiveSessions(0);
-      });
+    void loadSessions();
     fetchAuditLogs({ limit: 6 })
       .then((res) => {
         if (!cancelled) setRecentLogs(res.data);

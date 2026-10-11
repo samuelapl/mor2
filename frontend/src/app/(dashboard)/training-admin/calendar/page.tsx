@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
-import type { ApiLiveSession } from '@/lib/api/types';
-import { fetchLiveSessions } from '@/lib/api/monitoring';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -16,28 +15,18 @@ import { SessionDetailModal } from '@/components/features/sessions/shared/Sessio
 export default function CalendarPage() {
   const { tBilingual } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
-  const [loading, setLoading] = useState(true);
+  const sessionList = useLiveSessionStore((s) => s.sessions);
+  const sessionsLoaded = useLiveSessionStore((s) => s.sessionsLoaded);
+  const loadSessions = useLiveSessionStore((s) => s.loadSessions);
+  const sessions = useMemo(
+    () => sessionList.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE'),
+    [sessionList],
+  );
+  const loading = !sessionsLoaded;
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetchLiveSessions({ limit: 100 })
-      .then((res) => {
-        if (!cancelled) {
-          setSessions(res.data.filter((s) => s.status === 'SCHEDULED' || s.status === 'LIVE'));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setSessions([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadSessions();
+  }, [loadSessions]);
 
   const rows = sessions.map<SessionRow>((session) => ({
     session,

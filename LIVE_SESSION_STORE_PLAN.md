@@ -114,7 +114,7 @@ Replace each local `useState` + `useEffect` fetch with `useLiveSessionStore((s) 
 
 | Phase | Work | TypeScript | Browser | Status |
 | :--- | :--- | :---: | :---: | :--- |
-| A | Store + `resetAll` hook | [ ] | n/a | Pending |
-| B | Changes go through store | [ ] | [ ] | Pending |
-| C | 8 list consumers read store | [ ] | [ ] | Pending |
-| D | Freshness review | [ ] | [ ] | Pending |
+| A | Store + `resetAll` hook | [x] | n/a | Done (committed) |
+| B | Changes go through store | [x] | [ ] | Committed — awaiting browser check |
+| C | 8 list consumers read store | [x] | [ ] | Awaiting browser check |
+| D | Freshness review | [x] | [ ] | Every list page still refetches on mount (cached list shown meanwhile) — no polling added |

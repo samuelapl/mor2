@@ -19,11 +19,11 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { fetchCourseAssessments } from '@/lib/api/quiz';
 import { fetchCourseLearnersProgress } from '@/lib/api/progress';
-import { fetchLiveSessions } from '@/lib/api/monitoring';
 import type { ApiLearnerProgress, ApiLiveSession } from '@/lib/api/types';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
@@ -50,8 +50,10 @@ export default function TrainerDashboardPage() {
 
   const assigned = courses.filter((c) => c.trainerId === currentUser?.id);
 
-  const [allSessions, setAllSessions] = useState<ApiLiveSession[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const sessionList = useLiveSessionStore((s) => s.sessions);
+  const sessionsLoaded = useLiveSessionStore((s) => s.sessionsLoaded);
+  const loadSessions = useLiveSessionStore((s) => s.loadSessions);
+  const sessionsLoading = !sessionsLoaded;
 
   // Overlays
   const [activeLiveSession, setActiveLiveSession] = useState<ApiLiveSession | null>(null);
@@ -64,27 +66,13 @@ export default function TrainerDashboardPage() {
 
   useEffect(() => {
     if (!currentUser) return;
-    let cancelled = false;
-    const assignedIds = new Set(assigned.map((c) => c.id));
+    void loadSessions();
+  }, [currentUser?.id, loadSessions]);
 
-    setSessionsLoading(true);
-    fetchLiveSessions({ limit: 100 })
-      .then((res) => {
-        if (cancelled) return;
-        const relevant = res.data.filter((s) => assignedIds.has(s.courseId));
-        setAllSessions(relevant);
-        setSessionsLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setAllSessions([]);
-          setSessionsLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser?.id, assigned.length]);
+  const allSessions = useMemo(() => {
+    const assignedIds = new Set(assigned.map((c) => c.id));
+    return sessionList.filter((s) => assignedIds.has(s.courseId));
+  }, [sessionList, assigned]);
 
   const upcomingSessions = allSessions.filter(
     (s) => s.status === 'SCHEDULED' || s.status === 'LIVE',

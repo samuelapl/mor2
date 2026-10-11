@@ -16,7 +16,8 @@ import {
   Video,
   X,
 } from 'lucide-react';
-import { fetchUpcomingSessions, selfCheckIn } from '@/lib/api/monitoring';
+import { selfCheckIn } from '@/lib/api/monitoring';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { ApiError } from '@/lib/api/client';
 import { tr } from '@/constants/labels';
@@ -51,7 +52,8 @@ export default function LearnerLiveSessionsPage() {
     () => allCourses.filter((c) => c.enrolledLearnerIds.includes(me)),
     [allCourses, me],
   );
-  const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
+  const sessions = useLiveSessionStore((s) => s.upcoming);
+  const loadUpcoming = useLiveSessionStore((s) => s.loadUpcoming);
   const [loadingJoinId, setLoadingJoinId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -67,21 +69,21 @@ export default function LearnerLiveSessionsPage() {
   const [selectedCourseFilter, setSelectedCourseFilter] = useState('ALL');
 
   const load = () => {
-    fetchUpcomingSessions()
-      .then((res) => {
-        setSessions(res.data);
-        if (targetSessionId) {
-          const match = res.data.find(
-            (s) => s.id === targetSessionId || (s as any).sessionId === targetSessionId,
-          );
-          if (match) {
-            setActiveSession(match);
-          }
+    void loadUpcoming().then((list) => {
+      const { upcomingError } = useLiveSessionStore.getState();
+      if (upcomingError) {
+        setError(upcomingError instanceof ApiError ? upcomingError.message : 'Failed to load live sessions.');
+        return;
+      }
+      if (targetSessionId) {
+        const match = list.find(
+          (s) => s.id === targetSessionId || (s as any).sessionId === targetSessionId,
+        );
+        if (match) {
+          setActiveSession(match);
         }
-      })
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.message : 'Failed to load live sessions.'),
-      );
+      }
+    });
   };
 
   useEffect(() => {
