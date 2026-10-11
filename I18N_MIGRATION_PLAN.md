@@ -165,6 +165,21 @@ Write `scripts/i18n-extract.ts`. Given a folder and a namespace, it:
 
 Skipped cases, such as dynamic strings, JSX inside a translation, or strings built across several statements, are listed for manual conversion.
 
+**Usage:**
+
+```
+cd frontend
+node scripts/i18n-extract.mjs --ns sessions --dry-run src/components/features/sessions   # report only
+node scripts/i18n-extract.mjs --ns sessions src/components/features/sessions             # apply
+npm run i18n:check && npx tsc --noEmit
+```
+
+**What the script leaves for manual conversion, by design:**
+- **`{ en, am }` objects stored in config and passed around as values** (e.g. `SessionsManager`'s `SCOPE_CONFIG`). Store the key instead, e.g. `titleKey: 'sessionsManager.allSessionsTitle'`, then call `t(config.titleKey)`.
+- **Text whose language comes from a prop or parameter instead of the UI language** (e.g. `StartsInBadge`'s `isAmharic` prop, certificates rendered in a chosen language). Pass `t` down, or keep the language explicit if it is intentionally not the UI language.
+- **Spots where a local variable named `t` exists**, e.g. `.map((t) => …)`. Rename the local variable, then rerun.
+- **English and Amharic that interpolate different values**, e.g. `formatStartsIn(s, true)` vs `formatStartsIn(s)`.
+
 ### Phase 4 — Migrate folder by folder
 Order: smallest first to prove the script, then the rest. Each step:
 - `--dry-run`, review the report
@@ -218,6 +233,6 @@ Order: smallest first to prove the script, then the rest. Each step:
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | 1 | `locale-store.ts` | [x] | n/a | [x] | Done |
 | 2 | Catalog + `t()` + `translate()` + check script | [x] | [x] | [x] | Done |
-| 3 | Extraction script | [ ] | n/a | n/a | Pending |
+| 3 | Extraction script | [x] | n/a | n/a | Done (tested on sessions + courses/creator, reverted) |
 | 4.1–4.12 | Folder migrations | [ ] | [ ] | [ ] | Pending |
 | 5 | Cleanup + guard | [ ] | [ ] | [ ] | Pending |
