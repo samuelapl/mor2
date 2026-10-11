@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 
 /** Footer shared by the landing page and the public news pages. */
 export default function PublicFooter() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
 
   return (
     <footer className="border-t border-slate-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-950">
@@ -25,39 +25,39 @@ export default function PublicFooter() {
                 MoR LMS
               </p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                {tBilingual('Ministry of Revenues • Ethiopia', 'የገቢዎች ሚኒስቴር • ኢትዮጵያ')}
+                {t('publicFooter.ministryOfRevenuesEthiopia')}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
             <Link href="/#capabilities" className="hover:text-sky-700 dark:hover:text-sky-400">
-              {tBilingual('Capabilities', 'ችሎታዎች')}
+              {t('publicFooter.capabilities')}
             </Link>
             <Link href="/#roles" className="hover:text-sky-700 dark:hover:text-sky-400">
-              {tBilingual('Roles', 'የስራ ድርሻዎች')}
+              {t('publicFooter.roles')}
             </Link>
             <Link href="/#how-it-works" className="hover:text-sky-700 dark:hover:text-sky-400">
-              {tBilingual('Workflow', 'የስራ ሂደት')}
+              {t('publicFooter.workflow')}
             </Link>
             <Link href="/news" className="hover:text-sky-700 dark:hover:text-sky-400">
-              {tBilingual('News', 'ዜና')}
+              {t('publicFooter.news')}
             </Link>
             <Link
               href="/#desktop"
               data-desktop-app-only="true"
               className="hover:text-sky-700 dark:hover:text-sky-400"
             >
-              {tBilingual('Windows Client', 'የዴስክቶፕ መተግበሪያ')}
+              {t('publicFooter.windowsClient')}
             </Link>
             <Link href="/login" className="hover:text-sky-700 dark:hover:text-sky-400">
-              {tBilingual('Sign In', 'መግቢያ')}
+              {t('publicFooter.signIn')}
             </Link>
           </div>
 
           <p className="text-[11px] text-slate-400">
             © {new Date().getFullYear()}{' '}
-            {tBilingual('Ministry of Revenues. All rights reserved.', 'የገቢዎች ሚኒስቴር። መብቱ በህግ የተጠበቀ ነው።')}
+            {t('publicFooter.ministryOfRevenuesAllRightsReserved')}
           </p>
         </div>
       </div>

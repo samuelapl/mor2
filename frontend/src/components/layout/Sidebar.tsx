@@ -42,7 +42,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
   const currentUser = useAuthStore((s) => s.currentUser);
   const logout = useAuthStore((s) => s.logout);
   const { canAny } = usePermissions();
-  const { tNav, t, isAmharic } = useTranslation();
+  const { tNav, t, isAmharic } = useTranslation('common');
   const role = currentUser?.role ?? getRoleFromPath(pathname) ?? 'learner';
   const navItems = filterNavItems(navItemsForRole(role), canAny);
 
@@ -136,7 +136,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
       id="dashboard-sidebar"
       role={drawer ? 'dialog' : undefined}
       aria-modal={drawer ? true : undefined}
-      aria-label={isAmharic ? 'ዋና ማውጫ' : 'Main menu'}
+      aria-label={t('sidebar.mainMenu')}
       className={cn(
         'shrink-0 flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 transition-[width] duration-200',
         mobileOpen
@@ -172,7 +172,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                 MoR LMS
               </p>
               <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                {isAmharic ? 'የትምህርት አስተዳደር ሥርዓት' : 'Learning Management System'}
+                {t('sidebar.learningManagementSystem')}
               </p>
             </div>
           ) : null}
@@ -181,7 +181,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
           <button
             type="button"
             onClick={onMobileClose}
-            aria-label={isAmharic ? 'ማውጫውን ዝጋ' : 'Close menu'}
+            aria-label={t('sidebar.closeMenu')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
           >
             <X className="h-5 w-5" />
@@ -192,12 +192,8 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
           onClick={() => setCollapsedPref(!collapsed)}
           title={
             collapsed
-              ? isAmharic
-                ? 'አስፋ'
-                : 'Expand sidebar'
-              : isAmharic
-                ? 'አሳንስ'
-                : 'Collapse sidebar'
+              ? t('sidebar.expandSidebar')
+              : t('sidebar.collapseSidebar')
           }
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
         >
@@ -212,7 +208,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
 
       {!collapsed ? (
         <p className="relative px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          {isAmharic ? 'አቅጣጫ መጠቆሚያ' : 'Navigation'}
+          {t('sidebar.navigation')}
         </p>
       ) : null}
       <nav
@@ -330,14 +326,14 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
         <Link
           href="/login"
           onClick={() => logout()}
-          title={collapsed ? (isAmharic ? 'ውጣ' : 'Log out') : undefined}
+          title={collapsed ? (t('header.logOut')) : undefined}
           className={cn(
             'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300',
             collapsed && 'justify-center px-0',
           )}
         >
           <LogOut className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
-          {!collapsed ? (isAmharic ? 'ውጣ' : 'Log out') : null}
+          {!collapsed ? (t('header.logOut')) : null}
         </Link>
       </div>
     </aside>

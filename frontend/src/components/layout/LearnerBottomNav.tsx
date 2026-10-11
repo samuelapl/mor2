@@ -5,15 +5,16 @@ import { usePathname } from 'next/navigation';
 import { BookOpen, LayoutDashboard, Menu, Store, Video, type LucideIcon } from 'lucide-react';
 import { navItemsForRole } from '@/constants/navigation';
 import { usePermissions } from '@/lib/usePermissions';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 import { filterNavItems } from './Sidebar';
 
-const TABS: { href: string; icon: LucideIcon; en: string; am: string }[] = [
-  { href: '/learner', icon: LayoutDashboard, en: 'Home', am: 'መነሻ' },
-  { href: '/learner/catalog', icon: Store, en: 'Catalog', am: 'ኮርሶች' },
-  { href: '/learner/my-courses', icon: BookOpen, en: 'My courses', am: 'የእኔ' },
-  { href: '/learner/live-sessions', icon: Video, en: 'Live', am: 'ቀጥታ' },
+const TABS: { href: string; icon: LucideIcon; labelKey: NamespaceKey<'common'> }[] = [
+  { href: '/learner', icon: LayoutDashboard, labelKey: 'learnerBottomNav.home' },
+  { href: '/learner/catalog', icon: Store, labelKey: 'learnerBottomNav.catalog' },
+  { href: '/learner/my-courses', icon: BookOpen, labelKey: 'learnerBottomNav.myCourses' },
+  { href: '/learner/live-sessions', icon: Video, labelKey: 'learnerBottomNav.live' },
 ];
 
 /**
@@ -24,7 +25,7 @@ const TABS: { href: string; icon: LucideIcon; en: string; am: string }[] = [
 export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
   const pathname = usePathname() ?? '';
   const { canAny } = usePermissions();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('common');
 
   const allowed = new Set(
     filterNavItems(navItemsForRole('learner'), canAny).flatMap((item) =>
@@ -47,11 +48,11 @@ export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      aria-label={tBilingual('Learner navigation', 'የተማሪ ማውጫ')}
+      aria-label={t('learnerBottomNav.learnerNavigation')}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="flex h-16 items-stretch">
-        {tabs.map(({ href, icon: Icon, en, am }) => {
+        {tabs.map(({ href, icon: Icon, labelKey }) => {
           const active = isActive(href);
           return (
             <Link
@@ -68,7 +69,7 @@ export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
               >
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="max-w-full truncate px-1">{tBilingual(en, am)}</span>
+              <span className="max-w-full truncate px-1">{t(labelKey)}</span>
             </Link>
           );
         })}
@@ -76,7 +77,7 @@ export default function LearnerBottomNav({ onMore }: { onMore: () => void }) {
           <span className="flex h-7 w-12 items-center justify-center rounded-full">
             <Menu className="h-5 w-5" />
           </span>
-          <span className="max-w-full truncate px-1">{tBilingual('More', 'ተጨማሪ')}</span>
+          <span className="max-w-full truncate px-1">{t('learnerBottomNav.more')}</span>
         </button>
       </div>
     </nav>

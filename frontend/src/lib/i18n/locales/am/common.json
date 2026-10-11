@@ -54,7 +54,20 @@
   "loading": "በመጫን ላይ...",
   "quickActions": "ፈጣን ተግባራት",
   "recentActivity": "የቅርብ ጊዜ እንቅስቃሴዎች",
-  "status": "ሁኔታ",
+  "status": {
+    "draft": "ረቂቅ",
+    "under_review": "ማጽደቅ የሚጠብቅ",
+    "pending_approval": "ማጽደቅ የሚጠብቅ",
+    "approved": "የጸደቀ",
+    "published": "የታተመ",
+    "not_published": "ያልታተመ",
+    "completed": "የተጠናቀቀ",
+    "rejected": "ውድቅ የተደረገ",
+    "archived": "የተቀመጠ",
+    "pending": "በመጠባበቅ ላይ",
+    "active": "ንቁ",
+    "suspended": "የታገደ"
+  },
   "category": "ምድብ",
   "department": "ክፍል",
   "applicant": "አመልካች",
@@ -168,5 +181,68 @@
   "learnerCertificatesTitle": "የእኔ ሰርተፊኬቶች",
   "learnerCertificatesDesc": "ስልጠናዎችን በተሳካ ሁኔታ በማጠናቀቅ የተገኙ ይፋዊ ሰርተፊኬቶች።",
   "learnerProgressTitle": "የመማር እድገት እና ትንተና",
-  "learnerProgressDesc": "የትምህርት ማጠናቀቂያ፣ የፈተና ውጤቶች እና አጠቃላይ የክንውን ዝርዝር ትንተና።"
+  "learnerProgressDesc": "የትምህርት ማጠናቀቂያ፣ የፈተና ውጤቶች እና አጠቃላይ የክንውን ዝርዝር ትንተና።",
+  "header": {
+    "openMenu": "ማውጫ ክፈት",
+    "markAllRead": "ሁሉንም አንብብ",
+    "account": "መለያ",
+    "logOut": "ውጣ"
+  },
+  "learnerBottomNav": {
+    "learnerNavigation": "የተማሪ ማውጫ",
+    "more": "ተጨማሪ",
+    "home": "መነሻ",
+    "catalog": "ኮርሶች",
+    "myCourses": "የእኔ",
+    "live": "ቀጥታ"
+  },
+  "publicFooter": {
+    "ministryOfRevenuesEthiopia": "የገቢዎች ሚኒስቴር • ኢትዮጵያ",
+    "capabilities": "ችሎታዎች",
+    "roles": "የስራ ድርሻዎች",
+    "workflow": "የስራ ሂደት",
+    "news": "ዜና",
+    "windowsClient": "የዴስክቶፕ መተግበሪያ",
+    "signIn": "መግቢያ",
+    "ministryOfRevenuesAllRightsReserved": "የገቢዎች ሚኒስቴር። መብቱ በህግ የተጠበቀ ነው።"
+  },
+  "publicHeader": {
+    "platformOverview": "አጠቃላይ እይታ",
+    "roleWorkspaces": "የስራ ድርሻ ቦታዎች",
+    "desktopApp": "የዴስክቶፕ መተግበሪያ",
+    "faq": "ተደጋጋሚ ጥያቄዎች",
+    "federalDemocraticRepublicOfEthiopiaMinis": "የኢትዮጵያ ፌዴራላዊ ዴሞክራሲያዊ ሪፐብሊክ • የገቢዎች ሚኒስቴር የስልጠና ማዕከል",
+    "ministryOfRevenues": "የገቢዎች ሚኒስቴር",
+    "myDashboard": "የእኔ ዳሽቦርድ",
+    "signIn": "ግባ",
+    "getStarted": "ስርዓቱን ጀምር"
+  },
+  "sidebar": {
+    "mainMenu": "ዋና ማውጫ",
+    "learningManagementSystem": "የትምህርት አስተዳደር ሥርዓት",
+    "closeMenu": "ማውጫውን ዝጋ",
+    "expandSidebar": "አስፋ",
+    "collapseSidebar": "አሳንስ",
+    "navigation": "አቅጣጫ መጠቆሚያ"
+  },
+  "userStatusBadge": {
+    "emailNotVerified": "ኢሜይል ያልተረጋገጠ"
+  },
+  "pagination": {
+    "perPage": "በአንድ ገጽ:",
+    "itemsPerPage": "በአንድ ገጽ የሚታዩ ንጥሎች",
+    "firstPage": "ወደ መጀመሪያው ገጽ",
+    "previousPage": "ቀዳሚ ገጽ",
+    "jumpBack3Pages": "3 ገጾች ወደ ኋላ ዝለል",
+    "jumpForward3Pages": "3 ገጾች ወደ ፊት ዝለል",
+    "nextPage": "ቀጣይ ገጽ",
+    "lastPage": "ወደ መጨረሻው ገጽ",
+    "showingRange": "ከ {total} ውስጥ {range} በማሳየት ላይ",
+    "pageOf": "ገጽ {page} ከ {pages}"
+  },
+  "courseLevel": {
+    "basic": "መሰረታዊ",
+    "intermediate": "መካከለኛ",
+    "advanced": "ከፍተኛ"
+  }
 }

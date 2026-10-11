@@ -2,6 +2,7 @@
 
 import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
+import { lookupIn } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 type BadgeVariant = 'slate' | 'amber' | 'blue' | 'green' | 'red' | 'outline' | 'indigo';
@@ -46,28 +47,14 @@ const LEVEL_VARIANT: Record<string, BadgeVariant> = {
   advanced: 'indigo',
 };
 
-const LEVEL_LABEL_EN: Record<string, string> = {
-  basic: 'Basic',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-};
-
-const LEVEL_LABEL_AM: Record<string, string> = {
-  basic: 'መሰረታዊ',
-  intermediate: 'መካከለኛ',
-  advanced: 'ከፍተኛ',
-};
-
 export function courseLevelVariant(level: string): BadgeVariant {
   return LEVEL_VARIANT[level] ?? 'slate';
 }
 
+/** Course level label (locales common.courseLevel.*). English unless `isAmharic` is passed. */
 export function courseLevelLabel(level: string, isAmharic?: boolean): string {
-  const norm = (level || '').toLowerCase();
-  if (isAmharic) {
-    return LEVEL_LABEL_AM[norm] ?? LEVEL_LABEL_EN[norm] ?? level;
-  }
-  return LEVEL_LABEL_EN[norm] ?? level;
+  const key = `common.courseLevel.${(level || '').toLowerCase()}`;
+  return (isAmharic && lookupIn('am', key)) || lookupIn('en', key) || level;
 }
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -106,42 +93,11 @@ export function Badge({
   );
 }
 
-const STATUS_LABELS_EN: Record<string, string> = {
-  draft: 'Draft',
-  under_review: 'Pending Approval',
-  pending_approval: 'Pending Approval',
-  approved: 'Approved',
-  published: 'Published',
-  not_published: 'Not Published',
-  completed: 'Completed',
-  rejected: 'Rejected',
-  archived: 'Archived',
-  pending: 'Pending',
-  active: 'Active',
-  suspended: 'Suspended',
-};
-
-const STATUS_LABELS_AM: Record<string, string> = {
-  draft: 'ረቂቅ',
-  under_review: 'ማጽደቅ የሚጠብቅ',
-  pending_approval: 'ማጽደቅ የሚጠብቅ',
-  approved: 'የጸደቀ',
-  published: 'የታተመ',
-  not_published: 'ያልታተመ',
-  completed: 'የተጠናቀቀ',
-  rejected: 'ውድቅ የተደረገ',
-  archived: 'የተቀመጠ',
-  pending: 'በመጠባበቅ ላይ',
-  active: 'ንቁ',
-  suspended: 'የታገደ',
-};
-
 export function CourseStatusBadge({ status }: { status: string }) {
-  const { isAmharic } = useTranslation();
+  const { lang } = useTranslation();
   const norm = (status || '').toLowerCase();
-  const label = isAmharic
-    ? (STATUS_LABELS_AM[norm] ?? STATUS_LABELS_EN[norm] ?? status)
-    : (STATUS_LABELS_EN[norm] ?? status);
+  const key = `common.status.${norm}`;
+  const label = lookupIn(lang, key) ?? lookupIn('en', key) ?? status;
 
   return (
     <Badge variant={statusBadgeVariant(norm)} dot>
@@ -151,12 +107,12 @@ export function CourseStatusBadge({ status }: { status: string }) {
 }
 
 export function UserStatusBadge({ status }: { status: string }) {
-  const { isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('common');
   // A pending user is a self-registration that has not verified its email yet.
   if (status.toLowerCase() === 'pending') {
     return (
       <Badge variant="amber" dot>
-        {isAmharic ? 'ኢሜይል ያልተረጋገጠ' : 'Email not verified'}
+        {t('userStatusBadge.emailNotVerified')}
       </Badge>
     );
   }

@@ -13,6 +13,10 @@
  * Only text whose language comes from the UI language (useTranslation() / the locale store) is
  * converted. Everything else is listed in the report for manual conversion, as are spots where a
  * local `t` would shadow the hook's `t`.
+ *
+ * --objects [--key-prop labelKey]: instead, converts `{ en: '…', am: '…' }` object literals (config
+ * tables, option lists). A pure `{ en, am }` becomes the key string; inside a larger object the en/am
+ * pair becomes `labelKey: 'key'`. The code that reads them must then call t() — tsc points to it.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,10 +26,12 @@ import ts from 'typescript';
 // CLI
 // ---------------------------------------------------------------------------------------------
 const argv = process.argv.slice(2);
-const opt = { ns: null, dryRun: false, targets: [] };
+const opt = { ns: null, dryRun: false, objects: false, keyProp: 'labelKey', targets: [] };
 for (let i = 0; i < argv.length; i++) {
   if (argv[i] === '--ns') opt.ns = argv[++i];
   else if (argv[i] === '--dry-run') opt.dryRun = true;
+  else if (argv[i] === '--objects') opt.objects = true;
+  else if (argv[i] === '--key-prop') opt.keyProp = argv[++i];
   else opt.targets.push(argv[i]);
 }
 if (!opt.ns || opt.targets.length === 0) {
@@ -242,6 +248,11 @@ function runPass() {
     const skip = (n, why) => report.skipped.push({ at: loc(n), why, code: n.getText(sf).slice(0, 110).replace(/\s+/g, ' ') });
 
     const visit = (node) => {
+      if (opt.objects) {
+        if (ts.isObjectLiteralExpression(node)) collectObject(node);
+        ts.forEachChild(node, visit);
+        return;
+      }
       if (ts.isCallExpression(node)) {
         if (calleeName(node) === 'tBilingual') collectTBilingual(node);
         else if (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'tBilingual') skip(node, 'tBilingual called as a member — convert by hand');
@@ -266,6 +277,20 @@ function runPass() {
       }
       if (!en || !am) return skip(call, 'tBilingual arguments are not plain text');
       addSite(call, en, am, { hookDecl }, names, call.arguments.length === 1 && !ts.isObjectLiteralExpression(obj));
+    };
+
+    const collectObject = (obj) => {
+      const prop = (k) => obj.properties.find((p) => ts.isPropertyAssignment(p) && p.name.getText(sf).replace(/['"]/g, '') === k);
+      const enP = prop('en');
+      const amP = prop('am');
+      if (!enP || !amP) return;
+      const names = new Map();
+      const en = readText(enP.initializer, sf, names);
+      const am = readText(amP.initializer, sf, names);
+      if (!en || !am) return skip(obj, '{ en, am } values are not plain text');
+      if (en.exprs.length || am.exprs.length) return skip(obj, '{ en, am } with interpolation — convert by hand');
+      const pure = obj.properties.length === 2;
+      sites.push({ node: obj, en, am, source: {}, names, enOnly: false, scope: scopeName(obj, sf), object: pure ? 'pure' : { enP, amP } });
     };
 
     const collectTernary = (cond) => {
@@ -337,6 +362,25 @@ function runPass() {
       }
       if (s.source.anchor) anchorPlans.set(s.source.anchor, true);
       const { key, reused } = keyFor(s.scope, s.en.text, s.am.text);
+      if (s.object) {
+        if (s.object === 'pure') edits.push({ start: s.node.getStart(sf), end: s.node.end, text: `${quote}${key}${quote}` });
+        else {
+          const [first, second] = [s.object.enP, s.object.amP].sort((a, b) => a.getStart(sf) - b.getStart(sf));
+          const between = sf.text.slice(first.end, second.getStart(sf));
+          const keyProp = `${opt.keyProp}: ${quote}${key}${quote}`;
+          if (/^\s*,\s*$/.test(between)) {
+            // adjacent `en: …, am: …` → one property, keeping whatever follows `am` as is
+            edits.push({ start: first.getStart(sf), end: second.end, text: keyProp });
+          } else {
+            // separated by other properties: replace `en`, remove `am` with its comma
+            edits.push({ start: first.getStart(sf), end: first.end, text: keyProp });
+            const after = sf.text.slice(second.end).match(/^\s*,/)?.[0].length ?? 0;
+            edits.push({ start: second.getFullStart(), end: second.end + after, text: '' });
+          }
+        }
+        report.converted.push({ at: loc(s.node), key: `${NS}.${key}`, en: s.en.text, am: s.am.text, reused, enOnly: false });
+        continue;
+      }
       const vars = [...s.names.entries()].map(([expr, name]) => (expr === name ? name : `${name}: ${expr}`));
       const call = vars.length ? `t(${quote}${key}${quote}, { ${vars.join(', ')} })` : `t(${quote}${key}${quote})`;
       edits.push({ start: s.node.getStart(sf), end: s.node.end, text: call });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { createElement, Fragment, useCallback, type ReactNode } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useLocaleStore } from '@/lib/stores/locale-store';
 import type { ActionResult, Lang, Role } from '@/types';
@@ -17,6 +17,8 @@ export type BilingualInput = string | { en: string; am: string };
 
 /** `t` for a namespace takes keys relative to it; without a namespace it takes full keys. */
 type TFunction<K extends string> = (key: K, vars?: TranslationVars) => string;
+/** Like `t`, but placeholder values may be JSX (e.g. `{ total: <strong>{n}</strong> }`). */
+type TRichFunction<K extends string> = (key: K, vars: Record<string, ReactNode>) => ReactNode[];
 
 export function useTranslation(): TranslationApi<TranslationKey>;
 export function useTranslation<N extends Namespace>(namespace: N): TranslationApi<NamespaceKey<N>>;
@@ -27,6 +29,17 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
   const t = useCallback(
     (key: string, vars?: TranslationVars): string =>
       translateIn(lang, namespace ? `${namespace}.${key}` : key, vars),
+    [lang, namespace],
+  );
+
+  const tRich = useCallback(
+    (key: string, vars: Record<string, ReactNode>): ReactNode[] => {
+      const template = translateIn(lang, namespace ? `${namespace}.${key}` : key);
+      return template.split(/(\{\w+\})/).map((part, i) => {
+        const name = /^\{(\w+)\}$/.exec(part)?.[1];
+        return createElement(Fragment, { key: i }, name !== undefined && name in vars ? vars[name] : part);
+      });
+    },
     [lang, namespace],
   );
 
@@ -74,6 +87,7 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
 
   return {
     t,
+    tRich,
     tBilingual,
     tRole,
     tRoleDesc,
@@ -88,6 +102,7 @@ export function useTranslation(namespace?: Namespace): TranslationApi<string> {
 
 export interface TranslationApi<K extends string> {
   t: TFunction<K>;
+  tRich: TRichFunction<K>;
   /** @deprecated Inline bilingual text — use `t('key')` with locales/en + locales/am. */
   tBilingual: (enOrEntry: BilingualInput, amFallback?: string) => string;
   tRole: (role?: Role | string | null) => string;

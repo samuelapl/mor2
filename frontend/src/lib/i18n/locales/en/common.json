@@ -54,7 +54,20 @@
   "loading": "Loading...",
   "quickActions": "Quick actions",
   "recentActivity": "Recent activity",
-  "status": "Status",
+  "status": {
+    "draft": "Draft",
+    "under_review": "Pending Approval",
+    "pending_approval": "Pending Approval",
+    "approved": "Approved",
+    "published": "Published",
+    "not_published": "Not Published",
+    "completed": "Completed",
+    "rejected": "Rejected",
+    "archived": "Archived",
+    "pending": "Pending",
+    "active": "Active",
+    "suspended": "Suspended"
+  },
   "category": "Category",
   "department": "Department",
   "applicant": "Applicant",
@@ -168,5 +181,68 @@
   "learnerCertificatesTitle": "My Certificates",
   "learnerCertificatesDesc": "Certificates earned from successfully completing training courses.",
   "learnerProgressTitle": "Learning Progress & Analytics",
-  "learnerProgressDesc": "Detailed analytics on lesson completions, quiz results, and performance milestones."
+  "learnerProgressDesc": "Detailed analytics on lesson completions, quiz results, and performance milestones.",
+  "header": {
+    "openMenu": "Open menu",
+    "markAllRead": "Mark all read",
+    "account": "Account",
+    "logOut": "Log out"
+  },
+  "learnerBottomNav": {
+    "learnerNavigation": "Learner navigation",
+    "more": "More",
+    "home": "Home",
+    "catalog": "Catalog",
+    "myCourses": "My courses",
+    "live": "Live"
+  },
+  "publicFooter": {
+    "ministryOfRevenuesEthiopia": "Ministry of Revenues • Ethiopia",
+    "capabilities": "Capabilities",
+    "roles": "Roles",
+    "workflow": "Workflow",
+    "news": "News",
+    "windowsClient": "Windows Client",
+    "signIn": "Sign In",
+    "ministryOfRevenuesAllRightsReserved": "Ministry of Revenues. All rights reserved."
+  },
+  "publicHeader": {
+    "platformOverview": "Platform Overview",
+    "roleWorkspaces": "Role Workspaces",
+    "desktopApp": "Desktop App",
+    "faq": "FAQ",
+    "federalDemocraticRepublicOfEthiopiaMinis": "Federal Democratic Republic of Ethiopia • Ministry of Revenues Enterprise LMS",
+    "ministryOfRevenues": "Ministry of Revenues",
+    "myDashboard": "My Dashboard",
+    "signIn": "Sign In",
+    "getStarted": "Get Started"
+  },
+  "sidebar": {
+    "mainMenu": "Main menu",
+    "learningManagementSystem": "Learning Management System",
+    "closeMenu": "Close menu",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "navigation": "Navigation"
+  },
+  "userStatusBadge": {
+    "emailNotVerified": "Email not verified"
+  },
+  "pagination": {
+    "perPage": "Per page:",
+    "itemsPerPage": "Items per page",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "jumpBack3Pages": "Jump back 3 pages",
+    "jumpForward3Pages": "Jump forward 3 pages",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "showingRange": "Showing {range} of {total} results",
+    "pageOf": "Page {page} of {pages}"
+  },
+  "courseLevel": {
+    "basic": "Basic",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  }
 }

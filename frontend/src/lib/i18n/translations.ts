@@ -11,8 +11,15 @@ export interface TranslationEntry {
   am: string;
 }
 
-function pair<T extends Record<string, string>>(en: T, am: T): Record<string, TranslationEntry> {
-  return Object.fromEntries(Object.keys(en).map((key) => [key, { en: en[key], am: am[key] ?? en[key] }]));
+/** Flat `key → { en, am }` view of a namespace's top-level strings (nested groups are skipped). */
+function pair(en: object, am: object): Record<string, TranslationEntry> {
+  const e = en as Record<string, unknown>;
+  const a = am as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.keys(e)
+      .filter((key) => typeof e[key] === 'string')
+      .map((key) => [key, { en: e[key] as string, am: typeof a[key] === 'string' ? (a[key] as string) : (e[key] as string) }]),
+  );
 }
 
 export const ROLE_TRANSLATIONS = pair(catalogs.en.roles.names, catalogs.am.roles.names) as Record<Role, TranslationEntry>;
