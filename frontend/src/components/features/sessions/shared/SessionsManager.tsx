@@ -19,14 +19,10 @@ import {
 } from "lucide-react";
 import type { ApiLiveSession } from "@/lib/api/types";
 import type { Role } from "@/types";
-import {
-  deleteLiveSession,
-  fetchLiveSessions,
-  sendSessionAttendanceReport,
-  setSessionStatus,
-} from "@/lib/api/monitoring";
+import { sendSessionAttendanceReport } from "@/lib/api/monitoring";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useCourseStore } from "@/lib/stores/course-store";
+import { useLiveSessionStore } from "@/lib/stores/live-session-store";
 import { useUserStore } from "@/lib/stores/user-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
@@ -151,8 +147,14 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sessionToDelete, setSessionToDelete] = useState<ApiLiveSession | null>(null);
-  const [sessions, setSessions] = useState<ApiLiveSession[]>([]);
-  const [loading, setLoading] = useState(true);
+  const sessions = useLiveSessionStore((s) => s.sessions);
+  const sessionsLoaded = useLiveSessionStore((s) => s.sessionsLoaded);
+  const refreshing = useLiveSessionStore((s) => s.loadingSessions);
+  const fetchSessions = useLiveSessionStore((s) => s.loadSessions);
+  const setSessionStatus = useLiveSessionStore((s) => s.setStatus);
+  const deleteLiveSession = useLiveSessionStore((s) => s.deleteSession);
+  // Skeletons only until the first list arrives; later refreshes keep showing the list.
+  const loading = !sessionsLoaded;
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [activeJoinSession, setActiveJoinSession] = useState<ApiLiveSession | null>(null);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
@@ -178,16 +180,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const role = currentUser?.role ?? config.defaultRole;
 
   const loadSessions = () => {
-    setLoading(true);
-    fetchLiveSessions({ limit: 100 })
-      .then((res) => {
-        setSessions(res.data);
-      })
-      .catch((err) => {
-        console.error("Failed to load sessions:", err);
-        setSessions([]);
-      })
-      .finally(() => setLoading(false));
+    void fetchSessions();
   };
 
   useEffect(() => {
@@ -286,9 +279,6 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
           // Best effort report generation
         }
       }
-      setSessions((prev) =>
-        prev.map((s) => (s.id === session.id ? { ...s, status: newStatus } : s)),
-      );
       toast.success(`Session status updated to ${newStatus}.`);
     } catch {
       toast.error("Failed to update session status.");
@@ -312,7 +302,6 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       );
       void refreshCourse(sessionToDelete.courseId);
       setSessionToDelete(null);
-      loadSessions();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete session.");
     } finally {
@@ -455,8 +444,8 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
               </Button>
             )}
 
-            <Button variant="ghost" size="sm" onClick={loadSessions} disabled={loading} className="h-8 gap-1 text-xs text-slate-600">
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="ghost" size="sm" onClick={loadSessions} disabled={refreshing} className="h-8 gap-1 text-xs text-slate-600">
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
               {tBilingual("Refresh", "አድስ")}
             </Button>
           </div>
@@ -650,7 +639,6 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
             // The course's planned session is now scheduled: refresh it for the course pages.
             void refreshCourse(courseId);
             toast.success("Live training session successfully scheduled and persisted.");
-            loadSessions();
           }}
           courses={scheduleCourses}
         />
@@ -663,7 +651,6 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
         onUpdated={() => {
           setEditingSession(null);
           toast.success("Live training session has been updated / rescheduled.");
-          loadSessions();
         }}
         courses={courses}
       />

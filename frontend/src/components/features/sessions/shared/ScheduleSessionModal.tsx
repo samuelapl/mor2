@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { RichTextArea } from "@/components/ui/RichTextArea";
 import { ApiError } from "@/lib/api/client";
-import { scheduleSession } from "@/lib/api/monitoring";
+import { useLiveSessionStore } from "@/lib/stores/live-session-store";
 import { fetchSessionPlans } from "@/lib/api/session-plans";
 import type { ApiSessionPlan } from "@/lib/api/types";
 import { fetchTrainers } from "@/lib/api/users";
@@ -71,6 +71,8 @@ export function ScheduleSessionModal({
   const [descriptionEn, setDescriptionEn] = useState("");
   const [objectivesEn, setObjectivesEn] = useState("");
   const currentUser = useAuthStore((s) => s.currentUser);
+  const scheduleSession = useLiveSessionStore((s) => s.scheduleSession);
+  const invalidateSessions = useLiveSessionStore((s) => s.invalidate);
   const { can } = usePermissions();
   // With manage_all the scheduler picks the host; with only manage_own they host it themselves.
   const canPickTrainer = can("live_session.manage_all");
@@ -348,6 +350,7 @@ export function ScheduleSessionModal({
         descriptionEn: descriptionEn.trim() || undefined,
         venueSessions: payloadSessions,
       });
+      invalidateSessions();
 
       toast.success(
         `Successfully created ${venueRows.length} in-person sessions across assigned branch venues!`,

@@ -10,6 +10,7 @@ import type { User } from '@/types';
 import { useAuthStore } from './auth-store';
 import { useCourseStore } from './course-store';
 import { useEnrollmentStore } from './enrollment-store';
+import { useLiveSessionStore } from './live-session-store';
 import { fullName } from './store-utils';
 import { useUserStore } from './user-store';
 
@@ -109,6 +110,7 @@ export function resetAll(): void {
   useUserStore.getState().reset();
   useCourseStore.getState().reset();
   useEnrollmentStore.getState().reset();
+  useLiveSessionStore.getState().reset();
 }
 
 /** Marks a course as enrolled for `learnerId` locally, before the full reload finishes. */

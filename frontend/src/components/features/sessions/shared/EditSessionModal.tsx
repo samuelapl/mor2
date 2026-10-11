@@ -8,7 +8,7 @@ import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Button } from '@/components/ui/Button';
 import { RichTextArea } from '@/components/ui/RichTextArea';
 import { ApiError } from '@/lib/api/client';
-import { updateLiveSession } from '@/lib/api/monitoring';
+import { useLiveSessionStore } from '@/lib/stores/live-session-store';
 import { fetchTrainers } from '@/lib/api/users';
 import { SearchableTrainerSelect } from './SearchableTrainerSelect';
 import { SessionStartNotice } from './SessionStartNotice';
@@ -32,6 +32,7 @@ export function EditSessionModal({
   session,
   courses,
 }: EditSessionModalProps) {
+  const updateLiveSession = useLiveSessionStore((s) => s.updateSession);
   const [trainerId, setTrainerId] = useState('');
   const [availableTrainers, setAvailableTrainers] = useState<ApiUser[]>([]);
   const [trainersLoading, setTrainersLoading] = useState(false);
