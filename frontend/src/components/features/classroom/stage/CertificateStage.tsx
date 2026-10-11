@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CalendarClock,
 } from 'lucide-react';
+import { formatSessionDateTime } from '@/lib/app-time';
 import type { Course } from '@/types';
 import type {
   ApiCourseProgress,
@@ -484,7 +485,7 @@ function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) 
               <span className="font-medium">{s.titleEn}</span>
               {' — '}
               {s.scheduledAt
-                ? new Date(s.scheduledAt).toLocaleString(isAmharic ? 'am-ET' : undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                ? formatSessionDateTime(s.scheduledAt, isAmharic ? 'am-ET' : undefined)
                 : tBilingual('date to be announced', 'ቀኑ ይገለጻል')}
               {s.status === 'CANCELLED' ? ` (${tBilingual('cancelled — to be rescheduled', 'ተሰርዟል — እንደገና ይታቀዳል')})` : ''}
             </li>

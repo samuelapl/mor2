@@ -14,6 +14,8 @@ import {
   Video,
   XCircle,
 } from 'lucide-react';
+import { APP_TIME_ZONE, APP_TIME_ZONE_LABEL } from '@/lib/app-time';
+import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBadge';
 import type { ApiLearnerSession } from '@/lib/api/types';
 import { fetchLiveSession, fetchSessionJoinUrl } from '@/lib/api/monitoring';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
@@ -39,11 +41,13 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
   const [selectedSession, setSelectedSession] = useState<ApiLearnerSession | null>(null);
   const [activeVirtualSession, setActiveVirtualSession] = useState<any | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  // Platform time (EAT), whatever the browser's time zone.
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleString(isAmharic ? 'am-ET' : undefined, {
+    `${new Date(iso).toLocaleString(isAmharic ? 'am-ET' : 'en-US', {
+      timeZone: APP_TIME_ZONE,
       dateStyle: 'full',
       timeStyle: 'short',
-    });
+    })} ${APP_TIME_ZONE_LABEL}`;
 
   const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
@@ -143,6 +147,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     {s.scheduledAt ? fmt(s.scheduledAt) : tBilingual('Date to be announced', 'ቀኑ ይገለጻል')}
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${tBilingual('min', 'ደቂቃ')}` : ''}
                   </p>
+                  <StartsInBadge seconds={s.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
                   {(s.platform || s.trainerName) && (
                     <p className="mt-0.5 text-xs text-slate-500">
                       {[s.platform ? (PLATFORM_LABEL[s.platform] ?? s.platform) : null, s.trainerName].filter(Boolean).join(' · ')}
@@ -298,6 +303,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
                   {selectedSession.scheduledAt ? fmt(selectedSession.scheduledAt) : tBilingual('To be announced', 'ቀኑ ይገለጻል')}
                 </p>
+                <StartsInBadge seconds={selectedSession.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
               </div>
 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">

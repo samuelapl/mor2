@@ -28,10 +28,12 @@ import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatClock } from '@/core/utils/formatters';
 import {
+  blockFileUrls,
   ClassroomStage,
   FileRow,
   LessonBody,
-  fileNameFromUrl,
+  lessonBlocks,
+  SlideDeckStage,
   useLesson,
 } from '@/features/classroom';
 import { SyllabusDrawer } from '@/features/courses';
@@ -354,24 +356,25 @@ export default function LessonScreen() {
     [data?.attachments],
   );
 
-  // File attachments stay at the bottom; non-video resource files also go here
+  // The lesson's content blocks in order (notes, slide decks, media), read like the web.
+  const blocks = useMemo(
+    () =>
+      data
+        ? lessonBlocks({
+            content: data.content ?? data.contentEn,
+            contentType: data.contentType,
+            resourceUrl: data.resourceUrl,
+          })
+        : [],
+    [data],
+  );
+
+  // Attachments are the lesson's handouts only: files shown in the lesson (slide decks, block
+  // media, videos) are not repeated here.
   const downloadableAttachments = useMemo(() => {
-    const files = (data?.attachments ?? []).filter((f) => !isVideoAttachment(f));
-    if (
-      data?.resourceUrl &&
-      (data.contentType === 'DOCUMENT' || data.contentType === 'PRESENTATION') &&
-      !files.some((f) => f.fileUrl === data.resourceUrl)
-    ) {
-      files.unshift({
-        id: 'lesson-resource-doc',
-        fileName: fileNameFromUrl(data.resourceUrl, data.title ?? data.titleEn ?? 'Document'),
-        fileUrl: data.resourceUrl,
-        fileType: 'application/pdf',
-        sizeBytes: 0,
-      });
-    }
-    return files;
-  }, [data]);
+    const shown = new Set(blockFileUrls(blocks));
+    return (data?.attachments ?? []).filter((f) => !isVideoAttachment(f) && !shown.has(f.fileUrl));
+  }, [data, blocks]);
 
   // Video media player stage: only video attachments & video resourceUrls are placed at the top
   const effectiveLesson = useMemo(() => {
@@ -742,7 +745,43 @@ export default function LessonScreen() {
               </Card>
             ) : null}
 
-            {body ? <LessonBody content={body} /> : null}
+            {blocks.map((block) => {
+              if (block.type === 'DOCUMENT') {
+                // Legacy notes follow the reading language; studio blocks carry their own HTML.
+                const html = block.id === 'legacy-notes' ? body : block.content;
+                return html?.trim() ? <LessonBody key={block.id} content={html} /> : null;
+              }
+              if (block.type === 'PRESENTATION') {
+                return block.url ? (
+                  <SlideDeckStage
+                    key={`${block.id}:${block.url}`}
+                    url={block.url}
+                    fileName={block.fileName}
+                    title={block.title}
+                  />
+                ) : null;
+              }
+              // VIDEO / AUDIO: the lesson's main media plays at the top; other block media here.
+              if (
+                !block.url ||
+                block.url === data.resourceUrl ||
+                block.url === effectiveLesson?.resourceUrl
+              ) {
+                return null;
+              }
+              return (
+                <ClassroomStage
+                  key={block.id}
+                  lesson={{ ...data, contentType: block.type, resourceUrl: block.url }}
+                  startAt={0}
+                  onPlayingChange={() => undefined}
+                  onPosition={() => undefined}
+                  onPause={() => undefined}
+                  onEnded={() => undefined}
+                  onExternalTime={heartbeat.addSeconds}
+                />
+              );
+            })}
 
             {/* Downloadable file attachments at the bottom */}
             {downloadableAttachments.length > 0 ? (

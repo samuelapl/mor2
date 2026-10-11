@@ -263,7 +263,11 @@
     "playVideoToUnlock": "Play the video to unlock the quiz",
     "playAudioToUnlock": "Play the audio to unlock the quiz",
     "keepStudyingToUnlock": "Keep studying — unlocks in {{time}}",
-    "finishTopicsToUnlock": "Finish all topics in this lesson to unlock the quiz"
+    "finishTopicsToUnlock": "Finish all topics in this lesson to unlock the quiz",
+    "slideDeck": "Slide deck",
+    "deckLoading": "Loading slides…",
+    "deckFailed": "Could not display this slide deck.",
+    "deckPages": "Pages: {{count}}"
   },
   "quiz": {
     "questionOf": "Question {{number}} of {{total}}",
@@ -370,7 +374,7 @@
     "rejoin": "Open meeting",
     "iLeft": "I've left",
     "ended": "This session has ended.",
-    "joinWindow": "You can join from 15 minutes before the start time.",
+    "joinWindow": "You can join from 5 minutes before the start time.",
     "meetingPassword": "Meeting password",
     "attendanceLabel": "Your attendance",
     "watchRecording": "Watch recording",
@@ -414,7 +418,9 @@
     "capacity": "{{count}} seats",
     "facilities": "Facilities",
     "offlineTitle": "Connection required",
-    "offlineBody": "Live sessions need an internet connection."
+    "offlineBody": "Live sessions need an internet connection.",
+    "startsIn": "Starts in {{time}}",
+    "timeZoneNote": "Times are in EAT (Addis Ababa)."
   },
   "certificates": {
     "empty": "No certificates yet",
@@ -568,8 +574,8 @@
     "notTaken": "Not taken",
     "weightPoints": "{{weight}}% weight · {{points}} pts",
     "sessionsPendingTitle": "Certificate waits for {{count}} live session quiz(zes)",
-    "sessionsPendingBody": "Still to be held: {{names}}. Your grade is final once they are done.",
-    "sessionsPendingGeneric": "Your grade is final once every live session has been held."
+    "sessionsPendingBody": "Attend an upcoming round of: {{names}}. Your grade is final once each session quiz has your result.",
+    "sessionsPendingGeneric": "Attend an upcoming round of each live session you have not taken the quiz in. Your grade is final once each session quiz has your result."
   },
   "laws": {
     "title": "Tax & Customs Laws",

@@ -9,8 +9,9 @@
  * - The certificate needs every assessment passed AND course grade ≥ the global mark.
  *   Session quizzes are the exception: they only count towards the grade. A missed one
  *   scores 0 and blocks the certificate only through the grade.
- * - A session quiz must be *closed* (its session completed and graded) before the
- *   certificate: an unscheduled, upcoming, live or cancelled session keeps it open.
+ * - A session quiz must be *closed* for the learner before the certificate: they have a
+ *   result from a held round of it. Missed sessions are rescheduled, so a learner without
+ *   one still has a round to attend; newer rounds never reopen a quiz already taken.
  */
 
 export interface GradableAssessment {
@@ -21,25 +22,17 @@ export interface GradableAssessment {
   passingScore: number;
   /** Submitted attempts, any order. */
   attempts: Array<{ score: number; passed: boolean }>;
-  /** Session quizzes: false while their session has not been completed (see isSessionQuizClosed). */
+  /** Session quizzes: false while the learner has no result from a held round (see isSessionQuizClosed). */
   closed?: boolean;
 }
 
-/** Shape Prisma returns for `sessionPlan: SESSION_PLAN_STATUS_SELECT`. */
-export interface SessionPlanLink {
-  sessionPlan?: { liveSession: { status: string; deletedAt: Date | null } | null } | null;
+/**
+ * A session quiz is closed for a learner once a held round graded them (`attempts` are the
+ * learner's submitted attempts). Grading only writes a result for learners in that round.
+ */
+export function isSessionQuizClosed(a: { attempts: unknown[] }): boolean {
+  return a.attempts.length > 0;
 }
-
-/** A session quiz is closed once its (non-deleted) session is COMPLETED; it was graded then. */
-export function isSessionQuizClosed(a: SessionPlanLink): boolean {
-  const live = a.sessionPlan?.liveSession;
-  return Boolean(live && !live.deletedAt && live.status === 'COMPLETED');
-}
-
-/** Prisma select fragment that loads what isSessionQuizClosed needs. */
-export const SESSION_PLAN_STATUS_SELECT = {
-  select: { liveSession: { select: { status: true, deletedAt: true } } },
-} as const;
 
 export interface AssessmentGrade {
   id: string;

@@ -12,7 +12,7 @@ import {
   SessionStatus,
 } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { assertCourseWeightsTotal } from '@common/utils';
+import { assertCourseWeightsTotal, startsInSeconds } from '@common/utils';
 import { PolicyService } from '@modules/policy/policy.service';
 import {
   AddSessionQuizDto,
@@ -332,7 +332,9 @@ export class SessionPlansService {
         ...quiz,
         questionCount: Array.isArray(questions) ? questions.length : 0,
       })),
-      liveSession: p.liveSession,
+      liveSession: p.liveSession
+        ? { ...p.liveSession, startsInSeconds: startsInSeconds(p.liveSession) }
+        : null,
     };
   }
 }

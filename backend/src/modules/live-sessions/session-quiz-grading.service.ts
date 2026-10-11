@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EnrollmentStatus, Prisma } from '@prisma/client';
+import { AttendanceStatus, EnrollmentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { ProgressService } from '@modules/progress/progress.service';
 
@@ -24,7 +24,12 @@ export class SessionQuizGradingService {
     private readonly progressService: ProgressService,
   ) {}
 
-  /** Idempotent: re-grading replaces the previous result for each learner. */
+  /**
+   * Grades the learners who were in this session: those marked present or late, plus anyone who
+   * answered. A missed session is rescheduled, so absent learners keep whatever an earlier round
+   * gave them (or nothing yet) instead of a 0. Idempotent: re-grading replaces only this
+   * session's result; results from other rounds stay and the best one counts.
+   */
   async gradeSession(sessionId: string): Promise<{ quizzes: number; learners: number }> {
     const session = await this.prisma.liveSession.findUnique({
       where: { id: sessionId },
@@ -42,7 +47,7 @@ export class SessionQuizGradingService {
     });
     if (!session || session.preparedQuizzes.length === 0) return { quizzes: 0, learners: 0 };
 
-    const [enrollments, logs] = await Promise.all([
+    const [enrollments, logs, present] = await Promise.all([
       this.prisma.enrollment.findMany({
         where: {
           courseId: session.courseId,
@@ -55,6 +60,10 @@ export class SessionQuizGradingService {
         orderBy: { timestamp: 'asc' },
         select: { userId: true, metadata: true },
       }),
+      this.prisma.attendance.findMany({
+        where: { sessionId, status: { in: [AttendanceStatus.PRESENT, AttendanceStatus.LATE] } },
+        select: { userId: true },
+      }),
     ]);
 
     // Latest answer per learner per question (a learner may re-submit before the reveal).
@@ -66,6 +75,9 @@ export class SessionQuizGradingService {
       latest.get(log.userId)!.set(meta.questionId, meta);
     }
 
+    const inSession = new Set([...present.map((p) => p.userId), ...latest.keys()]);
+    const learners = enrollments.filter((e) => inSession.has(e.userId));
+
     const now = new Date();
     for (const quiz of session.preparedQuizzes) {
       // Trainer-set points per question. If none were assigned, every question counts the same
@@ -75,7 +87,7 @@ export class SessionQuizGradingService {
       const totalPoints = quiz.questions.reduce((sum, q) => sum + pointsOf(q), 0);
       const passingScore = quiz.assessment?.passingScore ?? 0;
 
-      for (const { userId } of enrollments) {
+      for (const { userId } of learners) {
         const answers = latest.get(userId);
         const answered = quiz.questions.filter((q) => answers?.has(q.questionId));
         const earned = answered.reduce(
@@ -85,15 +97,20 @@ export class SessionQuizGradingService {
         const score = totalPoints > 0 ? Math.round((earned / totalPoints) * 100) : 0;
         const missed = answered.length === 0;
 
+        // Only this session's earlier result is replaced; other rounds' results stay.
+        const thisSession = { path: ['sessionId'], equals: sessionId };
+        const otherRounds = await this.prisma.assessmentAttempt.count({
+          where: { assessmentId: quiz.assessmentId!, userId, NOT: { answers: thisSession } },
+        });
         await this.prisma.$transaction([
           this.prisma.assessmentAttempt.deleteMany({
-            where: { assessmentId: quiz.assessmentId!, userId },
+            where: { assessmentId: quiz.assessmentId!, userId, answers: thisSession },
           }),
           this.prisma.assessmentAttempt.create({
             data: {
               assessmentId: quiz.assessmentId!,
               userId,
-              attemptNumber: 1,
+              attemptNumber: otherRounds + 1,
               score,
               passed: !missed && score >= passingScore,
               answers: {
@@ -111,7 +128,7 @@ export class SessionQuizGradingService {
     }
 
     // A session result can complete the course (or tell the learner the grade fell short).
-    for (const { userId } of enrollments) {
+    for (const { userId } of learners) {
       try {
         await this.progressService.maybeCompleteCourse(userId, session.courseId);
       } catch (err) {
@@ -119,6 +136,6 @@ export class SessionQuizGradingService {
       }
     }
 
-    return { quizzes: session.preparedQuizzes.length, learners: enrollments.length };
+    return { quizzes: session.preparedQuizzes.length, learners: learners.length };
   }
 }

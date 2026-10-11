@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
 import { VerticalBarChart, BarChart } from '@/components/ui/charts';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function TrainingAdminDashboardPage() {
   const { courses } = useLms();
@@ -335,21 +336,14 @@ export default function TrainingAdminDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
               const isLive = session.status === 'LIVE';
-              const dateStr = new Date(session.scheduledAt).toLocaleDateString(
-                isAmharic ? 'am-ET' : undefined,
-                {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                },
+              // Platform time (EAT), whatever the browser's time zone.
+              const locale = isAmharic ? 'am-ET' : undefined;
+              const dateStr = formatSessionDate(
+                session.scheduledAt,
+                { weekday: 'short', month: 'short', day: 'numeric' },
+                locale,
               );
-              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(
-                isAmharic ? 'am-ET' : undefined,
-                {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                },
-              );
+              const timeStr = formatSessionTime(session.scheduledAt, locale);
 
               return (
                 <div

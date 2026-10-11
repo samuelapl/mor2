@@ -27,6 +27,7 @@ import { CurrentUser, Permissions, Public } from '@common/decorators';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards';
+import { startsInSeconds } from '@common/utils';
 import { LiveKitProvider } from './virtual/providers/livekit.provider';
 import { AttendanceService } from '@modules/attendance/attendance.service';
 
@@ -144,7 +145,8 @@ export class LiveSessionsController {
   @ApiOperation({ summary: 'Get live session details' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Param('id') id: string) {
-    return this.liveSessionsService.findById(id);
+    const session = await this.liveSessionsService.findById(id);
+    return { ...session, startsInSeconds: startsInSeconds(session) };
   }
 
   @Get('live-sessions/:id/join-url')

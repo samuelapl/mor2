@@ -2,9 +2,18 @@ import type { Locale } from '../api/types';
 
 const intlLocale = (locale: Locale) => (locale === 'am' ? 'am-ET' : 'en-US');
 
+/**
+ * Session times are shown in the platform time zone (EAT), whatever zone the phone is set to,
+ * so the app, the website and reminder emails always agree. Same setting as the backend's
+ * APP_TIMEZONE.
+ */
+export const APP_TIME_ZONE = process.env.EXPO_PUBLIC_APP_TIMEZONE || 'Africa/Addis_Ababa';
+export const APP_TIME_ZONE_LABEL = process.env.EXPO_PUBLIC_APP_TIMEZONE_LABEL || 'EAT';
+
 export function formatDate(iso: string | null | undefined, locale: Locale = 'en'): string {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString(intlLocale(locale), {
+    timeZone: APP_TIME_ZONE,
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -13,20 +22,37 @@ export function formatDate(iso: string | null | undefined, locale: Locale = 'en'
 
 export function formatDateTime(iso: string | null | undefined, locale: Locale = 'en'): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleString(intlLocale(locale), {
+  const formatted = new Date(iso).toLocaleString(intlLocale(locale), {
+    timeZone: APP_TIME_ZONE,
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
+  return `${formatted} ${APP_TIME_ZONE_LABEL}`;
 }
 
 export function formatTime(iso: string | null | undefined, locale: Locale = 'en'): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleTimeString(intlLocale(locale), {
+  const formatted = new Date(iso).toLocaleTimeString(intlLocale(locale), {
+    timeZone: APP_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
   });
+  return `${formatted} ${APP_TIME_ZONE_LABEL}`;
+}
+
+/** Time until a session starts: 376500 → "4d 8h 35m" (Amharic: "4ቀ 8ሰ 35ደ"); under a minute "<1m". */
+export function formatStartsIn(totalSeconds: number, locale: Locale = 'en'): string {
+  const [d, h, m] = locale === 'am' ? ['ቀ', 'ሰ', 'ደ'] : ['d', 'h', 'm'];
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(s / 86_400);
+  const hours = Math.floor((s % 86_400) / 3_600);
+  const minutes = Math.floor((s % 3_600) / 60);
+  if (days === 0 && hours === 0 && minutes === 0) return `<1${m}`;
+  return [days ? `${days}${d}` : null, days || hours ? `${hours}${h}` : null, `${minutes}${m}`]
+    .filter(Boolean)
+    .join(' ');
 }
 
 /** 5400 → "1h 30m", 95 → "1m 35s". */

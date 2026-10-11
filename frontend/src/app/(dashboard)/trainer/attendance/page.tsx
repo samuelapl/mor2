@@ -51,17 +51,13 @@ import { TableSkeleton } from '@/components/ui/Skeleton';
 import { ClassroomQrModal } from '@/components/features/sessions/in-person/ClassroomQrModal';
 import { toast } from '@/lib/toast';
 import { isInPersonSession } from '@/lib/session-mode';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
+// Platform time (EAT), whatever the browser's time zone.
 const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  formatSessionDate(value, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-const formatTime = (value: string) =>
-  new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+const formatTime = (value: string) => formatSessionTime(value);
 
 export default function TrainerAttendancePage() {
   const { courses, currentUser, users, userName } = useLms();

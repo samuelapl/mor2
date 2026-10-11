@@ -20,6 +20,7 @@ import {
   Wind,
   X,
 } from "lucide-react";
+import { formatSessionDate, formatSessionTime } from "@/lib/app-time";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -46,7 +47,7 @@ const FACILITY_ICONS: Record<string, any> = {
 function formatDate(iso?: string): string {
   if (!iso) return "Scheduled date";
   try {
-    return new Date(iso).toLocaleDateString("en-US", {
+    return formatSessionDate(iso, {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -60,10 +61,7 @@ function formatDate(iso?: string): string {
 function formatTime(iso?: string): string {
   if (!iso) return "Scheduled time";
   try {
-    return new Date(iso).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatSessionTime(iso);
   } catch {
     return iso;
   }

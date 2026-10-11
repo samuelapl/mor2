@@ -22,6 +22,8 @@ export interface ApiLiveSession {
   status: SessionStatus;
   scheduledAt: string;
   durationMinutes: number;
+  /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
+  startsInSeconds?: number | null;
   externalUrl: string | null;
   meetingId: string | null;
   meetingPassword: string | null;

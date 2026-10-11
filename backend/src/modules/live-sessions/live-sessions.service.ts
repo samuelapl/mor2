@@ -16,7 +16,13 @@ import {
   SessionType,
 } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { buildOrderBy, buildPaginationArgs, buildPaginatedResponse } from '@common/utils';
+import {
+  buildOrderBy,
+  buildPaginationArgs,
+  buildPaginatedResponse,
+  formatAppDateTime,
+  startsInSeconds,
+} from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
 import {
   CreateSessionDto,
@@ -240,7 +246,7 @@ export class LiveSessionsService {
             type: 'SESSION_REMINDER' as any,
             titleEn: `Live Session Scheduled: ${session.titleEn}`,
             titleAm: `የቀጥታ ክፍለ ጊዜ ቅጥር: ${session.titleAm || session.titleEn}`,
-            bodyEn: `A live training session has been scheduled for "${session.course?.title || session.titleEn}" on ${new Date(session.scheduledAt).toLocaleString()}.`,
+            bodyEn: `A live training session has been scheduled for "${session.course?.title || session.titleEn}" on ${formatAppDateTime(session.scheduledAt)}.`,
             bodyAm: `ለኮርስዎ የቀጥታ ክፍለ ጊዜ ተቀጥሯል።`,
             metadata: { sessionId: session.id, courseId } as any,
           })),
@@ -370,10 +376,12 @@ export class LiveSessionsService {
 
     // bookedSeats = active enrollments holding a seat — the same count the booking check uses.
     // Learners get the seat count but not other people's attendance rows.
+    const now = new Date();
     const withSeats = sessions.map(({ _count, attendees, ...session }) => ({
       ...session,
       ...(visibility.kind === 'enrolled' ? {} : { attendees }),
       bookedSeats: _count.enrollments,
+      startsInSeconds: startsInSeconds(session, now),
     }));
 
     return buildPaginatedResponse(withSeats, total, page, limit);
@@ -678,7 +686,13 @@ export class LiveSessionsService {
       this.prisma.liveSession.count({ where }),
     ]);
 
-    return buildPaginatedResponse(sessions, total, page, limit);
+    const now = new Date();
+    return buildPaginatedResponse(
+      sessions.map((s) => ({ ...s, startsInSeconds: startsInSeconds(s, now) })),
+      total,
+      page,
+      limit,
+    );
   }
 
   /**

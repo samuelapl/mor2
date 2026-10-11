@@ -17,7 +17,7 @@ import {
 import { useLocaleStore } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatDateTime } from '@/core/utils/formatters';
-import { SessionQuizResults } from '@/features/live-sessions';
+import { SessionQuizResults, StartsInBadge } from '@/features/live-sessions';
 import { useCourseProgress, type LearnerSession } from '@/features/progress';
 
 /** The course's online sessions: when, where, whether the learner attended, and quiz results. */
@@ -91,6 +91,7 @@ export default function CourseLiveSessionsScreen() {
                         ? ` · ${t('courses.minutes', { count: s.durationMinutes })}`
                         : ''}
                     </AppText>
+                    <StartsInBadge seconds={s.startsInSeconds} />
                     {s.platform || s.trainerName ? (
                       <AppText variant="caption">
                         {[

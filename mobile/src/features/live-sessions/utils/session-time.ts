@@ -1,3 +1,5 @@
+import { APP_TIME_ZONE } from '@/core/utils/formatters';
+
 import type { ApiLiveSession } from '../types/live-session.types';
 
 export const sessionStart = (s: Pick<ApiLiveSession, 'scheduledAt'>) =>
@@ -5,13 +7,18 @@ export const sessionStart = (s: Pick<ApiLiveSession, 'scheduledAt'>) =>
 export const sessionEnd = (s: Pick<ApiLiveSession, 'scheduledAt' | 'durationMinutes'>) =>
   sessionStart(s) + s.durationMinutes * 60 * 1000;
 
-const EARLY_MS = 15 * 60 * 1000;
+/** Learners may join a virtual session from 5 min before the start (the backend enforces it). */
+export const JOIN_EARLY_MS = 5 * 60 * 1000;
+const CHECK_IN_EARLY_MS = 15 * 60 * 1000;
 
-/** Virtual: joinable while LIVE, or from 15 min before start until the scheduled end. */
+/**
+ * Virtual: joinable while LIVE, or from 5 min before start until the scheduled end. Pass the
+ * server clock (useServerNow) so a wrong phone clock does not open or close the window.
+ */
 export function isJoinable(s: ApiLiveSession, now = Date.now()): boolean {
   if (s.status === 'LIVE') return true;
   if (s.status !== 'SCHEDULED') return false;
-  return now >= sessionStart(s) - EARLY_MS && now <= sessionEnd(s);
+  return now >= sessionStart(s) - JOIN_EARLY_MS && now <= sessionEnd(s);
 }
 
 /**
@@ -20,14 +27,19 @@ export function isJoinable(s: ApiLiveSession, now = Date.now()): boolean {
  */
 export function isCheckInOpen(s: ApiLiveSession, now = Date.now()): boolean {
   if (s.status !== 'SCHEDULED' && s.status !== 'LIVE') return false;
-  return now >= sessionStart(s) - EARLY_MS;
+  return now >= sessionStart(s) - CHECK_IN_EARLY_MS;
 }
 
 export const isInPerson = (s: Pick<ApiLiveSession, 'sessionType' | 'platform'>) =>
   s.sessionType === 'IN_PERSON' || s.platform === 'IN_PERSON';
 
-/** "YYYY-MM-DD" key for grouping by local day. */
+/** "YYYY-MM-DD" key for grouping by day in the platform time zone (EAT), not the phone's. */
 export function dayKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // en-CA formats dates as YYYY-MM-DD.
+  return new Date(iso).toLocaleDateString('en-CA', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 }

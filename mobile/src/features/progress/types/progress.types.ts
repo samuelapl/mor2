@@ -107,4 +107,6 @@ export interface LearnerSession {
   status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
   attended: boolean;
   planned: boolean;
+  /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
+  startsInSeconds?: number | null;
 }

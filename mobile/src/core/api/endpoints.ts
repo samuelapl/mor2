@@ -7,6 +7,8 @@ const id = (value: string) => encodeURIComponent(value);
 
 export const endpoints = {
   health: 'health',
+  /** Server clock + platform time zone, for "starts in" / join windows. */
+  time: 'time',
 
   /* §2 Auth & account ------------------------------------------------------ */
   auth: {

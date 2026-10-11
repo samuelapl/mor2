@@ -22,6 +22,8 @@ import {
   User,
   Key,
 } from 'lucide-react';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
+import { StartsInBadge } from './StartsInBadge';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { fetchLiveSession } from '@/lib/api/monitoring';
 import { useLms } from '@/lib/lms-store';
@@ -43,16 +45,11 @@ interface SessionDetailModalProps {
   onJoin?: () => void;
 }
 
+// Platform time (EAT), whatever the browser's time zone.
 const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  formatSessionDate(value, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-const formatTime = (value: string) =>
-  new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+const formatTime = (value: string) => formatSessionTime(value);
 
 const STATUS_META: Record<
   ApiLiveSession['status'],
@@ -208,6 +205,7 @@ export function SessionDetailModal({
                     {formatDate(session.scheduledAt)}
                   </p>
                   <p className="text-[11px] text-slate-500">{formatTime(session.scheduledAt)}</p>
+                  <StartsInBadge seconds={session.startsInSeconds} className="mt-1" />
                 </div>
               </div>
 

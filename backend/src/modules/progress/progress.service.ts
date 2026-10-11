@@ -7,12 +7,12 @@ import {
   countsTowardProgress,
   isAssessmentPassed,
   isSessionQuizClosed,
-  SESSION_PLAN_STATUS_SELECT,
   computeSequentialUnlocks,
   isTimeSatisfied,
   loadUserCompletionState,
   moduleRequiredSeconds,
   requiredSeconds,
+  startsInSeconds,
   sumLessonTime,
 } from '@common/utils';
 import { MarkLessonCompleteDto } from './dto';
@@ -54,6 +54,8 @@ export interface LearnerSessionInfo {
   attended: boolean;
   /** Planned with the course (may carry a graded quiz; details are not exposed to learners). */
   planned: boolean;
+  /** Seconds until an upcoming session starts, on the server clock at request time. */
+  startsInSeconds: number | null;
 }
 
 @Injectable()
@@ -167,7 +169,6 @@ export class ProgressService {
             where: { userId, submittedAt: { not: null } },
             orderBy: { score: 'desc' },
           },
-          sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
     ).map((a) => ({
@@ -442,6 +443,7 @@ export class ProgressService {
       status: s.status,
       attended: s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
       planned: planId !== null,
+      startsInSeconds: startsInSeconds(s),
     });
 
     const byId = new Map(sessions.map((s) => [s.id, s]));
@@ -473,6 +475,7 @@ export class ProgressService {
             status: 'TO_BE_SCHEDULED',
             attended: false,
             planned: true,
+            startsInSeconds: null,
           };
     });
     const extra = sessions.filter((s) => !s.sessionPlanId && !s.originalPlanId).map((s) => toInfo(s, null));
@@ -886,7 +889,6 @@ export class ProgressService {
             where: { userId, submittedAt: { not: null } },
             orderBy: { score: 'desc' },
           },
-          sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
     ).map((a) => ({

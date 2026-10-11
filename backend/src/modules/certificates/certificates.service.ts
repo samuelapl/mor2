@@ -10,7 +10,6 @@ import {
   computeCourseGrade,
   findMissingSessionAttendance,
   isSessionQuizClosed,
-  SESSION_PLAN_STATUS_SELECT,
 } from '@common/utils';
 import { PDFDocument, PDFPage, RGB, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
@@ -635,7 +634,6 @@ export class CertificatesService {
             where: { userId, submittedAt: { not: null } },
             select: { score: true, passed: true },
           },
-          sessionPlan: SESSION_PLAN_STATUS_SELECT,
         },
       })
     ).map((a) => ({

@@ -32,6 +32,7 @@ import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/Liv
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import { isInPersonEnrollment, isInPersonSession } from '@/lib/session-mode';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function LearnerDashboardPage() {
   const { courses, lang, currentUser, getEnrollmentForCourse } = useLms();
@@ -318,15 +319,9 @@ export default function LearnerDashboardPage() {
         ) : upcomingSessions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
-              const dateStr = new Date(session.scheduledAt).toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              });
-              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(undefined, {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
+              // Platform time (EAT), whatever the browser's time zone.
+              const dateStr = formatSessionDate(session.scheduledAt, { weekday: 'short', month: 'short', day: 'numeric' });
+              const timeStr = formatSessionTime(session.scheduledAt);
               const isLive = session.status === 'LIVE';
               const isPerson = isInPersonSession(session);
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@config/prisma.service';
+import { appDateKey, appDayOfWeek, nextAppDay } from '@common/utils';
 
 @Injectable()
 export class WorkingDayResolverService {
@@ -10,37 +11,26 @@ export class WorkingDayResolverService {
   /**
    * Evaluates candidateDate and advances day-by-day if it hits Sunday or an active registered Public Holiday.
    * In Ethiopia, Monday through Saturday are valid working/training days; only Sunday is skipped.
-   * Preserves the exact hours, minutes, and seconds of candidateDate.
+   * Days are read in the app time zone (EAT), whatever the server's own zone, and the start time
+   * of day stays the same.
    */
   async resolveNextValidWorkingDay(candidateDate: Date): Promise<Date> {
-    const resolved = new Date(candidateDate.getTime());
-    const originalHours = candidateDate.getHours();
-    const originalMinutes = candidateDate.getMinutes();
-    const originalSeconds = candidateDate.getSeconds();
-
+    let resolved = new Date(candidateDate.getTime());
     const maxLookaheadDays = 60; // Safety guard to prevent infinite loops
-    let attempts = 0;
 
-    while (attempts < maxLookaheadDays) {
-      const isSunday = resolved.getDay() === 0; // 0 = Sunday
+    for (let attempts = 0; attempts < maxLookaheadDays; attempts++) {
+      const isSunday = appDayOfWeek(resolved) === 0;
       const isHoliday = await this.isPublicHoliday(resolved);
-
-      if (!isSunday && !isHoliday) {
-        resolved.setHours(originalHours, originalMinutes, originalSeconds, 0);
-        return resolved;
-      }
+      if (!isSunday && !isHoliday) return resolved;
 
       const reason = isSunday ? 'Sunday' : 'Public Holiday';
-      const dateStr = resolved.toISOString().split('T')[0];
-      this.logger.log(`Candidate date ${dateStr} is a ${reason}. Advancing +1 calendar day.`);
-
-      // Advance by +1 day
-      resolved.setDate(resolved.getDate() + 1);
-      attempts++;
+      this.logger.log(
+        `Candidate date ${appDateKey(resolved)} is a ${reason}. Advancing +1 calendar day.`,
+      );
+      resolved = nextAppDay(resolved);
     }
 
     this.logger.warn(`Max lookahead reached for candidate date. Falling back to candidate.`);
-    candidateDate.setHours(originalHours, originalMinutes, originalSeconds, 0);
     return candidateDate;
   }
 
@@ -49,11 +39,8 @@ export class WorkingDayResolverService {
    */
   async isPublicHoliday(date: Date): Promise<boolean> {
     try {
-      // Normalize to date-only boundary (UTC midnight) for comparison
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Holidays are calendar dates (stored at UTC midnight); compare the app-time-zone date.
+      const dateString = appDateKey(date);
 
       const count = await this.prisma.publicHoliday.count({
         where: {
@@ -69,4 +56,3 @@ export class WorkingDayResolverService {
     }
   }
 }
-

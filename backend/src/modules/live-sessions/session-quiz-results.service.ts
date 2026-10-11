@@ -160,24 +160,84 @@ export class SessionQuizResultsService {
       if (!metaByQuestion.has(meta.questionId)) metaByQuestion.set(meta.questionId, meta);
     }
 
-    const quizzes: SessionQuizGroup[] = session.preparedQuizzes.map((pq) => ({
-      id: pq.id,
-      title: pq.title,
-      graded: Boolean(pq.assessmentId),
-      weight: pq.assessment?.weight ?? null,
-      passingScore: pq.assessment?.passingScore ?? null,
-      questions: pq.questions.map(({ points, question: q }) => {
-        const options = Array.isArray(q.options) ? (q.options as unknown[]).map(String) : [];
-        return {
-          id: q.id,
-          type: q.type,
-          question: q.question,
-          options,
-          correctAnswer: asText(q.correctAnswer, options),
-          points,
-        };
-      }),
-    }));
+    // Empty groups (prepared but never given questions) have no results to show.
+    const quizzes: SessionQuizGroup[] = session.preparedQuizzes
+      .filter((pq) => pq.questions.length > 0)
+      .map((pq) => ({
+        id: pq.id,
+        title: pq.title,
+        graded: Boolean(pq.assessmentId),
+        weight: pq.assessment?.weight ?? null,
+        passingScore: pq.assessment?.passingScore ?? null,
+        questions: pq.questions.map(({ points, question: q }) => {
+          const options = Array.isArray(q.options) ? (q.options as unknown[]).map(String) : [];
+          return {
+            id: q.id,
+            type: q.type,
+            question: q.question,
+            options,
+            correctAnswer: asText(q.correctAnswer, options),
+            points,
+          };
+        }),
+      }));
+
+    // A held round whose weighted quiz moved on to a later round (missed sessions are rescheduled)
+    // no longer has that prepared quiz. Rebuild it from the assessment's answer key, which keeps
+    // the trainer's per-question points, for every weighted quiz this round graded.
+    const preparedAssessmentIds = new Set(
+      session.preparedQuizzes
+        .map((pq) => pq.assessmentId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    const gradedHere = await this.prisma.assessmentAttempt.findMany({
+      where: { answers: { path: ['sessionId'], equals: sessionId } },
+      select: { assessmentId: true },
+      distinct: ['assessmentId'],
+    });
+    const movedIds = gradedHere
+      .map((a) => a.assessmentId)
+      .filter((id) => !preparedAssessmentIds.has(id));
+    const moved =
+      movedIds.length > 0
+        ? await this.prisma.assessment.findMany({
+            where: { id: { in: movedIds }, courseId: session.courseId },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true, titleEn: true, weight: true, passingScore: true, questions: true },
+          })
+        : [];
+    for (const a of moved) {
+      const keyed = (Array.isArray(a.questions) ? a.questions : []) as Array<{
+        id: string;
+        type?: string;
+        question?: string;
+        options?: unknown[];
+        correctAnswer?: string | number | null;
+        points?: number;
+      }>;
+      quizzes.push({
+        id: a.id,
+        title: a.titleEn,
+        graded: true,
+        weight: a.weight,
+        passingScore: a.passingScore,
+        questions: keyed.map((q) => {
+          const options = Array.isArray(q.options) ? q.options.map(String) : [];
+          const answer =
+            q.correctAnswer === null || q.correctAnswer === undefined
+              ? null
+              : String(q.correctAnswer);
+          return {
+            id: q.id,
+            type: q.type ?? 'MULTIPLE_CHOICE',
+            question: q.question ?? '',
+            options,
+            correctAnswer: asText(answer, options),
+            points: q.points ?? 0,
+          };
+        }),
+      });
+    }
 
     // Questions answered live that are not in any prepared group (broadcast straight from the bank).
     const grouped = new Set(quizzes.flatMap((quiz) => quiz.questions.map((q) => q.id)));
@@ -233,9 +293,7 @@ export class SessionQuizResultsService {
         ).map((e) => e.userId);
     const userIds = [...new Set([...enrolledIds, ...latest.keys()])];
 
-    const gradedAssessmentIds = session.preparedQuizzes
-      .map((pq) => pq.assessmentId)
-      .filter((id): id is string => Boolean(id));
+    const gradedAssessmentIds = [...preparedAssessmentIds, ...moved.map((a) => a.id)];
     const [users, attendance, attempts] = await Promise.all([
       this.prisma.user.findMany({
         where: { id: { in: userIds } },
@@ -262,7 +320,10 @@ export class SessionQuizResultsService {
         passed: attempt.passed,
       });
     }
-    const assessmentOf = new Map(session.preparedQuizzes.map((pq) => [pq.id, pq.assessmentId]));
+    const assessmentOf = new Map<string, string | null>([
+      ...session.preparedQuizzes.map((pq) => [pq.id, pq.assessmentId] as [string, string | null]),
+      ...moved.map((a) => [a.id, a.id] as [string, string]),
+    ]);
 
     const learners: LearnerSessionResult[] = users
       .map((user) => {

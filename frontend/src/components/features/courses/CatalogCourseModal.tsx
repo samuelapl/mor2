@@ -28,6 +28,7 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
+import { formatSessionDate, formatSessionDateTime, formatSessionTime } from '@/lib/app-time';
 import { useRouter } from 'next/navigation';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Badge';
@@ -49,7 +50,7 @@ interface CatalogCourseModalProps {
 
 function formatDate(value: string): string {
   try {
-    return new Date(value).toLocaleDateString('en-US', {
+    return formatSessionDate(value, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -62,10 +63,7 @@ function formatDate(value: string): string {
 
 function formatTime(value: string): string {
   try {
-    return new Date(value).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatSessionTime(value);
   } catch {
     return value;
   }
@@ -874,7 +872,7 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                     <span className="text-slate-500">Session: </span>
                     <strong className="text-slate-800">
                       {chosenSession.titleEn} ·{' '}
-                      {new Date(chosenSession.scheduledAt).toLocaleString()}
+                      {formatSessionDateTime(chosenSession.scheduledAt)}
                     </strong>
                   </li>
                   {chosenSession.venue ? (

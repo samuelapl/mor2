@@ -26,7 +26,11 @@ import { NotificationsService } from '@modules/notifications/notifications.servi
 import { ProgressService } from '@modules/progress/progress.service';
 import { CourseStateMachine } from './statemachine/course-state-machine';
 import { assertDeliveryModeAllowed, DEFAULT_DELIVERY_MODE } from './delivery-modes';
-import { assertAssessmentPointsMatchWeights, assertCourseWeightsTotal } from '@common/utils';
+import {
+  assertAssessmentPointsMatchWeights,
+  assertCourseWeightsTotal,
+  startsInSeconds,
+} from '@common/utils';
 import { CreateCourseDto, UpdateCourseDto, ReviewCourseDto, ReturnToDraftDto } from './dto';
 
 const STAFF_ROLES: RoleName[] = [
@@ -170,6 +174,14 @@ export class CoursesService {
       modules: course.modules
         ? course.modules.map((m: any) => this.formatModuleCompat(m))
         : undefined,
+      sessionPlans: course.sessionPlans?.map((p: any) =>
+        p.liveSession
+          ? {
+              ...p,
+              liveSession: { ...p.liveSession, startsInSeconds: startsInSeconds(p.liveSession) },
+            }
+          : p,
+      ),
     };
   }
 

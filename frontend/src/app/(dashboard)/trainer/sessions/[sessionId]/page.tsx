@@ -14,6 +14,7 @@ import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/Liv
 import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQuizReadinessGate';
 import { isInPersonSession } from '@/lib/session-mode';
 import { RichContent } from '@/components/ui/RichContent';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function SessionQuizPrepPage() {
   const params = useParams();
@@ -127,7 +128,9 @@ export default function SessionQuizPrepPage() {
           <div className="flex items-center gap-4 text-xs text-slate-500">
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <span>{new Date(session.scheduledAt).toLocaleDateString()}</span>
+              <span>
+                {formatSessionDate(session.scheduledAt)} · {formatSessionTime(session.scheduledAt)}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-slate-400" />

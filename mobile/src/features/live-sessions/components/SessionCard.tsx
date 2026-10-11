@@ -9,6 +9,7 @@ import { formatTime } from '@/core/utils/formatters';
 
 import type { ApiLiveSession } from '../types/live-session.types';
 import { isInPerson } from '../utils/session-time';
+import { StartsInBadge } from './StartsInBadge';
 
 export function SessionCard({
   session,
@@ -32,6 +33,7 @@ export function SessionCard({
           tone={inPerson ? 'warning' : 'brand'}
         />
         {session.course ? <AppText variant="caption">{session.course.code}</AppText> : null}
+        <StartsInBadge seconds={session.startsInSeconds} />
       </View>
       <AppText variant="heading" numberOfLines={2}>
         {localized(session, 'title')}

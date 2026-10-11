@@ -339,8 +339,8 @@ export class EnrollmentsService {
 
   /**
    * Admin unenroll: removes the enrollment together with everything the learner built up in
-   * the course (lesson/module progress, study time, assessment attempts and the certificate),
-   * so re-enrolling later starts from scratch.
+   * the course (lesson/module progress, study time, assessment attempts, live session
+   * attendance and the certificate), so re-enrolling later starts from scratch.
    */
   async unenroll(enrollmentId: string, actorId: string) {
     const enrollment = await this.prisma.enrollment.findUnique({
@@ -351,25 +351,32 @@ export class EnrollmentsService {
     }
     const { userId, courseId } = enrollment;
 
-    const [lessons, modules, attempts, certificates] = await this.prisma.$transaction([
-      this.prisma.lessonCompletion.deleteMany({
-        where: { userId, lesson: { module: { courseId } } },
-      }),
-      this.prisma.moduleCompletion.deleteMany({
-        where: { userId, module: { courseId } },
-      }),
-      this.prisma.assessmentAttempt.deleteMany({
-        where: { userId, assessment: { courseId } },
-      }),
-      this.prisma.certificate.deleteMany({ where: { userId, courseId } }),
-      this.prisma.enrollment.delete({ where: { id: enrollmentId } }),
-    ]);
+    const [lessons, modules, attempts, certificates, attendanceLogs, attendance] =
+      await this.prisma.$transaction([
+        this.prisma.lessonCompletion.deleteMany({
+          where: { userId, lesson: { module: { courseId } } },
+        }),
+        this.prisma.moduleCompletion.deleteMany({
+          where: { userId, module: { courseId } },
+        }),
+        this.prisma.assessmentAttempt.deleteMany({
+          where: { userId, assessment: { courseId } },
+        }),
+        this.prisma.certificate.deleteMany({ where: { userId, courseId } }),
+        // Live sessions too: room activity (joins, leaves, live quiz answers) and attendance, so
+        // re-enrolling starts with every session unattended and shows its upcoming round.
+        this.prisma.attendanceLog.deleteMany({ where: { userId, session: { courseId } } }),
+        this.prisma.attendance.deleteMany({ where: { userId, session: { courseId } } }),
+        this.prisma.enrollment.delete({ where: { id: enrollmentId } }),
+      ]);
 
     const removed = {
       lessonCompletions: lessons.count,
       moduleCompletions: modules.count,
       assessmentAttempts: attempts.count,
       certificates: certificates.count,
+      sessionAttendance: attendance.count,
+      sessionActivityLogs: attendanceLogs.count,
     };
 
     await this.auditService.record({

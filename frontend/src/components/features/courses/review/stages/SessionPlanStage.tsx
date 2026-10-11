@@ -15,6 +15,8 @@ import {
   UserX,
   Video,
 } from 'lucide-react';
+import { formatSessionDateTime } from '@/lib/app-time';
+import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBadge';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useLms } from '@/lib/lms-store';
 import { usePermissions } from '@/lib/usePermissions';
@@ -153,8 +155,7 @@ export function SessionPlanStage({
     }
   }
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleString(isAmharic ? 'am-ET' : undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  const formatDate = (iso: string) => formatSessionDateTime(iso, isAmharic ? 'am-ET' : undefined);
   const doneSteps = (trainerId ? 1 : 0) + (scheduled ? 1 : 0);
   const stepLabels = { done: tBilingual('Done', 'ተጠናቋል'), next: tBilingual('Next', 'ቀጣይ'), pending: tBilingual('Pending', 'በመጠባበቅ ላይ') };
 
@@ -379,7 +380,10 @@ export function SessionPlanStage({
       {scheduled && (
         <StageCard title={tBilingual('Step 2 · Scheduled session', 'ደረጃ 2 · የታቀደ ክፍለ-ጊዜ')} icon={<CalendarCheck className="h-4 w-4" />}>
           <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <Detail label={tBilingual('Date & time', 'ቀን እና ሰዓት')}>{formatDate(scheduled.scheduledAt)}</Detail>
+            <Detail label={tBilingual('Date & time', 'ቀን እና ሰዓት')}>
+              {formatDate(scheduled.scheduledAt)}
+              <StartsInBadge seconds={scheduled.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
+            </Detail>
             <Detail label={tBilingual('Duration', 'ቆይታ')}>{scheduled.durationMinutes ? `${scheduled.durationMinutes} min` : '—'}</Detail>
             <Detail label={tBilingual('Platform', 'መድረክ')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
             <Detail label={tBilingual('Status', 'ሁኔታ')}>{scheduled.status}</Detail>

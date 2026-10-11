@@ -118,14 +118,9 @@ describe('computeCourseGrade waits for session quizzes', () => {
 });
 
 describe('isSessionQuizClosed', () => {
-  it('treats only a completed, non-deleted session as closed', () => {
-    const live = (status: string, deletedAt: Date | null = null) => ({
-      sessionPlan: { liveSession: { status, deletedAt } },
-    });
-    expect(isSessionQuizClosed(live('COMPLETED'))).toBe(true);
-    expect(isSessionQuizClosed(live('SCHEDULED'))).toBe(false);
-    expect(isSessionQuizClosed(live('CANCELLED'))).toBe(false); // cancelled keeps blocking until rescheduled
-    expect(isSessionQuizClosed(live('COMPLETED', new Date()))).toBe(false);
-    expect(isSessionQuizClosed({ sessionPlan: { liveSession: null } })).toBe(false); // not scheduled yet
+  it('is closed for a learner once a held round graded them, whatever round is scheduled next', () => {
+    expect(isSessionQuizClosed({ attempts: [{ score: 80 }] })).toBe(true);
+    expect(isSessionQuizClosed({ attempts: [{ score: 0 }] })).toBe(true); // attended, did not answer
+    expect(isSessionQuizClosed({ attempts: [] })).toBe(false); // no round attended yet
   });
 });

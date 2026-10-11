@@ -39,6 +39,12 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
     LiveKitProvider,
     PrismaService,
   ],
-  exports: [LiveSessionsService, BigBlueButtonProvider, LiveKitProvider],
+  exports: [
+    LiveSessionsService,
+    BigBlueButtonProvider,
+    LiveKitProvider,
+    SessionQuizGradingService,
+    SessionRemindersService,
+  ],
 })
 export class LiveSessionsModule {}

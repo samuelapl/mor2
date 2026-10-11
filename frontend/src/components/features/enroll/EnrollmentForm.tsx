@@ -223,7 +223,7 @@ export function EnrollmentForm() {
     }
   };
 
-  // Unenroll: removes the enrollment along with the learner's progress and certificate
+  // Unenroll: removes the enrollment along with the learner's progress, session attendance and certificate
   const handleWithdrawConfirm = async () => {
     if (!withdrawingLearner) return;
     setWithdrawing(true);
@@ -733,7 +733,7 @@ export function EnrollmentForm() {
       <ConfirmModal
         open={Boolean(withdrawingLearner)}
         title="Unenroll Learner from Course"
-        description={`Unenroll "${withdrawingLearner?.name}" from "${selectedCourse?.title}"? This permanently removes their enrollment, lesson and module progress, assessment attempts and certificate for this course. This cannot be undone.`}
+        description={`Unenroll "${withdrawingLearner?.name}" from "${selectedCourse?.title}"? This permanently removes their enrollment, lesson and module progress, assessment attempts, live session attendance and certificate for this course. This cannot be undone.`}
         confirmText="Unenroll Learner"
         variant="danger"
         isLoading={withdrawing}

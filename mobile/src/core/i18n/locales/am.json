@@ -263,7 +263,11 @@
     "playVideoToUnlock": "ፈተናውን ለመክፈት ቪዲዮውን ያጫውቱ",
     "playAudioToUnlock": "ፈተናውን ለመክፈት ድምጹን ያጫውቱ",
     "keepStudyingToUnlock": "ማጥናትዎን ይቀጥሉ — በ{{time}} ይከፈታል",
-    "finishTopicsToUnlock": "ፈተናውን ለመክፈት በዚህ ትምህርት ያሉትን ሁሉንም ርዕሶች ያጠናቅቁ"
+    "finishTopicsToUnlock": "ፈተናውን ለመክፈት በዚህ ትምህርት ያሉትን ሁሉንም ርዕሶች ያጠናቅቁ",
+    "slideDeck": "የስላይድ አቀራረብ",
+    "deckLoading": "ስላይዶች በመጫን ላይ…",
+    "deckFailed": "ይህን ስላይድ ማሳየት አልተቻለም።",
+    "deckPages": "ገጾች፦ {{count}}"
   },
   "quiz": {
     "questionOf": "ጥያቄ {{number}} ከ{{total}}",
@@ -370,7 +374,7 @@
     "rejoin": "ስብሰባውን ክፈት",
     "iLeft": "ወጥቻለሁ",
     "ended": "ይህ ክፍለ ጊዜ አብቅቷል።",
-    "joinWindow": "ከመጀመሪያው ሰዓት 15 ደቂቃ በፊት ጀምሮ መቀላቀል ይችላሉ።",
+    "joinWindow": "ክፍለ-ጊዜው ከመጀመሩ 5 ደቂቃ በፊት ጀምሮ መቀላቀል ይችላሉ።",
     "meetingPassword": "የስብሰባ የይለፍ ቃል",
     "attendanceLabel": "የእርስዎ ተገኝነት",
     "watchRecording": "ቅጂውን ይመልከቱ",
@@ -414,7 +418,9 @@
     "capacity": "{{count}} መቀመጫዎች",
     "facilities": "አገልግሎቶች",
     "offlineTitle": "ግንኙነት ያስፈልጋል",
-    "offlineBody": "የቀጥታ ክፍለ-ጊዜዎች የኢንተርኔት ግንኙነት ይፈልጋሉ።"
+    "offlineBody": "የቀጥታ ክፍለ-ጊዜዎች የኢንተርኔት ግንኙነት ይፈልጋሉ።",
+    "startsIn": "በ{{time}} ይጀምራል",
+    "timeZoneNote": "ሰዓቶቹ በምሥራቅ አፍሪካ ሰዓት (አዲስ አበባ) ናቸው።"
   },
   "certificates": {
     "empty": "እስካሁን ምስክር ወረቀት የለም",
@@ -568,8 +574,8 @@
     "notTaken": "አልተወሰደም",
     "weightPoints": "{{weight}}% ክብደት · {{points}} ነጥብ",
     "sessionsPendingTitle": "ሰርተፊኬቱ {{count}} የቀጥታ ክፍለ-ጊዜ ፈተና(ዎች) ይጠብቃል",
-    "sessionsPendingBody": "ገና የሚካሄዱ፦ {{names}}። ውጤትዎ የሚጸናው እነዚህ ሲጠናቀቁ ነው።",
-    "sessionsPendingGeneric": "ውጤትዎ የሚጸናው ሁሉም የቀጥታ ክፍለ-ጊዜዎች ሲካሄዱ ነው።"
+    "sessionsPendingBody": "በሚቀጥለው ዙር ይሳተፉ፦ {{names}}። ውጤትዎ የሚጸናው እያንዳንዱ የክፍለ-ጊዜ ፈተና ውጤትዎን ሲይዝ ነው።",
+    "sessionsPendingGeneric": "ፈተናውን ያልወሰዱበትን እያንዳንዱን የቀጥታ ክፍለ-ጊዜ በሚቀጥለው ዙር ይሳተፉ። ውጤትዎ የሚጸናው እያንዳንዱ የክፍለ-ጊዜ ፈተና ውጤትዎን ሲይዝ ነው።"
   },
   "laws": {
     "title": "የታክስ እና የጉምሩክ ሕጎች",

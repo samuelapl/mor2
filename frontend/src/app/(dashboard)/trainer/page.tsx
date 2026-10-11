@@ -39,6 +39,7 @@ import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/Liv
 import { useQuizReadinessGate } from '@/components/features/prepared-quiz/useQuizReadinessGate';
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 import { isInPersonSession } from '@/lib/session-mode';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function TrainerDashboardPage() {
   const { courses, currentUser } = useLms();
@@ -410,21 +411,14 @@ export default function TrainerDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingSessions.slice(0, 3).map((session) => {
               const isLive = session.status === 'LIVE';
-              const dateStr = new Date(session.scheduledAt).toLocaleDateString(
-                isAmharic ? 'am-ET' : undefined,
-                {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                },
+              // Platform time (EAT), whatever the browser's time zone.
+              const locale = isAmharic ? 'am-ET' : undefined;
+              const dateStr = formatSessionDate(
+                session.scheduledAt,
+                { weekday: 'short', month: 'short', day: 'numeric' },
+                locale,
               );
-              const timeStr = new Date(session.scheduledAt).toLocaleTimeString(
-                isAmharic ? 'am-ET' : undefined,
-                {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                },
-              );
+              const timeStr = formatSessionTime(session.scheduledAt, locale);
 
               return (
                 <div

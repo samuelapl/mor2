@@ -11,6 +11,8 @@ import { ApiError } from '@/lib/api/client';
 import { updateLiveSession } from '@/lib/api/monitoring';
 import { fetchTrainers } from '@/lib/api/users';
 import { SearchableTrainerSelect } from './SearchableTrainerSelect';
+import { SessionStartNotice } from './SessionStartNotice';
+import { appDateTimeToIso, isoToAppDateTime, useServerNow } from '@/lib/app-time';
 
 interface EditSessionModalProps {
   open: boolean;
@@ -40,6 +42,7 @@ export function EditSessionModal({
   const [objectivesEn, setObjectivesEn] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
+  const serverNow = useServerNow(open);
   const [duration, setDuration] = useState(60);
   const [status, setStatus] = useState<'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED'>(
     'SCHEDULED',
@@ -79,15 +82,11 @@ export function EditSessionModal({
       setPlatformType('BIGBLUEBUTTON');
     else setPlatformType('CUSTOM');
 
-    // Parse date and time
-    if (session.scheduledAt) {
-      const d = new Date(session.scheduledAt);
-      if (!isNaN(d.getTime())) {
-        setDate(d.toISOString().split('T')[0]);
-        const hh = String(d.getHours()).padStart(2, '0');
-        const mm = String(d.getMinutes()).padStart(2, '0');
-        setTime(`${hh}:${mm}`);
-      }
+    // Date and time in platform time (EAT), whatever the browser's time zone.
+    if (session.scheduledAt && !isNaN(new Date(session.scheduledAt).getTime())) {
+      const local = isoToAppDateTime(session.scheduledAt);
+      setDate(local.date);
+      setTime(local.time);
     }
     setError(null);
   }, [session, open]);
@@ -156,7 +155,7 @@ export function EditSessionModal({
       else if (platformType === 'MS_TEAMS') backendPlatform = 'MS_TEAMS';
       else backendPlatform = 'CUSTOM';
 
-      const scheduledAtIso = date && time ? new Date(`${date}T${time}`).toISOString() : undefined;
+      const scheduledAtIso = date && time ? appDateTimeToIso(date, time) : undefined;
 
       await updateLiveSession(session.id, {
         titleEn: titleEn.trim(),
@@ -288,6 +287,7 @@ export function EditSessionModal({
               <CalendarDays className="h-4 w-4 text-amber-600" />
               <p className="text-xs font-bold text-amber-900">Schedule &amp; Timing</p>
             </div>
+            <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date *</label>
@@ -301,7 +301,7 @@ export function EditSessionModal({
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Start Time *
+                  Start Time (EAT) *
                 </label>
                 <input
                   required

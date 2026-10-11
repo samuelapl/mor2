@@ -21,10 +21,12 @@ import type { ApiSessionPlan } from "@/lib/api/types";
 import { fetchTrainers } from "@/lib/api/users";
 import { useLms } from "@/lib/lms-store";
 import { usePermissions } from "@/lib/usePermissions";
+import { appDateTimeToIso, appToday, useServerNow } from "@/lib/app-time";
 import { createBatchLiveSessions, fetchVenues } from "@/lib/api/venues";
 import type { ApiUser, ApiVenue, SessionType } from "@/lib/api/types";
 import { SearchableCourseSelect } from "./SearchableCourseSelect";
 import { SearchableTrainerSelect } from "./SearchableTrainerSelect";
+import { SessionStartNotice } from "./SessionStartNotice";
 import {
   VenueAllocationStep,
   createVenueRow,
@@ -75,11 +77,9 @@ export function ScheduleSessionModal({
   // Sessions the course owner planned during preparation, not yet scheduled.
   const [plannedSessions, setPlannedSessions] = useState<ApiSessionPlan[]>([]);
   const [sessionPlanId, setSessionPlanId] = useState("");
-  const [date, setDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split("T")[0];
-  });
+  // Date and time are platform time (EAT), whatever the browser's time zone.
+  const [date, setDate] = useState(() => appToday(1));
+  const serverNow = useServerNow(open);
   const [time, setTime] = useState("10:00");
   const [duration, setDuration] = useState(60);
   const [externalUrl, setExternalUrl] = useState("");
@@ -282,7 +282,7 @@ export function ScheduleSessionModal({
         externalUrl: externalUrl.trim() || undefined,
         meetingId,
         meetingPassword: meetingPassword.trim() || undefined,
-        scheduledAt: new Date(`${date}T${time}`).toISOString(),
+        scheduledAt: appDateTimeToIso(date, time),
         durationMinutes: Number(duration),
         allowViewAttendance,
         sessionPlanId: sessionPlanId || undefined,
@@ -337,7 +337,7 @@ export function ScheduleSessionModal({
       const payloadSessions = venueRows.map((r) => ({
         venueId: r.venueId,
         trainerId: r.trainerId || undefined,
-        scheduledAt: new Date(`${r.date}T${r.time}`).toISOString(),
+        scheduledAt: appDateTimeToIso(r.date, r.time),
         durationMinutes: Number(r.duration),
       }));
 
@@ -639,6 +639,7 @@ export function ScheduleSessionModal({
               </div>
             )}
 
+            <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">Date *</label>
@@ -651,7 +652,7 @@ export function ScheduleSessionModal({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Start Time *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Start Time (EAT) *</label>
                 <input
                   required
                   type="time"
@@ -777,6 +778,7 @@ export function ScheduleSessionModal({
               />
             </div>
 
+            <SessionStartNotice date={date} time={time} now={serverNow} />
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">
@@ -792,7 +794,7 @@ export function ScheduleSessionModal({
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Default Start Time *
+                  Default Start Time (EAT) *
                 </label>
                 <input
                   required

@@ -15,6 +15,7 @@ import {
   SegmentedControl,
   Skeleton,
 } from '@/components/ui';
+import { useServerNow } from '@/core/api/server-clock';
 import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatDate, formatDateTime } from '@/core/utils/formatters';
@@ -45,11 +46,14 @@ export default function LiveSessionsScreen() {
   const upcoming = useUpcomingSessions();
   const attendance = useMyAttendance();
   const activeMeeting = useMeetingStore((s) => s.active);
+  const serverNow = useServerNow();
 
   const dayLabel = (iso: string) => {
     const key = dayKey(iso);
-    const today = dayKey(new Date().toISOString());
-    const tomorrow = dayKey(new Date(Date.now() + 86_400_000).toISOString());
+    // Days in EAT on the server clock, like the session times shown.
+    const now = serverNow();
+    const today = dayKey(new Date(now).toISOString());
+    const tomorrow = dayKey(new Date(now + 86_400_000).toISOString());
     if (key === today) return t('sessions.today');
     if (key === tomorrow) return t('sessions.tomorrow');
     return formatDate(iso, locale);

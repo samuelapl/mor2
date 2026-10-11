@@ -5,6 +5,7 @@ import { endpoints } from '@/core/api/endpoints';
 import { resolveMediaUrl } from '@/core/media/resolveMediaUrl';
 
 import type { ApiAssessment } from '../assessments/types/assessment.types';
+import { storedBlocks, withStoredBlocks } from '../classroom/utils/lesson-blocks';
 import type {
   ApiAttachment,
   ApiCourseDetail,
@@ -33,6 +34,58 @@ export interface CourseDownloadProgress {
 
 function safeFilename(name: string): string {
   return name.replace(/[^\w.\-]+/g, '_').slice(-120) || 'file';
+}
+
+/**
+ * Saves the files of a lesson's content blocks (slide decks, block video/audio) next to the
+ * course and points the stored blocks at the saved copies, so the lesson reads offline. The
+ * lesson's main file is reused when a block points at it. Content without blocks is unchanged.
+ */
+async function saveBlockFiles(
+  content: string | null,
+  lesson: { id: string; resourceUrl: string | null },
+  localMediaUri: string | null,
+  courseDir: Directory,
+): Promise<{ content: string | null; bytes: number }> {
+  const blocks = storedBlocks(content);
+  if (!content || !blocks) return { content, bytes: 0 };
+  let bytes = 0;
+  const saved = [];
+  for (const [index, block] of blocks.entries()) {
+    const url = block.url;
+    const downloadable =
+      block.type !== 'DOCUMENT' &&
+      url &&
+      !url.startsWith('file://') &&
+      !/youtu\.?be|docs\.google\.com/.test(url);
+    if (!downloadable) {
+      saved.push(block);
+      continue;
+    }
+    if (url === lesson.resourceUrl && localMediaUri) {
+      saved.push({ ...block, url: localMediaUri });
+      continue;
+    }
+    const resolved = resolveMediaUrl(url);
+    try {
+      const ext = (block.fileName ?? url).split('?')[0]!.split('.').pop() || 'bin';
+      const target = new File(courseDir, `block_${lesson.id}_${index}.${safeFilename(ext)}`);
+      if (!target.exists && resolved) await File.downloadFileAsync(resolved, target, { idempotent: true });
+      if (target.size) bytes += target.size;
+      saved.push({ ...block, url: target.uri });
+    } catch (err) {
+      console.warn(`[OfflineDownloadManager] Lesson ${lesson.id} block ${index} failed:`, err);
+      saved.push(block); // still opens online
+    }
+  }
+  return { content: withStoredBlocks(content, saved), bytes };
+}
+
+/** Saved block files of a stored lesson (see saveBlockFiles). */
+function savedBlockFiles(content: string | null | undefined): string[] {
+  return (storedBlocks(content) ?? [])
+    .map((b) => b.url)
+    .filter((url): url is string => Boolean(url?.startsWith('file://')));
 }
 
 function isPlayableRemoteUrl(url: string | null | undefined): boolean {
@@ -375,6 +428,17 @@ class OfflineDownloadManager {
           });
         }
 
+        // Slide decks and other block files, so the lesson's blocks read offline.
+        let content = isEligible ? (lesson.content ?? lesson.contentEn ?? null) : null;
+        let contentAm = isEligible ? (lesson.contentAm ?? null) : null;
+        if (shouldDownload && isEligible) {
+          const en = await saveBlockFiles(content, lesson, localMediaUri, courseDir);
+          const am = await saveBlockFiles(contentAm, lesson, localMediaUri, courseDir);
+          content = en.content;
+          contentAm = am.content;
+          totalBytesAccumulated += en.bytes + am.bytes;
+        }
+
         offlineLessonsToSave.push({
           id: lesson.id,
           courseId,
@@ -385,8 +449,8 @@ class OfflineDownloadManager {
           sortOrder: lesson.order,
           contentType: lesson.contentType,
           durationMinutes: lesson.durationMinutes,
-          content: isEligible ? (lesson.content ?? lesson.contentEn ?? null) : null,
-          contentAm: isEligible ? (lesson.contentAm ?? null) : null,
+          content,
+          contentAm,
           resourceUrl: isEligible ? lesson.resourceUrl : null,
           localMediaUri,
           requiredSeconds: (lesson.durationMinutes ?? 0) * 60,
@@ -593,9 +657,10 @@ class OfflineDownloadManager {
     try {
       const lessons = await offlineDb.getLessonsForModule(moduleId);
       for (const l of lessons) {
-        if (l.localMediaUri) {
+        const files = [l.localMediaUri, ...savedBlockFiles(l.content), ...savedBlockFiles(l.contentAm)];
+        for (const uri of new Set(files.filter(Boolean) as string[])) {
           try {
-            const f = new File(l.localMediaUri);
+            const f = new File(uri);
             if (f.exists) f.delete();
           } catch (e) {
             console.warn('[OfflineDownloadManager] Error deleting media file:', e);

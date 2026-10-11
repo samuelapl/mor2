@@ -206,6 +206,7 @@ export interface ApiCourseSessionPlanRow {
 
 export interface ApiSessionPlanLiveSession {
   id: string;
+  startsInSeconds?: number | null;
   scheduledAt: string;
   status: string;
   trainerId: string | null;
@@ -530,6 +531,8 @@ export interface ApiLearnerSession {
   status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
   attended: boolean;
   planned: boolean;
+  /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
+  startsInSeconds?: number | null;
 }
 
 export interface ApiLearnerProgress {
@@ -733,6 +736,8 @@ export type BackendCheckInMethod = 'VIRTUAL' | 'QR' | 'GPS' | 'BIOMETRIC';
 export interface ApiLiveSession {
   id: string;
   courseId: string;
+  /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
+  startsInSeconds?: number | null;
   /** Set when the session was scheduled from a course's planned session. */
   sessionPlanId?: string | null;
   titleAm: string;

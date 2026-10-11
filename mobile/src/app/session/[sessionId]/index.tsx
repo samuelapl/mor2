@@ -31,6 +31,7 @@ import {
   Skeleton,
 } from '@/components/ui';
 import { ApiError } from '@/core/api/errors';
+import { useServerNow } from '@/core/api/server-clock';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { palette, useThemeColors } from '@/core/theme/colors';
@@ -41,6 +42,7 @@ import {
   isJoinable,
   liveSessionApi,
   SessionQuizResults,
+  StartsInBadge,
   useAttendanceVisibility,
   useMeetingStore,
   useMyAttendance,
@@ -57,6 +59,7 @@ export default function SessionScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
 
   const session = useSession(sessionId);
+  const serverNow = useServerNow();
   const attendance = useMyAttendance();
   const visibility = useAttendanceVisibility(sessionId);
   const meeting = useMeetingStore();
@@ -91,8 +94,9 @@ export default function SessionScreen() {
 
   const data = session.data;
   const inPerson = isInPerson(data);
-  const joinable = isJoinable(data);
-  const checkInOpen = isCheckInOpen(data);
+  // Server clock, so a phone with a wrong clock or time zone does not shift the windows.
+  const joinable = isJoinable(data, serverNow());
+  const checkInOpen = isCheckInOpen(data, serverNow());
   const mine = attendance.data?.find((a) => a.sessionId === sessionId);
   const percentage =
     inThisMeeting && meeting.last ? meeting.last.percentage : (mine?.percentage ?? null);
@@ -202,6 +206,7 @@ export default function SessionScreen() {
               {t('courses.minutes', { count: data.durationMinutes })}
             </AppText>
           </View>
+          <StartsInBadge seconds={data.startsInSeconds} />
           {!inPerson ? (
             <View className="flex-row items-center gap-2">
               <Video size={16} color={colors.textMuted} />

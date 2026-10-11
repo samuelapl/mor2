@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Calendar, Clock } from 'lucide-react';
 import { isInPersonSession } from '@/lib/session-mode';
 import { stripHtmlTags } from '@/components/ui/RichContent';
+import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
+import { StartsInBadge } from './StartsInBadge';
 
 export interface SessionRow {
   session: ApiLiveSession;
@@ -18,13 +20,10 @@ interface SessionTableProps {
   extra?: (row: SessionRow) => ReactNode;
 }
 
+// Session times are shown in platform time (EAT), whatever the browser's time zone.
 const formatDate = (value: string) => {
   try {
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    return formatSessionDate(value);
   } catch {
     return value;
   }
@@ -32,10 +31,7 @@ const formatDate = (value: string) => {
 
 const formatTime = (value: string) => {
   try {
-    return new Date(value).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatSessionTime(value);
   } catch {
     return '';
   }
@@ -108,6 +104,7 @@ export function SessionTable({ sessions, extra }: SessionTableProps) {
                       {row.session.durationMinutes}m
                     </span>
                   </div>
+                  <StartsInBadge seconds={row.session.startsInSeconds} className="mt-0.5 w-fit" />
                 </div>
               </Td>
 

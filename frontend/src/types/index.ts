@@ -202,6 +202,8 @@ export interface SessionPlan {
     trainerId: string | null;
     platform?: string;
     durationMinutes?: number;
+    /** Seconds until it starts, on the server clock when loaded (upcoming sessions only). */
+    startsInSeconds?: number | null;
   } | null;
 }
 

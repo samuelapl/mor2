@@ -6,5 +6,7 @@ export { lessonKeys, useLesson } from './api/lesson-queries';
 export { ClassroomStage } from './components/ClassroomStage';
 export { FileRow } from './components/FileRow';
 export { LessonBody } from './components/LessonBody';
+export { SlideDeckStage } from './components/SlideDeckStage';
+export { blockFileUrls, lessonBlocks, type LessonContentBlock } from './utils/lesson-blocks';
 export type * from './types/lesson.types';
 export { downloadAndOpen, fileNameFromUrl } from './utils/open-file';

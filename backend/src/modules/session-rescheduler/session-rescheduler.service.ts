@@ -2,6 +2,9 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '@config/prisma.service';
 import { CourseStatus, SessionStatus, SessionType } from '@prisma/client';
+import { addAppDaysAtTimeOf, formatAppDateTime } from '@common/utils';
+import { SessionQuizGradingService } from '@modules/live-sessions/session-quiz-grading.service';
+import { SessionRemindersService } from '@modules/live-sessions/session-reminders.service';
 import { WorkingDayResolverService } from './working-day-resolver.service';
 import {
   DEFAULT_RESCHEDULE_DAY_GAP,
@@ -19,6 +22,8 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
   constructor(
     private readonly prisma: PrismaService,
     private readonly workingDayResolver: WorkingDayResolverService,
+    private readonly sessionQuizGrading: SessionQuizGradingService,
+    private readonly reminders: SessionRemindersService,
   ) {}
 
   onModuleInit() {
@@ -102,6 +107,16 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
         return;
       }
 
+      // Grade this round before its quizzes move to the next one. Ending from attendance or the
+      // abandonment reaper does not grade; grading is idempotent, so a second run is harmless.
+      try {
+        await this.sessionQuizGrading.gradeSession(session.id);
+      } catch (err) {
+        this.logger.warn(
+          `Grading session ${session.id} before rescheduling failed: ${(err as Error).message}`,
+        );
+      }
+
       // 3. Fetch configured institutional Day Gap (default 10 days)
       const dayGap = await this.getRescheduleDayGap();
 
@@ -124,24 +139,13 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
         ? new Date(latestUpcoming.scheduledAt)
         : new Date(session.scheduledAt);
 
-      // Raw candidate date = baseDate + dayGap days
-      const rawTargetDate = new Date(baseDate.getTime());
-      rawTargetDate.setDate(rawTargetDate.getDate() + dayGap);
-
-      // Preserve the session's original scheduled start time (Hours, Minutes, Seconds)
-      rawTargetDate.setHours(
-        session.scheduledAt.getHours(),
-        session.scheduledAt.getMinutes(),
-        session.scheduledAt.getSeconds(),
-        0,
-      );
+      // Raw candidate date = baseDate + dayGap days, at the session's start time of day.
+      // Calendar days and times are read in the app time zone (EAT), not the server's.
+      let rawTargetDate = addAppDaysAtTimeOf(baseDate, dayGap, session.scheduledAt);
 
       // Safety check: Ensure the candidate is strictly in the future
       if (rawTargetDate.getTime() <= Date.now()) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + dayGap);
-        tomorrow.setHours(session.scheduledAt.getHours(), session.scheduledAt.getMinutes(), 0, 0);
-        rawTargetDate.setTime(tomorrow.getTime());
+        rawTargetDate = addAppDaysAtTimeOf(new Date(), dayGap, session.scheduledAt);
       }
 
       // 6. Working Day & Holiday Resolver (Skips Sundays and Ethiopian Public Holidays)
@@ -197,11 +201,15 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
           },
         });
 
-        // If the session plan has prepared weighted quizzes, create fresh instances for the new session
+        // A weighted quiz has one prepared quiz (assessmentId is unique): move it, with the
+        // trainer's questions and points, to the new round. Earlier rounds' results are kept on
+        // their attempts and attendance logs.
         if (session.sessionPlan?.assessments && session.sessionPlan.assessments.length > 0) {
           for (const [order, quiz] of session.sessionPlan.assessments.entries()) {
-            await tx.sessionPreparedQuiz.create({
-              data: {
+            await tx.sessionPreparedQuiz.upsert({
+              where: { assessmentId: quiz.id },
+              update: { sessionId: newSession.id, order },
+              create: {
                 sessionId: newSession.id,
                 assessmentId: quiz.id,
                 title: quiz.titleEn,
@@ -218,6 +226,15 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
       this.logger.log(
         `[Auto-Rescheduler] Created next iteration for "${session.titleEn}" scheduled on ${resolvedTargetDate.toISOString()} (Session ID: ${created.id})`,
       );
+
+      // 24 h / 1 h reminders, like a session scheduled by hand.
+      try {
+        await this.reminders.schedule(created.id);
+      } catch (err) {
+        this.logger.warn(
+          `Could not schedule reminders for ${created.id}: ${(err as Error).message}`,
+        );
+      }
 
       // 8. Targeted Notification Scoping:
       // Notify ONLY enrolled learners who have NOT yet attended this session topic in a previous cycle
@@ -302,7 +319,7 @@ export class SessionReschedulerService implements OnModuleInit, OnModuleDestroy 
             type: 'SESSION_REMINDER' as any,
             titleEn: `Upcoming Live Session: ${newSession.titleEn}`,
             titleAm: `የቀጥታ ክፍለ-ጊዜ ተመድቧል፦ ${newSession.titleAm || newSession.titleEn}`,
-            bodyEn: `A newly scheduled session for your course is set for ${new Date(newSession.scheduledAt).toLocaleString()}.`,
+            bodyEn: `A newly scheduled session for your course is set for ${formatAppDateTime(newSession.scheduledAt)}.`,
             bodyAm: `ለኮርስዎ አዲስ የቀጥታ ክፍለ-ጊዜ ተመድቧል።`,
             metadata: { sessionId: newSession.id, courseId } as any,
           })),

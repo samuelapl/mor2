@@ -29,7 +29,16 @@ describe('SessionQuizGradingService.gradeSession', () => {
       enrollment: {
         findMany: jest
           .fn()
-          .mockResolvedValue([{ userId: 'full' }, { userId: 'half' }, { userId: 'absent' }]),
+          .mockResolvedValue([
+            { userId: 'full' },
+            { userId: 'half' },
+            { userId: 'silent' },
+            { userId: 'absent' },
+          ]),
+      },
+      // 'silent' attended without answering; 'absent' was not in this round.
+      attendance: {
+        findMany: jest.fn().mockResolvedValue([{ userId: 'full' }, { userId: 'silent' }]),
       },
       attendanceLog: {
         findMany: jest.fn().mockResolvedValue([
@@ -41,6 +50,7 @@ describe('SessionQuizGradingService.gradeSession', () => {
         ]),
       },
       assessmentAttempt: {
+        count: jest.fn().mockResolvedValue(0),
         deleteMany: jest.fn((x) => ({ op: 'delete', x })),
         create: jest.fn((x) => ({ op: 'create', x })),
       },
@@ -52,28 +62,42 @@ describe('SessionQuizGradingService.gradeSession', () => {
 
   const created = () => prisma.assessmentAttempt.create.mock.calls.map(([arg]: any[]) => arg.data);
 
-  it('scores each learner from their latest answers and records a missed quiz as 0', async () => {
+  it('scores learners in the session from their latest answers; attending without answering is 0', async () => {
     await service.gradeSession('s1');
 
     const byUser = Object.fromEntries(created().map((d: any) => [d.userId, d]));
     expect(byUser.full).toMatchObject({ assessmentId: 'a1', score: 100, passed: true });
     expect(byUser.half).toMatchObject({ score: 50, passed: false });
-    expect(byUser.absent).toMatchObject({ score: 0, passed: false });
-    expect(byUser.absent.answers).toMatchObject({ missed: true });
+    expect(byUser.silent).toMatchObject({ score: 0, passed: false });
+    expect(byUser.silent.answers).toMatchObject({ missed: true, sessionId: 's1' });
   });
 
-  it('replaces any earlier result, so grading can be re-run', async () => {
+  it('leaves learners who were not in this round alone (their earlier round result stays)', async () => {
+    await service.gradeSession('s1');
+    expect(created().map((d: any) => d.userId)).not.toContain('absent');
+    expect(prisma.assessmentAttempt.deleteMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ userId: 'absent' }) }),
+    );
+  });
+
+  it("replaces only this session's earlier result, so grading can be re-run", async () => {
     await service.gradeSession('s1');
     expect(prisma.assessmentAttempt.deleteMany).toHaveBeenCalledWith({
-      where: { assessmentId: 'a1', userId: 'full' },
+      where: { assessmentId: 'a1', userId: 'full', answers: { path: ['sessionId'], equals: 's1' } },
     });
     expect(prisma.$transaction).toHaveBeenCalledTimes(3);
   });
 
-  it('re-checks course completion for every learner afterwards', async () => {
+  it('numbers the attempt after results from other rounds', async () => {
+    prisma.assessmentAttempt.count.mockResolvedValue(1);
+    await service.gradeSession('s1');
+    expect(created()[0]).toMatchObject({ attemptNumber: 2 });
+  });
+
+  it('re-checks course completion for the learners it graded', async () => {
     await service.gradeSession('s1');
     expect(progress.maybeCompleteCourse).toHaveBeenCalledTimes(3);
-    expect(progress.maybeCompleteCourse).toHaveBeenCalledWith('absent', 'c1');
+    expect(progress.maybeCompleteCourse).not.toHaveBeenCalledWith('absent', 'c1');
   });
 
   it('does nothing for a session without weighted quizzes', async () => {
