@@ -4,7 +4,8 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Eye, ShieldCheck, ShieldOff, Trash2 } from 'lucide-react';
 import { ROLES, ROLE_LABELS } from '@/constants/roles';
 import { fetchRolesWithPermissions } from '@/lib/api/permissions';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -47,15 +48,13 @@ function getInitials(name: string): string {
 }
 
 export default function UsersPage() {
-  const {
-    currentUser,
-    users,
-    changeUserRole,
-    deactivateUser,
-    reactivateUser,
-    deleteUser,
-    bulkUserAction,
-  } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const users = useUserStore((s) => s.users);
+  const changeUserRole = useUserStore((s) => s.changeUserRole);
+  const deactivateUser = useUserStore((s) => s.deactivateUser);
+  const reactivateUser = useUserStore((s) => s.reactivateUser);
+  const deleteUser = useUserStore((s) => s.deleteUser);
+  const bulkUserAction = useUserStore((s) => s.bulkUserAction);
   const { can } = usePermissions();
   const canManage = can('user.manage');
   const { t, tBilingual, tRole } = useTranslation();

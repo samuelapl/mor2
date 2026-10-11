@@ -4,6 +4,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 
 import { ApiError } from '@/lib/api/client';
 import { useAuthStore, setSessionHooks, type RegisterInput, type RegisterResult } from '@/lib/stores/auth-store';
+import { setDataReloader } from '@/lib/stores/session-data';
+import {
+  useUserStore,
+  type BulkRegisterUsersResult,
+  type BulkUserActionResult,
+  type RegisterActorInput,
+} from '@/lib/stores/user-store';
 import {
   fetchCourseDetail,
   fetchCourseModules,
@@ -19,16 +26,7 @@ import {
   updateCourse as apiUpdateCourse,
 } from '@/lib/api/courses';
 import { bulkEnroll, fetchCourseEnrollments, fetchMyEnrollments, selfEnroll } from '@/lib/api/enrollments';
-import {
-  assignRole,
-  bulkCreateUsers,
-  createActor,
-  deactivateUser as apiDeactivateUser,
-  fetchUsers,
-  reactivateUser as apiReactivateUser,
-  deleteUser as apiDeleteUser,
-  removeRole,
-} from '@/lib/api/users';
+import { fetchUsers } from '@/lib/api/users';
 import {
   assignTrainer as apiAssignTrainer,
   unassignTrainer,
@@ -44,7 +42,6 @@ import {
   courseToCreateBody,
   courseToUpdateBody,
   moduleToCreateBody,
-  roleToApi,
   uploadedResourceToApiAttachment,
   userFromApi,
 } from '@/lib/api/transform';
@@ -52,7 +49,6 @@ import type {
   ApiEnrollment,
   ApiModule,
   BulkCreateUserItem,
-  BulkCreateUsersResult,
   CreateCurriculumAttachmentBody,
   ReplaceSessionPlansBody,
 } from '@/lib/api/types';
@@ -237,31 +233,10 @@ interface LmsContextValue {
   reactivateUser: (userId: string) => Promise<ActionResult>;
   deleteUser: (userId: string) => Promise<ActionResult>;
   /** Suspends or deletes several users, reloading once. Failures are reported per user. */
-  bulkUserAction: (
-    action: 'suspend' | 'delete',
-    userIds: string[],
-  ) => Promise<{ ok: false; message: string } | { ok: true; succeeded: number; failed: string[] }>;
-  bulkRegisterUsers: (rows: BulkCreateUserItem[]) => Promise<{ ok: true; result: BulkCreateUsersResult } | { ok: false; message: string }>;
-  registerActor: (input: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    role: Role | string;
-    phone?: string;
-    primaryVenueId?: string;
-    mustChangePassword?: boolean;
-  }) => Promise<ActionResult>;
-  registerUser: (input: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    role: Role | string;
-    phone?: string;
-    primaryVenueId?: string;
-    mustChangePassword?: boolean;
-  }) => Promise<ActionResult>;
+  bulkUserAction: (action: 'suspend' | 'delete', userIds: string[]) => Promise<BulkUserActionResult>;
+  bulkRegisterUsers: (rows: BulkCreateUserItem[]) => Promise<BulkRegisterUsersResult>;
+  registerActor: (input: RegisterActorInput) => Promise<ActionResult>;
+  registerUser: (input: RegisterActorInput) => Promise<ActionResult>;
   updateProfile: (input: { firstName?: string; lastName?: string; phone?: string; tin?: string; avatarUrl?: string }) => Promise<ActionResult>;
   changePassword: (input: { currentPassword: string; newPassword: string }) => Promise<ActionResult>;
   updateLocale: (locale: Lang) => Promise<ActionResult>;
@@ -549,30 +524,32 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   const updateLocale = useAuthStore((s) => s.updateLocale);
   const refreshPermissions = useAuthStore((s) => s.refreshPermissions);
 
+  // User directory and names live in the Zustand user store (Phase 2 facade).
+  const users = useUserStore((s) => s.users);
+  const userNames = useUserStore((s) => s.userNames);
+  const changeUserRole = useUserStore((s) => s.changeUserRole);
+  const deactivateUser = useUserStore((s) => s.deactivateUser);
+  const reactivateUser = useUserStore((s) => s.reactivateUser);
+  const deleteUser = useUserStore((s) => s.deleteUser);
+  const bulkUserAction = useUserStore((s) => s.bulkUserAction);
+  const bulkRegisterUsers = useUserStore((s) => s.bulkRegisterUsers);
+  const registerActor = useUserStore((s) => s.registerActor);
+
   const [courses, setCourses] = useState<Course[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [myEnrollments, setMyEnrollments] = useState<ApiEnrollment[]>([]);
-  const [userNames, setUserNames] = useState<Record<string, string>>({});
 
   const coursesRef = useRef<Course[]>([]);
-  const usersRef = useRef<User[]>([]);
 
   useEffect(() => {
     coursesRef.current = courses;
   }, [courses]);
 
-  useEffect(() => {
-    usersRef.current = users;
-  }, [users]);
-
   // Clears the user-scoped data; the auth store clears the token and user.
   const clearData = useCallback(() => {
-    setUsers([]);
-    usersRef.current = [];
+    useUserStore.getState().reset();
     setCourses([]);
     coursesRef.current = [];
     setMyEnrollments([]);
-    setUserNames({});
   }, []);
 
   const reloadData = useCallback(async (user?: User | null) => {
@@ -641,15 +618,14 @@ export function LmsProvider({ children }: { children: ReactNode }) {
           const res = await fetchUsers({ limit: 100 });
           const mappedUsers = res.data.map(userFromApi);
           for (const user of mappedUsers) names[user.id] = user.name;
-          setUsers(mappedUsers);
-          usersRef.current = mappedUsers;
+          useUserStore.setState({ users: mappedUsers });
         } catch {
           // not permitted → keep the user list empty
         }
       }
 
       if (current) names[current.id] = current.name;
-      setUserNames(names);
+      useUserStore.setState({ userNames: names });
       setCourses(next);
       coursesRef.current = next;
     } catch (err) {
@@ -792,60 +768,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         return {
           ok: false,
           message: errorMessage(err, 'Failed to remove trainer.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const bulkRegisterUsers: LmsContextValue['bulkRegisterUsers'] = useCallback(
-    async (rows) => {
-      if (rows.length === 0) {
-        return { ok: false, message: 'No users in the file.' };
-      }
-      try {
-        const result = await bulkCreateUsers(
-          rows.map((row) => ({
-            firstName: row.firstName,
-            lastName: row.lastName,
-            email: row.email,
-            phone: row.phone,
-            tin: row.tin || undefined,
-            role: row.role || undefined,
-            password: row.password || undefined,
-          })),
-        );
-        await reloadData(useAuthStore.getState().currentUser);
-        return { ok: true, result };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to register users.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const registerActor: LmsContextValue['registerActor'] = useCallback(
-    async (input) => {
-      try {
-        await createActor({
-          firstName: input.firstName,
-          lastName: input.lastName,
-          email: input.email,
-          password: input.password,
-          role: roleToApi(input.role),
-          phone: input.phone || undefined,
-          primaryVenueId: input.primaryVenueId || undefined,
-          mustChangePassword: input.mustChangePassword,
-        });
-        await reloadData(useAuthStore.getState().currentUser);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to register user.'),
         };
       }
     },
@@ -1223,121 +1145,6 @@ export function LmsProvider({ children }: { children: ReactNode }) {
 
   const getEnrollmentForCourse = useCallback((courseId: string) => myEnrollments.find((e) => e.courseId === courseId), [myEnrollments]);
 
-  const changeUserRole = useCallback(
-    async (userId: string, role: Role): Promise<ActionResult> => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'role.manage')) {
-        return {
-          ok: false,
-          message: 'Only system administrators can change roles.',
-        };
-      }
-      const user = usersRef.current.find((item) => item.id === userId);
-      if (!user) return { ok: false, message: 'User not found.' };
-      if (user.role === role) return { ok: true };
-      try {
-        await assignRole(userId, roleToApi(role));
-        if (user.role !== role) {
-          try {
-            await removeRole(userId, roleToApi(user.role));
-          } catch {
-            // the previous role may already be revoked by the API
-          }
-        }
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to change role.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const deactivateUser = useCallback(
-    async (userId: string): Promise<ActionResult> => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return { ok: false, message: 'You are not allowed to manage users.' };
-      }
-      try {
-        await apiDeactivateUser(userId);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to deactivate user.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const reactivateUser = useCallback(
-    async (userId: string): Promise<ActionResult> => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return { ok: false, message: 'You are not allowed to manage users.' };
-      }
-      try {
-        await apiReactivateUser(userId);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to reactivate user.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const deleteUser = useCallback(
-    async (userId: string): Promise<ActionResult> => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return { ok: false, message: 'You are not allowed to manage users.' };
-      }
-      try {
-        await apiDeleteUser(userId);
-        await reloadData(admin);
-        return { ok: true };
-      } catch (err) {
-        return {
-          ok: false,
-          message: errorMessage(err, 'Failed to delete user.'),
-        };
-      }
-    },
-    [reloadData],
-  );
-
-  const bulkUserAction: LmsContextValue['bulkUserAction'] = useCallback(
-    async (action, userIds) => {
-      const admin = useAuthStore.getState().currentUser;
-      if (!admin || !hasPermission(admin, 'user.manage')) {
-        return { ok: false, message: 'You are not allowed to manage users.' };
-      }
-      const run = action === 'suspend' ? apiDeactivateUser : apiDeleteUser;
-      const failed: string[] = [];
-      // A few requests at a time so a large selection doesn't flood the API.
-      for (let i = 0; i < userIds.length; i += 5) {
-        const batch = userIds.slice(i, i + 5);
-        const results = await Promise.allSettled(batch.map((id) => run(id)));
-        results.forEach((result, index) => {
-          if (result.status === 'rejected') failed.push(batch[index]);
-        });
-      }
-      await reloadData(admin);
-      return { ok: true, succeeded: userIds.length - failed.length, failed };
-    },
-    [reloadData],
-  );
-
   const refreshCourse = useCallback(async (courseId: string) => {
     try {
       const fresh = courseFromDetail(await fetchCourseDetail(courseId));
@@ -1361,12 +1168,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setSessionHooks({
       onSignIn: async (user) => {
-        setUserNames({ [user.id]: user.name });
+        useUserStore.setState({ userNames: { [user.id]: user.name } });
         await reloadData(user);
       },
       onRestore: (user) => reloadData(user),
       onClear: clearData,
     });
+    setDataReloader(reloadData);
     useAuthStore.getState().initAuth();
   }, [clearData, reloadData]);
 

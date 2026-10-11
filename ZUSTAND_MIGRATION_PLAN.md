@@ -293,8 +293,8 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 
 | Phase | Target Store | Proxy Wired in `lms-store` | TypeScript Pass | Status |
 | :--- | :--- | :---: | :---: | :--- |
-| **Phase 1** | `auth-store.ts` | [x] | [x] | Awaiting browser check |
-| **Phase 2** | `user-store.ts` | [ ] | [ ] | Pending |
+| **Phase 1** | `auth-store.ts` | [x] | [x] | Done |
+| **Phase 2** | `user-store.ts` | [x] | [x] | Awaiting browser check |
 | **Phase 3** | `enrollment-store.ts` | [ ] | [ ] | Pending |
 | **Phase 4** | `course-store.ts` | [ ] | [ ] | Pending |
 | **Phase 5** | Cutover & Delete `lms-store.tsx` | N/A (Deleted) | [ ] | Pending |
