@@ -347,5 +347,22 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "duration": {
+    "selfPaced": "Self-paced",
+    "minutesOnlyOne": "{mins} min",
+    "minutesOnlyOther": "{mins} mins",
+    "hoursOnlyOne": "{hours} hr",
+    "hoursOnlyOther": "{hours} hrs",
+    "hoursAndMinutes": "{hours} {hourUnit} {mins} {minuteUnit}",
+    "hourUnitOne": "hr",
+    "hourUnitOther": "hrs",
+    "minuteUnitOne": "min",
+    "minuteUnitOther": "mins"
+  },
+  "timeUnits": {
+    "day": "d",
+    "hour": "h",
+    "minute": "m"
   }
 }

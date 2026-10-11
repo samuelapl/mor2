@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api/client';
+import { translateIn } from '@/lib/i18n';
 
 /**
  * Session times are entered and shown in one platform time zone (EAT by default), whatever
@@ -74,9 +75,10 @@ export function formatSessionDateTime(iso: string, locale?: Locale): string {
   return `${formatted} ${APP_TIME_ZONE_LABEL}`;
 }
 
-/** Seconds as "4d 2h 35m" (Amharic: "4ቀ 2ሰ 35ደ"); under a minute is "<1m". */
+/** Seconds as "4d 2h 35m" (unit letters from locales common.timeUnits); under a minute is "<1m". */
 export function formatStartsIn(seconds: number, isAmharic = false): string {
-  const [d, h, m] = isAmharic ? ['ቀ', 'ሰ', 'ደ'] : ['d', 'h', 'm'];
+  const lang = isAmharic ? 'am' : 'en';
+  const [d, h, m] = (['day', 'hour', 'minute'] as const).map((u) => translateIn(lang, `common.timeUnits.${u}`));
   const days = Math.floor(seconds / 86_400);
   const hours = Math.floor((seconds % 86_400) / 3_600);
   const minutes = Math.floor((seconds % 3_600) / 60);

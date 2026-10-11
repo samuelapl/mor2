@@ -1,3 +1,5 @@
+import { translateIn } from '@/lib/i18n';
+
 /**
  * Course duration rules, shared by every screen that shows or saves a duration.
  *
@@ -66,20 +68,22 @@ export function calculateEstimatedHours(totalMinutes: number): number {
 
 /** "45 mins", "1 hr", "3 hrs", "2 hrs 25 mins" (or the Amharic equivalents); 0 reads as self-paced. */
 export function formatDuration(minutes: number | null | undefined, isAmharic = false): string {
+  const lang = isAmharic ? 'am' : 'en';
   const total = Math.round(minutes || 0);
-  if (total <= 0) return isAmharic ? 'በግል ፍጥነት' : 'Self-paced';
+  if (total <= 0) return translateIn(lang, 'common.duration.selfPaced');
 
   const hours = Math.floor(total / 60);
   const mins = total % 60;
+  const one = (n: number) => (n === 1 ? 'One' : 'Other');
 
-  if (hours === 0) return isAmharic ? `${mins} ደቂቃ` : `${mins} min${mins === 1 ? '' : 's'}`;
-  if (mins === 0) {
-    if (isAmharic) return hours === 1 ? '1 ሰዓት' : `${hours} ሰዓታት`;
-    return hours === 1 ? '1 hr' : `${hours} hrs`;
-  }
-  return isAmharic
-    ? `${hours} ሰዓት ${mins} ደቂቃ`
-    : `${hours} hr${hours === 1 ? '' : 's'} ${mins} min${mins === 1 ? '' : 's'}`;
+  if (hours === 0) return translateIn(lang, `common.duration.minutesOnly${one(mins)}`, { mins });
+  if (mins === 0) return translateIn(lang, `common.duration.hoursOnly${one(hours)}`, { hours });
+  return translateIn(lang, 'common.duration.hoursAndMinutes', {
+    hours,
+    mins,
+    hourUnit: translateIn(lang, `common.duration.hourUnit${one(hours)}`),
+    minuteUnit: translateIn(lang, `common.duration.minuteUnit${one(mins)}`),
+  });
 }
 
 /** formatDuration for a value stored in hours (Course.estimatedHours). */

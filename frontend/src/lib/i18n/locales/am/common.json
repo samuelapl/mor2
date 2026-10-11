@@ -347,5 +347,22 @@
     "light": "ብርሃን",
     "dark": "ጨለማ",
     "system": "የስርዓቱ"
+  },
+  "duration": {
+    "selfPaced": "በግል ፍጥነት",
+    "minutesOnlyOne": "{mins} ደቂቃ",
+    "minutesOnlyOther": "{mins} ደቂቃ",
+    "hoursOnlyOne": "{hours} ሰዓት",
+    "hoursOnlyOther": "{hours} ሰዓታት",
+    "hoursAndMinutes": "{hours} {hourUnit} {mins} {minuteUnit}",
+    "hourUnitOne": "ሰዓት",
+    "hourUnitOther": "ሰዓት",
+    "minuteUnitOne": "ደቂቃ",
+    "minuteUnitOther": "ደቂቃ"
+  },
+  "timeUnits": {
+    "day": "ቀ",
+    "hour": "ሰ",
+    "minute": "ደ"
   }
 }
