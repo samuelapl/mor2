@@ -78,7 +78,7 @@ function formatDateTime(val: string | null | undefined): string {
 }
 
 export default function ManageCertificatesPage() {
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('certificates');
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const [certificates, setCertificates] = useState<ApiCertificate[]>([]);
@@ -167,7 +167,7 @@ export default function ManageCertificatesPage() {
     try {
       setRevokeLoading(true);
       await revokeCertificate(revokingCert.id, revokeReason.trim() || undefined);
-      toast.success(tBilingual('Certificate revoked successfully', 'ሰርተፊኬቱ በተሳካ ሁኔታ ተሰርዟል'));
+      toast.success(t('manageCertificatesPage.certificateRevokedSuccessfully'));
       setRevokingCert(null);
       setRevokeReason('');
       void loadData();
@@ -185,7 +185,7 @@ export default function ManageCertificatesPage() {
     try {
       setReissueLoading(true);
       await reissueCertificate(reissuingCert.id, reissueReason.trim() || undefined);
-      toast.success(tBilingual('Certificate reissued successfully', 'ሰርተፊኬቱ እንደገና ተሰጥቷል'));
+      toast.success(t('manageCertificatesPage.certificateReissuedSuccessfully'));
       setReissuingCert(null);
       setReissueReason('');
       void loadData();
@@ -217,7 +217,7 @@ export default function ManageCertificatesPage() {
       setDownloading(true);
       const filename = `${cert.certificateNumber || 'certificate'}_${lang}.pdf`;
       await downloadCertificateDirectly(cert.id, lang, filename);
-      toast.success(tBilingual('Certificate download started', 'የሰርተፊኬት ማውረድ ተጀምሯል'));
+      toast.success(t('manageCertificatesPage.certificateDownloadStarted'));
     } catch (err: any) {
       toast.error(err?.message || 'Download error');
       if (cert.downloadUrl) {
@@ -241,11 +241,8 @@ export default function ManageCertificatesPage() {
   return (
     <PageShell
       role={userRole as any}
-      title={tBilingual('Manage Certificates', 'ሰርተፊኬቶችን ያስተዳድሩ')}
-      description={tBilingual(
-        'Authoritative management of issued course certificates: search, preview, verify, download, revoke, reissue, and audit trail.',
-        'የተሰጡ የኮርስ ሰርተፊኬቶችን ማስተዳደር፦ መፈለግ፣ ማየት፣ ማረጋገጥ፣ ማውረድ፣ መሰረዝ፣ እንደገና መስጠት እና የኦዲት መዝገብ።',
-      )}
+      title={t('manageCertificatesPage.manageCertificates')}
+      description={t('manageCertificatesPage.authoritativeManagementOfIssuedCourseCer')}
     >
       {/* Executive Metrics & Analytics Dashboard Report */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
@@ -264,7 +261,7 @@ export default function ManageCertificatesPage() {
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tBilingual('Total Issued', 'በአጠቃላይ የተሰጡ')}
+              {t('manageCertificatesPage.totalIssued')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
               <Award className="h-4 w-4" />
@@ -275,11 +272,11 @@ export default function ManageCertificatesPage() {
               {statsLoading ? '...' : (stats?.totalIssued ?? total)}
             </span>
             <span className="text-[11px] text-slate-400">
-              {tBilingual('certificates', 'ሰርተፊኬቶች')}
+              {t('manageCertificatesPage.certificates')}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {tBilingual('Across all published courses', 'በሁሉም ኮርሶች የተሰጡ')}
+            {t('manageCertificatesPage.acrossAllPublishedCourses')}
           </p>
         </div>
 
@@ -298,7 +295,7 @@ export default function ManageCertificatesPage() {
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tBilingual('Active & Valid', 'ንቁ እና ህጋዊ')}
+              {t('manageCertificatesPage.activeValid')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
@@ -315,7 +312,7 @@ export default function ManageCertificatesPage() {
             </Badge>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {tBilingual('Fully verified & compliant', 'የተረጋገጡ እና ንቁ')}
+            {t('manageCertificatesPage.fullyVerifiedCompliant')}
           </p>
         </div>
 
@@ -323,7 +320,7 @@ export default function ManageCertificatesPage() {
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tBilingual('Total Downloads', 'የሰርተፊኬት ማውረዶች')}
+              {t('manageCertificatesPage.totalDownloads')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
               <Download className="h-4 w-4" />
@@ -334,11 +331,11 @@ export default function ManageCertificatesPage() {
               {statsLoading ? '...' : (stats?.totalDownloads ?? 0)}
             </span>
             <span className="text-[11px] text-slate-400">
-              {tBilingual('downloads', 'ማውረዶች')}
+              {t('manageCertificatesPage.downloads')}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {tBilingual('PDF export audit events', 'ኦዲት የተደረጉ ማውረዶች')}
+            {t('manageCertificatesPage.pdfExportAuditEvents')}
           </p>
         </div>
 
@@ -346,7 +343,7 @@ export default function ManageCertificatesPage() {
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:shadow-md">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tBilingual('Certified Learners', 'የተመሰከረላቸው ሰልጣኞች')}
+              {t('manageCertificatesPage.certifiedLearners')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
               <Users className="h-4 w-4" />
@@ -357,11 +354,11 @@ export default function ManageCertificatesPage() {
               {statsLoading ? '...' : (stats?.uniqueLearners ?? 0)}
             </span>
             <span className="text-[11px] text-slate-400">
-              {tBilingual('graduates', 'ሰልጣኞች')}
+              {t('manageCertificatesPage.graduates')}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {tBilingual('Distinct graduated users', 'ኮርስ ያጠናቀቁ ልዩ ሰልጣኞች')}
+            {t('manageCertificatesPage.distinctGraduatedUsers')}
           </p>
         </div>
 
@@ -380,7 +377,7 @@ export default function ManageCertificatesPage() {
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tBilingual('Revoked / Expired', 'የተሰረዙ / ያለፈባቸው')}
+              {t('manageCertificatesPage.revokedExpired')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
               <ShieldAlert className="h-4 w-4" />
@@ -393,11 +390,11 @@ export default function ManageCertificatesPage() {
                 : (stats?.revokedCount ?? 0) + (stats?.expiredCount ?? 0)}
             </span>
             <span className="text-[11px] text-slate-400">
-              {stats?.revokedCount ?? 0} {tBilingual('revoked', 'የተሰረዙ')}
+              {stats?.revokedCount ?? 0} {t('manageCertificatesPage.revoked')}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
-            {stats?.expiredCount ?? 0} {tBilingual('expired certificates', 'ጊዜያቸው ያለፈባቸው')}
+            {stats?.expiredCount ?? 0} {t('manageCertificatesPage.expiredCertificates')}
           </p>
         </div>
       </div>
@@ -411,10 +408,7 @@ export default function ManageCertificatesPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={tBilingual(
-                'Search certificate #, verification code, student, course...',
-                'በሰርተፊኬት ቁጥር፣ ኮድ፣ ሰልጣኝ፣ ኮርስ ፈልግ...',
-              )}
+              placeholder={t('manageCertificatesPage.searchCertificateVerificationCodeStudent')}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-10 pr-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
             />
           </div>
@@ -430,7 +424,7 @@ export default function ManageCertificatesPage() {
               title="Refresh"
             >
               <RefreshCw className={cn('h-3.5 w-3.5', (loading || statsLoading) && 'animate-spin')} />
-              <span>{tBilingual('Refresh', 'አድስ')}</span>
+              <span>{t('manageCertificatesPage.refresh')}</span>
             </button>
             <LanguageToggle />
           </div>
@@ -439,10 +433,10 @@ export default function ManageCertificatesPage() {
         {/* Status Filter Tabs */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           {[
-            { key: 'ALL', label: tBilingual('All Issued', 'ሁሉም የተሰጡ') },
-            { key: 'ACTIVE', label: tBilingual('Active', 'ንቁ') },
-            { key: 'EXPIRED', label: tBilingual('Expired', 'ጊዜያቸው ያለፈ') },
-            { key: 'REVOKED', label: tBilingual('Revoked', 'የተሰረዙ') },
+            { key: 'ALL', label: t('manageCertificatesPage.allIssued') },
+            { key: 'ACTIVE', label: t('certificateCard.active') },
+            { key: 'EXPIRED', label: t('manageCertificatesPage.expired') },
+            { key: 'REVOKED', label: t('manageCertificatesPage.revoked2') },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -471,22 +465,22 @@ export default function ManageCertificatesPage() {
             <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-5 py-3.5">
-                  {tBilingual('Certificate', 'ሰርተፊኬት')}
+                  {t('manageCertificatesPage.certificate')}
                 </th>
                 <th className="px-5 py-3.5">
-                  {tBilingual('Learner', 'ሰልጣኝ')}
+                  {t('manageCertificatesPage.learner')}
                 </th>
                 <th className="px-5 py-3.5">
-                  {tBilingual('Course', 'ኮርስ')}
+                  {t('manageCertificatesPage.course')}
                 </th>
                 <th className="px-5 py-3.5">
-                  {tBilingual('Issued / Expires', 'የተሰጠበት / የሚያበቃበት')}
+                  {t('manageCertificatesPage.issuedExpires')}
                 </th>
                 <th className="px-5 py-3.5">
-                  {tBilingual('Status', 'ሁኔታ')}
+                  {t('manageCertificatesPage.status')}
                 </th>
                 <th className="px-5 py-3.5 text-right">
-                  {tBilingual('Actions', 'ተግባራት')}
+                  {t('manageCertificatesPage.actions')}
                 </th>
               </tr>
             </thead>
@@ -495,7 +489,7 @@ export default function ManageCertificatesPage() {
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-indigo-500" />
-                    <span>{tBilingual('Loading certificates...', 'ሰርተፊኬቶች በመጫን ላይ...')}</span>
+                    <span>{t('manageCertificatesPage.loadingCertificates')}</span>
                   </td>
                 </tr>
               ) : certificates.length === 0 ? (
@@ -503,13 +497,10 @@ export default function ManageCertificatesPage() {
                   <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
                     <Award className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     <p className="font-semibold text-slate-700 dark:text-slate-200">
-                      {tBilingual('No certificates found', 'ምንም ሰርተፊኬት አልተገኘም')}
+                      {t('manageCertificatesPage.noCertificatesFound')}
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      {tBilingual(
-                        'Certificates are automatically generated when learners pass their course evaluations.',
-                        'ሰልጣኞች የኮርስ ፈተናዎቻቸውን ሲያልፉ ሰርተፊኬቶች በራስ-ሰር ይፈጠራሉ።',
-                      )}
+                      {t('manageCertificatesPage.certificatesAreAutomaticallyGeneratedWhe')}
                     </p>
                   </td>
                 </tr>
@@ -561,13 +552,13 @@ export default function ManageCertificatesPage() {
                       {/* Dates */}
                       <td className="px-5 py-4 text-xs">
                         <div>
-                          <span className="text-slate-400">{tBilingual('Issued:', 'የተሰጠበት፦')} </span>
+                          <span className="text-slate-400">{t('manageCertificatesPage.issued')} </span>
                           <span className="font-semibold text-slate-700 dark:text-slate-200">
                             {formatDate(cert.issuedAt)}
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
-                          <span>{tBilingual('Expires:', 'የሚያበቃበት፦')} </span>
+                          <span>{t('manageCertificatesPage.expires')} </span>
                           <span>{formatDate(cert.expiresAt)}</span>
                         </div>
                       </td>
@@ -576,15 +567,15 @@ export default function ManageCertificatesPage() {
                       <td className="px-5 py-4">
                         {isRevoked ? (
                           <Badge variant="red" dot>
-                            {tBilingual('Revoked', 'ተሰርዟል')}
+                            {t('certificateCard.revoked')}
                           </Badge>
                         ) : isExpired ? (
                           <Badge variant="amber" dot>
-                            {tBilingual('Expired', 'ጊዜው አልፏል')}
+                            {t('certificateCard.expired')}
                           </Badge>
                         ) : (
                           <Badge variant="green" dot>
-                            {tBilingual('Active', 'ንቁ')}
+                            {t('certificateCard.active')}
                           </Badge>
                         )}
                       </td>
@@ -600,11 +591,11 @@ export default function ManageCertificatesPage() {
                               setPreviewCert(cert);
                               setPreviewLang('en');
                             }}
-                            title={tBilingual('Preview Certificate', 'ሰርተፊኬት እይ')}
+                            title={t('manageCertificatesPage.previewCertificate')}
                             className="h-8 px-2.5 gap-1 text-slate-700 dark:text-slate-300"
                           >
                             <Eye className="h-3.5 w-3.5" />
-                            <span className="hidden md:inline">{tBilingual('Preview', 'እይ')}</span>
+                            <span className="hidden md:inline">{t('manageCertificatesPage.preview')}</span>
                           </Button>
 
                           {/* Direct Download Action */}
@@ -613,11 +604,11 @@ export default function ManageCertificatesPage() {
                             variant="outline"
                             onClick={() => handleDownload(cert, 'en')}
                             disabled={downloading}
-                            title={tBilingual('Download Certificate PDF', 'ሰርተፊኬት ፒዲኤፍ አውርድ')}
+                            title={t('certificateCard.downloadCertificatePdf')}
                             className="h-8 px-2.5 gap-1 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                           >
                             <Download className="h-3.5 w-3.5" />
-                            <span className="hidden md:inline">{tBilingual('Download', 'አውርድ')}</span>
+                            <span className="hidden md:inline">{t('certificateCard.download')}</span>
                           </Button>
 
                           {/* Quick Verify */}
@@ -656,7 +647,7 @@ export default function ManageCertificatesPage() {
                               className="h-8 px-2.5 gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
-                              <span className="hidden md:inline">{tBilingual('Reissue', 'እንደገና ስጥ')}</span>
+                              <span className="hidden md:inline">{t('manageCertificatesPage.reissue')}</span>
                             </Button>
                           ) : (
                             <Button
@@ -706,7 +697,7 @@ export default function ManageCertificatesPage() {
         <WorkspaceDetailOverlay
           open={Boolean(previewCert)}
           onClose={() => setPreviewCert(null)}
-          title={tBilingual('Certificate Preview', 'የሰርተፊኬት ቅድመ-እይታ')}
+          title={t('manageCertificatesPage.certificatePreview')}
           subtitle={`${previewCert.certificateNumber} · ${previewCert.user?.firstName || ''} ${previewCert.user?.lastName || ''} · ${previewCert.course?.title || previewCert.course?.titleEn || 'Course'}`}
           fullViewport={true}
           actions={
@@ -722,7 +713,7 @@ export default function ManageCertificatesPage() {
 
               <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5">
                 <Printer className="h-4 w-4" />
-                {tBilingual('Print', 'አትም')}
+                {t('certificateCard.print')}
               </Button>
 
               <Button
@@ -733,8 +724,8 @@ export default function ManageCertificatesPage() {
               >
                 <Download className="h-4 w-4" />
                 {downloading
-                  ? tBilingual('Preparing...', 'በማዘጋጀት ላይ...')
-                  : tBilingual('Download PDF', 'PDF አውርድ')}
+                  ? t('certificateCard.preparing')
+                  : t('certificateCard.downloadPdf')}
               </Button>
 
               <a
@@ -744,7 +735,7 @@ export default function ManageCertificatesPage() {
               >
                 <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
                   <ExternalLink className="h-4 w-4" />
-                  {tBilingual('Verify Link', 'የማረጋገጫ ሊንክ')}
+                  {t('manageCertificatesPage.verifyLink')}
                 </Button>
               </a>
             </div>
@@ -757,11 +748,11 @@ export default function ManageCertificatesPage() {
                 <XCircle className="h-5 w-5 shrink-0 text-red-600" />
                 <div>
                   <p className="font-bold text-sm">
-                    {tBilingual('This certificate is REVOKED', 'ይህ ሰርተፊኬት የተሰረዘ ነው')}
+                    {t('manageCertificatesPage.thisCertificateIsRevoked')}
                   </p>
                   {previewCert.revokedReason && (
                     <p className="text-xs text-red-700 mt-0.5">
-                      {tBilingual('Revocation reason:', 'የመሰረዣ ምክንያት፦')} {previewCert.revokedReason}
+                      {t('manageCertificatesPage.revocationReason')} {previewCert.revokedReason}
                     </p>
                   )}
                 </div>
@@ -794,37 +785,31 @@ export default function ManageCertificatesPage() {
       <Modal
         open={Boolean(revokingCert)}
         onClose={() => setRevokingCert(null)}
-        title={tBilingual('Revoke Certificate', 'ሰርተፊኬት ሰርዝ')}
-        subtitle={tBilingual(
-          'Revoking will invalidate this certificate and mark it as invalid upon verification.',
-          'ይህን ሰርተፊኬት መሰረዝ ሲረጋገጥ ዋጋ እንደሌለው ያደርገዋል።',
-        )}
+        title={t('manageCertificatesPage.revokeCertificate')}
+        subtitle={t('manageCertificatesPage.revokingWillInvalidateThisCertificateAnd')}
       >
         <div className="space-y-4 pt-2">
           <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-800">
-            <span className="font-bold">{tBilingual('Target:', 'የሚሰረዘው፦')} </span>
+            <span className="font-bold">{t('manageCertificatesPage.target')} </span>
             {revokingCert?.certificateNumber} ({revokingCert?.user?.firstName} {revokingCert?.user?.lastName})
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              {tBilingual('Revocation Reason (Required for audit log)', 'የመሰረዣ ምክንያት (ለኦዲት መዝገብ አስፈላጊ)')}
+              {t('manageCertificatesPage.revocationReasonRequiredForAuditLog')}
             </label>
             <textarea
               rows={3}
               value={revokeReason}
               onChange={(e) => setRevokeReason(e.target.value)}
-              placeholder={tBilingual(
-                'Enter justification for revoking this certificate (e.g. academic integrity violation, administrative correction)...',
-                'ይህን ሰርተፊኬት ለመሰረዝ ምክንያት ያስገቡ...',
-              )}
+              placeholder={t('manageCertificatesPage.enterJustificationForRevokingThisCertifi')}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setRevokingCert(null)}>
-              {tBilingual('Cancel', 'ተመለስ')}
+              {t('manageCertificatesPage.cancel')}
             </Button>
             <Button
               variant="danger"
@@ -834,8 +819,8 @@ export default function ManageCertificatesPage() {
             >
               <ShieldAlert className="h-4 w-4" />
               {revokeLoading
-                ? tBilingual('Revoking...', 'በመሰረዝ ላይ...')
-                : tBilingual('Confirm Revocation', 'መሰረዙን አረጋግጥ')}
+                ? t('manageCertificatesPage.revoking')
+                : t('manageCertificatesPage.confirmRevocation')}
             </Button>
           </div>
         </div>
@@ -847,37 +832,31 @@ export default function ManageCertificatesPage() {
       <Modal
         open={Boolean(reissuingCert)}
         onClose={() => setReissuingCert(null)}
-        title={tBilingual('Reissue Certificate', 'ሰርተፊኬት እንደገና ስጥ')}
-        subtitle={tBilingual(
-          'Reissuing restores an active status, generates fresh verification credentials, and updates the PDF template.',
-          'እንደገና መስጠት ንቁ ሁኔታን ይመልሳል፣ አዲስ የማረጋገጫ ኮድ ያመነጫል፣ እና የፒዲኤፍ ቅጹን ያድሳል።',
-        )}
+        title={t('manageCertificatesPage.reissueCertificate')}
+        subtitle={t('manageCertificatesPage.reissuingRestoresAnActiveStatusGenerates')}
       >
         <div className="space-y-4 pt-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-xs text-emerald-800">
-            <span className="font-bold">{tBilingual('Target:', 'ዒላማ፦')} </span>
+            <span className="font-bold">{t('manageCertificatesPage.target2')} </span>
             {reissuingCert?.certificateNumber} ({reissuingCert?.user?.firstName} {reissuingCert?.user?.lastName})
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              {tBilingual('Reissue Note / Reason', 'የእንደገና መስጠት ምክንያት')}
+              {t('manageCertificatesPage.reissueNoteReason')}
             </label>
             <textarea
               rows={3}
               value={reissueReason}
               onChange={(e) => setReissueReason(e.target.value)}
-              placeholder={tBilingual(
-                'Enter note explaining the reissue (e.g. name correction, template refresh, administrative reinstatement)...',
-                'እንደገና ለመስጠት ማብራሪያ ያስገቡ...',
-              )}
+              placeholder={t('manageCertificatesPage.enterNoteExplainingTheReissueE')}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setReissuingCert(null)}>
-              {tBilingual('Cancel', 'ተመለስ')}
+              {t('manageCertificatesPage.cancel')}
             </Button>
             <Button
               onClick={handleConfirmReissue}
@@ -886,8 +865,8 @@ export default function ManageCertificatesPage() {
             >
               <RotateCcw className="h-4 w-4" />
               {reissueLoading
-                ? tBilingual('Reissuing...', 'በመስጠት ላይ...')
-                : tBilingual('Confirm Reissue', 'እንደገና መስጠቱን አረጋግጥ')}
+                ? t('manageCertificatesPage.reissuing')
+                : t('manageCertificatesPage.confirmReissue')}
             </Button>
           </div>
         </div>
@@ -899,19 +878,19 @@ export default function ManageCertificatesPage() {
       <Modal
         open={Boolean(auditCert)}
         onClose={() => setAuditCert(null)}
-        title={tBilingual('Certificate Audit History', 'የሰርተፊኬት ኦዲት መዝገብ')}
+        title={t('manageCertificatesPage.certificateAuditHistory')}
         subtitle={`${auditCert?.certificateNumber} · ${auditCert?.course?.code}`}
       >
         <div className="space-y-4 pt-2">
           {auditLoading ? (
             <div className="py-8 text-center text-slate-400">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-indigo-500" />
-              <span>{tBilingual('Loading audit logs...', 'የኦዲት መዝገብ በመጫን ላይ...')}</span>
+              <span>{t('manageCertificatesPage.loadingAuditLogs')}</span>
             </div>
           ) : auditLogs.length === 0 ? (
             <div className="py-8 text-center text-slate-400">
               <History className="h-6 w-6 mx-auto mb-2 opacity-40" />
-              <p>{tBilingual('No audit logs recorded for this certificate yet.', 'ምንም የኦዲት መዝገብ አልተገኘም።')}</p>
+              <p>{t('manageCertificatesPage.noAuditLogsRecordedForThis')}</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
@@ -951,7 +930,7 @@ export default function ManageCertificatesPage() {
 
           <div className="flex justify-end pt-2">
             <Button variant="ghost" onClick={() => setAuditCert(null)}>
-              {tBilingual('Close', 'ዝጋ')}
+              {t('manageCertificatesPage.close')}
             </Button>
           </div>
         </div>

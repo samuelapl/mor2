@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function CertificatesPage() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('certificates');
   const currentUser = useAuthStore((s) => s.currentUser);
   const [certificates, setCertificates] = useState<ApiCertificate[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ export default function CertificatesPage() {
       const data = await fetchMyCertificates();
       setCertificates(data);
     } catch {
-      setError(tBilingual('Unable to load certificates.', 'ሰርተፊኬቶችን መጫን አልተቻለም።'));
+      setError(t('certificatesPage.unableToLoadCertificates'));
     } finally {
       setLoading(false);
     }
@@ -87,11 +87,8 @@ export default function CertificatesPage() {
   return (
     <PageShell
       role="learner"
-      title={tBilingual('My Certificates', 'የእኔ ሰርተፊኬቶች')}
-      description={tBilingual(
-        'View, download, and verify verified certificates you earned upon completing courses.',
-        'ኮርሶችን በማጠናቀቅ ያገኟቸውን የተረጋገጡ ሰርተፊኬቶች ይመልከቱ፣ ያውርዱ እና ያረጋግጡ።',
-      )}
+      title={t('certificatesPage.myCertificates')}
+      description={t('certificatesPage.viewDownloadAndVerifyVerifiedCertificate')}
     >
       <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         {/* Search bar */}
@@ -101,10 +98,7 @@ export default function CertificatesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tBilingual(
-              'Search by course title, code, or certificate #...',
-              'በኮርስ ስም፣ ኮድ ወይም የሰርተፊኬት ቁጥር ፈልግ...',
-            )}
+            placeholder={t('certificatesPage.searchByCourseTitleCodeOr')}
             className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-10 pr-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
           />
         </div>
@@ -117,7 +111,7 @@ export default function CertificatesPage() {
             title="Refresh list"
           >
             <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-            <span className="hidden sm:inline">{tBilingual('Refresh', 'አድስ')}</span>
+            <span className="hidden sm:inline">{t('manageCertificatesPage.refresh')}</span>
           </button>
         </div>
       </div>
@@ -125,10 +119,10 @@ export default function CertificatesPage() {
       {/* Status Filter Tabs */}
       <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
         {[
-          { key: 'ALL', label: tBilingual('All Certificates', 'ሁሉም ሰርተፊኬቶች') },
-          { key: 'ACTIVE', label: tBilingual('Active', 'ንቁ') },
-          { key: 'EXPIRED', label: tBilingual('Expired', 'ጊዜያቸው ያለፈ') },
-          { key: 'REVOKED', label: tBilingual('Revoked', 'የተሰረዙ') },
+          { key: 'ALL', label: t('certificatesPage.allCertificates') },
+          { key: 'ACTIVE', label: t('certificateCard.active') },
+          { key: 'EXPIRED', label: t('manageCertificatesPage.expired') },
+          { key: 'REVOKED', label: t('manageCertificatesPage.revoked2') },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -158,19 +152,13 @@ export default function CertificatesPage() {
         <EmptyState
           title={
             search || statusFilter !== 'ALL'
-              ? tBilingual('No matching certificates', 'ምንም የሚዛመድ ሰርተፊኬት አልተገኘም')
-              : tBilingual('No certificates yet', 'እስካሁን ምንም የምስክር ወረቀት የለም')
+              ? t('certificatesPage.noMatchingCertificates')
+              : t('certificatesPage.noCertificatesYet')
           }
           description={
             search || statusFilter !== 'ALL'
-              ? tBilingual(
-                  'Try adjusting your search terms or filter criteria.',
-                  'የፍለጋ ቃላትን ወይም ማጣሪያዎችን አስተካክለው ይሞክሩ።',
-                )
-              : tBilingual(
-                  'Finish all course modules and pass the final evaluation to automatically earn your verified certificate.',
-                  'ሁሉንም የኮርስ ክፍሎች በማጠናቀቅ እና የመጨረሻውን ፈተና በማለፍ የተረጋገጠ ሰርተፊኬትዎን በራስ-ሰር ያግኙ።',
-                )
+              ? t('certificatesPage.tryAdjustingYourSearchTermsOr')
+              : t('certificatesPage.finishAllCourseModulesAndPass')
           }
         />
       ) : (

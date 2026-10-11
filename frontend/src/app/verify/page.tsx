@@ -40,7 +40,7 @@ function formatDate(val: string | null | undefined): string {
 function VerifyContent() {
   const searchParams = useSearchParams();
   const initialCode = searchParams.get('code') || '';
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('certificates');
 
   const [code, setCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
@@ -59,10 +59,7 @@ function VerifyContent() {
     } catch (err: any) {
       setError(
         err?.message ||
-          tBilingual(
-            'No certificate found matching this verification code.',
-            'በዚህ የማረጋገጫ ኮድ የተገኘ ሰርተፊኬት የለም።',
-          ),
+          t('verifyContent.noCertificateFoundMatchingThisVerificati'),
       );
     } finally {
       setLoading(false);
@@ -101,7 +98,7 @@ function VerifyContent() {
           <LanguageToggle />
           <Link href="/login">
             <Button size="sm" variant="outline" className="text-xs">
-              {tBilingual('Sign In', 'ግባ')}
+              {t('verifyContent.signIn')}
             </Button>
           </Link>
         </div>
@@ -114,13 +111,10 @@ function VerifyContent() {
             <ShieldCheck className="h-7 w-7" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {tBilingual('Certificate Verification Portal', 'የሰርተፊኬት ማረጋገጫ መድረክ')}
+            {t('verifyContent.certificateVerificationPortal')}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
-            {tBilingual(
-              'Verify the authenticity, issuance details, and status of Ministry of Revenues ETIMS credentials.',
-              'የገቢዎች ሚኒስቴር ኢቲኤምኤስ ሰርተፊኬቶችን ትክክለኛነት፣ የተሰጡበትን ዝርዝር እና ሁኔታ ያረጋግጡ።',
-            )}
+            {t('verifyContent.verifyTheAuthenticityIssuanceDetailsAnd')}
           </p>
         </div>
 
@@ -139,10 +133,7 @@ function VerifyContent() {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder={tBilingual(
-                  'Enter verification code (e.g. VERIF-0001)...',
-                  'የማረጋገጫ ኮድ ያስገቡ (ለምሳሌ VERIF-0001)...',
-                )}
+                placeholder={t('verifyContent.enterVerificationCodeEGVerif')}
                 className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-mono font-medium"
               />
             </div>
@@ -152,8 +143,8 @@ function VerifyContent() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 font-semibold"
             >
               {loading
-                ? tBilingual('Verifying...', 'በማረጋገጥ ላይ...')
-                : tBilingual('Verify', 'አረጋግጥ')}
+                ? t('verifyContent.verifying')
+                : t('certificateCard.verify')}
             </Button>
           </form>
         </div>
@@ -165,7 +156,7 @@ function VerifyContent() {
               <XCircle className="h-6 w-6 text-rose-600 shrink-0" />
               <div>
                 <h3 className="font-bold text-base">
-                  {tBilingual('Invalid or Unrecognized Credential', 'ያልተረጋገጠ ወይም የማይታወቅ ሰርተፊኬት')}
+                  {t('verifyContent.invalidOrUnrecognizedCredential')}
                 </h3>
                 <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">{error}</p>
               </div>
@@ -180,18 +171,15 @@ function VerifyContent() {
                   <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <div>
                     <p className="font-display font-extrabold text-base">
-                      {tBilingual('Authentic & Verified Credential', 'ኦፊሴላዊ እና የተረጋገጠ ሰርተፊኬት')}
+                      {t('verifyContent.authenticVerifiedCredential')}
                     </p>
                     <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                      {tBilingual(
-                        'This certificate is officially issued and actively recognized by Ministry of Revenues.',
-                        'ይህ ሰርተፊኬት በገቢዎች ሚኒስቴር በይፋ የተሰጠ እና ንቁ እውቅና ያለው ነው።',
-                      )}
+                      {t('verifyContent.thisCertificateIsOfficiallyIssuedAnd')}
                     </p>
                   </div>
                 </div>
                 <Badge variant="green" dot>
-                  {tBilingual('Verified Active', 'የተረጋገጠ ንቁ')}
+                  {t('verifyContent.verifiedActive')}
                 </Badge>
               </div>
             ) : result.status === 'REVOKED' ? (
@@ -200,23 +188,20 @@ function VerifyContent() {
                   <XCircle className="h-7 w-7 text-rose-600 dark:text-rose-400 shrink-0" />
                   <div>
                     <p className="font-display font-extrabold text-base">
-                      {tBilingual('Revoked Credential', 'የተሰረዘ ሰርተፊኬት')}
+                      {t('verifyContent.revokedCredential')}
                     </p>
                     <p className="text-xs text-rose-700 dark:text-rose-300">
-                      {tBilingual(
-                        'This certificate was officially revoked and is no longer valid.',
-                        'ይህ ሰርተፊኬት በይፋ የተሰረዘ ሲሆን ከአሁን በኋላ ዋጋ የለውም።',
-                      )}
+                      {t('verifyContent.thisCertificateWasOfficiallyRevokedAnd')}
                     </p>
                     {result.revokedReason && (
                       <p className="text-xs font-semibold text-rose-800 dark:text-rose-200 mt-1">
-                        {tBilingual('Reason:', 'ምክንያት፦')} {result.revokedReason}
+                        {t('certificateCard.reason')} {result.revokedReason}
                       </p>
                     )}
                   </div>
                 </div>
                 <Badge variant="red" dot>
-                  {tBilingual('Revoked', 'ተሰርዟል')}
+                  {t('certificateCard.revoked')}
                 </Badge>
               </div>
             ) : (
@@ -225,18 +210,15 @@ function VerifyContent() {
                   <AlertTriangle className="h-7 w-7 text-amber-600 dark:text-amber-400 shrink-0" />
                   <div>
                     <p className="font-display font-extrabold text-base">
-                      {tBilingual('Expired Credential', 'ጊዜው ያለፈበት ሰርተፊኬት')}
+                      {t('verifyContent.expiredCredential')}
                     </p>
                     <p className="text-xs text-amber-700 dark:text-amber-300">
-                      {tBilingual(
-                        'This certificate was authentic but its validity period has expired.',
-                        'ይህ ሰርተፊኬት ትክክለኛ የነበረ ቢሆንም የአገልግሎት ጊዜው አልፏል።',
-                      )}
+                      {t('verifyContent.thisCertificateWasAuthenticButIts')}
                     </p>
                   </div>
                 </div>
                 <Badge variant="amber" dot>
-                  {tBilingual('Expired', 'ጊዜው ያለፈ')}
+                  {t('verifyContent.expired')}
                 </Badge>
               </div>
             )}
@@ -245,7 +227,7 @@ function VerifyContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {tBilingual('Recipient Holder', 'የሰርተፊኬቱ ባለቤት')}
+                  {t('verifyContent.recipientHolder')}
                 </span>
                 <p className="font-display font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <User className="h-4 w-4 text-indigo-600 shrink-0" />
@@ -255,7 +237,7 @@ function VerifyContent() {
 
               <div className="space-y-1 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {tBilingual('Certificate Number', 'የሰርተፊኬት ቁጥር')}
+                  {t('verifyContent.certificateNumber')}
                 </span>
                 <p className="font-mono font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Award className="h-4 w-4 text-amber-600 shrink-0" />
@@ -265,7 +247,7 @@ function VerifyContent() {
 
               <div className="space-y-1 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 md:col-span-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {tBilingual('Completed Training Program', 'የተጠናቀቀው የስልጠና ፕሮግራም')}
+                  {t('verifyContent.completedTrainingProgram')}
                 </span>
                 <p className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-indigo-600 shrink-0" />
@@ -275,7 +257,7 @@ function VerifyContent() {
 
               <div className="space-y-1 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {tBilingual('Issue Date', 'የተሰጠበት ቀን')}
+                  {t('verifyContent.issueDate')}
                 </span>
                 <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
@@ -285,7 +267,7 @@ function VerifyContent() {
 
               <div className="space-y-1 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {tBilingual('Expiry Date', 'የሚያበቃበት ቀን')}
+                  {t('verifyContent.expiryDate')}
                 </span>
                 <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
@@ -300,7 +282,7 @@ function VerifyContent() {
                 <a href={result.downloadUrl} target="_blank" rel="noreferrer">
                   <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
                     <Download className="h-4 w-4" />
-                    {tBilingual('Download Original Verified PDF', 'ኦሪጅናል የተረጋገጠውን PDF አውርድ')}
+                    {t('verifyContent.downloadOriginalVerifiedPdf')}
                   </Button>
                 </a>
               </div>

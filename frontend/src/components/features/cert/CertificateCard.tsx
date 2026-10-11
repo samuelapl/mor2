@@ -35,7 +35,7 @@ function formatDate(value: string): string {
 }
 
 export function CertificateCard({ certificate, learnerName }: CertificateCardProps) {
-  const { tBilingual, lang, isAmharic } = useTranslation();
+  const { lang, isAmharic, t } = useTranslation('certificates');
   const [open, setOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<ApiCertificateTemplate | null>(null);
   const [selectedLang, setSelectedLang] = useState<string>(lang || 'en');
@@ -108,15 +108,15 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
             {/* Status indicator */}
             {isRevoked ? (
               <Badge variant="red" dot>
-                {tBilingual('Revoked', 'ተሰርዟል')}
+                {t('certificateCard.revoked')}
               </Badge>
             ) : isExpired ? (
               <Badge variant="amber" dot>
-                {tBilingual('Expired', 'ጊዜው አልፏል')}
+                {t('certificateCard.expired')}
               </Badge>
             ) : (
               <Badge variant="green" dot>
-                {tBilingual('Active', 'ንቁ')}
+                {t('certificateCard.active')}
               </Badge>
             )}
           </div>
@@ -131,7 +131,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               href={`/verify?code=${encodeURIComponent(certificate.verificationCode)}`}
               target="_blank"
               rel="noreferrer"
-              title={tBilingual('Verify Credential Authenticity', 'የማረጋገጫ ትክክለኛነት')}
+              title={t('certificateCard.verifyCredentialAuthenticity')}
             >
               <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600">
                 <ShieldCheck className="h-4 w-4" />
@@ -142,10 +142,10 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               variant="outline"
               onClick={() => setOpen(true)}
               className="gap-1.5 h-8 px-2.5 text-slate-700 dark:text-slate-200"
-              title={tBilingual('View Certificate', 'ሰርተፊኬት እይ')}
+              title={t('certificateCard.viewCertificate')}
             >
               <Eye className="h-3.5 w-3.5" />
-              <span>{tBilingual('View', 'እይ')}</span>
+              <span>{t('certificateCard.view')}</span>
             </Button>
             <Button
               size="sm"
@@ -153,10 +153,10 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               onClick={handleDownload}
               disabled={downloading}
               className="gap-1.5 h-8 px-2.5 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-              title={tBilingual('Download Certificate PDF', 'ሰርተፊኬት ፒዲኤፍ አውርድ')}
+              title={t('certificateCard.downloadCertificatePdf')}
             >
               <Download className="h-3.5 w-3.5" />
-              <span>{downloading ? tBilingual('...', '...') : tBilingual('Download', 'አውርድ')}</span>
+              <span>{downloading ? t('certificateCard.text') : t('certificateCard.download')}</span>
             </Button>
           </div>
         </div>
@@ -165,8 +165,8 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
       <WorkspaceDetailOverlay
         open={open}
         onClose={() => setOpen(false)}
-        title={tBilingual('Official Certificate of Completion', 'ኦፊሴላዊ የስልጠና ማጠናቀቂያ ሰርተፊኬት')}
-        subtitle={`${course.titleEn || course.titleAm || course.title} (${course.code}) · ${tBilingual('Verified Credential', 'የተረጋገጠ ማረጋገጫ')}`}
+        title={t('certificateCard.officialCertificateOfCompletion')}
+        subtitle={`${course.titleEn || course.titleAm || course.title} (${course.code}) · ${t('certificateCard.verifiedCredential')}`}
         fullViewport={true}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -181,7 +181,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
 
             <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
               <Printer className="h-4 w-4" />
-              {tBilingual('Print', 'አትም')}
+              {t('certificateCard.print')}
             </Button>
 
             <Button
@@ -191,7 +191,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Download className="h-4 w-4" />
-              {downloading ? tBilingual('Preparing...', 'በማዘጋጀት ላይ...') : tBilingual('Download PDF', 'PDF አውርድ')}
+              {downloading ? t('certificateCard.preparing') : t('certificateCard.downloadPdf')}
             </Button>
 
             <a
@@ -201,7 +201,7 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
             >
               <Button size="sm" variant="outline" className="gap-1.5 text-slate-600 dark:text-slate-300">
                 <ExternalLink className="h-4 w-4" />
-                {tBilingual('Verify', 'አረጋግጥ')}
+                {t('certificateCard.verify')}
               </Button>
             </a>
           </div>
@@ -214,11 +214,11 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               <XCircle className="h-5 w-5 shrink-0 text-red-600" />
               <div>
                 <p className="font-bold text-sm">
-                  {tBilingual('This certificate has been revoked by an administrator.', 'ይህ ሰርተፊኬት በአስተዳዳሪው ተሰርዟል።')}
+                  {t('certificateCard.thisCertificateHasBeenRevokedBy')}
                 </p>
                 {certificate.revokedReason && (
                   <p className="text-xs text-red-700 mt-0.5">
-                    {tBilingual('Reason:', 'ምክንያት፦')} {certificate.revokedReason}
+                    {t('certificateCard.reason')} {certificate.revokedReason}
                   </p>
                 )}
               </div>
@@ -230,10 +230,10 @@ export function CertificateCard({ certificate, learnerName }: CertificateCardPro
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
               <div>
                 <p className="font-bold text-sm">
-                  {tBilingual('This certificate has expired.', 'የዚህ ሰርተፊኬት አገልግሎት ጊዜ አልፏል።')}
+                  {t('certificateCard.thisCertificateHasExpired')}
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  {tBilingual('Validity ended on:', 'የማብቂያ ቀን፦')} {formatDate(certificate.expiresAt)}
+                  {t('certificateCard.validityEndedOn')} {formatDate(certificate.expiresAt)}
                 </p>
               </div>
             </div>
