@@ -185,30 +185,39 @@ Write `frontend/scripts/theme-tokens.mjs`, like `scripts/i18n-extract.mjs` (Type
 - **`--dry-run`** reports per file. Anything that does not match a mapping (gradients, odd shades, `text-white` on colored buttons) is listed for manual review instead of guessed.
 - **Not touched:** `CertificateRenderer` and any print or export layout (intentionally fixed colors).
 
-### Phase 4 — Page-by-page migration
-Run the codemod folder by folder, fix the leftovers by hand, browser-check both themes, commit. Worst first:
+### Phase 4 — Every folder, worst first
+Run the codemod folder by folder, fix the leftovers by hand, browser-check both themes, commit.
 
-| Step | Folder | Notes |
-| :---: | :--- | :--- |
-| 4.1 | `features/courses/review/*` + `detail/*` | Course review page is fully light today (screenshot 2) |
-| 4.2 | Role dashboards (`app/(dashboard)/*/page.tsx`) | Chart cards render white (screenshot 1) |
-| 4.3 | `features/courses/creator/*` incl. `DeliveryFormatModal` | Washed-out cards (screenshot 3) |
-| 4.4 | `features/sessions/**` (`LiveQuizTrainerControl` 91, venues, `SessionDetailModal`) | |
-| 4.5 | `training-admin/*` (venues, feedback, enrollments, calendar) | |
-| 4.6 | `features/classroom/**` | Learner classroom (`DocumentStage` quiz cards etc.) |
-| 4.7 | `features/news`, `features/laws`, `features/certificates` (not the renderer) | |
-| 4.8 | `system-admin/*` (roles, policies, users, settings, audit logs) | |
-| 4.9 | auth pages, landing page, `learner/*`, everything else | |
+**Full inventory.** All 208 `.tsx` files that contain raw color classes, grouped. The counts are raw color utilities, including `dark:` ones; some will end up allow-listed (brand gradients, white text on solid buttons). Every group is assigned to a step; nothing is "everything else".
 
-### Phase 5 — Guard
-Add `npm run theme:check` (and run it in `prebuild` next to `i18n:check`). It fails on:
+| Step | Folders | Raw color classes | Files |
+| :---: | :--- | ---: | ---: |
+| 4.1 | `components/features/courses` (review, detail, creator incl. `DeliveryFormatModal`, learn, catalog) | 2,238 | 39 |
+| 4.2 | `app/(dashboard)/training-admin`, `trainer`, `learner`, `course-owner`, `content-approver`, `courses` (dashboards and their pages) | 862 | 19 |
+| 4.3 | `components/features/sessions` (incl. `LiveQuizTrainerControl`, in-person venues) | 2,396 | 21 |
+| 4.4 | `components/features/classroom` | 1,331 | 17 |
+| 4.5 | `components/features/question-bank`, `prepared-quiz`, `quiz` | 968 | 19 |
+| 4.6 | `app/(dashboard)/system-admin` + `components/features/users` | 611 | 10 |
+| 4.7 | `components/features/laws`, `app/(dashboard)/laws`, `laws-management` | 495 | 7 |
+| 4.8 | `components/features/certificates`, `cert`, `app/(dashboard)/manage-certificates`, `certificate-templates`, `app/verify` (not `CertificateRenderer`) | 705 | 7 |
+| 4.9 | `components/features/news`, `app/(dashboard)/news-management`, `app/news` | 316 | 15 |
+| 4.10 | `components/features/enroll` (training-admin enrollments) | 118 | 1 |
+| 4.11 | `app/(auth)` (login, register, verify, first-login, password reset) | 345 | 7 |
+| 4.12 | `app/page.tsx` (landing), `app/error.tsx`, `app/not-found.tsx`, `app/layout.tsx` | 258 | 4 |
+
+Phase 2 already covers `components/ui` (536 / 23), `components/layout` (289 / 7) and `components/shared` (194 / 14).
+
+**A step is done when** `theme:check` (Phase 5 rules, scoped to that folder) reports 0, and every route of that folder (section 6) was looked at in both themes.
+
+### Phase 5 — Guard (the completion test)
+The migration is complete only when this reports **0 violations across all of `src/`**, which proves no component was skipped. Add `npm run theme:check` (and run it in `prebuild` next to `i18n:check`). It fails on:
 - **`dark:` color utilities** (`dark:(bg|text|border|from|via|to|ring|divide|placeholder)-…`) in `.tsx` outside an allow-list
 - **raw neutral surface/text colors** (`bg-white`, `bg-slate-*`, `text-slate-*`, `border-slate-*`, `bg-gray-*`…) outside an allow-list
   - The allow-list (`scripts/theme-allowlist.json`, file + reason) covers e.g. `CertificateRenderer`, brand gradients, `text-white` on solid buttons.
 
-## 6. Browser Check (each phase)
+## 6. Browser Check
 
-Critical pages in both themes, at desktop and mobile width:
+### After each step: critical pages first, both themes, desktop + mobile width
 
 | # | Page | What to look for |
 | :---: | :--- | :--- |
@@ -220,6 +229,23 @@ Critical pages in both themes, at desktop and mobile width:
 | 6 | Sessions manager + schedule modal + live quiz controls | Tables, modals, the largest file |
 | 7 | Any table with pagination + filters | Header row, hover row, borders |
 | 8 | Login page | Public pages |
+
+### Before calling the migration done: every route, both themes
+
+Tick each route once its step is finished. Also open the modals and drawers reachable from each page; most of the light boxes live there.
+
+| Area | Routes |
+| :--- | :--- |
+| Public / auth | `/` (landing), `/login`, `/register`, `/verify-email`, `/verify-code`, `/first-login`, `/forgot-password`, `/reset-password`, `/verify`, `/news`, `/news/[slug]`, not-found, error page |
+| Learner | `/learner`, `/learner/catalog` (+ course modal, enroll), `/learner/my-courses`, `/learner/progress`, `/learner/live-sessions` (+ check-in), `/learner/certificates`, `/learner/courses/[courseId]/learn` (all stages: document, video, quiz, live sessions, feedback, certificate) |
+| Trainer | `/trainer`, `/trainer/sessions`, `/trainer/sessions/[sessionId]` (live room, quiz controls, learner overlay), `/trainer/attendance`, `/trainer/question-bank`, `/trainer/create-quiz` |
+| Training admin | `/training-admin`, `/training-admin/courses`, `/training-admin/publish`, `/training-admin/enrollments`, `/training-admin/sessions` (+ schedule / edit / detail / attendance modals), `/training-admin/calendar`, `/training-admin/venues`, `/training-admin/feedback` |
+| Course owner | `/course-owner`, `/course-owner/my-courses`, `/course-owner/create-course` (all creator stages + modals), `/course-owner/content-status`, `/course-owner/question-bank` |
+| Content approver | `/content-approver`, `/content-approver/pending-approvals`, `/content-approver/approved-courses` |
+| Courses | `/courses`, `/courses/[courseId]` (review: all stages + reject / return / delete dialogs) |
+| System admin | `/system-admin`, `/system-admin/users` (+ detail modal), `/system-admin/roles`, `/system-admin/register-actor`, `/system-admin/bulk-register`, `/system-admin/policies`, `/system-admin/settings`, `/system-admin/categories`, `/system-admin/audit-logs`, `/system-admin/pending-course-approvals`, `/system-admin/certificate-templates` |
+| Content | `/laws`, `/laws-management` (+ category / document / PDF modals), `/news-management`, `/news-management/new`, `/news-management/[id]`, `/news-management/[id]/comments`, `/manage-certificates`, `/certificate-templates` |
+| Everywhere | Account page tabs (details, security, preferences), toasts, empty states, loading skeletons, mobile bottom nav |
 
 **Look for:**
 - white or very light boxes in dark mode
@@ -234,7 +260,8 @@ Critical pages in both themes, at desktop and mobile width:
 | 1 | Tokens + theme store + toggle fixes | [ ] | [ ] | Pending |
 | 2 | Shared UI / layout / charts | [ ] | [ ] | Pending |
 | 3 | Codemod (`scripts/theme-tokens.mjs`) | [ ] | n/a | Pending |
-| 4.1–4.9 | Folder migrations | [ ] | [ ] | Pending |
+| 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [ ] | [ ] | Pending |
+| — | Every route checked in both themes (section 6) | n/a | [ ] | Pending |
 | 5 | `theme:check` guard | [ ] | n/a | Pending |
 
 ## 8. Notes for the New Session
