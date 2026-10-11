@@ -74,7 +74,7 @@ export function ClassroomSidebar({
   isOpen,
   onClose,
 }: ClassroomSidebarProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('classroom');
 
   // Map flat items by key for instant lookup
   const itemsByKey = useMemo(() => {
@@ -135,10 +135,10 @@ export function ClassroomSidebar({
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {tBilingual('Course Curriculum', 'የኮርስ ስርዓተ-ትምህርት')}
+            {t('classroomSidebar.courseCurriculum')}
           </p>
           <span className="text-[11px] font-semibold text-slate-500 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-            {tBilingual(`${course.modules.length} Modules`, `${course.modules.length} ሞጁሎች`)}
+            {t('classroomSidebar.modules', { count: course.modules.length })}
           </span>
         </div>
       </div>
@@ -169,10 +169,10 @@ export function ClassroomSidebar({
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-bold truncate">
-                  {tBilingual('Course Overview & Objectives', 'የኮርስ አጠቃላይ እይታና ግቦች')}
+                  {t('classroomSidebar.courseOverviewObjectives')}
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  {tBilingual('Orientation & Syllabus', 'መግቢያና ሲላበስ')}
+                  {t('classroomSidebar.orientationSyllabus')}
                 </p>
               </div>
             </div>
@@ -230,13 +230,10 @@ export function ClassroomSidebar({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                      {tBilingual('Module', 'ሞጁል')} {mIdx + 1}: {cleanModuleTitle(mod.title)}
+                      {t('classroomSidebar.module')} {mIdx + 1}: {cleanModuleTitle(mod.title)}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {tBilingual(
-                        `${completedLessons}/${totalLessons} lessons completed`,
-                        `${completedLessons}/${totalLessons} ትምህርቶች ተጠናቀዋል`,
-                      )}
+                      {t('classroomSidebar.lessonsCompleted', { completedLessons, totalLessons })}
                     </p>
                   </div>
                 </div>
@@ -283,7 +280,7 @@ export function ClassroomSidebar({
                             )}
                           />
                           <span className="truncate">
-                            {tBilingual('Module Overview & Objectives', 'የሞጁሉ አጠቃላይ እይታና ግቦች')}
+                            {t('classroomSidebar.moduleOverviewObjectives')}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -355,7 +352,7 @@ export function ClassroomSidebar({
                           >
                             {renderContentIcon(lesson.contentType)}
                             <span className="truncate">
-                              {tBilingual('Lesson', 'ትምህርት')} {mIdx + 1}.{lIdx + 1}:{' '}
+                              {t('classroomSidebar.lesson')} {mIdx + 1}.{lIdx + 1}:{' '}
                               {cleanLessonTitle(lesson.title)}
                             </span>
                           </button>
@@ -382,7 +379,7 @@ export function ClassroomSidebar({
                               <button
                                 type="button"
                                 onClick={(e) => toggleLesson(lesson.id, e)}
-                                title={isLessonExpanded ? tBilingual('Collapse sub-lessons', 'ንዑስ ክፍሎችን አጥፋ') : tBilingual('Expand sub-lessons', 'ንዑስ ክፍሎችን ዘርጋ')}
+                                title={isLessonExpanded ? t('classroomSidebar.collapseSubLessons') : t('classroomSidebar.expandSubLessons')}
                                 className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition"
                               >
                                 {isLessonExpanded ? (
@@ -463,7 +460,7 @@ export function ClassroomSidebar({
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                 <BookOpenCheck className="h-3.5 w-3.5 shrink-0" />
                                 <span className="truncate">
-                                  {lessonQuizItem.assessment?.titleEn || lessonQuizItem.title || tBilingual('Lesson Assessment', 'የትምህርት ምዘና')}
+                                  {lessonQuizItem.assessment?.titleEn || lessonQuizItem.title || t('classroomSidebar.lessonAssessment')}
                                 </span>
                               </div>
 
@@ -474,7 +471,7 @@ export function ClassroomSidebar({
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                                 ) : (
                                   <span className="text-[10px] font-bold">
-                                    {tBilingual('Quiz', 'ፈተና')}
+                                    {t('classroomSidebar.quiz')}
                                   </span>
                                 )}
                               </div>
@@ -506,7 +503,7 @@ export function ClassroomSidebar({
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Award className="h-4 w-4 shrink-0" />
                           <span className="truncate">
-                            {moduleQuizItem.assessment?.titleEn || moduleQuizItem.title || tBilingual('Module Assessment', 'የሞጁል ምዘና')}
+                            {moduleQuizItem.assessment?.titleEn || moduleQuizItem.title || t('classroomSidebar.moduleAssessment')}
                           </span>
                         </div>
 
@@ -517,7 +514,7 @@ export function ClassroomSidebar({
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider">
-                              {tBilingual('Take Exam', 'ፈተና ውሰድ')}
+                              {t('classroomSidebar.takeExam')}
                             </span>
                           )}
                         </div>
@@ -551,9 +548,9 @@ export function ClassroomSidebar({
                   <Video className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate">{tBilingual('Live Sessions', 'የቀጥታ ክፍለ-ጊዜዎች')}</p>
+                  <p className="text-xs font-bold truncate">{t('classroomSidebar.liveSessions')}</p>
                   <p className="text-[10px] opacity-75 mt-0.5 truncate">
-                    {sessionsItem.completed ? tBilingual('All sessions held', 'ሁሉም ተካሂደዋል') : tBilingual('Upcoming sessions', 'የሚመጡ ክፍለ-ጊዜዎች')}
+                    {sessionsItem.completed ? t('classroomSidebar.allSessionsHeld') : t('classroomSidebar.upcomingSessions')}
                   </p>
                 </div>
                 {sessionsItem.completed && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
@@ -583,39 +580,24 @@ export function ClassroomSidebar({
 
                   if (!contentCompleted && totalLessons > 0 && completedLessons < totalLessons) {
                     toast.warning(
-                      tBilingual(
-                        `Please complete all course lessons (${completedLessons}/${totalLessons} completed) before taking the final assessment.`,
-                        `የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የትምህርት ክፍሎች (${completedLessons}/${totalLessons}) ያጠናቅቁ።`,
-                      ),
+                      t('classroomSidebar.pleaseCompleteAllCourseLessonsCompleted', { completedLessons, totalLessons }),
                     );
                   } else if (contentCompleted && !allLiveSessionsAttended) {
                     toast.warning(
-                      tBilingual(
-                        'You must attend all scheduled live sessions before taking the final assessment.',
-                        'የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የቀጥታ ክፍለ-ጊዜዎች መከታተል አለብዎት።',
-                      ),
+                      t('classroomSidebar.youMustAttendAllScheduledLive'),
                     );
                   } else if (!allAssessmentsPassed) {
                     toast.warning(
-                      tBilingual(
-                        'Please pass all prerequisite module assessments before taking the final assessment.',
-                        'የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም የሞጁል ፈተናዎች ማለፍ አለብዎት።',
-                      ),
+                      t('classroomSidebar.pleasePassAllPrerequisiteModuleAssessmen'),
                     );
                   } else {
                     toast.warning(
-                      tBilingual(
-                        'You have uncompleted prerequisites. Complete all preceding content before taking the final assessment.',
-                        'ያልተጠናቀቁ ቅድመ-ሁኔታዎች አሉዎት። የመጨረሻውን ፈተና ከመውሰድዎ በፊት ሁሉንም ይዘቶች ያጠናቅቁ።',
-                      ),
+                      t('classroomSidebar.youHaveUncompletedPrerequisitesCompleteA'),
                     );
                   }
                 } else if (finalItem.isInPersonLocked) {
                   toast.info(
-                    tBilingual(
-                      'This final assessment is administered in-person at the training venue.',
-                      'ይህ የመጨረሻ ፈተና በስልጠናው ቦታ በአካል ይሰጣል።',
-                    ),
+                    t('classroomSidebar.thisFinalAssessmentIsAdministeredIn'),
                   );
                 }
               };
@@ -653,7 +635,7 @@ export function ClassroomSidebar({
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold truncate">
-                          {finalItem.assessment?.titleEn || finalItem.title || tBilingual('Final Assessment', 'የኮርስ ማጠቃለያ ፈተና')}
+                          {finalItem.assessment?.titleEn || finalItem.title || t('classroomSidebar.finalAssessment')}
                         </p>
                         <p
                           className={cn(
@@ -662,8 +644,8 @@ export function ClassroomSidebar({
                           )}
                         >
                           {finalItem.isInPersonLocked
-                            ? tBilingual('In-Person Classroom Evaluation', 'በአካል የሚሰጥ የክፍል ግምገማ')
-                            : tBilingual('Required for Certification', 'ለሰርተፊኬት የሚያስፈልግ')}
+                            ? t('classroomSidebar.inPersonClassroomEvaluation')
+                            : t('classroomSidebar.requiredForCertification')}
                         </p>
                       </div>
                     </div>
@@ -684,7 +666,7 @@ export function ClassroomSidebar({
                         <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                       ) : (
                         <span className="text-[10px] font-bold uppercase bg-white/20 px-2 py-0.5 rounded">
-                          {tBilingual('Final', 'ማጠቃለያ')}
+                          {t('classroomSidebar.final')}
                         </span>
                       )}
                     </div>
@@ -730,14 +712,14 @@ export function ClassroomSidebar({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold truncate">
-                      {tBilingual('Certificate of Completion', 'የማጠናቀቂያ ሰርተፊኬት')}
+                      {t('classroomSidebar.certificateOfCompletion')}
                     </p>
                     <p className="text-[10px] opacity-75 mt-0.5 truncate">
                       {isUnlocked
-                        ? tBilingual('Verified & Ready to View', 'የተረጋገጠና ለመመልከት ዝግጁ')
+                        ? t('classroomSidebar.verifiedReadyToView')
                         : certItem.isInPersonLocked
-                          ? tBilingual('Issued upon classroom completion', 'የክፍል ስልጠና ሲጠናቀቅ ይሰጣል')
-                          : tBilingual('Complete course to unlock', 'ለመክፈት ኮርሱን ያጠናቁ')}
+                          ? t('classroomSidebar.issuedUponClassroomCompletion')
+                          : t('classroomSidebar.completeCourseToUnlock')}
                     </p>
                   </div>
                 </div>

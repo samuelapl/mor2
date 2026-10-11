@@ -24,7 +24,7 @@ export function ClassroomHeader({
   sidebarOpen,
   onToggleSidebar,
 }: ClassroomHeaderProps) {
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('classroom');
   const overallPercent = Math.round(progress?.stats.overallPercent ?? 0);
   const isCompleted = progress?.courseCompletion.certificateEligible ?? false;
 
@@ -38,7 +38,7 @@ export function ClassroomHeader({
           title="Return to My Courses"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{tBilingual('My Courses', 'የእኔ ኮርሶች')}</span>
+          <span className="hidden sm:inline">{t('classroomHeader.myCourses')}</span>
         </Link>
 
         <div className="hidden sm:block h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
@@ -48,7 +48,7 @@ export function ClassroomHeader({
           onClick={onToggleSidebar}
           className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0"
           title={sidebarOpen ? 'Collapse curriculum sidebar' : 'Expand curriculum sidebar'}
-          aria-label={tBilingual('Course contents', 'የኮርስ ይዘት')}
+          aria-label={t('classroomHeader.courseContents')}
           aria-expanded={sidebarOpen}
         >
           {sidebarOpen ? (
@@ -79,7 +79,7 @@ export function ClassroomHeader({
         </span>
         <div className="hidden sm:flex flex-col items-end gap-1 min-w-[140px] mr-1">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-            <span>{tBilingual('Progress:', 'እድገት:')}</span>
+            <span>{t('classroomHeader.progress')}</span>
             <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{overallPercent}%</span>
           </div>
           <div className="w-full">
@@ -89,11 +89,11 @@ export function ClassroomHeader({
 
         {isCompleted ? (
           <Badge variant="green" dot className="hidden sm:inline-flex text-xs mr-2">
-            {tBilingual('Course Passed', 'ኮርሱ ተጠናቋል')}
+            {t('classroomHeader.coursePassed')}
           </Badge>
         ) : (
           <Badge variant="blue" dot className="hidden sm:inline-flex text-xs mr-2">
-            {tBilingual('In Progress', 'በመካሄድ ላይ')}
+            {t('classroomFooter.inProgress')}
           </Badge>
         )}
 

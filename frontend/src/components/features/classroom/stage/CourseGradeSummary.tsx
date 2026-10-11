@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * learner can see exactly why the certificate is (or is not) unlocked.
  */
 export function CourseGradeSummary({ completion }: { completion: ApiCourseCompletion }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('classroom');
   const breakdown = completion.assessmentBreakdown ?? [];
   if (breakdown.length === 0) return null;
 
@@ -32,16 +32,13 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
           <div className="space-y-1 text-sm">
             <p className="font-bold text-rose-800">
-              {tBilingual(
-                `You did not reach the required course grade (${grade}% of ${required}%).`,
-                `የሚያስፈልገውን የኮርስ ውጤት አላሟሉም (${grade}% ከ ${required}%)።`,
-              )}
+              {t('courseGradeSummary.youDidNotReachTheRequired', { grade, required })}
             </p>
             <p className="flex items-center gap-1.5 text-rose-700">
               {canRetakeSomething ? <RotateCcw className="h-3.5 w-3.5" /> : <LifeBuoy className="h-3.5 w-3.5" />}
               {canRetakeSomething
-                ? tBilingual('Retake an assessment to improve your score, or contact support.', 'ውጤትዎን ለማሻሻል ምዘናውን እንደገና ይውሰዱ ወይም ድጋፍ ያግኙ።')
-                : tBilingual('No retakes are left. Please contact support.', 'የቀረ ሙከራ የለም። እባክዎ ድጋፍ ያግኙ።')}
+                ? t('courseGradeSummary.retakeAnAssessmentToImproveYour')
+                : t('courseGradeSummary.noRetakesAreLeftPleaseContact')}
             </p>
           </div>
         </div>
@@ -49,9 +46,9 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs font-semibold">
-          <span className="text-slate-700">{tBilingual('Course grade', 'የኮርስ ውጤት')}</span>
+          <span className="text-slate-700">{t('courseGradeSummary.courseGrade')}</span>
           <span className={cn('font-mono', gradeShort ? 'text-rose-600' : 'text-emerald-600')}>
-            {grade}% / {tBilingual(`${required}% required`, `${required}% ያስፈልጋል`)}
+            {grade}% / {t('courseGradeSummary.required', { required })}
           </span>
         </div>
         <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -67,11 +64,11 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400">
-              <th className="py-2 pr-3 font-semibold">{tBilingual('Assessment', 'ምዘና')}</th>
-              <th className="py-2 pr-3 text-right font-semibold">{tBilingual('Best', 'ምርጥ')}</th>
-              <th className="py-2 pr-3 text-right font-semibold">{tBilingual('Pass mark', 'ማለፊያ')}</th>
-              <th className="py-2 pr-3 text-right font-semibold">{tBilingual('Weight', 'ክብደት')}</th>
-              <th className="py-2 text-right font-semibold">{tBilingual('Points', 'ነጥብ')}</th>
+              <th className="py-2 pr-3 font-semibold">{t('courseGradeSummary.assessment')}</th>
+              <th className="py-2 pr-3 text-right font-semibold">{t('courseGradeSummary.best')}</th>
+              <th className="py-2 pr-3 text-right font-semibold">{t('courseGradeSummary.passMark')}</th>
+              <th className="py-2 pr-3 text-right font-semibold">{t('courseGradeSummary.weight')}</th>
+              <th className="py-2 text-right font-semibold">{t('courseGradeSummary.points')}</th>
             </tr>
           </thead>
           <tbody>
@@ -86,11 +83,11 @@ export function CourseGradeSummary({ completion }: { completion: ApiCourseComple
                     )}
                     {a.titleEn}
                     {a.type === 'SESSION_ASSESSMENT' && (
-                      <span className="rounded bg-sky-100 px-1 text-[10px] font-semibold text-sky-700">{tBilingual('Live session', 'የቀጥታ ክፍለ-ጊዜ')}</span>
+                      <span className="rounded bg-sky-100 px-1 text-[10px] font-semibold text-sky-700">{t('courseGradeSummary.liveSession')}</span>
                     )}
                     {!a.attempted && (
                       <span className="rounded bg-slate-100 px-1 text-[10px] font-semibold text-slate-500">
-                        {a.type === 'SESSION_ASSESSMENT' ? tBilingual('Upcoming', 'ይጠበቃል') : tBilingual('Not taken', 'አልተወሰደም')}
+                        {a.type === 'SESSION_ASSESSMENT' ? t('courseGradeSummary.upcoming') : t('courseGradeSummary.notTaken')}
                       </span>
                     )}
                   </span>

@@ -9,7 +9,7 @@ import { QuizAnswerList, QuizScoreBadge } from '@/components/features/sessions/s
 
 /** A learner's own answers and score for a completed session's live quizzes, loaded on first open. */
 export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('classroom');
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<(ApiSessionQuizResults & { available: boolean }) | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
       >
         <span className="inline-flex items-center gap-1.5">
           <ClipboardCheck className="h-4 w-4" />
-          {tBilingual('View my quiz results', 'የፈተና ውጤቴን ይመልከቱ')}
+          {t('mySessionQuizResults.viewMyQuizResults')}
         </span>
         <ChevronDown className={cn('h-4 w-4 transition', open && 'rotate-180')} />
       </button>
@@ -57,7 +57,7 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
             <p className="text-sm text-rose-600">{error}</p>
           ) : !data?.available || !me || data.quizzes.length === 0 ? (
             <p className="text-sm text-slate-500">
-              {tBilingual('No quiz was run in this session.', 'በዚህ ክፍለ-ጊዜ ፈተና አልተካሄደም።')}
+              {t('mySessionQuizResults.noQuizWasRunInThis')}
             </p>
           ) : (
             data.quizzes.map((quiz) => {
@@ -69,7 +69,7 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
                     <QuizScoreBadge quiz={quiz} result={result} />
                     {quiz.graded && (
                       <span className="text-[11px] text-slate-500">
-                        {quiz.weight}% {tBilingual('of the course grade', 'ከኮርሱ ውጤት')} · {tBilingual('pass', 'ማለፊያ')}{' '}
+                        {quiz.weight}% {t('mySessionQuizResults.ofTheCourseGrade')} · {t('mySessionQuizResults.pass')}{' '}
                         {quiz.passingScore}%
                       </span>
                     )}
@@ -77,8 +77,8 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
                   {result.answered === 0 ? (
                     <p className="text-xs text-slate-500">
                       {quiz.graded
-                        ? tBilingual("You didn't answer this quiz, so it counts as 0.", 'ይህን ፈተና ስላልመለሱ 0 ይቆጠራል።')
-                        : tBilingual("You didn't answer this quiz.", 'ይህን ፈተና አልመለሱም።')}
+                        ? t('mySessionQuizResults.youDidnTAnswerThisQuiz')
+                        : t('mySessionQuizResults.youDidnTAnswerThisQuiz2')}
                     </p>
                   ) : (
                     <QuizAnswerList quiz={quiz} result={result} />

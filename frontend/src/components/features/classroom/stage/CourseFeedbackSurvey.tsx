@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
+import type { NamespaceKey } from '@/lib/i18n';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { submitCourseFeedback } from '@/lib/api/feedback';
 import type { Course } from '@/types';
@@ -30,7 +31,7 @@ interface CourseFeedbackSurveyProps {
 }
 
 export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: CourseFeedbackSurveyProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('classroom');
 
   const [curriculumRelevance, setCurriculumRelevance] = useState<number>(5);
   const [trainerDelivery, setTrainerDelivery] = useState<number>(5);
@@ -40,12 +41,12 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
   const [comments, setComments] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
-  const starLabels: Record<number, { en: string; am: string }> = {
-    1: { en: 'Poor', am: 'ደካማ' },
-    2: { en: 'Fair', am: 'መጠነኛ' },
-    3: { en: 'Good', am: 'ጥሩ' },
-    4: { en: 'Very Good', am: 'በጣም ጥሩ' },
-    5: { en: 'Excellent', am: 'እጅግ በጣም ጥሩ' },
+  const starLabels: Record<number, NamespaceKey<'classroom'>> = {
+    1: 'courseFeedbackSurvey.poor',
+    2: 'courseFeedbackSurvey.fair',
+    3: 'courseFeedbackSurvey.good',
+    4: 'courseFeedbackSurvey.veryGood',
+    5: 'courseFeedbackSurvey.excellent',
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,10 +78,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
       });
 
       toast.success(
-        tBilingual(
-          'Thank you! Your feedback has been submitted.',
-          'እናመሰግናለን! አስተያየትዎ ገብቷል።',
-        ),
+        t('courseFeedbackSurvey.thankYouYourFeedbackHasBeen'),
       );
 
       onSubmitted();
@@ -107,7 +105,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
             <p className="text-xs text-slate-500">{sublabel}</p>
           </div>
           <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60 self-start sm:self-auto">
-            {tBilingual(starLabels[value]?.en || '', starLabels[value]?.am || '')} ({value}/5)
+            {starLabels[value] ? t(starLabels[value]) : ''} ({value}/5)
           </span>
         </div>
 
@@ -149,16 +147,13 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100/80 px-3 py-1 text-xs font-bold text-indigo-900">
               <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              {tBilingual('Course Evaluation (Optional)', 'የኮርስ ግምገማ (አማራጭ)')}
+              {t('courseFeedbackSurvey.courseEvaluationOptional')}
             </div>
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
-              {tBilingual('Course Feedback & Evaluation', 'የኮርስ ግምገማ እና ግብረ-መልስ')}
+              {t('courseFeedbackSurvey.courseFeedbackEvaluation')}
             </h2>
             <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-              {tBilingual(
-                `Congratulations on completing "${course.title}"! Please take a moment to submit your feedback to help us improve future programs, or skip ahead to claim your certificate.`,
-                `"${course.title}"ን በማጠናቀቅዎ እንኳን ደስ አለዎት! የወደፊት ስልጠናዎችን እንድናሻሽል እባክዎ አስተያየትዎን ያካፍሉ፣ ወይም በቀጥታ ሰርተፊኬትዎን ይውሰዱ።`,
-              )}
+              {t('courseFeedbackSurvey.congratulationsOnCompletingPleaseTakeA', { title: course.title })}
             </p>
           </div>
         </div>
@@ -168,47 +163,32 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {/* Rating Category 1 */}
         {renderStarRating(
-          tBilingual('1. Curriculum Relevance & Depth', '1. የስርዓተ-ትምህርቱ ተዛማጅነት እና ጥልቀት'),
-          tBilingual(
-            'How well did the topics meet your professional learning goals and revenue administration expectations?',
-            'የትምህርት ይዘቱ ከሙያዊ ግቦችዎ እና ከገቢዎች አስተዳደር ፍላጎት ጋር ምን ያህል ተጣጣመ?',
-          ),
+          t('courseFeedbackSurvey.n1CurriculumRelevanceDepth'),
+          t('courseFeedbackSurvey.howWellDidTheTopicsMeet'),
           curriculumRelevance,
           setCurriculumRelevance,
         )}
 
         {/* Rating Category 2 */}
         {renderStarRating(
-          tBilingual('2. Trainer Facilitation & Instruction', '2. የአሰልጣኙ የማስተማር እና የማብራራት ጥራት'),
-          tBilingual(
-            'How clearly did the instructor/trainer explain key concepts and answer questions?',
-            'አሰልጣኙ ቁልፍ ፅንሰ-ሀሳቦችን ምን ያህል በግልጽ አብራርተዋል?',
-          ),
+          t('courseFeedbackSurvey.n2TrainerFacilitationInstruction'),
+          t('courseFeedbackSurvey.howClearlyDidTheInstructorTrainer'),
           trainerDelivery,
           setTrainerDelivery,
         )}
 
         {/* Rating Category 3 */}
         {renderStarRating(
-          tBilingual('3. Practical Job Applicability', '3. በስራ ላይ በቀጥታ የመጠቀም እድል'),
-          tBilingual(
-            'How readily can you apply the knowledge, tax procedures, or laws to your day-to-day duties at MoR?',
-            'የተማሯቸውን እውቀቶች እና የግብር ሂደቶች በዕለት ተዕለት የገቢዎች ስራዎ ላይ ምን ያህል መተግበር ይችላሉ?',
-          ),
+          t('courseFeedbackSurvey.n3PracticalJobApplicability'),
+          t('courseFeedbackSurvey.howReadilyCanYouApplyThe'),
           practicalApplicability,
           setPracticalApplicability,
         )}
 
         {/* Rating Category 4 */}
         {renderStarRating(
-          tBilingual(
-            '4. Platform Usability & Learning Materials',
-            '4. የመድረኩ ምቾት እና የትምህርት ቁሳቁሶች ጥራት',
-          ),
-          tBilingual(
-            'How do you evaluate video clarity, download materials, quiz navigation, and overall LMS speed?',
-            'የቪዲዮ ጥራትን፣ ሰነዶችን፣ የፈተና አቀራረብን እና አጠቃላይ የሲስተሙን ፍጥነት እንዴት ይገመግማሉ?',
-          ),
+          t('courseFeedbackSurvey.n4PlatformUsabilityLearningMaterials'),
+          t('courseFeedbackSurvey.howDoYouEvaluateVideoClarity'),
           materialsAndPlatform,
           setMaterialsAndPlatform,
         )}
@@ -216,10 +196,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
         {/* Question 5: Recommendation */}
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs space-y-2.5">
           <h4 className="text-sm font-bold text-slate-900">
-            {tBilingual(
-              '5. Would you recommend this course to fellow colleagues?',
-              '5. ይህን ስልጠና ለሌሎች የስራ ባልደረቦችዎ ይመክራሉ?',
-            )}
+            {t('courseFeedbackSurvey.n5WouldYouRecommendThisCourse')}
           </h4>
           <div className="flex items-center gap-3">
             <button
@@ -233,7 +210,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
               )}
             >
               <ThumbsUp className="h-4 w-4 text-emerald-600" />
-              {tBilingual('Yes, Highly Recommended', 'አዎ፣ በእርግጥ እመክራለሁ')}
+              {t('courseFeedbackSurvey.yesHighlyRecommended')}
             </button>
             <button
               type="button"
@@ -246,7 +223,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
               )}
             >
               <ThumbsDown className="h-4 w-4 text-amber-600" />
-              {tBilingual('Needs Revision First', 'መጀመሪያ መሻሻል ያስፈልገዋል')}
+              {t('courseFeedbackSurvey.needsRevisionFirst')}
             </button>
           </div>
         </div>
@@ -254,19 +231,13 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
         {/* Question 6: Comments & Suggestions */}
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs space-y-2">
           <label className="block text-sm font-bold text-slate-900">
-            {tBilingual(
-              '6. Additional Comments & Improvement Suggestions (Optional)',
-              '6. ተጨማሪ አስተያየቶች እና የማሻሻያ ሃሳቦች (አማራጭ)',
-            )}
+            {t('courseFeedbackSurvey.n6AdditionalCommentsImprovementSuggestio')}
           </label>
           <textarea
             rows={3}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-            placeholder={tBilingual(
-              'Share what you liked most or specific topics you would like expanded in upcoming versions...',
-              'በጣም የወደዱትን ወይም ወደፊት እንዲጨመሩ የሚፈልጓቸውን ርዕሰ ጉዳዮች ያካፍሉ...',
-            )}
+            placeholder={t('courseFeedbackSurvey.shareWhatYouLikedMostOr')}
             className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
           />
         </div>
@@ -276,10 +247,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <MessageSquareHeart className="h-4 w-4 text-indigo-500 shrink-0" />
             <span>
-              {tBilingual(
-                'Submit your feedback',
-                'ግብረ-መልስዎን ያስገቡ',
-              )}
+              {t('courseFeedbackSurvey.submitYourFeedback')}
             </span>
           </div>
 
@@ -293,7 +261,7 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
                 className="w-full sm:w-auto gap-2 px-5 py-2.5 text-slate-700 hover:text-slate-900 border-slate-300 hover:bg-slate-50"
               >
                 <Award className="h-4 w-4 text-amber-500" />
-                {tBilingual('Skip to Certificate', 'ይለፉ እና ሰርተፊኬት ይውሰዱ')}
+                {t('courseFeedbackSurvey.skipToCertificate')}
               </Button>
             )}
 
@@ -302,11 +270,11 @@ export function CourseFeedbackSurvey({ course, user, onSubmitted, onSkip }: Cour
               variant="primary"
               disabled={submitting}
               isLoading={submitting}
-              loadingText={tBilingual('Submitting Feedback...', 'ግብረ-መልስ በማስገባት ላይ...')}
+              loadingText={t('courseFeedbackSurvey.submittingFeedback')}
               className="w-full sm:w-auto gap-2 px-6 py-2.5 shadow-md shadow-indigo-600/20"
             >
               <Send className="h-4 w-4" />
-              {tBilingual('Submit Feedback', 'ግብረ-መልስ አስገባ')}
+              {t('courseFeedbackSurvey.submitFeedback')}
             </Button>
           </div>
         </div>

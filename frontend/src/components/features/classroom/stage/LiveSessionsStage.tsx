@@ -37,13 +37,13 @@ const PLATFORM_LABEL: Record<string, string> = {
 /** The course's online sessions as a learner sees them: when, where and whether they attended. */
 export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] }) {
   const router = useRouter();
-  const { tBilingual, isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('classroom');
   const [selectedSession, setSelectedSession] = useState<ApiLearnerSession | null>(null);
   const [activeVirtualSession, setActiveVirtualSession] = useState<any | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   // Platform time (EAT), whatever the browser's time zone.
   const fmt = (iso: string) =>
-    `${new Date(iso).toLocaleString(isAmharic ? 'am-ET' : 'en-US', {
+    `${new Date(iso).toLocaleString(t('liveSessionsStage.enUs'), {
       timeZone: APP_TIME_ZONE,
       dateStyle: 'full',
       timeStyle: 'short',
@@ -61,10 +61,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
     const sessionId = s.sessionId || s.id;
     if (!isTimeReached(s)) {
       toast.warning(
-        tBilingual(
-          'You can join 5 minutes before the session starts.',
-          'ክፍለ-ጊዜው ከመጀመሩ 5 ደቂቃ በፊት መቀላቀል ይችላሉ።',
-        ),
+        t('liveSessionsStage.youCanJoin5MinutesBefore'),
       );
       return;
     }
@@ -94,7 +91,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
     } catch (err: any) {
       toast.error(
         err?.message ||
-          tBilingual('Failed to connect to the session.', 'ክፍለ-ጊዜውን መቀላቀል አልተቻለም።'),
+          t('liveSessionsStage.failedToConnectToTheSession'),
       );
     } finally {
       setJoiningSessionId(null);
@@ -103,15 +100,15 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
 
   const statusBadge = (s: ApiLearnerSession) => {
     if (s.status === 'TO_BE_SCHEDULED')
-      return { label: tBilingual('To be scheduled', 'ገና ይታቀዳል'), tone: 'bg-slate-100 text-slate-600 border-slate-200', icon: CalendarClock };
-    if (s.status === 'LIVE') return { label: tBilingual('Live now', 'አሁን በቀጥታ'), tone: 'bg-rose-50 text-rose-700 border-rose-200', icon: Radio };
+      return { label: t('liveSessionsStage.toBeScheduled'), tone: 'bg-slate-100 text-slate-600 border-slate-200', icon: CalendarClock };
+    if (s.status === 'LIVE') return { label: t('liveSessionsStage.liveNow'), tone: 'bg-rose-50 text-rose-700 border-rose-200', icon: Radio };
     if (s.status === 'CANCELLED')
-      return { label: tBilingual('Cancelled', 'ተሰርዟል'), tone: 'bg-slate-100 text-slate-500 border-slate-200', icon: XCircle };
+      return { label: t('liveSessionsStage.cancelled'), tone: 'bg-slate-100 text-slate-500 border-slate-200', icon: XCircle };
     if (s.status === 'COMPLETED')
       return s.attended
-        ? { label: tBilingual('Attended', 'ተገኝተዋል'), tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 }
-        : { label: tBilingual('Missed', 'አልተገኙም'), tone: 'bg-amber-50 text-amber-800 border-amber-200', icon: XCircle };
-    return { label: tBilingual('Upcoming', 'ይጠበቃል'), tone: 'bg-sky-50 text-sky-700 border-sky-200', icon: CalendarClock };
+        ? { label: t('liveSessionsStage.attended'), tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 }
+        : { label: t('liveSessionsStage.missed'), tone: 'bg-amber-50 text-amber-800 border-amber-200', icon: XCircle };
+    return { label: t('courseGradeSummary.upcoming'), tone: 'bg-sky-50 text-sky-700 border-sky-200', icon: CalendarClock };
   };
 
   return (
@@ -121,12 +118,9 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           <Video className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{tBilingual('Live Sessions', 'የቀጥታ ክፍለ-ጊዜዎች')}</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('classroomSidebar.liveSessions')}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {tBilingual(
-              'Online sessions for this course. Attend them live; your certificate is issued after every session has been held.',
-              'የዚህ ኮርስ የኦንላይን ክፍለ-ጊዜዎች። በቀጥታ ይሳተፉ፤ ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ከተካሄዱ በኋላ ነው።',
-            )}
+            {t('liveSessionsStage.onlineSessionsForThisCourseAttend')}
           </p>
         </div>
       </div>
@@ -140,12 +134,12 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    {tBilingual('Session', 'ክፍለ-ጊዜ')} {i + 1}
+                    {t('liveSessionsStage.session')} {i + 1}
                   </p>
                   <h3 className="font-semibold text-slate-900 dark:text-white">{s.titleEn}</h3>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {s.scheduledAt ? fmt(s.scheduledAt) : tBilingual('Date to be announced', 'ቀኑ ይገለጻል')}
-                    {s.durationMinutes ? ` · ${s.durationMinutes} ${tBilingual('min', 'ደቂቃ')}` : ''}
+                    {s.scheduledAt ? fmt(s.scheduledAt) : t('liveSessionsStage.dateToBeAnnounced')}
+                    {s.durationMinutes ? ` · ${s.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
                   </p>
                   <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
                   {(s.platform || s.trainerName) && (
@@ -165,7 +159,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                       onClick={() => setSelectedSession(s)}
                       className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     >
-                      {tBilingual('View session', 'ክፍለ-ጊዜውን ይመልከቱ')}
+                      {t('liveSessionsStage.viewSession')}
                     </button>
                     {s.status === 'LIVE' ? (
                       <button
@@ -179,7 +173,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                         ) : (
                           <Radio className="h-3.5 w-3.5" />
                         )}
-                        {tBilingual('Join now', 'አሁን ይቀላቀሉ')}
+                        {t('liveSessionsStage.joinNow')}
                       </button>
                     ) : s.status === 'SCHEDULED' ? (
                       <button
@@ -199,8 +193,8 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                           <Video className="h-3.5 w-3.5" />
                         )}
                         {isTimeReached(s)
-                          ? tBilingual('Join', 'ተቀላቀል')
-                          : tBilingual('Time not reached', 'ሰዓቱ አልደረሰም')}
+                          ? t('liveSessionsStage.join')
+                          : t('liveSessionsStage.timeNotReached')}
                       </button>
                     ) : null}
                   </div>
@@ -217,7 +211,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           open={Boolean(selectedSession)}
           onClose={() => setSelectedSession(null)}
           title={selectedSession.titleEn}
-          subtitle={tBilingual('Online Scheduled Session Details', 'የቀጥታ ክፍለ-ጊዜ ዝርዝር መረጃ')}
+          subtitle={t('liveSessionsStage.onlineScheduledSessionDetails')}
           size="md"
           footer={
             <div className="flex items-center justify-between w-full">
@@ -226,7 +220,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                 size="sm"
                 onClick={() => setSelectedSession(null)}
               >
-                {tBilingual('Close', 'ዝጋ')}
+                {t('liveSessionsStage.close')}
               </Button>
               {selectedSession.status === 'LIVE' ? (
                 <button
@@ -240,7 +234,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   ) : (
                     <Radio className="h-4 w-4" />
                   )}
-                  {tBilingual('Join Meeting Now', 'አሁን ስብሰባውን ይቀላቀሉ')}
+                  {t('liveSessionsStage.joinMeetingNow')}
                 </button>
               ) : selectedSession.status === 'SCHEDULED' ? (
                 <button
@@ -260,8 +254,8 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     <Video className="h-4 w-4" />
                   )}
                   {isTimeReached(selectedSession)
-                    ? tBilingual('Go to Virtual Room', 'ወደ ስብሰባ ክፍል ይሂዱ')
-                    : tBilingual('Time Not Reached', 'ሰዓቱ አልደረሰም')}
+                    ? t('liveSessionsStage.goToVirtualRoom')
+                    : t('liveSessionsStage.timeNotReached2')}
                 </button>
               ) : null}
             </div>
@@ -269,7 +263,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
         >
           <div className="space-y-4 py-2 text-sm text-slate-700 dark:text-slate-300">
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-              <span className="text-xs font-medium text-slate-500">{tBilingual('Session Status', 'የክፍለ-ጊዜ ሁኔታ')}</span>
+              <span className="text-xs font-medium text-slate-500">{t('liveSessionsStage.sessionStatus')}</span>
               {(() => {
                 const b = statusBadge(selectedSession);
                 const Icon = b.icon;
@@ -286,10 +280,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-medium">
                 <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>
-                  {tBilingual(
-                    'The scheduled time has not been reached yet. You can join 5 minutes before the session starts.',
-                    'የተያዘው ሰዓት ገና አልደረሰም። ክፍለ-ጊዜው ከመጀመሩ 5 ደቂቃ በፊት መቀላቀል ይችላሉ።',
-                  )}
+                  {t('liveSessionsStage.theScheduledTimeHasNotBeen')}
                 </span>
               </div>
             )}
@@ -298,10 +289,10 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
                 <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <CalendarClock className="h-3.5 w-3.5" />
-                  {tBilingual('Scheduled Time', 'የተያዘበት ሰዓት')}
+                  {t('liveSessionsStage.scheduledTime')}
                 </span>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
-                  {selectedSession.scheduledAt ? fmt(selectedSession.scheduledAt) : tBilingual('To be announced', 'ቀኑ ይገለጻል')}
+                  {selectedSession.scheduledAt ? fmt(selectedSession.scheduledAt) : t('liveSessionsStage.toBeAnnounced')}
                 </p>
                 <StartsInBadge seconds={selectedSession.startsInSeconds} className="mt-1" />
               </div>
@@ -309,30 +300,30 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
                 <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <Clock className="h-3.5 w-3.5" />
-                  {tBilingual('Duration', 'የሚፈጀው ጊዜ')}
+                  {t('liveSessionsStage.duration')}
                 </span>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
-                  {selectedSession.durationMinutes ? `${selectedSession.durationMinutes} ${tBilingual('minutes', 'ደቂቃዎች')}` : tBilingual('Standard lesson', 'መደበኛ ክፍለ-ጊዜ')}
+                  {selectedSession.durationMinutes ? `${selectedSession.durationMinutes} ${t('liveSessionsStage.minutes')}` : t('liveSessionsStage.standardLesson')}
                 </p>
               </div>
 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
                 <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <Globe className="h-3.5 w-3.5" />
-                  {tBilingual('Platform', 'የስብሰባ ዘዴ')}
+                  {t('liveSessionsStage.platform')}
                 </span>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
-                  {selectedSession.platform ? (PLATFORM_LABEL[selectedSession.platform] ?? selectedSession.platform) : tBilingual('Virtual Classroom', 'የኦንላይን ክፍል')}
+                  {selectedSession.platform ? (PLATFORM_LABEL[selectedSession.platform] ?? selectedSession.platform) : t('liveSessionsStage.virtualClassroom')}
                 </p>
               </div>
 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">
                 <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <User className="h-3.5 w-3.5" />
-                  {tBilingual('Trainer', 'አሰልጣኝ')}
+                  {t('liveSessionsStage.trainer')}
                 </span>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
-                  {selectedSession.trainerName || tBilingual('Assigned Course Trainer', 'የተመደበው አሰልጣኝ')}
+                  {selectedSession.trainerName || t('liveSessionsStage.assignedCourseTrainer')}
                 </p>
               </div>
             </div>
@@ -340,13 +331,10 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
               <p className="font-semibold flex items-center gap-1.5">
                 <Info className="h-4 w-4 shrink-0 text-amber-600" />
-                {tBilingual('Certificate Requirement Policy', 'የሰርተፊኬት አሰጣጥ ደንብ')}
+                {t('liveSessionsStage.certificateRequirementPolicy')}
               </p>
               <p className="mt-1 leading-relaxed text-amber-700 dark:text-amber-400">
-                {tBilingual(
-                  'Learners are required to attend all scheduled live sessions. Session attendance is tracked and verified before course certificate issuance.',
-                  'ተማሪዎች በሁሉም የጊዜ ሰሌዳ በተያዘላቸው የቀጥታ ክፍለ-ጊዜዎች መሳተፍ አለባቸው። ሰርተፊኬት ከመሰጠቱ በፊት የክፍለ-ጊዜ ተሳትፎ ይረጋገጣል።',
-                )}
+                {t('liveSessionsStage.learnersAreRequiredToAttendAll')}
               </p>
             </div>
           </div>

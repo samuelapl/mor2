@@ -35,16 +35,13 @@ export function ClassroomStage({
   onItemComplete,
   onNavigateNext,
 }: ClassroomStageProps) {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('classroom');
 
   if (!activeContent) {
     return (
       <div className="flex h-full items-center justify-center p-8 text-center text-slate-400">
         <p className="text-sm">
-          {tBilingual(
-            'Select a lesson, topic, or quiz from the curriculum sidebar.',
-            'ከስርዓተ-ትምህርቱ ማውጫ ትምህርት፣ ርዕስ ወይም ፈተና ይምረጡ።',
-          )}
+          {t('classroomStage.selectALessonTopicOrQuiz')}
         </p>
       </div>
     );
