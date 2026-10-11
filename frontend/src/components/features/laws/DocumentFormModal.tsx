@@ -32,7 +32,7 @@ export function DocumentFormModal({
   defaultCategoryId,
   initialData,
 }: DocumentFormModalProps) {
-  const { lang, tBilingual } = useTranslation();
+  const { lang, t } = useTranslation('laws');
 
   const [categoryId, setCategoryId] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
@@ -89,7 +89,7 @@ export function DocumentFormModal({
     if (!file) return;
 
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setUploadError(tBilingual('Please select a valid PDF document', 'እባክዎ ትክክለኛ የፒዲኤፍ ሰነድ ይምረጡ'));
+      setUploadError(t('documentFormModal.pleaseSelectAValidPdfDocument'));
       return;
     }
 
@@ -110,19 +110,19 @@ export function DocumentFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryId) {
-      setError(tBilingual('Please select a category', 'እባክዎ ምድብ ይምረጡ'));
+      setError(t('documentFormModal.pleaseSelectACategory'));
       return;
     }
     if (!documentNumber.trim()) {
-      setError(tBilingual('Document number is required (e.g. 33/1984)', 'የሰነድ ቁጥር ማስገባት አስፈላጊ ነው'));
+      setError(t('documentFormModal.documentNumberIsRequiredEG'));
       return;
     }
     if (!titleEn.trim()) {
-      setError(tBilingual('English title is required', 'የእንግሊዝኛ ርዕስ ማስገባት አስፈላጊ ነው'));
+      setError(t('documentFormModal.englishTitleIsRequired'));
       return;
     }
     if (!pdfUrl.trim()) {
-      setError(tBilingual('Please upload or provide a PDF document URL', 'እባክዎ ፒዲኤፍ ሰነድ ይጫኑ'));
+      setError(t('documentFormModal.pleaseUploadOrProvideAPdf'));
       return;
     }
 
@@ -157,18 +157,15 @@ export function DocumentFormModal({
       onClose={onClose}
       title={
         initialData
-          ? tBilingual('Edit Legal Document', 'የሕግ ሰነድ አርትዕ')
-          : tBilingual('Attach New Legal Document', 'አዲስ የሕግ ሰነድ ጫን')
+          ? t('documentFormModal.editLegalDocument')
+          : t('documentFormModal.attachNewLegalDocument')
       }
-      subtitle={tBilingual(
-        'Upload proclamation, regulation, or directive PDF with Negarit Gazeta metadata',
-        'የአዋጅ፣ ደንብ ወይም መመሪያ ፒዲኤፍ ሰነድ ከመረጃዎች ጋር ያያይዙ',
-      )}
+      subtitle={t('documentFormModal.uploadProclamationRegulationOrDirectiveP')}
       size="xl"
       footer={
         <div className="flex justify-end gap-2 w-full">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            {tBilingual('Cancel', 'ሰርዝ')}
+            {t('categoryFormModal.cancel')}
           </Button>
           <Button
             type="submit"
@@ -176,7 +173,7 @@ export function DocumentFormModal({
             isLoading={isSubmitting}
             className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
           >
-            {initialData ? tBilingual('Save Changes', 'ለውጦችን መዝግብ') : tBilingual('Upload Document', 'ሰነድ መዝግብ')}
+            {initialData ? t('categoryFormModal.saveChanges') : t('documentFormModal.uploadDocument')}
           </Button>
         </div>
       }
@@ -192,7 +189,7 @@ export function DocumentFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Target Category', 'የሚመደብበት ምድብ')} *
+              {t('documentFormModal.targetCategory')} *
             </label>
             <select
               value={categoryId}
@@ -210,7 +207,7 @@ export function DocumentFormModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Official Document Number', 'ይፋዊ የሰነድ ቁጥር')} *
+              {t('documentFormModal.officialDocumentNumber')} *
             </label>
             <input
               type="text"
@@ -227,7 +224,7 @@ export function DocumentFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Amharic Title (Primary)', 'የአማርኛ ርዕስ (ዋና)')}
+              {t('documentFormModal.amharicTitlePrimary')}
             </label>
             <input
               type="text"
@@ -240,7 +237,7 @@ export function DocumentFormModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('English Title', 'የእንግሊዝኛ ርዕስ')} *
+              {t('documentFormModal.englishTitle')} *
             </label>
             <input
               type="text"
@@ -257,7 +254,7 @@ export function DocumentFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Enforcement Status', 'የሕጉ ሁኔታ')} *
+              {t('documentFormModal.enforcementStatus')} *
             </label>
             <select
               value={status}
@@ -266,7 +263,7 @@ export function DocumentFormModal({
             >
               {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
                 <option key={st} value={st}>
-                  {lang === 'am' ? LAW_STATUS_CONFIG[st].labelAm : LAW_STATUS_CONFIG[st].labelEn}
+                  {t(`status.${st}`)}
                 </option>
               ))}
             </select>
@@ -274,7 +271,7 @@ export function DocumentFormModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Year Issued', 'የወጣበት ዓመት')}
+              {t('documentFormModal.yearIssued')}
             </label>
             <input
               type="number"
@@ -287,7 +284,7 @@ export function DocumentFormModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Cover Image / Gazeta Thumbnail URL', 'የነጋሪት ጋዜጣ ገጽ ምስል')}
+              {t('documentFormModal.coverImageGazetaThumbnailUrl')}
             </label>
             <input
               type="text"
@@ -302,13 +299,13 @@ export function DocumentFormModal({
         {/* 4. PDF File Upload */}
         <div className="p-4 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
           <label className="block text-xs font-bold text-indigo-900 dark:text-indigo-200 mb-2">
-            {tBilingual('PDF Document Attachment', 'የፒዲኤፍ ሰነድ አባሪ')} *
+            {t('documentFormModal.pdfDocumentAttachment')} *
           </label>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white shadow-sm transition-colors">
               <UploadCloud className="w-4 h-4 text-indigo-600" />
-              <span>{isUploading ? tBilingual('Uploading...', 'በመጫን ላይ...') : tBilingual('Choose PDF File', 'ፒዲኤፍ ፋይል ምረጥ')}</span>
+              <span>{isUploading ? t('documentFormModal.uploading') : t('documentFormModal.choosePdfFile')}</span>
               <input
                 type="file"
                 accept=".pdf,application/pdf"
@@ -321,7 +318,7 @@ export function DocumentFormModal({
             {isUploading && (
               <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{tBilingual('Uploading file to server...', 'ፋይሉ ወደ ሰርቨር በመጫን ላይ ነው...')}</span>
+                <span>{t('documentFormModal.uploadingFileToServer')}</span>
               </div>
             )}
 
@@ -343,7 +340,7 @@ export function DocumentFormModal({
           {/* Or manual URL */}
           <div className="mt-3 pt-3 border-t border-indigo-200/60 dark:border-indigo-900/40 flex items-center gap-2">
             <span className="text-[11px] text-slate-500 whitespace-nowrap">
-              {tBilingual('Or direct URL:', 'ወይም ቀጥተኛ ማስፈንጠሪያ፡')}
+              {t('documentFormModal.orDirectUrl')}
             </span>
             <input
               type="text"
@@ -359,7 +356,7 @@ export function DocumentFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Amharic Summary / Objectives', 'የአማርኛ ማጠቃለያ')}
+              {t('documentFormModal.amharicSummaryObjectives')}
             </label>
             <textarea
               rows={2}
@@ -372,7 +369,7 @@ export function DocumentFormModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('English Summary / Objectives', 'የእንግሊዝኛ ማጠቃለያ')}
+              {t('documentFormModal.englishSummaryObjectives')}
             </label>
             <textarea
               rows={2}

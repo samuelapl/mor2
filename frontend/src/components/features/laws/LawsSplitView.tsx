@@ -59,7 +59,7 @@ interface LawsSplitViewProps {
 }
 
 export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
-  const { lang, tBilingual } = useTranslation();
+  const { lang, t } = useTranslation('laws');
   const { can } = usePermissions();
   const canManage = can('laws.manage');
 
@@ -154,10 +154,10 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
   const handleSaveCategory = async (data: CreateLawCategoryInput | UpdateLawCategoryInput) => {
     if (editingCategory) {
       await updateLawCategory(editingCategory.id, data);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Category updated', 'ምድቡ ተስተካክሏል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.categoryUpdated') });
     } else {
       const created = await createLawCategory(data as CreateLawCategoryInput);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Category created', 'አዲስ ምድብ ተፈጥሯል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.categoryCreated') });
       setSelectedCategory(created);
     }
     await loadCategories();
@@ -168,7 +168,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
     if (!deletingCategory) return;
     try {
       await deleteLawCategory(deletingCategory.id);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Category deleted', 'ምድቡ ተሰርዟል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.categoryDeleted') });
       setDeletingCategory(null);
       await loadCategories();
     } catch (err: any) {
@@ -180,10 +180,10 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
   const handleSaveDocument = async (data: CreateLegalDocumentInput | UpdateLegalDocumentInput) => {
     if (editingDocument) {
       await updateLegalDocument(editingDocument.id, data);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Document updated', 'ሰነዱ ተስተካክሏል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.documentUpdated') });
     } else {
       await createLegalDocument(data as CreateLegalDocumentInput);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Document attached', 'ሰነዱ በተሳካ ሁኔታ ተያይዟል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.documentAttached') });
     }
     await loadDocuments();
     await loadCategories();
@@ -194,7 +194,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
     if (!deletingDocument) return;
     try {
       await deleteLegalDocument(deletingDocument.id);
-      setFeedbackMessage({ type: 'success', text: tBilingual('Document deleted', 'ሰነዱ ተሰርዟል') });
+      setFeedbackMessage({ type: 'success', text: t('lawsSplitView.documentDeleted') });
       setDeletingDocument(null);
       await loadDocuments();
       await loadCategories();
@@ -214,18 +214,15 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
             </span>
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
               {isAdmin
-                ? tBilingual('Legal Repository Management', 'የሕግ ማከማቻ አስተዳደር')
-                : tBilingual('Knowledge Base & Legal Library', 'የሕግ እውቀትና ሰነዶች ማዕከል')}
+                ? t('lawsSplitView.legalRepositoryManagement')
+                : t('lawsSplitView.knowledgeBaseLegalLibrary')}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            {tBilingual('Tax & Customs Laws', 'የታክስ እና የጉምሩክ ሕጎች')}
+            {t('lawsSplitView.taxCustomsLaws')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-            {tBilingual(
-              'Official Federal Democratic Republic of Ethiopia proclamations, regulations, directives, and legal circulars.',
-              'የኢትዮጵያ ፌዴራላዊ ዴሞክራሲያዊ ሪፐብሊክ ይፋዊ የገቢዎችና ጉምሩክ አዋጆች፣ ደንቦች፣ መመሪያዎች እና ሰርኩላሮች።',
-            )}
+            {t('lawsSplitView.officialFederalDemocraticRepublicOfEthio')}
           </p>
         </div>
 
@@ -238,7 +235,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
               >
                 <Eye className="w-4 h-4" />
-                <span>{tBilingual('Learner Portal View', 'የተማሪ ገጽ እይታ')}</span>
+                <span>{t('lawsSplitView.learnerPortalView')}</span>
               </Link>
               <button
                 type="button"
@@ -249,7 +246,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-50 transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4 text-indigo-600" />
-                <span>{tBilingual('Add Category', 'ምድብ አክል')}</span>
+                <span>{t('lawsSplitView.addCategory')}</span>
               </button>
               <button
                 type="button"
@@ -260,7 +257,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                <span>{tBilingual('Upload Document', 'ሰነድ ጫን')}</span>
+                <span>{t('lawsSplitView.uploadDocument')}</span>
               </button>
             </>
           ) : (
@@ -270,7 +267,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                <span>{tBilingual('Manage Legal Laws', 'ሕጎችን አስተዳድር')}</span>
+                <span>{t('lawsSplitView.manageLegalLaws')}</span>
               </Link>
             )
           )}
@@ -292,7 +289,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
             onClick={() => setFeedbackMessage(null)}
             className="text-xs font-bold underline ml-4 hover:opacity-80"
           >
-            {tBilingual('Dismiss', 'አጥፋ')}
+            {t('lawsSplitView.dismiss')}
           </button>
         </div>
       )}
@@ -316,7 +313,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                     : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300',
                 )}
               >
-                <span>{lang === 'am' ? dom.labelAm : dom.labelEn}</span>
+                <span>{t(`domain.${dom.key}`)}</span>
               </button>
             );
           })}
@@ -339,7 +336,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                   : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
               )}
             >
-              {tBilingual('All Types', 'ሁሉም አይነቶች')}
+              {t('lawsSplitView.allTypes')}
             </button>
             {LAW_INSTRUMENT_TYPES.map((inst) => {
               const active = selectedInstrument === inst.key;
@@ -355,7 +352,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                       : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700',
                   )}
                 >
-                  {lang === 'am' ? inst.labelAm : inst.labelEn}
+                  {t(`instrumentType.${inst.key}`)}
                 </button>
               );
             })}
@@ -370,7 +367,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={tBilingual('Search title, number...', 'በርዕስ ወይም ቁጥር ፈልግ...')}
+                placeholder={t('lawsSplitView.searchTitleNumber')}
                 className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
               />
             </div>
@@ -382,10 +379,10 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 onChange={(e) => setStatusFilter(e.target.value as LawStatus | 'ALL')}
                 className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
               >
-                <option value="ALL">{tBilingual('All Statuses', 'ሁሉም ሁኔታዎች')}</option>
+                <option value="ALL">{t('lawsSplitView.allStatuses')}</option>
                 {(Object.keys(LAW_STATUS_CONFIG) as LawStatus[]).map((st) => (
                   <option key={st} value={st}>
-                    {lang === 'am' ? LAW_STATUS_CONFIG[st].labelAm : LAW_STATUS_CONFIG[st].labelEn}
+                    {t(`status.${st}`)}
                   </option>
                 ))}
               </select>
@@ -401,7 +398,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
             </div>
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap shrink-0">
-                {tBilingual('Law Category:', 'የህግ ምድብ:')}
+                {t('lawsSplitView.lawCategory')}
               </span>
               <div className="relative flex-1 max-w-xl">
                 <select
@@ -418,13 +415,13 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                   className="w-full text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer truncate shadow-2xs"
                 >
                   <option value="ALL">
-                    {tBilingual('All Categories', 'ሁሉም ምድቦች')} ({categories.reduce((acc, c) => acc + (c._count?.documents ?? 0), 0)} {tBilingual('documents', 'ሰነዶች')})
+                    {t('lawsSplitView.allCategories')} ({categories.reduce((acc, c) => acc + (c._count?.documents ?? 0), 0)} {t('lawsSplitView.documents')})
                   </option>
                   {categories.map((cat) => {
                     const label = lang === 'am' ? cat.nameAm || cat.nameEn : cat.nameEn || cat.nameAm;
                     return (
                       <option key={cat.id} value={cat.id}>
-                        {label} ({cat._count?.documents ?? 0} {tBilingual('documents', 'ሰነዶች')})
+                        {label} ({cat._count?.documents ?? 0} {t('lawsSplitView.documents')})
                       </option>
                     );
                   })}
@@ -445,19 +442,19 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                       setIsCategoryModalOpen(true);
                     }}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs"
-                    title={tBilingual('Edit current category', 'የአሁኑን ምድብ አርትዕ')}
+                    title={t('lawsSplitView.editCurrentCategory')}
                   >
                     <Edit2 className="w-3 h-3 text-indigo-600" />
-                    <span>{tBilingual('Edit', 'አርትዕ')}</span>
+                    <span>{t('lawsSplitView.edit')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeletingCategory(selectedCategory)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors shadow-2xs"
-                    title={tBilingual('Delete current category', 'የአሁኑን ምድብ ሰርዝ')}
+                    title={t('lawsSplitView.deleteCurrentCategory')}
                   >
                     <Trash2 className="w-3 h-3" />
-                    <span>{tBilingual('Delete', 'ሰርዝ')}</span>
+                    <span>{t('lawsSplitView.delete')}</span>
                   </button>
                 </>
               )}
@@ -470,7 +467,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors shadow-2xs"
               >
                 <Plus className="w-3 h-3" />
-                <span>{tBilingual('Add Category', 'አዲስ ምድብ')}</span>
+                <span>{t('lawsSplitView.addCategory2')}</span>
               </button>
             </div>
           )}
@@ -487,14 +484,14 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 {(() => {
                   if (!selectedCategory) {
                     const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedInstrument);
-                    return inst ? (lang === 'am' ? inst.labelAm : inst.labelEn) : tBilingual('All Categories', 'ሁሉም ምድቦች');
+                    return inst ? t(`instrumentType.${inst.key}`) : t('lawsSplitView.allCategories');
                   }
                   const inst = LAW_INSTRUMENT_TYPES.find((i) => i.key === selectedCategory.instrumentType);
-                  return inst ? (lang === 'am' ? inst.labelAm : inst.labelEn) : selectedCategory.instrumentType;
+                  return inst ? t(`instrumentType.${inst.key}`) : selectedCategory.instrumentType;
                 })()}
               </span>
               <span className="text-xs text-slate-500">
-                {totalDocs} {tBilingual('document(s) found', 'ሰነዶች ተገኝተዋል')}
+                {totalDocs} {t('lawsSplitView.documentSFound')}
               </span>
             </div>
             <h2
@@ -507,7 +504,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 ? (lang === 'am'
                     ? selectedCategory.nameAm || selectedCategory.nameEn
                     : selectedCategory.nameEn || selectedCategory.nameAm)
-                : tBilingual('All Tax & Customs Laws & Decrees', 'ሁሉም የታክስና ጉምሩክ ሕጎችና ደንቦች')}
+                : t('lawsSplitView.allTaxCustomsLawsDecrees')}
             </h2>
             {selectedCategory?.description && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
@@ -526,7 +523,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95 self-start sm:self-auto"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>{tBilingual('Add Document', 'ሰነድ አክል')}</span>
+              <span>{t('lawsSplitView.addDocument')}</span>
             </button>
           )}
         </div>
@@ -535,7 +532,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         {isLoadingDocs ? (
           <div className="p-12 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-400">
             <Spinner className="size-8 text-indigo-600" />
-            <span className="text-sm">{tBilingual('Loading documents...', 'ሰነዶች በመጫን ላይ...')}</span>
+            <span className="text-sm">{t('lawsSplitView.loadingDocuments')}</span>
           </div>
         ) : documents.length === 0 ? (
           <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
@@ -543,13 +540,10 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
               <FileText className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-slate-800 dark:text-white">
-              {tBilingual('No legal documents uploaded yet', 'እስካሁን ምንም የሕግ ሰነዶች አልተጫኑም')}
+              {t('lawsSplitView.noLegalDocumentsUploadedYet')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-              {tBilingual(
-                'No decrees match the current category and filters. Try adjusting your search term or status.',
-                'በዚህ ምድብ ወይም ፍለጋ ስር ምንም ሰነድ የለም። የፍለጋ ቃሉን ወይም ሁኔታውን ይቀይሩ።',
-              )}
+              {t('lawsSplitView.noDecreesMatchTheCurrentCategory')}
             </p>
             {isAdmin && (
               <button
@@ -561,7 +555,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                <span>{tBilingual('Upload First Document', 'የመጀመሪያውን ሰነድ ጫን')}</span>
+                <span>{t('lawsSplitView.uploadFirstDocument')}</span>
               </button>
             )}
           </div>
@@ -620,17 +614,16 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         isOpen={Boolean(deletingCategory)}
         onClose={() => setDeletingCategory(null)}
         onConfirm={handleConfirmDeleteCategory}
-        title={tBilingual('Delete Category', 'ምድብ ሰርዝ')}
+        title={t('lawsSplitView.deleteCategory')}
         description={
           <span>
-            {tBilingual(
-              `Are you sure you want to delete category "${deletingCategory?.nameEn}"? Categories containing documents cannot be deleted.`,
-              `ምድቡን "${deletingCategory?.nameAm || deletingCategory?.nameEn}" መሰረዝ ይፈልጋሉ? ሰነዶችን የያዘ ምድብ መሰረዝ አይቻልም።`,
-            )}
+            {t('lawsSplitView.deleteCategoryConfirm', {
+              name: (lang === 'am' ? deletingCategory?.nameAm || deletingCategory?.nameEn : deletingCategory?.nameEn) ?? '',
+            })}
           </span>
         }
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
-        cancelText={tBilingual('Cancel', 'ተመለስ')}
+        confirmText={t('lawsSplitView.delete')}
+        cancelText={t('lawsSplitView.cancel')}
         variant="danger"
       />
 
@@ -639,17 +632,17 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
         isOpen={Boolean(deletingDocument)}
         onClose={() => setDeletingDocument(null)}
         onConfirm={handleConfirmDeleteDocument}
-        title={tBilingual('Delete Legal Document', 'የሕግ ሰነድ ሰርዝ')}
+        title={t('lawsSplitView.deleteLegalDocument')}
         description={
           <span>
-            {tBilingual(
-              `Are you sure you want to delete document "${deletingDocument?.documentNumber} - ${deletingDocument?.titleEn}"?`,
-              `ሰነዱን "${deletingDocument?.documentNumber} - ${deletingDocument?.titleAm || deletingDocument?.titleEn}" መሰረዝ ይፈልጋሉ?`,
-            )}
+            {t('lawsSplitView.deleteDocumentConfirm', {
+              number: deletingDocument?.documentNumber ?? '',
+              title: (lang === 'am' ? deletingDocument?.titleAm || deletingDocument?.titleEn : deletingDocument?.titleEn) ?? '',
+            })}
           </span>
         }
-        confirmText={tBilingual('Delete', 'ሰርዝ')}
-        cancelText={tBilingual('Cancel', 'ተመለስ')}
+        confirmText={t('lawsSplitView.delete')}
+        cancelText={t('lawsSplitView.cancel')}
         variant="danger"
       />
     </div>

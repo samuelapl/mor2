@@ -99,40 +99,33 @@ export interface UpdateLegalDocumentInput {
   fileSize?: number;
 }
 
-export const LAW_DOMAINS: { key: LawDomain; labelEn: string; labelAm: string; description: string }[] = [
-  { key: 'TAX_LAW', labelEn: 'Tax Laws', labelAm: 'የታክስ ሕጎች', description: 'Domestic direct and indirect tax legislation' },
-  { key: 'CUSTOMS_LAW', labelEn: 'Customs Laws', labelAm: 'የጉምሩክ ሕጎች', description: 'Cross-border trade tariffs and customs controls' },
-  { key: 'DRAFT_LAW', labelEn: 'Draft Laws', labelAm: 'ረቂቅ ሕጎች', description: 'Upcoming proposals and public consultation drafts' },
-  { key: 'OTHER_DOCUMENTS', labelEn: 'Other Documents', labelAm: 'ሌሎች ሰነዶች', description: 'Treaties, technical circulars, and official guidance' },
+/** Labels: locales laws.domain.<key>, laws.instrumentType.<key>, laws.status.<key>. */
+export const LAW_DOMAINS: { key: LawDomain; description: string }[] = [
+  { key: 'TAX_LAW', description: 'Domestic direct and indirect tax legislation' },
+  { key: 'CUSTOMS_LAW', description: 'Cross-border trade tariffs and customs controls' },
+  { key: 'DRAFT_LAW', description: 'Upcoming proposals and public consultation drafts' },
+  { key: 'OTHER_DOCUMENTS', description: 'Treaties, technical circulars, and official guidance' },
 ];
 
-export const LAW_INSTRUMENT_TYPES: { key: LawInstrumentType; labelEn: string; labelAm: string }[] = [
-  { key: 'PROCLAMATION', labelEn: 'Proclamations', labelAm: 'አዋጆች' },
-  { key: 'REGULATION', labelEn: 'Regulations', labelAm: 'ደንቦች' },
-  { key: 'DIRECTIVE', labelEn: 'Directives', labelAm: 'መመሪያዎች' },
-  { key: 'CIRCULAR', labelEn: 'Circulars', labelAm: 'ሰርኩላሮች' },
-  { key: 'OTHER', labelEn: 'Other', labelAm: 'ሌሎች' },
+export const LAW_INSTRUMENT_TYPES: { key: LawInstrumentType }[] = [
+  { key: 'PROCLAMATION' },
+  { key: 'REGULATION' },
+  { key: 'DIRECTIVE' },
+  { key: 'CIRCULAR' },
+  { key: 'OTHER' },
 ];
 
-export const LAW_STATUS_CONFIG: Record<LawStatus, { labelEn: string; labelAm: string; badgeClass: string }> = {
+export const LAW_STATUS_CONFIG: Record<LawStatus, { badgeClass: string }> = {
   IN_FORCE: {
-    labelEn: 'In Force',
-    labelAm: 'በሥራ ላይ ያለ',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
   },
   REPEALED: {
-    labelEn: 'Repealed',
-    labelAm: 'የተሻረ',
     badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800',
   },
   AMENDED: {
-    labelEn: 'Amended',
-    labelAm: 'የተሻሻለ',
     badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
   },
   DRAFT: {
-    labelEn: 'Draft',
-    labelAm: 'ረቂቅ',
     badgeClass: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/60 dark:text-slate-400 dark:border-slate-700',
   },
 };

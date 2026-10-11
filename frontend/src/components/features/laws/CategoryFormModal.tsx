@@ -30,7 +30,7 @@ export function CategoryFormModal({
   defaultDomain = 'TAX_LAW',
   defaultInstrumentType = 'PROCLAMATION',
 }: CategoryFormModalProps) {
-  const { lang, tBilingual } = useTranslation();
+  const { lang, t } = useTranslation('laws');
 
   const [domain, setDomain] = useState<LawDomain>(defaultDomain);
   const [instrumentType, setInstrumentType] = useState<LawInstrumentType>(defaultInstrumentType);
@@ -63,7 +63,7 @@ export function CategoryFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nameEn.trim()) {
-      setError(tBilingual('English category name is required', 'የእንግሊዝኛ ምድብ ስም ማስገባት አስፈላጊ ነው'));
+      setError(t('categoryFormModal.englishCategoryNameIsRequired'));
       return;
     }
 
@@ -92,18 +92,15 @@ export function CategoryFormModal({
       onClose={onClose}
       title={
         initialData
-          ? tBilingual('Edit Category', 'ምድብ አርትዕ')
-          : tBilingual('Add New Legal Category', 'አዲስ የሕግ ምድብ አክል')
+          ? t('categoryFormModal.editCategory')
+          : t('categoryFormModal.addNewLegalCategory')
       }
-      subtitle={tBilingual(
-        'Define a dynamic category under a law domain and instrument type',
-        'በሕግ ዘርፍ እና በአዋጅ/ደንብ ስር የሚገኝ አዲስ ምድብ ይፍጠሩ',
-      )}
+      subtitle={t('categoryFormModal.defineADynamicCategoryUnderA')}
       size="lg"
       footer={
         <div className="flex justify-end gap-2 w-full">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            {tBilingual('Cancel', 'ሰርዝ')}
+            {t('categoryFormModal.cancel')}
           </Button>
           <Button
             type="submit"
@@ -111,7 +108,7 @@ export function CategoryFormModal({
             isLoading={isSubmitting}
             className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
           >
-            {initialData ? tBilingual('Save Changes', 'ለውጦችን መዝግብ') : tBilingual('Create Category', 'ምድብ ፍጠር')}
+            {initialData ? t('categoryFormModal.saveChanges') : t('categoryFormModal.createCategory')}
           </Button>
         </div>
       }
@@ -127,7 +124,7 @@ export function CategoryFormModal({
           {/* Domain */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Law Domain', 'የሕግ ዘርፍ')} *
+              {t('categoryFormModal.lawDomain')} *
             </label>
             <select
               value={domain}
@@ -136,7 +133,7 @@ export function CategoryFormModal({
             >
               {LAW_DOMAINS.map((d) => (
                 <option key={d.key} value={d.key}>
-                  {lang === 'am' ? d.labelAm : d.labelEn}
+                  {t(`domain.${d.key}`)}
                 </option>
               ))}
             </select>
@@ -145,7 +142,7 @@ export function CategoryFormModal({
           {/* Instrument Type */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Instrument Type', 'የሰነድ አይነት')} *
+              {t('categoryFormModal.instrumentType')} *
             </label>
             <select
               value={instrumentType}
@@ -154,7 +151,7 @@ export function CategoryFormModal({
             >
               {LAW_INSTRUMENT_TYPES.map((it) => (
                 <option key={it.key} value={it.key}>
-                  {lang === 'am' ? it.labelAm : it.labelEn}
+                  {t(`instrumentType.${it.key}`)}
                 </option>
               ))}
             </select>
@@ -164,7 +161,7 @@ export function CategoryFormModal({
         {/* English Name */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {tBilingual('Category Name (English)', 'የምድብ ስም (እንግሊዝኛ)')} *
+            {t('categoryFormModal.categoryNameEnglish')} *
           </label>
           <input
             type="text"
@@ -179,7 +176,7 @@ export function CategoryFormModal({
         {/* Amharic Name */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {tBilingual('Category Name (Amharic)', 'የምድብ ስም (አማርኛ)')}
+            {t('categoryFormModal.categoryNameAmharic')}
           </label>
           <input
             type="text"
@@ -194,20 +191,20 @@ export function CategoryFormModal({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Description', 'መግለጫ')}
+              {t('categoryFormModal.description')}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={tBilingual('Optional description', 'አስፈላጊ ከሆነ አጭር መግለጫ')}
+              placeholder={t('categoryFormModal.optionalDescription')}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {tBilingual('Display Order', 'ቅደም ተከተል')}
+              {t('categoryFormModal.displayOrder')}
             </label>
             <input
               type="number"
