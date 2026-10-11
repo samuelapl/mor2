@@ -260,7 +260,7 @@ Tick each route once its step is finished. Also open the modals and drawers reac
 | :--- | :--- | :---: | :---: | :--- |
 | 1 | Tokens + theme store + toggle fixes | [x] | [x] | Done |
 | 2 | Shared UI / layout / charts | [x] | [x] | Done |
-| 3 | Codemod (`scripts/theme-tokens.mjs`) | [ ] | n/a | Pending |
+| 3 | Codemod (`scripts/theme-tokens.mjs`) | [x] | n/a | Done |
 | 4.1–4.12 | Folder migrations (every folder, see Phase 4 inventory) | [ ] | [ ] | Pending |
 | — | Every route checked in both themes (section 6) | n/a | [ ] | Pending |
 | 5 | `theme:check` guard | [ ] | n/a | Pending |

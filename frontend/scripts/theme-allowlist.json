@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "file": "src/components/features/certificates/CertificateRenderer.tsx",
+      "reason": "Printed / exported certificate: fixed colors on purpose, identical in both themes."
+    },
+    {
+      "file": "src/components/shared/SlideDeckViewer.tsx",
+      "reason": "Slide/PDF deck stage is dark in both themes; its bg-white is the PDF paper."
+    }
+  ]
+}
