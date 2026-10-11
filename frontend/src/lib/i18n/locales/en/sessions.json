@@ -1,1 +1,92 @@
-{}
+{
+  "sessionsManager": {
+    "scheduleSession": "Schedule Session",
+    "allCourses": "All Courses",
+    "allStatus": "All Status",
+    "upcoming": "Upcoming",
+    "live": "Live",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "noSessionsMatchYourSearchOr": "No sessions match your search or filter criteria. Try clearing filters.",
+    "upcomingActiveSessions": "Upcoming & Active Sessions",
+    "noUpcomingSessionsFound": "No upcoming sessions found",
+    "tryAdjustingYourSearchOrFilters": "Try adjusting your search or filters.",
+    "prepareQuiz": "Prepare Quiz",
+    "attendance": "Attendance",
+    "goLive": "Go Live",
+    "endSession": "End Session",
+    "classroomAttendance": "Classroom Attendance",
+    "joinRoom": "Join Room",
+    "noPastSessionsFound": "No past sessions found",
+    "noCompletedOrCancelledSessionsMatch": "No completed or cancelled sessions match your filter criteria.",
+    "attendanceRecords": "Attendance Records",
+    "scope": {
+      "all": {
+        "title": "All Sessions",
+        "description": "Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses.",
+        "searchPlaceholder": "Search session, course, trainer…",
+        "emptyTitle": "No live sessions found",
+        "emptyDescription": "No live training sessions have been scheduled yet.",
+        "upcomingDescription": "Scheduled webinars and active classroom meetings awaiting or undergoing delivery.",
+        "upcomingEmptyDescription": "Arrange a new live training session for any course.",
+        "pastTitle": "Past Sessions Archive",
+        "pastDescription": "Previously conducted or cancelled training events."
+      },
+      "own": {
+        "title": "My Sessions",
+        "description": "View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance.",
+        "searchPlaceholder": "Search session, course, trainer…",
+        "emptyTitle": "No sessions found",
+        "emptyDescription": "You do not have any assigned course sessions scheduled yet.",
+        "upcomingDescription": "Sessions scheduled to be delivered. Start the session to go live or review attendance.",
+        "upcomingEmptyDescription": "No scheduled or live sessions match your filter criteria.",
+        "pastTitle": "Past Sessions",
+        "pastDescription": "Completed training sessions with verifiable attendance records."
+      }
+    }
+  },
+  "liveQuizTrainerControl": {
+    "multipleChoice": "Multiple Choice",
+    "trueFalse": "True / False",
+    "shortAnswer": "Short Answer"
+  },
+  "trainerAttendancePage": {
+    "attendanceManagementWorkspace": "Attendance Management Workspace",
+    "trackVerifyAndManageParticipantAttendanc": "Track, verify, and manage participant attendance across your scheduled live training sessions.",
+    "selectSession": "Select Session:",
+    "generating": "Generating…",
+    "sendReportToTrainer": "Send Report to Trainer",
+    "refreshRoster": "Refresh Roster",
+    "enrolledStudents": "Enrolled Students",
+    "totalEligible": "Total eligible",
+    "present": "Present",
+    "confirmedCheckIns": "Confirmed check-ins",
+    "late": "Late",
+    "checkedInAfterStart": "Checked in after start",
+    "excusedAbsence": "Excused Absence",
+    "authorizedPermits": "Authorized permits",
+    "attendanceRate": "Attendance Rate",
+    "searchLearnerByNameOrEmail": "Search learner by name or email…",
+    "allStatuses": "All Statuses",
+    "absent": "Absent",
+    "excused": "Excused",
+    "noLearnersFound": "No learners found",
+    "noLearnersMatchTheCurrentFilter": "No learners match the current filter or are enrolled in this course session.",
+    "learnerName": "Learner Name",
+    "accountEmail": "Account / Email",
+    "checkInDetails": "Check-in Details",
+    "stay": "Stay & %",
+    "currentStatus": "Current Status",
+    "manageAttendance": "Manage Attendance"
+  },
+  "calendarPage": {
+    "trainingCalendar": "Training Calendar",
+    "upcomingLiveTrainingSessionsAcrossAll": "Upcoming live training sessions across all courses.",
+    "details": "Details"
+  },
+  "startsInBadge": {
+    "startsIn": "Starts in {time}"
+  }
+}

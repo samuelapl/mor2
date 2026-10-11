@@ -1,1 +1,92 @@
-{}
+{
+  "sessionsManager": {
+    "scheduleSession": "ክፍለ-ጊዜ መርሐግብር አውጣ",
+    "allCourses": "ሁሉም ኮርሶች",
+    "allStatus": "ሁሉም ሁኔታ",
+    "upcoming": "መጪ",
+    "live": "በቀጥታ",
+    "completed": "የተጠናቀቀ",
+    "cancelled": "የተሰረዘ",
+    "clear": "አጽዳ",
+    "refresh": "አድስ",
+    "noSessionsMatchYourSearchOr": "ከፍለጋዎ ወይም ከማጣሪያዎ ጋር የሚዛመድ ክፍለ-ጊዜ የለም። ማጣሪያዎቹን ያጽዱ።",
+    "upcomingActiveSessions": "መጪ እና ንቁ ክፍለ-ጊዜዎች",
+    "noUpcomingSessionsFound": "ምንም መጪ ክፍለ-ጊዜዎች አልተገኙም",
+    "tryAdjustingYourSearchOrFilters": "እባክዎን ፍለጋዎን ወይም ማጣሪያዎችዎን ያስተካክሉ።",
+    "prepareQuiz": "ፈተና አዘጋጅ",
+    "attendance": "መገኘት",
+    "goLive": "በቀጥታ ጀምር",
+    "endSession": "ክፍለ-ጊዜውን ጨርስ",
+    "classroomAttendance": "የክፍል መገኘት",
+    "joinRoom": "ወደ ክፍሉ ግባ",
+    "noPastSessionsFound": "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም",
+    "noCompletedOrCancelledSessionsMatch": "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።",
+    "attendanceRecords": "የተሳትፎ መዝገቦች",
+    "scope": {
+      "all": {
+        "title": "ሁሉም የቀጥታ ክፍለ-ጊዜዎች",
+        "description": "በሁሉም ኮርሶች የተቋማዊ የቀጥታ ክፍለ-ጊዜዎችን፣ በአሰልጣኝ የሚመሩ ዌቢናሮችን እና ስብሰባዎችን ያቅዱ እና ያስተዳድሩ።",
+        "searchPlaceholder": "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…",
+        "emptyTitle": "ምንም የቀጥታ ክፍለ-ጊዜዎች አልተገኙም",
+        "emptyDescription": "እስካሁን ምንም የቀጥታ ስልጠና አልታቀደም።",
+        "upcomingDescription": "የታቀዱ ዌቢናሮች እና ንቁ የስልጠና ስብሰባዎች።",
+        "upcomingEmptyDescription": "ለማንኛውም ኮርስ አዲስ የቀጥታ ስልጠና ያዘጋጁ።",
+        "pastTitle": "ያለፉ ክፍለ-ጊዜዎች መዝገብ",
+        "pastDescription": "ከዚህ በፊት የተካሄዱ ወይም የተሰረዙ የስልጠና ዝግጅቶች።"
+      },
+      "own": {
+        "title": "የእኔ የቀጥታ ክፍለ-ጊዜዎች",
+        "description": "ለተመደቡልዎት ኮርሶች የታቀዱ የቀጥታ ስልጠናዎችን ይመልከቱ እና ያካሂዱ፣ እንዲሁም የተሳታፊዎችን ክትትል ይመርምሩ።",
+        "searchPlaceholder": "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…",
+        "emptyTitle": "ምንም ክፍለ-ጊዜዎች አልተገኙም",
+        "emptyDescription": "እስካሁን ለእርስዎ የተመደበ ክፍለ-ጊዜ የለም።",
+        "upcomingDescription": "ሊካሄዱ የታቀዱ ክፍለ-ጊዜዎች። ቀጥታ ለመጀመር ወይም መገኘትን ለመገምገም ክፍለ-ጊዜውን ይጀምሩ።",
+        "upcomingEmptyDescription": "ከማጣሪያዎ ጋር የሚዛመድ የታቀደ ወይም የቀጥታ ክፍለ-ጊዜ የለም።",
+        "pastTitle": "ያለፉ ክፍለ-ጊዜዎች",
+        "pastDescription": "የተረጋገጠ የተሳትፎ መዝገብ ያላቸው የተጠናቀቁ የስልጠና ክፍለ-ጊዜዎች።"
+      }
+    }
+  },
+  "liveQuizTrainerControl": {
+    "multipleChoice": "ባለብዙ ምርጫ",
+    "trueFalse": "እውነት / ሐሰት",
+    "shortAnswer": "አጭር መልስ"
+  },
+  "trainerAttendancePage": {
+    "attendanceManagementWorkspace": "የተሳትፎ እና የክትትል አስተዳደር",
+    "trackVerifyAndManageParticipantAttendanc": "በታቀዱ የቀጥታ ስልጠና ክፍለ-ጊዜዎችዎ የተሳታፊዎችን ክትትል ይከታተሉ፣ ያረጋግጡ እና ያስተዳድሩ።",
+    "selectSession": "ክፍለ-ጊዜ ይምረጡ:",
+    "generating": "በማመንጨት ላይ…",
+    "sendReportToTrainer": "ሪፖርት ለአሰልጣኝ ላክ",
+    "refreshRoster": "ዝርዝር አድስ",
+    "enrolledStudents": "የተመዘገቡ ተማሪዎች",
+    "totalEligible": "ጠቅላላ ብቁ",
+    "present": "የተገኙ",
+    "confirmedCheckIns": "የተረጋገጡ መግቢያዎች",
+    "late": "የዘገዩ",
+    "checkedInAfterStart": "ከመጀመሪያ በኋላ የገቡ",
+    "excusedAbsence": "ፈቃድ ያላቸው",
+    "authorizedPermits": "የተፈቀደላቸው",
+    "attendanceRate": "የተሳትፎ ምጣኔ",
+    "searchLearnerByNameOrEmail": "ተማሪ በስም ወይም ኢሜይል ይፈልጉ…",
+    "allStatuses": "ሁሉም ሁኔታዎች",
+    "absent": "የቀሩ",
+    "excused": "ፈቃድ",
+    "noLearnersFound": "ምንም ተማሪዎች አልተገኙም",
+    "noLearnersMatchTheCurrentFilter": "ከአሁኑ ማጣሪያ ጋር የሚዛመድ ወይም በዚህ ክፍለ-ጊዜ የተመዘገበ ተማሪ የለም።",
+    "learnerName": "የተማሪ ስም",
+    "accountEmail": "መለያ / ኢሜይል",
+    "checkInDetails": "የመግቢያ ዝርዝር",
+    "stay": "የቆይታ ጊዜ እና %",
+    "currentStatus": "የአሁን ሁኔታ",
+    "manageAttendance": "ክትትል አስተዳድር"
+  },
+  "calendarPage": {
+    "trainingCalendar": "የስልጠና የቀን መቁጠሪያ",
+    "upcomingLiveTrainingSessionsAcrossAll": "በሁሉም ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።",
+    "details": "ዝርዝሮች"
+  },
+  "startsInBadge": {
+    "startsIn": "በ{time} ይጀምራል"
+  }
+}

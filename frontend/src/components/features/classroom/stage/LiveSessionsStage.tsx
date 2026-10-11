@@ -147,7 +147,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     {s.scheduledAt ? fmt(s.scheduledAt) : tBilingual('Date to be announced', 'ቀኑ ይገለጻል')}
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${tBilingual('min', 'ደቂቃ')}` : ''}
                   </p>
-                  <StartsInBadge seconds={s.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
+                  <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
                   {(s.platform || s.trainerName) && (
                     <p className="mt-0.5 text-xs text-slate-500">
                       {[s.platform ? (PLATFORM_LABEL[s.platform] ?? s.platform) : null, s.trainerName].filter(Boolean).join(' · ')}
@@ -303,7 +303,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                 <p className="mt-1 font-semibold text-slate-900 dark:text-white text-xs">
                   {selectedSession.scheduledAt ? fmt(selectedSession.scheduledAt) : tBilingual('To be announced', 'ቀኑ ይገለጻል')}
                 </p>
-                <StartsInBadge seconds={selectedSession.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
+                <StartsInBadge seconds={selectedSession.startsInSeconds} className="mt-1" />
               </div>
 
               <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900">

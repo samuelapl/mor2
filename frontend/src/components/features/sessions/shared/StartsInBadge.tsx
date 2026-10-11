@@ -2,6 +2,7 @@
 
 import { Clock } from 'lucide-react';
 import { formatStartsIn } from '@/lib/app-time';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
 /**
@@ -10,13 +11,12 @@ import { cn } from '@/lib/utils';
  */
 export function StartsInBadge({
   seconds,
-  isAmharic = false,
   className,
 }: {
   seconds: number | null | undefined;
-  isAmharic?: boolean;
   className?: string;
 }) {
+  const { t, isAmharic } = useTranslation('sessions');
   if (seconds == null || seconds <= 0) return null;
   return (
     <span
@@ -26,7 +26,7 @@ export function StartsInBadge({
       )}
     >
       <Clock className="h-3 w-3" />
-      {isAmharic ? `በ${formatStartsIn(seconds, true)} ይጀምራል` : `Starts in ${formatStartsIn(seconds)}`}
+      {t('startsInBadge.startsIn', { time: formatStartsIn(seconds, isAmharic) })}
     </span>
   );
 }

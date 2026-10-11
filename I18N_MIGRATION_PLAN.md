@@ -213,6 +213,7 @@ Order: smallest first to prove the script, then the rest. Each step:
 1. Remove `tBilingual` from `useTranslation`. Delete `lib/i18n/translations.ts` and `constants/labels.ts`.
 2. Remove the remaining `isAmharic` uses that pick text. Keep the ones used for layout, fonts or dates.
 3. Extend `i18n:check` to fail if any `.ts`/`.tsx` file outside `locales/` contains Ethiopic characters (except the files marked as database-content or test fixtures).
+   Known intentional Amharic in code: labels/placeholders of Amharic-content inputs (e.g. "Session Title (አማርኛ)" in `ScheduleSessionModal`, `EditSessionModal`, `SessionDetailModal`, `LiveQuizTrainerControl`) — allow-list these.
 4. Add `i18n:check` to the pre-commit hook or CI.
 5. Run `tsc`, `npm run build`, and a full browser check in both languages.
 
@@ -234,5 +235,6 @@ Order: smallest first to prove the script, then the rest. Each step:
 | 1 | `locale-store.ts` | [x] | n/a | [x] | Done |
 | 2 | Catalog + `t()` + `translate()` + check script | [x] | [x] | [x] | Done |
 | 3 | Extraction script | [x] | n/a | n/a | Done (tested on sessions + courses/creator, reverted) |
-| 4.1–4.12 | Folder migrations | [ ] | [ ] | [ ] | Pending |
+| 4.1 | sessions (57 by script, 18 config texts + 1 badge by hand) | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.2–4.12 | Remaining folders | [ ] | [ ] | [ ] | Pending |
 | 5 | Cleanup + guard | [ ] | [ ] | [ ] | Pending |

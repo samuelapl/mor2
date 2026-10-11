@@ -52,9 +52,7 @@ import { useQuizReadinessGate } from "@/components/features/prepared-quiz/useQui
  */
 export type SessionsScope = "all" | "own";
 
-/** English + Amharic text pair, rendered with `tBilingual`. */
-type Bi = { en: string; am: string };
-
+/** Page text per scope lives in locales/{en,am}/sessions.json under sessionsManager.scope.<scope>. */
 const SCOPE_CONFIG: Record<
   SessionsScope,
   {
@@ -62,15 +60,6 @@ const SCOPE_CONFIG: Record<
     pageSize: number;
     pageSizeOptions: number[];
     canSchedule: boolean;
-    title: Bi;
-    description: Bi;
-    searchPlaceholder: Bi;
-    emptyTitle: Bi;
-    emptyDescription: Bi;
-    upcomingDescription: Bi;
-    upcomingEmptyDescription: Bi;
-    pastTitle: Bi;
-    pastDescription: Bi;
   }
 > = {
   all: {
@@ -78,60 +67,12 @@ const SCOPE_CONFIG: Record<
     pageSize: 10,
     pageSizeOptions: [5, 10, 20, 50],
     canSchedule: true,
-    title: { en: "All Sessions", am: "ሁሉም የቀጥታ ክፍለ-ጊዜዎች" },
-    description: {
-      en: "Schedule and manage institutional virtual sessions, instructor-led webinars, and platform meetings across courses.",
-      am: "በሁሉም ኮርሶች የተቋማዊ የቀጥታ ክፍለ-ጊዜዎችን፣ በአሰልጣኝ የሚመሩ ዌቢናሮችን እና ስብሰባዎችን ያቅዱ እና ያስተዳድሩ።",
-    },
-    searchPlaceholder: { en: "Search session, course, trainer…", am: "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…" },
-    emptyTitle: { en: "No live sessions found", am: "ምንም የቀጥታ ክፍለ-ጊዜዎች አልተገኙም" },
-    emptyDescription: {
-      en: "No live training sessions have been scheduled yet.",
-      am: "እስካሁን ምንም የቀጥታ ስልጠና አልታቀደም።",
-    },
-    upcomingDescription: {
-      en: "Scheduled webinars and active classroom meetings awaiting or undergoing delivery.",
-      am: "የታቀዱ ዌቢናሮች እና ንቁ የስልጠና ስብሰባዎች።",
-    },
-    upcomingEmptyDescription: {
-      en: "Arrange a new live training session for any course.",
-      am: "ለማንኛውም ኮርስ አዲስ የቀጥታ ስልጠና ያዘጋጁ።",
-    },
-    pastTitle: { en: "Past Sessions Archive", am: "ያለፉ ክፍለ-ጊዜዎች መዝገብ" },
-    pastDescription: {
-      en: "Previously conducted or cancelled training events.",
-      am: "ከዚህ በፊት የተካሄዱ ወይም የተሰረዙ የስልጠና ዝግጅቶች።",
-    },
   },
   own: {
     defaultRole: "trainer",
     pageSize: 6,
     pageSizeOptions: [6, 12, 24, 48],
     canSchedule: false,
-    title: { en: "My Sessions", am: "የእኔ የቀጥታ ክፍለ-ጊዜዎች" },
-    description: {
-      en: "View and conduct scheduled live training sessions for your assigned courses, and inspect participant attendance.",
-      am: "ለተመደቡልዎት ኮርሶች የታቀዱ የቀጥታ ስልጠናዎችን ይመልከቱ እና ያካሂዱ፣ እንዲሁም የተሳታፊዎችን ክትትል ይመርምሩ።",
-    },
-    searchPlaceholder: { en: "Search session, course, trainer…", am: "ክፍለ-ጊዜ፣ ኮርስ፣ አሰልጣኝ ይፈልጉ…" },
-    emptyTitle: { en: "No sessions found", am: "ምንም ክፍለ-ጊዜዎች አልተገኙም" },
-    emptyDescription: {
-      en: "You do not have any assigned course sessions scheduled yet.",
-      am: "እስካሁን ለእርስዎ የተመደበ ክፍለ-ጊዜ የለም።",
-    },
-    upcomingDescription: {
-      en: "Sessions scheduled to be delivered. Start the session to go live or review attendance.",
-      am: "ሊካሄዱ የታቀዱ ክፍለ-ጊዜዎች። ቀጥታ ለመጀመር ወይም መገኘትን ለመገምገም ክፍለ-ጊዜውን ይጀምሩ።",
-    },
-    upcomingEmptyDescription: {
-      en: "No scheduled or live sessions match your filter criteria.",
-      am: "ከማጣሪያዎ ጋር የሚዛመድ የታቀደ ወይም የቀጥታ ክፍለ-ጊዜ የለም።",
-    },
-    pastTitle: { en: "Past Sessions", am: "ያለፉ ክፍለ-ጊዜዎች" },
-    pastDescription: {
-      en: "Completed training sessions with verifiable attendance records.",
-      am: "የተረጋገጠ የተሳትፎ መዝገብ ያላቸው የተጠናቀቁ የስልጠና ክፍለ-ጊዜዎች።",
-    },
   },
 };
 
@@ -142,7 +83,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const refreshCourse = useCourseStore((s) => s.refreshCourse);
   const { can, canAny } = usePermissions();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation("sessions");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<ApiLiveSession | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -314,7 +255,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const scheduleButton = (size?: "sm") => (
     <Button size={size} onClick={() => setScheduleOpen(true)} className={size ? undefined : "shadow-sm"}>
       <CalendarPlus className="h-4 w-4" />
-      {tBilingual("Schedule Session", "ክፍለ-ጊዜ መርሐግብር አውጣ")}
+      {t("sessionsManager.scheduleSession")}
     </Button>
   );
 
@@ -363,8 +304,8 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
   return (
     <PageShell
       role={role}
-      title={tBilingual(config.title)}
-      description={tBilingual(config.description)}
+      title={t(`sessionsManager.scope.${scope}.title`)}
+      description={t(`sessionsManager.scope.${scope}.description`)}
       actions={canSchedule ? scheduleButton() : undefined}
     >
       {/* FILTER BAR */}
@@ -376,7 +317,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder={tBilingual(config.searchPlaceholder)}
+                placeholder={t(`sessionsManager.scope.${scope}.searchPlaceholder`)}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -391,7 +332,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
               className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
               <option value="ALL">
-                {tBilingual("All Courses", "ሁሉም ኮርሶች")} ({filterCourses.length})
+                {t("sessionsManager.allCourses")} ({filterCourses.length})
               </option>
               {filterCourses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -414,14 +355,14 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                   }`}
                 >
                   {st === "ALL"
-                    ? tBilingual("All Status", "ሁሉም ሁኔታ")
+                    ? t("sessionsManager.allStatus")
                     : st === "SCHEDULED"
-                    ? tBilingual("Upcoming", "መጪ")
+                    ? t("sessionsManager.upcoming")
                     : st === "LIVE"
-                    ? tBilingual("Live", "በቀጥታ")
+                    ? t("sessionsManager.live")
                     : st === "COMPLETED"
-                    ? tBilingual("Completed", "የተጠናቀቀ")
-                    : tBilingual("Cancelled", "የተሰረዘ")}
+                    ? t("sessionsManager.completed")
+                    : t("sessionsManager.cancelled")}
                 </button>
               ))}
             </div>
@@ -440,13 +381,13 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                 className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
               >
                 <X className="h-3.5 w-3.5" />
-                {tBilingual("Clear", "አጽዳ")}
+                {t("sessionsManager.clear")}
               </Button>
             )}
 
             <Button variant="ghost" size="sm" onClick={loadSessions} disabled={refreshing} className="h-8 gap-1 text-xs text-slate-600">
               <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              {tBilingual("Refresh", "አድስ")}
+              {t("sessionsManager.refresh")}
             </Button>
           </div>
         </div>
@@ -455,14 +396,11 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       <div className="space-y-8">
         {!loading && selectedStatusFilter === "ALL" && upcoming.length === 0 && past.length === 0 ? (
           <EmptyState
-            title={tBilingual(config.emptyTitle)}
+            title={t(`sessionsManager.scope.${scope}.emptyTitle`)}
             description={
               hasActiveFilters
-                ? tBilingual(
-                    "No sessions match your search or filter criteria. Try clearing filters.",
-                    "ከፍለጋዎ ወይም ከማጣሪያዎ ጋር የሚዛመድ ክፍለ-ጊዜ የለም። ማጣሪያዎቹን ያጽዱ።",
-                  )
-                : tBilingual(config.emptyDescription)
+                ? t("sessionsManager.noSessionsMatchYourSearchOr")
+                : t(`sessionsManager.scope.${scope}.emptyDescription`)
             }
           >
             {canSchedule && !hasActiveFilters ? scheduleButton("sm") : null}
@@ -471,13 +409,13 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
 
         {/* Upcoming & Active Sessions */}
         {(selectedStatusFilter === "ALL" ? (loading || upcoming.length > 0) : selectedStatusFilter === "SCHEDULED" || selectedStatusFilter === "LIVE") ? (
-          <PageSection title={tBilingual("Upcoming & Active Sessions", "መጪ እና ንቁ ክፍለ-ጊዜዎች")} description={tBilingual(config.upcomingDescription)}>
+          <PageSection title={t("sessionsManager.upcomingActiveSessions")} description={t(`sessionsManager.scope.${scope}.upcomingDescription`)}>
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : upcoming.length === 0 ? (
               <EmptyState
-                title={tBilingual("No upcoming sessions found", "ምንም መጪ ክፍለ-ጊዜዎች አልተገኙም")}
-                description={hasActiveFilters ? tBilingual("Try adjusting your search or filters.", "እባክዎን ፍለጋዎን ወይም ማጣሪያዎችዎን ያስተካክሉ።") : tBilingual(config.upcomingEmptyDescription)}
+                title={t("sessionsManager.noUpcomingSessionsFound")}
+                description={hasActiveFilters ? t("sessionsManager.tryAdjustingYourSearchOrFilters") : t(`sessionsManager.scope.${scope}.upcomingEmptyDescription`)}
               >
                 {canSchedule && !hasActiveFilters ? scheduleButton("sm") : null}
               </EmptyState>
@@ -498,7 +436,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                             className="gap-1.5 text-xs text-indigo-700 hover:text-indigo-900 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                           >
                             <HelpCircle className="h-3.5 w-3.5 text-indigo-600" />
-                            {tBilingual("Prepare Quiz", "ፈተና አዘጋጅ")}
+                            {t("sessionsManager.prepareQuiz")}
                           </Button>
                         </Link>
                       )}
@@ -513,7 +451,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                           className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-200 hover:bg-slate-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <ClipboardCheck className="h-3.5 w-3.5 text-indigo-600" />
-                          {tBilingual("Attendance", "መገኘት")}
+                          {t("sessionsManager.attendance")}
                         </Button>
                       )}
 
@@ -527,7 +465,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                           className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <Play className="h-3 w-3 fill-emerald-600 text-emerald-600" />
-                          {tBilingual("Go Live", "በቀጥታ ጀምር")}
+                          {t("sessionsManager.goLive")}
                         </Button>
                       ) : canConductSession && row.session.status === "LIVE" ? (
                         <Button
@@ -538,7 +476,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                           className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-none text-xs gap-1 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <Square className="h-3 w-3 fill-rose-600 text-rose-600" />
-                          {tBilingual("End Session", "ክፍለ-ጊዜውን ጨርስ")}
+                          {t("sessionsManager.endSession")}
                         </Button>
                       ) : null}
 
@@ -550,7 +488,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                             className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white shadow-xs text-xs h-8 px-3 rounded-lg shrink-0 font-medium"
                           >
                             <Building2 className="h-3.5 w-3.5" />
-                            {tBilingual("Classroom Attendance", "የክፍል መገኘት")}
+                            {t("sessionsManager.classroomAttendance")}
                           </Button>
                         </Link>
                       ) : (
@@ -560,7 +498,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                           className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-xs text-xs h-8 px-3 rounded-lg shrink-0 font-medium"
                         >
                           <MonitorPlay className="h-3.5 w-3.5" />
-                          {tBilingual("Join Room", "ወደ ክፍሉ ግባ")}
+                          {t("sessionsManager.joinRoom")}
                         </Button>
                       )}
                     </div>
@@ -582,16 +520,13 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
 
         {/* Past Sessions */}
         {(selectedStatusFilter === "ALL" ? (loading || past.length > 0) : selectedStatusFilter === "COMPLETED" || selectedStatusFilter === "CANCELLED") ? (
-          <PageSection title={tBilingual(config.pastTitle)} description={tBilingual(config.pastDescription)}>
+          <PageSection title={t(`sessionsManager.scope.${scope}.pastTitle`)} description={t(`sessionsManager.scope.${scope}.pastDescription`)}>
             {loading ? (
               <TableSkeleton rows={4} columns={5} />
             ) : past.length === 0 ? (
               <EmptyState
-                title={tBilingual("No past sessions found", "ምንም ያለፉ ክፍለ-ጊዜዎች አልተገኙም")}
-                description={tBilingual(
-                  "No completed or cancelled sessions match your filter criteria.",
-                  "ከማጣሪያ መስፈርትዎ ጋር የሚዛመድ ምንም ያለፈ ክፍለ-ጊዜ የለም።",
-                )}
+                title={t("sessionsManager.noPastSessionsFound")}
+                description={t("sessionsManager.noCompletedOrCancelledSessionsMatch")}
               />
             ) : (
               <>
@@ -609,7 +544,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
                           className="gap-1.5 text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-2.5 rounded-lg shrink-0 font-medium"
                         >
                           <ClipboardCheck className="h-3.5 w-3.5" />
-                          {tBilingual("Attendance Records", "የተሳትፎ መዝገቦች")}
+                          {t("sessionsManager.attendanceRecords")}
                         </Button>
                       )}
                     </div>

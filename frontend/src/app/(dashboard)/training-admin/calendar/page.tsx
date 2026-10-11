@@ -13,7 +13,7 @@ import { SessionTable, type SessionRow } from '@/components/features/sessions/sh
 import { SessionDetailModal } from '@/components/features/sessions/shared/SessionDetailModal';
 
 export default function CalendarPage() {
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('sessions');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const sessionList = useLiveSessionStore((s) => s.sessions);
   const sessionsLoaded = useLiveSessionStore((s) => s.sessionsLoaded);
@@ -42,11 +42,8 @@ export default function CalendarPage() {
   return (
     <PageShell
       role="training_admin"
-      title={tBilingual('Training Calendar', 'የስልጠና የቀን መቁጠሪያ')}
-      description={tBilingual(
-        'Upcoming live training sessions across all courses.',
-        'በሁሉም ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።',
-      )}
+      title={t('calendarPage.trainingCalendar')}
+      description={t('calendarPage.upcomingLiveTrainingSessionsAcrossAll')}
     >
       {loading ? (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
@@ -59,7 +56,7 @@ export default function CalendarPage() {
             extra={(row) => (
               <Button size="sm" variant="outline" onClick={() => setSelectedId(row.session.id)}>
                 <Eye className="h-3.5 w-3.5" />
-                {tBilingual('Details', 'ዝርዝሮች')}
+                {t('calendarPage.details')}
               </Button>
             )}
           />

@@ -213,7 +213,7 @@ export function LiveQuizTrainerControl({
   } | null>(null);
 
   // Translation & Question Type Category Lookups
-  const { isAmharic } = useTranslation();
+  const { isAmharic, t } = useTranslation('sessions');
   const { items: questionTypeCategories } = useLookupCategories('QUESTION_TYPE');
   const [customQuestionType, setCustomQuestionType] = useState<string>('MULTIPLE_CHOICE');
 
@@ -225,9 +225,9 @@ export function LiveQuizTrainerControl({
       }));
     }
     return [
-      { value: 'MULTIPLE_CHOICE', label: isAmharic ? 'ባለብዙ ምርጫ' : 'Multiple Choice' },
-      { value: 'TRUE_FALSE', label: isAmharic ? 'እውነት / ሐሰት' : 'True / False' },
-      { value: 'SHORT_ANSWER', label: isAmharic ? 'አጭር መልስ' : 'Short Answer' },
+      { value: 'MULTIPLE_CHOICE', label: t('liveQuizTrainerControl.multipleChoice') },
+      { value: 'TRUE_FALSE', label: t('liveQuizTrainerControl.trueFalse') },
+      { value: 'SHORT_ANSWER', label: t('liveQuizTrainerControl.shortAnswer') },
     ];
   }, [questionTypeCategories, isAmharic]);
 

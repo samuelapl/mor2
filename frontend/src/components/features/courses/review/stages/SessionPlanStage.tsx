@@ -382,7 +382,7 @@ export function SessionPlanStage({
           <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <Detail label={tBilingual('Date & time', 'ቀን እና ሰዓት')}>
               {formatDate(scheduled.scheduledAt)}
-              <StartsInBadge seconds={scheduled.startsInSeconds} isAmharic={isAmharic} className="mt-1" />
+              <StartsInBadge seconds={scheduled.startsInSeconds} className="mt-1" />
             </Detail>
             <Detail label={tBilingual('Duration', 'ቆይታ')}>{scheduled.durationMinutes ? `${scheduled.durationMinutes} min` : '—'}</Detail>
             <Detail label={tBilingual('Platform', 'መድረክ')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
