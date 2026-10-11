@@ -30,7 +30,7 @@ export default function LearnerCoursesPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const ready = useAuthStore((s) => s.ready);
   const getEnrollmentForCourse = useEnrollmentForCourse();
-  const { t, tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -111,11 +111,8 @@ export default function LearnerCoursesPage() {
   return (
     <PageShell
       role="learner"
-      title={tBilingual('My Courses', 'የእኔ ኮርሶች')}
-      description={tBilingual(
-        'Courses you are enrolled in across pure online and in-person regional classroom formats.',
-        'በመስመር ላይ እና በአካል በሚሰጡ የስልጠና ዓይነቶች የተመዘገቡባቸው ኮርሶች።',
-      )}
+      title={t('learnerCoursesPage.myCourses')}
+      description={t('learnerCoursesPage.coursesYouAreEnrolledInAcross')}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         {/* Delivery Mode Tabs */}
@@ -129,7 +126,7 @@ export default function LearnerCoursesPage() {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            {tBilingual('All Courses', 'ሁሉም ኮርሶች')} ({enrolled.length})
+            {t('learnerCoursesPage.allCourses')} ({enrolled.length})
           </button>
           <button
             type="button"
@@ -141,7 +138,7 @@ export default function LearnerCoursesPage() {
             }`}
           >
             <Laptop className="h-3.5 w-3.5" />
-            <span>{tBilingual('Pure Online', 'በመስመር ላይ ብቻ')} ({onlineCount})</span>
+            <span>{t('learnerCoursesPage.pureOnline')} ({onlineCount})</span>
           </button>
           <button
             type="button"
@@ -153,7 +150,7 @@ export default function LearnerCoursesPage() {
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
-            <span>{tBilingual('In-Person Classroom', 'በአካል የሚሰጥ ስልጠና')} ({inPersonCount})</span>
+            <span>{t('learnerDashboardPage.inPersonClassroom')} ({inPersonCount})</span>
           </button>
         </div>
       </div>
@@ -161,18 +158,18 @@ export default function LearnerCoursesPage() {
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder={tBilingual('Search enrolled courses by title, code or topic…', 'የተመዘገቡባቸውን ኮርሶች በርዕስ፣ ኮድ ወይም ርዕሰ ጉዳይ ይፈልጉ…')}
+        searchPlaceholder={t('learnerCoursesPage.searchEnrolledCoursesByTitleCode')}
         selects={[
           {
             id: 'status',
-            label: tBilingual('Progress Status', 'የስልጠና ሁኔታ'),
+            label: t('learnerCoursesPage.progressStatus'),
             value: statusFilter,
             onChange: (val) => setStatusFilter(val as typeof statusFilter),
             options: [
-              { value: 'ALL', label: tBilingual('All Statuses', 'ሁሉም ሁኔታዎች') },
-              { value: 'NOT_STARTED', label: tBilingual('Not Started (0%)', 'ያልተጀመረ (0%)') },
-              { value: 'IN_PROGRESS', label: tBilingual('In Progress (1-99%)', 'በሂደት ላይ (1-99%)') },
-              { value: 'COMPLETED', label: tBilingual('Completed (100%)', 'የተጠናቀቀ (100%)') },
+              { value: 'ALL', label: t('learnerCoursesPage.allStatuses') },
+              { value: 'NOT_STARTED', label: t('learnerCoursesPage.notStarted0') },
+              { value: 'IN_PROGRESS', label: t('learnerCoursesPage.inProgress199') },
+              { value: 'COMPLETED', label: t('learnerCoursesPage.completed100') },
             ],
           },
         ]}
@@ -190,19 +187,13 @@ export default function LearnerCoursesPage() {
         </div>
       ) : enrolled.length === 0 ? (
         <EmptyState
-          title={tBilingual('No enrolled courses', 'ምንም የተመዘገቡባቸው ኮርሶች የሉም')}
-          description={tBilingual(
-            'Browse the catalog to enroll in pure online or in-person Ministry training courses.',
-            'በመስመር ላይ ወይም በአካል በሚሰጡ ስልጠናዎች ለመመዝገብ ካታሎጉን ያስሱ።',
-          )}
+          title={t('learnerCoursesPage.noEnrolledCourses')}
+          description={t('learnerCoursesPage.browseTheCatalogToEnrollIn')}
         />
       ) : rows.length === 0 ? (
         <EmptyState
-          title={tBilingual('No matching courses found', 'ምንም የሚዛመድ ኮርስ አልተገኘም')}
-          description={tBilingual(
-            'Try adjusting your search keywords or filter criteria.',
-            'የፍለጋ ቃላትን ወይም የማጣሪያ መስፈርቶችን ያስተካክሉ።',
-          )}
+          title={t('learnerCoursesPage.noMatchingCoursesFound')}
+          description={t('learnerCoursesPage.tryAdjustingYourSearchKeywordsOr')}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -217,7 +208,7 @@ export default function LearnerCoursesPage() {
               deliveryDetail={enrollment?.venue?.branch}
               extraBadge={
                 done ? (
-                  <Badge variant="green">{tBilingual('Completed', 'የተጠናቀቀ')}</Badge>
+                  <Badge variant="green">{t('learnerCoursesPage.completed')}</Badge>
                 ) : (
                   <Badge variant="blue">{percent}%</Badge>
                 )

@@ -25,7 +25,7 @@ import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 export default function ContentApproverDashboardPage() {
   const courses = useCourseStore((s) => s.courses);
-  const { lang } = useTranslation();
+  const { lang, t } = useTranslation('dashboard');
   const isAmharic = lang === 'am';
 
   const pending = courses.filter((c) => c.status === 'under_review');
@@ -43,17 +43,17 @@ export default function ContentApproverDashboardPage() {
   // Donut chart: Review Queue Distribution
   const queueSegments = [
     {
-      label: isAmharic ? 'የጸደቁ' : 'Approved',
+      label: t('courseOwnerDashboardPage.approved'),
       value: approved.length,
       color: '#10b981',
     },
     {
-      label: isAmharic ? 'ግምገማ የሚጠብቁ' : 'Pending Review',
+      label: t('contentApproverDashboardPage.pendingReview'),
       value: pending.length,
       color: '#6366f1',
     },
     {
-      label: isAmharic ? 'የረቂቅ ደረጃ' : 'Draft Stage',
+      label: t('courseOwnerDashboardPage.draftStage'),
       value: drafts.length,
       color: '#94a3b8',
     },
@@ -70,7 +70,7 @@ export default function ContentApproverDashboardPage() {
       .map(([cat, val]) => ({
         label: cat,
         value: val,
-        subLabel: isAmharic ? `${val} ኮርሶች` : `${val} courses`,
+        subLabel: t('contentApproverDashboardPage.courses', { val }),
         color: '#4f46e5',
       }));
   }, [courses, isAmharic]);
@@ -78,41 +78,39 @@ export default function ContentApproverDashboardPage() {
   return (
     <PageShell
       role="content_approver"
-      title={isAmharic ? 'የይዘት አጽዳቂ ዳሽቦርድ' : 'Content Approver Dashboard'}
+      title={t('contentApproverDashboardPage.contentApproverDashboard')}
       description={
-        isAmharic
-          ? 'የቀረቡ የስልጠና ይዘቶችን ይገምግሙ፣ ጥራትን እና ተገቢነትን ያረጋግጡ፣ የጸደቁ ኮርሶችን ያቀናብሩ።'
-          : 'Review submitted curricula, verify quality and compliance, and maintain the approved course repository.'
+        t('contentApproverDashboardPage.reviewSubmittedCurriculaVerifyQualityAnd')
       }
     >
       {/* Top Stat KPI Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Timer}
-          label={isAmharic ? 'ግምገማ የሚጠብቁ' : 'Pending review'}
+          label={t('contentApproverDashboardPage.pendingReview2')}
           value={pending.length}
-          hint={isAmharic ? 'ማጽደቅዎን የሚጠብቁ' : 'Awaiting your approval'}
+          hint={t('contentApproverDashboardPage.awaitingYourApproval')}
           iconClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           icon={CheckCircle2}
-          label={isAmharic ? 'የጸደቁ ኮርሶች' : 'Approved courses'}
+          label={t('contentApproverDashboardPage.approvedCourses')}
           value={approved.length}
-          hint={isAmharic ? 'በጸደቁ ኮርሶች ማከማቻ ውስጥ' : 'In approved repository'}
+          hint={t('contentApproverDashboardPage.inApprovedRepository')}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={BookOpen}
-          label={isAmharic ? 'ጠቅላላ ካታሎግ' : 'Total catalog'}
+          label={t('contentApproverDashboardPage.totalCatalog')}
           value={courses.length}
-          hint={isAmharic ? 'ሁሉም ንቁ ኮርሶች' : 'All active courses'}
+          hint={t('contentApproverDashboardPage.allActiveCourses')}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           icon={Clock4}
-          label={isAmharic ? 'የማጽደቅ ምጣኔ' : 'Approval rate'}
+          label={t('contentApproverDashboardPage.approvalRate')}
           value={`${approvalRate}%`}
-          hint={isAmharic ? 'የጸደቁ ከቀረቡት አንፃር' : 'Approved vs submitted'}
+          hint={t('contentApproverDashboardPage.approvedVsSubmitted')}
           iconClassName="bg-amber-50 text-amber-600"
         />
       </div>
@@ -125,17 +123,15 @@ export default function ContentApproverDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? 'የግምገማ ሂደት ሁኔታ' : 'Approval Queue Status'}
+                  {t('contentApproverDashboardPage.approvalQueueStatus')}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic
-                    ? 'የኮርሶች ስርጭት በግምገማ ደረጃዎች'
-                    : 'Distribution of courses across review stages'}
+                  {t('contentApproverDashboardPage.distributionOfCoursesAcrossReviewStages')}
                 </p>
               </div>
               <Link href="/courses">
                 <Button variant="outline" size="sm">
-                  {isAmharic ? 'የግምገማ ዝርዝር' : 'Review queue'}
+                  {t('contentApproverDashboardPage.reviewQueue')}
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
@@ -144,19 +140,17 @@ export default function ContentApproverDashboardPage() {
               <VerticalBarChart
                 items={queueSegments}
                 totalValue={courses.length}
-                unitLabel={isAmharic ? 'ኮርሶች' : 'Courses'}
-                emptyText={isAmharic ? 'ምንም የቀረበ ኮርስ የለም' : 'No courses submitted in database'}
+                unitLabel={t('trainingAdminDashboardPage.courses')}
+                emptyText={t('contentApproverDashboardPage.noCoursesSubmittedInDatabase')}
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>
-              {isAmharic
-                ? `${pending.length} ኮርሶች እርምጃዎን ይጠብቃሉ`
-                : `${pending.length} courses awaiting your action`}
+              {t('contentApproverDashboardPage.coursesAwaitingYourAction', { count: pending.length })}
             </span>
             <span className="font-semibold text-emerald-600">
-              {isAmharic ? `${approved.length} የጸደቁ` : `${approved.length} approved`}
+              {t('contentApproverDashboardPage.approved', { count: approved.length })}
             </span>
           </div>
         </div>
@@ -167,34 +161,30 @@ export default function ContentApproverDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-display text-sm font-bold text-slate-900">
-                  {isAmharic ? 'ኮርሶች በምድብ' : 'Courses by Category'}
+                  {t('contentApproverDashboardPage.coursesByCategory')}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  {isAmharic
-                    ? 'የስርዓተ-ትምህርት ስርጭት በስራ መስኮች'
-                    : 'Curriculum distribution across domains'}
+                  {t('contentApproverDashboardPage.curriculumDistributionAcrossDomains')}
                 </p>
               </div>
               <Badge variant="blue">
-                {isAmharic ? `${courses.length} ኮርሶች` : `${courses.length} Courses`}
+                {t('trainerDashboardPage.courses', { count: courses.length })}
               </Badge>
             </div>
             <div className="mt-6">
               <BarChart
                 items={categoryBars}
-                emptyText={isAmharic ? 'ምንም የምድብ መረጃ የለም።' : 'No category data available.'}
+                emptyText={t('contentApproverDashboardPage.noCategoryDataAvailable')}
                 barColor="#6366f1"
               />
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500 flex items-center justify-between">
             <span>
-              {isAmharic
-                ? `የምድቦች ብዛት: ${categoryBars.length}`
-                : `Categories represented: ${categoryBars.length}`}
+              {t('contentApproverDashboardPage.categoriesRepresented', { count: categoryBars.length })}
             </span>
             <Link href="/courses" className="font-semibold text-indigo-600 hover:underline">
-              {isAmharic ? 'የጸደቁ ኮርሶች ቤተ-መጽሐፍት →' : 'Approved library →'}
+              {t('contentApproverDashboardPage.approvedLibrary')}
             </Link>
           </div>
         </div>
@@ -203,16 +193,14 @@ export default function ContentApproverDashboardPage() {
       {/* Pending Approvals Section with Modern Pagination */}
       {pending.length > 0 ? (
         <PageSection
-          title={isAmharic ? 'ግምገማ የሚጠብቁ ኮርሶች' : 'Pending approvals'}
+          title={t('contentApproverDashboardPage.pendingApprovals')}
           description={
-            isAmharic
-              ? 'በኮርስ ባለቤቶች የቀረቡ እና የእርስዎን ግምገማ እና ማጽደቅ የሚጠብቁ ኮርሶች።'
-              : 'Courses submitted by Course Owners awaiting review and approval.'
+            t('contentApproverDashboardPage.coursesSubmittedByCourseOwnersAwaiting')
           }
           action={
             <Link href="/courses">
               <Button variant="outline" size="sm">
-                {isAmharic ? 'የግምገማ ማዕከል' : 'Review queue'}
+                {t('contentApproverDashboardPage.reviewQueue2')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -221,10 +209,10 @@ export default function ContentApproverDashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {pendingPage.pageItems.map((course) => (
               <CourseCard key={course.id} course={course}>
-                <Badge variant="blue">{isAmharic ? 'በግምገማ ላይ' : 'Pending review'}</Badge>
+                <Badge variant="blue">{t('contentApproverDashboardPage.pendingReview3')}</Badge>
                 <Link href="/courses">
                   <Button size="sm" variant="outline">
-                    {isAmharic ? 'ይዘት መርምር' : 'Review Curriculum'}
+                    {t('contentApproverDashboardPage.reviewCurriculum')}
                   </Button>
                 </Link>
               </CourseCard>
@@ -242,9 +230,9 @@ export default function ContentApproverDashboardPage() {
         </PageSection>
       ) : (
         <PageSection
-          title={isAmharic ? 'የግምገማ ማዕከል' : 'Approval queue'}
+          title={t('contentApproverDashboardPage.approvalQueue')}
           description={
-            isAmharic ? 'የማጽደቂያው ዝርዝር በአሁኑ ጊዜ ባዶ ነው።' : 'The approval queue is currently empty.'
+            t('contentApproverDashboardPage.theApprovalQueueIsCurrentlyEmpty')
           }
         >
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-12 text-center">
@@ -252,12 +240,10 @@ export default function ContentApproverDashboardPage() {
               <FileCheck2 className="h-6 w-6" />
             </div>
             <p className="mt-4 text-sm font-semibold text-slate-700">
-              {isAmharic ? 'ሁሉም የቀረቡ ኮርሶች ተገምግመዋል' : 'All submissions reviewed'}
+              {t('contentApproverDashboardPage.allSubmissionsReviewed')}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              {isAmharic
-                ? 'በአሁኑ ሰዓት ማጽደቅ የሚያስፈልገው አዲስ የቀረበ ኮርስ የለም።'
-                : 'There are no pending course submissions requiring approval right now.'}
+              {t('contentApproverDashboardPage.thereAreNoPendingCourseSubmissions')}
             </p>
           </div>
         </PageSection>
@@ -265,16 +251,14 @@ export default function ContentApproverDashboardPage() {
 
       {/* Recently Approved Section with Modern Pagination */}
       <PageSection
-        title={isAmharic ? 'በቅርቡ የጸደቁ ይዘቶች' : 'Recently approved content'}
+        title={t('contentApproverDashboardPage.recentlyApprovedContent')}
         description={
-          isAmharic
-            ? 'ለህዝብ ህትመት እና ለስልጠና ዝግጁ የሆኑ የተመሰከረላቸው ኮርሶች።'
-            : 'Courses certified for public release and training facilitation.'
+          t('contentApproverDashboardPage.coursesCertifiedForPublicReleaseAnd')
         }
         action={
           <Link href="/courses">
             <Button variant="outline" size="sm">
-              {isAmharic ? 'ሙሉውን ቤተ-መጽሐፍት እይ' : 'View full library'}
+              {t('contentApproverDashboardPage.viewFullLibrary')}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -283,7 +267,7 @@ export default function ContentApproverDashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {approvedPage.pageItems.map((course) => (
             <CourseCard key={course.id} course={course}>
-              <Badge variant="green">{isAmharic ? 'የጸደቀ' : 'Approved'}</Badge>
+              <Badge variant="green">{t('trainingAdminDashboardPage.approved')}</Badge>
             </CourseCard>
           ))}
         </div>

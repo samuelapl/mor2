@@ -27,7 +27,7 @@ export default function LearnerCatalogPage() {
   const courses = useCourseStore((s) => s.courses);
   const currentUser = useAuthStore((s) => s.currentUser);
   const getEnrollmentForCourse = useEnrollmentForCourse();
-  const { t, tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const me = currentUser?.id;
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
@@ -65,21 +65,21 @@ export default function LearnerCatalogPage() {
   return (
     <PageShell
       role="learner"
-      title={tBilingual('Available Courses', 'የሚገኙ ኮርሶች')}
-      description={tBilingual('Published courses you can enroll in.', 'ሊመዘገቡባቸው የሚችሉ የታተሙ ኮርሶች።')}
+      title={t('learnerCatalogPage.availableCourses')}
+      description={t('learnerCatalogPage.publishedCoursesYouCanEnrollIn')}
     >
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder={tBilingual('Search available courses…', 'የሚገኙ ኮርሶችን ይፈልጉ…')}
+        searchPlaceholder={t('learnerCatalogPage.searchAvailableCourses')}
         selects={[
           {
             id: 'category',
-            label: tBilingual('Category', 'ምድብ'),
+            label: t('learnerCatalogPage.category'),
             value: category,
             onChange: setCategory,
             options: [
-              { value: 'all', label: tBilingual('All Categories', 'ሁሉም ምድቦች') },
+              { value: 'all', label: t('learnerCatalogPage.allCategories') },
               ...COURSE_CATEGORIES.map((item) => ({ value: item, label: item })),
             ],
           },
@@ -94,11 +94,8 @@ export default function LearnerCatalogPage() {
 
       {available.length === 0 ? (
         <EmptyState
-          title={tBilingual('No published courses', 'ምንም የታተሙ ኮርሶች የሉም')}
-          description={tBilingual(
-            'Approved courses appear here after an administrator publishes them.',
-            'የጸደቁ ኮርሶች በአስተዳዳሪ ከታተሙ በኋላ እዚህ ይታያሉ።',
-          )}
+          title={t('learnerCatalogPage.noPublishedCourses')}
+          description={t('learnerCatalogPage.approvedCoursesAppearHereAfterAn')}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -151,7 +148,7 @@ export default function LearnerCatalogPage() {
                     }}
                   >
                     <BookPlus className="h-3.5 w-3.5" />
-                    {tBilingual('Enroll', 'ተመዝገብ')}
+                    {t('learnerCatalogPage.enroll')}
                   </Button>
                 )}
               </CourseCard>

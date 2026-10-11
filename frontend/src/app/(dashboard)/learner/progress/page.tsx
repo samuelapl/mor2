@@ -25,7 +25,7 @@ export default function ProgressPage() {
   const courses = useCourseStore((s) => s.courses);
   const lang = useLocaleStore((s) => s.lang);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { t, tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress, loading } = useCourseProgress(enrolled.map((c) => c.id));
@@ -47,11 +47,8 @@ export default function ProgressPage() {
   return (
     <PageShell
       role="learner"
-      title={tBilingual('My Progress', 'የእኔ ሂደት')}
-      description={tBilingual(
-        'Your completion progress across all enrolled courses.',
-        'በሁሉም የተመዘገቡባቸው ኮርሶች የማጠናቀቂያ ሂደትዎ።',
-      )}
+      title={t('progressPage.myProgress')}
+      description={t('progressPage.yourCompletionProgressAcrossAllEnrolled')}
     >
       {loading && rows.length === 0 ? (
         <div className="space-y-3">
@@ -59,8 +56,8 @@ export default function ProgressPage() {
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
-          title={tBilingual('No courses', 'ምንም ኮርሶች የሉም')}
-          description={tBilingual('Enrolled courses will appear here.', 'የተመዘገቡባቸው ኮርሶች እዚህ ይታያሉ።')}
+          title={t('progressPage.noCourses')}
+          description={t('progressPage.enrolledCoursesWillAppearHere')}
         />
       ) : (
         <div className="space-y-3">

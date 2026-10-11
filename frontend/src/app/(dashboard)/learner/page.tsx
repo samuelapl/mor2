@@ -36,10 +36,12 @@ import { SessionDetailModal } from '@/components/features/sessions/shared/Sessio
 import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import { isInPersonEnrollment, isInPersonSession } from '@/lib/session-mode';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function LearnerDashboardPage() {
   const courses = useCourseStore((s) => s.courses);
   const lang = useLocaleStore((s) => s.lang);
+  const { t } = useTranslation('dashboard');
   const currentUser = useAuthStore((s) => s.currentUser);
   const getEnrollmentForCourse = useEnrollmentForCourse();
   const me = currentUser?.id ?? '';
@@ -110,17 +112,11 @@ export default function LearnerDashboardPage() {
       // The greeting is the heading; "Learner Dashboard" is already clear from the menu.
       title={
         currentUser?.firstName || currentUser?.name
-          ? lang === 'am'
-            ? `እንኳን ደህና መጡ፣ ${currentUser.firstName || currentUser.name}!`
-            : `Welcome back, ${currentUser.firstName || currentUser.name}!`
-          : lang === 'am'
-            ? 'ወደ መማሪያ ማዕከልዎ እንኳን ደህና መጡ'
-            : 'Welcome to your learning hub'
+          ? t('learnerDashboardPage.welcomeBack', { value: currentUser.firstName || currentUser.name })
+          : t('learnerDashboardPage.welcomeToYourLearningHub')
       }
       description={
-        lang === 'en'
-          ? 'Track your learning journey, resume active courses, and participate in scheduled live sessions.'
-          : 'የመማር ሂደትዎን ይከታተሉ እና የቀጥታ ስልጠናዎችን ይቀላቀሉ።'
+        t('learnerDashboardPage.trackYourLearningJourneyResumeActive')
       }
     >
       {/* KPI Stat Cards: 2×2 on phones and tablets, one row on desktop */}
@@ -130,30 +126,28 @@ export default function LearnerDashboardPage() {
           label={tr(lang, 'myCourses')}
           value={enrolled.length}
           hint={
-            lang === 'am'
-              ? `${onlineCount} በመስመር ላይ · ${inPersonCount} በአካል`
-              : `${onlineCount} Online · ${inPersonCount} In-Person`
+            t('learnerDashboardPage.onlineInPerson', { onlineCount, inPersonCount })
           }
         />
         <StatCard
           icon={Building2}
-          label={lang === 'am' ? 'በአካል የሚሰጥ ስልጠና' : 'In-Person Classroom'}
+          label={t('learnerDashboardPage.inPersonClassroom')}
           value={inPersonCount}
-          hint={lang === 'am' ? 'የቅርንጫፍ ማሰልጠኛ ቦታዎች' : 'Regional branch venues'}
+          hint={t('learnerDashboardPage.regionalBranchVenues')}
           iconClassName="bg-amber-50 text-amber-700"
         />
         <StatCard
           icon={CheckCircle2}
           label={tr(lang, 'completed')}
           value={completed.length}
-          hint={lang === 'am' ? 'ያጠናቀቋቸው ኮርሶች' : 'Finished courses'}
+          hint={t('learnerDashboardPage.finishedCourses')}
           iconClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={Award}
           label={tr(lang, 'averageProgress')}
           value={`${avgProgress}%`}
-          hint={lang === 'am' ? 'አጠቃላይ አማካይ' : 'Platform average'}
+          hint={t('learnerDashboardPage.platformAverage')}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
       </div>
@@ -223,12 +217,8 @@ export default function LearnerDashboardPage() {
                   >
                     <PlayCircle className="h-4 w-4 text-indigo-700" />
                     {nextUpPercent > 0
-                      ? lang === 'am'
-                        ? 'ትምህርት ቀጥል'
-                        : 'Resume Course'
-                      : lang === 'am'
-                        ? 'ትምህርት ጀምር'
-                        : 'Start Course'}
+                      ? t('learnerDashboardPage.resumeCourse')
+                      : t('learnerDashboardPage.startCourse')}
                   </Button>
                 </Link>
               ) : null}
@@ -290,7 +280,7 @@ export default function LearnerDashboardPage() {
 
       {/* Upcoming Scheduled Live Sessions */}
       <PageSection
-        title={lang === 'en' ? 'Upcoming Live Sessions' : 'ቀጣይ የቀጥታ ስልጠናዎች'}
+        title={t('learnerDashboardPage.upcomingLiveSessions')}
         description="Scheduled interactive video sessions for your courses. Join directly inside LMS."
         action={
           <Link href="/learner/live-sessions">

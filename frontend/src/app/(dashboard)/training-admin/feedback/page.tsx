@@ -45,7 +45,7 @@ import { cn } from '@/lib/utils';
 export default function CourseFeedbackPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const courses = useCourseStore((s) => s.courses);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
 
   const [feedbacks, setFeedbacks] = useState<CourseFeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function CourseFeedbackPage() {
       const items = await fetchCourseFeedbacks();
       setFeedbacks(items);
     } catch {
-      toast.error(tBilingual('Failed to load feedback records.', 'የግብረ-መልስ መዝገቦችን መጫን አልተቻለም።'));
+      toast.error(t('courseFeedbackPage.failedToLoadFeedbackRecords'));
     } finally {
       setLoading(false);
     }
@@ -78,21 +78,21 @@ export default function CourseFeedbackPage() {
         `${currentUser?.firstName ?? ''} ${currentUser?.lastName ?? ''}`.trim() ||
         'Training Coordinator';
       await markFeedbackReviewed(id, reviewerName);
-      toast.success(tBilingual('Feedback marked as reviewed.', 'ግብረ-መልሱ እንደተገመገመ ምልክት ተደርጓል።'));
+      toast.success(t('courseFeedbackPage.feedbackMarkedAsReviewed'));
       await loadData();
     } catch {
-      toast.error(tBilingual('Action failed.', 'እርምጃው አልተሳካም።'));
+      toast.error(t('courseFeedbackPage.actionFailed'));
     } finally {
       setReviewingId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(tBilingual('Delete this feedback entry?', 'ይህን የግብረ-መልስ መዝገብ ይሰርዙ?'))) {
+    if (!window.confirm(t('courseFeedbackPage.deleteThisFeedbackEntry'))) {
       return;
     }
     await deleteFeedback(id);
-    toast.success(tBilingual('Feedback removed.', 'ግብረ-መልሱ ተሰርዟል።'));
+    toast.success(t('courseFeedbackPage.feedbackRemoved'));
     await loadData();
   };
 
@@ -152,11 +152,8 @@ export default function CourseFeedbackPage() {
   return (
     <PageShell
       role={currentUser?.role ?? 'training_admin'}
-      title={tBilingual('Course Feedback Management', 'የኮርስ ግብረ-መልስ አስተዳደር')}
-      description={tBilingual(
-        'Inspect learner course evaluations, track training quality indicators, and review curriculum feedback submitted prior to certificate issuance.',
-        'የተማሪዎችን የኮርስ ግምገማዎች ይመልከቱ፣ የስልጠና ጥራት አመልካቾችን ይከታተሉ እንዲሁም ሰርተፊኬት ከመሰጠቱ በፊት የቀረቡ የግብረ-መልስ ሪፖርቶችን ያስተዳድሩ።',
-      )}
+      title={t('courseFeedbackPage.courseFeedbackManagement')}
+      description={t('courseFeedbackPage.inspectLearnerCourseEvaluationsTrackTrai')}
     >
       <div className="space-y-6">
         {/* KPI Metric Cards */}
@@ -164,7 +161,7 @@ export default function CourseFeedbackPage() {
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">
-                {tBilingual('Total Evaluations', 'አጠቃላይ ግምገማዎች')}
+                {t('courseFeedbackPage.totalEvaluations')}
               </span>
               <MessageSquareQuote className="h-5 w-5 text-indigo-500" />
             </div>
@@ -172,14 +169,14 @@ export default function CourseFeedbackPage() {
               {metrics.total}
             </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              {tBilingual('All submitted learner forms', 'የቀረቡ የተማሪዎች ቅጾች')}
+              {t('courseFeedbackPage.allSubmittedLearnerForms')}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">
-                {tBilingual('Average Rating', 'አማካይ ደረጃ')}
+                {t('courseFeedbackPage.averageRating')}
               </span>
               <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
             </div>
@@ -187,14 +184,14 @@ export default function CourseFeedbackPage() {
               {metrics.avgRating} <span className="text-xs font-normal text-slate-400">/ 5.0</span>
             </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              {tBilingual('Overall satisfaction score', 'አጠቃላይ የእርካታ ነጥብ')}
+              {t('courseFeedbackPage.overallSatisfactionScore')}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">
-                {tBilingual('High Satisfaction', 'ከፍተኛ እርካታ')}
+                {t('courseFeedbackPage.highSatisfaction')}
               </span>
               <ThumbsUp className="h-5 w-5 text-emerald-500" />
             </div>
@@ -202,14 +199,14 @@ export default function CourseFeedbackPage() {
               {metrics.satisfactionRate}%
             </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              {tBilingual('Rated 4 stars or higher', '4 ወይም ከዚያ በላይ ኮከብ ያገኙ')}
+              {t('courseFeedbackPage.rated4StarsOrHigher')}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">
-                {tBilingual('Pending Review', 'ምላሽ የሚጠብቁ')}
+                {t('courseFeedbackPage.pendingReview')}
               </span>
               <Clock className="h-5 w-5 text-amber-500" />
             </div>
@@ -217,7 +214,7 @@ export default function CourseFeedbackPage() {
               {metrics.pendingCount}
             </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              {tBilingual('Awaiting coordinator check', 'የአስተባባሪ እይታ የሚጠብቁ')}
+              {t('courseFeedbackPage.awaitingCoordinatorCheck')}
             </p>
           </div>
         </div>
@@ -236,10 +233,7 @@ export default function CourseFeedbackPage() {
                     setSearchQuery(e.target.value);
                     setPage(1);
                   }}
-                  placeholder={tBilingual(
-                    'Search learner, department, or comment...',
-                    'ተማሪን፣ ክፍልን ወይም አስተያየትን ይፈልጉ...',
-                  )}
+                  placeholder={t('courseFeedbackPage.searchLearnerDepartmentOrComment')}
                   className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                 />
                 {searchQuery && (
@@ -263,7 +257,7 @@ export default function CourseFeedbackPage() {
                   }}
                   className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
                 >
-                  <option value="ALL">{tBilingual('All Courses', 'ሁሉም ኮርሶች')}</option>
+                  <option value="ALL">{t('learnerCoursesPage.allCourses')}</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.title}
@@ -279,10 +273,10 @@ export default function CourseFeedbackPage() {
               {(['ALL', 'PENDING_REVIEW', 'REVIEWED'] as const).map((st) => {
                 const label =
                   st === 'ALL'
-                    ? tBilingual('All', 'ሁሉም')
+                    ? t('courseFeedbackPage.all')
                     : st === 'PENDING_REVIEW'
-                      ? tBilingual('Pending Review', 'ምላሽ የሚጠብቁ')
-                      : tBilingual('Reviewed', 'የተገመገሙ');
+                      ? t('courseFeedbackPage.pendingReview')
+                      : t('courseFeedbackPage.reviewed');
 
                 return (
                   <button
@@ -312,7 +306,7 @@ export default function CourseFeedbackPage() {
           <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-12 text-slate-400">
             <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
             <p className="text-xs font-medium">
-              {tBilingual('Loading feedback entries...', 'የግብረ-መልስ መዝገቦችን በመጫን ላይ...')}
+              {t('courseFeedbackPage.loadingFeedbackEntries')}
             </p>
           </div>
         ) : filteredFeedbacks.length === 0 ? (
@@ -321,13 +315,10 @@ export default function CourseFeedbackPage() {
               <MessageSquareHeart className="h-6 w-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-800">
-              {tBilingual('No feedback submissions found', 'ምንም የቀረበ ግብረ-መልስ አልተገኘም')}
+              {t('courseFeedbackPage.noFeedbackSubmissionsFound')}
             </h3>
             <p className="mt-1 text-xs text-slate-500 max-w-sm">
-              {tBilingual(
-                'Learners will submit course evaluations right after passing the final assessment and prior to claiming their certificate.',
-                'ተማሪዎች የማጠቃለያ ፈተናውን ካጠናቀቁ በኋላ ሰርተፊኬታቸውን ከመውሰዳቸው በፊት ግብረ-መልስ ያስገባሉ።',
-              )}
+              {t('courseFeedbackPage.learnersWillSubmitCourseEvaluationsRight')}
             </p>
           </div>
         ) : (
@@ -387,8 +378,8 @@ export default function CourseFeedbackPage() {
 
                     <Badge variant={item.status === 'REVIEWED' ? 'green' : 'amber'} dot>
                       {item.status === 'REVIEWED'
-                        ? tBilingual('Reviewed', 'የተገመገመ')
-                        : tBilingual('Pending Review', 'ምላሽ የሚጠብቅ')}
+                        ? t('courseFeedbackPage.reviewed2')
+                        : t('courseFeedbackPage.pendingReview2')}
                     </Badge>
                   </div>
                 </div>
@@ -397,7 +388,7 @@ export default function CourseFeedbackPage() {
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 rounded-xl bg-slate-50/70 p-3 border border-slate-100 text-xs">
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                      {tBilingual('Curriculum', 'ስርዓተ-ትምህርት')}
+                      {t('courseFeedbackPage.curriculum')}
                     </span>
                     <span className="font-semibold text-slate-800">
                       ⭐ {item.ratings.curriculumRelevance}/5
@@ -406,7 +397,7 @@ export default function CourseFeedbackPage() {
 
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                      {tBilingual('Trainer', 'አሰልጣኝ')}
+                      {t('courseFeedbackPage.trainer')}
                     </span>
                     <span className="font-semibold text-slate-800">
                       ⭐ {item.ratings.trainerDelivery}/5
@@ -415,7 +406,7 @@ export default function CourseFeedbackPage() {
 
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                      {tBilingual('Applicability', 'ተግባራዊነት')}
+                      {t('courseFeedbackPage.applicability')}
                     </span>
                     <span className="font-semibold text-slate-800">
                       ⭐ {item.ratings.practicalApplicability}/5
@@ -424,7 +415,7 @@ export default function CourseFeedbackPage() {
 
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                      {tBilingual('Platform', 'መድረክ')}
+                      {t('courseFeedbackPage.platform')}
                     </span>
                     <span className="font-semibold text-slate-800">
                       ⭐ {item.ratings.materialsAndPlatform}/5
@@ -445,19 +436,19 @@ export default function CourseFeedbackPage() {
                       {item.recommendToColleagues ? (
                         <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
                           <ThumbsUp className="h-3 w-3" />{' '}
-                          {tBilingual('Recommends Course', 'ኮርሱን ይመክራል')}
+                          {t('courseFeedbackPage.recommendsCourse')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-amber-600 font-semibold">
                           <ThumbsDown className="h-3 w-3" />{' '}
-                          {tBilingual('Suggests Updates', 'ማሻሻያዎችን ይመክራል')}
+                          {t('courseFeedbackPage.suggestsUpdates')}
                         </span>
                       )}
                     </div>
 
                     {item.reviewedBy && (
                       <span className="text-slate-400">
-                        {tBilingual('Reviewed by', 'የተገመገመው በ')}:{' '}
+                        {t('courseFeedbackPage.reviewedBy')}:{' '}
                         <strong className="text-slate-600">{item.reviewedBy}</strong>
                       </span>
                     )}
@@ -476,13 +467,13 @@ export default function CourseFeedbackPage() {
                       className="gap-1.5 text-xs py-1.5 px-3"
                     >
                       <Check className="h-3.5 w-3.5" />
-                      {tBilingual('Mark as Reviewed', 'እንደተገመገመ ምልክት አድርግ')}
+                      {t('courseFeedbackPage.markAsReviewed')}
                     </Button>
                   )}
 
                   <button
                     type="button"
-                    title={tBilingual('Delete Feedback', 'ግብረ-መልስ ሰርዝ')}
+                    title={t('courseFeedbackPage.deleteFeedback')}
                     onClick={() => handleDelete(item.id)}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
                   >

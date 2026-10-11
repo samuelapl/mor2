@@ -7,16 +7,13 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function EnrollmentsPage() {
   const courses = useCourseStore((s) => s.courses);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
 
   return (
     <PageShell
       role="training_admin"
-      title={tBilingual('Course Enrolled Students & Roster', 'የተመዘገቡ ተማሪዎች ዝርዝር')}
-      description={tBilingual(
-        'Inspect enrolled learners, track real-time course progress, and manage learner assignments across all catalog courses.',
-        'የተመዘገቡ ተማሪዎችን ይመልከቱ፣ የቀጥታ የትምህርት እድገታቸውን ይከታተሉ እና የተማሪዎችን ምደባ በሁሉም የኮርስ ካታሎጎች ያስተዳድሩ።',
-      )}
+      title={t('enrollmentsPage.courseEnrolledStudentsRoster')}
+      description={t('enrollmentsPage.inspectEnrolledLearnersTrackRealTime')}
     >
       <EnrollmentForm />
     </PageShell>

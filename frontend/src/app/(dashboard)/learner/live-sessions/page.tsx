@@ -47,7 +47,7 @@ export default function LearnerLiveSessionsPage() {
   const allCourses = useCourseStore((s) => s.courses);
   const currentUser = useAuthStore((s) => s.currentUser);
   const userName = useUserName();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const me = currentUser?.id ?? '';
   const courses = useMemo(
     () => allCourses.filter((c) => c.enrolledLearnerIds.includes(me)),
@@ -155,11 +155,8 @@ export default function LearnerLiveSessionsPage() {
   return (
     <PageShell
       role="learner"
-      title={tBilingual('Live Sessions', 'የቀጥታ ክፍለ-ጊዜዎች')}
-      description={tBilingual(
-        'Upcoming live sessions for the courses you are enrolled in.',
-        'ለተመዘገቡባቸው ኮርሶች የሚካሄዱ መጪ የቀጥታ ስልጠናዎች።',
-      )}
+      title={t('learnerLiveSessionsPage.liveSessions')}
+      description={t('learnerLiveSessionsPage.upcomingLiveSessionsForTheCourses')}
     >
       {/* FILTER BAR */}
       <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
@@ -170,10 +167,7 @@ export default function LearnerLiveSessionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder={tBilingual(
-                  'Search session or course code…',
-                  'ክፍለ-ጊዜ ወይም የኮርስ ኮድ ይፈልጉ…',
-                )}
+                placeholder={t('learnerLiveSessionsPage.searchSessionOrCourseCode')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none"
@@ -189,7 +183,7 @@ export default function LearnerLiveSessionsPage() {
               className="w-full min-w-0 truncate rounded-xl border sm:w-auto sm:max-w-xs border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:bg-white focus:outline-none"
             >
               <option value="ALL">
-                {tBilingual('All Courses', 'ሁሉም ኮርሶች')} ({courses.length})
+                {t('learnerCoursesPage.allCourses')} ({courses.length})
               </option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -211,7 +205,7 @@ export default function LearnerLiveSessionsPage() {
                 className="h-8 gap-1 text-xs text-slate-500 hover:text-slate-800"
               >
                 <X className="h-3.5 w-3.5" />
-                {tBilingual('Clear', 'አጽዳ')}
+                {t('learnerLiveSessionsPage.clear')}
               </Button>
             )}
 
@@ -222,7 +216,7 @@ export default function LearnerLiveSessionsPage() {
               className="h-8 gap-1 text-xs text-slate-600"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              {tBilingual('Refresh', 'አድስ')}
+              {t('learnerLiveSessionsPage.refresh')}
             </Button>
           </div>
         </div>
@@ -245,19 +239,13 @@ export default function LearnerLiveSessionsPage() {
         <EmptyState
           title={
             hasActiveFilters
-              ? tBilingual('No matching live sessions', 'ምንም የሚዛመዱ የቀጥታ ክፍለ-ጊዜዎች የሉም')
-              : tBilingual('No live sessions scheduled', 'ምንም የታቀዱ የቀጥታ ክፍለ-ጊዜዎች የሉም')
+              ? t('learnerLiveSessionsPage.noMatchingLiveSessions')
+              : t('learnerLiveSessionsPage.noLiveSessionsScheduled')
           }
           description={
             hasActiveFilters
-              ? tBilingual(
-                  'No live classroom sessions match your current search or course filter. Try resetting filters.',
-                  'ከአሁኑ ፍለጋ ወይም ማጣሪያ ጋር የሚዛመድ የቀጥታ ስልጠና የለም።',
-                )
-              : tBilingual(
-                  'Upcoming virtual classroom sessions and live lectures for your enrolled courses will appear here.',
-                  'ለተመዘገቡባቸው ኮርሶች መጪ የቀጥታ ክፍለ-ጊዜዎች እዚህ ይታያሉ።',
-                )
+              ? t('learnerLiveSessionsPage.noLiveClassroomSessionsMatchYour')
+              : t('learnerLiveSessionsPage.upcomingVirtualClassroomSessionsAndLive')
           }
         />
       ) : (
@@ -276,7 +264,7 @@ export default function LearnerLiveSessionsPage() {
                     variant="ghost"
                     onClick={() => setSelectedDetailId(row.session.id)}
                     className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg shrink-0"
-                    title={tBilingual('View Session Details', 'የክፍለ-ጊዜውን ዝርዝር ተመልከት')}
+                    title={t('learnerLiveSessionsPage.viewSessionDetails')}
                   >
                     <Info className="h-4 w-4" />
                     <span className="sr-only">Details</span>
@@ -291,13 +279,13 @@ export default function LearnerLiveSessionsPage() {
                       title="View classroom venue location & directions"
                     >
                       <MapPin className="h-3.5 w-3.5 text-amber-600" />
-                      {tBilingual('Venue', 'ቦታ')}
+                      {t('learnerLiveSessionsPage.venue')}
                     </Button>
                   )}
 
                   {isCheckedIn && (
                     <Badge variant="green" dot>
-                      {tBilingual('Present', 'የተገኘ')}
+                      {t('learnerLiveSessionsPage.present')}
                     </Badge>
                   )}
                   {isPerson ? (
@@ -308,8 +296,8 @@ export default function LearnerLiveSessionsPage() {
                     >
                       <Building2 className="h-3.5 w-3.5" />
                       {isCheckedIn
-                        ? tBilingual('Checked In', 'ተገኝቷል')
-                        : tBilingual('Classroom Check-In', 'የመማሪያ ክፍል መገኘት ማረጋገጫ')}
+                        ? t('learnerLiveSessionsPage.checkedIn')
+                        : t('learnerLiveSessionsPage.classroomCheckIn')}
                     </Button>
                   ) : (
                     <Button
@@ -324,10 +312,10 @@ export default function LearnerLiveSessionsPage() {
                     >
                       <MonitorPlay className="h-3.5 w-3.5" />
                       {isLoading
-                        ? tBilingual('Connecting…', 'በመገናኘት ላይ…')
+                        ? t('learnerLiveSessionsPage.connecting')
                         : isCheckedIn
-                          ? tBilingual('Enter Room', 'ወደ ክፍሉ ግባ')
-                          : tBilingual('Join', 'ተቀላቀል')}
+                          ? t('learnerLiveSessionsPage.enterRoom')
+                          : t('learnerLiveSessionsPage.join')}
                       <ExternalLink className="h-3 w-3 opacity-60 ml-0.5" />
                     </Button>
                   )}
