@@ -47,7 +47,7 @@ import type { ApiCertificate } from '@/lib/api/types';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 function formatDate(val: string | null | undefined): string {
   if (!val) return '—';
@@ -79,7 +79,7 @@ function formatDateTime(val: string | null | undefined): string {
 
 export default function ManageCertificatesPage() {
   const { tBilingual, isAmharic } = useTranslation();
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const [certificates, setCertificates] = useState<ApiCertificate[]>([]);
   const [total, setTotal] = useState(0);

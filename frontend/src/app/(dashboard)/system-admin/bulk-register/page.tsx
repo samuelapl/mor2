@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FileSpreadsheet, Download, Trash2, UploadCloud, UserPlus } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import PageShell from '@/components/shared/PageShell';
 import PageSection from '@/components/shared/PageSection';
 import { Button } from '@/components/ui/Button';
@@ -181,7 +181,7 @@ function rowErrors(row: RowDraft, roleNames: Set<string>): string[] {
 }
 
 export default function BulkRegisterPage() {
-  const { bulkRegisterUsers } = useLms();
+  const bulkRegisterUsers = useUserStore((s) => s.bulkRegisterUsers);
   const { tBilingual } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<RowDraft[]>([]);

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Check, Globe, Mail } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 import { updateMyProfile } from '@/lib/api/users';
@@ -16,7 +16,8 @@ interface PreferencesTabProps {
 }
 
 export default function PreferencesTab({ profile, loading, onUpdated }: PreferencesTabProps) {
-  const { lang, updateLocale } = useLms();
+  const lang = useAuthStore((s) => s.lang);
+  const updateLocale = useAuthStore((s) => s.updateLocale);
   const { tBilingual } = useTranslation();
   const [saving, setSaving] = useState<Lang | null>(null);
   const [savingEmail, setSavingEmail] = useState(false);

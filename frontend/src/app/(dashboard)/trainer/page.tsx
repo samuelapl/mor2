@@ -17,7 +17,8 @@ import {
   UsersRound,
   Video,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { fetchCourseAssessments } from '@/lib/api/quiz';
@@ -42,7 +43,8 @@ import { isInPersonSession } from '@/lib/session-mode';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function TrainerDashboardPage() {
-  const { courses, currentUser } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { lang } = useTranslation();
   const isAmharic = lang === 'am';
 

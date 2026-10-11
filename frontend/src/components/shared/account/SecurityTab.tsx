@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
 import { passwordIssues } from '@/constants/auth';
@@ -40,7 +40,7 @@ function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
 }
 
 export default function SecurityTab() {
-  const { changePassword } = useLms();
+  const changePassword = useAuthStore((s) => s.changePassword);
   const { tBilingual } = useTranslation();
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);

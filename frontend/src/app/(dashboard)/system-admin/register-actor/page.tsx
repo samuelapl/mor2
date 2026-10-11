@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, UserCog } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import PageShell from '@/components/shared/PageShell';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -45,7 +46,8 @@ const EMPTY_FORM = {
 };
 
 export default function RegisterActorPage() {
-  const { currentUser, registerActor } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const registerActor = useUserStore((s) => s.registerActor);
   const { tBilingual, tRole } = useTranslation();
   const router = useRouter();
   const [form, setForm] = useState(EMPTY_FORM);

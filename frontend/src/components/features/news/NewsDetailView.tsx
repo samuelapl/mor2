@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { fetchNewsBySlug, fetchNewsList, recordNewsView } from '@/lib/api/news';
 import type { ApiNewsCard, ApiNewsDetail } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { NewsArticleView } from './NewsArticleView';
 import { NewsCard } from './NewsCard';
@@ -29,7 +29,8 @@ function useRecordView(newsId: string) {
 
 /** Client part of /news/[slug]. `initial` comes from the server render (anonymous). */
 export function NewsDetailView({ initial }: { initial: ApiNewsDetail }) {
-  const { ready, currentUser } = useLms();
+  const ready = useAuthStore((s) => s.ready);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { tBilingual } = useTranslation();
   const [news, setNews] = useState(initial);
   const [more, setMore] = useState<ApiNewsCard[]>([]);

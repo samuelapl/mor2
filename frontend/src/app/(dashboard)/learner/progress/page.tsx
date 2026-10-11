@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronDown, Lock, PlayCircle } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
@@ -20,7 +21,9 @@ import { cn } from '@/lib/utils';
 
 export default function ProgressPage() {
   const router = useRouter();
-  const { courses, lang, currentUser } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const lang = useAuthStore((s) => s.lang);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { t, tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));

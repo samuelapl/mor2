@@ -25,7 +25,9 @@ import {
   sendSessionAttendanceReport,
   setSessionStatus,
 } from "@/lib/api/monitoring";
-import { useLms } from "@/lib/lms-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { useCourseStore } from "@/lib/stores/course-store";
+import { useUserStore } from "@/lib/stores/user-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { usePagination } from "@/lib/usePagination";
 import { isInPersonSession } from "@/lib/session-mode";
@@ -139,7 +141,10 @@ const SCOPE_CONFIG: Record<
 
 export function SessionsManager({ scope }: { scope: SessionsScope }) {
   const config = SCOPE_CONFIG[scope];
-  const { courses, users, currentUser, refreshCourse } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const users = useUserStore((s) => s.users);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const refreshCourse = useCourseStore((s) => s.refreshCourse);
   const { can, canAny } = usePermissions();
   const { tBilingual } = useTranslation();
   const [scheduleOpen, setScheduleOpen] = useState(false);

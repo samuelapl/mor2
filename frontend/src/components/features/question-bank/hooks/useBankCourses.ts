@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import type { CourseFilterMode } from '../types';
 
 export type QuestionBankRole = 'trainer' | 'course_owner';
 
 /** Which course the bank is showing: all vs. "my" courses, search, and the selected course. */
 export function useBankCourses(role: QuestionBankRole) {
-  const { courses, currentUser } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   // All actors with question bank access can access all institutional courses by default
   const [courseFilterMode, setCourseFilterMode] = useState<CourseFilterMode>('ALL');

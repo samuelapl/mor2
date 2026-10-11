@@ -31,7 +31,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import {
   fetchCourseFeedbacks,
   markFeedbackReviewed,
@@ -42,7 +43,8 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 export default function CourseFeedbackPage() {
-  const { currentUser, courses } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const courses = useCourseStore((s) => s.courses);
   const { tBilingual } = useTranslation();
 
   const [feedbacks, setFeedbacks] = useState<CourseFeedbackItem[]>([]);

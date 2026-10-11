@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { uploadAvatar } from '@/lib/api/files';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
@@ -25,7 +25,7 @@ interface ProfileTabProps {
 }
 
 export default function ProfileTab({ profile, loading, onUpdated }: ProfileTabProps) {
-  const { updateProfile } = useLms();
+  const updateProfile = useAuthStore((s) => s.updateProfile);
   const { tBilingual } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', tin: '' });

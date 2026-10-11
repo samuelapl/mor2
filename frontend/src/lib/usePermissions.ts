@@ -1,10 +1,10 @@
 'use client';
 
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import type { Role } from '@/types';
 
 export function usePermissions() {
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const isSystemAdmin =
     currentUser?.role === 'system_admin' || (currentUser?.roles?.includes('system_admin') ?? false);
 

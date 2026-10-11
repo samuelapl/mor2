@@ -8,7 +8,7 @@ import PageShell from '@/components/shared/PageShell';
 import { CourseCreationWizard } from '@/components/features/courses/CourseCreationWizard';
 import { ScormUpload } from '@/components/features/courses/ScormUpload';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { cn } from '@/lib/utils';
 
 type CreationMode = 'manual' | 'scorm' | null;
@@ -17,7 +17,7 @@ function CreateCourseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseIdParam = searchParams.get('courseId');
-  const { courses } = useLms();
+  const courses = useCourseStore((s) => s.courses);
   const { tBilingual } = useTranslation();
 
   const editingCourse = useMemo(() => {

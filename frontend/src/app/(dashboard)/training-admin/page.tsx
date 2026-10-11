@@ -12,7 +12,7 @@ import {
   UsersRound,
   Video,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { useDashboardStats } from '@/lib/api/useDashboardStats';
 import { fetchLiveSessions } from '@/lib/api/monitoring';
 import type { ApiLiveSession } from '@/lib/api/types';
@@ -29,7 +29,7 @@ import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function TrainingAdminDashboardPage() {
-  const { courses } = useLms();
+  const courses = useCourseStore((s) => s.courses);
   const { stats } = useDashboardStats();
   const { lang } = useTranslation();
   const isAmharic = lang === 'am';

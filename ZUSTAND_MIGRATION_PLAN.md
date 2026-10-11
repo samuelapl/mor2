@@ -296,8 +296,8 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 | **Phase 1** | `auth-store.ts` | [x] | [x] | Done |
 | **Phase 2** | `user-store.ts` | [x] | [x] | Done |
 | **Phase 3** | `enrollment-store.ts` | [x] | [x] | Done |
-| **Phase 4** | `course-store.ts` | [x] | [x] | Awaiting browser check |
-| **Phase 5** | Cutover & Delete `lms-store.tsx` | N/A (Deleted) | [ ] | Pending |
+| **Phase 4** | `course-store.ts` | [x] | [x] | Done |
+| **Phase 5** | Cutover & Delete `lms-store.tsx` | N/A (Deleted) | [x] | Done |
 
 ---
 
@@ -311,4 +311,16 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 | **Out-of-React Access** | ❌ Impossible (needs React hook context) | ✅ Supported anytime via `.getState()` |
 | **Root Provider Wrapper** | Required (`<LmsProvider>`) | None needed |
 | **SSR / RSC Boundary** | Heavy client-side wrapper around whole app | Lightweight, zero-wrapper client stores |
+
+---
+
+## 6. As Built (2026-10-11)
+
+- `lib/stores/auth-store.ts` — session, user, locale; `initAuth()` runs once.
+- `lib/stores/user-store.ts`, `enrollment-store.ts`, `course-store.ts` — domain state + actions.
+- `lib/stores/session-data.ts` — `reloadAll()` / `resetAll()`: the role-dependent loader that fills the course, enrollment and user stores.
+- `lib/stores/course-sync.ts` — wizard types and curriculum/assessment sync helpers.
+- `lib/stores/store-utils.ts` — shared `errorMessage`, `hasPermission`, `fullName`.
+- `components/providers/SessionSync.tsx` — calls `initAuth()` and runs the 10s permission sync; rendered after `{children}` in `AppProviders`.
+- Lookup hooks that re-render on data changes: `useCourseById()`, `useUserName()`, `useEnrollmentForCourse()`. The plain store getters (`courseById`, `userName`, `getEnrollmentForCourse`) do **not** subscribe — use them only in event handlers.
 

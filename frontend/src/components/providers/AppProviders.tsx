@@ -1,17 +1,17 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { LmsProvider } from '@/lib/lms-store';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ThemeProvider } from '@/lib/theme';
+import { SessionSync } from './SessionSync';
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
-      <LmsProvider>
-        {children}
-        <ToastContainer />
-      </LmsProvider>
+      {children}
+      <ToastContainer />
+      {/* After children so its effects run after theirs, as LmsProvider's did. */}
+      <SessionSync />
     </ThemeProvider>
   );
 }

@@ -12,11 +12,11 @@ import { Pagination } from '@/components/ui/Pagination';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { Search, Filter, Award, ShieldCheck, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function CertificatesPage() {
   const { tBilingual } = useTranslation();
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [certificates, setCertificates] = useState<ApiCertificate[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

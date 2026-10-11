@@ -19,7 +19,7 @@ import { scheduleSession } from "@/lib/api/monitoring";
 import { fetchSessionPlans } from "@/lib/api/session-plans";
 import type { ApiSessionPlan } from "@/lib/api/types";
 import { fetchTrainers } from "@/lib/api/users";
-import { useLms } from "@/lib/lms-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePermissions } from "@/lib/usePermissions";
 import { appDateTimeToIso, appToday, useServerNow } from "@/lib/app-time";
 import { createBatchLiveSessions, fetchVenues } from "@/lib/api/venues";
@@ -70,7 +70,7 @@ export function ScheduleSessionModal({
   const [titleAm, setTitleAm] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
   const [objectivesEn, setObjectivesEn] = useState("");
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { can } = usePermissions();
   // With manage_all the scheduler picks the host; with only manage_own they host it themselves.
   const canPickTrainer = can("live_session.manage_all");

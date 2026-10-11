@@ -20,7 +20,9 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { toast } from '@/lib/toast';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useEnrollmentStore } from '@/lib/stores/enrollment-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { fetchCourseEnrollments, unenrollLearner } from '@/lib/api/enrollments';
 import { fetchCourseLearnersProgress } from '@/lib/api/progress';
 import { usePagination } from '@/lib/usePagination';
@@ -69,7 +71,9 @@ function stripHtml(html?: string): string {
 }
 
 export function EnrollmentForm() {
-  const { courses, users, enrollLearners } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const users = useUserStore((s) => s.users);
+  const enrollLearners = useEnrollmentStore((s) => s.enrollLearners);
 
   // Selected Course
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');

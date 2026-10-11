@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Laptop } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
@@ -22,7 +24,11 @@ import type { ApiVenue } from '@/lib/api/types';
 
 export default function LearnerCoursesPage() {
   const router = useRouter();
-  const { courses, lang, currentUser, ready, getEnrollmentForCourse } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const lang = useAuthStore((s) => s.lang);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const ready = useAuthStore((s) => s.ready);
+  const getEnrollmentForCourse = useEnrollmentForCourse();
   const { t, tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));

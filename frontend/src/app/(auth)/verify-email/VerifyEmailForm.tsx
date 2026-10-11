@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MailCheck } from 'lucide-react';
 import { resendVerification } from '@/lib/api/auth';
 import { getRoleHomePath } from '@/constants/roles';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 import { toast } from '@/lib/toast';
@@ -23,7 +23,7 @@ export default function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') ?? '';
   const devCode = searchParams.get('dev') ?? '';
-  const { verifyEmail } = useLms();
+  const verifyEmail = useAuthStore((s) => s.verifyEmail);
   const { tBilingual } = useTranslation();
 
   const [digits, setDigits] = useState(() => (/^\d{6}$/.test(devCode) ? devCode.split('') : ['', '', '', '', '', '']));

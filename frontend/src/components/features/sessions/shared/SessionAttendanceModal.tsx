@@ -20,7 +20,9 @@ import {
 } from 'lucide-react';
 import type { ApiAttendance, ApiLiveSession, BackendAttendanceStatus } from '@/lib/api/types';
 import { bulkMarkAttendance, fetchLiveSession, fetchSessionAttendance, markAttendance, sendSessionAttendanceReport } from '@/lib/api/monitoring';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserName, useUserStore } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Badge } from '@/components/ui/Badge';
@@ -36,7 +38,10 @@ interface SessionAttendanceModalProps {
 }
 
 export function SessionAttendanceModal({ open, onClose, sessionId }: SessionAttendanceModalProps) {
-  const { courses, users, userName, currentUser } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const users = useUserStore((s) => s.users);
+  const userName = useUserName();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { can } = usePermissions();
 
   const [session, setSession] = useState<ApiLiveSession | null>(null);

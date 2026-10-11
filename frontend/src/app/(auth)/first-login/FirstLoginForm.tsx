@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, Hash, KeyRound, Lock, ShieldCheck } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   readFirstLoginChallenge,
   resendFirstLoginCode,
@@ -55,7 +55,7 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
 
 export default function FirstLoginForm() {
   const router = useRouter();
-  const { completeFirstLogin } = useLms();
+  const completeFirstLogin = useAuthStore((s) => s.completeFirstLogin);
   const { tBilingual } = useTranslation();
 
   // undefined = not read yet (sessionStorage is client-only), null = missing.

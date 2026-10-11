@@ -22,7 +22,9 @@ import { ApiError } from '@/lib/api/client';
 import { tr } from '@/constants/labels';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserName } from '@/lib/stores/user-store';
 import PageShell from '@/components/shared/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -39,7 +41,10 @@ import { isInPersonSession } from '@/lib/session-mode';
 export default function LearnerLiveSessionsPage() {
   const searchParams = useSearchParams();
   const targetSessionId = searchParams.get('sessionId') || searchParams.get('joinSessionId');
-  const { lang, courses: allCourses, currentUser, userName } = useLms();
+  const lang = useAuthStore((s) => s.lang);
+  const allCourses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const userName = useUserName();
   const { tBilingual } = useTranslation();
   const me = currentUser?.id ?? '';
   const courses = useMemo(

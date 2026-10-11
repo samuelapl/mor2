@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookPlus } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -22,7 +24,9 @@ import type { ApiVenue } from '@/lib/api/types';
 
 export default function LearnerCatalogPage() {
   const router = useRouter();
-  const { courses, currentUser, getEnrollmentForCourse } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const getEnrollmentForCourse = useEnrollmentForCourse();
   const { t, tBilingual } = useTranslation();
   const me = currentUser?.id;
   const [search, setSearch] = useState('');

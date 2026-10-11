@@ -1,12 +1,12 @@
 'use client';
 
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import PageShell from '@/components/shared/PageShell';
 import { EnrollmentForm } from '@/components/features/enroll/EnrollmentForm';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function EnrollmentsPage() {
-  const { courses } = useLms();
+  const courses = useCourseStore((s) => s.courses);
   const { tBilingual } = useTranslation();
 
   return (

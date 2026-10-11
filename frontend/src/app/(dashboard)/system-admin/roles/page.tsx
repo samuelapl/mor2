@@ -11,7 +11,7 @@ import {
   ShieldAlert,
   Trash2,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import PageShell from '@/components/shared/PageShell';
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -168,7 +168,8 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
 }
 
 export default function RolesPermissionsPage() {
-  const { currentUser, refreshPermissions } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const refreshPermissions = useAuthStore((s) => s.refreshPermissions);
   const { tBilingual, isAmharic } = useTranslation();
 
   const getRoleLabel = (label: string, name?: string) => {

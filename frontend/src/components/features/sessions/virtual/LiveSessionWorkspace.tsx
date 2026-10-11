@@ -43,7 +43,7 @@ import {
   fetchSystemSettings,
 } from '@/lib/api/monitoring';
 import type { ApiAttendance, ApiAttendanceVisibility, ApiLiveSession } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { DynamicAttendanceModal } from '../shared/DynamicAttendanceModal';
 import { DisconnectReason } from 'livekit-client';
 
@@ -621,7 +621,7 @@ export function LiveSessionWorkspace({
   trainerName,
   userRole = 'learner',
 }: LiveSessionWorkspaceProps) {
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const isTrainerOrStaff =
     userRole === 'trainer' ||

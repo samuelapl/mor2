@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import type { Lang, Role } from '@/types';
 import {
   COMMON_TRANSLATIONS,
@@ -15,7 +15,10 @@ import {
 export type BilingualInput = string | { en: string; am: string };
 
 export function useTranslation() {
-  const { lang, setLang, updateLocale, currentUser } = useLms();
+  const lang = useAuthStore((s) => s.lang);
+  const setLang = useAuthStore((s) => s.setLang);
+  const updateLocale = useAuthStore((s) => s.updateLocale);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const t = useCallback(
     (key: string, fallback?: string | { en?: string; am?: string }): string => {

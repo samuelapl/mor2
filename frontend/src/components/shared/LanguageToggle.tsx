@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { cn } from '@/lib/utils';
 
 export interface LanguageToggleProps {
@@ -41,7 +41,8 @@ export function LanguageToggle({
   compact = false,
   placement = 'down-end',
 }: LanguageToggleProps) {
-  const { lang, updateLocale } = useLms();
+  const lang = useAuthStore((s) => s.lang);
+  const updateLocale = useAuthStore((s) => s.updateLocale);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 

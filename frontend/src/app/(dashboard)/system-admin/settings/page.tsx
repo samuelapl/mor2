@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Lock, Save, ShieldCheck } from 'lucide-react';
 import { fetchSystemSettings, updateSystemSettings } from '@/lib/api/monitoring';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import PageShell from '@/components/shared/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -11,7 +11,8 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
 export default function SystemSettingsPage() {
-  const { lang, setLang } = useLms();
+  const lang = useAuthStore((s) => s.lang);
+  const setLang = useAuthStore((s) => s.setLang);
   const { tBilingual } = useTranslation();
   const [sessionTimeout, setSessionTimeout] = useState('60');
   const [notifications, setNotifications] = useState(true);

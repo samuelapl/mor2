@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Eye, FilePenLine, PackageOpen, Plus } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import PageShell from '@/components/shared/PageShell';
@@ -25,7 +26,9 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 type StatusTab = 'all' | 'draft' | 'under_review' | 'approved' | 'published' | 'archived';
 
 export default function CoursesPage() {
-  const { courses, currentUser, ready } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const ready = useAuthStore((s) => s.ready);
   const { can } = usePermissions();
   const { lang, t } = useTranslation();
   const isAmharic = lang === 'am';

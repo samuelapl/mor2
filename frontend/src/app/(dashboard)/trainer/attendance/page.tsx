@@ -36,7 +36,9 @@ import {
   overrideAttendance,
   sendSessionAttendanceReport,
 } from '@/lib/api/monitoring';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserName, useUserStore } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -60,7 +62,10 @@ const formatDate = (value: string) =>
 const formatTime = (value: string) => formatSessionTime(value);
 
 export default function TrainerAttendancePage() {
-  const { courses, currentUser, users, userName } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const users = useUserStore((s) => s.users);
+  const userName = useUserName();
   const { can } = usePermissions();
   const { tBilingual } = useTranslation();
   const [sessions, setSessions] = useState<ApiLiveSession[]>([]);

@@ -12,7 +12,7 @@ import {
   updateOwnNewsComment,
 } from '@/lib/api/news';
 import type { ApiNewsComment } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { formatNewsDate, newsTextLang } from '@/lib/news';
 import { toast } from '@/lib/toast';
@@ -22,7 +22,8 @@ const MAX_LENGTH = 1000;
 const PAGE_SIZE = 20;
 
 export function NewsComments({ newsId, allowComments }: { newsId: string; allowComments: boolean }) {
-  const { currentUser, ready } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const ready = useAuthStore((s) => s.ready);
   const { tBilingual, lang } = useTranslation();
   const { loginHref } = useSignInPrompt();
   const [comments, setComments] = useState<ApiNewsComment[]>([]);

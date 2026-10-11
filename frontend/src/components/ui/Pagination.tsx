@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { cn } from '@/lib/utils';
 
 export interface PaginationProps {
@@ -49,7 +49,7 @@ export function Pagination({
   compact = false,
   hideOnSinglePage = false,
 }: PaginationProps) {
-  const { lang } = useLms();
+  const lang = useAuthStore((s) => s.lang);
   const isAmharic = lang === 'am';
 
   // Hide pagination only when there are no items, no pages, or hideOnSinglePage is explicitly requested

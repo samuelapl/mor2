@@ -49,7 +49,7 @@ import {
   uploadNewsImage,
 } from '@/lib/api/news';
 import type { ApiAdminNews, ApiNewsImage, NewsCategory, NewsInput } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { usePermissions } from '@/lib/usePermissions';
 import {
@@ -135,7 +135,7 @@ const errorMessage = (err: unknown, fallback: string) =>
  */
 export function NewsEditor({ newsId }: { newsId?: string }) {
   const router = useRouter();
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { can, isSystemAdmin } = usePermissions();
   const { tBilingual, lang } = useTranslation();
 

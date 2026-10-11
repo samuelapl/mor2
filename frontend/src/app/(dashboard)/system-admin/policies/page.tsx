@@ -23,7 +23,7 @@ import {
   Users,
   Video,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import PageShell from '@/components/shared/PageShell';
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -39,7 +39,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 type PolicyTab = 'course' | 'live_sessions';
 
 export default function PoliciesPage() {
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { tBilingual } = useTranslation();
   const [activeTab, setActiveTab] = useState<PolicyTab>('course');
 

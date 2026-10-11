@@ -11,7 +11,7 @@ import {
   FileText,
   Timer,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -24,7 +24,7 @@ import { CourseCard } from '@/components/features/courses/CourseCard';
 import { VerticalBarChart, BarChart } from '@/components/ui/charts';
 
 export default function ContentApproverDashboardPage() {
-  const { courses } = useLms();
+  const courses = useCourseStore((s) => s.courses);
   const { lang } = useTranslation();
   const isAmharic = lang === 'am';
 

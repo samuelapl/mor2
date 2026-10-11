@@ -26,7 +26,8 @@ import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 import { StartsInBadge } from './StartsInBadge';
 import type { ApiLiveSession } from '@/lib/api/types';
 import { fetchLiveSession } from '@/lib/api/monitoring';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserName, useUserStore } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { WorkspaceDetailOverlay } from '@/components/ui/WorkspaceDetailOverlay';
 import { Badge } from '@/components/ui/Badge';
@@ -69,7 +70,9 @@ export function SessionDetailModal({
   onOpenAttendance,
   onJoin,
 }: SessionDetailModalProps) {
-  const { courses, users, userName } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const users = useUserStore((s) => s.users);
+  const userName = useUserName();
   const { can, canAny } = usePermissions();
   const [session, setSession] = useState<ApiLiveSession | null>(null);
   const [liveWorkspaceOpen, setLiveWorkspaceOpen] = useState(false);

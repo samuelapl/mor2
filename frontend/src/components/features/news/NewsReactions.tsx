@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { reactToNews } from '@/lib/api/news';
 import type { NewsReactionType } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ interface NewsReactionsProps {
 
 /** Like / dislike. Only the like count is public; dislikes are feedback for the publishers. */
 export function NewsReactions({ newsId, likeCount, myReaction }: NewsReactionsProps) {
-  const { currentUser } = useLms();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { tBilingual } = useTranslation();
   const { prompt } = useSignInPrompt();
   // Optimistic local copy; re-synced from props when the parent refetches with the user's token.

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Eye, Send } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { usePagination } from '@/lib/usePagination';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import PageShell from '@/components/shared/PageShell';
@@ -15,7 +15,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar } from '@/components/ui/FilterBar';
 
 export default function ContentStatusPage() {
-  const { courses, submitForApproval } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const submitForApproval = useCourseStore((s) => s.submitForApproval);
   const { t, tBilingual } = useTranslation();
   const router = useRouter();
   const [search, setSearch] = useState('');
