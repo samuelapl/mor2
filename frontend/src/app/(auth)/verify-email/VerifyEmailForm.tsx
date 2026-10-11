@@ -24,7 +24,7 @@ export default function VerifyEmailForm() {
   const email = searchParams.get('email') ?? '';
   const devCode = searchParams.get('dev') ?? '';
   const verifyEmail = useAuthStore((s) => s.verifyEmail);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('auth');
 
   const [digits, setDigits] = useState(() => (/^\d{6}$/.test(devCode) ? devCode.split('') : ['', '', '', '', '', '']));
   const [error, setError] = useState<string | null>(null);
@@ -73,17 +73,17 @@ export default function VerifyEmailForm() {
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      setError(tBilingual('Enter all 6 digits.', 'ሁሉንም 6 አሃዞች ያስገቡ።'));
+      setError(t('firstLoginForm.enterAll6Digits'));
       return;
     }
     if (!email) {
-      setError(tBilingual('Email is missing. Sign in again to get a new code.', 'ኢሜይል አልተገኘም። አዲስ ኮድ ለማግኘት እንደገና ይግቡ።'));
+      setError(t('verifyEmailForm.emailIsMissingSignInAgain'));
       return;
     }
     setVerifying(true);
     const result = await verifyEmail(email, code);
     if (result.ok) {
-      toast.success(tBilingual('Email verified. Welcome!', 'ኢሜይልዎ ተረጋግጧል። እንኳን በደህና መጡ!'));
+      toast.success(t('verifyEmailForm.emailVerifiedWelcome'));
       router.push(getRoleHomePath(result.role, result.user?.permissions));
       return;
     }
@@ -100,9 +100,9 @@ export default function VerifyEmailForm() {
       setDigits(res.devCode && /^\d{6}$/.test(res.devCode) ? res.devCode.split('') : ['', '', '', '', '', '']);
       setCooldown(RESEND_COOLDOWN_SECONDS);
       inputRefs.current[0]?.focus();
-      toast.success(tBilingual('A new code is on its way.', 'አዲስ ኮድ ተልኳል።'));
+      toast.success(t('verifyEmailForm.aNewCodeIsOnIts'));
     } catch {
-      setError(tBilingual('Could not resend the code. Try again.', 'ኮዱን በድጋሚ መላክ አልተቻለም። እንደገና ይሞክሩ።'));
+      setError(t('verifyCodeForm.couldNotResendTheCodeTry'));
     } finally {
       setResending(false);
     }
@@ -122,17 +122,17 @@ export default function VerifyEmailForm() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
               <MailCheck className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">{tBilingual('Verify your email', 'ኢሜይልዎን ያረጋግጡ')}</h1>
+            <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">{t('firstLoginForm.verifyYourEmail')}</h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              {tBilingual('We sent a 6-digit code to ', 'ባለ 6-አሃዝ ኮድ ልከናል ወደ ')}
-              {email ? <span className="font-semibold text-indigo-500">{email}</span> : tBilingual('your email', 'ኢሜይልዎ')}
-              {tBilingual('. Enter it to activate your account. It expires in 10 minutes.', '። መለያዎን ለማንቃት ያስገቡት። በ10 ደቂቃ ውስጥ ያበቃል።')}
+              {t('verifyCodeForm.weSentA6DigitCode')}
+              {email ? <span className="font-semibold text-indigo-500">{email}</span> : t('verifyCodeForm.yourEmail')}
+              {t('verifyEmailForm.enterItToActivateYourAccount')}
             </p>
           </div>
 
           {/* OTP boxes */}
           <div className="mt-8">
-            <label className="mb-3 block text-xs font-semibold text-slate-600">{tBilingual('Verification code', 'የማረጋገጫ ኮድ')}</label>
+            <label className="mb-3 block text-xs font-semibold text-slate-600">{t('firstLoginForm.verificationCode')}</label>
             <div className="flex gap-2 sm:gap-3" onPaste={handlePaste}>
               {digits.map((digit, i) => (
                 <input
@@ -146,7 +146,7 @@ export default function VerifyEmailForm() {
                   maxLength={1}
                   value={digit}
                   autoFocus={i === 0}
-                  aria-label={`${tBilingual('Digit', 'አሃዝ')} ${i + 1}`}
+                  aria-label={`${t('verifyEmailForm.digit')} ${i + 1}`}
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   className="h-14 w-full rounded-xl border border-slate-200/90 bg-white text-center text-xl font-bold text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
@@ -163,13 +163,13 @@ export default function VerifyEmailForm() {
                 className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline disabled:opacity-50 disabled:hover:no-underline"
               >
                 {resending
-                  ? tBilingual('Sending…', 'በመላክ ላይ…')
+                  ? t('firstLoginForm.sending')
                   : cooldown > 0
-                    ? tBilingual(`Resend code in ${cooldown}s`, `ኮዱን በ${cooldown} ሰከንድ ውስጥ በድጋሚ ላክ`)
-                    : tBilingual('Resend code', 'ኮዱን በድጋሚ ላክ')}
+                    ? t('verifyEmailForm.resendCodeInS', { cooldown })
+                    : t('firstLoginForm.resendCode')}
               </button>
               <Link href="/register" className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline">
-                {tBilingual('Wrong email?', 'የተሳሳተ ኢሜይል?')}
+                {t('verifyCodeForm.wrongEmail')}
               </Link>
             </div>
           </div>
@@ -182,13 +182,13 @@ export default function VerifyEmailForm() {
             disabled={code.length !== 6 || verifying}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
-            {verifying ? tBilingual('Verifying…', 'በማረጋገጥ ላይ…') : tBilingual('Verify and sign in', 'አረጋግጥና ግባ')}
+            {verifying ? t('firstLoginForm.verifying') : t('verifyEmailForm.verifyAndSignIn')}
           </button>
 
           <p className="mt-5 text-center text-sm text-slate-500">
             <Link href="/login" className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700">
               <ArrowLeft className="h-3.5 w-3.5" />
-              {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
+              {t('firstLoginForm.backToSignIn')}
             </Link>
           </p>
         </div>

@@ -18,7 +18,7 @@ const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-600';
 export default function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('auth');
 
   // Both email and code come from the URL: /reset-password?email=...&code=...
   const email = searchParams.get('email') ?? '';
@@ -43,12 +43,12 @@ export default function ResetPasswordForm() {
         <div className="relative w-full max-w-md text-center">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
             <p className="text-sm text-slate-500">
-              {tBilingual('This link is incomplete. ', 'ይህ ማስፈንጠሪያ የተሟላ አይደለም። ')}
+              {t('resetPasswordForm.thisLinkIsIncomplete')}
               <Link
                 href="/forgot-password"
                 className="font-semibold text-indigo-500 hover:text-indigo-700"
               >
-                {tBilingual('Request a new code', 'አዲስ ኮድ ይጠይቁ')}
+                {t('resetPasswordForm.requestANewCode')}
               </Link>
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function ResetPasswordForm() {
       return;
     }
     if (password !== confirm) {
-      setError(tBilingual('Passwords do not match.', 'የይለፍ ቃሎች አይዛመዱም።'));
+      setError(t('firstLoginForm.passwordsDoNotMatch'));
       return;
     }
     setError(null);
@@ -77,10 +77,7 @@ export default function ResetPasswordForm() {
       setError(
         err instanceof Error
           ? err.message
-          : tBilingual(
-              'Invalid or expired code. Request a new one.',
-              'ልክ ያልሆነ ወይም ጊዜው ያለፈበት ኮድ። አዲስ ይጠይቁ።',
-            ),
+          : t('resetPasswordForm.invalidOrExpiredCodeRequestA'),
       );
     } finally {
       setSaving(false);
@@ -103,19 +100,16 @@ export default function ResetPasswordForm() {
                 <CheckCircle className="h-7 w-7" />
               </div>
               <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-                {tBilingual('Password updated!', 'የይለፍ ቃል ተቀይሯል!')}
+                {t('resetPasswordForm.passwordUpdated')}
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                {tBilingual(
-                  'Your password has been reset. Sign in with your new password.',
-                  'የይለፍ ቃልዎ ተቀይሯል። በአዲሱ የይለፍ ቃልዎ ይግቡ።',
-                )}
+                {t('resetPasswordForm.yourPasswordHasBeenResetSign')}
               </p>
               <Link
                 href="/login"
                 className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.98]"
               >
-                {tBilingual('Go to sign in', 'ወደ መግቢያ ገጽ ሂድ')}
+                {t('resetPasswordForm.goToSignIn')}
               </Link>
             </div>
           ) : (
@@ -126,13 +120,10 @@ export default function ResetPasswordForm() {
                   <KeyRound className="h-7 w-7" />
                 </div>
                 <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900">
-                  {tBilingual('Set a new password', 'አዲስ የይለፍ ቃል ያዘጋጁ')}
+                  {t('resetPasswordForm.setANewPassword')}
                 </h1>
                 <p className="mt-1.5 text-sm text-slate-500">
-                  {tBilingual(
-                    'At least 8 characters with a letter and a number.',
-                    'ቢያንስ 8 ቁምፊዎች ከፊደልና ከቁጥር ጋር።',
-                  )}
+                  {t('resetPasswordForm.atLeast8CharactersWithA')}
                 </p>
               </div>
 
@@ -140,7 +131,7 @@ export default function ResetPasswordForm() {
               <form onSubmit={handleSubmit} className="mt-7 space-y-4">
                 <div>
                   <label htmlFor="password" className={labelClass}>
-                    {tBilingual('New password', 'አዲስ የይለፍ ቃል')}
+                    {t('firstLoginForm.newPassword')}
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -171,7 +162,7 @@ export default function ResetPasswordForm() {
 
                 <div>
                   <label htmlFor="confirm" className={labelClass}>
-                    {tBilingual('Confirm password', 'የይለፍ ቃል አረጋግጥ')}
+                    {t('firstLoginForm.confirmPassword')}
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -204,7 +195,7 @@ export default function ResetPasswordForm() {
                     {error}{' '}
                     {error.includes('expired') || error.includes('Invalid') ? (
                       <Link href="/forgot-password" className="underline hover:text-red-800">
-                        {tBilingual('Request a new code.', 'አዲስ ኮድ ይጠይቁ።')}
+                        {t('resetPasswordForm.requestANewCode2')}
                       </Link>
                     ) : null}
                   </div>
@@ -216,8 +207,8 @@ export default function ResetPasswordForm() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
                 >
                   {saving
-                    ? tBilingual('Saving…', 'በማስቀመጥ ላይ…')
-                    : tBilingual('Reset password', 'የይለፍ ቃል ቀይር')}
+                    ? t('firstLoginForm.saving')
+                    : t('resetPasswordForm.resetPassword')}
                 </button>
               </form>
 
@@ -227,7 +218,7 @@ export default function ResetPasswordForm() {
                   className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-700"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  {tBilingual('Back to code entry', 'ወደ ኮድ ማስገቢያ ተመለስ')}
+                  {t('resetPasswordForm.backToCodeEntry')}
                 </Link>
               </p>
             </>

@@ -15,7 +15,7 @@ const inputClass =
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { tBilingual, lang } = useTranslation();
+  const { lang, t } = useTranslation('auth');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!isValidEmail(email)) {
-      setError(tBilingual('Enter a valid email address.', 'ትክክለኛ የኢሜይል አድራሻ ያስገቡ።'));
+      setError(t('forgotPasswordPage.enterAValidEmailAddress'));
       return;
     }
     setError(null);
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       setError(
         err instanceof Error
           ? err.message
-          : tBilingual('Could not send the code. Try again.', 'ኮዱን መላክ አልተቻለም። እንደገና ይሞክሩ።'),
+          : t('forgotPasswordPage.couldNotSendTheCodeTry'),
       );
     } finally {
       setSending(false);
@@ -58,13 +58,10 @@ export default function ForgotPasswordPage() {
               <KeyRound className="h-7 w-7" />
             </div>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {tBilingual('Forgot your password?', 'የይለፍ ቃልዎን ረሱት?')}
+              {t('forgotPasswordPage.forgotYourPassword')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              {tBilingual(
-                "Enter your email and we'll send you a 6-digit reset code.",
-                'ኢሜይልዎን ያስገቡ፤ ባለ 6-አሃዝ የይለፍ ቃል መቀየሪያ ኮድ እንልክልዎታለን።',
-              )}
+              {t('forgotPasswordPage.enterYourEmailAndWeLl')}
             </p>
           </div>
 
@@ -72,7 +69,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400">
-                {tBilingual('Email address', 'የኢሜይል አድራሻ')}
+                {t('forgotPasswordPage.emailAddress')}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
@@ -107,11 +104,11 @@ export default function ForgotPasswordPage() {
               {sending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span>{tBilingual('Sending…', 'በመላክ ላይ…')}</span>
+                  <span>{t('firstLoginForm.sending')}</span>
                 </>
               ) : (
                 <>
-                  <span>{tBilingual('Send reset code', 'የመቀየሪያ ኮድ ላክ')}</span>
+                  <span>{t('forgotPasswordPage.sendResetCode')}</span>
                   <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -124,7 +121,7 @@ export default function ForgotPasswordPage() {
               className="inline-flex items-center gap-1 font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
+              {t('firstLoginForm.backToSignIn')}
             </Link>
           </p>
         </div>

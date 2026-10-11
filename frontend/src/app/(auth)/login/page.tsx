@@ -22,7 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const ready = useAuthStore((s) => s.ready);
-  const { tBilingual, tRole } = useTranslation();
+  const { tRole, t } = useTranslation('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +77,7 @@ export default function LoginPage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
           >
             <ArrowLeft className="h-4 w-4" />
-            {tBilingual('Back to home', 'ወደ ዋና ገጽ ተመለስ')}
+            {t('loginPage.backToHome')}
           </Link>
         </div>
 
@@ -85,7 +85,7 @@ export default function LoginPage() {
           <div className="text-center">
             <Link
               href="/"
-              title={tBilingual('Back to home', 'ወደ ዋና ገጽ ተመለስ')}
+              title={t('loginPage.backToHome')}
               className="inline-block transition-opacity hover:opacity-80"
             >
               <Image
@@ -97,20 +97,17 @@ export default function LoginPage() {
               />
             </Link>
             <h1 className="mt-5 font-display text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {tBilingual(
-                'Welcome to MoR E-Learning Management System',
-                'እንኳን ወደ ገቢዎች ሚ/ር ኢ-ትምህርት አስተዳደር ሥርዓት በደህና መጡ',
-              )}
+              {t('loginPage.welcomeToMorELearningManagement')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              {tBilingual('Sign in', 'ግባ')}
+              {t('loginPage.signIn')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
               <label htmlFor="email" className={labelClass}>
-                {tBilingual('Email address', 'የኢሜይል አድራሻ')}
+                {t('forgotPasswordPage.emailAddress')}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -133,13 +130,13 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className={labelClass}>
-                  {tBilingual('Password', 'የይለፍ ቃል')}
+                  {t('loginPage.password')}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-[11px] font-semibold text-indigo-500 transition-colors hover:text-indigo-700"
                 >
-                  {tBilingual('Forgot password?', 'የይለፍ ቃል ረሱ?')}
+                  {t('loginPage.forgotPassword')}
                 </Link>
               </div>
               <div className="relative">
@@ -182,11 +179,11 @@ export default function LoginPage() {
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span>{tBilingual('Signing in…', 'በመግባት ላይ…')}</span>
+                  <span>{t('loginPage.signingIn')}</span>
                 </>
               ) : (
                 <>
-                  <span>{tBilingual('Sign in', 'ግባ')}</span>
+                  <span>{t('loginPage.signIn')}</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -194,9 +191,9 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-            {tBilingual('Non-staff user?', 'ሰራተኛ አይደሉም?')}{' '}
+            {t('loginPage.nonStaffUser')}{' '}
             <Link href="/register" className="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">
-              {tBilingual('Create an account', 'መለያ ፍጠር')}
+              {t('loginPage.createAnAccount')}
             </Link>
           </p>
 
@@ -210,7 +207,7 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
               <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 transition-colors hover:text-indigo-500 dark:hover:text-indigo-400">
                 <KeyRound className="h-3.5 w-3.5" />
-                {tBilingual('Demo accounts', 'የማሳያ መለያዎች')}
+                {t('loginPage.demoAccounts')}
                 <ChevronDown
                   className={cn(
                     'h-3.5 w-3.5 transition-transform duration-200',

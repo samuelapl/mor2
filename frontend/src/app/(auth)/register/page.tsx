@@ -32,7 +32,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const register = useAuthStore((s) => s.register);
   const ready = useAuthStore((s) => s.ready);
-  const { tBilingual } = useTranslation();
+  const { t } = useTranslation('auth');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -83,7 +83,7 @@ export default function RegisterPage() {
         return;
       }
       toast.success(
-        tBilingual('Account created. Check your email for a code.', 'መለያ ተፈጥሯል። ኮዱን በኢሜይልዎ ይመልከቱ።'),
+        t('registerPage.accountCreatedCheckYourEmailFor'),
       );
       const params = new URLSearchParams({ email: result.email });
       if (result.devCode) params.set('dev', result.devCode);
@@ -107,7 +107,7 @@ export default function RegisterPage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-slate-200"
           >
             <ArrowLeft className="h-4 w-4" />
-            {tBilingual('Back to sign in', 'ወደ መግቢያ ገጽ ተመለስ')}
+            {t('firstLoginForm.backToSignIn')}
           </Link>
         </div>
 
@@ -115,7 +115,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <Link
               href="/"
-              title={tBilingual('Back to home', 'ወደ ዋና ገጽ ተመለስ')}
+              title={t('loginPage.backToHome')}
               className="inline-block transition-opacity hover:opacity-80"
             >
               <Image
@@ -127,13 +127,10 @@ export default function RegisterPage() {
               />
             </Link>
             <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {tBilingual('Registration', 'የተማሪ ምዝገባ')}
+              {t('registerPage.registration')}
             </h1>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              {tBilingual(
-                'Create a learner account. We will email you a code to verify your address before you sign in.',
-                'የተማሪ መለያ ይፍጠሩ። ከመግባትዎ በፊት ኢሜይልዎን ለማረጋገጥ ኮድ እንልክልዎታለን።',
-              )}
+              {t('registerPage.createALearnerAccountWeWill')}
             </p>
           </div>
 
@@ -142,7 +139,7 @@ export default function RegisterPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="firstName" className={labelClass}>
-                      <span>{tBilingual('First name', 'ስም')}</span>
+                      <span>{t('registerPage.firstName')}</span>
                       <span className="text-red-500 font-bold" aria-hidden="true">
                         *
                       </span>
@@ -165,7 +162,7 @@ export default function RegisterPage() {
                   </div>
                   <div>
                     <label htmlFor="lastName" className={labelClass}>
-                      <span>{tBilingual('Last name', 'የአባት ስም')}</span>
+                      <span>{t('registerPage.lastName')}</span>
                       <span className="text-red-500 font-bold" aria-hidden="true">
                         *
                       </span>
@@ -190,7 +187,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label htmlFor="reg-email" className={labelClass}>
-                    <span>{tBilingual('Email', 'ኢሜይል')}</span>
+                    <span>{t('registerPage.email')}</span>
                     <span className="text-red-500 font-bold" aria-hidden="true">
                       *
                     </span>
@@ -217,7 +214,7 @@ export default function RegisterPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="reg-password" className={labelClass}>
-                      <span>{tBilingual('Password', 'የይለፍ ቃል')}</span>
+                      <span>{t('loginPage.password')}</span>
                       <span className="text-red-500 font-bold" aria-hidden="true">
                         *
                       </span>
@@ -250,7 +247,7 @@ export default function RegisterPage() {
                   </div>
                   <div>
                     <label htmlFor="confirmPassword" className={labelClass}>
-                      <span>{tBilingual('Confirm password', 'የይለፍ ቃል አረጋግጥ')}</span>
+                      <span>{t('firstLoginForm.confirmPassword')}</span>
                       <span className="text-red-500 font-bold" aria-hidden="true">
                         *
                       </span>
@@ -283,16 +280,13 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  {tBilingual(
-                    'Use at least 8 characters, including one letter and one number.',
-                    'ቢያንስ 8 ቁምፊዎችን ይጠቀሙ፣ አንድ ፊደል እና አንድ ቁጥር ማካተት አለበት።',
-                  )}
+                  {t('registerPage.useAtLeast8CharactersIncluding')}
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="phone" className={labelClass}>
-                      <span>{tBilingual('Phone number', 'ስልክ ቁጥር')}</span>
+                      <span>{t('registerPage.phoneNumber')}</span>
                       <span className="text-red-500 font-bold" aria-hidden="true">
                         *
                       </span>
@@ -317,9 +311,9 @@ export default function RegisterPage() {
 
                   <div>
                     <label htmlFor="tin" className={labelClass}>
-                      <span>{tBilingual('TIN', 'የግብር መለያ')}</span>
+                      <span>{t('registerPage.tin')}</span>
                       <span className="text-xs font-normal text-slate-400">
-                        ({tBilingual('Optional', 'አማራጭ')})
+                        ({t('registerPage.optional')})
                       </span>
                     </label>
                     <div className="relative">
@@ -352,11 +346,11 @@ export default function RegisterPage() {
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>{tBilingual('Submitting registration…', 'ምዝገባን በመላክ ላይ…')}</span>
+                      <span>{t('registerPage.submittingRegistration')}</span>
                     </>
                   ) : (
                     <>
-                      <span>{tBilingual('Submit registration', 'ምዝገባን ላክ')}</span>
+                      <span>{t('registerPage.submitRegistration')}</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -364,9 +358,9 @@ export default function RegisterPage() {
               </form>
 
               <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                {tBilingual('Already registered?', 'ቀደም ሲል ተመዝግበዋል?')}{' '}
+                {t('registerPage.alreadyRegistered')}{' '}
                 <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">
-                  {tBilingual('Sign in', 'ግባ')}
+                  {t('loginPage.signIn')}
                 </Link>
               </p>
           </>
