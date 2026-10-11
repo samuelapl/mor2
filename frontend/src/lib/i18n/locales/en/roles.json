@@ -1,0 +1,18 @@
+{
+  "names": {
+    "course_owner": "Course Owner",
+    "content_approver": "Content Approver",
+    "training_admin": "Training Administrator",
+    "trainer": "Trainer",
+    "learner": "Learner",
+    "system_admin": "System Administrator"
+  },
+  "descriptions": {
+    "course_owner": "Owns and manages course catalog and curriculum.",
+    "content_approver": "Reviews and approves course content.",
+    "training_admin": "Administers training programs, schedules, and enrollments.",
+    "trainer": "Delivers training sessions and tracks learner progress.",
+    "learner": "Enrolls in and completes courses.",
+    "system_admin": "Manages system configuration, users, and permissions."
+  }
+}
