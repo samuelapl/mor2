@@ -112,7 +112,7 @@ export default function PublicHeader() {
                   href="/login"
                   className="hidden rounded-xl border border-slate-300/80 bg-white px-3.5 py-2 text-xs font-semibold sm:inline-flex text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
-                  {t('publicHeader.signIn')}
+                  {t('publicFooter.signIn')}
                 </Link>
 
                 <Link
@@ -165,7 +165,7 @@ export default function PublicHeader() {
                 >
                   {dashboardHref
                     ? t('publicHeader.myDashboard')
-                    : t('publicHeader.signIn')}
+                    : t('publicFooter.signIn')}
                 </Link>
               </div>
             </div>

@@ -184,7 +184,6 @@
   "learnerProgressDesc": "የትምህርት ማጠናቀቂያ፣ የፈተና ውጤቶች እና አጠቃላይ የክንውን ዝርዝር ትንተና።",
   "header": {
     "openMenu": "ማውጫ ክፈት",
-    "markAllRead": "ሁሉንም አንብብ",
     "account": "መለያ",
     "logOut": "ውጣ"
   },
@@ -199,11 +198,11 @@
   "publicFooter": {
     "ministryOfRevenuesEthiopia": "የገቢዎች ሚኒስቴር • ኢትዮጵያ",
     "capabilities": "ችሎታዎች",
-    "roles": "የስራ ድርሻዎች",
+    "roles": "ሚናዎች",
     "workflow": "የስራ ሂደት",
     "news": "ዜና",
     "windowsClient": "የዴስክቶፕ መተግበሪያ",
-    "signIn": "መግቢያ",
+    "signIn": "ግባ",
     "ministryOfRevenuesAllRightsReserved": "የገቢዎች ሚኒስቴር። መብቱ በህግ የተጠበቀ ነው።"
   },
   "publicHeader": {
@@ -214,7 +213,6 @@
     "federalDemocraticRepublicOfEthiopiaMinis": "የኢትዮጵያ ፌዴራላዊ ዴሞክራሲያዊ ሪፐብሊክ • የገቢዎች ሚኒስቴር የስልጠና ማዕከል",
     "ministryOfRevenues": "የገቢዎች ሚኒስቴር",
     "myDashboard": "የእኔ ዳሽቦርድ",
-    "signIn": "ግባ",
     "getStarted": "ስርዓቱን ጀምር"
   },
   "sidebar": {
@@ -281,7 +279,6 @@
     "manageYourProfileSecurityAndPreferences": "የግል መገለጫዎን፣ ደህንነትዎን እና ምርጫዎችዎን ያስተዳድሩ"
   },
   "detailsTab": {
-    "roles": "ሚናዎች",
     "status": "ሁኔታ",
     "memberSince": "አባል የሆነበት ጊዜ",
     "lastLogin": "የመጨረሻ መግቢያ",

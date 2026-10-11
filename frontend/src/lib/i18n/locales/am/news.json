@@ -17,12 +17,12 @@
     "commentsAreClosedForThisNews": "ለዚህ ዜና አስተያየት መስጠት ተዘግቷል።",
     "writeAComment": "አስተያየት ይጻፉ…",
     "postComment": "አስተያየት ለጥፍ",
-    "signIn": "ይግቡ",
+    "signIn": "ግባ",
     "toJoinTheConversation": "እና በውይይቱ ይሳተፉ።",
     "editComment": "አስተያየት አርትዕ",
     "deleteComment": "አስተያየት ሰርዝ",
-    "cancel": "ተወው",
-    "saveChanges": "ለውጦችን መዝግብ",
+    "cancel": "ይቅር",
+    "saveChanges": "ለውጦችን አስቀምጥ",
     "noCommentsYet": "እስካሁን ምንም አስተያየት የለም።",
     "loadMoreComments": "ተጨማሪ አስተያየቶችን አሳይ",
     "deleteComment2": "አስተያየቱ ይሰረዝ?",
@@ -80,7 +80,6 @@
     "shownInsteadOfThePublishDate": "(ከህትመት ቀኑ ይልቅ ይታያል)",
     "allowComments": "አስተያየት ፍቀድ",
     "saveDraft": "ረቂቅ አስቀምጥ",
-    "saveChanges": "ለውጦችን አስቀምጥ",
     "allChangesSaved": "ሁሉም ለውጦች ተቀምጠዋል",
     "resubmitForReview": "እንደገና ለግምገማ ላክ",
     "submitForReview": "ለግምገማ ላክ",
@@ -105,7 +104,6 @@
     "moderateComments": "አስተያየቶችን አስተዳድር",
     "rejectNews": "ዜናውን ውድቅ አድርግ",
     "theAuthorWillSeeThisReason": "ጸሐፊው ይህን ምክንያት ያያል።",
-    "cancel": "ሰርዝ",
     "whatNeedsToChange": "ምን መቀየር አለበት?",
     "deleteThisNews": "ይህ ዜና ይሰረዝ?",
     "itWillDisappearFromTheSite": "ከድረ-ገጹ እና ከዚህ ዝርዝር ይጠፋል። መዝገቡ ለኦዲት ዓላማ ይቀመጣል።",
@@ -142,9 +140,6 @@
     "share": "አጋራ",
     "copyLink": "ሊንኩን ቅዳ",
     "shareOn": "አጋራ በ"
-  },
-  "useSignInPrompt": {
-    "signIn": "ግባ"
   },
   "newsCommentsModerationPage": {
     "publishersOnly": "ለአሳታሚዎች ብቻ",

@@ -73,7 +73,6 @@
     "linkingATrainerToTheirPrimary": "Linking a trainer to their primary branch helps auto-populate venues when scheduling in-person sessions.",
     "setTheUserSInitialPassword": "Set the user's initial password",
     "requirePasswordChangeOnFirstSign": "Require password change on first sign-in (sends email code)",
-    "cancel": "Cancel",
     "registeringUser": "Registering user…",
     "registerUser2": "Register user"
   },

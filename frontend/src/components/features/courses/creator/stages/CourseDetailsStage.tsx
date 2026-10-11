@@ -74,7 +74,7 @@ const DELIVERY_OPTIONS: Array<{
 }> = [
   {
     id: 'ONLINE_ONLY',
-    labelKey: 'courseDetailsStage.onlineSelfPaced',
+    labelKey: 'deliveryFormatModal.onlineSelfPaced',
     descriptionKey: 'courseDetailsStage.selfPacedDigitalModulesVideoStreams',
     icon: Globe2,
     iconClass: 'text-indigo-600',

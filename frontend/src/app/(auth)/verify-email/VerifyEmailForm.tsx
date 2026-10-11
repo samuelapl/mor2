@@ -102,7 +102,7 @@ export default function VerifyEmailForm() {
       inputRefs.current[0]?.focus();
       toast.success(t('verifyEmailForm.aNewCodeIsOnIts'));
     } catch {
-      setError(t('verifyCodeForm.couldNotResendTheCodeTry'));
+      setError(t('firstLoginForm.couldNotResendTheCodeTry'));
     } finally {
       setResending(false);
     }
@@ -165,7 +165,7 @@ export default function VerifyEmailForm() {
                 {resending
                   ? t('firstLoginForm.sending')
                   : cooldown > 0
-                    ? t('verifyEmailForm.resendCodeInS', { cooldown })
+                    ? t('firstLoginForm.resendCodeInS', { cooldown })
                     : t('firstLoginForm.resendCode')}
               </button>
               <Link href="/register" className="text-xs text-slate-500 underline-offset-2 hover:text-indigo-600 hover:underline">

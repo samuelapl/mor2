@@ -90,7 +90,7 @@ export default function VerifyCodeForm() {
       inputRefs.current[0]?.focus();
     } catch {
       setError(
-        t('verifyCodeForm.couldNotResendTheCodeTry'),
+        t('firstLoginForm.couldNotResendTheCodeTry'),
       );
     } finally {
       setResending(false);

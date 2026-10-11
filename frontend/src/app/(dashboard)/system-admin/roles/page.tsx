@@ -505,7 +505,7 @@ export default function RolesPermissionsPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowNewRole(false)}>
-              {t('registerActorPage.cancel')}
+              {t('usersPage.cancel')}
             </Button>
             <Button
               size="sm"

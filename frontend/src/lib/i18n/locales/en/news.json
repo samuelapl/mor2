@@ -80,7 +80,6 @@
     "shownInsteadOfThePublishDate": "(shown instead of the publish date)",
     "allowComments": "Allow comments",
     "saveDraft": "Save draft",
-    "saveChanges": "Save changes",
     "allChangesSaved": "All changes saved",
     "resubmitForReview": "Resubmit for review",
     "submitForReview": "Submit for review",
@@ -105,7 +104,6 @@
     "moderateComments": "Moderate comments",
     "rejectNews": "Reject news",
     "theAuthorWillSeeThisReason": "The author will see this reason.",
-    "cancel": "Cancel",
     "whatNeedsToChange": "What needs to change?",
     "deleteThisNews": "Delete this news?",
     "itWillDisappearFromTheSite": "It will disappear from the site and this list. The record is kept for audit purposes.",
@@ -142,9 +140,6 @@
     "share": "Share",
     "copyLink": "Copy link",
     "shareOn": "Share on"
-  },
-  "useSignInPrompt": {
-    "signIn": "Sign in"
   },
   "newsCommentsModerationPage": {
     "publishersOnly": "Publishers only",

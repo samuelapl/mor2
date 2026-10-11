@@ -67,7 +67,7 @@ export function RejectDialog({ open, mode = 'reject', onClose, courseLabel, busy
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            {t('rejectDialog.cancel')}
+            {t('deliveryFormatModal.cancel')}
           </Button>
           <Button variant="danger" disabled={!reason.trim() || busy} onClick={() => void confirm()}>
             {busy ? t(copy.busy) : t(copy.confirm)}

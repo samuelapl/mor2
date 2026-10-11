@@ -73,7 +73,7 @@ export default function TrainingAdminDashboardPage() {
     },
     {
       href: '/training-admin/sessions',
-      title: t('trainingAdminDashboardPage.liveSessions'),
+      title: t('learnerLiveSessionsPage.liveSessions'),
       description: t('trainingAdminDashboardPage.scheduleSessionsAndMonitorFacilitatorAtt'),
       icon: Video,
     },
@@ -370,7 +370,7 @@ export default function TrainingAdminDashboardPage() {
               <Video className="h-5 w-5" />
             </div>
             <p className="mt-3 text-xs font-semibold text-slate-700">
-              {t('trainingAdminDashboardPage.noLiveSessionsScheduled')}
+              {t('learnerLiveSessionsPage.noLiveSessionsScheduled')}
             </p>
             <p className="mt-1 text-xs text-slate-400">
               {t('trainingAdminDashboardPage.scheduleInteractiveWebinarsOrClassroomSe')}

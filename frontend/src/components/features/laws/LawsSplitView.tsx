@@ -257,7 +257,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                <span>{t('lawsSplitView.uploadDocument')}</span>
+                <span>{t('documentFormModal.uploadDocument')}</span>
               </button>
             </>
           ) : (
@@ -623,7 +623,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
           </span>
         }
         confirmText={t('lawsSplitView.delete')}
-        cancelText={t('lawsSplitView.cancel')}
+        cancelText={t('categoryFormModal.cancel')}
         variant="danger"
       />
 
@@ -642,7 +642,7 @@ export function LawsSplitView({ isAdmin = false }: LawsSplitViewProps) {
           </span>
         }
         confirmText={t('lawsSplitView.delete')}
-        cancelText={t('lawsSplitView.cancel')}
+        cancelText={t('categoryFormModal.cancel')}
         variant="danger"
       />
     </div>

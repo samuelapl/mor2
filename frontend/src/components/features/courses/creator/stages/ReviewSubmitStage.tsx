@@ -204,7 +204,7 @@ export function ReviewSubmitStage({
               className="gap-1.5 shadow-xs text-xs"
             >
               <Save className="h-3.5 w-3.5" />
-              {t('reviewSubmitStage.saveAsDraft')}
+              {t('creatorHeader.saveAsDraft')}
             </Button>
             <Button
               variant="primary"

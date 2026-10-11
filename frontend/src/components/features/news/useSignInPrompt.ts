@@ -16,7 +16,7 @@ export function useSignInPrompt() {
   const prompt = useCallback(
     (messageKey: NamespaceKey<'news'>) =>
       toast.info(t(messageKey), {
-        action: { label: t('useSignInPrompt.signIn'), onClick: () => router.push(loginHref) },
+        action: { label: t('newsComments.signIn'), onClick: () => router.push(loginHref) },
       }),
     [router, loginHref, t],
   );

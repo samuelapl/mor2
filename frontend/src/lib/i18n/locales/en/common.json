@@ -184,7 +184,6 @@
   "learnerProgressDesc": "Detailed analytics on lesson completions, quiz results, and performance milestones.",
   "header": {
     "openMenu": "Open menu",
-    "markAllRead": "Mark all read",
     "account": "Account",
     "logOut": "Log out"
   },
@@ -214,7 +213,6 @@
     "federalDemocraticRepublicOfEthiopiaMinis": "Federal Democratic Republic of Ethiopia • Ministry of Revenues Enterprise LMS",
     "ministryOfRevenues": "Ministry of Revenues",
     "myDashboard": "My Dashboard",
-    "signIn": "Sign In",
     "getStarted": "Get Started"
   },
   "sidebar": {
@@ -281,7 +279,6 @@
     "manageYourProfileSecurityAndPreferences": "Manage your profile, security, and preferences"
   },
   "detailsTab": {
-    "roles": "Roles",
     "status": "Status",
     "memberSince": "Member since",
     "lastLogin": "Last login",

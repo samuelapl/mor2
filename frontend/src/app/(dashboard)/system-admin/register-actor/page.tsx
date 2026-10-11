@@ -269,7 +269,7 @@ export default function RegisterActorPage() {
               variant="outline"
               onClick={() => router.push('/system-admin/users')}
             >
-              {t('registerActorPage.cancel')}
+              {t('usersPage.cancel')}
             </Button>
             <Button
               type="submit"

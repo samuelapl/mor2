@@ -162,7 +162,7 @@ export function CourseCurriculumSection({
                       <h5 className="font-display text-base font-bold text-slate-900 truncate">
                         {lockedModule ? <Lock className="mr-1.5 inline h-3.5 w-3.5 text-slate-400" /> : null}
                         {module.title.trim() || (
-                          <span className="text-amber-600 italic font-normal">{t('courseCurriculumSection.untitledModule')}</span>
+                          <span className="text-amber-600 italic font-normal">{t('creatorSidebar.untitledModule')}</span>
                         )}
                       </h5>
                     </div>

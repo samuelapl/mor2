@@ -53,7 +53,7 @@ export default function DetailsTab({ profile, loading }: DetailsTabProps) {
     <div className="divide-y divide-slate-100">
       <Row label={t('email')} value={profile.email} />
       <Row
-        label={t('detailsTab.roles')}
+        label={t('publicFooter.roles')}
         value={
           <div className="flex flex-wrap justify-end gap-1.5">
             {profile.roles.map((r) => {

@@ -53,7 +53,6 @@
     "officialFederalDemocraticRepublicOfEthio": "Official Federal Democratic Republic of Ethiopia proclamations, regulations, directives, and legal circulars.",
     "learnerPortalView": "Learner Portal View",
     "addCategory": "Add Category",
-    "uploadDocument": "Upload Document",
     "manageLegalLaws": "Manage Legal Laws",
     "dismiss": "Dismiss",
     "allTypes": "All Types",
@@ -75,7 +74,6 @@
     "noDecreesMatchTheCurrentCategory": "No decrees match the current category and filters. Try adjusting your search term or status.",
     "uploadFirstDocument": "Upload First Document",
     "deleteCategory": "Delete Category",
-    "cancel": "Cancel",
     "deleteLegalDocument": "Delete Legal Document",
     "deleteCategoryConfirm": "Are you sure you want to delete category \"{name}\"? Categories containing documents cannot be deleted.",
     "deleteDocumentConfirm": "Are you sure you want to delete document \"{number} - {title}\"?"

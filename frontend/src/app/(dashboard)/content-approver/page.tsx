@@ -200,7 +200,7 @@ export default function ContentApproverDashboardPage() {
           action={
             <Link href="/courses">
               <Button variant="outline" size="sm">
-                {t('contentApproverDashboardPage.reviewQueue2')}
+                {t('contentApproverDashboardPage.reviewQueue')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>

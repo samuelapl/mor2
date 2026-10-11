@@ -191,7 +191,7 @@ export default function Header({ onMenuClick, menuOpen: drawerOpen = false }: He
                   className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
-                  {t('header.markAllRead')}
+                  {t('markAllRead')}
                 </button>
               </div>
               <div className="max-h-[min(24rem,calc(100dvh-9rem))] overflow-y-auto">

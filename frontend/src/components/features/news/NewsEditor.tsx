@@ -736,7 +736,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
                   {!news
                     ? t('newsEditor.saveDraft')
                     : isDirty
-                      ? t('newsEditor.saveChanges')
+                      ? t('newsComments.saveChanges')
                       : t('newsEditor.allChangesSaved')}
                 </Button>
               )}
@@ -920,7 +920,7 @@ export function NewsEditor({ newsId }: { newsId?: string }) {
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setRejectOpen(false)}>
-              {t('newsEditor.cancel')}
+              {t('newsComments.cancel')}
             </Button>
             <Button
               variant="danger"

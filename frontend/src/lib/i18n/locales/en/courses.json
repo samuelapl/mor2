@@ -160,7 +160,6 @@
     "targetAudience": "Target Audience",
     "prerequisitesOptional": "Prerequisites (Optional)",
     "nextBuildCurriculum": "Next: Build Curriculum",
-    "onlineSelfPaced": "Online Self-Paced",
     "selfPacedDigitalModulesVideoStreams": "Self-paced digital modules, video streams, and automated quizzes.",
     "physicalAttendanceAtMinistryBranchRooms": "Physical attendance at ministry branch rooms with QR check-in.",
     "hybridBlended": "Hybrid / Blended",
@@ -257,7 +256,6 @@
     "assessmentWeightsTotalTheyMustAdd": "Assessment weights total {calculatedWeights}% — they must add up to exactly 100%",
     "coursePreFlightChecklistSubmission": "Course Pre-flight Checklist & Submission",
     "reviewYourSyllabusAssessmentsAndConfigur": "Review your syllabus, assessments, and configuration before submitting for approval.",
-    "saveAsDraft": "Save as Draft",
     "submitForApproval": "Submit for Approval",
     "courseInformation": "Course Information",
     "titleRequired": "Title required",
@@ -331,7 +329,6 @@
     "reviewAllModulesLessonsReadingNotes": "Review all modules, lessons, reading notes, and attached documents.",
     "editCurriculum": "Edit Curriculum",
     "noModulesAddedToThisCourse": "⚠ No modules added to this course yet.",
-    "untitledModule": "Untitled Module",
     "moduleDescription": "Module Description:",
     "moduleResourcesReferences": "Module Resources & References ({count})",
     "lessonsInThisModule": "Lessons in this Module ({count})",
@@ -472,7 +469,6 @@
     "hasOfPointsAssigned": "\"{titleEn}\" has {points} of {weight} points assigned.",
     "done": "Done",
     "pending": "Pending",
-    "onlineSession": "Online session",
     "noTrainerYet": "No trainer yet",
     "notScheduledYet": "Not scheduled yet",
     "ofTheCourseGrade": "of the course grade",
@@ -573,8 +569,7 @@
     "returnCourseToDraft": "Return course to draft",
     "whatNeedsToChange": "What needs to change",
     "explainWhatTheOwnerShouldChange": "Explain what the owner should change or add (for example, online sessions). The approval is withdrawn, the owner is notified with this reason, and the course must be resubmitted for approval...",
-    "returning": "Returning…",
-    "cancel": "Cancel"
+    "returning": "Returning…"
   },
   "attachmentCard": {
     "openFileInNewTab": "Open file in new tab",

@@ -250,47 +250,36 @@ Order: smallest first to prove the script, then the rest. Each step:
 | 4.12 | landing + duration/time units | [x] | [x] | [ ] | Committed — browser check pending |
 | 5 | Cleanup + guard | [x] | [x] | [ ] | Committed — browser check pending |
 
-## 7. Wording Conflicts to Review (same English, different Amharic)
+## 7. Wording Conflicts (same English, different Amharic)
 
-The migration kept every original translation, so these are separate keys today. Pick one Amharic wording per row, then point both places at one key (or keep both if the context really differs).
+**Unified on 2026-10-11** (one Amharic wording each; duplicate keys inside a namespace merged):
 
-| Namespace | English | Keys |
-| :--- | :--- | :--- |
-| auth | Could not resend the code. Try again. | firstLoginForm.couldNotResendTheCodeTry, verifyCodeForm.couldNotResendTheCodeTry |
-| auth | Resend code in {cooldown}s | firstLoginForm.resendCodeInS, verifyEmailForm.resendCodeInS |
-| certificates | Expired | certificateCard.expired, manageCertificatesPage.expired |
-| certificates | Revoked | certificateCard.revoked, manageCertificatesPage.revoked2 |
-| certificates | Target: | manageCertificatesPage.target, manageCertificatesPage.target2 |
-| common | Mark all read | markAllRead, header.markAllRead |
-| common | Roles | publicFooter.roles, detailsTab.roles |
-| common | Sign In | publicFooter.signIn, publicHeader.signIn |
-| courses | Assign a trainer | sessionPlanStage.assignATrainer, sessionPlanStage.assignATrainer2 |
-| courses | Audio Lecture | lessonEditorStage.audioLecture, lessonEditorStage.audioLecture2 |
-| courses | Cancel | rejectDialog.cancel (vs others) |
-| courses | Final Assessment | creatorSidebar.finalAssessment, reviewSidebar.finalAssessment |
-| courses | Lesson Assessment | creatorSidebar.lessonAssessment, reviewSidebar.lessonAssessment |
-| courses | Online Self-Paced | deliveryFormatModal.onlineSelfPaced, courseDetailsStage.onlineSelfPaced |
-| courses | Online session | reviewSubmitStage.onlineSession, sessionPlanStage.onlineSession |
-| courses | Save as Draft | creatorHeader.saveAsDraft, reviewSubmitStage.saveAsDraft |
-| courses | Untitled Module | creatorSidebar.untitledModule, courseCurriculumSection.untitledModule |
-| courses | Video Lecture | lessonEditorStage.videoLecture, lessonEditorStage.videoLecture2 |
-| dashboard | Approved | trainingAdminDashboardPage.approved, courseOwnerDashboardPage.approved |
-| dashboard | Completed | learnerCoursesPage.completed, trainerDashboardPage.completed |
-| dashboard | Live Sessions | learnerLiveSessionsPage.liveSessions, trainingAdminDashboardPage.liveSessions |
-| dashboard | No live sessions scheduled | learnerLiveSessionsPage.noLiveSessionsScheduled, trainingAdminDashboardPage.noLiveSessionsScheduled |
-| dashboard | Pending Review | courseFeedbackPage.pendingReview, courseFeedbackPage.pendingReview2 |
-| dashboard | Pending review | contentApproverDashboardPage.pendingReview2, contentApproverDashboardPage.pendingReview3 |
-| dashboard | Review queue | contentApproverDashboardPage.reviewQueue, contentApproverDashboardPage.reviewQueue2 |
-| dashboard | Reviewed | courseFeedbackPage.reviewed, courseFeedbackPage.reviewed2 |
-| laws | Add Category | lawsSplitView.addCategory, lawsSplitView.addCategory2 |
-| laws | Cancel | categoryFormModal.cancel, lawsSplitView.cancel |
-| laws | Upload Document | documentFormModal.uploadDocument, lawsSplitView.uploadDocument |
-| news | Cancel | newsComments.cancel, newsEditor.cancel |
-| news | Published | newsEditor.published, news.published |
-| news | Save changes | newsComments.saveChanges, newsEditor.saveChanges |
-| news | Sign in | newsComments.signIn, useSignInPrompt.signIn |
-| users | Cancel | usersPage.cancel, registerActorPage.cancel |
-| users | Register user | registerActorPage.registerUser, registerActorPage.registerUser2 |
+| English | Amharic now used everywhere |
+| :--- | :--- |
+| Cancel | ይቅር |
+| Sign In / Sign in | ግባ |
+| Mark all read | ሁሉንም እንደተነበበ ምልክት አድርግ |
+| Roles | ሚናዎች |
+| Live Sessions | የቀጥታ ክፍለ-ጊዜዎች |
+| No live sessions scheduled | ምንም የታቀዱ የቀጥታ ክፍለ-ጊዜዎች የሉም |
+| Save changes | ለውጦችን አስቀምጥ |
+| Upload Document | ሰነድ ጫን |
+| Save as Draft | እንደ ረቂቅ አስቀምጥ |
+| Untitled Module | ርዕስ አልባ ሞጁል |
+| Online Self-Paced | ኦንላይን (ራስ-አገዝ) |
+| Online session | የኦንላይን ክፍለ-ጊዜ |
+| Could not resend the code. Try again. | ኮዱን በድጋሚ መላክ አልተቻለም። እንደገና ይሞክሩ። |
+| Resend code in {cooldown}s | ኮዱን በ{cooldown} ሰከንድ ውስጥ በድጋሚ ላክ |
+| Review queue | የግምገማ ዝርዝር |
+
+**Kept different on purpose (21):** the Amharic differs because the meaning does:
+- **Singular vs plural:** Completed, Approved, Reviewed, Pending Review, Expired, Role, User, "Lesson" as a count word.
+- **Status/event vs label:** Approved/Rejected/Published/Revoked as a history event (ጸድቋል) vs a badge or filter (የጸደቀ).
+- **Short button vs long label:** Video/Audio Lecture.
+- **The English is the inaccurate side:** "Final Assessment" (Amharic adds "and rules"), "Target:" (one means the item being revoked).
+- **Instruction vs button:** Assign a trainer, Register user, Add Category.
+
+A native speaker may still want to review these.
 
 ## 8. As Built (2026-10-11)
 

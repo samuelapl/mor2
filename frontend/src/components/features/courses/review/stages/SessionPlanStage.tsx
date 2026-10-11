@@ -163,7 +163,7 @@ export function SessionPlanStage({
     <div className="space-y-6">
       <StageTitle
         icon={<Video className="h-4 w-4" />}
-        eyebrow={`${t('sessionPlanStage.onlineSession')} ${index + 1}`}
+        eyebrow={`${t('reviewSubmitStage.onlineSession')} ${index + 1}`}
         title={plan.titleEn || t('creatorSidebar.untitledSession')}
         meta={
           <>
