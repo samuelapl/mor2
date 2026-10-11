@@ -62,7 +62,7 @@ export default function NewsCommentsModerationPage() {
 
   if (!can(NEWS_PERMISSIONS.publish)) {
     return (
-      <PageShell title={'newsComments.comments'}>
+      <PageShell title={t('newsComments.comments')}>
         <EmptyState
           title={t('newsCommentsModerationPage.publishersOnly')}
           description={t('newsCommentsModerationPage.moderatingCommentsNeedsTheNewsPublish')}
@@ -93,7 +93,7 @@ export default function NewsCommentsModerationPage() {
 
   return (
     <PageShell
-      title={'newsComments.comments'}
+      title={t('newsComments.comments')}
       description={headline ? <span lang={newsTextLang(headline)}>{headline}</span> : undefined}
       actions={
         <Link

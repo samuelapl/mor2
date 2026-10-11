@@ -99,8 +99,8 @@ export default function NewsManagementPage() {
 
   return (
     <PageShell
-      title={'newsManagementPage.newsManagement'}
-      description={'newsManagementPage.writeMinistryNewsSendItFor'}
+      title={t('newsManagementPage.newsManagement')}
+      description={t('newsManagementPage.writeMinistryNewsSendItFor')}
       actions={
         canManage ? (
           <Link href="/news-management/new">

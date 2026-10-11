@@ -237,5 +237,57 @@ Order: smallest first to prove the script, then the rest. Each step:
 | 2 | Catalog + `t()` + `translate()` + check script | [x] | [x] | [x] | Done |
 | 3 | Extraction script | [x] | n/a | n/a | Done (tested on sessions + courses/creator, reverted) |
 | 4.1 | sessions (57 by script, 18 config texts + 1 badge by hand) | [x] | [x] | [ ] | Committed — browser check pending |
-| 4.2–4.12 | Remaining folders | [ ] | [ ] | [ ] | Pending |
+| 4.2 | layout + ui → common | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.3 | components/shared → common | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.4 | auth pages → auth | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.5 | role dashboards → dashboard | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.6 | certificates | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.7 | news | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.8 | laws | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.9 | classroom | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.10 | system-admin → users + admin | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.11 | courses + quiz | [x] | [x] | [ ] | Committed — browser check pending |
+| 4.12 | landing + duration/time units | [x] | [x] | [ ] | Committed — browser check pending |
 | 5 | Cleanup + guard | [ ] | [ ] | [ ] | Pending |
+
+## 7. Wording Conflicts to Review (same English, different Amharic)
+
+The migration kept every original translation, so these are separate keys today. Pick one Amharic wording per row, then point both places at one key (or keep both if the context really differs).
+
+| Namespace | English | Keys |
+| :--- | :--- | :--- |
+| auth | Could not resend the code. Try again. | firstLoginForm.couldNotResendTheCodeTry, verifyCodeForm.couldNotResendTheCodeTry |
+| auth | Resend code in {cooldown}s | firstLoginForm.resendCodeInS, verifyEmailForm.resendCodeInS |
+| certificates | Expired | certificateCard.expired, manageCertificatesPage.expired |
+| certificates | Revoked | certificateCard.revoked, manageCertificatesPage.revoked2 |
+| certificates | Target: | manageCertificatesPage.target, manageCertificatesPage.target2 |
+| common | Mark all read | markAllRead, header.markAllRead |
+| common | Roles | publicFooter.roles, detailsTab.roles |
+| common | Sign In | publicFooter.signIn, publicHeader.signIn |
+| courses | Assign a trainer | sessionPlanStage.assignATrainer, sessionPlanStage.assignATrainer2 |
+| courses | Audio Lecture | lessonEditorStage.audioLecture, lessonEditorStage.audioLecture2 |
+| courses | Cancel | rejectDialog.cancel (vs others) |
+| courses | Final Assessment | creatorSidebar.finalAssessment, reviewSidebar.finalAssessment |
+| courses | Lesson Assessment | creatorSidebar.lessonAssessment, reviewSidebar.lessonAssessment |
+| courses | Online Self-Paced | deliveryFormatModal.onlineSelfPaced, courseDetailsStage.onlineSelfPaced |
+| courses | Online session | reviewSubmitStage.onlineSession, sessionPlanStage.onlineSession |
+| courses | Save as Draft | creatorHeader.saveAsDraft, reviewSubmitStage.saveAsDraft |
+| courses | Untitled Module | creatorSidebar.untitledModule, courseCurriculumSection.untitledModule |
+| courses | Video Lecture | lessonEditorStage.videoLecture, lessonEditorStage.videoLecture2 |
+| dashboard | Approved | trainingAdminDashboardPage.approved, courseOwnerDashboardPage.approved |
+| dashboard | Completed | learnerCoursesPage.completed, trainerDashboardPage.completed |
+| dashboard | Live Sessions | learnerLiveSessionsPage.liveSessions, trainingAdminDashboardPage.liveSessions |
+| dashboard | No live sessions scheduled | learnerLiveSessionsPage.noLiveSessionsScheduled, trainingAdminDashboardPage.noLiveSessionsScheduled |
+| dashboard | Pending Review | courseFeedbackPage.pendingReview, courseFeedbackPage.pendingReview2 |
+| dashboard | Pending review | contentApproverDashboardPage.pendingReview2, contentApproverDashboardPage.pendingReview3 |
+| dashboard | Review queue | contentApproverDashboardPage.reviewQueue, contentApproverDashboardPage.reviewQueue2 |
+| dashboard | Reviewed | courseFeedbackPage.reviewed, courseFeedbackPage.reviewed2 |
+| laws | Add Category | lawsSplitView.addCategory, lawsSplitView.addCategory2 |
+| laws | Cancel | categoryFormModal.cancel, lawsSplitView.cancel |
+| laws | Upload Document | documentFormModal.uploadDocument, lawsSplitView.uploadDocument |
+| news | Cancel | newsComments.cancel, newsEditor.cancel |
+| news | Published | newsEditor.published, news.published |
+| news | Save changes | newsComments.saveChanges, newsEditor.saveChanges |
+| news | Sign in | newsComments.signIn, useSignInPrompt.signIn |
+| users | Cancel | usersPage.cancel, registerActorPage.cancel |
+| users | Register user | registerActorPage.registerUser, registerActorPage.registerUser2 |
