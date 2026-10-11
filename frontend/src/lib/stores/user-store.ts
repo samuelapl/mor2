@@ -1,8 +1,8 @@
 'use client';
 
+import { useCallback } from 'react';
 import { create } from 'zustand';
 
-import { ApiError } from '@/lib/api/client';
 import { roleToApi } from '@/lib/api/transform';
 import type { BulkCreateUserItem, BulkCreateUsersResult } from '@/lib/api/types';
 import {
@@ -18,14 +18,7 @@ import type { ActionResult, Role, User } from '@/types';
 
 import { useAuthStore } from './auth-store';
 import { reloadAll } from './session-data';
-
-function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? err.message : fallback;
-}
-
-function hasPermission(user: User | null, code: string): boolean {
-  return user?.permissions?.includes(code) ?? false;
-}
+import { errorMessage, hasPermission } from './store-utils';
 
 export interface RegisterActorInput {
   firstName: string;
@@ -220,3 +213,9 @@ export const useUserStore = create<UserStore>()((set, get) => ({
 
   reset: () => set({ users: [], userNames: {} }),
 }));
+
+/** Memoized `userName` that re-renders the caller when `userNames` changes. */
+export function useUserName(): (userId: string) => string {
+  const userNames = useUserStore((s) => s.userNames);
+  return useCallback((userId: string) => userNames[userId] ?? 'Unknown', [userNames]);
+}

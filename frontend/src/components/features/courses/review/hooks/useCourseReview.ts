@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseById, useCourseStore } from '@/lib/stores/course-store';
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from '@/lib/api/quiz';
 import type { ApiAssessment } from '@/lib/api/types';
 import type { AssessmentsByScope, ReviewNode, ReviewNodeType } from '../types';
@@ -57,7 +58,9 @@ function groupAssessments(list: ApiAssessment[]): AssessmentsByScope {
 
 /** Loads the course under review plus every assessment (with answers) and tracks the selected item. */
 export function useCourseReview(courseId: string) {
-  const { ready, courseById, refreshCourse } = useLms();
+  const ready = useAuthStore((s) => s.ready);
+  const courseById = useCourseById();
+  const refreshCourse = useCourseStore((s) => s.refreshCourse);
   const course = courseById(courseId);
 
   // The store is loaded once at sign-in; re-fetch this course so scheduling, trainer and

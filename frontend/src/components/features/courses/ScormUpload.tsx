@@ -10,7 +10,7 @@ import {
   Loader2,
   Upload,
 } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { uploadScormPreview } from '@/lib/api/files';
 import { toast } from '@/lib/toast';
 import { COURSE_CATEGORIES, deriveCategory } from '@/constants/course-categories';
@@ -48,7 +48,8 @@ interface ScormUploadProps {
 }
 
 export function ScormUpload({ onDone, onCancel }: ScormUploadProps) {
-  const { createCourse, courses } = useLms();
+  const createCourse = useCourseStore((s) => s.createCourse);
+  const courses = useCourseStore((s) => s.courses);
 
   /** Appends -2, -3… when the generated code is already taken by an existing course. */
   const uniqueCode = useCallback(

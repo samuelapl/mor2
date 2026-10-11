@@ -18,7 +18,9 @@ import {
 } from 'lucide-react';
 import { fetchUpcomingSessions } from '@/lib/api/monitoring';
 import type { ApiLiveSession, ApiVenue } from '@/lib/api/types';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useEnrollmentForCourse } from '@/lib/stores/enrollment-store';
 import { useCourseProgress } from '@/lib/api/useCourseProgress';
 import { tr } from '@/constants/labels';
 import PageShell from '@/components/shared/PageShell';
@@ -35,7 +37,10 @@ import { isInPersonEnrollment, isInPersonSession } from '@/lib/session-mode';
 import { formatSessionDate, formatSessionTime } from '@/lib/app-time';
 
 export default function LearnerDashboardPage() {
-  const { courses, lang, currentUser, getEnrollmentForCourse } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const lang = useAuthStore((s) => s.lang);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const getEnrollmentForCourse = useEnrollmentForCourse();
   const me = currentUser?.id ?? '';
   const enrolled = courses.filter((c) => c.enrolledLearnerIds.includes(me));
   const { progress } = useCourseProgress(enrolled.map((c) => c.id));

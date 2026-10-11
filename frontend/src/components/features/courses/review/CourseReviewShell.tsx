@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { usePermissions } from '@/lib/usePermissions';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { CourseCreationWizard } from '../CourseCreationWizard';
 import { useCourseReview } from './hooks/useCourseReview';
 import { useCourseActions } from './hooks/useCourseActions';
@@ -35,7 +35,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const { ready, detailLoaded, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
   const actions = useCourseActions(course, { onDeleted: () => router.push('/courses') });
   // Stable, so a session page waiting to be scheduled elsewhere can keep re-checking.
-  const { refreshCourse: refreshCourseById } = useLms();
+  const refreshCourseById = useCourseStore((s) => s.refreshCourse);
   const reloadCourse = useCallback(() => void refreshCourseById(courseId), [refreshCourseById, courseId]);
 
   const [editing, setEditing] = useState(false);

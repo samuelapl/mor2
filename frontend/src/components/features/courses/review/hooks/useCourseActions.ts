@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { fetchTrainers } from '@/lib/api/users';
 import { userFromApi } from '@/lib/api/transform';
@@ -21,18 +21,16 @@ function notify(result: ActionResult, successMessage: string): boolean {
  * Moved from the former CourseDetailModal without behaviour changes.
  */
 export function useCourseActions(course: Course | undefined, opts: { onDeleted?: () => void } = {}) {
-  const {
-    assignTrainerToCourse,
-    unassignTrainerFromCourse,
-    submitForApproval,
-    approveCourse,
-    rejectCourse,
-    returnCourseToDraft,
-    publishCourse,
-    unpublishCourse,
-    archiveCourse,
-    deleteCourse,
-  } = useLms();
+  const assignTrainerToCourse = useCourseStore((s) => s.assignTrainerToCourse);
+  const unassignTrainerFromCourse = useCourseStore((s) => s.unassignTrainerFromCourse);
+  const submitForApproval = useCourseStore((s) => s.submitForApproval);
+  const approveCourse = useCourseStore((s) => s.approveCourse);
+  const rejectCourse = useCourseStore((s) => s.rejectCourse);
+  const returnCourseToDraft = useCourseStore((s) => s.returnCourseToDraft);
+  const publishCourse = useCourseStore((s) => s.publishCourse);
+  const unpublishCourse = useCourseStore((s) => s.unpublishCourse);
+  const archiveCourse = useCourseStore((s) => s.archiveCourse);
+  const deleteCourse = useCourseStore((s) => s.deleteCourse);
   const { can: hasPermission, hasRole } = usePermissions();
 
   const [busy, setBusy] = useState(false);

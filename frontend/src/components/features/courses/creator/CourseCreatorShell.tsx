@@ -3,7 +3,7 @@
 import { calculateModuleDuration } from '@/lib/duration';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import type { Course, CourseDeliveryMode, CourseLevel, Question, UploadedResource, Quiz } from '@/types';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 import { uploadAttachment } from '@/lib/api/files';
 import { fetchAssessmentWithAnswers, fetchCourseAssessments } from '@/lib/api/quiz';
 import { COURSE_CATEGORIES } from '@/constants/course-categories';
@@ -50,7 +50,10 @@ export interface CourseCreatorShellProps {
 }
 
 export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDeliveryMode = DEFAULT_DELIVERY_MODE }: CourseCreatorShellProps) {
-  const { courses, createCourse, updateCourseFull, submitForApproval } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const createCourse = useCourseStore((s) => s.createCourse);
+  const updateCourseFull = useCourseStore((s) => s.updateCourseFull);
+  const submitForApproval = useCourseStore((s) => s.submitForApproval);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedCourseIdRef = useRef<string | undefined>(editingCourse?.id);
   const [savedCourseId, setSavedCourseId] = useState<string | undefined>(editingCourse?.id);

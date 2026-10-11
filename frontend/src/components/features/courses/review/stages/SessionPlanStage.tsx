@@ -18,7 +18,7 @@ import {
 import { formatSessionDateTime } from '@/lib/app-time';
 import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBadge';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useLms } from '@/lib/lms-store';
+import { useUserName } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import { assignSessionPlanTrainer } from '@/lib/api/session-plans';
@@ -75,7 +75,7 @@ export function SessionPlanStage({
   onRefresh,
 }: SessionPlanStageProps) {
   const { tBilingual, isAmharic } = useTranslation();
-  const { userName } = useLms();
+  const userName = useUserName();
   const { can } = usePermissions();
   const policyPassMark = usePolicyPassMark();
   const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);

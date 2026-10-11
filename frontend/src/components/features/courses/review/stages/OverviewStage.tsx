@@ -7,7 +7,7 @@ import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Bad
 import { Button } from '@/components/ui/Button';
 import { RichContent, stripHtmlTags } from '@/components/ui/RichContent';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useLms } from '@/lib/lms-store';
+import { useUserName } from '@/lib/stores/user-store';
 import type { Course, UploadedResource, User } from '@/types';
 import { AttachmentCard } from '../../detail/AttachmentCard';
 import { getItemAttachments } from '../../wizard-components';
@@ -38,7 +38,7 @@ export function OverviewStage({
   onRemoveTrainer,
 }: OverviewStageProps) {
   const { tBilingual, isAmharic } = useTranslation();
-  const { userName } = useLms();
+  const userName = useUserName();
 
   const courseFiles: UploadedResource[] = useMemo(
     () => (course.attachments || []).map((a) => ({ id: a.id, name: a.name, url: a.url, type: a.type })),

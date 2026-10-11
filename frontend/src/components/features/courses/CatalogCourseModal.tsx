@@ -35,7 +35,10 @@ import { Badge, courseLevelLabel, courseLevelVariant } from '@/components/ui/Bad
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RichContent } from '@/components/ui/RichContent';
-import { useLms } from '@/lib/lms-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseById } from '@/lib/stores/course-store';
+import { useEnrollmentStore } from '@/lib/stores/enrollment-store';
+import { useUserName } from '@/lib/stores/user-store';
 import { fetchAssessment, fetchCourseAssessments } from '@/lib/api/quiz';
 import { fetchLiveSessions } from '@/lib/api/monitoring';
 import type { ApiAssessment, ApiLiveSession } from '@/lib/api/types';
@@ -82,7 +85,10 @@ function bookedSeatCount(session: ApiLiveSession) {
 export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseModalProps) {
   const { isAmharic } = useTranslation();
   const router = useRouter();
-  const { courseById, currentUser, userName, enrollSelf } = useLms();
+  const courseById = useCourseById();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const userName = useUserName();
+  const enrollSelf = useEnrollmentStore((s) => s.enrollSelf);
   const course = courseById(courseId);
 
   const [enrolling, setEnrolling] = useState(false);

@@ -295,8 +295,8 @@ Sweep all remaining `useLms()` imports across the codebase, remove the `<LmsProv
 | :--- | :--- | :---: | :---: | :--- |
 | **Phase 1** | `auth-store.ts` | [x] | [x] | Done |
 | **Phase 2** | `user-store.ts` | [x] | [x] | Done |
-| **Phase 3** | `enrollment-store.ts` | [x] | [x] | Awaiting browser check (consumers switch in Phase 4/5 — they also read courses) |
-| **Phase 4** | `course-store.ts` | [ ] | [ ] | Pending |
+| **Phase 3** | `enrollment-store.ts` | [x] | [x] | Done |
+| **Phase 4** | `course-store.ts` | [x] | [x] | Awaiting browser check |
 | **Phase 5** | Cutover & Delete `lms-store.tsx` | N/A (Deleted) | [ ] | Pending |
 
 ---

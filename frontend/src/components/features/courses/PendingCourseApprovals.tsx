@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Check, Eye, X } from 'lucide-react';
-import { useLms } from '@/lib/lms-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserName } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
 import { usePagination } from '@/lib/usePagination';
 import { Table, Td } from '@/components/ui/Table';
@@ -18,7 +19,10 @@ import { COURSE_CATEGORIES } from '@/constants/course-categories';
 import { toast } from '@/lib/toast';
 
 export function PendingCourseApprovals() {
-  const { courses, userName, approveCourse, rejectCourse } = useLms();
+  const courses = useCourseStore((s) => s.courses);
+  const userName = useUserName();
+  const approveCourse = useCourseStore((s) => s.approveCourse);
+  const rejectCourse = useCourseStore((s) => s.rejectCourse);
   const { can } = usePermissions();
   const canApprove = can('course.approve_reject');
   const canReject = can('course.approve_reject');

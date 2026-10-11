@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 
 import { isValidEmail, passwordIssues } from '@/constants/auth';
-import { ApiError, setAccessToken, setRefreshHandler, setUnauthorizedHandler } from '@/lib/api/client';
+import { setAccessToken, setRefreshHandler, setUnauthorizedHandler } from '@/lib/api/client';
 import {
   clearFirstLoginChallenge,
   completeFirstLogin as apiCompleteFirstLogin,
@@ -19,6 +19,9 @@ import {
 import { getStoredAccessToken, getStoredRefreshToken, clearTokens } from '@/lib/api/tokens';
 import { changeMyPassword, updateMyProfile } from '@/lib/api/users';
 import type { ActionResult, Lang, LoginResult, User } from '@/types';
+
+import { reloadAll, resetAll, seedUserName } from './session-data';
+import { errorMessage } from './store-utils';
 
 export const LOCALE_STORAGE_KEY = 'eltms_locale';
 
@@ -41,10 +44,6 @@ export function persistLocale(locale: Lang): void {
   } catch {}
 }
 
-function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? err.message : fallback;
-}
-
 export interface RegisterInput {
   firstName: string;
   lastName: string;
@@ -57,29 +56,6 @@ export interface RegisterInput {
 }
 
 export type RegisterResult = { ok: true; email: string; devCode?: string } | { ok: false; message: string };
-
-/**
- * Data-side callbacks the auth flow triggers. Registered by `LmsProvider` until the
- * course/user/enrollment data moves into its own stores (see ZUSTAND_MIGRATION_PLAN.md).
- */
-export interface SessionHooks {
-  /** A fresh sign-in (login, email verification, first-login): seed names and load data. */
-  onSignIn: (user: User) => Promise<void>;
-  /** A restored session (startup refresh): load data. */
-  onRestore: (user: User) => Promise<void>;
-  /** The session ended: drop all user-scoped data. */
-  onClear: () => void;
-}
-
-let sessionHooks: SessionHooks = {
-  onSignIn: async () => {},
-  onRestore: async () => {},
-  onClear: () => {},
-};
-
-export function setSessionHooks(hooks: SessionHooks): void {
-  sessionHooks = hooks;
-}
 
 let authInitialized = false;
 
@@ -127,7 +103,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
       set({ lang: res.user.locale });
       persistLocale(res.user.locale);
     }
-    await sessionHooks.onSignIn(res.user);
+    seedUserName(res.user);
+    await reloadAll(res.user);
     return { ok: true, role: res.user.role, user: res.user };
   };
 
@@ -172,7 +149,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
             const res = await apiRefresh();
             setAccessToken(res.accessToken);
             set({ currentUser: res.user });
-            await sessionHooks.onRestore(res.user);
+            await reloadAll(res.user);
           } catch {
             clearTokens();
             get().clearSession();
@@ -259,7 +236,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
     clearSession: () => {
       setAccessToken(null);
       set({ currentUser: null });
-      sessionHooks.onClear();
+      resetAll();
     },
 
     logout: () => {

@@ -1,22 +1,15 @@
 'use client';
 
+import { useCallback } from 'react';
 import { create } from 'zustand';
 
-import { ApiError } from '@/lib/api/client';
 import { bulkEnroll, selfEnroll } from '@/lib/api/enrollments';
 import type { ApiEnrollment } from '@/lib/api/types';
-import type { ActionResult, CourseDeliveryMode, User } from '@/types';
+import type { ActionResult, CourseDeliveryMode } from '@/types';
 
 import { useAuthStore } from './auth-store';
 import { markCourseEnrolled, reloadAll } from './session-data';
-
-function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? err.message : fallback;
-}
-
-function hasPermission(user: User | null, code: string): boolean {
-  return user?.permissions?.includes(code) ?? false;
-}
+import { errorMessage, hasPermission } from './store-utils';
 
 export interface EnrollSelfOptions {
   deliveryMode?: CourseDeliveryMode;
@@ -97,3 +90,9 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set, get) => ({
 
   reset: () => set({ myEnrollments: [] }),
 }));
+
+/** Memoized `getEnrollmentForCourse` that re-renders the caller when `myEnrollments` changes. */
+export function useEnrollmentForCourse(): (courseId: string) => ApiEnrollment | undefined {
+  const myEnrollments = useEnrollmentStore((s) => s.myEnrollments);
+  return useCallback((courseId: string) => myEnrollments.find((e) => e.courseId === courseId), [myEnrollments]);
+}
