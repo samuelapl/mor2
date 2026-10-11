@@ -69,6 +69,7 @@ model User {
   lessonCompletions       LessonCompletion[]
   attendanceRecords       Attendance[]
   liveSessionsTaught      LiveSession[] @relation("LiveSessionTrainer")
+  sessionPlansTaught      CourseSessionPlan[] @relation("SessionPlanTrainer")
   attendanceLogs          AttendanceLog[]
   certificatesEarned      Certificate[]
   certificateTemplatesCreated CertificateTemplate[]
@@ -691,15 +692,19 @@ model CourseSessionPlan {
   titleEn       String   @map("title_en")
   descriptionEn String?  @map("description_en")
   objectivesEn  String?  @map("objectives_en")
+  /// Trainer assigned before scheduling; pre-fills the session's host when it is scheduled.
+  trainerId     String?  @map("trainer_id")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  trainer     User?        @relation("SessionPlanTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
   /// Weighted quizzes (type SESSION_ASSESSMENT) planned for this session.
   assessments Assessment[]
   liveSession LiveSession?
 
   @@index([courseId])
+  @@index([trainerId])
   @@map("course_session_plans")
 }
 

@@ -82,15 +82,9 @@ export function updateLiveSession(
   return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'PATCH', body });
 }
 
-/**
- * `rebalance` is required when the session came from a course plan whose quizzes carry weight
- * on an approved course: it says which session quizzes take over that weight.
- */
-export function deleteLiveSession(
-  id: string,
-  rebalance?: Array<{ assessmentId: string; weight: number }>,
-): Promise<ApiLiveSession> {
-  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE', body: rebalance ? { rebalance } : undefined });
+/** A session scheduled from a course plan goes back to unscheduled; the plan itself stays. */
+export function deleteLiveSession(id: string): Promise<ApiLiveSession> {
+  return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE' });
 }
 
 /** Re-grades the session's weighted quizzes into learners' course results. */

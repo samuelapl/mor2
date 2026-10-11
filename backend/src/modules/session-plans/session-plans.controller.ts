@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, Permissions } from '@common/decorators';
 import { AuthenticatedUser } from '@common/interfaces';
@@ -6,7 +6,12 @@ import { RolesGuard } from '@common/guards';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { SessionPlansService } from './session-plans.service';
 import { CoursesService } from '@modules/courses/courses.service';
-import { AddSessionQuizDto, RemoveSessionPlanDto, ReplaceSessionPlansDto } from './dto';
+import {
+  AddSessionQuizDto,
+  AssignSessionPlanTrainerDto,
+  RemoveSessionPlanDto,
+  ReplaceSessionPlansDto,
+} from './dto';
 
 @ApiTags('session-plans')
 @ApiBearerAuth()
@@ -53,6 +58,19 @@ export class SessionPlansController {
     @Body() dto: RemoveSessionPlanDto,
   ) {
     return this.sessionPlansService.removePlan(courseId, planId, dto);
+  }
+
+  @Patch('courses/:courseId/session-plans/:planId/trainer')
+  @Permissions('course.assign_trainer')
+  @ApiOperation({
+    summary: 'Assign (or clear) the trainer of a planned session, before or after scheduling',
+  })
+  async assignTrainer(
+    @Param('courseId') courseId: string,
+    @Param('planId') planId: string,
+    @Body() dto: AssignSessionPlanTrainerDto,
+  ) {
+    return this.sessionPlansService.assignTrainer(courseId, planId, dto.trainerId ?? null);
   }
 
   @Post('courses/:courseId/session-plans/:planId/quizzes')

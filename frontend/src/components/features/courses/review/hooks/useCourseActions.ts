@@ -99,7 +99,6 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
     can,
     busy,
     trainerOptions,
-    hasTrainer: Boolean(course?.trainerId),
     requiresTrainer,
 
     submit: () => withBusy(async () => notify(await submitForApproval(id), 'Course submitted for approval.')),
@@ -129,13 +128,6 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
       }),
 
     publish: () => withBusy(async () => notify(await publishCourse(id), 'Course published. Learners can now enroll.')),
-
-    assignAndPublish: (trainerId: string) =>
-      withBusy(async () => {
-        const assigned = await assignTrainerToCourse(id, trainerId);
-        if (!assigned.ok) return notify(assigned, '');
-        return notify(await publishCourse(id), 'Trainer assigned and course published.');
-      }),
 
     unpublish: () => withBusy(async () => notify(await unpublishCourse(id), 'Course unpublished. It no longer appears in the learner catalog.')),
 

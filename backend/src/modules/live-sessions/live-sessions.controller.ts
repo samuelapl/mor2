@@ -17,7 +17,6 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import { SessionStatus } from '@prisma/client';
 import { SessionQuizResultsService } from './session-quiz-results.service';
 import { LiveSessionsService } from './live-sessions.service';
-import { RemoveSessionPlanDto } from '@modules/session-plans/dto';
 import {
   CreateSessionDto,
   UpdateSessionDto,
@@ -241,10 +240,12 @@ export class LiveSessionsController {
 
   @Delete('live-sessions/:id')
   @Permissions('live_session.manage_all')
-  @ApiOperation({ summary: 'Soft delete a live session' })
+  @ApiOperation({
+    summary: 'Soft delete a live session (a planned session goes back to unscheduled)',
+  })
   @ApiParam({ name: 'id', type: String })
-  async remove(@Param('id') id: string, @Body() dto: RemoveSessionPlanDto) {
-    return this.liveSessionsService.softDelete(id, dto?.rebalance);
+  async remove(@Param('id') id: string) {
+    return this.liveSessionsService.softDelete(id);
   }
 
   @Post('live-sessions/:id/grade-quizzes')

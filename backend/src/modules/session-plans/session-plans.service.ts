@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AssessmentType, CourseDeliveryMode, CourseStatus, Prisma } from '@prisma/client';
+import {
+  AssessmentType,
+  CourseDeliveryMode,
+  CourseStatus,
+  Prisma,
+  SessionStatus,
+} from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
 import { assertCourseWeightsTotal } from '@common/utils';
 import { PolicyService } from '@modules/policy/policy.service';
@@ -231,6 +237,45 @@ export class SessionPlansService {
     return this.findByCourse(courseId);
   }
 
+  /**
+   * Assigns (or with `null` clears) the trainer who will host a planned session, before or after
+   * it is scheduled. The trainer also becomes a course trainer, so they can schedule and run it.
+   * A session that is already scheduled and not yet held moves to the new trainer too.
+   */
+  async assignTrainer(courseId: string, planId: string, trainerId: string | null) {
+    const plan = await this.prisma.courseSessionPlan.findUnique({
+      where: { id: planId },
+      include: { liveSession: { select: { id: true, status: true, deletedAt: true } } },
+    });
+    if (!plan || plan.courseId !== courseId) throw new NotFoundException('Session plan not found');
+    if (trainerId) {
+      const trainer = await this.prisma.user.findUnique({
+        where: { id: trainerId },
+        select: { isActive: true, deletedAt: true },
+      });
+      if (!trainer || trainer.deletedAt || !trainer.isActive) {
+        throw new BadRequestException('Trainer not found or inactive');
+      }
+    }
+
+    const session = plan.liveSession && !plan.liveSession.deletedAt ? plan.liveSession : null;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.courseSessionPlan.update({ where: { id: planId }, data: { trainerId } });
+      if (trainerId) {
+        await tx.trainerAssignment.upsert({
+          where: { courseId_userId: { courseId, userId: trainerId } },
+          create: { courseId, userId: trainerId },
+          update: {},
+        });
+      }
+      if (session && session.status !== SessionStatus.COMPLETED) {
+        await tx.liveSession.update({ where: { id: session.id }, data: { trainerId } });
+      }
+    });
+
+    return this.findByCourse(courseId);
+  }
+
   /** Only session quizzes of the same course can absorb weight; approved lesson/module/final weights stay as approved. */
   /** Freed weight goes to the final assessment, or the heaviest remaining one if there is none. */
   private async giveWeightToDefault(
@@ -282,6 +327,7 @@ export class SessionPlansService {
       titleEn: p.titleEn,
       descriptionEn: p.descriptionEn,
       objectivesEn: p.objectivesEn,
+      trainerId: p.trainerId,
       quizzes: p.assessments.map(({ questions, ...quiz }) => ({
         ...quiz,
         questionCount: Array.isArray(questions) ? questions.length : 0,

@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/lib/toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { usePermissions } from '@/lib/usePermissions';
+import { useLms } from '@/lib/lms-store';
 import { CourseCreationWizard } from '../CourseCreationWizard';
 import { useCourseReview } from './hooks/useCourseReview';
 import { useCourseActions } from './hooks/useCourseActions';
-import { buildIssueMap, buildNodeOrder, sameNode } from './nodes';
+import { buildIssueMap, buildNodeOrder, sameNode, sessionPlanTrainerId } from './nodes';
 import type { ReviewNode } from './types';
 import { ReviewHeader } from './ReviewHeader';
 import { ReviewSidebar } from './ReviewSidebar';
@@ -21,7 +22,6 @@ import { AssessmentStage } from './stages/AssessmentStage';
 import { ApprovalHistoryStage } from './stages/ApprovalHistoryStage';
 import { SessionPlanStage } from './stages/SessionPlanStage';
 import { RejectDialog } from './dialogs/RejectDialog';
-import { PublishDialog } from './dialogs/PublishDialog';
 import { ConfirmActionDialog } from './dialogs/ConfirmActionDialog';
 
 /** Staff who may open the review page. Learners (course.browse only) use the classroom instead. */
@@ -32,13 +32,15 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
   const { tBilingual } = useTranslation();
   const { canAny } = usePermissions();
 
-  const { ready, detailLoaded, course, refreshCourse, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
+  const { ready, detailLoaded, course, assessments, assessmentsLoading, reloadAssessments, selectedNode, setSelectedNode } = useCourseReview(courseId);
   const actions = useCourseActions(course, { onDeleted: () => router.push('/courses') });
+  // Stable, so a session page waiting to be scheduled elsewhere can keep re-checking.
+  const { refreshCourse: refreshCourseById } = useLms();
+  const reloadCourse = useCallback(() => void refreshCourseById(courseId), [refreshCourseById, courseId]);
 
   const [editing, setEditing] = useState(false);
   /** Which reason dialog is open: rejecting a submission or withdrawing an approval. */
   const [reasonDialog, setReasonDialog] = useState<'reject' | 'returnToDraft' | null>(null);
-  const [publishOpen, setPublishOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | null>(null);
 
   // `?edit=1` opens the creator straight away (e.g. right after a SCORM import).
@@ -74,14 +76,25 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
     else router.push('/courses');
   };
 
+  // Each planned session needs a trainer and a schedule; point at the first one that is not ready.
   const handlePublish = () => {
-    if (actions.hasTrainer || !actions.requiresTrainer) {
+    const notReady = (course?.sessionPlans ?? []).filter((p) => !sessionPlanTrainerId(p) || !p.liveSession);
+    if (notReady.length === 0) {
       void actions.publish();
-    } else if (actions.can.assignTrainer) {
-      setPublishOpen(true);
-    } else {
-      toast.error('This course has planned sessions. Assign a trainer before publishing it.');
+      return;
     }
+    const first = notReady[0]!;
+    const missing = [
+      !sessionPlanTrainerId(first) && tBilingual('no trainer assigned', 'አሰልጣኝ አልተመደበም'),
+      !first.liveSession && tBilingual('not scheduled yet', 'ገና አልታቀደም'),
+    ].filter(Boolean);
+    toast.error(
+      tBilingual(
+        `${notReady.length} online session(s) not ready. "${first.titleEn}": ${missing.join(', ')}.`,
+        `${notReady.length} የኦንላይን ክፍለ-ጊዜ(ዎች) ዝግጁ አይደሉም። "${first.titleEn}"፦ ${missing.join('፣ ')}።`,
+      ),
+    );
+    select({ type: 'SESSION_PLAN', sessionPlanId: first.id });
   };
 
   if (!ready) {
@@ -177,7 +190,8 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
             courseId={course.id}
             canAssignTrainer={actions.can.assignTrainer}
             trainerOptions={actions.trainerOptions}
-            onTrainerAssigned={() => void refreshCourse()}
+            courseTrainerIds={course.trainerIds ?? []}
+            onRefresh={reloadCourse}
           />
         );
       }
@@ -277,14 +291,6 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
         courseLabel={courseLabel}
         busy={actions.busy}
         onConfirm={reasonDialog === 'returnToDraft' ? actions.returnToDraft : actions.reject}
-      />
-      <PublishDialog
-        open={publishOpen}
-        onClose={() => setPublishOpen(false)}
-        courseLabel={courseLabel}
-        trainerOptions={actions.trainerOptions}
-        busy={actions.busy}
-        onAssignAndPublish={actions.assignAndPublish}
       />
       <ConfirmActionDialog
         action={confirmAction}

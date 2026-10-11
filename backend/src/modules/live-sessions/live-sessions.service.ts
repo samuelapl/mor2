@@ -28,8 +28,6 @@ import { VirtualSessionsService } from './virtual/virtual-sessions.service';
 import { isInPersonEnrollment, isInPersonSession } from './session-mode';
 import { InPersonSessionsService } from './in-person/in-person-sessions.service';
 import { PermissionsService } from '@modules/permissions/permissions.service';
-import { SessionPlansService } from '@modules/session-plans/session-plans.service';
-import type { RemoveSessionPlanDto } from '@modules/session-plans/dto';
 import { assertCanRunSession } from './session-access';
 import { SessionQuizGradingService } from './session-quiz-grading.service';
 import { SessionRemindersService } from './session-reminders.service';
@@ -52,7 +50,6 @@ export class LiveSessionsService {
     private readonly virtualSessions: VirtualSessionsService,
     private readonly inPersonSessions: InPersonSessionsService,
     private readonly permissions: PermissionsService,
-    private readonly sessionPlans: SessionPlansService,
     private readonly sessionQuizGrading: SessionQuizGradingService,
     private readonly reminders: SessionRemindersService,
     private readonly eventEmitter: EventEmitter2,
@@ -124,6 +121,8 @@ export class LiveSessionsService {
     const plan = dto.sessionPlanId
       ? await this.assertPlanSchedulable(courseId, dto.sessionPlanId)
       : null;
+    // The trainer assigned to the plan hosts it unless the scheduler picked someone else.
+    if (plan?.trainerId && !dto.trainerId) dto = { ...dto, trainerId: plan.trainerId };
 
     const isVenueSession = isInPersonSession(dto);
     const session = await this.prisma.$transaction(async (tx) => {
@@ -171,15 +170,25 @@ export class LiveSessionsService {
       if (plan) {
         // One prepared quiz per planned quiz, already linked to its weighted assessment;
         // the trainer only has to add questions from the question bank.
+        // A plan scheduled before (its session was removed) still has its prepared quizzes;
+        // they move to the new session with their questions.
         for (const [order, quiz] of plan.assessments.entries()) {
-          await tx.sessionPreparedQuiz.create({
-            data: {
+          await tx.sessionPreparedQuiz.upsert({
+            where: { assessmentId: quiz.id },
+            update: { sessionId: created.id, order },
+            create: {
               sessionId: created.id,
               assessmentId: quiz.id,
               title: quiz.titleEn,
               timeLimitMinutes: quiz.timeLimitMinutes ?? 10,
               order,
             },
+          });
+        }
+        if (created.trainerId !== plan.trainerId) {
+          await tx.courseSessionPlan.update({
+            where: { id: plan.id },
+            data: { trainerId: created.trainerId },
           });
         }
       }
@@ -469,6 +478,14 @@ export class LiveSessionsService {
         },
       });
 
+      // A session scheduled from a plan keeps the plan's trainer in step.
+      if (dto.trainerId !== undefined && existing.sessionPlanId) {
+        await tx.courseSessionPlan.update({
+          where: { id: existing.sessionPlanId },
+          data: { trainerId: dto.trainerId },
+        });
+      }
+
       if (dto.trainerId) {
         await tx.trainerAssignment.upsert({
           where: { courseId_userId: { courseId: existing.courseId, userId: dto.trainerId } },
@@ -484,7 +501,10 @@ export class LiveSessionsService {
             deletedAt: null,
           },
         });
-        if (otherSessions === 0) {
+        const plansHosted = await tx.courseSessionPlan.count({
+          where: { courseId: existing.courseId, trainerId: existing.trainerId },
+        });
+        if (otherSessions === 0 && plansHosted === 0) {
           await tx.trainerAssignment.deleteMany({
             where: { courseId: existing.courseId, userId: existing.trainerId },
           });
@@ -530,25 +550,21 @@ export class LiveSessionsService {
   }
 
   /**
-   * Removing a session that was scheduled from a course plan removes the plan too. If its
-   * quizzes carry weight on an approved course, `rebalance` says where that weight goes.
+   * Removing a session scheduled from a course plan only unschedules it: the plan (its quizzes,
+   * weights and trainer) stays and can be scheduled again. The link moves to `originalPlanId`
+   * so the plan is free for a new session; its prepared quizzes move over when that happens.
    */
-  async softDelete(id: string, rebalance?: RemoveSessionPlanDto['rebalance']) {
+  async softDelete(id: string) {
     const existing = await this.findById(id);
-
-    if (existing.sessionPlanId) {
-      await this.sessionPlans.removePlan(
-        existing.courseId,
-        existing.sessionPlanId,
-        { rebalance },
-        id,
-      );
-      return { ...existing, deletedAt: new Date() };
-    }
 
     return this.prisma.liveSession.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: {
+        deletedAt: new Date(),
+        ...(existing.sessionPlanId
+          ? { sessionPlanId: null, originalPlanId: existing.sessionPlanId }
+          : {}),
+      },
     });
   }
 

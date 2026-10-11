@@ -191,6 +191,8 @@ export interface SessionPlan {
   titleEn: string;
   descriptionEn?: string;
   objectivesEn?: string;
+  /** Trainer assigned to host it (step 1); pre-fills the host when it is scheduled. */
+  trainerId?: string | null;
   quizzes: SessionQuizPlan[];
   /** Set once the plan has been scheduled as a live session. */
   liveSession?: {

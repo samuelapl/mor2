@@ -29,6 +29,12 @@ describe('AssessmentsService progression & final assessment gating', () => {
       attendance: {
         findMany: jest.fn().mockResolvedValue([]),
       },
+      course: {
+        findUnique: jest.fn().mockResolvedValue({ hasOnlineSessions: false }),
+      },
+      courseSessionPlan: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
 
     progressServiceMock = {
@@ -131,6 +137,48 @@ describe('AssessmentsService progression & final assessment gating', () => {
       ).resolves.toBeUndefined();
     });
 
+    it('accepts a missed planned session attended when it was scheduled again', async () => {
+      prismaMock.curriculumModule.findMany.mockResolvedValue([
+        {
+          id: 'mod-1',
+          title: 'Module 1',
+          lessons: [{ id: 'les-1', title: 'Lesson 1', subLessons: [] }],
+        },
+      ]);
+      prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
+      prismaMock.assessment.findMany.mockResolvedValue([]);
+      prismaMock.course.findUnique.mockResolvedValue({ hasOnlineSessions: true });
+      prismaMock.courseSessionPlan.findMany.mockResolvedValue([
+        { id: 'p1', titleEn: 'Session 1' },
+        { id: 'p2', titleEn: 'Session 2' },
+      ]);
+      const row = (
+        id: string,
+        status: string,
+        plan: string | null,
+        orig: string,
+        attended: boolean,
+      ) => ({
+        id,
+        titleEn: id,
+        status,
+        sessionPlanId: plan,
+        originalPlanId: orig,
+        attendees: attended ? [{ id: 'att' }] : [],
+      });
+      prismaMock.liveSession.findMany.mockResolvedValue([
+        row('s1-round1', 'COMPLETED', null, 'p1', true),
+        row('s2-round1', 'COMPLETED', null, 'p2', false),
+        row('s2-round2', 'COMPLETED', null, 'p2', true),
+        row('s1-round2', 'SCHEDULED', 'p1', 'p1', false),
+        row('s2-round3', 'SCHEDULED', 'p2', 'p2', false),
+      ]);
+
+      await expect(
+        (service as any).assertFinalEligible('course-1', 'user-1'),
+      ).resolves.toBeUndefined();
+    });
+
     it('throws ForbiddenException when live sessions exist but are not completed/attended', async () => {
       prismaMock.curriculumModule.findMany.mockResolvedValue([
         {
@@ -142,9 +190,15 @@ describe('AssessmentsService progression & final assessment gating', () => {
       prismaMock.lessonCompletion.findMany.mockResolvedValue([{ lessonId: 'les-1' }]);
       prismaMock.assessment.findMany.mockResolvedValue([]);
       prismaMock.liveSession.findMany.mockResolvedValue([
-        { id: 'sess-1', titleEn: 'Live Session 1', status: 'SCHEDULED' },
+        {
+          id: 'sess-1',
+          titleEn: 'Live Session 1',
+          status: 'SCHEDULED',
+          sessionPlanId: null,
+          originalPlanId: null,
+          attendees: [],
+        },
       ]);
-      prismaMock.attendance.findMany.mockResolvedValue([]);
 
       await expect((service as any).assertFinalEligible('course-1', 'user-1')).rejects.toThrow(
         ForbiddenException,

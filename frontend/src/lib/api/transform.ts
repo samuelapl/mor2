@@ -269,6 +269,7 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
       titleEn: p.titleEn,
       descriptionEn: p.descriptionEn ?? undefined,
       objectivesEn: p.objectivesEn ?? undefined,
+      trainerId: p.trainerId ?? null,
       quizzes: p.assessments.map((a) => ({
         id: a.id,
         titleEn: a.titleEn,

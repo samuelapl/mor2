@@ -11,6 +11,7 @@ import { useLms } from '@/lib/lms-store';
 import type { Course, UploadedResource, User } from '@/types';
 import { AttachmentCard } from '../../detail/AttachmentCard';
 import { getItemAttachments } from '../../wizard-components';
+import { sessionPlanTrainerId } from '../nodes';
 import type { AssessmentsByScope } from '../types';
 
 interface OverviewStageProps {
@@ -66,6 +67,10 @@ export function OverviewStage({
   const duration = formatDuration(stats.minutes, isAmharic);
 
   const trainers = course.trainerIds?.length ? course.trainerIds : course.trainerId ? [course.trainerId] : [];
+  // Courses with online sessions show who hosts each session; other course trainers are listed after.
+  const plans = course.sessionPlans ?? [];
+  const sessionTrainers = plans.map((plan, i) => ({ plan, number: i + 1, trainerId: sessionPlanTrainerId(plan) }));
+  const otherTrainers = trainers.filter((id) => !sessionTrainers.some((s) => s.trainerId === id));
 
   return (
     <div className="space-y-6">
@@ -127,18 +132,30 @@ export function OverviewStage({
                 <UserRound className="h-3.5 w-3.5 text-indigo-600" />
                 {tBilingual('Owner:', 'ባለቤት:')} {userName(course.ownerId)}
               </Chip>
-              {trainers.length > 0 ? (
+              {sessionTrainers.map(({ plan, number, trainerId }) =>
+                trainerId ? (
+                  <Chip key={plan.id}>
+                    <UserRound className="h-3.5 w-3.5 text-indigo-600" />
+                    <span title={plan.titleEn}>
+                      {tBilingual(`Session ${number}:`, `ክፍለ-ጊዜ ${number}:`)} {userName(trainerId)}
+                    </span>
+                  </Chip>
+                ) : (
+                  <span
+                    key={plan.id}
+                    title={plan.titleEn}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
+                  >
+                    {tBilingual(`Session ${number}: no trainer assigned`, `ክፍለ-ጊዜ ${number}: አሰልጣኝ አልተመደበም`)}
+                  </span>
+                ),
+              )}
+              {otherTrainers.length > 0 && (
                 <Chip>
                   <UserRound className="h-3.5 w-3.5 text-indigo-600" />
-                  {tBilingual('Trainers:', 'አሰልጣኞች:')} {trainers.map(userName).join(', ')}
+                  {plans.length > 0 ? tBilingual('Course trainers:', 'የኮርስ አሰልጣኞች:') : tBilingual('Trainers:', 'አሰልጣኞች:')}{' '}
+                  {otherTrainers.map(userName).join(', ')}
                 </Chip>
-              ) : (
-                // Only courses with online sessions need a trainer (see useCourseActions.requiresTrainer).
-                (course.sessionPlans?.length ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                    {tBilingual('No trainer assigned', 'አሰልጣኝ አልተመደበም')}
-                  </span>
-                )
               )}
             </div>
 

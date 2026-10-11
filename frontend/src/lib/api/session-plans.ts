@@ -10,3 +10,8 @@ export async function fetchSessionPlans(courseId: string): Promise<ApiSessionPla
 export async function replaceSessionPlans(courseId: string, body: ReplaceSessionPlansBody): Promise<ApiSessionPlan[]> {
   return api<ApiSessionPlan[]>(`courses/${courseId}/session-plans`, { method: 'PUT', body });
 }
+
+/** Assigns (or with `null` clears) the trainer who will host a planned session. */
+export async function assignSessionPlanTrainer(courseId: string, planId: string, trainerId: string | null): Promise<ApiSessionPlan[]> {
+  return api<ApiSessionPlan[]>(`courses/${courseId}/session-plans/${planId}/trainer`, { method: 'PATCH', body: { trainerId } });
+}

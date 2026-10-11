@@ -798,8 +798,8 @@ export class CoursesService {
 
   /**
    * Learners cannot get a certificate until every session quiz has been held, so a course
-   * with planned sessions only goes live once each one is scheduled and each weighted quiz
-   * has questions.
+   * with planned sessions only goes live once each one has a trainer and is scheduled, and
+   * each weighted quiz has questions.
    */
   private async assertSessionsReadyToPublish(courseId: string) {
     const plans = await this.prisma.courseSessionPlan.findMany({
@@ -807,7 +807,8 @@ export class CoursesService {
       orderBy: { order: 'asc' },
       select: {
         titleEn: true,
-        liveSession: { select: { deletedAt: true } },
+        trainerId: true,
+        liveSession: { select: { deletedAt: true, trainerId: true } },
         assessments: {
           where: { type: 'SESSION_ASSESSMENT' },
           select: {
@@ -821,8 +822,10 @@ export class CoursesService {
     });
     const problems: string[] = [];
     for (const plan of plans) {
-      if (!plan.liveSession || plan.liveSession.deletedAt)
-        problems.push(`"${plan.titleEn}" is not scheduled yet`);
+      const session = plan.liveSession && !plan.liveSession.deletedAt ? plan.liveSession : null;
+      if (!(session?.trainerId ?? plan.trainerId))
+        problems.push(`"${plan.titleEn}" has no trainer assigned`);
+      if (!session) problems.push(`"${plan.titleEn}" is not scheduled yet`);
       for (const quiz of plan.assessments) {
         if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
           problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
@@ -847,13 +850,7 @@ export class CoursesService {
 
     this.stateMachine.assertCanTransition(course.status, CourseStatus.PUBLISHED);
 
-    // A trainer runs the planned online sessions; a course without any is self-paced.
-    const plannedSessions = await this.prisma.courseSessionPlan.count({ where: { courseId: id } });
-    if (plannedSessions > 0 && (!course.trainers || course.trainers.length === 0)) {
-      throw new ForbiddenException(
-        'This course has planned sessions. Assign at least one trainer before publishing.',
-      );
-    }
+    // Each planned online session needs its own trainer and a schedule; a course without any is self-paced.
     await this.assertSessionsReadyToPublish(id);
 
     const updated = await this.prisma.course.update({

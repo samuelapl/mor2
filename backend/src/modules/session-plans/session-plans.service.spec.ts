@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { SessionPlansService } from './session-plans.service';
 
 describe('SessionPlansService.replaceAll', () => {
@@ -201,5 +201,79 @@ describe('SessionPlansService after approval', () => {
     expect(tx.sessionPreparedQuiz.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ sessionId: 'session-1', assessmentId: 'new' }),
     });
+  });
+});
+
+describe('SessionPlansService.assignTrainer', () => {
+  let service: SessionPlansService;
+  let tx: any;
+  let prisma: any;
+
+  const setup = (
+    liveSession: Record<string, unknown> | null,
+    trainer: unknown = { isActive: true, deletedAt: null },
+  ) => {
+    tx = {
+      courseSessionPlan: { update: jest.fn() },
+      trainerAssignment: { upsert: jest.fn() },
+      liveSession: { update: jest.fn() },
+    };
+    prisma = {
+      courseSessionPlan: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'p1', courseId: 'c1', liveSession }),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      user: { findUnique: jest.fn().mockResolvedValue(trainer) },
+      $transaction: jest.fn((fn: (t: any) => Promise<unknown>) => fn(tx)),
+    };
+    service = new SessionPlansService(prisma, {} as any);
+  };
+
+  it('assigns an unscheduled plan and makes the trainer a course trainer', async () => {
+    setup(null);
+    await service.assignTrainer('c1', 'p1', 't1');
+    expect(tx.courseSessionPlan.update).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      data: { trainerId: 't1' },
+    });
+    expect(tx.trainerAssignment.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: { courseId: 'c1', userId: 't1' } }),
+    );
+    expect(tx.liveSession.update).not.toHaveBeenCalled();
+  });
+
+  it('moves a scheduled, not yet held session to the new trainer', async () => {
+    setup({ id: 's1', status: 'SCHEDULED', deletedAt: null });
+    await service.assignTrainer('c1', 'p1', 't2');
+    expect(tx.liveSession.update).toHaveBeenCalledWith({
+      where: { id: 's1' },
+      data: { trainerId: 't2' },
+    });
+  });
+
+  it('leaves a completed session with the trainer who ran it', async () => {
+    setup({ id: 's1', status: 'COMPLETED', deletedAt: null });
+    await service.assignTrainer('c1', 'p1', 't2');
+    expect(tx.liveSession.update).not.toHaveBeenCalled();
+  });
+
+  it('clears the plan trainer with null', async () => {
+    setup(null);
+    await service.assignTrainer('c1', 'p1', null);
+    expect(tx.courseSessionPlan.update).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      data: { trainerId: null },
+    });
+    expect(tx.trainerAssignment.upsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects an inactive trainer', async () => {
+    setup(null, { isActive: false, deletedAt: null });
+    await expect(service.assignTrainer('c1', 'p1', 't1')).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects a plan of another course', async () => {
+    setup(null);
+    await expect(service.assignTrainer('other', 'p1', 't1')).rejects.toThrow(NotFoundException);
   });
 });

@@ -40,7 +40,6 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { SessionTable, type SessionRow } from "./SessionTable";
 import { ScheduleSessionModal } from "./ScheduleSessionModal";
-import { RebalanceWeightsDialog } from "./RebalanceWeightsDialog";
 import { EditSessionModal } from "./EditSessionModal";
 import { SessionDetailModal } from "./SessionDetailModal";
 import { SessionAttendanceModal } from "./SessionAttendanceModal";
@@ -293,25 +292,19 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
     }
   };
 
-  /**
-   * A session scheduled from a course plan whose quizzes carry weight on an approved course
-   * needs its weight handed to other session quizzes before it can go.
-   */
-  // A planned session of an approved course always goes through the weight dialog: it loads
-  // the plan's quiz weight itself (the course in the store may not carry its session plans).
-  const deletePlan = (() => {
-    if (!sessionToDelete?.sessionPlanId) return null;
-    const course = courseMap.get(sessionToDelete.courseId);
-    if (course && (course.status === "draft" || course.status === "rejected")) return null;
-    return { planId: sessionToDelete.sessionPlanId };
-  })();
+  // A session scheduled from a course plan only goes back to unscheduled; the plan stays.
+  const deletingPlanned = Boolean(sessionToDelete?.sessionPlanId);
 
-  const confirmDeleteSession = async (rebalance?: Array<{ assessmentId: string; weight: number }>) => {
+  const confirmDeleteSession = async () => {
     if (!sessionToDelete) return;
     setDeletingId(sessionToDelete.id);
     try {
-      await deleteLiveSession(sessionToDelete.id, rebalance);
-      toast.success(`Session "${sessionToDelete.titleEn}" was deleted successfully.`);
+      await deleteLiveSession(sessionToDelete.id);
+      toast.success(
+        deletingPlanned
+          ? `Session "${sessionToDelete.titleEn}" was removed. Its planned session is unscheduled again and can be rescheduled.`
+          : `Session "${sessionToDelete.titleEn}" was deleted successfully.`,
+      );
       void refreshCourse(sessionToDelete.courseId);
       setSessionToDelete(null);
       loadSessions();
@@ -721,19 +714,8 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deletePlan && sessionToDelete ? (
-        <RebalanceWeightsDialog
-          open
-          courseId={sessionToDelete.courseId}
-          sessionPlanId={deletePlan.planId}
-          sessionTitle={sessionToDelete.titleEn}
-          busy={Boolean(deletingId)}
-          onClose={() => !deletingId && setSessionToDelete(null)}
-          onConfirm={(rebalance) => void confirmDeleteSession(rebalance)}
-        />
-      ) : null}
       <ConfirmModal
-        open={Boolean(sessionToDelete) && !deletePlan}
+        open={Boolean(sessionToDelete)}
         onClose={() => !deletingId && setSessionToDelete(null)}
         onConfirm={() => confirmDeleteSession()}
         title="Delete Live Session"
@@ -743,7 +725,9 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
             <span className="font-semibold text-slate-800">
               &quot;{sessionToDelete?.titleEn}&quot;
             </span>
-            ? This action cannot be undone and will revoke scheduled room links for all enrolled learners.
+            ? This will revoke scheduled room links for all enrolled learners.
+            {deletingPlanned &&
+              " The course's planned session, its trainer and quizzes are kept: it goes back to unscheduled and can be scheduled again."}
           </>
         }
         confirmText="Delete Session"

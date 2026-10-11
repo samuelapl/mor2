@@ -15,7 +15,12 @@ import {
 import { PrismaService } from '@config/prisma.service';
 import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
-import { deriveAttachmentFileKey, isTimeSatisfied, requiredSeconds } from '@common/utils';
+import {
+  deriveAttachmentFileKey,
+  findMissingSessionAttendance,
+  isTimeSatisfied,
+  requiredSeconds,
+} from '@common/utils';
 import type { CurriculumAttachmentDto } from '@modules/curriculum/dto/module/create-module.dto';
 import { CertificatesService } from '@modules/certificates/certificates.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
@@ -458,33 +463,15 @@ export class AssessmentsService {
       });
     }
 
-    // Verify all scheduled live sessions are completed and attended if any exist
-    const liveSessions = await this.prisma.liveSession.findMany({
-      where: { courseId, deletedAt: null },
-      select: { id: true, titleEn: true, status: true },
-    });
-    if (liveSessions.length > 0) {
-      const attendances = await this.prisma.attendance.findMany({
-        where: {
-          sessionId: { in: liveSessions.map((s) => s.id) },
-          userId,
-          status: { in: ['PRESENT', 'LATE'] },
-        },
-        select: { sessionId: true },
+    // Each planned session attended once, in any round (same rule as the certificate).
+    const unattended = await findMissingSessionAttendance(this.prisma, courseId, userId);
+    if (unattended.length > 0) {
+      throw new ForbiddenException({
+        reason: 'LIVE_SESSIONS_INCOMPLETE',
+        message: `You must attend all scheduled live sessions before taking the final assessment. Still to attend: ${unattended.map((s) => s.title).join(', ')}.`,
+        incompleteCount: unattended.length,
+        incompleteSessions: unattended,
       });
-      const attendedSet = new Set(attendances.map((a) => a.sessionId));
-      const unattended = liveSessions.filter(
-        (s) => s.status !== 'COMPLETED' || !attendedSet.has(s.id),
-      );
-      if (unattended.length > 0) {
-        throw new ForbiddenException({
-          reason: 'LIVE_SESSIONS_INCOMPLETE',
-          message:
-            'You must attend all scheduled live sessions before taking the final assessment.',
-          incompleteCount: unattended.length,
-          incompleteSessions: unattended.map((s) => ({ id: s.id, title: s.titleEn })),
-        });
-      }
     }
   }
 

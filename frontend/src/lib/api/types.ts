@@ -199,6 +199,7 @@ export interface ApiCourseSessionPlanRow {
   titleEn: string;
   descriptionEn: string | null;
   objectivesEn: string | null;
+  trainerId: string | null;
   assessments: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null }>;
   liveSession: ApiSessionPlanLiveSession | null;
 }
@@ -221,6 +222,7 @@ export interface ApiSessionPlan {
   titleEn: string;
   descriptionEn: string | null;
   objectivesEn: string | null;
+  trainerId: string | null;
   quizzes: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null; questionCount: number }>;
   liveSession: ApiSessionPlanLiveSession | null;
 }

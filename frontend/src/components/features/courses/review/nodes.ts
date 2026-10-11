@@ -1,5 +1,5 @@
 import type { ApiAssessment } from '@/lib/api/types';
-import type { Course } from '@/types';
+import type { Course, SessionPlan } from '@/types';
 import type { AssessmentsByScope, ReviewNode } from './types';
 
 export const nodeKey = (n: ReviewNode) => [n.type, n.moduleId ?? '', n.lessonId ?? '', n.subLessonId ?? '', n.sessionPlanId ?? ''].join(':');
@@ -28,6 +28,9 @@ export function buildNodeOrder(course: Course, assessments: AssessmentsByScope):
   order.push({ type: 'APPROVAL_HISTORY' });
   return order;
 }
+
+/** Who hosts a planned session: its scheduled session's trainer, else the trainer assigned to the plan. */
+export const sessionPlanTrainerId = (plan: SessionPlan): string | null => plan.liveSession?.trainerId ?? plan.trainerId ?? null;
 
 /** Problems a reviewer should notice: an assessment that cannot be taken as written. */
 export function assessmentIssues(a: ApiAssessment | undefined): string[] {
@@ -74,6 +77,7 @@ export function buildIssueMap(course: Course, assessments: AssessmentsByScope): 
       if (!q.weight) planIssues.push(`Quiz ${i + 1} has 0% weight`);
     });
     if (course.status === 'approved' || course.status === 'published') {
+      if (!sessionPlanTrainerId(plan)) planIssues.push('Trainer not assigned (blocks publishing)');
       if (!plan.liveSession) planIssues.push('Not scheduled yet (blocks publishing)');
       plan.quizzes.forEach((q) => {
         const prepared = assessments.all.find((a) => a.id === q.id);

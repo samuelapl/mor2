@@ -117,3 +117,14 @@ export class AddSessionQuizDto extends SessionQuizPlanDto {
   @Type(() => WeightRebalanceDto)
   rebalance?: WeightRebalanceDto[];
 }
+
+export class AssignSessionPlanTrainerDto {
+  @ApiPropertyOptional({
+    example: 'uuid-of-trainer',
+    description: 'Trainer to host this planned session; null removes the assignment',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  trainerId!: string | null;
+}

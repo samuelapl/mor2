@@ -150,6 +150,8 @@ export function ScheduleSessionModal({
     setTitleEn(plan.titleEn);
     setDescriptionEn(plan.descriptionEn || "");
     setObjectivesEn(plan.objectivesEn || "");
+    // The trainer assigned on the publication page hosts it unless the scheduler picks someone else.
+    if (canPickTrainer && plan.trainerId) setTrainerId(plan.trainerId);
   };
 
   // When courseId changes, auto-select trainer & align sessionType with course.deliveryMode
