@@ -25,9 +25,9 @@ export interface PreparedQuizQuestionItem {
 }
 
 export interface PreparedQuizGroup {
-  /** Set when this is a weighted course quiz planned with the course; it is graded into the course result. */
+  /** Set when this is a course session quiz planned with the course (formative: score only). */
   assessmentId?: string | null;
-  assessment?: { id: string; weight: number; passingScore: number } | null;
+  assessment?: { id: string; totalPoints?: number | null } | null;
   id: string;
   sessionId: string;
   title: string;
@@ -97,8 +97,8 @@ export async function removePreparedQuestion(
 }
 
 /**
- * Set the points of questions in a quiz group. For a weighted quiz the total may not exceed
- * its course weight (one point per percent of the course grade).
+ * Set the points of questions in a quiz group. Session quizzes are formative, so the total is
+ * free: a learner's score is earned ÷ total points.
  */
 export async function setPreparedQuestionPoints(
   sessionId: string,

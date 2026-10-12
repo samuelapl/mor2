@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnrollmentStatus, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { isAnswerCorrect } from '@common/utils';
 
 interface QuizResponseMeta {
   questionId?: string;
@@ -25,9 +26,10 @@ export interface SessionQuizGroup {
   /** Prepared quiz id, or `other` for questions broadcast outside a prepared group. */
   id: string;
   title: string;
+  /** A course session quiz (formative: the score is recorded as feedback, never graded). */
   graded: boolean;
-  weight: number | null;
-  passingScore: number | null;
+  /** Points the quiz is out of (sum of its questions' points). */
+  totalPoints: number;
   questions: SessionQuizQuestion[];
 }
 
@@ -35,6 +37,8 @@ export interface LearnerAnswer {
   questionId: string;
   /** What the learner picked, as text; null when they did not answer. */
   answer: string | null;
+  /** The option texts the learner picked (or their typed answer), to mark them in the full list. */
+  selected: string[];
   isCorrect: boolean | null;
   answeredAt: Date | null;
 }
@@ -46,8 +50,8 @@ export interface LearnerQuizResult {
   earnedPoints: number;
   totalPoints: number;
   scorePercent: number;
-  /** The result recorded in the course grade when the session was completed (graded quizzes). */
-  recorded: { score: number; passed: boolean } | null;
+  /** The score recorded when the session was completed (course session quizzes). */
+  recorded: { score: number; missed: boolean } | null;
   answers: LearnerAnswer[];
 }
 
@@ -117,7 +121,6 @@ export class SessionQuizResultsService {
             id: true,
             title: true,
             assessmentId: true,
-            assessment: { select: { weight: true, passingScore: true } },
             questions: {
               orderBy: [{ order: 'asc' }, { addedAt: 'asc' }],
               select: {
@@ -167,8 +170,7 @@ export class SessionQuizResultsService {
         id: pq.id,
         title: pq.title,
         graded: Boolean(pq.assessmentId),
-        weight: pq.assessment?.weight ?? null,
-        passingScore: pq.assessment?.passingScore ?? null,
+        totalPoints: 0,
         questions: pq.questions.map(({ points, question: q }) => {
           const options = Array.isArray(q.options) ? (q.options as unknown[]).map(String) : [];
           return {
@@ -182,9 +184,9 @@ export class SessionQuizResultsService {
         }),
       }));
 
-    // A held round whose weighted quiz moved on to a later round (missed sessions are rescheduled)
+    // A held round whose course quiz moved on to a later round (missed sessions are rescheduled)
     // no longer has that prepared quiz. Rebuild it from the assessment's answer key, which keeps
-    // the trainer's per-question points, for every weighted quiz this round graded.
+    // the trainer's per-question points, for every course quiz this round scored.
     const preparedAssessmentIds = new Set(
       session.preparedQuizzes
         .map((pq) => pq.assessmentId)
@@ -203,7 +205,7 @@ export class SessionQuizResultsService {
         ? await this.prisma.assessment.findMany({
             where: { id: { in: movedIds }, courseId: session.courseId },
             orderBy: { createdAt: 'asc' },
-            select: { id: true, titleEn: true, weight: true, passingScore: true, questions: true },
+            select: { id: true, titleEn: true, questions: true },
           })
         : [];
     for (const a of moved) {
@@ -219,8 +221,7 @@ export class SessionQuizResultsService {
         id: a.id,
         title: a.titleEn,
         graded: true,
-        weight: a.weight,
-        passingScore: a.passingScore,
+        totalPoints: 0,
         questions: keyed.map((q) => {
           const options = Array.isArray(q.options) ? q.options.map(String) : [];
           const answer =
@@ -259,8 +260,7 @@ export class SessionQuizResultsService {
         id: OTHER_QUIZ_ID,
         title: 'Other questions',
         graded: false,
-        weight: null,
-        passingScore: null,
+        totalPoints: 0,
         questions: otherIds.map((id) => {
           const q = bankById.get(id);
           const meta = metaByQuestion.get(id)!;
@@ -306,24 +306,35 @@ export class SessionQuizResultsService {
       gradedAssessmentIds.length > 0
         ? this.prisma.assessmentAttempt.findMany({
             where: { assessmentId: { in: gradedAssessmentIds }, userId: { in: userIds } },
-            select: { assessmentId: true, userId: true, score: true, passed: true, answers: true },
+            select: { assessmentId: true, userId: true, score: true, answers: true },
           })
         : Promise.resolve([]),
     ]);
     const attendanceByUser = new Map(attendance.map((a) => [a.userId, a.status]));
-    const recordedBy = new Map<string, { score: number; passed: boolean }>();
+    const recordedBy = new Map<string, { score: number; missed: boolean }>();
     for (const attempt of attempts) {
-      const source = (attempt.answers ?? {}) as { source?: string; sessionId?: string };
+      const source = (attempt.answers ?? {}) as {
+        source?: string;
+        sessionId?: string;
+        missed?: boolean;
+      };
       if (source.source !== 'LIVE_SESSION' || source.sessionId !== sessionId) continue;
       recordedBy.set(`${attempt.assessmentId}:${attempt.userId}`, {
         score: attempt.score,
-        passed: attempt.passed,
+        missed: Boolean(source.missed),
       });
     }
     const assessmentOf = new Map<string, string | null>([
       ...session.preparedQuizzes.map((pq) => [pq.id, pq.assessmentId] as [string, string | null]),
       ...moved.map((a) => [a.id, a.id] as [string, string]),
     ]);
+
+    // Score like grading: the trainer's points, or one point each when none were assigned.
+    // The points shown per question are the ones the score uses.
+    for (const quiz of quizzes) {
+      if (quiz.questions.every((q) => !q.points)) for (const q of quiz.questions) q.points = 1;
+      quiz.totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
+    }
 
     const learners: LearnerSessionResult[] = users
       .map((user) => {
@@ -334,33 +345,43 @@ export class SessionQuizResultsService {
           email: user.email,
           attendance: attendanceByUser.get(user.id) ?? null,
           quizzes: quizzes.map((quiz): LearnerQuizResult => {
-            // Graded like the course result: trainer points, or equal weight if none were set.
-            const allZero = quiz.questions.every((q) => !q.points);
-            const pointsOf = (q: SessionQuizQuestion) => (allZero ? 1 : q.points);
             let answered = 0;
             let correct = 0;
             let earnedPoints = 0;
             const rows = quiz.questions.map((q): LearnerAnswer => {
               const entry = answers?.get(q.id);
               if (!entry)
-                return { questionId: q.id, answer: null, isCorrect: null, answeredAt: null };
+                return {
+                  questionId: q.id,
+                  answer: null,
+                  selected: [],
+                  isCorrect: null,
+                  answeredAt: null,
+                };
               answered += 1;
-              const isCorrect = Boolean(entry.meta.isCorrect);
+              const selectedIds = entry.meta.selectedOptionIds ?? [];
+              const hasSelected = selectedIds.length > 0;
+              // Checked against the answer key (older answers stored a wrong flag), falling back to isCorrect.
+              const isCorrect = hasSelected
+                ? isAnswerCorrect(
+                    { options: q.options, correctAnswer: q.correctAnswer },
+                    selectedIds,
+                  )
+                : Boolean(entry.meta.isCorrect);
               if (isCorrect) {
                 correct += 1;
-                earnedPoints += pointsOf(q);
+                earnedPoints += q.points;
               }
-              const picked = (entry.meta.selectedOptionIds ?? []).map(
-                (v) => asText(v, q.options) ?? v,
-              );
+              const picked = selectedIds.map((v) => asText(v, q.options) ?? v);
               return {
                 questionId: q.id,
                 answer: picked.join(', ') || null,
+                selected: picked,
                 isCorrect,
                 answeredAt: entry.at,
               };
             });
-            const totalPoints = quiz.questions.reduce((sum, q) => sum + pointsOf(q), 0);
+            const totalPoints = quiz.totalPoints;
             const assessmentId = assessmentOf.get(quiz.id);
             return {
               quizId: quiz.id,

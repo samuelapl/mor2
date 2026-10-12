@@ -20,7 +20,7 @@ import {
   ReorderPreparedQuestionsDto,
   SetPreparedQuestionPointsDto,
 } from './dto';
-import { isEvenSplit, splitEvenly } from './quiz-points';
+import { splitEvenly } from './quiz-points';
 
 const CACHE_TTL_SECONDS = 300;
 
@@ -82,7 +82,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   private async assertQuizExists(sessionId: string, quizId: string) {
     const quiz = await this.prisma.sessionPreparedQuiz.findUnique({
       where: { id: quizId },
-      include: { assessment: { select: { weight: true } } },
+      include: { assessment: { select: { id: true, totalPoints: true } } },
     });
     if (!quiz || quiz.sessionId !== sessionId) {
       throw new NotFoundException(`Prepared quiz group "${quizId}" not found for this session`);
@@ -90,10 +90,33 @@ export class PreparedQuizService implements OnModuleDestroy {
     return quiz;
   }
 
+  private async orderedPoints(quizId: string) {
+    return this.prisma.sessionPreparedQuestion.findMany({
+      where: { quizId },
+      orderBy: [{ order: 'asc' }, { addedAt: 'asc' }],
+      select: { id: true, points: true },
+    });
+  }
+
+  /** Writes the even split of `total` over the quiz's questions so total points equals planned points. */
+  private async applyEvenSplit(quizId: string, total: number) {
+    const rows = await this.orderedPoints(quizId);
+    if (rows.length === 0) return;
+    const split = splitEvenly(total, rows.length);
+    await this.prisma.$transaction(
+      rows.map((row, i) =>
+        this.prisma.sessionPreparedQuestion.update({
+          where: { id: row.id },
+          data: { points: split[i] },
+        }),
+      ),
+    );
+  }
+
   private get quizInclude() {
     return {
-      // Weighted course quiz this prepared quiz runs, if any (weight / pass mark shown to the trainer).
-      assessment: { select: { id: true, weight: true, passingScore: true } },
+      // Formative course quiz this prepared quiz runs, if any (planned with the course).
+      assessment: { select: { id: true, totalPoints: true } },
       questions: {
         orderBy: { order: 'asc' as const },
         include: {
@@ -115,7 +138,7 @@ export class PreparedQuizService implements OnModuleDestroy {
   }
 
   /**
-   * A weighted session quiz keeps its answer key on its Assessment (like every other graded
+   * A course session quiz keeps its answer key on its Assessment (like every other
    * assessment), so its question list is copied there whenever the prepared quiz changes.
    */
   private async syncLinkedAssessment(quizId: string) {
@@ -164,29 +187,6 @@ export class PreparedQuizService implements OnModuleDestroy {
       where: { id: quiz.assessmentId },
       data: { questions: questions as unknown as Prisma.InputJsonValue },
     });
-  }
-
-  /** Points of a quiz's questions in order. */
-  private async orderedPoints(quizId: string) {
-    return this.prisma.sessionPreparedQuestion.findMany({
-      where: { quizId },
-      orderBy: [{ order: 'asc' }, { addedAt: 'asc' }],
-      select: { id: true, points: true },
-    });
-  }
-
-  /** Writes the even split of `weight` over the quiz's questions. */
-  private async applyEvenSplit(quizId: string, weight: number) {
-    const rows = await this.orderedPoints(quizId);
-    const split = splitEvenly(weight, rows.length);
-    await this.prisma.$transaction(
-      rows.map((row, i) =>
-        this.prisma.sessionPreparedQuestion.update({
-          where: { id: row.id },
-          data: { points: split[i] },
-        }),
-      ),
-    );
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
@@ -278,7 +278,7 @@ export class PreparedQuizService implements OnModuleDestroy {
     const quiz = await this.assertQuizExists(sessionId, quizId);
     if (quiz.assessmentId) {
       throw new BadRequestException(
-        'This is a weighted course quiz planned with the course. Add questions to it; it cannot be deleted here.',
+        'This quiz was planned with the course. Add questions to it; it cannot be deleted here.',
       );
     }
 
@@ -292,18 +292,11 @@ export class PreparedQuizService implements OnModuleDestroy {
   /**
    * Bulk-add questions to a specific quiz group.
    * Silently skips already added questions.
+   * Automatically allocates question points so that the total equals the planned totalPoints.
    */
   async bulkAddQuestions(sessionId: string, quizId: string, dto: BulkAddPreparedQuestionsDto) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const weight = quiz.assessment?.weight ?? null;
-    // A weighted quiz whose points are still the even split stays evenly split; once the
-    // trainer has customised them, new questions start at 0 for the trainer to assign.
-    const keepEven =
-      weight !== null &&
-      isEvenSplit(
-        (await this.orderedPoints(quizId)).map((r) => r.points),
-        weight,
-      );
+    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
 
     const last = await this.prisma.sessionPreparedQuestion.findFirst({
       where: { quizId },
@@ -334,13 +327,15 @@ export class PreparedQuizService implements OnModuleDestroy {
               quizId,
               questionId,
               order: nextOrder++,
-              // Ungraded quizzes start from the bank question's points.
-              points: weight === null ? (bankPoints.get(questionId) ?? 0) : 0,
+              // For planned quizzes, start at 0 before even split; practice quizzes use bank points
+              points: plannedTotal !== null ? 0 : (bankPoints.get(questionId) || 1),
             },
           }),
         ),
       );
-      if (keepEven) await this.applyEvenSplit(quizId, weight);
+      if (plannedTotal !== null) {
+        await this.applyEvenSplit(quizId, plannedTotal);
+      }
     }
 
     await this.syncLinkedAssessment(quizId);
@@ -352,30 +347,26 @@ export class PreparedQuizService implements OnModuleDestroy {
     });
   }
 
-  /** Remove a question from a quiz group */
+  /** Remove a question from a quiz group and rebalance points to match planned totalPoints */
   async removeQuestion(sessionId: string, quizId: string, questionId: string) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
-    const weight = quiz.assessment?.weight ?? null;
-    const keepEven =
-      weight !== null &&
-      isEvenSplit(
-        (await this.orderedPoints(quizId)).map((r) => r.points),
-        weight,
-      );
+    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
 
     await this.prisma.sessionPreparedQuestion.deleteMany({
       where: { quizId, questionId },
     });
-    if (keepEven) await this.applyEvenSplit(quizId, weight);
+
+    if (plannedTotal !== null) {
+      await this.applyEvenSplit(quizId, plannedTotal);
+    }
 
     await this.syncLinkedAssessment(quizId);
     await this.invalidateCache(sessionId);
   }
 
   /**
-   * Sets the points of some questions in a quiz group. For a weighted quiz the total may not
-   * exceed its course weight (it must equal it before the quiz can be broadcast or the course
-   * published; a lower total is allowed while the trainer is still assigning points).
+   * Sets the points of questions in a quiz group. The trainer can reallocate points,
+   * but the total cannot exceed the planned totalPoints.
    */
   async setQuestionPoints(sessionId: string, quizId: string, dto: SetPreparedQuestionPointsDto) {
     const quiz = await this.assertQuizExists(sessionId, quizId);
@@ -391,12 +382,12 @@ export class PreparedQuizService implements OnModuleDestroy {
       next.set(item.questionId, item.points);
     }
 
-    const weight = quiz.assessment?.weight;
-    if (weight !== undefined) {
+    const plannedTotal = quiz.assessment ? (quiz.assessment.totalPoints || 10) : null;
+    if (plannedTotal !== null) {
       const total = [...next.values()].reduce((sum, p) => sum + p, 0);
-      if (total > weight) {
+      if (total > plannedTotal) {
         throw new BadRequestException(
-          `Points total ${total} but this quiz is worth ${weight}% of the course grade, so its questions must total ${weight} points.`,
+          `Points total ${total} but this quiz group is planned for ${plannedTotal} points. Points cannot exceed ${plannedTotal}.`,
         );
       }
     }

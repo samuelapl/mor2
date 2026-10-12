@@ -17,27 +17,24 @@ describe('SessionPlansService.replaceAll', () => {
     tx = {
       courseSessionPlan: { deleteMany: jest.fn(), create: jest.fn() },
       course: { update: jest.fn() },
-      // weights already saved for lesson/module/final, plus the session quizzes just created
-      assessment: { findMany: jest.fn().mockResolvedValue([]) },
     };
     prisma = {
       course: { findUnique: jest.fn().mockResolvedValue(course()) },
       courseSessionPlan: { findMany: jest.fn().mockResolvedValue([]) },
       $transaction: jest.fn((fn: (t: any) => Promise<unknown>) => fn(tx)),
     };
-    service = new SessionPlansService(prisma, {
-      getPassingScorePercent: jest.fn().mockResolvedValue(60),
-    } as any);
+    service = new SessionPlansService(prisma);
   });
 
   const twoSessions = {
     plans: [
-      { titleEn: 'Kick-off', quizzes: [{ titleEn: 'Q1', weight: 10 }] },
+      // An older client may still send weight / passingScore; both are ignored.
+      { titleEn: 'Kick-off', quizzes: [{ titleEn: 'Q1', weight: 10, passingScore: 70 }] },
       { titleEn: 'Wrap-up', quizzes: [] },
     ],
   };
 
-  it('replaces every plan and creates weighted SESSION_ASSESSMENT quizzes with the policy pass mark by default', async () => {
+  it('replaces every plan and creates formative SESSION_ASSESSMENT quizzes (no weight, no pass mark)', async () => {
     await service.replaceAll('c1', twoSessions);
 
     expect(tx.courseSessionPlan.deleteMany).toHaveBeenCalledWith({ where: { courseId: 'c1' } });
@@ -46,8 +43,8 @@ describe('SessionPlansService.replaceAll', () => {
     expect(first.order).toBe(0);
     expect(first.assessments.create[0]).toMatchObject({
       type: 'SESSION_ASSESSMENT',
-      weight: 10,
-      passingScore: 60,
+      weight: 0,
+      passingScore: 0,
       questions: [],
     });
     expect(tx.course.update).toHaveBeenCalledWith({
@@ -75,14 +72,6 @@ describe('SessionPlansService.replaceAll', () => {
     // ...but removing them is always allowed
     await expect(service.replaceAll('c1', { plans: [] })).resolves.toEqual([]);
   });
-
-  it('rolls back when the combined course weights would pass 100%', async () => {
-    tx.assessment.findMany.mockResolvedValue([
-      { weight: 95, questions: [{ id: 'q' }], type: 'FINAL_ASSESSMENT' },
-      { weight: 10, questions: [], type: 'SESSION_ASSESSMENT' },
-    ]);
-    await expect(service.replaceAll('c1', twoSessions)).rejects.toThrow(BadRequestException);
-  });
 });
 
 describe('SessionPlansService after approval', () => {
@@ -93,7 +82,7 @@ describe('SessionPlansService after approval', () => {
     id: 'p1',
     courseId: 'c1',
     course: { status: 'APPROVED' },
-    assessments: [{ id: 'a1', weight: 10, _count: { attempts: 0 } }],
+    assessments: [{ id: 'a1', _count: { attempts: 0 } }],
     liveSession: null,
     ...overrides,
   });
@@ -123,84 +112,64 @@ describe('SessionPlansService after approval', () => {
       },
       $transaction: jest.fn((fn: (t: any) => Promise<unknown>) => fn(tx)),
     };
-    service = new SessionPlansService(prisma, {
-      getPassingScorePercent: jest.fn().mockResolvedValue(60),
-    } as any);
+    service = new SessionPlansService(prisma);
   });
 
-  it('gives the removed weight to the final assessment when no rebalance is given', async () => {
-    await service.removePlan('c1', 'p1', {}, 'session-1');
-    expect(tx.courseSessionPlan.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
-    expect(tx.assessment.update).toHaveBeenCalledWith({
-      where: { id: 'final' },
-      data: { weight: { increment: 10 } },
-    });
-  });
-
-  it('refuses when the course has no other assessment to take the weight', async () => {
-    tx.assessment.findFirst.mockResolvedValue(null);
-    await expect(service.removePlan('c1', 'p1', {})).rejects.toThrow(BadRequestException);
-  });
-
-  it('removes the plan, deletes the scheduled session and applies the rebalance in one transaction', async () => {
-    await service.removePlan(
-      'c1',
-      'p1',
-      { rebalance: [{ assessmentId: 'a2', weight: 20 }] },
-      'session-1',
-    );
+  it('removes the plan and deletes the scheduled session in one transaction, without touching weights', async () => {
+    await service.removePlan('c1', 'p1', 'session-1');
     expect(tx.liveSession.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'session-1' } }),
     );
     expect(tx.courseSessionPlan.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
-    expect(tx.assessment.update).toHaveBeenCalledWith({
-      where: { id: 'a2' },
-      data: { weight: 20 },
+    expect(tx.assessment.update).not.toHaveBeenCalled();
+  });
+
+  it('clears the online-sessions flag when the last plan goes', async () => {
+    tx.courseSessionPlan.count.mockResolvedValue(0);
+    await service.removePlan('c1', 'p1');
+    expect(tx.course.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { hasOnlineSessions: false },
     });
   });
 
   it('refuses to remove a session whose quiz already has results', async () => {
     prisma.courseSessionPlan.findUnique.mockResolvedValue(
-      planRow({ assessments: [{ id: 'a1', weight: 10, _count: { attempts: 3 } }] }),
+      planRow({ assessments: [{ id: 'a1', _count: { attempts: 3 } }] }),
     );
-    await expect(service.removePlan('c1', 'p1', { rebalance: [] })).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(service.removePlan('c1', 'p1')).rejects.toThrow(ForbiddenException);
   });
 
-  it('lets weight move to any assessment of the course', async () => {
-    tx.assessment.findUnique.mockResolvedValue({ courseId: 'c1', type: 'FINAL_ASSESSMENT' });
-    await service.removePlan('c1', 'p1', { rebalance: [{ assessmentId: 'final', weight: 60 }] });
-    expect(tx.assessment.update).toHaveBeenCalledWith({
-      where: { id: 'final' },
-      data: { weight: 60 },
-    });
+  it('refuses a plan of another course', async () => {
+    prisma.courseSessionPlan.findUnique.mockResolvedValue(planRow({ courseId: 'other' }));
+    await expect(service.removePlan('c1', 'p1')).rejects.toThrow(NotFoundException);
   });
 
-  it('refuses to move weight to an assessment of another course', async () => {
-    tx.assessment.findUnique.mockResolvedValue({ courseId: 'other' });
-    await expect(
-      service.removePlan('c1', 'p1', { rebalance: [{ assessmentId: 'x', weight: 60 }] }),
-    ).rejects.toThrow(BadRequestException);
-  });
-
-  it('adds a quiz to a scheduled session together with its linked prepared quiz', async () => {
+  it('adds a formative quiz to a scheduled session together with its linked prepared quiz', async () => {
     prisma.courseSessionPlan.findUnique.mockResolvedValue(
       planRow({ liveSession: { id: 'session-1' } }),
     );
     await service.addQuiz('c1', 'p1', {
       titleEn: 'Extra',
-      weight: 5,
-      rebalance: [{ assessmentId: 'a1', weight: 5 }],
+      weight: 5, // ignored
+      rebalance: [{ assessmentId: 'a1', weight: 5 }], // ignored
     });
     expect(tx.assessment.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ type: 'SESSION_ASSESSMENT', weight: 5 }),
+        data: expect.objectContaining({ type: 'SESSION_ASSESSMENT', weight: 0, passingScore: 0 }),
       }),
     );
+    expect(tx.assessment.update).not.toHaveBeenCalled();
     expect(tx.sessionPreparedQuiz.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ sessionId: 'session-1', assessmentId: 'new' }),
     });
+  });
+
+  it('refuses to add a quiz while the course is still being prepared', async () => {
+    prisma.courseSessionPlan.findUnique.mockResolvedValue(planRow({ course: { status: 'DRAFT' } }));
+    await expect(service.addQuiz('c1', 'p1', { titleEn: 'Extra' })).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });
 
@@ -226,7 +195,7 @@ describe('SessionPlansService.assignTrainer', () => {
       user: { findUnique: jest.fn().mockResolvedValue(trainer) },
       $transaction: jest.fn((fn: (t: any) => Promise<unknown>) => fn(tx)),
     };
-    service = new SessionPlansService(prisma, {} as any);
+    service = new SessionPlansService(prisma);
   };
 
   it('assigns an unscheduled plan and makes the trainer a course trainer', async () => {

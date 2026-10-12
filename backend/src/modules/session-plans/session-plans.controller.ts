@@ -50,14 +50,15 @@ export class SessionPlansController {
   @Delete('courses/:courseId/session-plans/:planId')
   @Permissions('live_session.manage_all', 'course.manage_curriculum')
   @ApiOperation({
-    summary: 'Remove a planned session; after approval its quiz weight must be rebalanced',
+    summary: 'Remove a planned session and its formative quizzes',
   })
   async removePlan(
     @Param('courseId') courseId: string,
     @Param('planId') planId: string,
-    @Body() dto: RemoveSessionPlanDto,
+    // Body accepted for older clients; its `rebalance` is ignored.
+    @Body() _dto: RemoveSessionPlanDto,
   ) {
-    return this.sessionPlansService.removePlan(courseId, planId, dto);
+    return this.sessionPlansService.removePlan(courseId, planId);
   }
 
   @Patch('courses/:courseId/session-plans/:planId/trainer')
@@ -77,7 +78,7 @@ export class SessionPlansController {
   @Permissions('live_session.manage_all', 'live_session.manage_own')
   @ApiOperation({
     summary:
-      'Add a weighted quiz to a planned session of an approved course (total must stay 100%)',
+      'Add a formative quiz (score only, not graded) to a planned session of an approved course',
   })
   async addQuiz(
     @Param('courseId') courseId: string,

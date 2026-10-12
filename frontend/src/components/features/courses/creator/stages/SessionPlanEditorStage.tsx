@@ -13,28 +13,20 @@ interface SessionPlanEditorStageProps {
   index: number;
   onUpdate: (patch: Partial<SessionPlanDraft>) => void;
   onDelete: () => void;
-  /** Course-wide weight total, including every session quiz. */
-  totalAllocatedWeight: number;
-  /** Starting pass mark for a new quiz (the global policy mark). */
-  defaultPassMark: number;
-  /** Global policy mark, for the "below the certificate grade" warning. */
-  policyPassMark: number | null;
 }
 
-/** Plans one online session: what it covers, and any weighted quizzes it will run. */
+/**
+ * Plans one online session: what it covers, and any quizzes it will run. Session quizzes are
+ * formative: learners see their score, but it never counts towards the grade or certificate.
+ */
 export function SessionPlanEditorStage({
   plan,
   index,
   onUpdate,
   onDelete,
-  totalAllocatedWeight,
-  defaultPassMark,
-  policyPassMark,
 }: SessionPlanEditorStageProps) {
   const { t } = useTranslation('courses');
   const hasQuizzes = plan.quizzes.length > 0;
-  const sessionWeight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
-  const remaining = Math.max(0, 100 - totalAllocatedWeight);
 
   const updateQuiz = (quizId: string, patch: Partial<SessionQuizDraft>) =>
     onUpdate({ quizzes: plan.quizzes.map((q) => (q.id === quizId ? { ...q, ...patch } : q)) });
@@ -46,9 +38,6 @@ export function SessionPlanEditorStage({
         {
           id: uid('sq'),
           titleEn: `${plan.titleEn || t('sessionPlanEditorStage.session')} quiz ${plan.quizzes.length + 1}`,
-          // New quizzes take 10%, or whatever is left, so the course total never passes 100%.
-          weight: Math.min(10, remaining),
-          passingScore: defaultPassMark,
           timeLimitMinutes: 10,
         },
       ],
@@ -121,24 +110,20 @@ export function SessionPlanEditorStage({
               type="checkbox"
               checked={hasQuizzes}
               onChange={(e) => (e.target.checked ? addQuiz() : onUpdate({ quizzes: [] }))}
-              disabled={!hasQuizzes && remaining === 0}
               className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
             />
             <span className="text-sm font-bold text-foreground">{t('sessionPlanEditorStage.thisSessionHasQuizzes')}</span>
           </label>
-          <WeightBar sessionWeight={sessionWeight} total={totalAllocatedWeight} />
+          <span className="rounded-full bg-info-soft px-2.5 py-1 text-[11px] font-semibold text-info">
+            {t('sessionPlanEditorStage.formativeBadge')}
+          </span>
         </div>
 
-        {!hasQuizzes ? (
-          <p className="text-xs text-muted-foreground">
-            {remaining === 0
-              ? t('sessionPlanEditorStage.all100OfTheCourseWeight')
-              : t('sessionPlanEditorStage.quizzesRunLiveDuringTheSession')}
-          </p>
-        ) : (
+        <p className="text-xs text-muted-foreground">{t('sessionPlanEditorStage.formativeNote')}</p>
+
+        {hasQuizzes && (
           <div className="space-y-3">
             {plan.quizzes.map((quiz, i) => {
-              const maxWeight = 100 - (totalAllocatedWeight - (quiz.weight || 0));
               return (
                 <div key={quiz.id} className="space-y-3 rounded-xl border border-border bg-muted/50 p-4">
                   <div className="flex items-center gap-2">
@@ -161,32 +146,6 @@ export function SessionPlanEditorStage({
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div>
-                      <label className={labelClass}>{t('sessionPlanEditorStage.weight')}</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={maxWeight}
-                        value={quiz.weight}
-                        onChange={(e) => updateQuiz(quiz.id, { weight: Math.max(0, Math.min(maxWeight, parseInt(e.target.value, 10) || 0)) })}
-                        className={inputClass}
-                      />
-                      <p className="mt-1 text-[10px] text-subtle-foreground">{t('sessionPlanEditorStage.upToAvailable', { maxWeight })}</p>
-                    </div>
-                    <div>
-                      <label className={labelClass}>{t('sessionPlanEditorStage.passMark')}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={quiz.passingScore}
-                        onChange={(e) => {
-                          const v = parseInt(e.target.value, 10);
-                          if (!Number.isNaN(v)) updateQuiz(quiz.id, { passingScore: Math.max(1, Math.min(100, v)) });
-                        }}
-                        className={inputClass}
-                      />
-                    </div>
-                    <div>
                       <label className={labelClass}>{t('sessionPlanEditorStage.timeLimitMin')}</label>
                       <input
                         type="number"
@@ -198,20 +157,10 @@ export function SessionPlanEditorStage({
                       />
                     </div>
                   </div>
-                  {quiz.weight === 0 && (
-                    <p className="text-[11px] text-warning">
-                      {t('sessionPlanEditorStage.a0QuizDoesNotAffect')}
-                    </p>
-                  )}
-                  {policyPassMark !== null && quiz.passingScore < policyPassMark && (
-                    <p className="text-[11px] text-warning">
-                      {t('sessionPlanEditorStage.theCourseNeedsOverallForThe', { policyPassMark })}
-                    </p>
-                  )}
                 </div>
               );
             })}
-            <Button variant="outline" size="sm" onClick={addQuiz} disabled={remaining === 0} className="gap-1.5 text-xs">
+            <Button variant="outline" size="sm" onClick={addQuiz} className="gap-1.5 text-xs">
               <Plus className="h-3.5 w-3.5" />
               {t('sessionPlanEditorStage.addQuiz')}
             </Button>
@@ -221,22 +170,6 @@ export function SessionPlanEditorStage({
           {t('sessionPlanEditorStage.questionsAreAddedFromTheQuestion')}
         </p>
       </div>
-    </div>
-  );
-}
-
-function WeightBar({ sessionWeight, total }: { sessionWeight: number; total: number }) {
-  const { t } = useTranslation('courses');
-  const others = Math.max(0, total - sessionWeight);
-  return (
-    <div className="min-w-[220px] space-y-1">
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-secondary">
-        <div className="h-full bg-subtle-foreground" style={{ width: `${Math.min(100, others)}%` }} />
-        <div className="h-full bg-primary" style={{ width: `${Math.min(100 - Math.min(100, others), sessionWeight)}%` }} />
-      </div>
-      <p className={cn('text-[11px] font-semibold', total === 100 ? 'text-success' : 'text-muted-foreground')}>
-        {t('weightBar.thisSessionCourseTotalLeft', { sessionWeight, total, value: Math.max(0, 100 - total) })}
-      </p>
     </div>
   );
 }

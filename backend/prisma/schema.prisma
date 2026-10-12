@@ -525,7 +525,7 @@ model Assessment {
   moduleId      String? @map("module_id")
   lessonId      String? @map("lesson_id")
   type          AssessmentType @default(FINAL_ASSESSMENT) @map("type")
-  /// Set for SESSION_ASSESSMENT: the planned session this weighted quiz belongs to.
+  /// Set for SESSION_ASSESSMENT: the planned session this formative quiz belongs to (weight 0, no pass mark).
   sessionPlanId String? @map("session_plan_id")
   titleAm       String @map("title_am")
   titleEn       String @map("title_en")
@@ -533,6 +533,9 @@ model Assessment {
   descriptionEn String? @map("description_en")
   passingScore  Int    @map("passing_score") // percentage
   weight        Int    @default(0) @map("weight") // percentage weight towards course grade (sum of course assessments = 100)
+  /// SESSION_ASSESSMENT only: points the trainer's questions must total (planned with the course).
+  /// The score is points earned ÷ this total, shown as feedback; it never counts towards the grade.
+  totalPoints   Int?   @map("total_points")
   maxAttempts   Int    @default(3) @map("max_attempts")
   timeLimitMinutes Int? @map("time_limit_minutes")
   shuffleQuestions Boolean @default(false) @map("shuffle_questions")
@@ -734,7 +737,7 @@ model SessionPreparedQuestion {
   addedAt    DateTime @default(now()) @map("added_at")
   order      Int      @default(0)
   /// Points for this question in this quiz (the bank question's points are only the starting
-  /// value). For a weighted session quiz the points of all its questions must total its weight.
+  /// value). For a course session quiz the points of all its questions must total its totalPoints.
   points     Int      @default(0)
 
   quiz       SessionPreparedQuiz  @relation("QuizPreparedQuestions", fields: [quizId], references: [id], onDelete: Cascade)

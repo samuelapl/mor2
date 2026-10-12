@@ -45,7 +45,9 @@
     "certificateOfCompletion": "Certificate of Completion",
     "verifiedReadyToView": "Verified & Ready to View",
     "issuedUponClassroomCompletion": "Issued upon classroom completion",
-    "completeCourseToUnlock": "Complete course to unlock"
+    "completeCourseToUnlock": "Complete course to unlock",
+    "attendNextSession": "Next: attend \"{title}\" on {date}.",
+    "sessionNotScheduledYet": "\"{title}\" will be scheduled again by your trainer."
   },
   "certificateStage": {
     "retrievingOfficialCertificationCredentia": "Retrieving official certification credentials…",
@@ -73,8 +75,8 @@
     "usingCode": "using code"
   },
   "pendingSessionsNotice": {
-    "dateToBeAnnounced": "date to be announced",
-    "cancelledToBeRescheduled": "cancelled — to be rescheduled"
+    "nextSession": "next session {date}",
+    "notScheduledYet": "not scheduled yet: your trainer will schedule a new session"
   },
   "classroomStage": {
     "selectALessonTopicOrQuiz": "Select a lesson, topic, or quiz from the curriculum sidebar."
@@ -118,9 +120,11 @@
     "passMark": "Pass mark",
     "weight": "Weight",
     "points": "Points",
-    "liveSession": "Live session",
     "upcoming": "Upcoming",
-    "notTaken": "Not taken"
+    "notTaken": "Not taken",
+    "sessionQuizzes": "Live session quizzes (feedback only)",
+    "noScoreYet": "No score",
+    "sessionQuizzesNote": "These scores don't count towards your course grade or certificate. Attending each live session does."
   },
   "liveSessionsStage": {
     "youCanJoin5MinutesBefore": "You can join 5 minutes before the session starts.",
@@ -130,7 +134,7 @@
     "cancelled": "Cancelled",
     "attended": "Attended",
     "missed": "Missed",
-    "onlineSessionsForThisCourseAttend": "Online sessions for this course. Attend them live; your certificate is issued after every session has been held.",
+    "onlineSessionsForThisCourseAttend": "Online sessions for this course. Attend them live; your certificate is issued once you have attended every session.",
     "session": "Session",
     "dateToBeAnnounced": "Date to be announced",
     "min": "min",
@@ -155,18 +159,18 @@
     "trainer": "Trainer",
     "assignedCourseTrainer": "Assigned Course Trainer",
     "certificateRequirementPolicy": "Certificate Requirement Policy",
-    "learnersAreRequiredToAttendAll": "Learners are required to attend all scheduled live sessions. Session attendance is tracked and verified before course certificate issuance."
+    "learnersAreRequiredToAttendAll": "Learners are required to attend all scheduled live sessions. Session attendance is tracked and verified before course certificate issuance.",
+    "notAttended": "Not attended",
+    "attendTheNextSession": "You missed this session. Attend the next one below to count it towards your certificate."
   },
   "mySessionQuizResults": {
     "viewMyQuizResults": "View my quiz results",
     "noQuizWasRunInThis": "No quiz was run in this session.",
-    "ofTheCourseGrade": "of the course grade",
-    "pass": "pass",
-    "youDidnTAnswerThisQuiz": "You didn't answer this quiz, so it counts as 0.",
-    "youDidnTAnswerThisQuiz2": "You didn't answer this quiz."
+    "youDidnTAnswerThisQuiz2": "You didn't answer this quiz.",
+    "feedbackOnly": "Feedback only: doesn't affect your grade or certificate"
   },
   "pendingSessions": {
-    "remainingOne": "You have {count} live session remaining to attend. Your certificate is issued after all live sessions have been held and attended.",
-    "remainingOther": "You have {count} live sessions remaining to attend. Your certificate is issued after all live sessions have been held and attended."
+    "remainingOne": "You have {count} live session left to attend. Your certificate is issued once you have attended every live session; if you missed one, attend its next scheduled session.",
+    "remainingOther": "You have {count} live sessions left to attend. Your certificate is issued once you have attended every live session; if you missed one, attend its next scheduled session."
   }
 }

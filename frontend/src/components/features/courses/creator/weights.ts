@@ -1,5 +1,4 @@
 import type { LessonDraft, ModuleDraft } from '../wizard-types';
-import type { SessionPlanDraft } from './types';
 
 /** A module's checkpoint quiz is stored as an ASSESSMENT row among its lessons. */
 export const isModuleAssessmentLesson = (l: LessonDraft) =>
@@ -14,16 +13,13 @@ const hasQuestions = (l: LessonDraft) => (l.quizQuestions?.length ?? 0) > 0;
 /**
  * Sum of the weights that will actually be saved. A lesson, module or final assessment
  * without questions is not created on save (see syncCurriculumAndAssessments), so its weight
- * does not count. Session quizzes always count: their questions are prepared after approval.
- * The backend applies the same rule when a course is submitted (common/utils/weights.util.ts).
+ * does not count. Session quizzes are formative and never count. The backend applies the same rule when a course is submitted (common/utils/weights.util.ts).
  */
 export function computeWeightTotal(
   modules: ModuleDraft[],
   final: { weight: number; questionCount: number },
-  sessionPlans: SessionPlanDraft[] = [],
 ): number {
   let total = final.questionCount > 0 ? final.weight || 0 : 0;
-  for (const plan of sessionPlans) for (const quiz of plan.quizzes) total += quiz.weight || 0;
   for (const m of modules) {
     for (const l of m.lessons) {
       if (isModuleAssessmentLesson(l)) {
@@ -38,11 +34,10 @@ export function computeWeightTotal(
   return total;
 }
 
-/** True when the course will have at least one graded assessment. */
-export function hasAnyAssessment(modules: ModuleDraft[], finalQuestionCount: number, sessionPlans: SessionPlanDraft[] = []): boolean {
+/** True when the course will have at least one graded assessment (session quizzes are not graded). */
+export function hasAnyAssessment(modules: ModuleDraft[], finalQuestionCount: number): boolean {
   return (
     finalQuestionCount > 0 ||
-    sessionPlans.some((p) => p.quizzes.length > 0) ||
     modules.some((m) =>
       m.lessons.some((l) =>
         isModuleAssessmentLesson(l) ? hasQuestions(l) : (l.subLessons ?? []).some((s) => isLessonAssessmentSub(s) && hasQuestions(s)),

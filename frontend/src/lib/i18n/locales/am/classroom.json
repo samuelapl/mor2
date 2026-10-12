@@ -45,7 +45,9 @@
     "certificateOfCompletion": "የማጠናቀቂያ ሰርተፊኬት",
     "verifiedReadyToView": "የተረጋገጠና ለመመልከት ዝግጁ",
     "issuedUponClassroomCompletion": "የክፍል ስልጠና ሲጠናቀቅ ይሰጣል",
-    "completeCourseToUnlock": "ለመክፈት ኮርሱን ያጠናቁ"
+    "completeCourseToUnlock": "ለመክፈት ኮርሱን ያጠናቁ",
+    "attendNextSession": "ቀጣይ፦ \"{title}\"ን በ{date} ይከታተሉ።",
+    "sessionNotScheduledYet": "\"{title}\" በአሰልጣኝዎ እንደገና ይታቀዳል።"
   },
   "certificateStage": {
     "retrievingOfficialCertificationCredentia": "ይፋዊ የሰርተፊኬት መረጃዎችን በማምጣት ላይ…",
@@ -73,8 +75,8 @@
     "usingCode": "በማረጋገጫ ኮድ"
   },
   "pendingSessionsNotice": {
-    "dateToBeAnnounced": "ቀኑ ይገለጻል",
-    "cancelledToBeRescheduled": "ተሰርዟል — እንደገና ይታቀዳል"
+    "nextSession": "ቀጣይ ክፍለ-ጊዜ {date}",
+    "notScheduledYet": "ገና አልታቀደም፤ አሰልጣኝዎ አዲስ ክፍለ-ጊዜ ያዘጋጃሉ"
   },
   "classroomStage": {
     "selectALessonTopicOrQuiz": "ከስርዓተ-ትምህርቱ ማውጫ ትምህርት፣ ርዕስ ወይም ፈተና ይምረጡ።"
@@ -118,9 +120,11 @@
     "passMark": "ማለፊያ",
     "weight": "ክብደት",
     "points": "ነጥብ",
-    "liveSession": "የቀጥታ ክፍለ-ጊዜ",
     "upcoming": "ይጠበቃል",
-    "notTaken": "አልተወሰደም"
+    "notTaken": "አልተወሰደም",
+    "sessionQuizzes": "የቀጥታ ክፍለ-ጊዜ ፈተናዎች (ለግብረ መልስ ብቻ)",
+    "noScoreYet": "ውጤት የለም",
+    "sessionQuizzesNote": "እነዚህ ውጤቶች በኮርስ ውጤትዎ ወይም በሰርተፊኬትዎ ላይ አይቆጠሩም። የሚቆጠረው እያንዳንዱን የቀጥታ ክፍለ-ጊዜ መከታተል ነው።"
   },
   "liveSessionsStage": {
     "youCanJoin5MinutesBefore": "ክፍለ-ጊዜው ከመጀመሩ 5 ደቂቃ በፊት መቀላቀል ይችላሉ።",
@@ -130,7 +134,7 @@
     "cancelled": "ተሰርዟል",
     "attended": "ተገኝተዋል",
     "missed": "አልተገኙም",
-    "onlineSessionsForThisCourseAttend": "የዚህ ኮርስ የኦንላይን ክፍለ-ጊዜዎች። በቀጥታ ይሳተፉ፤ ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ከተካሄዱ በኋላ ነው።",
+    "onlineSessionsForThisCourseAttend": "የዚህ ኮርስ የኦንላይን ክፍለ-ጊዜዎች። በቀጥታ ይሳተፉ፤ ሰርተፊኬትዎ የሚሰጠው ሁሉንም ክፍለ-ጊዜዎች ከተከታተሉ በኋላ ነው።",
     "session": "ክፍለ-ጊዜ",
     "dateToBeAnnounced": "ቀኑ ይገለጻል",
     "min": "ደቂቃ",
@@ -155,18 +159,18 @@
     "trainer": "አሰልጣኝ",
     "assignedCourseTrainer": "የተመደበው አሰልጣኝ",
     "certificateRequirementPolicy": "የሰርተፊኬት አሰጣጥ ደንብ",
-    "learnersAreRequiredToAttendAll": "ተማሪዎች በሁሉም የጊዜ ሰሌዳ በተያዘላቸው የቀጥታ ክፍለ-ጊዜዎች መሳተፍ አለባቸው። ሰርተፊኬት ከመሰጠቱ በፊት የክፍለ-ጊዜ ተሳትፎ ይረጋገጣል።"
+    "learnersAreRequiredToAttendAll": "ተማሪዎች በሁሉም የጊዜ ሰሌዳ በተያዘላቸው የቀጥታ ክፍለ-ጊዜዎች መሳተፍ አለባቸው። ሰርተፊኬት ከመሰጠቱ በፊት የክፍለ-ጊዜ ተሳትፎ ይረጋገጣል።",
+    "notAttended": "አልተገኙም",
+    "attendTheNextSession": "ይህ ክፍለ-ጊዜ አምልጦዎታል። ለሰርተፊኬትዎ እንዲቆጠር ከታች ያለውን ቀጣይ ክፍለ-ጊዜ ይከታተሉ።"
   },
   "mySessionQuizResults": {
     "viewMyQuizResults": "የፈተና ውጤቴን ይመልከቱ",
     "noQuizWasRunInThis": "በዚህ ክፍለ-ጊዜ ፈተና አልተካሄደም።",
-    "ofTheCourseGrade": "ከኮርሱ ውጤት",
-    "pass": "ማለፊያ",
-    "youDidnTAnswerThisQuiz": "ይህን ፈተና ስላልመለሱ 0 ይቆጠራል።",
-    "youDidnTAnswerThisQuiz2": "ይህን ፈተና አልመለሱም።"
+    "youDidnTAnswerThisQuiz2": "ይህን ፈተና አልመለሱም።",
+    "feedbackOnly": "ለግብረ መልስ ብቻ፤ በውጤትዎ ወይም በሰርተፊኬትዎ ላይ ተጽዕኖ የለውም"
   },
   "pendingSessions": {
-    "remainingOne": "የሚቀሩዎት {count} የቀጥታ ክፍለ-ጊዜ(ዎች) አሉ። ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ተካሂደው ሲገኙባቸው ብቻ ነው።",
-    "remainingOther": "የሚቀሩዎት {count} የቀጥታ ክፍለ-ጊዜ(ዎች) አሉ። ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ተካሂደው ሲገኙባቸው ብቻ ነው።"
+    "remainingOne": "የሚቀሩዎት {count} የቀጥታ ክፍለ-ጊዜ(ዎች) አሉ። ሰርተፊኬትዎ የሚሰጠው ሁሉንም የቀጥታ ክፍለ-ጊዜዎች ሲከታተሉ ነው፤ ያመለጠዎት ካለ ቀጣዩን የታቀደ ክፍለ-ጊዜ ይከታተሉ።",
+    "remainingOther": "የሚቀሩዎት {count} የቀጥታ ክፍለ-ጊዜ(ዎች) አሉ። ሰርተፊኬትዎ የሚሰጠው ሁሉንም የቀጥታ ክፍለ-ጊዜዎች ሲከታተሉ ነው፤ ያመለጠዎት ካለ ቀጣዩን የታቀደ ክፍለ-ጊዜ ይከታተሉ።"
   }
 }

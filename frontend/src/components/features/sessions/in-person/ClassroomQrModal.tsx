@@ -107,8 +107,6 @@ export function ClassroomQrModal({
 }: ClassroomQrModalProps) {
   const [copied, setCopied] = useState(false);
 
-  if (!open) return null;
-
   const pinCode = session.id.slice(-6).toUpperCase();
   const venue = session.venue;
 

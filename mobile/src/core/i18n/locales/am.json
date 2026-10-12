@@ -539,19 +539,21 @@
   "sessionQuiz": {
     "viewResults": "የፈተና ውጤቴን ይመልከቱ",
     "noQuiz": "በዚህ ክፍለ-ጊዜ ፈተና አልተካሄደም።",
-    "gradedInfo": "ከኮርሱ ውጤት {{weight}}% · ማለፊያ {{pass}}%",
     "notAnswered": "ይህን ፈተና አልመለሱም።",
-    "notAnsweredGraded": "ይህን ፈተና ስላልመለሱ 0 ይቆጠራል።",
     "notAnsweredShort": "አልተመለሰም",
     "score": "{{percent}}% · {{earned}}/{{total}} ነጥብ",
     "points": "{{earned}}/{{total}} ነጥብ",
     "answered": "የመለሱት፦",
     "noAnswer": "መልስ የለም",
-    "correctAnswer": "ትክክለኛ መልስ፦"
+    "correctAnswer": "ትክክለኛ መልስ፦",
+    "yourAnswerCorrect": "የመለሱት (ትክክል)",
+    "yourAnswer": "የመለሱት",
+    "correctAnswerBadge": "ትክክለኛ መልስ",
+    "feedbackOnly": "ለግብረ መልስ ብቻ፤ በውጤትዎ ወይም በሰርተፊኬትዎ ላይ ተጽዕኖ የለውም"
   },
   "courseSessions": {
     "title": "የቀጥታ ክፍለ-ጊዜዎች",
-    "intro": "የዚህ ኮርስ የኦንላይን ክፍለ-ጊዜዎች። በቀጥታ ይሳተፉ፤ ሰርተፊኬትዎ የሚሰጠው ሁሉም ክፍለ-ጊዜዎች ከተካሄዱ በኋላ ነው።",
+    "intro": "የዚህ ኮርስ የኦንላይን ክፍለ-ጊዜዎች። በቀጥታ ይሳተፉ፤ ሰርተፊኬትዎ የሚሰጠው ሁሉንም ክፍለ-ጊዜዎች ከተከታተሉ በኋላ ነው።",
     "none": "ለዚህ ኮርስ እስካሁን የቀጥታ ክፍለ-ጊዜ የለም።",
     "sessionN": "ክፍለ-ጊዜ {{number}}",
     "dateTba": "ቀኑ ይገለጻል",
@@ -561,7 +563,9 @@
     "missed": "አልተገኙም",
     "joinNow": "አሁን ይቀላቀሉ",
     "viewSession": "ክፍለ-ጊዜውን ይመልከቱ",
-    "heldOf": "ከ{{total}} {{held}} ተካሂደዋል"
+    "heldOf": "ከ{{total}} {{held}} ተካሂደዋል",
+    "notAttended": "አልተገኙም",
+    "attendNext": "ይህ ክፍለ-ጊዜ አምልጦዎታል። ለሰርተፊኬትዎ እንዲቆጠር ከታች ያለውን ቀጣይ ክፍለ-ጊዜ ይከታተሉ።"
   },
   "grade": {
     "courseGrade": "የኮርስ ውጤት",
@@ -569,13 +573,14 @@
     "notReached": "የሚያስፈልገውን የኮርስ ውጤት አላሟሉም ({{grade}}% ከ {{required}}%)።",
     "retakeHint": "ውጤትዎን ለማሻሻል ምዘናውን እንደገና ይውሰዱ ወይም ድጋፍ ያግኙ።",
     "contactSupport": "የቀረ ሙከራ የለም። እባክዎ ድጋፍ ያግኙ።",
-    "liveSession": "የቀጥታ ክፍለ-ጊዜ",
-    "upcoming": "ይጠበቃል",
     "notTaken": "አልተወሰደም",
     "weightPoints": "{{weight}}% ክብደት · {{points}} ነጥብ",
-    "sessionsPendingTitle": "ሰርተፊኬቱ {{count}} የቀጥታ ክፍለ-ጊዜ ፈተና(ዎች) ይጠብቃል",
-    "sessionsPendingBody": "በሚቀጥለው ዙር ይሳተፉ፦ {{names}}። ውጤትዎ የሚጸናው እያንዳንዱ የክፍለ-ጊዜ ፈተና ውጤትዎን ሲይዝ ነው።",
-    "sessionsPendingGeneric": "ፈተናውን ያልወሰዱበትን እያንዳንዱን የቀጥታ ክፍለ-ጊዜ በሚቀጥለው ዙር ይሳተፉ። ውጤትዎ የሚጸናው እያንዳንዱ የክፍለ-ጊዜ ፈተና ውጤትዎን ሲይዝ ነው።"
+    "sessionsMissingTitle": "ሰርተፊኬቱ {{count}} የሚከታተሉት የቀጥታ ክፍለ-ጊዜ(ዎች) ይጠብቃል",
+    "nextSession": "ቀጣይ ክፍለ-ጊዜ {{date}}",
+    "notScheduledYet": "ገና አልታቀደም፤ አሰልጣኝዎ አዲስ ክፍለ-ጊዜ ያዘጋጃሉ",
+    "sessionQuizzes": "የቀጥታ ክፍለ-ጊዜ ፈተናዎች (ለግብረ መልስ ብቻ)",
+    "noScoreYet": "ውጤት የለም",
+    "sessionQuizzesNote": "እነዚህ ውጤቶች በኮርስ ውጤትዎ ወይም በሰርተፊኬትዎ ላይ አይቆጠሩም። የሚቆጠረው እያንዳንዱን የቀጥታ ክፍለ-ጊዜ መከታተል ነው።"
   },
   "laws": {
     "title": "የታክስ እና የጉምሩክ ሕጎች",

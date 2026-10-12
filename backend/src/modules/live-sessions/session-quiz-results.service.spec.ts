@@ -48,17 +48,15 @@ describe('SessionQuizResultsService for a held round whose quiz moved to a later
         ]),
     },
     assessment: {
-      findMany: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'quiz-1',
-            titleEn: 'Session 1 quiz',
-            weight: 10,
-            passingScore: 70,
-            questions: keyed,
-          },
-        ]),
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'quiz-1',
+          titleEn: 'Session 1 quiz',
+          weight: 10,
+          passingScore: 70,
+          questions: keyed,
+        },
+      ]),
     },
     questionBankQuestion: { findMany: jest.fn().mockResolvedValue([]) },
     enrollment: { findMany: jest.fn().mockResolvedValue([{ userId: 'u1' }]) },
@@ -81,6 +79,6 @@ describe('SessionQuizResultsService for a held round whose quiz moved to a later
 
     const mine = results.learners[0]!.quizzes[0]!;
     expect(mine).toMatchObject({ earnedPoints: 8, totalPoints: 10, scorePercent: 80 });
-    expect(mine.recorded).toEqual({ score: 80, passed: true });
+    expect(mine.recorded).toEqual({ score: 80, missed: false });
   });
 });

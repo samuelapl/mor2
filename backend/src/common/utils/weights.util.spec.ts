@@ -67,12 +67,14 @@ describe('assertCourseWeightsTotal', () => {
 });
 
 describe('assertCourseWeightsTotal with session quizzes', () => {
-  it('counts a session quiz before its questions are prepared', async () => {
-    const rows = [
-      { weight: 80, questions: q, type: 'FINAL_ASSESSMENT' },
-      { weight: 20, questions: [], type: 'SESSION_ASSESSMENT' },
-    ];
-    await expect(assertCourseWeightsTotal(db(rows as any), 'c', 'exact')).resolves.toBeUndefined();
+  it('leaves formative session quizzes out of the 100%', async () => {
+    const mock = db([{ weight: 100, questions: q }]);
+    await expect(assertCourseWeightsTotal(mock, 'c', 'exact')).resolves.toBeUndefined();
+    expect(mock.assessment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { courseId: 'c', type: { not: 'SESSION_ASSESSMENT' } },
+      }),
+    );
   });
 });
 
@@ -82,13 +84,19 @@ describe('assertAssessmentPointsMatchWeights', () => {
 
   it('accepts points that total the weight', async () => {
     await expect(
-      assertAssessmentPointsMatchWeights(rows({ weight: 20, questions: [{ points: 15 }, { points: 5 }] }), 'c'),
+      assertAssessmentPointsMatchWeights(
+        rows({ weight: 20, questions: [{ points: 15 }, { points: 5 }] }),
+        'c',
+      ),
     ).resolves.toBeUndefined();
   });
 
   it('rejects points that do not total the weight', async () => {
     await expect(
-      assertAssessmentPointsMatchWeights(rows({ weight: 20, questions: [{ points: 10 }, { points: 20 }] }), 'c'),
+      assertAssessmentPointsMatchWeights(
+        rows({ weight: 20, questions: [{ points: 10 }, { points: 20 }] }),
+        'c',
+      ),
     ).rejects.toThrow('"A0" has 30 points but weighs 20%');
   });
 

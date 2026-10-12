@@ -21,6 +21,7 @@ import {
   buildPaginationArgs,
   buildPaginatedResponse,
   formatAppDateTime,
+  isAnswerCorrect,
   startsInSeconds,
 } from '@common/utils';
 import { AuthenticatedUser, PaginationQuery } from '@common/interfaces';
@@ -558,8 +559,8 @@ export class LiveSessionsService {
   }
 
   /**
-   * Removing a session scheduled from a course plan only unschedules it: the plan (its quizzes,
-   * weights and trainer) stays and can be scheduled again. The link moves to `originalPlanId`
+   * Removing a session scheduled from a course plan only unschedules it: the plan (its quizzes
+   * and trainer) stays and can be scheduled again. The link moves to `originalPlanId`
    * so the plan is free for a new session; its prepared quizzes move over when that happens.
    */
   async softDelete(id: string) {
@@ -576,36 +577,28 @@ export class LiveSessionsService {
     });
   }
 
-  /**
-   * A session with graded quizzes can only go live once each one is prepared: it has questions
-   * and their points total the quiz's course weight (one point per percent).
-   */
+  /** A session with course quizzes can only go live once each one has questions. */
   private async assertGradedQuizzesReady(sessionId: string) {
     const quizzes = await this.prisma.sessionPreparedQuiz.findMany({
       where: { sessionId, assessmentId: { not: null } },
       select: {
         title: true,
-        assessment: { select: { weight: true } },
-        questions: { select: { points: true } },
+        _count: { select: { questions: true } },
       },
     });
-    const problems = quizzes.flatMap((q) => {
-      const weight = q.assessment?.weight ?? 0;
-      const total = q.questions.reduce((sum, x) => sum + x.points, 0);
-      if (q.questions.length === 0) return [`"${q.title}" has no questions`];
-      if (total !== weight) return [`"${q.title}" has ${total} of ${weight} points assigned`];
-      return [];
-    });
+    const problems = quizzes
+      .filter((q) => q._count.questions === 0)
+      .map((q) => `"${q.title}" has no questions`);
     if (problems.length > 0) {
       throw new BadRequestException({
-        message: `Unable to start this session now: prepare its graded quiz first (${problems.join('; ')}).`,
+        message: `Unable to start this session now: prepare its session quiz first (${problems.join('; ')}).`,
         code: 'SESSION_QUIZ_NOT_READY',
         problems,
       });
     }
   }
 
-  /** Re-grades the session's weighted quizzes (e.g. after a late response). */
+  /** Re-scores the session's quizzes (e.g. after a late response). */
   async gradeSessionQuizzes(id: string, user?: AuthenticatedUser) {
     await this.findById(id);
     if (user) await assertCanRunSession(this.prisma, this.permissions, user, id);
@@ -727,12 +720,14 @@ export class LiveSessionsService {
     const explanation = undefined;
 
     if (question) {
-      const correctAns = question.correctAnswer?.trim().toLowerCase();
-      const selected = dto.selectedOptionIds.map((s) => s.trim().toLowerCase());
-
-      if (correctAns) {
-        isCorrect = selected.includes(correctAns);
-      }
+      // The key may be stored as an option position or as its text; apps send positions.
+      isCorrect = isAnswerCorrect(
+        {
+          options: Array.isArray(question.options) ? question.options : [],
+          correctAnswer: question.correctAnswer,
+        },
+        dto.selectedOptionIds,
+      );
       score = isCorrect ? question.points : 0;
     }
 

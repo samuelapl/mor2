@@ -1136,7 +1136,6 @@ export function LiveQuizTrainerControl({
           correctCount: number;
           totalQuestions: number;
           scorePercent: number;
-          status: 'PASSED' | 'NEEDS_REVIEW';
           totalDurationSeconds: number;
           breakdown: Array<{
             questionId: string;
@@ -1244,7 +1243,6 @@ export function LiveQuizTrainerControl({
           ...s,
           totalQuestions: item.totalQuestions,
           scorePercent,
-          status: (scorePercent >= 60 ? 'PASSED' : 'NEEDS_REVIEW') as 'PASSED' | 'NEEDS_REVIEW',
         };
       });
     });
@@ -1304,7 +1302,6 @@ export function LiveQuizTrainerControl({
       'Total Questions',
       'Correct Answers',
       'Score (%)',
-      'Status',
       'Duration (seconds)',
     ];
     const rows = group.studentResults.map((s) => [
@@ -1314,7 +1311,6 @@ export function LiveQuizTrainerControl({
       s.totalQuestions,
       s.correctCount,
       `${s.scorePercent}%`,
-      s.status,
       s.totalDurationSeconds,
     ]);
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -3483,7 +3479,6 @@ export function LiveQuizTrainerControl({
                                           <th className="px-3 py-2.5 text-center">Score</th>
                                           <th className="px-3 py-2.5 text-center">Accuracy</th>
                                           <th className="px-3 py-2.5 text-center">Time</th>
-                                          <th className="px-3 py-2.5 text-center">Status</th>
                                           <th className="px-3 py-2.5 text-right">Details</th>
                                         </tr>
                                       </thead>
@@ -3527,24 +3522,6 @@ export function LiveQuizTrainerControl({
                                                     ? `${student.totalDurationSeconds}s`
                                                     : '-'}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                  <span
-                                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-                                                      student.status === 'PASSED'
-                                                        ? 'bg-success-soft border-success/30 text-success'
-                                                        : 'bg-warning-soft border-warning/30 text-warning'
-                                                    }`}
-                                                  >
-                                                    {student.status === 'PASSED' ? (
-                                                      <>
-                                                        <Check className="h-3 w-3 text-success" />
-                                                        Passed
-                                                      </>
-                                                    ) : (
-                                                      'Needs Review'
-                                                    )}
-                                                  </span>
-                                                </td>
                                                 <td className="px-3 py-2.5 text-right">
                                                   <button
                                                     type="button"
@@ -3562,7 +3539,7 @@ export function LiveQuizTrainerControl({
                                               {/* Expanded per-student answer details */}
                                               {isStudentExpanded && (
                                                 <tr>
-                                                  <td colSpan={7} className="bg-muted/90 px-4 py-3 border-y border-border">
+                                                  <td colSpan={6} className="bg-muted/90 px-4 py-3 border-y border-border">
                                                     <div className="space-y-2">
                                                       <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                                         Question Answers by {student.userName}:

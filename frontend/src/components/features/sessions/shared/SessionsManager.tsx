@@ -108,7 +108,7 @@ export function SessionsManager({ scope }: { scope: SessionsScope }) {
 
   const canManageAll = can("live_session.manage_all");
   const canConductSession = canAny(["live_session.manage_all", "live_session.manage_own"]);
-  // Staff can't start or join a session whose graded quiz isn't prepared yet.
+  // Staff can't start or join a session whose course quiz isn't prepared yet.
   const quizGate = useQuizReadinessGate();
   const joinRoom = async (session: ApiLiveSession) => {
     if (canConductSession && !(await quizGate.guard(session.id))) return;

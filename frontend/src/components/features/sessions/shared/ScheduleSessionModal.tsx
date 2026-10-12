@@ -484,19 +484,18 @@ export function ScheduleSessionModal({
                   onChange={(event) => pickPlannedSession(event.target.value)}
                   className={inputClass}
                 >
-                  <option value="">New unplanned session (no graded quiz)</option>
+                  <option value="">New unplanned session (no course quiz)</option>
                   {plannedSessions.map((plan) => {
-                    const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
                     return (
                       <option key={plan.id} value={plan.id}>
                         {plan.order + 1}. {plan.titleEn}
-                        {plan.quizzes.length ? ` — ${plan.quizzes.length} quiz(zes), ${weight}% of the grade` : ""}
+                        {plan.quizzes.length ? ` — ${plan.quizzes.length} quiz(zes)` : ""}
                       </option>
                     );
                   })}
                 </select>
                 <p className="text-[11px] text-muted-foreground">
-                  Picking one fills in its title and description, and creates its weighted quizzes for the trainer to prepare.
+                  Picking one fills in its title and description, and creates its quizzes for the trainer to prepare.
                 </p>
               </div>
             )}

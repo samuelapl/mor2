@@ -11,6 +11,7 @@ import type {
 import type { ClassroomActiveContent, ClassroomFlatItem, ClassroomSelection } from '../types';
 import { stripHtmlTags } from '@/components/ui/RichContent';
 import { getItemAttachments } from '@/components/features/courses/wizard-components';
+import { missingLiveSessions } from '@/lib/live-attendance';
 
 interface UseClassroomNavigationProps {
   course: Course | null;
@@ -250,9 +251,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
 
     // 5. Final Certification Assessment (if course has final assessment)
     const finalAssessment = progress?.courseCompletion?.finalAssessment;
-    const allLiveSessionsAttended =
-      liveSessions.length === 0 ||
-      liveSessions.every((s) => s.status === 'COMPLETED' && s.attended);
+    // Same rule as the server: each planned session attended once, in any round.
+    const allLiveSessionsAttended = missingLiveSessions(progress).length === 0;
 
     if (finalAssessment) {
       const contentCompleted = progress?.courseCompletion?.contentCompleted ?? false;

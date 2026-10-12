@@ -34,7 +34,7 @@ export interface ScheduleSessionBody {
   allowViewAttendance?: boolean;
   attendanceThreshold?: number;
   trainerId?: string;
-  /** Schedule a session planned with the course; its weighted quizzes come along. */
+  /** Schedule a session planned with the course; its quizzes come along. */
   sessionPlanId?: string;
 }
 
@@ -87,7 +87,7 @@ export function deleteLiveSession(id: string): Promise<ApiLiveSession> {
   return api<ApiLiveSession>(`live-sessions/${id}`, { method: 'DELETE' });
 }
 
-/** Re-grades the session's weighted quizzes into learners' course results. */
+/** Re-scores the session's course quizzes from learners' answers (feedback only). */
 export function gradeSessionQuizzes(id: string): Promise<{ quizzes: number; learners: number }> {
   return api(`live-sessions/${id}/grade-quizzes`, { method: 'POST' });
 }
@@ -310,9 +310,9 @@ export interface ApiSessionQuizGroup {
   /** Prepared quiz id, or `other` for questions broadcast outside a prepared group. */
   id: string;
   title: string;
+  /** A course session quiz (formative: its score is recorded as feedback, never graded). */
   graded: boolean;
-  weight: number | null;
-  passingScore: number | null;
+  totalPoints?: number;
   questions: ApiSessionQuizQuestion[];
 }
 
@@ -320,6 +320,8 @@ export interface ApiLearnerQuizAnswer {
   questionId: string;
   /** What the learner picked, as text; null when not answered. */
   answer: string | null;
+  /** Actual option values/texts selected by the learner. */
+  selected?: string[];
   isCorrect: boolean | null;
   answeredAt: string | null;
 }
@@ -331,8 +333,8 @@ export interface ApiLearnerQuizResult {
   earnedPoints: number;
   totalPoints: number;
   scorePercent: number;
-  /** Result recorded in the course grade when the session was completed (graded quizzes). */
-  recorded: { score: number; passed: boolean } | null;
+  /** Score recorded when the session was completed (course session quizzes). */
+  recorded: { score: number; missed: boolean } | null;
   answers: ApiLearnerQuizAnswer[];
 }
 

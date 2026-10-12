@@ -273,8 +273,6 @@ export function courseFromDetail(apiCourse: ApiCourseDetail): Course {
       quizzes: p.assessments.map((a) => ({
         id: a.id,
         titleEn: a.titleEn,
-        weight: a.weight,
-        passingScore: a.passingScore,
         timeLimitMinutes: a.timeLimitMinutes,
       })),
       // A removed (soft-deleted) session leaves the plan unscheduled.

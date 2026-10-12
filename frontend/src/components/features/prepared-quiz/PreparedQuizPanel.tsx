@@ -178,7 +178,7 @@ export function PreparedQuizPanel({
               ))
             );
             const isOtherQuizActive = Boolean((activeQuizId || activeQuizTitle) && !isThisQuizActive);
-            // A graded quiz's points must total its course weight before it can be run.
+            // A quiz needs questions before it can be run.
             const blocker = broadcastBlocker(quiz);
             const isBroadcasted = Boolean(
               (broadcastedQuizTitles && broadcastedQuizTitles.has(quiz.title)) ||

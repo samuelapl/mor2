@@ -6,11 +6,7 @@ import { FilesService } from '@modules/files/files.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { AuditService } from '@modules/audit/audit.service';
 import { PolicyService } from '@modules/policy/policy.service';
-import {
-  computeCourseGrade,
-  findMissingSessionAttendance,
-  isSessionQuizClosed,
-} from '@common/utils';
+import { computeCourseGrade, findMissingSessionAttendance } from '@common/utils';
 import { PDFDocument, PDFPage, RGB, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
@@ -621,30 +617,24 @@ export class CertificatesService {
     if (completedLessons !== lessonIds.length) return null;
 
     // Same rule as ProgressService: every assessment passed on its own mark, and the
-    // weighted course grade at or above the global policy mark.
-    const assessments = (
-      await this.prisma.assessment.findMany({
-        where: { courseId },
-        select: {
-          id: true,
-          type: true,
-          weight: true,
-          passingScore: true,
-          attempts: {
-            where: { userId, submittedAt: { not: null } },
-            select: { score: true, passed: true },
-          },
+    // weighted course grade at or above the global policy mark. Session quizzes don't count.
+    const assessments = await this.prisma.assessment.findMany({
+      where: { courseId },
+      select: {
+        id: true,
+        type: true,
+        weight: true,
+        passingScore: true,
+        attempts: {
+          where: { userId, submittedAt: { not: null } },
+          select: { score: true, passed: true },
         },
-      })
-    ).map((a) => ({
-      ...a,
-      closed: a.type === 'SESSION_ASSESSMENT' ? isSessionQuizClosed(a) : undefined,
-    }));
+      },
+    });
     const grade = computeCourseGrade(
       assessments,
       await this.policyService.getPassingScorePercent(),
     );
-    // Includes: no session quiz still waiting for its session.
     if (!grade.certificateReady) return null;
 
     // Scheduled sessions attendance check:

@@ -101,7 +101,7 @@ export function PreparedQuizManager({ sessionId, courseId }: PreparedQuizManager
             tone={gradedReady === graded.length ? 'green' : 'amber'}
             icon={gradedReady === graded.length ? <CheckCircle2 className="h-3.5 w-3.5" /> : <GraduationCap className="h-3.5 w-3.5" />}
           >
-            {gradedReady} of {graded.length} graded {graded.length === 1 ? 'quiz' : 'quizzes'} ready
+            {gradedReady} of {graded.length} course {graded.length === 1 ? 'quiz' : 'quizzes'} ready
           </SummaryChip>
         )}
       </div>

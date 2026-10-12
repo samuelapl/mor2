@@ -200,7 +200,8 @@ export interface ApiCourseSessionPlanRow {
   descriptionEn: string | null;
   objectivesEn: string | null;
   trainerId: string | null;
-  assessments: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null }>;
+  /** Formative session quizzes (no weight, no pass mark). */
+  assessments: Array<{ id: string; titleEn: string; timeLimitMinutes: number | null }>;
   liveSession: ApiSessionPlanLiveSession | null;
 }
 
@@ -224,7 +225,8 @@ export interface ApiSessionPlan {
   descriptionEn: string | null;
   objectivesEn: string | null;
   trainerId: string | null;
-  quizzes: Array<{ id: string; titleEn: string; weight: number; passingScore: number; timeLimitMinutes: number | null; questionCount: number }>;
+  /** Formative session quizzes (no weight, no pass mark). */
+  quizzes: Array<{ id: string; titleEn: string; timeLimitMinutes: number | null; questionCount: number }>;
   liveSession: ApiSessionPlanLiveSession | null;
 }
 
@@ -233,7 +235,7 @@ export interface ReplaceSessionPlansBody {
     titleEn: string;
     descriptionEn?: string;
     objectivesEn?: string;
-    quizzes: Array<{ titleEn: string; weight: number; passingScore?: number; timeLimitMinutes?: number }>;
+    quizzes: Array<{ titleEn: string; timeLimitMinutes?: number }>;
   }>;
 }
 
@@ -413,7 +415,10 @@ export interface ApiAttachedAssessment {
   earnedPoints?: number;
   /** False when never submitted; it counts as 0 in the course grade. */
   attempted?: boolean;
-  /** AssessmentType; SESSION_ASSESSMENT quizzes run live in a session and are graded when it ends. */
+  /**
+   * AssessmentType. SESSION_ASSESSMENT quizzes run live in a session and are formative: weight 0,
+   * no pass mark, `bestScore` is feedback only and `passed` means "taken".
+   */
   type?: string;
   attemptsUsed?: number;
   maxAttempts?: number;
@@ -494,10 +499,18 @@ export interface ApiCourseCompletion {
   passingScorePercent?: number;
   gradeSatisfied?: boolean;
   certificateEligible: boolean;
-  /** Session quizzes still waiting for their session; the certificate waits for them. */
-  sessionsPending?: number;
+  /** Live sessions still to attend before the certificate (same rule as the backend). */
+  missingSessions?: ApiMissingSession[];
   finalAssessment: ApiAttachedAssessment | null;
   assessmentBreakdown?: ApiAttachedAssessment[];
+}
+
+/** A planned (or held) live session the learner has not attended yet. */
+export interface ApiMissingSession {
+  id: string;
+  title: string;
+  /** Earliest upcoming round they can attend, or null while none is scheduled. */
+  nextSessionAt: string | null;
 }
 
 export interface ApiCourseProgress {
@@ -533,6 +546,14 @@ export interface ApiLearnerSession {
   planned: boolean;
   /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
   startsInSeconds?: number | null;
+  /** Earlier held rounds of this planned session the learner missed (oldest first). */
+  missedRounds?: ApiMissedRound[];
+}
+
+export interface ApiMissedRound {
+  sessionId: string;
+  scheduledAt: string;
+  durationMinutes: number | null;
 }
 
 export interface ApiLearnerProgress {

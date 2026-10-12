@@ -12,11 +12,23 @@ export interface AttendanceSession {
   /** Set when the plan moved on to a newer session (rescheduled, or this one was removed). */
   originalPlanId: string | null;
   attended: boolean;
+  scheduledAt?: Date | null;
 }
 
 export interface MissingSession {
   id: string;
   title: string;
+  /** When the learner can attend it next: the earliest upcoming round, or null if none is scheduled. */
+  nextSessionAt: Date | null;
+}
+
+const UPCOMING_STATUSES: string[] = [SessionStatus.SCHEDULED, SessionStatus.LIVE];
+
+function nextRoundAt(sessions: AttendanceSession[], matches: (s: AttendanceSession) => boolean) {
+  const upcoming = sessions
+    .filter((s) => UPCOMING_STATUSES.includes(s.status) && s.scheduledAt && matches(s))
+    .map((s) => s.scheduledAt!.getTime());
+  return upcoming.length > 0 ? new Date(Math.min(...upcoming)) : null;
 }
 
 /**
@@ -43,7 +55,11 @@ export function missingSessionAttendance(
     );
     return plans
       .filter((p) => !attendedPlanIds.has(p.id))
-      .map((p) => ({ id: p.id, title: p.titleEn }));
+      .map((p) => ({
+        id: p.id,
+        title: p.titleEn,
+        nextSessionAt: nextRoundAt(sessions, (s) => (s.originalPlanId ?? s.sessionPlanId) === p.id),
+      }));
   }
 
   if (!hasOnlineSessions && sessions.length === 0) return [];
@@ -51,10 +67,32 @@ export function missingSessionAttendance(
   if (completed.length === 0) {
     // Required sessions have not been held yet.
     return sessions.length > 0
-      ? sessions.map((s) => ({ id: s.id, title: s.titleEn }))
-      : [{ id: 'online-sessions', title: 'Online sessions' }];
+      ? sessions.map((s) => ({
+          id: s.id,
+          title: s.titleEn,
+          nextSessionAt: nextRoundAt(sessions, (x) => x.id === s.id),
+        }))
+      : [{ id: 'online-sessions', title: 'Online sessions', nextSessionAt: null }];
   }
-  return completed.filter((s) => !s.attended).map((s) => ({ id: s.id, title: s.titleEn }));
+  // Ad-hoc sessions are not rescheduled, so a missed one has no next round.
+  return completed
+    .filter((s) => !s.attended)
+    .map((s) => ({ id: s.id, title: s.titleEn, nextSessionAt: null }));
+}
+
+/** "Session 2 (next session 12 Oct 2026), Session 3 (not scheduled yet)" for learner messages. */
+export function describeMissingSessions(missing: MissingSession[]): string {
+  return missing
+    .map((s) =>
+      s.nextSessionAt
+        ? `${s.title} (next session ${s.nextSessionAt.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })})`
+        : `${s.title} (not scheduled yet; your trainer will schedule a new session)`,
+    )
+    .join(', ');
 }
 
 /** Loads what missingSessionAttendance needs for one learner in one course. */
@@ -76,6 +114,7 @@ export async function findMissingSessionAttendance(
         id: true,
         titleEn: true,
         status: true,
+        scheduledAt: true,
         sessionPlanId: true,
         originalPlanId: true,
         attendees: {

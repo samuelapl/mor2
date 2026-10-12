@@ -57,7 +57,13 @@ function formatRemainingTime(sec: number): string {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
-export function LiveQuizLearnerOverlay({
+export function LiveQuizLearnerOverlay(props: LiveQuizLearnerOverlayProps) {
+  // If no active quiz is in session, unmount immediately so learner does not see lingering questions
+  if (!props.quiz) return null;
+  return <LiveQuizLearnerOverlayContent {...props} quiz={props.quiz} />;
+}
+
+function LiveQuizLearnerOverlayContent({
   sessionId,
   userId,
   userName,
@@ -67,10 +73,7 @@ export function LiveQuizLearnerOverlay({
   revealsByQuestionId = {},
   onBroadcast,
   onDismiss,
-}: LiveQuizLearnerOverlayProps) {
-  // If no active quiz is in session, unmount immediately so learner does not see lingering questions
-  if (!quiz) return null;
-
+}: LiveQuizLearnerOverlayProps & { quiz: LiveQuizPayload }) {
   // Aggregate all questions in the current live quiz sequence
   const allQuestions = useMemo(() => {
     if (!quiz) return [];

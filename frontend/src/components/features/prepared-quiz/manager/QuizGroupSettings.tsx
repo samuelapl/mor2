@@ -16,7 +16,7 @@ interface QuizGroupSettingsProps {
   onDelete: () => void;
 }
 
-/** Name, whole-quiz timer and delete for the selected quiz group, plus the grading rules if it is graded. */
+/** Name, whole-quiz timer and delete for the selected quiz group, plus how a course quiz is scored. */
 export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelete }: QuizGroupSettingsProps) {
   const graded = quiz.assessment;
   const [customTimer, setCustomTimer] = useState('');
@@ -105,65 +105,21 @@ export function QuizGroupSettings({ quiz, busy, onRename, onTimerChange, onDelet
         )}
       </div>
 
-      {graded && <PointsAllocation allocated={graded.weight} assigned={totalPoints(quiz)} />}
-
       {graded && (
-        <div className="flex gap-3 rounded-xl border border-warning/25 bg-gradient-to-r from-warning-soft to-warning-soft/40 p-3.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+        <div className="flex gap-3 rounded-xl border border-info/25 bg-info-soft/60 p-3.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info">
             <GraduationCap className="h-4 w-4" />
           </span>
-          <div className="text-xs leading-relaxed text-warning">
-            <p className="font-bold">
-              Graded course quiz · {graded.weight}% of the course grade · pass mark {graded.passingScore}%
-            </p>
-            <p className="mt-0.5 text-warning/90">
-              Question points must add up to <strong>{graded.weight}</strong>, one point per percent of the course grade. When
-              the session is marked completed, each learner&apos;s answers become their result; learners who didn&apos;t answer
-              score 0. This quiz was planned with the course, so it can&apos;t be deleted here.
+          <div className="text-xs leading-relaxed text-info">
+            <p className="font-bold">Course session quiz · formative · {totalPoints(quiz)} points</p>
+            <p className="mt-0.5 text-info/90">
+              Learners see their score (points earned out of the total). It has no pass mark and doesn&apos;t count towards
+              the course grade or the certificate; only attending the session does. This quiz was planned with the course, so
+              it can&apos;t be deleted here.
             </p>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/** Allocated (the quiz's course weight), assigned and remaining points of a graded quiz. */
-function PointsAllocation({ allocated, assigned }: { allocated: number; assigned: number }) {
-  const remaining = allocated - assigned;
-  const done = remaining === 0;
-  const cells = [
-    { label: 'Allocated', value: allocated, hint: 'Points this quiz must total', tone: 'text-foreground' },
-    { label: 'Assigned', value: assigned, hint: 'Points set on its questions', tone: 'text-primary' },
-    {
-      label: 'Remaining',
-      value: remaining,
-      hint: done ? 'Ready to broadcast' : 'Assign before going live',
-      tone: done ? 'text-success' : 'text-warning',
-    },
-  ];
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      {cells.map((cell) => (
-        <div
-          key={cell.label}
-          className={cn(
-            'rounded-xl border p-3',
-            cell.label === 'Remaining'
-              ? done
-                ? 'border-success/30 bg-success-soft/60'
-                : 'border-warning/30 bg-warning-soft/60'
-              : 'border-border bg-muted/60',
-          )}
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">{cell.label}</p>
-          <p className={cn('mt-0.5 text-2xl font-extrabold leading-tight', cell.tone)}>
-            {cell.value}
-            <span className="ml-1 text-xs font-semibold text-subtle-foreground">pts</span>
-          </p>
-          <p className="text-[11px] text-muted-foreground">{cell.hint}</p>
-        </div>
-      ))}
     </div>
   );
 }

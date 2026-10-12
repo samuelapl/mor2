@@ -67,12 +67,12 @@ export interface CourseProgress {
     certificateEligible: boolean;
     finalAssessment: ProgressAssessment | null;
     allAssessmentsPassed?: boolean;
-    /** Weighted course grade (0–100), session quizzes included. */
+    /** Weighted course grade (0–100); live-session quizzes are formative and not included. */
     totalCourseGrade?: number;
     passingScorePercent?: number;
     gradeSatisfied?: boolean;
-    /** Session quizzes still waiting for their session; the certificate waits for them. */
-    sessionsPending?: number;
+    /** Live sessions still to attend before the certificate (the server's rule). */
+    missingSessions?: MissingSession[];
     assessmentBreakdown?: AssessmentBreakdownItem[];
   };
   /** The course's online sessions (planned ones too, before they're scheduled). */
@@ -90,9 +90,20 @@ export interface AssessmentBreakdownItem {
   earnedPoints?: number;
   /** False when never submitted; it counts as 0 in the course grade. */
   attempted?: boolean;
-  /** SESSION_ASSESSMENT quizzes run live in a session and are graded when it ends. */
+  /**
+   * SESSION_ASSESSMENT quizzes run live in a session and are formative: weight 0, no pass mark,
+   * `bestScore` is feedback only and `passed` means "taken".
+   */
   type?: string;
   retakeAvailable?: boolean;
+}
+
+/** A live session the learner has not attended yet. */
+export interface MissingSession {
+  id: string;
+  title: string;
+  /** Earliest upcoming round they can attend, or null while none is scheduled. */
+  nextSessionAt: string | null;
 }
 
 export interface LearnerSession {
@@ -109,4 +120,12 @@ export interface LearnerSession {
   planned: boolean;
   /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
   startsInSeconds?: number | null;
+  /** Earlier held rounds of this planned session the learner missed (oldest first). */
+  missedRounds?: MissedRound[];
+}
+
+export interface MissedRound {
+  sessionId: string;
+  scheduledAt: string;
+  durationMinutes: number | null;
 }

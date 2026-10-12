@@ -106,8 +106,8 @@ export function ReviewSubmitStage({
   ).length;
 
   // Same total the studio and the backend submit check use.
-  const calculatedWeights = computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length }, sessionPlans);
-  const gradedCourse = hasAnyAssessment(modules, questions.length, sessionPlans);
+  const calculatedWeights = computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length });
+  const gradedCourse = hasAnyAssessment(modules, questions.length);
 
   // Blocking problems: anything here prevents submission.
   const issues: { message: string; node: CreatorActiveNode }[] = [];
@@ -166,7 +166,6 @@ export function ReviewSubmitStage({
     plan.quizzes.forEach((quiz, qi) => {
       const qLabel = `${label} › ${quiz.titleEn.trim() || `${t('reviewSubmitStage.quiz')} ${qi + 1}`}`;
       if (!quiz.titleEn.trim()) issues.push({ message: `${qLabel}: ${t('reviewSubmitStage.titleIsMissing')}`, node });
-      if (!quiz.weight) issues.push({ message: `${qLabel}: ${t('reviewSubmitStage.weightIs0')}`, node });
     });
   });
   if (gradedCourse && calculatedWeights !== 100) {
@@ -354,7 +353,7 @@ export function ReviewSubmitStage({
                   <span className="font-medium">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                   {plan.quizzes.map((q) => (
                     <span key={q.id} className="rounded-md border border-primary/30 bg-card px-1.5 text-[11px] font-semibold text-primary">
-                      {q.titleEn} · {q.weight}% · {t('reviewSubmitStage.pass')} {q.passingScore}%
+                      {q.titleEn} · {t('reviewSubmitStage.formativeQuiz')}
                     </span>
                   ))}
                 </li>

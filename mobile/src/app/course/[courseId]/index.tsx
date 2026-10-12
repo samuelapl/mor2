@@ -52,7 +52,7 @@ import {
   useSelfEnroll,
 } from '@/features/courses';
 import { useCertificateForCourse, useClaimCertificate } from '@/features/certificates';
-import { findNextLesson, useCourseProgress } from '@/features/progress';
+import { CourseGradeSummary, findNextLesson, useCourseProgress } from '@/features/progress';
 import { downloadManager, OfflineDownloadCard } from '@/features/offline';
 import { useIsOnline } from '@/core/hooks/useNetworkStatus';
 import type { ApiCourseDetail } from '@/features/courses/types/course.types';
@@ -385,6 +385,15 @@ export default function CourseScreen() {
               </AppText>
             </View>
           )}
+
+          {/* Why the certificate isn't unlocked yet: course grade, and live sessions still to attend */}
+          {enrolled &&
+          status !== 'DROPPED' &&
+          status !== 'COMPLETED' &&
+          progress.data &&
+          !progress.data.courseCompletion.certificateEligible ? (
+            <CourseGradeSummary progress={progress.data} />
+          ) : null}
 
           {/* Offline Learning download manager (enrolled, OPEN progression only) */}
           {enrolled && progress.data?.progressionMode === 'OPEN' ? (

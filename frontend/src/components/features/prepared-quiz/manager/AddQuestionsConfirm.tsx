@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { RichContent } from '@/components/ui/RichContent';
 import type { ApiQuestionBankQuestion } from '@/lib/api/quiz';
 import type { PreparedQuizGroup } from '@/lib/api/prepared-quiz';
-import { isEvenSplit, QUESTION_TYPE_LABEL, splitEvenly } from '../quiz-points';
+import { QUESTION_TYPE_LABEL } from '../quiz-points';
 
 interface AddQuestionsConfirmProps {
   quiz: PreparedQuizGroup | null;
@@ -19,20 +19,8 @@ interface AddQuestionsConfirmProps {
 /** Review step before questions are added to a quiz group: what is added and how points are set. */
 export function AddQuestionsConfirm({ quiz, questions, busy, onCancel, onConfirm }: AddQuestionsConfirmProps) {
   if (!quiz) return null;
-  const weight = quiz.assessment?.weight ?? null;
   const count = questions.length;
-
-  // Same rules as the server: an evenly split graded quiz stays even; otherwise new questions start at 0.
-  let pointsNote: string;
-  if (weight === null) {
-    pointsNote = 'Each question starts with its points from the question bank. You can change them afterwards.';
-  } else if (isEvenSplit(quiz.questions.map((q) => q.points), weight)) {
-    const split = splitEvenly(weight, quiz.questions.length + count);
-    const values = Array.from(new Set(split)).join(' or ');
-    pointsNote = `The quiz's ${weight} allocated points will be split evenly over ${quiz.questions.length + count} questions (${values} points each).`;
-  } else {
-    pointsNote = `You've customised this quiz's points, so the new questions start at 0. Assign them so the quiz totals its ${weight} allocated points.`;
-  }
+  const pointsNote = 'Each question starts with its points from the question bank. You can change them afterwards.';
 
   return (
     <Modal

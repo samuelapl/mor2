@@ -207,12 +207,10 @@ export interface SessionPlan {
   } | null;
 }
 
-/** A weighted quiz planned for a session; its questions are prepared after approval. */
+/** A formative quiz planned for a session (score only, never graded); questions are prepared after approval. */
 export interface SessionQuizPlan {
   id: string;
   titleEn: string;
-  weight: number;
-  passingScore: number;
   timeLimitMinutes?: number | null;
 }
 

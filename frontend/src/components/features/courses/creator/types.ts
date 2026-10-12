@@ -29,12 +29,13 @@ export interface CreatorActiveNode {
   sessionPlanId?: string;
 }
 
-/** A weighted quiz planned for an online session; its questions are prepared after approval. */
+/**
+ * A formative quiz planned for an online session; its questions are prepared after approval.
+ * It has no weight or pass mark: learners only see their score.
+ */
 export interface SessionQuizDraft {
   id: string;
   titleEn: string;
-  weight: number;
-  passingScore: number;
   timeLimitMinutes: number;
 }
 

@@ -145,7 +145,7 @@
     "recommended": "Recommended",
     "thisDeliveryModeIsNoLonger": "This delivery mode is no longer offered for new courses. This course keeps it; it can only be switched to Online Self-Paced.",
     "includeOnlineSessions": "Include online sessions",
-    "planLiveOnlineSessionsNowWith": "Plan live online sessions now, with optional weighted quizzes. They are scheduled (date, trainer, platform) after the course is approved.",
+    "planLiveOnlineSessionsNowWith": "Plan live online sessions now, with optional formative quizzes (score only, not graded). They are scheduled (date, trainer, platform) after the course is approved.",
     "courseCoverImage": "Course Cover Image",
     "changeCoverImage": "Change Cover Image",
     "uploadCoverImage": "Upload Cover Image",
@@ -252,7 +252,6 @@
     "hasNoLessons": "has no lessons",
     "onlineSession": "Online session",
     "quiz": "Quiz",
-    "weightIs0": "weight is 0%",
     "assessmentWeightsTotalTheyMustAdd": "Assessment weights total {calculatedWeights}% — they must add up to exactly 100%",
     "coursePreFlightChecklistSubmission": "Course Pre-flight Checklist & Submission",
     "reviewYourSyllabusAssessmentsAndConfigur": "Review your syllabus, assessments, and configuration before submitting for approval.",
@@ -268,7 +267,8 @@
     "thisMatchesHowEnrolledLearnersExperience": "This matches how enrolled learners experience the course overview and modules.",
     "plannedOnlineSessions": "Planned online sessions ({count})",
     "pass": "pass",
-    "scheduledWithADateTrainerAnd": "Scheduled with a date, trainer and platform after approval."
+    "scheduledWithADateTrainerAnd": "Scheduled with a date, trainer and platform after approval.",
+    "formativeQuiz": "formative, score only"
   },
   "sessionPlanEditorStage": {
     "session": "Session",
@@ -282,20 +282,12 @@
     "sessionObjectives": "Session objectives",
     "byTheEndOfThisSession": "By the end of this session learners will…",
     "thisSessionHasQuizzes": "This session has quizzes",
-    "all100OfTheCourseWeight": "All 100% of the course weight is already assigned. Lower another assessment to add a quiz here.",
-    "quizzesRunLiveDuringTheSession": "Quizzes run live during the session and count towards the course grade. A learner who misses one scores 0 for it.",
     "quizTitle": "Quiz {value} title",
-    "weight": "Weight (%)",
-    "upToAvailable": "Up to {maxWeight}% available",
-    "passMark": "Pass mark (%)",
     "timeLimitMin": "Time limit (min)",
-    "a0QuizDoesNotAffect": "A 0% quiz does not affect the course grade.",
-    "theCourseNeedsOverallForThe": "The course needs {policyPassMark}% overall for the certificate; this quiz's pass mark is lower.",
     "addQuiz": "Add quiz",
-    "questionsAreAddedFromTheQuestion": "Questions are added from the question bank by the trainer once the session is scheduled."
-  },
-  "weightBar": {
-    "thisSessionCourseTotalLeft": "This session {sessionWeight}% · course total {total}% · {value}% left"
+    "questionsAreAddedFromTheQuestion": "Questions are added from the question bank by the trainer once the session is scheduled.",
+    "formativeBadge": "Formative · score only",
+    "formativeNote": "Session quizzes are formative: learners see their score, but it doesn't count towards the course grade or the certificate. Only attending the session counts."
   },
   "assessmentDetailSection": {
     "noAssessmentHasBeenAttachedYet": "No assessment has been attached yet.",
@@ -466,12 +458,10 @@
     "noTrainerIsAssignedToThis": "No trainer is assigned to this session yet.",
     "thisSessionIsNotScheduledYet": "This session is not scheduled yet.",
     "hasNoQuestionsYet": "\"{titleEn}\" has no questions yet.",
-    "hasOfPointsAssigned": "\"{titleEn}\" has {points} of {weight} points assigned.",
     "done": "Done",
     "pending": "Pending",
     "noTrainerYet": "No trainer yet",
     "notScheduledYet": "Not scheduled yet",
-    "ofTheCourseGrade": "of the course grade",
     "getThisSessionReady": "Get this session ready",
     "allSetThisSessionIsReady": "All set. This session is ready for publishing.",
     "twoStepsBeforeThisSessionCan": "Two steps before this session can go live.",
@@ -505,15 +495,16 @@
     "changeTheDateOrTimeOn": "Change the date or time on the Session Scheduling page.",
     "objectives": "Objectives",
     "sessionQuizzes": "Session quizzes",
-    "thisSessionHasNoGradedQuiz": "This session has no graded quiz.",
+    "thisSessionHasNoGradedQuiz": "This session has no quiz.",
     "noQuestionsPreparedYetTheTrainer": "No questions prepared yet. The trainer adds them from the question bank in the session’s quiz tools.",
-    "eachSessionQuizIsGradedWhen": "Each session quiz is graded when its session is marked completed; a learner who misses it scores 0. The certificate waits until every session has been held.",
+    "eachSessionQuizIsGradedWhen": "Session quizzes are formative: each learner's score is recorded when the session is marked completed, but it doesn't count towards the grade or certificate. The certificate needs every session attended; a learner who misses one attends its rescheduled round.",
     "quizUnit": "quiz",
     "quizzesUnit": "quizzes",
     "questionUnit": "question",
     "questionsUnit": "questions",
     "blocksPublishingOne": "{count} issue blocks publishing",
-    "blocksPublishingOther": "{count} issues block publishing"
+    "blocksPublishingOther": "{count} issues block publishing",
+    "formativeNotGraded": "formative · not graded"
   },
   "contentStatusPage": {
     "contentStatus": "Content Status",

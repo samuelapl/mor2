@@ -55,11 +55,11 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
         <span
           className={cn(
             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-            graded ? 'bg-warning-soft text-warning' : 'bg-secondary text-secondary-foreground',
+            graded ? 'bg-info-soft text-info' : 'bg-secondary text-secondary-foreground',
           )}
         >
           {graded ? <GraduationCap className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
-          {graded ? `Graded · ${quiz.assessment!.weight}%` : 'Practice'}
+          {graded ? 'Course quiz' : 'Practice'}
         </span>
         {status.kind === 'ready' && <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-label="Ready" />}
       </div>
@@ -77,18 +77,13 @@ function QuizGroupCard({ quiz, active, onSelect }: { quiz: PreparedQuizGroup; ac
         </span>
       </div>
 
-      {status.kind !== 'practice' && (
-        <div className="mt-3">
-          <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-            <div
-              className={cn('h-full rounded-full transition-all', status.kind === 'ready' ? 'bg-emerald-500' : 'bg-amber-400')}
-              style={{ width: `${status.kind === 'empty' ? 0 : Math.min(100, (status.total / status.required) * 100)}%` }}
-            />
-          </div>
-          <p className={cn('mt-1 text-[10px] font-semibold', status.kind === 'ready' ? 'text-success' : 'text-warning')}>
-            {status.kind === 'empty' ? `0 / ${status.required} points` : `${status.total} / ${status.required} points`}
-          </p>
-        </div>
+      {status.kind === 'empty' && (
+        <p className="mt-3 text-[10px] font-semibold text-warning">Add questions before the session</p>
+      )}
+      {status.kind === 'incomplete' && (
+        <p className="mt-3 text-[10px] font-semibold text-warning">
+          Points: {status.current} / {status.planned} (must match)
+        </p>
       )}
     </button>
   );

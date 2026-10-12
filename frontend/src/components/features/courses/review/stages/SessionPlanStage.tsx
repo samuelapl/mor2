@@ -20,7 +20,6 @@ import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBad
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useUserName } from '@/lib/stores/user-store';
 import { usePermissions } from '@/lib/usePermissions';
-import { usePolicyPassMark } from '@/lib/api/usePolicyPassMark';
 import { assignSessionPlanTrainer } from '@/lib/api/session-plans';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -47,7 +46,7 @@ interface SessionPlanStageProps {
   plan: SessionPlan;
   index: number;
   courseStatus: CourseStatus;
-  /** The session's weighted quizzes with their prepared questions and answers. */
+  /** The session's formative quizzes with their prepared questions and answers. */
   quizAssessments: ApiAssessment[];
   courseId?: string;
   canAssignTrainer?: boolean;
@@ -77,8 +76,6 @@ export function SessionPlanStage({
   const { isAmharic, t } = useTranslation('courses');
   const userName = useUserName();
   const { can } = usePermissions();
-  const policyPassMark = usePolicyPassMark();
-  const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
   const scheduled = plan.liveSession;
   const trainerId = sessionPlanTrainerId(plan);
   const afterApproval = courseStatus === 'approved' || courseStatus === 'published';
@@ -144,14 +141,6 @@ export function SessionPlanStage({
     const questions = prepared?.questions ?? [];
     if (afterApproval && questions.length === 0) {
       publishBlockers.push(t('sessionPlanStage.hasNoQuestionsYet', { titleEn: q.titleEn }));
-    } else if (afterApproval) {
-      // One point per percent of course weight, so a 10% quiz totals 10 points.
-      const points = questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
-      if (points !== q.weight) {
-        publishBlockers.push(
-          t('sessionPlanStage.hasOfPointsAssigned', { titleEn: q.titleEn, points, weight: q.weight }),
-        );
-      }
     }
   }
 
@@ -174,8 +163,8 @@ export function SessionPlanStage({
               {scheduled ? formatDate(scheduled.scheduledAt) : t('sessionPlanStage.notScheduledYet')}
             </StatusPill>
             <span>
-              {plan.quizzes.length} {t(plan.quizzes.length === 1 ? 'sessionPlanStage.quizUnit' : 'sessionPlanStage.quizzesUnit')} · {weight}%{' '}
-              {t('sessionPlanStage.ofTheCourseGrade')}
+              {plan.quizzes.length} {t(plan.quizzes.length === 1 ? 'sessionPlanStage.quizUnit' : 'sessionPlanStage.quizzesUnit')} ·{' '}
+              {t('sessionPlanStage.formativeNotGraded')}
             </span>
           </>
         }
@@ -406,17 +395,8 @@ export function SessionPlanStage({
           return (
             <StageCard key={q.id} title={q.titleEn} icon={<FileQuestion className="h-4 w-4" />}>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-md border border-primary/30 bg-primary-soft px-1.5 font-semibold text-primary">
-                  {q.weight}% {t('lessonEditorStage.weight')}
-                </span>
-                <span
-                  className={`rounded-md border px-1.5 font-semibold ${
-                    policyPassMark !== null && q.passingScore < policyPassMark
-                      ? 'border-warning/30 bg-warning-soft text-warning'
-                      : 'border-success/30 bg-success-soft text-success'
-                  }`}
-                >
-                  {t('reviewSubmitStage.pass')} {q.passingScore}%
+                <span className="rounded-md border border-info/30 bg-info-soft px-1.5 font-semibold text-info">
+                  {t('sessionPlanStage.formativeNotGraded')}
                 </span>
                 {q.timeLimitMinutes ? <span className="text-subtle-foreground">{q.timeLimitMinutes} min</span> : null}
                 <span className="text-subtle-foreground">

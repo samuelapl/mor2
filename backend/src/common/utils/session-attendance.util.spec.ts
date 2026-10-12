@@ -1,4 +1,8 @@
-import { missingSessionAttendance, AttendanceSession } from './session-attendance.util';
+import {
+  AttendanceSession,
+  describeMissingSessions,
+  missingSessionAttendance,
+} from './session-attendance.util';
 
 const session = (overrides: Partial<AttendanceSession>): AttendanceSession => ({
   id: 's',
@@ -34,7 +38,7 @@ describe('missingSessionAttendance with planned sessions', () => {
       session({ id: 'r1-s2', originalPlanId: 'p2', attended: true }),
     ];
     expect(missingSessionAttendance(plans, sessions, true)).toEqual([
-      { id: 'p1', title: 'Session 1' },
+      { id: 'p1', title: 'Session 1', nextSessionAt: null },
     ]);
   });
 
@@ -44,7 +48,36 @@ describe('missingSessionAttendance with planned sessions', () => {
       session({ id: 's2', sessionPlanId: 'p2', attended: true }),
     ];
     expect(missingSessionAttendance(plans, sessions, true)).toEqual([
-      { id: 'p1', title: 'Session 1' },
+      { id: 'p1', title: 'Session 1', nextSessionAt: null },
+    ]);
+  });
+
+  it('gives the earliest upcoming round of a missed plan as the next session', () => {
+    const sessions = [
+      session({ id: 'r1-s1', originalPlanId: 'p1', attended: false }),
+      session({ id: 'r1-s2', originalPlanId: 'p2', attended: true }),
+      session({
+        id: 'r3-s1',
+        status: 'SCHEDULED',
+        sessionPlanId: 'p1',
+        scheduledAt: new Date('2026-11-20T09:00:00Z'),
+      }),
+      session({
+        id: 'r2-s1',
+        status: 'SCHEDULED',
+        sessionPlanId: 'p1',
+        scheduledAt: new Date('2026-11-10T09:00:00Z'),
+      }),
+      // Another plan's round is not this plan's next session.
+      session({
+        id: 'r2-s2',
+        status: 'SCHEDULED',
+        sessionPlanId: 'p2',
+        scheduledAt: new Date('2026-11-01T09:00:00Z'),
+      }),
+    ];
+    expect(missingSessionAttendance(plans, sessions, true)).toEqual([
+      { id: 'p1', title: 'Session 1', nextSessionAt: new Date('2026-11-10T09:00:00Z') },
     ]);
   });
 
@@ -64,7 +97,9 @@ describe('missingSessionAttendance without plans', () => {
       session({ id: 'b', titleEn: 'Extra', attended: false }),
       session({ id: 'c', status: 'SCHEDULED' }),
     ];
-    expect(missingSessionAttendance([], sessions, true)).toEqual([{ id: 'b', title: 'Extra' }]);
+    expect(missingSessionAttendance([], sessions, true)).toEqual([
+      { id: 'b', title: 'Extra', nextSessionAt: null },
+    ]);
   });
 
   it('waits until an online course has held a session', () => {
@@ -72,5 +107,18 @@ describe('missingSessionAttendance without plans', () => {
       missingSessionAttendance([], [session({ id: 'a', status: 'SCHEDULED' })], true),
     ).toHaveLength(1);
     expect(missingSessionAttendance([], [], true)).toHaveLength(1);
+  });
+});
+
+describe('describeMissingSessions', () => {
+  it('names each session with its next date, or says it is not scheduled yet', () => {
+    expect(
+      describeMissingSessions([
+        { id: 'p1', title: 'Session 1', nextSessionAt: new Date('2026-11-10T09:00:00Z') },
+        { id: 'p2', title: 'Session 2', nextSessionAt: null },
+      ]),
+    ).toBe(
+      'Session 1 (next session 10 Nov 2026), Session 2 (not scheduled yet; your trainer will schedule a new session)',
+    );
   });
 });

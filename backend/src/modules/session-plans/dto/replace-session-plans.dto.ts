@@ -18,20 +18,22 @@ export class SessionQuizPlanDto {
   @MinLength(2)
   titleEn!: string;
 
-  @ApiProperty({
-    example: 10,
-    description: 'Share of the course grade (%). All course weights total 100%.',
+  /** @deprecated Session quizzes are formative and have no weight; ignored. */
+  @ApiPropertyOptional({
+    deprecated: true,
+    description: 'Ignored: session quizzes have no weight.',
   })
-  @IsInt()
-  @Min(0)
-  @Max(100)
-  weight!: number;
-
-  @ApiPropertyOptional({ example: 60, description: 'Omit to use the global policy pass mark.' })
   @IsOptional()
   @IsInt()
-  @Min(1)
-  @Max(100)
+  weight?: number;
+
+  /** @deprecated Session quizzes are formative and have no pass mark; ignored. */
+  @ApiPropertyOptional({
+    deprecated: true,
+    description: 'Ignored: session quizzes have no pass mark.',
+  })
+  @IsOptional()
+  @IsInt()
   passingScore?: number;
 
   @ApiPropertyOptional({ example: 10 })
@@ -59,7 +61,7 @@ export class SessionPlanDto {
 
   @ApiProperty({
     type: [SessionQuizPlanDto],
-    description: 'Weighted quizzes for this session; [] for none.',
+    description: 'Formative quizzes for this session (score only, not graded); [] for none.',
   })
   @IsArray()
   @ArrayMaxSize(20)
@@ -80,7 +82,7 @@ export class ReplaceSessionPlansDto {
   plans!: SessionPlanDto[];
 }
 
-/** New weight for another session quiz, so the course total stays at exactly 100%. */
+/** @deprecated Session quizzes carry no weight, so nothing needs rebalancing; ignored. */
 export class WeightRebalanceDto {
   @ApiProperty()
   @IsString()
@@ -96,25 +98,28 @@ export class WeightRebalanceDto {
 export class RemoveSessionPlanDto {
   @ApiPropertyOptional({
     type: [WeightRebalanceDto],
-    description:
-      'Required after approval when the session has weighted quizzes: where their weight goes.',
+    deprecated: true,
+    description: 'Ignored: session quizzes carry no weight.',
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WeightRebalanceDto)
+  /** @deprecated ignored */
   rebalance?: WeightRebalanceDto[];
 }
 
 export class AddSessionQuizDto extends SessionQuizPlanDto {
   @ApiPropertyOptional({
     type: [WeightRebalanceDto],
-    description: 'New weights for other assessments of the course, to make room.',
+    deprecated: true,
+    description: 'Ignored: session quizzes carry no weight.',
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WeightRebalanceDto)
+  /** @deprecated ignored */
   rebalance?: WeightRebalanceDto[];
 }
 

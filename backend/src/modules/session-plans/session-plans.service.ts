@@ -12,14 +12,8 @@ import {
   SessionStatus,
 } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { assertCourseWeightsTotal, startsInSeconds } from '@common/utils';
-import { PolicyService } from '@modules/policy/policy.service';
-import {
-  AddSessionQuizDto,
-  RemoveSessionPlanDto,
-  ReplaceSessionPlansDto,
-  WeightRebalanceDto,
-} from './dto';
+import { startsInSeconds } from '@common/utils';
+import { AddSessionQuizDto, ReplaceSessionPlansDto } from './dto';
 
 const planInclude = {
   assessments: {
@@ -28,8 +22,6 @@ const planInclude = {
     select: {
       id: true,
       titleEn: true,
-      weight: true,
-      passingScore: true,
       timeLimitMinutes: true,
       questions: true,
     },
@@ -49,13 +41,10 @@ const planInclude = {
 
 type PlanRow = Prisma.CourseSessionPlanGetPayload<{ include: typeof planInclude }>;
 
-/** Planned online sessions (placeholders) and their weighted quizzes, owned by the course. */
+/** Planned online sessions (placeholders) and their formative quizzes, owned by the course. */
 @Injectable()
 export class SessionPlansService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly policyService: PolicyService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findByCourse(courseId: string) {
     const plans = await this.prisma.courseSessionPlan.findMany({
@@ -84,8 +73,6 @@ export class SessionPlansService {
       );
     }
 
-    const defaultPassMark = await this.policyService.getPassingScorePercent();
-
     await this.prisma.$transaction(async (tx) => {
       // Session quizzes cascade with their plan.
       await tx.courseSessionPlan.deleteMany({ where: { courseId } });
@@ -104,8 +91,9 @@ export class SessionPlansService {
                 type: AssessmentType.SESSION_ASSESSMENT,
                 titleEn: quiz.titleEn.trim(),
                 titleAm: quiz.titleEn.trim(),
-                weight: quiz.weight,
-                passingScore: quiz.passingScore ?? defaultPassMark,
+                // Formative: score shown to learners, never graded.
+                weight: 0,
+                passingScore: 0,
                 timeLimitMinutes: quiz.timeLimitMinutes,
                 // Questions are prepared from the question bank once the session is scheduled.
                 questions: [] as Prisma.InputJsonValue,
@@ -119,34 +107,20 @@ export class SessionPlansService {
         where: { id: courseId },
         data: { hasOnlineSessions: dto.plans.length > 0 },
       });
-
-      // Lesson, module and final weights are saved before this call; together they may not pass 100%.
-      await assertCourseWeightsTotal(tx, courseId, 'atMost');
     });
 
     return this.findByCourse(courseId);
   }
 
   /**
-   * Removes a planned session and its quizzes. Before approval the plan just goes; after
-   * approval its weight moves to other assessments of the course so it still totals exactly
-   * 100%: as given in `rebalance`, or, when none is given, all of it to the final assessment
-   * (or the heaviest remaining assessment if there is no final). A quiz that already has
-   * learner results cannot be removed. `alsoDeleteSessionId` soft-deletes the scheduled
-   * session in the same transaction.
+   * Removes a planned session and its quizzes. Session quizzes carry no weight, so the course
+   * grade is unaffected. A quiz that already has learner results cannot be removed.
+   * `alsoDeleteSessionId` soft-deletes the scheduled session in the same transaction.
    */
-  async removePlan(
-    courseId: string,
-    planId: string,
-    dto: RemoveSessionPlanDto,
-    alsoDeleteSessionId?: string,
-  ) {
+  async removePlan(courseId: string, planId: string, alsoDeleteSessionId?: string) {
     const plan = await this.prisma.courseSessionPlan.findUnique({
       where: { id: planId },
-      include: {
-        course: true,
-        assessments: { include: { _count: { select: { attempts: true } } } },
-      },
+      include: { assessments: { include: { _count: { select: { attempts: true } } } } },
     });
     if (!plan || plan.courseId !== courseId) throw new NotFoundException('Session plan not found');
     if (plan.assessments.some((a) => a._count.attempts > 0)) {
@@ -154,11 +128,6 @@ export class SessionPlansService {
         'This session already has graded quiz results and cannot be removed',
       );
     }
-
-    const preparing =
-      plan.course.status === CourseStatus.DRAFT || plan.course.status === CourseStatus.REJECTED;
-    const releasedWeight = plan.assessments.reduce((sum, a) => sum + (a.weight || 0), 0);
-    const autoMoveWeight = !preparing && releasedWeight > 0 && !dto.rebalance?.length;
 
     await this.prisma.$transaction(async (tx) => {
       if (alsoDeleteSessionId) {
@@ -168,9 +137,6 @@ export class SessionPlansService {
         });
       }
       await tx.courseSessionPlan.delete({ where: { id: planId } });
-      if (autoMoveWeight) await this.giveWeightToDefault(tx, courseId, releasedWeight);
-      else await this.applyRebalance(tx, courseId, dto.rebalance ?? []);
-      if (!preparing) await assertCourseWeightsTotal(tx, courseId, 'exact');
       const remaining = await tx.courseSessionPlan.count({ where: { courseId } });
       if (remaining === 0)
         await tx.course.update({ where: { id: courseId }, data: { hasOnlineSessions: false } });
@@ -180,9 +146,9 @@ export class SessionPlansService {
   }
 
   /**
-   * Adds a weighted quiz to a planned session of an approved course. Room is made by lowering
-   * other session quizzes (`rebalance`); the course must still total exactly 100%. If the session
-   * is already scheduled, its linked prepared quiz is created too.
+   * Adds a formative quiz to a planned session of an approved course. It carries no weight, so
+   * the course grade is unaffected. If the session is already scheduled, its linked prepared
+   * quiz is created too.
    */
   async addQuiz(courseId: string, planId: string, dto: AddSessionQuizDto) {
     const plan = await this.prisma.courseSessionPlan.findUnique({
@@ -198,10 +164,7 @@ export class SessionPlansService {
         'While the course is being prepared, edit its sessions in the course studio',
       );
     }
-    const defaultPassMark = await this.policyService.getPassingScorePercent();
-
     await this.prisma.$transaction(async (tx) => {
-      await this.applyRebalance(tx, courseId, dto.rebalance ?? []);
       const created = await tx.assessment.create({
         data: {
           courseId,
@@ -209,8 +172,8 @@ export class SessionPlansService {
           type: AssessmentType.SESSION_ASSESSMENT,
           titleEn: dto.titleEn.trim(),
           titleAm: dto.titleEn.trim(),
-          weight: dto.weight,
-          passingScore: dto.passingScore ?? defaultPassMark,
+          weight: 0,
+          passingScore: 0,
           timeLimitMinutes: dto.timeLimitMinutes,
           questions: [] as Prisma.InputJsonValue,
         },
@@ -231,7 +194,6 @@ export class SessionPlansService {
           },
         });
       }
-      await assertCourseWeightsTotal(tx, courseId, 'exact');
     });
 
     return this.findByCourse(courseId);
@@ -274,49 +236,6 @@ export class SessionPlansService {
     });
 
     return this.findByCourse(courseId);
-  }
-
-  /** Only session quizzes of the same course can absorb weight; approved lesson/module/final weights stay as approved. */
-  /** Freed weight goes to the final assessment, or the heaviest remaining one if there is none. */
-  private async giveWeightToDefault(
-    tx: Prisma.TransactionClient,
-    courseId: string,
-    weight: number,
-  ) {
-    const target =
-      (await tx.assessment.findFirst({
-        where: { courseId, type: AssessmentType.FINAL_ASSESSMENT },
-        orderBy: { createdAt: 'asc' },
-      })) ?? (await tx.assessment.findFirst({ where: { courseId }, orderBy: { weight: 'desc' } }));
-    if (!target) {
-      throw new BadRequestException(
-        `This session's quizzes carry ${weight}% of the course grade and the course has no other assessment to take it over.`,
-      );
-    }
-    await tx.assessment.update({
-      where: { id: target.id },
-      data: { weight: { increment: weight } },
-    });
-  }
-
-  /** Sets new weights on assessments of this course (any type) to rebalance the course grade. */
-  private async applyRebalance(
-    tx: Prisma.TransactionClient,
-    courseId: string,
-    rebalance: WeightRebalanceDto[],
-  ) {
-    for (const r of rebalance) {
-      const target = await tx.assessment.findUnique({
-        where: { id: r.assessmentId },
-        select: { courseId: true },
-      });
-      if (!target || target.courseId !== courseId) {
-        throw new BadRequestException(
-          'Weight can only be moved between assessments of this course',
-        );
-      }
-      await tx.assessment.update({ where: { id: r.assessmentId }, data: { weight: r.weight } });
-    }
   }
 
   private format(p: PlanRow) {

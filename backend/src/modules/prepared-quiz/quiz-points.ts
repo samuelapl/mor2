@@ -1,6 +1,6 @@
 /**
- * Points of a weighted session quiz must total its course weight (a 10% quiz has 10 points),
- * so one point is one percent of the course grade. Ungraded quizzes have no total.
+ * Points calculation for prepared session quizzes.
+ * When a session quiz is planned with a course, its question points must total its planned points.
  */
 
 /** `total` split over `count` questions; earlier questions take the remainder (10 / 3 → 4, 3, 3). */
@@ -12,11 +12,11 @@ export function splitEvenly(total: number, count: number): number[] {
 }
 
 /**
- * True when `points` is an even split of `total` in any order (the trainer has not customised
- * it; reordering questions keeps it even). An empty quiz counts as even.
+ * True when `points` is an even split of `total` in any order. An empty quiz counts as even.
  */
 export function isEvenSplit(points: number[], total: number): boolean {
   const even = splitEvenly(total, points.length);
   const sorted = [...points].sort((a, b) => b - a);
   return sorted.every((p, i) => p === even[i]);
 }
+

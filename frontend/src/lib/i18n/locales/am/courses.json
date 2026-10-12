@@ -145,7 +145,7 @@
     "recommended": "ተመራጭ",
     "thisDeliveryModeIsNoLonger": "ይህ የአሰጣጥ ዘዴ ለአዳዲስ ኮርሶች አይሰጥም። ይህ ኮርስ ይህንኑ ይቀጥላል፤ ወደ ኦንላይን (ራስ-አገዝ) ብቻ መቀየር ይችላል።",
     "includeOnlineSessions": "የኦንላይን ክፍለ-ጊዜዎችን አካት",
-    "planLiveOnlineSessionsNowWith": "የቀጥታ ኦንላይን ክፍለ-ጊዜዎችን አሁን ያቅዱ፤ ክብደት ያላቸው ፈተናዎች መጨመር ይቻላል። ኮርሱ ከጸደቀ በኋላ ቀን፣ አሰልጣኝ እና መድረክ ይወሰናሉ።",
+    "planLiveOnlineSessionsNowWith": "የቀጥታ የመስመር ላይ ክፍለ-ጊዜዎችን አሁን ያቅዱ፤ አማራጭ የግብረ መልስ ፈተናዎች (ውጤት ብቻ፣ አይመዘኑም) ሊኖሯቸው ይችላሉ። ኮርሱ ከጸደቀ በኋላ (ቀን፣ አሰልጣኝ፣ መድረክ) ይታቀዳሉ።",
     "courseCoverImage": "የኮርስ ሽፋን ምስል",
     "changeCoverImage": "ምስሉን ቀይር",
     "uploadCoverImage": "የሽፋን ምስል ጫን",
@@ -252,7 +252,6 @@
     "hasNoLessons": "ትምህርት የለውም",
     "onlineSession": "የኦንላይን ክፍለ-ጊዜ",
     "quiz": "ፈተና",
-    "weightIs0": "ክብደቱ 0% ነው",
     "assessmentWeightsTotalTheyMustAdd": "የምዘና ክብደቶች ድምር {calculatedWeights}% ነው — በትክክል 100% መሆን አለበት",
     "coursePreFlightChecklistSubmission": "የኮርስ ዝግጁነት ማረጋገጫ እና ማስረከቢያ",
     "reviewYourSyllabusAssessmentsAndConfigur": "ለማጽደቅ ከማስገባትዎ በፊት የስርዓተ-ትምህርቱን፣ ምዘናዎችን እና ቅንብሮችን ይገምግሙ።",
@@ -268,7 +267,8 @@
     "thisMatchesHowEnrolledLearnersExperience": "ይህ ተማሪዎች ሲመዘገቡ የሚያዩትን አቀራረብ ይከተላል።",
     "plannedOnlineSessions": "የታቀዱ የኦንላይን ክፍለ-ጊዜዎች ({count})",
     "pass": "ማለፊያ",
-    "scheduledWithADateTrainerAnd": "ከጸደቀ በኋላ ቀን፣ አሰልጣኝ እና መድረክ ይመደብላቸዋል።"
+    "scheduledWithADateTrainerAnd": "ከጸደቀ በኋላ ቀን፣ አሰልጣኝ እና መድረክ ይመደብላቸዋል።",
+    "formativeQuiz": "ለግብረ መልስ፣ ውጤት ብቻ"
   },
   "sessionPlanEditorStage": {
     "session": "ክፍለ-ጊዜ",
@@ -282,20 +282,12 @@
     "sessionObjectives": "የክፍለ-ጊዜ ዓላማዎች",
     "byTheEndOfThisSession": "በዚህ ክፍለ-ጊዜ መጨረሻ ሰልጣኞች…",
     "thisSessionHasQuizzes": "ይህ ክፍለ-ጊዜ ፈተናዎች አሉት",
-    "all100OfTheCourseWeight": "ሁሉም 100% ክብደት ተመድቧል። እዚህ ፈተና ለመጨመር ሌላ ምዘና ይቀንሱ።",
-    "quizzesRunLiveDuringTheSession": "ፈተናዎቹ በክፍለ-ጊዜው በቀጥታ ይሰጣሉ እና በኮርስ ውጤት ይቆጠራሉ። ያመለጠው ሰልጣኝ 0 ያገኛል።",
     "quizTitle": "የፈተና {value} ርዕስ",
-    "weight": "ክብደት (%)",
-    "upToAvailable": "እስከ {maxWeight}% ይቀራል",
-    "passMark": "ማለፊያ (%)",
     "timeLimitMin": "የጊዜ ገደብ (ደቂቃ)",
-    "a0QuizDoesNotAffect": "0% ፈተና የኮርስ ውጤትን አይነካም።",
-    "theCourseNeedsOverallForThe": "ኮርሱ ለሰርተፊኬት {policyPassMark}% ይፈልጋል፤ የዚህ ፈተና ማለፊያ ዝቅ ያለ ነው።",
     "addQuiz": "ፈተና ጨምር",
-    "questionsAreAddedFromTheQuestion": "ጥያቄዎች ክፍለ-ጊዜው ሲታቀድ በአሰልጣኙ ከጥያቄ ባንክ ይጨመራሉ።"
-  },
-  "weightBar": {
-    "thisSessionCourseTotalLeft": "ይህ ክፍለ-ጊዜ {sessionWeight}% · ድምር {total}% · {value}% ቀሪ"
+    "questionsAreAddedFromTheQuestion": "ጥያቄዎች ክፍለ-ጊዜው ሲታቀድ በአሰልጣኙ ከጥያቄ ባንክ ይጨመራሉ።",
+    "formativeBadge": "ለግብረ መልስ · ውጤት ብቻ",
+    "formativeNote": "የክፍለ-ጊዜ ፈተናዎች ለግብረ መልስ ብቻ ናቸው፤ ሰልጣኞች ውጤታቸውን ያያሉ፣ ነገር ግን በኮርሱ ውጤትም ሆነ በሰርተፊኬቱ ላይ አይቆጠርም። የሚቆጠረው ክፍለ-ጊዜውን መከታተል ብቻ ነው።"
   },
   "assessmentDetailSection": {
     "noAssessmentHasBeenAttachedYet": "እስካሁን ምንም ምዘና አልተያያዘም።",
@@ -466,12 +458,10 @@
     "noTrainerIsAssignedToThis": "ለዚህ ክፍለ-ጊዜ ገና አሰልጣኝ አልተመደበም።",
     "thisSessionIsNotScheduledYet": "ይህ ክፍለ-ጊዜ ገና አልታቀደም።",
     "hasNoQuestionsYet": "\"{titleEn}\" ገና ጥያቄ የለውም።",
-    "hasOfPointsAssigned": "\"{titleEn}\" {weight} ነጥብ ሊኖረው ይገባል፤ {points} ብቻ ተመድቧል።",
     "done": "ተጠናቋል",
     "pending": "በመጠባበቅ ላይ",
     "noTrainerYet": "ገና አሰልጣኝ የለም",
     "notScheduledYet": "ገና አልታቀደም",
-    "ofTheCourseGrade": "ከኮርስ ውጤት",
     "getThisSessionReady": "ክፍለ-ጊዜውን ያዘጋጁ",
     "allSetThisSessionIsReady": "ዝግጁ ነው። ይህ ክፍለ-ጊዜ ለማተም ዝግጁ ነው።",
     "twoStepsBeforeThisSessionCan": "ይህ ክፍለ-ጊዜ ከመጀመሩ በፊት ሁለት ደረጃዎች።",
@@ -505,15 +495,16 @@
     "changeTheDateOrTimeOn": "ቀኑን ወይም ሰዓቱን በክፍለ-ጊዜ ማቀጃ ገጽ ላይ ይቀይሩ።",
     "objectives": "ዓላማዎች",
     "sessionQuizzes": "የክፍለ-ጊዜ ፈተናዎች",
-    "thisSessionHasNoGradedQuiz": "ይህ ክፍለ-ጊዜ የሚታረም ፈተና የለውም።",
+    "thisSessionHasNoGradedQuiz": "ይህ ክፍለ-ጊዜ ፈተና የለውም።",
     "noQuestionsPreparedYetTheTrainer": "ገና ጥያቄ አልተዘጋጀም። አሰልጣኙ ከጥያቄ ባንክ ይጨምራል።",
-    "eachSessionQuizIsGradedWhen": "እያንዳንዱ የክፍለ-ጊዜ ፈተና ክፍለ-ጊዜው ሲጠናቀቅ ይታረማል፤ ያመለጠው ሰልጣኝ 0 ያገኛል። ሰርተፊኬቱ ሁሉም ክፍለ-ጊዜዎች እስኪካሄዱ ይጠብቃል።",
+    "eachSessionQuizIsGradedWhen": "የክፍለ-ጊዜ ፈተናዎች ለግብረ መልስ ብቻ ናቸው፤ የእያንዳንዱ ሰልጣኝ ውጤት ክፍለ-ጊዜው ሲጠናቀቅ ይመዘገባል፣ ነገር ግን በውጤትም ሆነ በሰርተፊኬት ላይ አይቆጠርም። ሰርተፊኬቱ ሁሉንም ክፍለ-ጊዜዎች መከታተልን ይጠይቃል፤ ያመለጠው ሰልጣኝ በድጋሚ የታቀደውን ይከታተላል።",
     "quizUnit": "ፈተናዎች",
     "quizzesUnit": "ፈተናዎች",
     "questionUnit": "ጥያቄዎች",
     "questionsUnit": "ጥያቄዎች",
     "blocksPublishingOne": "{count} ችግር(ዎች) ማተምን ያግዳሉ",
-    "blocksPublishingOther": "{count} ችግር(ዎች) ማተምን ያግዳሉ"
+    "blocksPublishingOther": "{count} ችግር(ዎች) ማተምን ያግዳሉ",
+    "formativeNotGraded": "ለግብረ መልስ · አይመዘንም"
   },
   "contentStatusPage": {
     "contentStatus": "የይዘት ሁኔታ",

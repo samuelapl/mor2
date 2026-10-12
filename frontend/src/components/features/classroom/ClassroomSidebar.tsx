@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import type { ClassroomActiveContent, ClassroomFlatItem } from './types';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { toast } from '@/lib/toast';
+import { missingLiveSessions } from '@/lib/live-attendance';
+import { formatSessionDateTime } from '@/lib/app-time';
 
 interface ClassroomSidebarProps {
   course: Course;
@@ -74,7 +76,7 @@ export function ClassroomSidebar({
   isOpen,
   onClose,
 }: ClassroomSidebarProps) {
-  const { t } = useTranslation('classroom');
+  const { isAmharic, t } = useTranslation('classroom');
 
   // Map flat items by key for instant lookup
   const itemsByKey = useMemo(() => {
@@ -572,10 +574,8 @@ export function ClassroomSidebar({
                   const contentCompleted = progress?.courseCompletion?.contentCompleted ?? false;
                   const completedLessons = progress?.stats?.completedLessons ?? 0;
                   const totalLessons = progress?.stats?.totalLessons ?? 0;
-                  const liveSessions = progress?.liveSessions ?? [];
-                  const allLiveSessionsAttended =
-                    liveSessions.length === 0 ||
-                    liveSessions.every((s) => s.status === 'COMPLETED' && s.attended);
+                  const missingSessions = missingLiveSessions(progress);
+                  const allLiveSessionsAttended = missingSessions.length === 0;
                   const allAssessmentsPassed = progress?.courseCompletion?.allAssessmentsPassed ?? true;
 
                   if (!contentCompleted && totalLessons > 0 && completedLessons < totalLessons) {
@@ -583,8 +583,16 @@ export function ClassroomSidebar({
                       t('classroomSidebar.pleaseCompleteAllCourseLessonsCompleted', { completedLessons, totalLessons }),
                     );
                   } else if (contentCompleted && !allLiveSessionsAttended) {
+                    const next = missingSessions[0]!;
                     toast.warning(
-                      t('classroomSidebar.youMustAttendAllScheduledLive'),
+                      `${t('classroomSidebar.youMustAttendAllScheduledLive')} ${
+                        next.nextSessionAt
+                          ? t('classroomSidebar.attendNextSession', {
+                              title: next.title,
+                              date: formatSessionDateTime(next.nextSessionAt, isAmharic ? 'am-ET' : undefined),
+                            })
+                          : t('classroomSidebar.sessionNotScheduledYet', { title: next.title })
+                      }`,
                     );
                   } else if (!allAssessmentsPassed) {
                     toast.warning(

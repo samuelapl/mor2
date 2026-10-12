@@ -90,8 +90,6 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       quizzes: p.quizzes.map((q) => ({
         id: q.id,
         titleEn: q.titleEn,
-        weight: q.weight,
-        passingScore: q.passingScore,
         timeLimitMinutes: q.timeLimitMinutes ?? 10,
       })),
     })),
@@ -842,8 +840,6 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
             objectivesEn: p.objectivesEn || undefined,
             quizzes: p.quizzes.map((q) => ({
               titleEn: q.titleEn.trim() || `${p.titleEn.trim() || 'Session'} quiz`,
-              weight: q.weight,
-              passingScore: q.passingScore,
               timeLimitMinutes: q.timeLimitMinutes,
             })),
           }))
@@ -1345,11 +1341,12 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     onCancel();
   };
 
-  // Weight of every assessment that will be saved (lesson, module, final, session). Must reach exactly 100%.
+  // Weight of every graded assessment that will be saved (lesson, module, final). Must reach exactly 100%.
+  // Session quizzes are formative and carry no weight.
   const activeSessionPlans = useMemo(() => (sessionsActive ? sessionPlans : []), [sessionsActive, sessionPlans]);
   const totalAllocatedWeight = useMemo(
-    () => computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length }, activeSessionPlans),
-    [finalAssessmentWeight, modules, questions.length, activeSessionPlans],
+    () => computeWeightTotal(modules, { weight: finalAssessmentWeight, questionCount: questions.length }),
+    [finalAssessmentWeight, modules, questions.length],
   );
   /** Highest weight one assessment may take without pushing the course total past 100%. */
   const maxWeightFor = (currentWeight: number, counted: boolean) => 100 - (totalAllocatedWeight - (counted ? currentWeight : 0));
@@ -1616,9 +1613,6 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           index={index}
           onUpdate={(patch) => handleUpdateSessionPlan(plan.id, patch)}
           onDelete={() => handleDeleteSessionPlan(plan.id)}
-          totalAllocatedWeight={totalAllocatedWeight}
-          defaultPassMark={defaultPassMark}
-          policyPassMark={policyPassMark}
         />
       );
     }
@@ -1751,7 +1745,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       <ConfirmModal
         open={confirmDisableSessions}
         title="Remove online sessions?"
-        description={`This removes ${sessionPlans.length} planned session(s) and their quizzes from the course. Their weight is freed up for other assessments.`}
+        description={`This removes ${sessionPlans.length} planned session(s) and their quizzes from the course.`}
         confirmText="Remove sessions"
         variant="warning"
         onClose={() => setConfirmDisableSessions(false)}

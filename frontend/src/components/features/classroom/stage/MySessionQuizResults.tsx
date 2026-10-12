@@ -66,19 +66,14 @@ export function MySessionQuizResults({ sessionId }: { sessionId: string }) {
                 <div key={quiz.id} className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="text-sm font-bold text-foreground">{quiz.title}</h4>
-                    <QuizScoreBadge quiz={quiz} result={result} />
+                    <QuizScoreBadge result={result} />
                     {quiz.graded && (
-                      <span className="text-[11px] text-muted-foreground">
-                        {quiz.weight}% {t('mySessionQuizResults.ofTheCourseGrade')} · {t('mySessionQuizResults.pass')}{' '}
-                        {quiz.passingScore}%
-                      </span>
+                      <span className="text-[11px] text-muted-foreground">{t('mySessionQuizResults.feedbackOnly')}</span>
                     )}
                   </div>
                   {result.answered === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      {quiz.graded
-                        ? t('mySessionQuizResults.youDidnTAnswerThisQuiz')
-                        : t('mySessionQuizResults.youDidnTAnswerThisQuiz2')}
+                      {t('mySessionQuizResults.youDidnTAnswerThisQuiz2')}
                     </p>
                   ) : (
                     <QuizAnswerList quiz={quiz} result={result} />

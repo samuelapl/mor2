@@ -10,7 +10,6 @@ describe('SessionQuizGradingService.gradeSession', () => {
     preparedQuizzes: [
       {
         assessmentId: 'a1',
-        assessment: { passingScore: 60 },
         questions: [
           { questionId: 'q1', question: { points: 10 } },
           { questionId: 'q2', question: { points: 10 } },
@@ -66,7 +65,8 @@ describe('SessionQuizGradingService.gradeSession', () => {
     await service.gradeSession('s1');
 
     const byUser = Object.fromEntries(created().map((d: any) => [d.userId, d]));
-    expect(byUser.full).toMatchObject({ assessmentId: 'a1', score: 100, passed: true });
+    // Formative: the score is feedback only, never "passed".
+    expect(byUser.full).toMatchObject({ assessmentId: 'a1', score: 100, passed: false });
     expect(byUser.half).toMatchObject({ score: 50, passed: false });
     expect(byUser.silent).toMatchObject({ score: 0, passed: false });
     expect(byUser.silent.answers).toMatchObject({ missed: true, sessionId: 's1' });
@@ -100,9 +100,17 @@ describe('SessionQuizGradingService.gradeSession', () => {
     expect(progress.maybeCompleteCourse).not.toHaveBeenCalledWith('absent', 'c1');
   });
 
-  it('does nothing for a session without weighted quizzes', async () => {
+  it('records no scores for a session without quizzes, but still checks completion (attendance counts)', async () => {
     prisma.liveSession.findUnique.mockResolvedValue({ courseId: 'c1', preparedQuizzes: [] });
-    await expect(service.gradeSession('s1')).resolves.toEqual({ quizzes: 0, learners: 0 });
+    await expect(service.gradeSession('s1')).resolves.toEqual({ quizzes: 0, learners: 3 });
     expect(prisma.assessmentAttempt.create).not.toHaveBeenCalled();
+    expect(progress.maybeCompleteCourse).toHaveBeenCalledWith('full', 'c1');
+    expect(progress.maybeCompleteCourse).not.toHaveBeenCalledWith('absent', 'c1');
+  });
+
+  it('does nothing for an unknown session', async () => {
+    prisma.liveSession.findUnique.mockResolvedValue(null);
+    await expect(service.gradeSession('s1')).resolves.toEqual({ quizzes: 0, learners: 0 });
+    expect(progress.maybeCompleteCourse).not.toHaveBeenCalled();
   });
 });

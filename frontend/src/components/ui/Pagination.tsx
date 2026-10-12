@@ -51,20 +51,6 @@ export function Pagination({
 }: PaginationProps) {
   const { t, tRich } = useTranslation('common');
 
-  // Hide pagination only when there are no items, no pages, or hideOnSinglePage is explicitly requested
-  if (totalItems !== undefined && totalItems === 0) {
-    return null;
-  }
-  if (totalPages <= 0) {
-    return null;
-  }
-  if (hideOnSinglePage && totalPages <= 1) {
-    return null;
-  }
-  if (totalPages <= 1 && totalItems === undefined && !onPageSizeChange) {
-    return null;
-  }
-
   const safePage = Math.max(1, Math.min(page, Math.max(1, totalPages)));
 
   // Ensure current pageSize is present in the selector dropdown options
@@ -110,6 +96,20 @@ export function Pagination({
       ? Math.min(safePage * pageSize, totalItems)
       : safePage * pageSize
     : null;
+
+  // Hide pagination only when there are no items, no pages, or hideOnSinglePage is explicitly requested
+  if (totalItems !== undefined && totalItems === 0) {
+    return null;
+  }
+  if (totalPages <= 0) {
+    return null;
+  }
+  if (hideOnSinglePage && totalPages <= 1) {
+    return null;
+  }
+  if (totalPages <= 1 && totalItems === undefined && !onPageSizeChange) {
+    return null;
+  }
 
   return (
     <nav

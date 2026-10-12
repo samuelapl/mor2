@@ -368,8 +368,6 @@ export class CoursesService {
               select: {
                 id: true,
                 titleEn: true,
-                weight: true,
-                passingScore: true,
                 timeLimitMinutes: true,
               },
             },
@@ -818,9 +816,9 @@ export class CoursesService {
   }
 
   /**
-   * Learners cannot get a certificate until every session quiz has been held, so a course
-   * with planned sessions only goes live once each one has a trainer and is scheduled, and
-   * each weighted quiz has questions.
+   * Learners cannot get a certificate until they have attended every planned session, so a
+   * course with planned sessions only goes live once each one has a trainer and is scheduled,
+   * and each session quiz has questions.
    */
   private async assertSessionsReadyToPublish(courseId: string) {
     const plans = await this.prisma.courseSessionPlan.findMany({
@@ -834,9 +832,7 @@ export class CoursesService {
           where: { type: 'SESSION_ASSESSMENT' },
           select: {
             titleEn: true,
-            weight: true,
             questions: true,
-            preparedQuiz: { select: { questions: { select: { points: true } } } },
           },
         },
       },
@@ -850,14 +846,6 @@ export class CoursesService {
       for (const quiz of plan.assessments) {
         if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
           problems.push(`quiz "${quiz.titleEn}" in "${plan.titleEn}" has no questions`);
-          continue;
-        }
-        // One point per percent of course weight, so a 10% quiz totals 10 points.
-        const points = (quiz.preparedQuiz?.questions ?? []).reduce((sum, q) => sum + q.points, 0);
-        if (quiz.preparedQuiz && points !== quiz.weight) {
-          problems.push(
-            `quiz "${quiz.titleEn}" in "${plan.titleEn}" has ${points} points but must total ${quiz.weight} (its course weight)`,
-          );
         }
       }
     }

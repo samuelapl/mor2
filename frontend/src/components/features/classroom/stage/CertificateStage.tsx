@@ -22,7 +22,7 @@ import type {
   ApiCertificate,
   ApiCertificateTemplate,
   ApiUser,
-  ApiLearnerSession,
+  ApiMissingSession,
 } from '@/lib/api/types';
 import {
   fetchMyCertificates,
@@ -37,6 +37,7 @@ import { CourseGradeSummary } from './CourseGradeSummary';
 import { hasSubmittedFeedback, hasSkippedFeedback, markFeedbackSkipped } from '@/lib/api/feedback';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { calculateEstimatedHours, getCourseDurationMinutes } from '@/lib/duration';
+import { missingLiveSessions } from '@/lib/live-attendance';
 
 interface CertificateStageProps {
   course: Course;
@@ -282,14 +283,8 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
           </div>
         </div>
 
-        {!isInPerson &&
-          ((progress?.courseCompletion.sessionsPending ?? 0) > 0 ||
-            (progress?.liveSessions ?? []).some((s) => s.status !== 'COMPLETED' || !s.attended)) && (
-          <PendingSessionsNotice
-            sessions={(progress?.liveSessions ?? []).filter(
-              (s) => s.status !== 'COMPLETED' || !s.attended,
-            )}
-          />
+        {!isInPerson && missingLiveSessions(progress).length > 0 && (
+          <PendingSessionsNotice sessions={missingLiveSessions(progress)} />
         )}
       </div>
     );
@@ -439,8 +434,11 @@ export function CertificateStage({ course, progress, courseId, unlocked }: Certi
   );
 }
 
-/** Shown while a session quiz is still to come: the certificate waits for every session. */
-function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) {
+/**
+ * Live sessions still to attend: the certificate waits for every one. A missed session is
+ * rescheduled, so each shows its next round, or that none is scheduled yet.
+ */
+function PendingSessionsNotice({ sessions }: { sessions: ApiMissingSession[] }) {
   const { isAmharic, t } = useTranslation('classroom');
   return (
     <div className="flex gap-3 rounded-2xl border border-info/30 bg-info-soft/80 p-5 text-left">
@@ -452,12 +450,13 @@ function PendingSessionsNotice({ sessions }: { sessions: ApiLearnerSession[] }) 
         <ul className="space-y-1 text-sm text-info/90">
           {sessions.map((s) => (
             <li key={s.id}>
-              <span className="font-medium">{s.titleEn}</span>
+              <span className="font-medium">{s.title}</span>
               {' — '}
-              {s.scheduledAt
-                ? formatSessionDateTime(s.scheduledAt, isAmharic ? 'am-ET' : undefined)
-                : t('pendingSessionsNotice.dateToBeAnnounced')}
-              {s.status === 'CANCELLED' ? ` (${t('pendingSessionsNotice.cancelledToBeRescheduled')})` : ''}
+              {s.nextSessionAt
+                ? t('pendingSessionsNotice.nextSession', {
+                    date: formatSessionDateTime(s.nextSessionAt, isAmharic ? 'am-ET' : undefined),
+                  })
+                : t('pendingSessionsNotice.notScheduledYet')}
             </li>
           ))}
         </ul>

@@ -1,4 +1,4 @@
-import { computeCourseGrade, GradableAssessment, isSessionQuizClosed } from './course-grade.util';
+import { computeCourseGrade, GradableAssessment } from './course-grade.util';
 
 const a = (
   id: string,
@@ -65,62 +65,51 @@ describe('computeCourseGrade', () => {
   });
 });
 
-describe('computeCourseGrade with session quizzes', () => {
-  it('does not require a session quiz to be passed, but counts it in the grade', () => {
-    const grade = computeCourseGrade(
-      [
-        { ...a('final', 90, 50, [100]) },
-        { id: 'session', type: 'SESSION_ASSESSMENT', weight: 10, passingScore: 50, attempts: [] }, // missed
-      ],
-      70,
-    );
-    expect(grade.allAssessmentsPassed).toBe(true);
-    expect(grade.totalCourseGrade).toBe(90);
-    expect(grade.gradeSatisfied).toBe(true);
-  });
-
-  it('blocks the certificate only through the grade when a missed session quiz drags it down', () => {
-    const grade = computeCourseGrade(
-      [
-        a('final', 70, 50, [80]),
-        { id: 's', type: 'SESSION_ASSESSMENT', weight: 30, passingScore: 50, attempts: [] },
-      ],
-      70,
-    );
-    expect(grade.allAssessmentsPassed).toBe(true);
-    expect(grade.totalCourseGrade).toBe(56);
-    expect(grade.gradeSatisfied).toBe(false);
-  });
-});
-
-describe('computeCourseGrade waits for session quizzes', () => {
-  const session = (closed: boolean, scores: number[] = []) => ({
+describe('computeCourseGrade with formative session quizzes', () => {
+  const session = (scores: number[], weight = 0, passingScore = 0): GradableAssessment => ({
     id: 's',
     type: 'SESSION_ASSESSMENT',
-    weight: 10,
-    passingScore: 50,
-    closed,
-    attempts: scores.map((score) => ({ score, passed: score >= 50 })),
+    weight,
+    passingScore,
+    attempts: scores.map((score) => ({ score, passed: false })),
   });
 
-  it('is not certificate-ready while a session has not been held, even if the grade already clears', () => {
-    const grade = computeCourseGrade([a('final', 90, 50, [100]), session(false)], 70);
-    expect(grade.gradeSatisfied).toBe(true);
-    expect(grade.sessionsPending).toBe(1);
-    expect(grade.certificateReady).toBe(false);
-  });
-
-  it('becomes ready once the session is completed', () => {
-    const grade = computeCourseGrade([a('final', 90, 50, [100]), session(true, [0])], 70);
-    expect(grade.sessionsPending).toBe(0);
+  it('leaves a failed session quiz out of the grade and the certificate', () => {
+    const grade = computeCourseGrade([a('final', 100, 50, [80]), session([10])], 70);
+    expect(grade.totalCourseGrade).toBe(80);
+    expect(grade.allAssessmentsPassed).toBe(true);
     expect(grade.certificateReady).toBe(true);
   });
-});
 
-describe('isSessionQuizClosed', () => {
-  it('is closed for a learner once a held round graded them, whatever round is scheduled next', () => {
-    expect(isSessionQuizClosed({ attempts: [{ score: 80 }] })).toBe(true);
-    expect(isSessionQuizClosed({ attempts: [{ score: 0 }] })).toBe(true); // attended, did not answer
-    expect(isSessionQuizClosed({ attempts: [] })).toBe(false); // no round attended yet
+  it('is certificate-ready without any session quiz result (missed or not held yet)', () => {
+    const grade = computeCourseGrade([a('final', 100, 50, [80]), session([])], 70);
+    expect(grade.certificateReady).toBe(true);
+  });
+
+  it('ignores a leftover weight or pass mark on a session quiz', () => {
+    const grade = computeCourseGrade([a('final', 70, 50, [100]), session([0], 30, 50)], 70);
+    expect(grade.assessments[1]).toMatchObject({ weight: 0, passingScore: 0, earnedPoints: 0 });
+    expect(grade.totalCourseGrade).toBe(70);
+    expect(grade.certificateReady).toBe(true);
+  });
+
+  it('reports the best session score as feedback', () => {
+    const grade = computeCourseGrade([a('final', 100, 50, [80]), session([40, 70])], 70);
+    expect(grade.assessments[1]).toMatchObject({ bestScore: 70, attempted: true, passed: true });
+  });
+
+  it('leaves session quizzes out of the even split for legacy courses', () => {
+    const grade = computeCourseGrade(
+      [a('x', 0, 50, [100]), a('y', 0, 50, [100]), session([0])],
+      50,
+    );
+    expect(grade.assessments.map((g) => g.weight)).toEqual([50, 50, 0]);
+    expect(grade.totalCourseGrade).toBe(100);
+  });
+
+  it('treats a course with only session quizzes as satisfied', () => {
+    const grade = computeCourseGrade([session([0])], 70);
+    expect(grade.gradeSatisfied).toBe(true);
+    expect(grade.certificateReady).toBe(true);
   });
 });

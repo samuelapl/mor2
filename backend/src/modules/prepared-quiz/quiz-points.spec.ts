@@ -5,7 +5,7 @@ describe('splitEvenly', () => {
     expect(splitEvenly(10, 3)).toEqual([4, 3, 3]);
   });
 
-  it('splits exactly when the weight divides evenly', () => {
+  it('splits exactly when the total divides evenly', () => {
     expect(splitEvenly(10, 5)).toEqual([2, 2, 2, 2, 2]);
   });
 
@@ -31,3 +31,4 @@ describe('isEvenSplit', () => {
     expect(isEvenSplit([], 10)).toBe(true);
   });
 });
+

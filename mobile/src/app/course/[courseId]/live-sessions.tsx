@@ -75,6 +75,29 @@ export default function CourseLiveSessionsScreen() {
             const joinable = (s.status === 'LIVE' || s.status === 'SCHEDULED') && s.sessionId;
             return (
               <Card key={s.id} className="gap-3">
+                {(s.missedRounds ?? []).length > 0 ? (
+                  <View className="gap-1.5 border-b border-slate-100 pb-3 dark:border-slate-800">
+                    {s.missedRounds!.map((r) => (
+                      <View
+                        key={r.sessionId}
+                        className="flex-row items-center justify-between gap-2"
+                      >
+                        <AppText className="flex-1 text-sm text-slate-400 line-through dark:text-slate-500">
+                          {formatDateTime(r.scheduledAt, locale)}
+                          {r.durationMinutes
+                            ? ` · ${t('courses.minutes', { count: r.durationMinutes })}`
+                            : ''}
+                        </AppText>
+                        <Badge label={t('courseSessions.notAttended')} tone="danger" />
+                      </View>
+                    ))}
+                    {s.status !== 'COMPLETED' ? (
+                      <AppText className="text-xs font-medium text-sky-700 dark:text-sky-300">
+                        {t('courseSessions.attendNext')}
+                      </AppText>
+                    ) : null}
+                  </View>
+                ) : null}
                 <View className="flex-row items-start gap-3">
                   <View className="flex-1 gap-0.5">
                     <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-400">

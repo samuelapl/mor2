@@ -9,8 +9,8 @@ import { fetchPreparedQuizzes } from '@/lib/api/prepared-quiz';
 import { broadcastBlocker } from './quiz-points';
 
 /**
- * Guards staff actions that start a session (Go live, Join room): a session with graded quizzes
- * can't start until each one has questions whose points total its course weight. `guard`
+ * Guards staff actions that start a session (Go live, Join room): a session with course quizzes
+ * can't start until each one has questions. `guard`
  * resolves true when the action may go ahead; otherwise it opens the returned `modal`.
  */
 export function useQuizReadinessGate() {
@@ -43,7 +43,7 @@ export function useQuizReadinessGate() {
       open={Boolean(blocked)}
       onClose={() => setBlocked(null)}
       title="Unable to perform this action now"
-      subtitle="The session's graded quiz isn't prepared yet"
+      subtitle="The session's quiz isn't prepared yet"
       footer={
         <>
           <Button variant="ghost" onClick={() => setBlocked(null)}>
@@ -60,7 +60,7 @@ export function useQuizReadinessGate() {
       <div className="space-y-3">
         <p className="flex items-start gap-2 text-sm text-secondary-foreground">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          This session has a graded quiz that counts toward the course grade. Prepare it before starting or joining the session:
+          This session has a course quiz planned. Prepare it before starting or joining the session:
         </p>
         <ul className="space-y-1.5">
           {blocked?.problems.map((problem) => (

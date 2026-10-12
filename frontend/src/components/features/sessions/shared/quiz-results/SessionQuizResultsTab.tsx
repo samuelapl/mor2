@@ -96,7 +96,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
           icon={<ClipboardList className="h-4 w-4 text-amber-500" />}
           label="Quizzes"
           value={String(quizzes.length)}
-          hint={data.completed ? 'Session completed: graded results are recorded' : 'Session not completed yet'}
+          hint={data.completed ? 'Session completed: scores are recorded as feedback' : 'Session not completed yet'}
         />
       </div>
 
@@ -121,7 +121,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
             {data.quizzes.map((q) => (
               <option key={q.id} value={q.id}>
                 {q.title}
-                {q.graded ? ` (graded ${q.weight}%)` : ''}
+                {q.graded ? ' (course quiz)' : ''}
               </option>
             ))}
           </select>
@@ -183,7 +183,7 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
                         return (
                           <span key={r.quizId} className="flex items-center gap-1" title={quiz.title}>
                             {quizzes.length > 1 && <span className="max-w-[120px] truncate text-[10px] text-subtle-foreground">{quiz.title}</span>}
-                            <QuizScoreBadge quiz={quiz} result={r} />
+                            <QuizScoreBadge result={r} />
                           </span>
                         );
                       })}
@@ -199,13 +199,13 @@ export function SessionQuizResultsTab({ sessionId }: { sessionId: string }) {
                             <div className="flex flex-wrap items-center gap-2">
                               <h4 className="text-xs font-bold uppercase tracking-wide text-secondary-foreground">{quiz.title}</h4>
                               {quiz.graded && (
-                                <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[10px] font-bold text-warning">
-                                  Graded · {quiz.weight}% · pass {quiz.passingScore}%
+                                <span className="rounded-full bg-info-soft px-2 py-0.5 text-[10px] font-bold text-info">
+                                  Course quiz · score only
                                 </span>
                               )}
                               <span className="text-[11px] text-muted-foreground">
                                 {r.correct}/{quiz.questions.length} correct
-                                {r.recorded ? ` · recorded grade ${r.recorded.score}%` : ''}
+                                {r.recorded && !r.recorded.missed ? ` · recorded score ${r.recorded.score}%` : ''}
                               </span>
                             </div>
                             <QuizAnswerList quiz={quiz} result={r} />

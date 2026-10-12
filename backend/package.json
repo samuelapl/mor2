@@ -25,7 +25,8 @@
     "seed:news": "ts-node prisma/seed-news.ts",
     "seed:laws": "ts-node prisma/seed-laws.ts",
     "questions:correct-first": "ts-node prisma/correct-answer-first.ts",
-    "durations:recalculate": "ts-node prisma/recalculate-durations.ts"
+    "durations:recalculate": "ts-node prisma/recalculate-durations.ts",
+    "session-quizzes:formative": "ts-node -r tsconfig-paths/register prisma/formative-session-quizzes.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

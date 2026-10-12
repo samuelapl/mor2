@@ -539,19 +539,21 @@
   "sessionQuiz": {
     "viewResults": "View my quiz results",
     "noQuiz": "No quiz was run in this session.",
-    "gradedInfo": "{{weight}}% of the course grade · pass {{pass}}%",
     "notAnswered": "You didn't answer this quiz.",
-    "notAnsweredGraded": "You didn't answer this quiz, so it counts as 0.",
     "notAnsweredShort": "Not answered",
     "score": "{{percent}}% · {{earned}}/{{total}} pts",
     "points": "{{earned}}/{{total}} pts",
     "answered": "Answered:",
     "noAnswer": "No answer",
-    "correctAnswer": "Correct answer:"
+    "correctAnswer": "Correct answer:",
+    "yourAnswerCorrect": "Your answer (Correct)",
+    "yourAnswer": "Your answer",
+    "correctAnswerBadge": "Correct answer",
+    "feedbackOnly": "Feedback only: doesn't affect your grade or certificate"
   },
   "courseSessions": {
     "title": "Live sessions",
-    "intro": "Online sessions for this course. Attend them live — your certificate is issued after every session has been held.",
+    "intro": "Online sessions for this course. Attend them live — your certificate is issued once you have attended every session.",
     "none": "No live sessions for this course yet.",
     "sessionN": "Session {{number}}",
     "dateTba": "Date to be announced",
@@ -561,7 +563,9 @@
     "missed": "Missed",
     "joinNow": "Join now",
     "viewSession": "View session",
-    "heldOf": "{{held}} of {{total}} held"
+    "heldOf": "{{held}} of {{total}} held",
+    "notAttended": "Not attended",
+    "attendNext": "You missed this session. Attend the next one below to count it towards your certificate."
   },
   "grade": {
     "courseGrade": "Course grade",
@@ -569,13 +573,14 @@
     "notReached": "You didn't reach the required course grade ({{grade}}% of {{required}}%).",
     "retakeHint": "Retake an assessment to improve your score, or contact support.",
     "contactSupport": "No retakes are left. Please contact support.",
-    "liveSession": "Live session",
-    "upcoming": "Upcoming",
     "notTaken": "Not taken",
     "weightPoints": "{{weight}}% weight · {{points}} pts",
-    "sessionsPendingTitle": "Certificate waits for {{count}} live session quiz(zes)",
-    "sessionsPendingBody": "Attend an upcoming round of: {{names}}. Your grade is final once each session quiz has your result.",
-    "sessionsPendingGeneric": "Attend an upcoming round of each live session you have not taken the quiz in. Your grade is final once each session quiz has your result."
+    "sessionsMissingTitle": "Certificate waits for {{count}} live session(s) to attend",
+    "nextSession": "next session {{date}}",
+    "notScheduledYet": "not scheduled yet: your trainer will schedule a new session",
+    "sessionQuizzes": "Live session quizzes (feedback only)",
+    "noScoreYet": "No score",
+    "sessionQuizzesNote": "These scores don't count towards your course grade or certificate. Attending each live session does."
   },
   "laws": {
     "title": "Tax & Customs Laws",

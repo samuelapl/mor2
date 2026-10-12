@@ -296,7 +296,6 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
               {t('creatorSidebar.onlineSessions')}
             </p>
             {course.sessionPlans!.map((plan, i) => {
-              const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
               return (
                 <React.Fragment key={plan.id}>
                   {node(
@@ -306,7 +305,7 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
                       <span className="min-w-0 flex-1 truncate">{plan.titleEn || t('creatorSidebar.untitledSession')}</span>
                       {plan.quizzes.length > 0 && (
                         <span className="shrink-0 rounded bg-foreground/5 px-1 text-[10px] font-bold">
-                          {plan.quizzes.length}Q · {weight}%
+                          {plan.quizzes.length}Q
                         </span>
                       )}
                     </>,

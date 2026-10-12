@@ -110,9 +110,9 @@ export interface SessionQuizGroup {
   /** Prepared quiz id, or `other` for questions broadcast outside a prepared quiz. */
   id: string;
   title: string;
+  /** A course session quiz (formative: its score is feedback only, never graded). */
   graded: boolean;
-  weight: number | null;
-  passingScore: number | null;
+  totalPoints?: number;
   questions: SessionQuizQuestion[];
 }
 
@@ -120,6 +120,8 @@ export interface LearnerQuizAnswer {
   questionId: string;
   /** What the learner picked, as text; null when not answered. */
   answer: string | null;
+  /** Selected option texts or keys */
+  selected?: string[];
   isCorrect: boolean | null;
   answeredAt: string | null;
 }
@@ -131,8 +133,8 @@ export interface LearnerQuizResult {
   earnedPoints: number;
   totalPoints: number;
   scorePercent: number;
-  /** What went into the course grade when the session was completed (graded quizzes). */
-  recorded: { score: number; passed: boolean } | null;
+  /** Score recorded when the session was completed (course session quizzes). */
+  recorded: { score: number; missed: boolean } | null;
   answers: LearnerQuizAnswer[];
 }
 

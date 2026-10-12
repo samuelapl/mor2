@@ -5,8 +5,8 @@ import {
   computeCourseGrade,
   computeProgressPercent,
   countsTowardProgress,
+  findMissingSessionAttendance,
   isAssessmentPassed,
-  isSessionQuizClosed,
   computeSequentialUnlocks,
   isTimeSatisfied,
   loadUserCompletionState,
@@ -52,10 +52,21 @@ export interface LearnerSessionInfo {
   trainerName: string | null;
   status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
   attended: boolean;
-  /** Planned with the course (may carry a graded quiz; details are not exposed to learners). */
+  /** Planned with the course (may carry a formative quiz; details are not exposed to learners). */
   planned: boolean;
   /** Seconds until an upcoming session starts, on the server clock at request time. */
   startsInSeconds: number | null;
+  /**
+   * Earlier held rounds of this planned session the learner did not attend (oldest first),
+   * so they can see what they missed above the round they can still attend.
+   */
+  missedRounds: MissedRoundInfo[];
+}
+
+export interface MissedRoundInfo {
+  sessionId: string;
+  scheduledAt: string;
+  durationMinutes: number | null;
 }
 
 @Injectable()
@@ -161,20 +172,15 @@ export class ProgressService {
       allLessonIds,
     );
     // Load every assessment attached to this course along with attempts for weighted scoring
-    const assessments = (
-      await this.prisma.assessment.findMany({
-        where: { courseId },
-        include: {
-          attempts: {
-            where: { userId, submittedAt: { not: null } },
-            orderBy: { score: 'desc' },
-          },
+    const assessments = await this.prisma.assessment.findMany({
+      where: { courseId },
+      include: {
+        attempts: {
+          where: { userId, submittedAt: { not: null } },
+          orderBy: { score: 'desc' },
         },
-      })
-    ).map((a) => ({
-      ...a,
-      closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined,
-    }));
+      },
+    });
 
     const [globalPassingScore, retakeCooldownMinutes] = await Promise.all([
       this.policyService.getPassingScorePercent(),
@@ -358,10 +364,12 @@ export class ProgressService {
     const finalAssessmentPassed = finalAssessment?.passed ?? false;
     const { totalCourseGrade, allAssessmentsPassed, gradeSatisfied } = grade;
 
-    const learnerSessionsList = await this.learnerSessions(userId, courseId);
-    const allLiveSessionsAttended =
-      learnerSessionsList.length === 0 ||
-      learnerSessionsList.every((s) => s.status === 'COMPLETED' && s.attended);
+    const [learnerSessionsList, missingSessions] = await Promise.all([
+      this.learnerSessions(userId, courseId),
+      // Same rule as the final-assessment gate and certificate issuing.
+      findMissingSessionAttendance(this.prisma, courseId, userId),
+    ]);
+    const allLiveSessionsAttended = missingSessions.length === 0;
 
     return {
       courseId,
@@ -394,8 +402,8 @@ export class ProgressService {
           (!finalAssessmentRequired || finalAssessmentPassed) &&
           grade.certificateReady &&
           allLiveSessionsAttended,
-        /** Session quizzes still waiting for their session; the certificate waits for them. */
-        sessionsPending: grade.sessionsPending,
+        /** Sessions still to attend before the certificate, with their next scheduled round. */
+        missingSessions,
         finalAssessment,
         assessmentBreakdown: assessmentInfos,
       },
@@ -408,7 +416,7 @@ export class ProgressService {
    * scheduled) in plan order, then any extra sessions. No quiz details are exposed.
    */
   private async learnerSessions(userId: string, courseId: string): Promise<LearnerSessionInfo[]> {
-    const [plans, sessions] = await Promise.all([
+    const [plans, sessions, enrollment] = await Promise.all([
       this.prisma.courseSessionPlan.findMany({
         where: { courseId },
         orderBy: { order: 'asc' },
@@ -430,6 +438,10 @@ export class ProgressService {
           attendees: { where: { userId }, select: { status: true } },
         },
       }),
+      this.prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+        select: { enrolledAt: true },
+      }),
     ]);
 
     const toInfo = (s: (typeof sessions)[number], planId: string | null): LearnerSessionInfo => ({
@@ -444,7 +456,27 @@ export class ProgressService {
       attended: s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
       planned: planId !== null,
       startsInSeconds: startsInSeconds(s),
+      missedRounds: [],
     });
+
+    const attendedRound = (s: (typeof sessions)[number]) =>
+      s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE');
+    // Held rounds of a plan the learner missed; rounds held before they enrolled don't count.
+    const missedRoundsOf = (planId: string, shownSessionId: string | null): MissedRoundInfo[] =>
+      sessions
+        .filter(
+          (s) =>
+            (s.originalPlanId ?? s.sessionPlanId) === planId &&
+            s.id !== shownSessionId &&
+            s.status === 'COMPLETED' &&
+            !attendedRound(s) &&
+            (!enrollment || s.scheduledAt >= enrollment.enrolledAt),
+        )
+        .map((s) => ({
+          sessionId: s.id,
+          scheduledAt: s.scheduledAt.toISOString(),
+          durationMinutes: s.durationMinutes,
+        }));
 
     const byId = new Map(sessions.map((s) => [s.id, s]));
     const planned = plans.map((p): LearnerSessionInfo => {
@@ -456,14 +488,17 @@ export class ProgressService {
           s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
       );
       if (attendedPrior) {
-        return toInfo(attendedPrior, p.id);
+        return {
+          ...toInfo(attendedPrior, p.id),
+          missedRounds: missedRoundsOf(p.id, attendedPrior.id),
+        };
       }
 
       // 2. Otherwise return current active/upcoming session for this plan
       const live =
         p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
       return live
-        ? toInfo(live, p.id)
+        ? { ...toInfo(live, p.id), missedRounds: missedRoundsOf(p.id, live.id) }
         : {
             id: p.id,
             sessionId: null,
@@ -476,9 +511,12 @@ export class ProgressService {
             attended: false,
             planned: true,
             startsInSeconds: null,
+            missedRounds: missedRoundsOf(p.id, null),
           };
     });
-    const extra = sessions.filter((s) => !s.sessionPlanId && !s.originalPlanId).map((s) => toInfo(s, null));
+    const extra = sessions
+      .filter((s) => !s.sessionPlanId && !s.originalPlanId)
+      .map((s) => toInfo(s, null));
     return [...planned, ...extra];
   }
 
@@ -881,27 +919,21 @@ export class ProgressService {
     if (completedLessons !== lessonIds.length) return;
 
     // Verify all assessments for this course meet the pass mark and cumulative grade
-    const assessments = (
-      await this.prisma.assessment.findMany({
-        where: { courseId },
-        include: {
-          attempts: {
-            where: { userId, submittedAt: { not: null } },
-            orderBy: { score: 'desc' },
-          },
+    const assessments = await this.prisma.assessment.findMany({
+      where: { courseId },
+      include: {
+        attempts: {
+          where: { userId, submittedAt: { not: null } },
+          orderBy: { score: 'desc' },
         },
-      })
-    ).map((a) => ({
-      ...a,
-      closed: a.type === AssessmentType.SESSION_ASSESSMENT ? isSessionQuizClosed(a) : undefined,
-    }));
+      },
+    });
 
     const grade = computeCourseGrade(
       assessments,
       await this.policyService.getPassingScorePercent(),
     );
     if (!grade.allAssessmentsPassed) return; // every assessment must pass on its own mark
-    if (grade.sessionsPending > 0) return; // a session quiz is still to come; judge the grade after it
     if (!grade.gradeSatisfied) {
       // Content done and every assessment passed, but the weighted grade is short.
       await this.notifyCertificateGradeNotMet(

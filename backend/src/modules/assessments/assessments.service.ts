@@ -17,6 +17,7 @@ import { CreateAssessmentDto, SubmitAssessmentDto } from './dto';
 import { AuthenticatedUser } from '@common/interfaces';
 import {
   deriveAttachmentFileKey,
+  describeMissingSessions,
   findMissingSessionAttendance,
   isTimeSatisfied,
   requiredSeconds,
@@ -468,7 +469,7 @@ export class AssessmentsService {
     if (unattended.length > 0) {
       throw new ForbiddenException({
         reason: 'LIVE_SESSIONS_INCOMPLETE',
-        message: `You must attend all scheduled live sessions before taking the final assessment. Still to attend: ${unattended.map((s) => s.title).join(', ')}.`,
+        message: `You must attend all scheduled live sessions before taking the final assessment. Still to attend: ${describeMissingSessions(unattended)}.`,
         incompleteCount: unattended.length,
         incompleteSessions: unattended,
       });

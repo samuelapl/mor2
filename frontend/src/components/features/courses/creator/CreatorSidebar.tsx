@@ -538,7 +538,6 @@ export function CreatorSidebar({
             </div>
             {sessionPlans.map((plan, i) => {
               const active = activeNode.type === 'SESSION_PLAN' && activeNode.sessionPlanId === plan.id;
-              const weight = plan.quizzes.reduce((sum, q) => sum + (q.weight || 0), 0);
               return (
                 <div
                   key={plan.id}
@@ -566,7 +565,7 @@ export function CreatorSidebar({
                         active ? 'bg-white/20' : 'border border-primary/20 bg-primary-soft text-primary',
                       )}
                     >
-                      {plan.quizzes.length}Q · {weight}%
+                      {plan.quizzes.length}Q
                     </span>
                   )}
                   {onDeleteSessionPlan && (

@@ -1,19 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AttendanceStatus, EnrollmentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
+import { isAnswerCorrect } from '@common/utils';
 import { ProgressService } from '@modules/progress/progress.service';
 
 interface QuizResponseMeta {
   questionId?: string;
+  selectedOptionIds?: string[];
   isCorrect?: boolean;
   score?: number;
 }
 
 /**
- * Turns live answers into graded results. Learners answer session quizzes one question at a
- * time (logged as QUIZ_RESPONSE in attendanceLog); when the session ends, every weighted quiz
- * becomes one AssessmentAttempt per enrolled learner, so it counts in the course grade like
- * any other assessment. A learner with no answers is recorded as 0 (a missed quiz).
+ * Turns live answers into scores. Learners answer session quizzes one question at a time
+ * (logged as QUIZ_RESPONSE in attendanceLog); when the session ends, every course session quiz
+ * becomes one AssessmentAttempt per learner in the session. Session quizzes are formative: the
+ * score is feedback only and never counts towards the grade or the certificate. A learner with
+ * no answers is recorded as 0 and `missed`.
  */
 @Injectable()
 export class SessionQuizGradingService {
@@ -39,13 +42,19 @@ export class SessionQuizGradingService {
           where: { assessmentId: { not: null } },
           select: {
             assessmentId: true,
-            assessment: { select: { passingScore: true } },
-            questions: { select: { questionId: true, points: true } },
+            questions: {
+              select: {
+                questionId: true,
+                points: true,
+                question: { select: { options: true, correctAnswer: true } },
+              },
+            },
           },
         },
       },
     });
-    if (!session || session.preparedQuizzes.length === 0) return { quizzes: 0, learners: 0 };
+    // A session without quizzes still runs the completion check below: attendance alone counts.
+    if (!session) return { quizzes: 0, learners: 0 };
 
     const [enrollments, logs, present] = await Promise.all([
       this.prisma.enrollment.findMany({
@@ -85,15 +94,26 @@ export class SessionQuizGradingService {
       const allZero = quiz.questions.every((q) => !q.points);
       const pointsOf = (q: { points: number }) => (allZero ? 1 : q.points);
       const totalPoints = quiz.questions.reduce((sum, q) => sum + pointsOf(q), 0);
-      const passingScore = quiz.assessment?.passingScore ?? 0;
 
       for (const { userId } of learners) {
         const answers = latest.get(userId);
         const answered = quiz.questions.filter((q) => answers?.has(q.questionId));
-        const earned = answered.reduce(
-          (sum, q) => sum + (answers!.get(q.questionId)!.isCorrect ? pointsOf(q) : 0),
-          0,
-        );
+        // Checked against the answer key, not the flag stored with the answer (older answers
+        // were compared with the key in the wrong form).
+        const earned = answered.reduce((sum, q) => {
+          const ans = answers!.get(q.questionId)!;
+          const selected = Array.isArray(ans.selectedOptionIds) ? ans.selectedOptionIds : [];
+          const right = selected.length > 0
+            ? isAnswerCorrect(
+                {
+                  options: Array.isArray(q.question?.options) ? q.question.options : [],
+                  correctAnswer: q.question?.correctAnswer,
+                },
+                selected,
+              )
+            : Boolean(ans.isCorrect);
+          return sum + (right ? pointsOf(q) : 0);
+        }, 0);
         const score = totalPoints > 0 ? Math.round((earned / totalPoints) * 100) : 0;
         const missed = answered.length === 0;
 
@@ -112,7 +132,8 @@ export class SessionQuizGradingService {
               userId,
               attemptNumber: otherRounds + 1,
               score,
-              passed: !missed && score >= passingScore,
+              // Formative: no pass mark, so never "passed".
+              passed: false,
               answers: {
                 source: 'LIVE_SESSION',
                 sessionId,
@@ -127,7 +148,7 @@ export class SessionQuizGradingService {
       }
     }
 
-    // A session result can complete the course (or tell the learner the grade fell short).
+    // Attending this session may be the last thing the course was waiting for.
     for (const { userId } of learners) {
       try {
         await this.progressService.maybeCompleteCourse(userId, session.courseId);

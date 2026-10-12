@@ -131,6 +131,25 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           const Icon = badge.icon;
           return (
             <li key={s.id} className="rounded-2xl border border-border bg-card p-4 shadow-2xs">
+              {(s.missedRounds ?? []).length > 0 && (
+                <ul className="mb-3 space-y-1.5 border-b border-border/60 pb-3">
+                  {s.missedRounds!.map((r) => (
+                    <li key={r.sessionId} className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm text-muted-foreground line-through decoration-danger/60">
+                        {fmt(r.scheduledAt)}
+                        {r.durationMinutes ? ` · ${r.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger">
+                        <XCircle className="h-3.5 w-3.5" />
+                        {t('liveSessionsStage.notAttended')}
+                      </span>
+                    </li>
+                  ))}
+                  {s.status !== 'COMPLETED' && (
+                    <li className="text-xs font-medium text-info">{t('liveSessionsStage.attendTheNextSession')}</li>
+                  )}
+                </ul>
+              )}
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">

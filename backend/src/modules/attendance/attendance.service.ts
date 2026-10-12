@@ -42,6 +42,10 @@ export class AttendanceService {
   /**
    * Learner virtual/QR/GPS/biometric check-in. Produces an attendance record
    * with checkInMethod set. Uses upsert so concurrent room joins never crash with unique constraint.
+   *
+   * QR / GPS / biometric check-ins prove the learner is in the room, so they mark PRESENT.
+   * A VIRTUAL check-in only records that the learner entered the online room: they become
+   * PRESENT through heartbeats once their time in the room reaches the attendance threshold.
    */
   async checkin(
     sessionId: string,
@@ -68,6 +72,22 @@ export class AttendanceService {
     const existing = await this.prisma.attendance.findUnique({
       where: { sessionId_userId: { sessionId, userId } },
     });
+
+    if (method === CheckInMethod.VIRTUAL) {
+      if (existing?.checkInMethod) return existing;
+      return this.prisma.attendance.upsert({
+        where: { sessionId_userId: { sessionId, userId } },
+        update: { checkInMethod: method, joinedAt: existing?.joinedAt || new Date() },
+        create: {
+          sessionId,
+          userId,
+          status: AttendanceStatus.ABSENT,
+          joinedAt: new Date(),
+          checkInMethod: method,
+          notes: `Self check-in via ${method}`,
+        },
+      });
+    }
 
     if (existing) {
       if (existing.checkInMethod && existing.status === AttendanceStatus.PRESENT) {
@@ -591,84 +611,39 @@ export class AttendanceService {
   }
 
   /**
-   * Called when a participant leaves the LiveKit room.
-   * Accumulates activeSeconds across multiple segments (for rejoins).
-   * Promotes status to PRESENT if percentage >= threshold.
+   * Called when a participant leaves the LiveKit room. Records when they left and logs the
+   * segment. Time in the room is counted only by the client heartbeats (web and mobile both
+   * send them); adding the segment here as well would count the same minutes twice.
    */
   async handleParticipantLeft(
     sessionId: string,
     userId: string,
     segmentDurationSeconds: number,
   ): Promise<void> {
-    const session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
-    if (!session) return;
-
-    const sessionTotalSeconds = (session.durationMinutes ?? 60) * 60;
-
     const existing = await this.prisma.attendance.findUnique({
       where: { sessionId_userId: { sessionId, userId } },
     });
+    if (!existing) return;
 
-    const prevActiveSeconds = existing?.activeSeconds ?? 0;
-    const newActiveSeconds = prevActiveSeconds + Math.max(0, segmentDurationSeconds);
-    const rawPercentage =
-      sessionTotalSeconds > 0 ? (newActiveSeconds / sessionTotalSeconds) * 100 : 0;
-    const percentage = Math.min(100, Math.round(rawPercentage));
-    const threshold = await this.getDefaultAttendanceThreshold();
-    const newStatus =
-      percentage >= threshold
-        ? AttendanceStatus.PRESENT
-        : (existing?.status ?? AttendanceStatus.ABSENT);
-
-    try {
-      await this.prisma.attendance.upsert({
-        where: { sessionId_userId: { sessionId, userId } },
-        update: {
-          activeSeconds: newActiveSeconds,
-          percentage,
-          status: newStatus,
-          leftAt: new Date(),
-        },
-        create: {
-          sessionId,
-          userId,
-          status: newStatus,
-          activeSeconds: newActiveSeconds,
-          percentage,
-          joinedAt: new Date(),
-          leftAt: new Date(),
-          rejoinCount: 0,
-        },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        await this.prisma.attendance.update({
-          where: { sessionId_userId: { sessionId, userId } },
-          data: {
-            activeSeconds: newActiveSeconds,
-            percentage,
-            status: newStatus,
-            leftAt: new Date(),
-          },
-        });
-      } else {
-        throw error;
-      }
-    }
+    const attendance = await this.prisma.attendance.update({
+      where: { sessionId_userId: { sessionId, userId } },
+      data: { leftAt: new Date() },
+    });
 
     // Create LEAVE log with segment duration
-    const attendance = await this.prisma.attendance.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
-    });
     await this.prisma.attendanceLog.create({
       data: {
         sessionId,
         userId,
-        attendanceId: attendance?.id ?? null,
+        attendanceId: attendance.id,
         eventType: 'LEAVE',
         durationSeconds: segmentDurationSeconds,
         timestamp: new Date(),
-        metadata: { percentage, status: newStatus, source: 'livekit_webhook' },
+        metadata: {
+          percentage: attendance.percentage,
+          status: attendance.status,
+          source: 'livekit_webhook',
+        },
       },
     });
   }

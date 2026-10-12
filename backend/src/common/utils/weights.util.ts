@@ -6,22 +6,17 @@ type Db = PrismaClient | Prisma.TransactionClient;
 /**
  * Total grade weight of a course's assessments. Lesson, module and final assessments without
  * questions cannot be taken, so they do not count; the creator studio uses the same rule
- * (creator/weights.ts). Session quizzes always count: their weight is fixed when the course is
- * planned, and their questions are only prepared after approval.
+ * (creator/weights.ts). Session quizzes are formative and never count.
  */
 export async function courseWeightTotal(
   db: Db,
   courseId: string,
 ): Promise<{ total: number; count: number }> {
   const rows = await db.assessment.findMany({
-    where: { courseId },
-    select: { weight: true, questions: true, type: true },
+    where: { courseId, type: { not: AssessmentType.SESSION_ASSESSMENT } },
+    select: { weight: true, questions: true },
   });
-  const graded = rows.filter(
-    (r) =>
-      r.type === AssessmentType.SESSION_ASSESSMENT ||
-      (Array.isArray(r.questions) && r.questions.length > 0),
-  );
+  const graded = rows.filter((r) => Array.isArray(r.questions) && r.questions.length > 0);
   return { total: graded.reduce((sum, r) => sum + (r.weight ?? 0), 0), count: graded.length };
 }
 
@@ -44,9 +39,8 @@ export async function assertCourseWeightsTotal(db: Db, courseId: string, mode: '
 
 /**
  * Lesson, module and final assessments: question points must total the assessment's weight
- * (one point per percent of the course grade), like session quizzes. A 0% (practice) assessment
- * or one without questions has no required total. Session quizzes are checked separately, as
- * their questions are prepared after approval. Mirrors the creator studio (creator/weights.ts).
+ * (one point per percent of the course grade). A 0% (practice) assessment or one without
+ * questions has no required total. Session quizzes have no weight, so no required total. Mirrors the creator studio (creator/weights.ts).
  */
 export async function assertAssessmentPointsMatchWeights(db: Db, courseId: string) {
   const rows = await db.assessment.findMany({
