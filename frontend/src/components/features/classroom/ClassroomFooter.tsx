@@ -76,9 +76,7 @@ export function ClassroomFooter({
               <CheckCircle2 className="h-3 w-3" /> {t('classroomFooter.met')}
             </span>
           ) : (
-            <span className="text-[11px] text-warning font-semibold">
-              {t('classroomFooter.inProgress')}
-            </span>
+            <span className="text-[11px] text-warning font-semibold">{t('classroomFooter.inProgress')}</span>
           )}
         </div>
       )}
@@ -118,13 +116,7 @@ export function ClassroomFooter({
             )}
           </Button>
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled
-            className="text-xs font-semibold text-success border-success/30 bg-success-soft"
-          >
+          <Button type="button" variant="outline" size="sm" disabled className="text-xs font-semibold text-success border-success/30 bg-success-soft">
             <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
             {t('classroomFooter.curriculumFinished')}
           </Button>
