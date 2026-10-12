@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { ArrowUp, Clock, Info, ListTree, Pause } from 'lucide-react-native';
+import { ArrowUp, Clock, ListTree } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -400,20 +400,13 @@ export default function LessonScreen() {
     return null;
   }, [data, selectedVideoUrl, videoAttachments]);
 
-  const isYoutube = Boolean(
-    effectiveLesson?.resourceUrl && /youtu\.?be/.test(effectiveLesson.resourceUrl),
-  );
-  const isPlayable =
-    Boolean(effectiveLesson?.resourceUrl) &&
-    (effectiveLesson?.contentType === 'VIDEO' || effectiveLesson?.contentType === 'AUDIO') &&
-    !isYoutube;
-  const [playing, setPlaying] = useState(false);
-
+  // Study time belongs to the lesson as a whole (like the web), not to its video: it keeps
+  // counting while the learner reads, browses slides or has the media paused.
   const heartbeat = useLessonHeartbeat({
     courseId,
     lessonId,
     serverSeconds: entry?.timeSpentSeconds ?? 0,
-    active: isPlayable ? playing : true,
+    active: true,
     enabled: Boolean(data) && !completed,
   });
   const playhead = usePlayhead(lessonId, completed);
@@ -424,13 +417,7 @@ export default function LessonScreen() {
   const remaining = Math.max(0, required - heartbeat.liveSeconds);
 
   const lockedHint = !satisfied
-    ? isPlayable && !playing
-      ? t(
-          effectiveLesson?.contentType === 'AUDIO'
-            ? 'classroom.playAudioToUnlock'
-            : 'classroom.playVideoToUnlock',
-        )
-      : t('classroom.keepStudyingToUnlock', { time: formatClock(remaining) })
+    ? t('classroom.keepStudyingToUnlock', { time: formatClock(remaining) })
     : null;
 
   const markComplete = (lastPosition?: number) => {
@@ -453,16 +440,18 @@ export default function LessonScreen() {
       {
         onError: (error) => {
           if (!(error instanceof ApiError)) return;
+          // Media ended on a lesson whose quiz completes it: nothing to report, Next leads there.
+          if (error.reason === 'ASSESSMENT_NOT_PASSED' || error.reason === 'ASSESSMENT_REQUIRED') {
+            return;
+          }
           const message =
             error.reason === 'TIME_NOT_MET'
               ? t('classroom.reasons.timeNotMet', {
                   time: formatClock(error.remainingSeconds ?? 0),
                 })
-              : error.reason === 'ASSESSMENT_NOT_PASSED' || error.reason === 'ASSESSMENT_REQUIRED'
-                ? t('classroom.reasons.assessmentRequired')
-                : error.reason === 'LOCKED'
-                  ? t('classroom.reasons.locked')
-                  : error.localizedMessage(locale);
+              : error.reason === 'LOCKED'
+                ? t('classroom.reasons.locked')
+                : error.localizedMessage(locale);
           Alert.alert(t('classroom.markComplete'), message);
           if (error.reason === 'LOCKED' || error.reason === 'TIME_NOT_MET') void progress.refetch();
         },
@@ -507,14 +496,30 @@ export default function LessonScreen() {
 
     setIsNavigating(true);
     try {
-      // Mark current topic/lesson completed on server and wait for success before navigating
+      // Mark the current topic complete before moving on. A lesson whose quiz is not passed
+      // yet cannot be completed (passing the quiz completes it), so in that case the learner
+      // goes straight on to the quiz instead of being stopped — same as the web classroom.
+      let quizGatesLesson = false;
       if (!completed) {
         if (!online) {
           setLocallyCompleted(true);
           await offlineDb.updateLessonProgress(lessonId, { isCompleted: true });
           syncQueue.enqueue('LESSON_COMPLETE', { lessonId }, `complete-${lessonId}`);
         } else {
-          await complete.mutateAsync({ lessonId });
+          // Send study time counted since the last heartbeat so the server sees the full time.
+          await heartbeat.flush();
+          try {
+            await complete.mutateAsync({ lessonId });
+          } catch (error) {
+            if (
+              error instanceof ApiError &&
+              (error.reason === 'ASSESSMENT_NOT_PASSED' || error.reason === 'ASSESSMENT_REQUIRED')
+            ) {
+              quizGatesLesson = true;
+            } else {
+              throw error;
+            }
+          }
           await progress.refetch();
         }
       }
@@ -523,11 +528,11 @@ export default function LessonScreen() {
       for (let i = currentIndex + 1; i < navNodes.length; i++) {
         const node = navNodes[i]!;
         if (node.type === 'ASSESSMENT') {
-          if (!node.passed) {
+          if (quizGatesLesson || !node.passed) {
             openQuiz(node.assessmentId!);
             return;
           }
-          // If this assessment is already passed, proceed to next lesson
+          // Already passed: carry on to the next lesson
           continue;
         }
 
@@ -657,7 +662,7 @@ export default function LessonScreen() {
             <ClassroomStage
               lesson={effectiveLesson}
               startAt={startAt}
-              onPlayingChange={setPlaying}
+              onPlayingChange={() => undefined}
               onPosition={playhead.onPosition}
               onPause={playhead.commit}
               onEnded={onEnded}
@@ -722,17 +727,11 @@ export default function LessonScreen() {
             {!completed && required > 0 ? (
               <Card className="gap-2">
                 <View className="flex-row items-center gap-2">
-                  {isPlayable && !playing && !satisfied ? (
-                    <Pause size={16} color={colors.textMuted} />
-                  ) : (
-                    <Clock size={16} color={satisfied ? colors.success : colors.primary} />
-                  )}
+                  <Clock size={16} color={satisfied ? colors.success : colors.primary} />
                   <AppText variant="label" className="flex-1">
                     {satisfied
                       ? t('classroom.timeDone')
-                      : isPlayable && !playing
-                        ? t('classroom.pausedHint')
-                        : t('classroom.timeRemaining', { time: formatClock(remaining) })}
+                      : t('classroom.timeRemaining', { time: formatClock(remaining) })}
                   </AppText>
                   <AppText variant="caption">
                     {formatClock(Math.min(heartbeat.liveSeconds, required))} / {formatClock(required)}
