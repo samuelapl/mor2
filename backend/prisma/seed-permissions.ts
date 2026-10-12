@@ -422,6 +422,15 @@ export const PERMISSIONS: PermissionDef[] = [
     scope: 'ALL',
     description: 'Manage legal document categories and upload/edit/delete tax and customs laws',
   },
+
+  // Dynamic Landing Page CMS
+  {
+    code: 'landing_page.manage',
+    resource: 'landing_page',
+    action: 'manage',
+    scope: 'ALL',
+    description: 'Manage dynamic landing page content, navigation, and branding',
+  },
 ];
 
 // Seed matrix — ROLE-PERMISSION-SPEC.md §6, final version (includes footnotes ¹²³ and the Exception block).

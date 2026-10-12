@@ -1,6 +1,10 @@
 {
   "files": [
     {
+      "file": "src/components/layout/PublicFooter.tsx",
+      "reason": "Institutional dark navy footer branded after the Ministry of Revenues logo in all themes."
+    },
+    {
       "file": "src/components/features/certificates/CertificateRenderer.tsx",
       "reason": "Printed / exported certificate: fixed colors on purpose, identical in both themes."
     },

@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  optimizeFonts: false,
 
   env: {
     NEXT_PUBLIC_API_URL:

@@ -798,6 +798,7 @@ export class AssessmentsService {
           am: `በ"${assessment.titleAm}" ${score}% አስመዝግበዋል እና ${passed ? 'አልፈዋል' : 'አላለፉም'}.`,
         },
         { assessmentId, score, passed, type: assessment.type },
+        { email: false },
       );
     } catch {
       // notification failure is non-fatal
