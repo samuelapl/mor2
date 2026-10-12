@@ -76,7 +76,14 @@ export class NotificationEmailResolver {
       },
     });
     const user = notification?.user;
-    if (!notification || !user || !user.isActive || user.deletedAt || !user.emailNotifications) {
+    if (
+      !notification ||
+      notification.type === NotificationType.ASSESSMENT_GRADED ||
+      !user ||
+      !user.isActive ||
+      user.deletedAt ||
+      !user.emailNotifications
+    ) {
       return null;
     }
 

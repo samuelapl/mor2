@@ -367,6 +367,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
       icon: Scale,
       permission: 'laws.manage',
     },
+    {
+      label: 'Landing Page CMS',
+      href: '/system-admin/landing-page',
+      icon: PenSquare,
+      permission: ['landing_page.manage', 'user.manage', 'role.manage'],
+    },
   ],
 };
 
@@ -406,6 +412,7 @@ export const PERMISSION_GATED_PATHS: Record<string, string[]> = {
   '/manage-certificates': ['CERTIFICATE_MANAGE', 'certificate.manage'],
   '/system-admin/certificate-templates': ['CERTIFICATE_TEMPLATE_MANAGE', 'certificate_template.manage', 'certificate.manage'],
   '/system-admin/settings': ['user.manage', 'role.manage', 'permission.manage'],
+  '/system-admin/landing-page': ['landing_page.manage', 'user.manage', 'role.manage'],
   '/system-admin/audit-logs': ['audit.view'],
   '/system-admin/categories': ['category.manage'],
   '/learner': [

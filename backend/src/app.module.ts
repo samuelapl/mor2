@@ -36,6 +36,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PermissionsGuard } from './modules/permissions/guards/permissions.guard';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { SessionReschedulerModule } from './modules/session-rescheduler/session-rescheduler.module';
+import { LandingPageModule } from './modules/landing-page/landing-page.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { SessionReschedulerModule } from './modules/session-rescheduler/session-
     NewsModule,
     LegalDocumentsModule,
     SessionReschedulerModule,
+    LandingPageModule,
   ],
   providers: [
     PrismaService,

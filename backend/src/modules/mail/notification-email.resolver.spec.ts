@@ -64,4 +64,12 @@ describe('NotificationEmailResolver', () => {
   it('skips a notification that no longer exists', async () => {
     expect(await resolverFor(null).resolve('n1')).toBeNull();
   });
+
+  it('skips ASSESSMENT_GRADED notifications', async () => {
+    const quizNotification = {
+      ...notification(baseUser),
+      type: NotificationType.ASSESSMENT_GRADED,
+    };
+    expect(await resolverFor(quizNotification).resolve('n1')).toBeNull();
+  });
 });

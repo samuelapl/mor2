@@ -8,6 +8,8 @@
  * that knows the dark values; components use the token classes (bg-card, text-foreground…).
  */
 :root {
+  --font-poppins: 'Poppins', 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+  --font-inter: 'Inter', 'Noto Sans Ethiopic', 'Nyala', sans-serif;
   --background: 255 255 255;
   --foreground: 15 23 42;
   --card: 255 255 255;

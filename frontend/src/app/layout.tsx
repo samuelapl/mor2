@@ -1,23 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { Poppins, Inter } from 'next/font/google';
 import AppProviders from '@/components/providers/AppProviders';
 import { themeInitScript } from '@/lib/theme-init';
 import './globals.css';
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-poppins',
-  display: 'swap',
-});
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-inter',
-  display: 'swap',
-});
+const poppins = { variable: 'font-poppins' };
+const inter = { variable: 'font-inter' };
 
 // viewport-fit=cover lets fixed bars use env(safe-area-inset-*) around the iPhone home indicator.
 export const viewport: Viewport = {
