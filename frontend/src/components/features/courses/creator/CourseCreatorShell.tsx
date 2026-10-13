@@ -95,8 +95,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     })),
   );
   const [confirmDisableSessions, setConfirmDisableSessions] = useState(false);
-  /** Sessions only exist on Online Self-Paced courses; switching mode hides (and on save drops) them. */
-  const sessionsActive = deliveryMode === 'ONLINE_ONLY' && hasOnlineSessions;
+  /** Sessions exist when enabled (for either Online Self-Paced or In-Person Classroom courses). */
+  const sessionsActive = hasOnlineSessions || deliveryMode === 'IN_PERSON_ONLY';
 
   const codeError = useMemo(() => {
     const normalized = code.trim().toUpperCase();

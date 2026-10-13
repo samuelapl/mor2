@@ -204,6 +204,9 @@
     "certificateReady": "ምስክር ወረቀት ዝግጁ ነው",
     "downloadAvailableContent": "ያሉትን ይዘቶች ያውርዱ",
     "downloadAvailableHint": "ከመስመር ውጭ ለመማር አሁን የተከፈቱ ትምህርቶችን፣ ሚዲያዎችን እና ፈተናዎችን ያውርዱ። የተቆለፉ ትምህርቶች ስልጠናውን ሲያጠናቅቁ በቅደም ተከተል ይከፈታሉ።",
+    "enrollOnline": "በመስመር ላይ ኮርስ ይመዝገቡ",
+    "reserveSeat": "መቀመጫ ይያዙ",
+    "enrollInCourse": "በኮርሱ ይመዝገቡ",
     "courseContent": "የኮርስ ይዘት"
   },
   "home": {

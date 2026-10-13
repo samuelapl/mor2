@@ -738,6 +738,7 @@ export interface VenueSessionBatchItem {
 
 export interface CreateBatchSessionInput {
   courseId: string;
+  sessionPlanId?: string;
   titleEn: string;
   titleAm?: string;
   descriptionEn?: string;

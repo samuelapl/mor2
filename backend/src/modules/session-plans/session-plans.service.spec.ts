@@ -66,11 +66,10 @@ describe('SessionPlansService.replaceAll', () => {
     await expect(service.replaceAll('c1', twoSessions)).rejects.toThrow(ForbiddenException);
   });
 
-  it('refuses planned sessions on a course that is not Online Self-Paced', async () => {
-    prisma.course.findUnique.mockResolvedValue(course({ deliveryMode: 'BOTH' }));
-    await expect(service.replaceAll('c1', twoSessions)).rejects.toThrow(BadRequestException);
-    // ...but removing them is always allowed
-    await expect(service.replaceAll('c1', { plans: [] })).resolves.toEqual([]);
+  it('allows planned sessions on In-Person Classroom courses', async () => {
+    prisma.course.findUnique.mockResolvedValue(course({ deliveryMode: 'IN_PERSON_ONLY' }));
+    await expect(service.replaceAll('c1', twoSessions)).resolves.toEqual([]);
+    expect(tx.courseSessionPlan.create).toHaveBeenCalledTimes(2);
   });
 });
 

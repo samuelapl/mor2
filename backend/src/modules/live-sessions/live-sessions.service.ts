@@ -274,11 +274,19 @@ export class LiveSessionsService {
       throw new BadRequestException('At least one venue session must be provided');
     }
 
+    // If linked to a course session plan, load its details
+    const plan = dto.sessionPlanId
+      ? await this.prisma.courseSessionPlan.findUnique({
+          where: { id: dto.sessionPlanId },
+          include: { assessments: { where: { type: 'SESSION_ASSESSMENT' } } },
+        })
+      : null;
+
     // All-or-nothing: a conflict in any row (including with an earlier row of the same batch)
     // rolls back the whole batch instead of leaving it half-created.
     const createdSessions = await this.prisma.$transaction(async (tx) => {
       const created: any[] = [];
-      for (const item of dto.venueSessions) {
+      for (const [idx, item] of dto.venueSessions.entries()) {
         const venue = await this.inPersonSessions.assertVenueAvailable(
           item.venueId,
           new Date(item.scheduledAt),
@@ -287,9 +295,14 @@ export class LiveSessionsService {
           tx,
         );
 
+        const assignedTrainerId = item.trainerId || plan?.trainerId || null;
+
         const session = await tx.liveSession.create({
           data: {
             courseId: dto.courseId,
+            sessionPlanId: plan && idx === 0 ? plan.id : null,
+            originalPlanId: plan?.id || null,
+            plannedOrder: plan?.order ?? null,
             titleAm: dto.titleAm || dto.titleEn,
             titleEn: `${dto.titleEn} (${venue.branch} - ${venue.name})`,
             descriptionAm: dto.descriptionAm,
@@ -297,7 +310,7 @@ export class LiveSessionsService {
             sessionType: SessionType.IN_PERSON,
             platform: SessionPlatform.IN_PERSON,
             venueId: item.venueId,
-            trainerId: item.trainerId || null,
+            trainerId: assignedTrainerId,
             scheduledAt: new Date(item.scheduledAt),
             durationMinutes: item.durationMinutes,
           },
@@ -309,6 +322,22 @@ export class LiveSessionsService {
             venue: true,
           },
         });
+
+        // If planned assessments exist, duplicate/setup prepared quizzes for each venue session
+        if (plan?.assessments && plan.assessments.length > 0) {
+          for (const [order, quiz] of plan.assessments.entries()) {
+            await tx.sessionPreparedQuiz.create({
+              data: {
+                sessionId: session.id,
+                assessmentId: quiz.id,
+                title: quiz.titleEn,
+                timeLimitMinutes: quiz.timeLimitMinutes ?? 10,
+                order,
+              },
+            });
+          }
+        }
+
         created.push(session);
       }
       return created;

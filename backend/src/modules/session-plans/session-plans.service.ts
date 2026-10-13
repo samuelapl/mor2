@@ -67,11 +67,8 @@ export class SessionPlansService {
         'Session plans can only be edited while the course is in DRAFT or REJECTED state',
       );
     }
-    if (dto.plans.length > 0 && course.deliveryMode !== CourseDeliveryMode.ONLINE_ONLY) {
-      throw new BadRequestException(
-        'Online sessions can only be planned for Online Self-Paced courses',
-      );
-    }
+    // Session plans can be added to both Online Self-Paced and In-Person Classroom courses.
+    // (A course with IN_PERSON_ONLY plans physical branch sessions, while ONLINE_ONLY plans virtual sessions).
 
     await this.prisma.$transaction(async (tx) => {
       // Session quizzes cascade with their plan.

@@ -345,6 +345,7 @@ export function ScheduleSessionModal({
 
       await createBatchLiveSessions({
         courseId,
+        sessionPlanId: sessionPlanId || undefined,
         titleEn: titleEn.trim(),
         titleAm: titleAm.trim() || titleEn.trim(),
         descriptionEn: descriptionEn.trim() || undefined,
@@ -375,6 +376,7 @@ export function ScheduleSessionModal({
     setMeetingPassword("");
     setVenueRows([]);
     setInPersonStep(1);
+    setSessionPlanId("");
   };
 
   const inputClass =
@@ -744,6 +746,30 @@ export function ScheduleSessionModal({
                 onChange={setCourseId}
               />
             </div>
+
+            {plannedSessions.length > 0 && (
+              <div className="rounded-xl border border-info/30 bg-info-soft/50 p-4 space-y-2">
+                <label className="block text-xs font-bold text-foreground">Planned session from the course</label>
+                <select
+                  value={sessionPlanId}
+                  onChange={(event) => pickPlannedSession(event.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">New unplanned session (no course quiz)</option>
+                  {plannedSessions.map((plan) => {
+                    return (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.order + 1}. {plan.titleEn}
+                        {plan.quizzes.length ? ` — ${plan.quizzes.length} quiz(zes)` : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[11px] text-muted-foreground">
+                  Picking one fills in its title and description, and creates its quizzes for the branch trainers to conduct.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">

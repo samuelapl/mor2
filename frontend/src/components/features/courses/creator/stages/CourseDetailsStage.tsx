@@ -89,14 +89,6 @@ const DELIVERY_OPTIONS: Array<{
     iconClass: 'text-warning',
     selectedClass: 'border-warning bg-warning-soft/60 shadow-xs ring-1 ring-warning',
   },
-  {
-    id: 'BOTH',
-    labelKey: 'courseDetailsStage.hybridBlended',
-    descriptionKey: 'courseDetailsStage.digitalOnlinePreparationModulesScheduled',
-    icon: Layers,
-    iconClass: 'text-success',
-    selectedClass: 'border-success bg-success-soft/60 shadow-xs ring-1 ring-success',
-  },
 ];
 
 export function CourseDetailsStage({
@@ -313,7 +305,7 @@ export function CourseDetailsStage({
           )}
         </div>
 
-        {deliveryMode === 'ONLINE_ONLY' && onToggleOnlineSessions && (
+        {onToggleOnlineSessions && (
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-info/30 bg-info-soft/50 p-3.5">
             <input
               type="checkbox"
@@ -323,11 +315,19 @@ export function CourseDetailsStage({
             />
             <span>
               <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                <Video className="h-4 w-4 text-info" />
-                {t('courseDetailsStage.includeOnlineSessions')}
+                {deliveryMode === 'IN_PERSON_ONLY' ? (
+                  <Building2 className="h-4 w-4 text-warning" />
+                ) : (
+                  <Video className="h-4 w-4 text-info" />
+                )}
+                {deliveryMode === 'IN_PERSON_ONLY'
+                  ? 'Include classroom sessions'
+                  : t('courseDetailsStage.includeOnlineSessions')}
               </span>
               <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
-                {t('courseDetailsStage.planLiveOnlineSessionsNowWith')}
+                {deliveryMode === 'IN_PERSON_ONLY'
+                  ? 'Plan mandatory physical classroom sessions at branch venues with on-site check-in.'
+                  : t('courseDetailsStage.planLiveOnlineSessionsNowWith')}
               </span>
             </span>
           </label>

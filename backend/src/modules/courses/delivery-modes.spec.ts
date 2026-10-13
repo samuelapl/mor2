@@ -3,14 +3,12 @@ import { CourseDeliveryMode } from '@prisma/client';
 import { assertDeliveryModeAllowed } from './delivery-modes';
 
 describe('assertDeliveryModeAllowed', () => {
-  it('allows online self-paced for new courses', () => {
+  it('allows online self-paced and in-person for new courses', () => {
     expect(() => assertDeliveryModeAllowed(CourseDeliveryMode.ONLINE_ONLY)).not.toThrow();
+    expect(() => assertDeliveryModeAllowed(CourseDeliveryMode.IN_PERSON_ONLY)).not.toThrow();
   });
 
-  it('refuses in-person and hybrid for new courses', () => {
-    expect(() => assertDeliveryModeAllowed(CourseDeliveryMode.IN_PERSON_ONLY)).toThrow(
-      BadRequestException,
-    );
+  it('refuses hybrid (BOTH) for new courses', () => {
     expect(() => assertDeliveryModeAllowed(CourseDeliveryMode.BOTH)).toThrow(BadRequestException);
   });
 
@@ -20,9 +18,9 @@ describe('assertDeliveryModeAllowed', () => {
     ).not.toThrow();
   });
 
-  it('does not let an existing course switch to another disabled mode', () => {
+  it('does not let an existing course switch to a disabled mode', () => {
     expect(() =>
-      assertDeliveryModeAllowed(CourseDeliveryMode.IN_PERSON_ONLY, CourseDeliveryMode.BOTH),
+      assertDeliveryModeAllowed(CourseDeliveryMode.BOTH, CourseDeliveryMode.ONLINE_ONLY),
     ).toThrow(BadRequestException);
   });
 });

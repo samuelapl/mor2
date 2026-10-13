@@ -19,11 +19,11 @@ describe('requiredSeconds', () => {
 
 describe('isTimeSatisfied', () => {
   it('is satisfied once exactly at the required boundary', () => {
-    expect(isTimeSatisfied(10, 10)).toBe(true);
+    expect(isTimeSatisfied(300, 10)).toBe(true);
   });
 
   it('is not satisfied one second below the boundary', () => {
-    expect(isTimeSatisfied(9, 10)).toBe(false);
+    expect(isTimeSatisfied(299, 10)).toBe(false);
   });
 
   it('is always satisfied when there is no duration configured', () => {

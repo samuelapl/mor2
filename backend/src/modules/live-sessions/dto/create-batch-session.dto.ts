@@ -59,6 +59,11 @@ export class CreateBatchSessionDto {
   @IsString()
   descriptionAm?: string;
 
+  @ApiPropertyOptional({ example: 'plan-uuid-1' })
+  @IsOptional()
+  @IsString()
+  sessionPlanId?: string;
+
   @ApiProperty({ type: [VenueSessionItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
