@@ -391,6 +391,44 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
+    // If any sessionPlan has no direct 1:1 liveSession (e.g. scheduled via an in-person batch/round),
+    // populate it from the first active liveSession referencing originalPlanId.
+    const missingPlanIds = (course.sessionPlans ?? [])
+      .filter((p) => !p.liveSession || p.liveSession.deletedAt)
+      .map((p) => p.id);
+
+    if (missingPlanIds.length > 0) {
+      const fallbackSessions = await this.prisma.liveSession.findMany({
+        where: {
+          courseId: id,
+          deletedAt: null,
+          originalPlanId: { in: missingPlanIds },
+        },
+        orderBy: { scheduledAt: 'asc' },
+        select: {
+          id: true,
+          originalPlanId: true,
+          scheduledAt: true,
+          status: true,
+          trainerId: true,
+          platform: true,
+          durationMinutes: true,
+          deletedAt: true,
+        },
+      });
+      const fallbackByPlan = new Map<string, any>();
+      for (const s of fallbackSessions) {
+        if (s.originalPlanId && !fallbackByPlan.has(s.originalPlanId)) {
+          fallbackByPlan.set(s.originalPlanId, s);
+        }
+      }
+      for (const p of course.sessionPlans ?? []) {
+        if ((!p.liveSession || p.liveSession.deletedAt) && fallbackByPlan.has(p.id)) {
+          (p as any).liveSession = fallbackByPlan.get(p.id);
+        }
+      }
+    }
+
     return this.formatCourseCompat(course);
   }
 
@@ -821,25 +859,39 @@ export class CoursesService {
    * and each session quiz has questions.
    */
   private async assertSessionsReadyToPublish(courseId: string) {
-    const plans = await this.prisma.courseSessionPlan.findMany({
-      where: { courseId },
-      orderBy: { order: 'asc' },
-      select: {
-        titleEn: true,
-        trainerId: true,
-        liveSession: { select: { deletedAt: true, trainerId: true } },
-        assessments: {
-          where: { type: 'SESSION_ASSESSMENT' },
-          select: {
-            titleEn: true,
-            questions: true,
+    const [plans, activeOriginalSessions] = await Promise.all([
+      this.prisma.courseSessionPlan.findMany({
+        where: { courseId },
+        orderBy: { order: 'asc' },
+        select: {
+          id: true,
+          titleEn: true,
+          trainerId: true,
+          liveSession: { select: { deletedAt: true, trainerId: true } },
+          assessments: {
+            where: { type: 'SESSION_ASSESSMENT' },
+            select: {
+              titleEn: true,
+              questions: true,
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.liveSession.findMany({
+        where: { courseId, deletedAt: null, originalPlanId: { not: null } },
+        select: { originalPlanId: true, trainerId: true },
+      }),
+    ]);
+    const fallbackByPlan = new Map<string, { trainerId: string | null }>();
+    for (const s of activeOriginalSessions) {
+      if (s.originalPlanId && !fallbackByPlan.has(s.originalPlanId)) {
+        fallbackByPlan.set(s.originalPlanId, { trainerId: s.trainerId });
+      }
+    }
     const problems: string[] = [];
     for (const plan of plans) {
-      const session = plan.liveSession && !plan.liveSession.deletedAt ? plan.liveSession : null;
+      const directSession = plan.liveSession && !plan.liveSession.deletedAt ? plan.liveSession : null;
+      const session = directSession ?? fallbackByPlan.get(plan.id) ?? null;
       if (!(session?.trainerId ?? plan.trainerId))
         problems.push(`"${plan.titleEn}" has no trainer assigned`);
       if (!session) problems.push(`"${plan.titleEn}" is not scheduled yet`);

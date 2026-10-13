@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { CalendarClock, CircleCheck, Radio, Video, XCircle } from 'lucide-react-native';
+import { Building2, CalendarClock, CircleCheck, Radio, Video, XCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -17,17 +17,23 @@ import {
 import { useLocaleStore } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatDateTime } from '@/core/utils/formatters';
+import { useCourse } from '@/features/courses';
 import { SessionQuizResults, StartsInBadge } from '@/features/live-sessions';
 import { useCourseProgress, type LearnerSession } from '@/features/progress';
 
-/** The course's online sessions: when, where, whether the learner attended, and quiz results. */
+/** The course's online or classroom sessions: when, where, whether the learner attended, and quiz results. */
 export default function CourseLiveSessionsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const locale = useLocaleStore((s) => s.locale);
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
+  const course = useCourse(courseId);
   const progress = useCourseProgress(courseId);
   const sessions = progress.data?.liveSessions ?? [];
+  const isInPerson =
+    course.data?.deliveryMode === 'IN_PERSON_ONLY' ||
+    sessions.some((s) => s.platform === 'IN_PERSON');
+  const HeaderIcon = isInPerson ? Building2 : Video;
 
   const status = (s: LearnerSession): { label: string; tone: BadgeTone; icon: typeof Radio } => {
     switch (s.status) {
@@ -48,7 +54,13 @@ export default function CourseLiveSessionsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('courseSessions.title') }} />
+      <Stack.Screen
+        options={{
+          title: isInPerson
+            ? t('courseSessions.classroomTitle', { defaultValue: 'Classroom Sessions' })
+            : t('courseSessions.title'),
+        }}
+      />
       <Screen
         contentClassName="gap-4 p-4 pb-10"
         refreshing={progress.isRefetching}
@@ -56,10 +68,15 @@ export default function CourseLiveSessionsScreen() {
       >
         <View className="flex-row items-start gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-            <Video size={22} color="#0284c7" />
+            <HeaderIcon size={22} color="#0284c7" />
           </View>
           <AppText className="flex-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
-            {t('courseSessions.intro')}
+            {isInPerson
+              ? t('courseSessions.classroomIntro', {
+                  defaultValue:
+                    'In-person classroom sessions for your enrolled round. Check in at the venue to record attendance.',
+                })
+              : t('courseSessions.intro')}
           </AppText>
         </View>
 
@@ -101,7 +118,12 @@ export default function CourseLiveSessionsScreen() {
                 <View className="flex-row items-start gap-3">
                   <View className="flex-1 gap-0.5">
                     <AppText className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      {t('courseSessions.sessionN', { number: i + 1 })}
+                      {isInPerson
+                        ? t('courseSessions.classroomSessionN', {
+                            number: i + 1,
+                            defaultValue: `Classroom Session ${i + 1}`,
+                          })
+                        : t('courseSessions.sessionN', { number: i + 1 })}
                     </AppText>
                     <AppText className="text-base font-semibold text-slate-900 dark:text-white">
                       {s.titleEn}

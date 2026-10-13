@@ -1,6 +1,7 @@
 import {
   Award,
   BookOpen,
+  Building2,
   ChevronDown,
   ChevronRight,
   CircleCheck,
@@ -123,7 +124,11 @@ export function CourseSyllabus({
       ))}
 
       {course.enrolled && onOpenLiveSessions && (progress?.liveSessions?.length ?? 0) > 0 ? (
-        <LiveSessionsRow sessions={progress!.liveSessions!} onPress={onOpenLiveSessions} />
+        <LiveSessionsRow
+          sessions={progress!.liveSessions!}
+          isInPerson={course.deliveryMode === 'IN_PERSON_ONLY'}
+          onPress={onOpenLiveSessions}
+        />
       ) : null}
 
       {finalAssessment ? (
@@ -466,15 +471,18 @@ function OverviewRow({ variant, title, subtitle, disabled = false, onPress }: Ov
 
 function LiveSessionsRow({
   sessions,
+  isInPerson = false,
   onPress,
 }: {
   sessions: NonNullable<CourseProgress['liveSessions']>;
+  isInPerson?: boolean;
   onPress: () => void;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const live = sessions.some((s) => s.status === 'LIVE');
   const held = sessions.filter((s) => s.status === 'COMPLETED').length;
+  const Icon = isInPerson ? Building2 : Video;
 
   return (
     <Pressable
@@ -483,11 +491,13 @@ function LiveSessionsRow({
       className="flex-row items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 active:opacity-80 dark:border-sky-900 dark:bg-sky-950/30"
     >
       <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/50">
-        <Video size={19} color="#0284c7" />
+        <Icon size={19} color="#0284c7" />
       </View>
       <View className="flex-1">
         <AppText className="text-sm font-bold text-slate-900 dark:text-white">
-          {t('courseSessions.title')}
+          {isInPerson
+            ? t('courseSessions.classroomTitle', { defaultValue: 'Classroom Sessions' })
+            : t('courseSessions.title')}
         </AppText>
         <AppText variant="caption">
           {t('courseSessions.heldOf', { held, total: sessions.length })}

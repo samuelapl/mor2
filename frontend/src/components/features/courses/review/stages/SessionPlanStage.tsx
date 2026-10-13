@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   AlertTriangle,
   ArrowRight,
+  Building2,
   CalendarCheck,
   CalendarClock,
   Check,
@@ -26,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SearchableTrainerSelect } from '@/components/features/sessions/shared/SearchableTrainerSelect';
 import type { ApiAssessment, ApiUser } from '@/lib/api/types';
-import type { CourseStatus, SessionPlan, User } from '@/types';
+import type { CourseDeliveryMode, CourseStatus, SessionPlan, User } from '@/types';
 import { AssessmentQuestionPreview } from '../../detail/AssessmentQuestionPreview';
 import { sessionPlanTrainerId } from '../nodes';
 import { RichSection, StageCard, StageTitle } from './StageParts';
@@ -45,6 +46,7 @@ const WAITING_REFRESH_MS = 30_000;
 interface SessionPlanStageProps {
   plan: SessionPlan;
   index: number;
+  deliveryMode?: CourseDeliveryMode;
   courseStatus: CourseStatus;
   /** The session's formative quizzes with their prepared questions and answers. */
   quizAssessments: ApiAssessment[];
@@ -58,13 +60,14 @@ interface SessionPlanStageProps {
 }
 
 /**
- * A planned online session as an approver or publisher sees it. Getting it ready takes two
+ * A planned online/classroom session as an approver or publisher sees it. Getting it ready takes two
  * steps: assign its trainer here, then schedule it on the Session Scheduling page. The steps
  * update on their own once the session is scheduled there.
  */
 export function SessionPlanStage({
   plan,
   index,
+  deliveryMode,
   courseStatus,
   quizAssessments,
   courseId,
@@ -81,6 +84,7 @@ export function SessionPlanStage({
   const afterApproval = courseStatus === 'approved' || courseStatus === 'published';
   const schedulingHref = can('live_session.manage_all') ? '/training-admin/sessions' : '/trainer/sessions';
   const waitingForSchedule = afterApproval && Boolean(trainerId) && !scheduled;
+  const isInPerson = deliveryMode === 'IN_PERSON_ONLY';
 
   const [selectedTrainerId, setSelectedTrainerId] = useState(trainerId ?? '');
   const [busy, setBusy] = useState(false);
@@ -151,8 +155,8 @@ export function SessionPlanStage({
   return (
     <div className="space-y-6">
       <StageTitle
-        icon={<Video className="h-4 w-4" />}
-        eyebrow={`${t('reviewSubmitStage.onlineSession')} ${index + 1}`}
+        icon={isInPerson ? <Building2 className="h-4 w-4 text-warning" /> : <Video className="h-4 w-4" />}
+        eyebrow={isInPerson ? `Classroom Session ${index + 1}` : `${t('reviewSubmitStage.onlineSession')} ${index + 1}`}
         title={plan.titleEn || t('creatorSidebar.untitledSession')}
         meta={
           <>

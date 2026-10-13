@@ -1,8 +1,10 @@
 import { api } from "./client";
 import type {
+  ApiInPersonRound,
   ApiVenue,
   CreateBatchSessionInput,
   CreateVenueInput,
+  ScheduleInPersonRoundInput,
   UpdateVenueInput,
 } from "./types";
 
@@ -59,4 +61,21 @@ export async function createBatchLiveSessions(
     body,
   });
 }
+
+export async function scheduleInPersonRound(
+  body: ScheduleInPersonRoundInput,
+): Promise<{ message: string; roundNumber: number; count: number; data: any[] }> {
+  return api<{ message: string; roundNumber: number; count: number; data: any[] }>(
+    "live-sessions/in-person/rounds",
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+export async function fetchCourseRounds(courseId: string): Promise<ApiInPersonRound[]> {
+  return api<ApiInPersonRound[]>(`live-sessions/in-person/rounds/${courseId}`);
+}
+
 

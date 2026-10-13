@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Award,
   BookOpen,
+  Building2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -292,8 +293,12 @@ export function ReviewSidebar({ course, assessments, selectedNode, onSelectNode,
         {(course.sessionPlans?.length ?? 0) > 0 && (
           <div className="space-y-0.5 border-t border-border/80 pt-2">
             <p className="flex items-center gap-1.5 px-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-info">
-              <Video className="h-3 w-3" />
-              {t('creatorSidebar.onlineSessions')}
+              {course.deliveryMode === 'IN_PERSON_ONLY' ? (
+                <Building2 className="h-3 w-3 text-warning" />
+              ) : (
+                <Video className="h-3 w-3" />
+              )}
+              {course.deliveryMode === 'IN_PERSON_ONLY' ? 'Classroom Sessions' : t('creatorSidebar.onlineSessions')}
             </p>
             {course.sessionPlans!.map((plan, i) => {
               return (

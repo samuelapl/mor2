@@ -5,6 +5,7 @@
 export {
   courseKeys,
   enrollmentKeys,
+  useBookableRounds,
   useBookableSessions,
   useCatalogCourses,
   useCourse,

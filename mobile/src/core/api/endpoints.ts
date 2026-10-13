@@ -86,6 +86,7 @@ export const endpoints = {
     livekitToken: (sessionId: string) => `live-sessions/${id(sessionId)}/livekit-token`,
     quizResponse: (sessionId: string) => `live-sessions/${id(sessionId)}/quiz-response`,
     quizResultsMe: (sessionId: string) => `live-sessions/${id(sessionId)}/quiz-results/me`,
+    inPersonRounds: (courseId: string) => `live-sessions/in-person/rounds/${id(courseId)}`,
   },
   attendance: {
     mine: 'attendance/me',

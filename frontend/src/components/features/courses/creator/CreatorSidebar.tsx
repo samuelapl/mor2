@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import {
   Award,
   BookOpen,
+  Building2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -18,6 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import type { CourseDeliveryMode } from '@/types';
 import type { LessonDraft, ModuleDraft } from '../wizard-types';
 import type { CreatorActiveNode, SessionPlanDraft } from './types';
 import { cn } from '@/lib/utils';
@@ -27,6 +29,7 @@ interface CreatorSidebarProps {
   onSelectNode: (node: CreatorActiveNode) => void;
   modules: ModuleDraft[];
   courseTitle: string;
+  deliveryMode?: CourseDeliveryMode;
   finalAssessmentWeight?: number;
   finalQuestionCount?: number;
   finalAssessmentTitle?: string;
@@ -40,7 +43,7 @@ interface CreatorSidebarProps {
   onDeleteSubLesson: (moduleId: string, lessonId: string, subLessonId: string) => void;
   onDeleteModuleAssessment: (moduleId: string) => void;
   onDeleteLessonAssessment: (moduleId: string, lessonId: string) => void;
-  /** Planned online sessions; the group is shown only when the course includes them. */
+  /** Planned online/classroom sessions; the group is shown only when the course includes them. */
   showSessions?: boolean;
   sessionPlans?: SessionPlanDraft[];
   onAddSessionPlan?: () => void;
@@ -52,6 +55,7 @@ export function CreatorSidebar({
   onSelectNode,
   modules,
   courseTitle,
+  deliveryMode,
   finalAssessmentWeight = 60,
   finalQuestionCount = 0,
   finalAssessmentTitle,
@@ -526,13 +530,19 @@ export function CreatorSidebar({
           <span>{t('creatorSidebar.addNewModule')}</span>
         </button>
 
-        {/* 3b. Planned Online Sessions */}
+        {/* 3b. Planned Online / Classroom Sessions */}
         {showSessions && (
           <div className="space-y-1.5 rounded-2xl border border-info/25 bg-card p-2.5 shadow-2xs">
             <div className="flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-info">
-                <Video className="h-3.5 w-3.5" />
-                {t('creatorSidebar.onlineSessions')}
+                {deliveryMode === 'IN_PERSON_ONLY' ? (
+                  <Building2 className="h-3.5 w-3.5 text-warning" />
+                ) : (
+                  <Video className="h-3.5 w-3.5" />
+                )}
+                {deliveryMode === 'IN_PERSON_ONLY'
+                  ? 'Classroom Sessions'
+                  : t('creatorSidebar.onlineSessions')}
               </span>
               <span className="text-[10px] font-semibold text-subtle-foreground">{sessionPlans.length}</span>
             </div>
@@ -594,7 +604,7 @@ export function CreatorSidebar({
                 className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-info/30 py-1.5 text-[11px] font-semibold text-info transition hover:bg-info-soft"
               >
                 <Plus className="h-3 w-3" />
-                {t('creatorSidebar.addSession')}
+                {deliveryMode === 'IN_PERSON_ONLY' ? 'Add classroom session' : t('creatorSidebar.addSession')}
               </button>
             )}
           </div>

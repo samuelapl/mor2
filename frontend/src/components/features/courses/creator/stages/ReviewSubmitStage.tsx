@@ -4,6 +4,7 @@ import React from 'react';
 import {
   AlertTriangle,
   Award,
+  Building2,
   CheckCircle2,
   FileCheck,
   HelpCircle,
@@ -160,7 +161,7 @@ export function ReviewSubmitStage({
   });
   if (questions.length > 0) checkQuestions(questions, finalAssessmentWeight, quizTitle || 'Final Assessment', { type: 'FINAL_ASSESSMENT' });
   sessionPlans.forEach((plan, i) => {
-    const label = plan.titleEn.trim() || `${t('reviewSubmitStage.onlineSession')} ${i + 1}`;
+    const label = plan.titleEn.trim() || `${deliveryMode === 'IN_PERSON_ONLY' ? 'Classroom session' : t('reviewSubmitStage.onlineSession')} ${i + 1}`;
     const node: CreatorActiveNode = { type: 'SESSION_PLAN', sessionPlanId: plan.id };
     if (!plan.titleEn.trim()) issues.push({ message: `${label}: ${t('reviewSubmitStage.titleIsMissing')}`, node });
     plan.quizzes.forEach((quiz, qi) => {
@@ -343,8 +344,14 @@ export function ReviewSubmitStage({
         {sessionPlans.length > 0 && (
           <div className="mb-6 space-y-2 rounded-xl border border-info/30 bg-info-soft/40 p-4">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-info">
-              <Video className="h-3.5 w-3.5" />
-              {t('reviewSubmitStage.plannedOnlineSessions', { count: sessionPlans.length })}
+              {deliveryMode === 'IN_PERSON_ONLY' ? (
+                <Building2 className="h-3.5 w-3.5 text-warning" />
+              ) : (
+                <Video className="h-3.5 w-3.5" />
+              )}
+              {deliveryMode === 'IN_PERSON_ONLY'
+                ? `Planned Classroom Sessions (${sessionPlans.length})`
+                : t('reviewSubmitStage.plannedOnlineSessions', { count: sessionPlans.length })}
             </p>
             <ol className="space-y-1.5">
               {sessionPlans.map((plan, i) => (
@@ -360,7 +367,9 @@ export function ReviewSubmitStage({
               ))}
             </ol>
             <p className="text-[11px] text-muted-foreground">
-              {t('reviewSubmitStage.scheduledWithADateTrainerAnd')}
+              {deliveryMode === 'IN_PERSON_ONLY'
+                ? 'Scheduled into Rounds (Round 1, Round 2, ...) with a branch venue, date, and trainer on the Session Scheduling page.'
+                : t('reviewSubmitStage.scheduledWithADateTrainerAnd')}
             </p>
           </div>
         )}

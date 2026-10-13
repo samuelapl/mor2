@@ -265,12 +265,12 @@ async function main() {
     },
   });
 
-  // 5. In-Person Planned Sessions (CourseSessionPlan)
+  // 5. In-Person Planned Classroom Sessions (CourseSessionPlan)
   const plan1 = await prisma.courseSessionPlan.create({
     data: {
       courseId: course.id,
       order: 0,
-      titleEn: 'Round 1: Practical VAT Declaration & Tax Invoice Audit Lab',
+      titleEn: 'Classroom Session 1: Practical VAT Filing & Tax Invoice Audit Workshop',
       descriptionEn:
         'Hands-on classroom lab calculating net VAT, auditing tax invoices with electronic fiscal registers (FMR/CIS), and reconciling monthly returns.',
       objectivesEn:
@@ -283,7 +283,7 @@ async function main() {
     data: {
       courseId: course.id,
       order: 1,
-      titleEn: 'Round 2: Field Audit Simulation & Taxpayer Dispute Resolution',
+      titleEn: 'Classroom Session 2: Branch EFD Compliance & Field Inspection Lab',
       descriptionEn:
         'Classroom case study analyzing disputed tax assessments, non-compliance penalties, and conducting field audit simulations.',
       objectivesEn:
@@ -292,7 +292,7 @@ async function main() {
     },
   });
 
-  // Create Formative Quiz for Session Plan 1
+  // Create Formative Quiz for Classroom Session 1 & 2
   const formativeQuestions = [
     {
       id: 'formative-q1',
@@ -309,9 +309,9 @@ async function main() {
       courseId: course.id,
       sessionPlanId: plan1.id,
       type: AssessmentType.SESSION_ASSESSMENT,
-      titleEn: 'Round 1 Formative Classroom Quiz',
-      titleAm: 'ዙር 1 የክፍል ውስጥ ምዘና ፈተና',
-      descriptionEn: 'Interactive live quiz conducted by the instructor during Round 1 classroom lab.',
+      titleEn: 'Classroom Session 1 Formative Quiz',
+      titleAm: 'የመማሪያ ክፍል ክፍለ-ጊዜ 1 ምዘና ፈተና',
+      descriptionEn: 'Interactive live quiz conducted by the instructor during Classroom Session 1.',
       descriptionAm: 'በአስተማሪው የሚመራ የክፍል ውስጥ በይነተገናኝ ፈተና።',
       passingScore: 0,
       maxAttempts: 1,
@@ -321,41 +321,20 @@ async function main() {
       questions: formativeQuestions as unknown as Prisma.InputJsonValue,
     },
   });
-  console.log(`Created 2 course session plans with formative quizzes`);
+  console.log(`Created 2 planned Classroom Sessions with formative quizzes`);
 
-  // 6. Schedule Live In-Person Classroom Sessions across branch venues
+  // 6. Schedule Round 1 and Round 2 (each Round contains Classroom Session 1 & Classroom Session 2)
   const now = new Date();
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  tomorrow.setHours(10, 0, 0, 0);
+  const round1Day1 = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  round1Day1.setHours(9, 30, 0, 0);
+  const round1Day2 = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+  round1Day2.setHours(9, 30, 0, 0);
 
-  const tomorrowAfternoon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  tomorrowAfternoon.setHours(14, 0, 0, 0);
+  const round2Day1 = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  round2Day1.setHours(14, 0, 0, 0);
+  const round2Day2 = new Date(now.getTime() + 96 * 60 * 60 * 1000);
+  round2Day2.setHours(14, 0, 0, 0);
 
-  const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-  dayAfterTomorrow.setHours(10, 0, 0, 0);
-
-  const sessionAllocations = [
-    {
-      venue: venues[0], // Addis Ababa HQ - Training Hall A
-      scheduledAt: tomorrow,
-      titleEn: 'Round 1: Practical VAT Declaration Lab — Addis Ababa HQ',
-      titleAm: 'ዙር 1፡ የተግባር የቫት ማስታወቂያ ልምምድ — አዲስ አበባ ዋና መ/ቤት',
-    },
-    {
-      venue: venues[1] || venues[0], // Executive Lab / Hawassa
-      scheduledAt: tomorrowAfternoon,
-      titleEn: 'Round 1: Practical VAT Declaration Lab — Executive Lab',
-      titleAm: 'ዙር 1፡ የተግባር የቫት ማስታወቂያ ልምምድ — ኤግዚክዩቲቭ ላብ',
-    },
-    {
-      venue: venues[2] || venues[0], // Hawassa / Bahir Dar
-      scheduledAt: dayAfterTomorrow,
-      titleEn: 'Round 1: Practical VAT Declaration Lab — Regional Branch',
-      titleAm: 'ዙር 1፡ የተግባር የቫት ማስታወቂያ ልምምድ — የክልል ቅርንጫፍ',
-    },
-  ];
-
-  // Question for formative session quiz
   const qbQuestion = await prisma.questionBankQuestion.create({
     data: {
       courseId: course.id,
@@ -369,48 +348,74 @@ async function main() {
     },
   });
 
-  for (const alloc of sessionAllocations) {
-    const liveSession = await prisma.liveSession.create({
-      data: {
-        courseId: course.id,
-        venueId: alloc.venue.id,
-        trainerId: user.id,
-        originalPlanId: plan1.id,
-        plannedOrder: plan1.order,
-        titleEn: alloc.titleEn,
-        titleAm: alloc.titleAm,
-        descriptionEn: plan1.descriptionEn,
-        descriptionAm: plan1.descriptionEn,
-        objectivesEn: plan1.objectivesEn,
-        sessionType: SessionType.IN_PERSON,
-        platform: SessionPlatform.IN_PERSON,
-        status: SessionStatus.SCHEDULED,
-        scheduledAt: alloc.scheduledAt,
-        durationMinutes: 90,
-        allowViewAttendance: true,
-      },
-    });
+  const roundSchedules = [
+    {
+      roundNumber: 1,
+      rescheduleStatus: 'ROUND_1',
+      venue: venues[0],
+      isFirstRound: true,
+      slots: [
+        { plan: plan1, scheduledAt: round1Day1, durationMinutes: 90 },
+        { plan: plan2, scheduledAt: round1Day2, durationMinutes: 90 },
+      ],
+    },
+    {
+      roundNumber: 2,
+      rescheduleStatus: 'ROUND_2',
+      venue: venues[1] || venues[0],
+      isFirstRound: false,
+      slots: [
+        { plan: plan1, scheduledAt: round2Day1, durationMinutes: 90 },
+        { plan: plan2, scheduledAt: round2Day2, durationMinutes: 90 },
+      ],
+    },
+  ];
 
-    // Also attach the formative quiz to this physical session for the instructor to project
-    await prisma.sessionPreparedQuiz.create({
-      data: {
-        sessionId: liveSession.id,
-        title: 'Classroom VAT Verification Quiz',
-        questions: {
-          create: [
-            {
-              questionId: qbQuestion.id,
-              order: 0,
-              points: 10,
-            },
-          ],
+  for (const round of roundSchedules) {
+    for (const slot of round.slots) {
+      const liveSession = await prisma.liveSession.create({
+        data: {
+          courseId: course.id,
+          venueId: round.venue.id,
+          trainerId: user.id,
+          sessionPlanId: round.isFirstRound ? slot.plan.id : null,
+          originalPlanId: slot.plan.id,
+          plannedOrder: slot.plan.order,
+          rescheduleStatus: round.rescheduleStatus,
+          titleEn: slot.plan.titleEn,
+          titleAm: slot.plan.titleEn,
+          descriptionEn: slot.plan.descriptionEn,
+          descriptionAm: slot.plan.descriptionEn,
+          objectivesEn: slot.plan.objectivesEn,
+          sessionType: SessionType.IN_PERSON,
+          platform: SessionPlatform.IN_PERSON,
+          status: SessionStatus.SCHEDULED,
+          scheduledAt: slot.scheduledAt,
+          durationMinutes: slot.durationMinutes,
+          allowViewAttendance: true,
         },
-      },
-    });
+      });
 
-    console.log(
-      `Scheduled in-person session "${alloc.titleEn}" at venue "${alloc.venue.name}" (${alloc.venue.branch}), seats: ${alloc.venue.capacity}, date: ${alloc.scheduledAt.toISOString()}`
-    );
+      await prisma.sessionPreparedQuiz.create({
+        data: {
+          sessionId: liveSession.id,
+          title: 'Classroom VAT Verification Quiz',
+          questions: {
+            create: [
+              {
+                questionId: qbQuestion.id,
+                order: 0,
+                points: 10,
+              },
+            ],
+          },
+        },
+      });
+
+      console.log(
+        `Scheduled [Round ${round.roundNumber}] "${slot.plan.titleEn}" at venue "${round.venue.name}" (${round.venue.branch}), date: ${slot.scheduledAt.toISOString()}`,
+      );
+    }
   }
 
   console.log(`\n======================================================`);
@@ -421,7 +426,7 @@ async function main() {
   console.log(`  Status      : ${course.status}`);
   console.log(`  Account     : ${user.email} (Password: Password123!)`);
   console.log(`  Roles       : ${roles.join(', ')}`);
-  console.log(`  Venues      : ${sessionAllocations.length} branch classroom sessions scheduled`);
+  console.log(`  Rounds      : 2 Rounds scheduled (2 Classroom Sessions per Round)`);
   console.log(`======================================================\n`);
 }
 

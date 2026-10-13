@@ -746,6 +746,40 @@ export interface CreateBatchSessionInput {
   venueSessions: VenueSessionBatchItem[];
 }
 
+export interface RoundSessionSlotInput {
+  sessionPlanId?: string;
+  titleEn: string;
+  titleAm?: string;
+  descriptionEn?: string;
+  descriptionAm?: string;
+  objectivesEn?: string;
+  trainerId?: string;
+  scheduledAt: string;
+  durationMinutes: number;
+}
+
+export interface ScheduleInPersonRoundInput {
+  courseId: string;
+  roundNumber?: number;
+  venueId: string;
+  trainerId?: string;
+  sessions: RoundSessionSlotInput[];
+}
+
+export interface ApiInPersonRound {
+  roundKey: string;
+  roundNumber: number;
+  roundLabel: string;
+  venueId: string | null;
+  venue: ApiVenue | null;
+  capacity: number;
+  bookedSeats: number;
+  seatsLeft: number;
+  isFull: boolean;
+  primarySessionId: string;
+  sessions: ApiLiveSession[];
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Live sessions                                                            */
 /* -------------------------------------------------------------------------- */

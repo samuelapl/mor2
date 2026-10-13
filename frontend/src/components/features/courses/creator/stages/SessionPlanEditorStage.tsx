@@ -1,9 +1,10 @@
 'use client';
 
-import { CalendarClock, FileQuestion, Plus, Trash2, Video } from 'lucide-react';
+import { Building2, CalendarClock, FileQuestion, Plus, Trash2, Video } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
+import type { CourseDeliveryMode } from '@/types';
 import { inputClass, labelClass, uid } from '../../wizard-types';
 import { RichEditor } from '../../wizard-components';
 import type { SessionPlanDraft, SessionQuizDraft } from '../types';
@@ -11,22 +12,25 @@ import type { SessionPlanDraft, SessionQuizDraft } from '../types';
 interface SessionPlanEditorStageProps {
   plan: SessionPlanDraft;
   index: number;
+  deliveryMode?: CourseDeliveryMode;
   onUpdate: (patch: Partial<SessionPlanDraft>) => void;
   onDelete: () => void;
 }
 
 /**
- * Plans one online session: what it covers, and any quizzes it will run. Session quizzes are
+ * Plans one online or classroom session: what it covers, and any quizzes it will run. Session quizzes are
  * formative: learners see their score, but it never counts towards the grade or certificate.
  */
 export function SessionPlanEditorStage({
   plan,
   index,
+  deliveryMode,
   onUpdate,
   onDelete,
 }: SessionPlanEditorStageProps) {
   const { t } = useTranslation('courses');
   const hasQuizzes = plan.quizzes.length > 0;
+  const isInPerson = deliveryMode === 'IN_PERSON_ONLY';
 
   const updateQuiz = (quizId: string, patch: Partial<SessionQuizDraft>) =>
     onUpdate({ quizzes: plan.quizzes.map((q) => (q.id === quizId ? { ...q, ...patch } : q)) });
@@ -48,17 +52,24 @@ export function SessionPlanEditorStage({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
-            <Video className="h-5 w-5" />
+          <div
+            className={cn(
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+              isInPerson ? 'bg-warning-soft text-warning' : 'bg-info-soft text-info',
+            )}
+          >
+            {isInPerson ? <Building2 className="h-5 w-5" /> : <Video className="h-5 w-5" />}
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
-              {t('sessionPlanEditorStage.onlineSession', { value: index + 1 })}
+              {isInPerson ? `Classroom Session #${index + 1}` : t('sessionPlanEditorStage.onlineSession', { value: index + 1 })}
             </p>
             <h2 className="font-display text-xl font-bold text-foreground">{plan.titleEn || t('creatorSidebar.untitledSession')}</h2>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5" />
-              {t('sessionPlanEditorStage.placeholderTheDateTrainerAndPlatform')}
+              {isInPerson
+                ? 'Placeholder — the date, branch venue, and trainer are set when this classroom session is scheduled in a Round.'
+                : t('sessionPlanEditorStage.placeholderTheDateTrainerAndPlatform')}
             </p>
           </div>
         </div>
@@ -78,7 +89,11 @@ export function SessionPlanEditorStage({
             type="text"
             value={plan.titleEn}
             onChange={(e) => onUpdate({ titleEn: e.target.value })}
-            placeholder={t('sessionPlanEditorStage.eGLiveQAApplying')}
+            placeholder={
+              isInPerson
+                ? 'e.g. Classroom Session 1: Practical VAT Filing & Branch Audit'
+                : t('sessionPlanEditorStage.eGLiveQAApplying')
+            }
             className={inputClass}
           />
         </div>

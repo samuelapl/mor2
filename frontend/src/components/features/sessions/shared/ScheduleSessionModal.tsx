@@ -33,6 +33,7 @@ import {
   type InPersonVenueRow,
   type VenueRowDefaults,
 } from "../in-person/VenueAllocationStep";
+import { InPersonRoundScheduler } from "../in-person/InPersonRoundScheduler";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -721,168 +722,23 @@ export function ScheduleSessionModal({
         ) : null}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* IN-PERSON SESSION FLOW (2-STEP MULTI-VENUE BATCH SCHEDULER)   */}
+        {/* IN-PERSON SESSION FLOW (ROUND-BASED CLASSROOM SCHEDULER)      */}
         {/* ═════════════════════════════════════════════════════════════ */}
-        {sessionType === "IN_PERSON" && inPersonStep === 1 ? (
-          <div className="space-y-5 rounded-2xl border border-border/90 bg-card p-6 shadow-xs">
-            <div className="rounded-xl bg-primary-soft/80 border border-primary/30 p-3.5 flex items-center gap-3 text-xs text-primary">
-              <Building2 className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <p className="font-bold">Step 1: In-Person Session Basic Details</p>
-                <p className="text-primary text-[11px]">
-                  Fill in the course, title, and default schedule. In Step 2, you will allocate physical classrooms and instructors across MoR branch venues.
-                </p>
-              </div>
-            </div>
-
-            {/* Course Selection */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                Course (Search &amp; Select) *
-              </label>
-              <SearchableCourseSelect
-                courses={courses}
-                value={courseId}
-                onChange={setCourseId}
-              />
-            </div>
-
-            {plannedSessions.length > 0 && (
-              <div className="rounded-xl border border-info/30 bg-info-soft/50 p-4 space-y-2">
-                <label className="block text-xs font-bold text-foreground">Planned session from the course</label>
-                <select
-                  value={sessionPlanId}
-                  onChange={(event) => pickPlannedSession(event.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">New unplanned session (no course quiz)</option>
-                  {plannedSessions.map((plan) => {
-                    return (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.order + 1}. {plan.titleEn}
-                        {plan.quizzes.length ? ` — ${plan.quizzes.length} quiz(zes)` : ""}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="text-[11px] text-muted-foreground">
-                  Picking one fills in its title and description, and creates its quizzes for the branch trainers to conduct.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                Session Title (English) *
-              </label>
-              <input
-                required
-                value={titleEn}
-                onChange={(e) => setTitleEn(e.target.value)}
-                placeholder="e.g. Practical Tax Auditing & Declaration Lab"
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                Session Title (አማርኛ)
-              </label>
-              <input
-                value={titleAm}
-                onChange={(e) => setTitleAm(e.target.value)}
-                placeholder="e.g. የግብር ኦዲት የተግባር ልምምድ"
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <RichTextArea
-                label="Session Description & Practical Agenda"
-                placeholder="List classroom requirements, materials learners must bring, or lab agenda…"
-                value={descriptionEn}
-                onChange={setDescriptionEn}
-                rows={3}
-              />
-            </div>
-
-            <SessionStartNotice date={date} time={time} now={serverNow} />
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                  Default Date *
-                </label>
-                <input
-                  required
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                  Default Start Time (EAT) *
-                </label>
-                <input
-                  required
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground">
-                  Duration (min) *
-                </label>
-                <input
-                  required
-                  type="number"
-                  min={15}
-                  step={15}
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            {error ? (
-              <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>
-            ) : null}
-
-            <div className="flex justify-between items-center pt-3 border-t border-border/60">
-              <Button type="button" variant="ghost" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleProceedToVenues}
-                className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700"
-              >
-                <span>Continue to Venue Allocation</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* IN-PERSON STEP 2: INTERACTIVE MULTI-VENUE ALLOCATION TABLE    */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {sessionType === "IN_PERSON" && inPersonStep === 2 ? (
-          <VenueAllocationStep
-            rows={venueRows}
-            onRowsChange={setVenueRows}
+        {sessionType === "IN_PERSON" ? (
+          <InPersonRoundScheduler
+            courseId={courseId}
+            onCourseChange={setCourseId}
+            courses={courses}
             venues={venues}
-            trainers={availableTrainers}
-            defaults={venueRowDefaults}
-            error={error}
-            submitting={submitting}
-            onBack={() => setInPersonStep(1)}
+            venuesLoading={venuesLoading}
+            trainers={trainerOptions}
+            courseTrainers={courseTrainers}
+            trainersLoading={trainersLoading}
+            canPickTrainer={canPickTrainer}
+            defaultTrainerId={trainerId || venueRowDefaults.fallbackTrainerId}
             onCancel={onClose}
-            onSubmit={handleInPersonSubmit}
+            onScheduled={onScheduled}
+            onInvalidateSessions={invalidateSessions}
           />
         ) : null}
       </div>

@@ -40,10 +40,9 @@ import { useCourseById } from '@/lib/stores/course-store';
 import { useEnrollmentStore } from '@/lib/stores/enrollment-store';
 import { useUserName } from '@/lib/stores/user-store';
 import { fetchAssessment, fetchCourseAssessments } from '@/lib/api/quiz';
-import { fetchLiveSessions } from '@/lib/api/monitoring';
-import type { ApiAssessment, ApiLiveSession } from '@/lib/api/types';
+import { fetchCourseRounds } from '@/lib/api/venues';
+import type { ApiAssessment, ApiInPersonRound } from '@/lib/api/types';
 import { getItemAttachments } from './wizard-components';
-import { isInPersonSession } from '@/lib/session-mode';
 
 interface CatalogCourseModalProps {
   open: boolean;
@@ -77,11 +76,6 @@ function formatTime(value: string): string {
  * modern curriculum syllabus roadmap, course objectives, metadata, and a
  * prominent Enroll CTA. Once the learner is enrolled, hands off to the classroom.
  */
-/** Seats taken, using the server's count (active enrollments) when available. */
-function bookedSeatCount(session: ApiLiveSession) {
-  return session.bookedSeats ?? session.attendees?.length ?? 0;
-}
-
 export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseModalProps) {
   const { isAmharic } = useTranslation();
   const router = useRouter();
@@ -98,10 +92,10 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<ApiAssessment[]>([]);
 
-  // Delivery mode & Session selection
+  // Delivery mode & Round selection
   const defaultMode: 'ONLINE_ONLY' | 'IN_PERSON_ONLY' = course?.deliveryMode === 'IN_PERSON_ONLY' ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY';
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<'ONLINE_ONLY' | 'IN_PERSON_ONLY'>(defaultMode);
-  const [availableSessions, setAvailableSessions] = useState<ApiLiveSession[]>([]);
+  const [availableRounds, setAvailableRounds] = useState<ApiInPersonRound[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
 
@@ -113,34 +107,25 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     }
   }, [course?.deliveryMode]);
 
-  // Fetch in-person scheduled sessions for this course
+  // Fetch in-person scheduled rounds for this course
   useEffect(() => {
     if (!open || !courseId) return;
     let cancelled = false;
     setLoadingSessions(true);
-    fetchLiveSessions({ courseId, status: 'SCHEDULED', limit: 50 })
-      .then((res) => {
+    fetchCourseRounds(courseId)
+      .then((rounds) => {
         if (!cancelled) {
-          const inPerson = res.data.filter((s) => isInPersonSession(s));
-          setAvailableSessions(inPerson);
-          if (inPerson.length > 0) {
-            const firstAvailable = inPerson.find((s) => {
-              const cap = s.venue?.capacity ?? 30;
-              const booked = bookedSeatCount(s);
-              return cap - booked > 0;
-            });
-            if (firstAvailable) {
-              setSelectedSessionId(firstAvailable.id);
-            } else {
-              setSelectedSessionId(inPerson[0].id);
-            }
+          setAvailableRounds(rounds);
+          if (rounds.length > 0) {
+            const firstAvailable = rounds.find((r) => !r.isFull) ?? rounds[0];
+            setSelectedSessionId(firstAvailable.primarySessionId);
           }
           setLoadingSessions(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setAvailableSessions([]);
+          setAvailableRounds([]);
           setLoadingSessions(false);
         }
       });
@@ -216,18 +201,13 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   // Early return if not loaded or enrolled
   if (!course || enrolled) return null;
 
+  const chosenRound = availableRounds.find((r) => r.primarySessionId === selectedSessionId);
+
   const isSeatFull =
-    selectedDeliveryMode === 'IN_PERSON_ONLY' &&
-    (() => {
-      const chosen = availableSessions.find((s) => s.id === selectedSessionId);
-      if (!chosen) return false;
-      const cap = chosen.venue?.capacity ?? 30;
-      const booked = bookedSeatCount(chosen);
-      return cap - booked <= 0;
-    })();
+    selectedDeliveryMode === 'IN_PERSON_ONLY' && Boolean(chosenRound?.isFull);
 
   const canEnroll =
-    !enrolling && !isSeatFull && (selectedDeliveryMode !== 'IN_PERSON_ONLY' || availableSessions.length === 0 || Boolean(selectedSessionId));
+    !enrolling && !isSeatFull && (selectedDeliveryMode !== 'IN_PERSON_ONLY' || availableRounds.length === 0 || Boolean(selectedSessionId));
 
   const enrollButtonLabel = enrolling
     ? 'Processing Enrollment…'
@@ -237,8 +217,6 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
         ? 'Reserve Seat & Enroll'
         : 'Enroll in Online Course';
 
-  const chosenSession = availableSessions.find((s) => s.id === selectedSessionId);
-
   const doEnroll = async () => {
     setEnrolling(true);
     setError(null);
@@ -246,8 +224,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
     if (selectedDeliveryMode === 'IN_PERSON_ONLY') {
       result = await enrollSelf(courseId, {
         deliveryMode: 'IN_PERSON_ONLY',
-        venueId: chosenSession?.venueId || undefined,
-        sessionId: chosenSession?.id,
+        venueId: chosenRound?.venueId || undefined,
+        sessionId: chosenRound?.primarySessionId,
       });
     } else {
       result = await enrollSelf(courseId, {
@@ -537,50 +515,48 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
               </div>
             )}
 
-            {/* In-Person Session Picker */}
+            {/* In-Person Round Picker */}
             {selectedDeliveryMode === 'IN_PERSON_ONLY' && (
               <div className="mt-4 space-y-3 pt-3 border-t border-border/80">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground">Select Training Venue & Scheduled Session:</span>
+                  <span className="text-xs font-bold text-foreground">Select Training Round &amp; Branch Venue:</span>
                   <span className="text-[11px] text-muted-foreground">
-                    {availableSessions.length} session
-                    {availableSessions.length === 1 ? '' : 's'} scheduled
+                    {availableRounds.length} round
+                    {availableRounds.length === 1 ? '' : 's'} scheduled
                   </span>
                 </div>
 
                 {loadingSessions ? (
                   <div className="flex items-center justify-center p-6 text-xs text-muted-foreground gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    Loading scheduled classroom sessions…
+                    Loading scheduled classroom rounds…
                   </div>
-                ) : availableSessions.length === 0 ? (
+                ) : availableRounds.length === 0 ? (
                   <div className="rounded-xl border border-warning/25 bg-warning-soft/60 p-4 text-xs text-warning flex items-start gap-2.5">
                     <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold">No classroom sessions scheduled yet</p>
+                      <p className="font-semibold">No classroom rounds scheduled yet</p>
                       <p className="mt-0.5">
-                        Training coordinators have not yet scheduled in-person sessions for this course. Please contact your branch training
+                        Training coordinators have not yet scheduled in-person rounds for this course. Please contact your branch training
                         administrator or check back soon.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid gap-2.5 sm:grid-cols-2">
-                    {availableSessions.map((session) => {
-                      const venue = session.venue;
-                      const capacity = venue?.capacity ?? 30;
-                      const booked = bookedSeatCount(session);
-                      const seatsLeft = Math.max(0, capacity - booked);
-                      const isFull = seatsLeft <= 0;
-                      const isSelected = selectedSessionId === session.id;
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {availableRounds.map((round) => {
+                      const venue = round.venue;
+                      const { capacity, seatsLeft, isFull } = round;
+                      const isSelected = selectedSessionId === round.primarySessionId;
+                      const firstTrainer = round.sessions[0]?.trainer;
 
                       return (
                         <div
-                          key={session.id}
+                          key={round.roundKey}
                           onClick={() => {
-                            if (!isFull) setSelectedSessionId(session.id);
+                            if (!isFull) setSelectedSessionId(round.primarySessionId);
                           }}
-                          className={`relative rounded-xl border p-3.5 text-left transition-all ${
+                          className={`relative rounded-xl border p-4 text-left transition-all ${
                             isFull
                               ? 'opacity-60 bg-muted border-border cursor-not-allowed'
                               : isSelected
@@ -590,13 +566,16 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="flex items-center gap-1.5 font-bold text-xs text-foreground">
+                              <div className="flex flex-wrap items-center gap-1.5 font-bold text-xs text-foreground">
+                                <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
+                                  {round.roundLabel}
+                                </span>
                                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                                 <span>{venue?.branch || 'Ministry Branch'}</span>
                                 <span className="text-subtle-foreground">·</span>
-                                <span className="font-semibold text-secondary-foreground">{venue?.name || 'Room'}</span>
+                                <span className="font-semibold text-secondary-foreground">{venue?.name || 'Classroom'}</span>
                               </div>
-                              {venue?.building ? <p className="text-[11px] text-muted-foreground mt-0.5 ml-5">Building: {venue.building}</p> : null}
+                              {venue?.building ? <p className="text-[11px] text-muted-foreground mt-0.5">Building: {venue.building}</p> : null}
                             </div>
 
                             <span
@@ -608,23 +587,28 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                             </span>
                           </div>
 
-                          {/* Date & Time */}
-                          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-secondary-foreground">
-                            <span className="inline-flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-subtle-foreground" />
-                              {formatDate(session.scheduledAt)}
-                            </span>
-                            <span>·</span>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-subtle-foreground" />
-                              {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
-                            </span>
+                          {/* Classroom Sessions inside this Round */}
+                          <div className="mt-3 space-y-1.5 rounded-lg border border-border/70 bg-muted/50 p-2.5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
+                              Classroom Sessions ({round.sessions.length})
+                            </p>
+                            {round.sessions.map((session, sIdx) => (
+                              <div key={session.id} className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-secondary-foreground">
+                                <span className="font-semibold text-foreground truncate">
+                                  {sIdx + 1}. {session.titleEn}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-muted-foreground shrink-0">
+                                  <Calendar className="h-3 w-3 text-subtle-foreground" />
+                                  {formatDate(session.scheduledAt)} · {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
+                                </span>
+                              </div>
+                            ))}
                           </div>
 
                           {/* Trainer & Seat Capacity Meter */}
                           <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px]">
-                            <span className="text-secondary-foreground truncate max-w-[130px]">
-                              {session.trainer ? `${session.trainer.firstName} ${session.trainer.lastName}` : 'Assigned Trainer'}
+                            <span className="text-secondary-foreground truncate max-w-[140px]">
+                              {firstTrainer ? `${firstTrainer.firstName} ${firstTrainer.lastName}` : 'Assigned Trainer'}
                             </span>
 
                             {isFull ? (
@@ -749,19 +733,19 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
                 <span className="text-muted-foreground">Delivery: </span>
                 <strong className="text-foreground">{selectedDeliveryMode === 'IN_PERSON_ONLY' ? 'In-Person Classroom' : 'Pure Online'}</strong>
               </li>
-              {selectedDeliveryMode === 'IN_PERSON_ONLY' && chosenSession ? (
+              {selectedDeliveryMode === 'IN_PERSON_ONLY' && chosenRound ? (
                 <>
                   <li>
-                    <span className="text-muted-foreground">Session: </span>
+                    <span className="text-muted-foreground">Scheduled Round: </span>
                     <strong className="text-foreground">
-                      {chosenSession.titleEn} · {formatSessionDateTime(chosenSession.scheduledAt)}
+                      {chosenRound.roundLabel} ({chosenRound.sessions.length} Classroom Session{chosenRound.sessions.length === 1 ? '' : 's'})
                     </strong>
                   </li>
-                  {chosenSession.venue ? (
+                  {chosenRound.venue ? (
                     <li>
                       <span className="text-muted-foreground">Venue: </span>
                       <strong className="text-foreground">
-                        {chosenSession.venue.name} · {chosenSession.venue.branch}
+                        {chosenRound.venue.name} · {chosenRound.venue.branch}
                       </strong>
                     </li>
                   ) : null}

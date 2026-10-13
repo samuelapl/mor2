@@ -21,10 +21,10 @@ import { cn } from '@/core/utils/cn';
 import { formatDateTime } from '@/core/utils/formatters';
 import { FormMessage, useFormError } from '@/features/auth';
 import {
-  useBookableSessions,
+  useBookableRounds,
   useCourse,
   useSelfEnroll,
-  type ApiCourseSession,
+  type ApiInPersonRound,
   type SelfEnrollBody,
 } from '@/features/courses';
 
@@ -32,7 +32,7 @@ type Mode = 'online' | 'inPerson';
 
 /**
  * Enrollment choices (spec §4.2, architecture §6.4):
- * ONLINE_ONLY → no picker · BOTH → choose mode · IN_PERSON_ONLY → session required.
+ * ONLINE_ONLY → no picker · BOTH → choose mode · IN_PERSON_ONLY → round required.
  */
 export default function EnrollScreen() {
   const { t } = useTranslation();
@@ -50,7 +50,7 @@ export default function EnrollScreen() {
         : mode;
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const sessions = useBookableSessions(courseId, effectiveMode === 'inPerson');
+  const rounds = useBookableRounds(courseId, effectiveMode === 'inPerson');
   const enroll = useSelfEnroll();
   const formError = useFormError(enroll.error);
 
@@ -82,7 +82,7 @@ export default function EnrollScreen() {
         router.back();
       },
       // A seat may have filled up meanwhile — refresh the list so counts are current.
-      onError: () => void sessions.refetch(),
+      onError: () => void rounds.refetch(),
     });
   };
 
@@ -112,20 +112,24 @@ export default function EnrollScreen() {
 
       {effectiveMode === 'inPerson' ? (
         <View className="gap-3">
-          <AppText variant="label">{t('courses.chooseSession')}</AppText>
-          {sessions.isPending ? (
-            <Skeleton height={96} />
-          ) : sessions.isError ? (
-            <ErrorState error={sessions.error} onRetry={() => void sessions.refetch()} />
-          ) : sessions.data.length === 0 ? (
-            <EmptyState title={t('courses.noSessions')} />
+          <AppText variant="label">
+            {t('courses.chooseRound', { defaultValue: t('courses.chooseSession') })}
+          </AppText>
+          {rounds.isPending ? (
+            <Skeleton height={120} />
+          ) : rounds.isError ? (
+            <ErrorState error={rounds.error} onRetry={() => void rounds.refetch()} />
+          ) : rounds.data.length === 0 ? (
+            <EmptyState
+              title={t('courses.noRounds', { defaultValue: t('courses.noSessions') })}
+            />
           ) : (
-            sessions.data.map((session) => (
-              <SessionOption
-                key={session.id}
-                session={session}
-                selected={session.id === sessionId}
-                onPress={() => setSessionId(session.id)}
+            rounds.data.map((round) => (
+              <RoundOption
+                key={round.roundKey}
+                round={round}
+                selected={round.primarySessionId === sessionId}
+                onPress={() => setSessionId(round.primarySessionId)}
               />
             ))
           )}
@@ -179,12 +183,12 @@ function ModeOption({
   );
 }
 
-function SessionOption({
-  session,
+function RoundOption({
+  round,
   selected,
   onPress,
 }: {
-  session: ApiCourseSession;
+  round: ApiInPersonRound;
   selected: boolean;
   onPress: () => void;
 }) {
@@ -192,45 +196,59 @@ function SessionOption({
   const localized = useLocalized();
   const locale = useLocaleStore((s) => s.locale);
   const colors = useThemeColors();
-  const capacity = session.venue?.capacity ?? 0;
-  const seatsLeft = Math.max(0, capacity - session.bookedSeats);
-  const full = capacity > 0 && seatsLeft === 0;
+  const full = round.isFull;
 
   return (
     <Card
       onPress={full ? undefined : onPress}
       className={cn(
-        'gap-2 border-2',
+        'gap-3 border-2',
         selected ? 'border-brand-600' : 'border-transparent',
         full && 'opacity-50',
       )}
     >
-      <View className="flex-row items-start justify-between gap-2">
-        <AppText className="flex-1 font-semibold text-slate-900 dark:text-slate-50">
-          {localized(session, 'title')}
-        </AppText>
+      <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-row items-center gap-2">
+          <Badge label={round.roundLabel} tone="brand" />
+          <AppText variant="caption" className="font-semibold">
+            {round.sessions.length}{' '}
+            {round.sessions.length === 1 ? 'Classroom Session' : 'Classroom Sessions'}
+          </AppText>
+        </View>
         {full ? (
           <Badge label={t('courses.full')} tone="danger" />
-        ) : capacity > 0 ? (
-          <Badge label={t('courses.seatsLeft', { count: seatsLeft })} tone="success" />
+        ) : round.capacity > 0 ? (
+          <Badge label={t('courses.seatsLeft', { count: round.seatsLeft })} tone="success" />
         ) : null}
       </View>
-      <View className="flex-row items-center gap-2">
-        <CalendarDays size={14} color={colors.textMuted} />
-        <AppText variant="caption">
-          {formatDateTime(session.scheduledAt, locale)} ·{' '}
-          {t('courses.minutes', { count: session.durationMinutes })}
-        </AppText>
-      </View>
-      {session.venue ? (
+
+      {round.venue ? (
         <View className="flex-row items-center gap-2">
           <MapPin size={14} color={colors.textMuted} />
-          <AppText variant="caption">
-            {session.venue.name}
-            {session.venue.building ? ` · ${session.venue.building}` : ''} · {session.venue.branch}
+          <AppText variant="caption" className="font-medium text-slate-700 dark:text-slate-200">
+            {round.venue.name}
+            {round.venue.building ? ` · ${round.venue.building}` : ''} · {round.venue.branch}
           </AppText>
         </View>
       ) : null}
+
+      <View className="gap-2 border-t border-slate-100 pt-2.5 dark:border-slate-700">
+        {round.sessions.map((session, idx) => (
+          <View key={session.id} className="gap-0.5">
+            <AppText className="text-xs font-semibold text-slate-900 dark:text-slate-50">
+              {idx + 1}. {localized(session, 'title')}
+            </AppText>
+            <View className="flex-row items-center gap-1.5">
+              <CalendarDays size={12} color={colors.textMuted} />
+              <AppText variant="caption">
+                {formatDateTime(session.scheduledAt, locale)} ·{' '}
+                {t('courses.minutes', { count: session.durationMinutes })}
+              </AppText>
+            </View>
+          </View>
+        ))}
+      </View>
     </Card>
   );
 }
+

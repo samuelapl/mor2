@@ -100,12 +100,14 @@ export class EnrollmentsService {
       const enrollment = await this.prisma.$transaction(async (tx) => {
         let finalVenueId: string | null = null;
         let finalSessionId: string | null = null;
+        let roundSessionIds: string[] = [];
 
         if (deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY) {
           if (dto.sessionId) {
             const seat = await this.inPersonSessions.reserveSeat(tx, dto.sessionId, dto.courseId);
             finalSessionId = seat.sessionId;
             finalVenueId = seat.venueId;
+            roundSessionIds = seat.roundSessionIds ?? [seat.sessionId];
           } else if (dto.venueId) {
             finalVenueId = (await this.inPersonSessions.getVenueOrFail(dto.venueId, tx)).id;
           }
@@ -134,12 +136,17 @@ export class EnrollmentsService {
           include: { course: true, venue: true },
         });
 
-        // A booked in-person seat also puts the learner on the trainer's session roster.
-        if (finalSessionId) {
+        // A booked in-person seat also puts the learner on the trainer's session roster for all sessions in the Round.
+        const targetSessionIds = roundSessionIds.length > 0
+          ? roundSessionIds
+          : finalSessionId
+            ? [finalSessionId]
+            : [];
+        for (const sid of targetSessionIds) {
           await tx.attendance.upsert({
-            where: { sessionId_userId: { sessionId: finalSessionId, userId } },
+            where: { sessionId_userId: { sessionId: sid, userId } },
             update: {},
-            create: { sessionId: finalSessionId, userId, status: 'ABSENT' },
+            create: { sessionId: sid, userId, status: 'ABSENT' },
           });
         }
 

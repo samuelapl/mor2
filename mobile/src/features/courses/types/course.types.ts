@@ -176,3 +176,17 @@ export interface ApiCourseSession {
   venue: ApiVenue | null;
   bookedSeats: number;
 }
+
+export interface ApiInPersonRound {
+  roundKey: string;
+  roundNumber: number;
+  roundLabel: string;
+  venue: ApiVenue | null;
+  capacity: number;
+  bookedSeats: number;
+  seatsLeft: number;
+  isFull: boolean;
+  primarySessionId: string;
+  sessions: ApiCourseSession[];
+}
+

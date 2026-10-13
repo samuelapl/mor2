@@ -95,8 +95,8 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     })),
   );
   const [confirmDisableSessions, setConfirmDisableSessions] = useState(false);
-  /** Sessions exist when enabled (for either Online Self-Paced or In-Person Classroom courses). */
-  const sessionsActive = hasOnlineSessions || deliveryMode === 'IN_PERSON_ONLY';
+  /** Sessions exist when enabled via the "Include online/classroom sessions" checkbox. */
+  const sessionsActive = hasOnlineSessions;
 
   const codeError = useMemo(() => {
     const normalized = code.trim().toUpperCase();
@@ -667,10 +667,11 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
     );
   };
 
-  // ── Planned Online Sessions ──
+  // ── Planned Online / Classroom Sessions ──
   const handleAddSessionPlan = () => {
     const id = uid('plan');
-    setSessionPlans((prev) => [...prev, { id, titleEn: `Online session ${prev.length + 1}`, descriptionEn: '', objectivesEn: '', quizzes: [] }]);
+    const prefix = deliveryMode === 'IN_PERSON_ONLY' ? 'Classroom session' : 'Online session';
+    setSessionPlans((prev) => [...prev, { id, titleEn: `${prefix} ${prev.length + 1}`, descriptionEn: '', objectivesEn: '', quizzes: [] }]);
     setActiveNode({ type: 'SESSION_PLAN', sessionPlanId: id });
   };
 
@@ -835,7 +836,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
       hasOnlineSessions: sessionsActive,
       sessionPlans: sessionsActive
         ? sessionPlans.map((p) => ({
-            titleEn: p.titleEn.trim() || 'Online session',
+            titleEn: p.titleEn.trim() || (deliveryMode === 'IN_PERSON_ONLY' ? 'Classroom session' : 'Online session'),
             descriptionEn: p.descriptionEn || undefined,
             objectivesEn: p.objectivesEn || undefined,
             quizzes: p.quizzes.map((q) => ({
@@ -1611,6 +1612,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
         <SessionPlanEditorStage
           plan={plan}
           index={index}
+          deliveryMode={deliveryMode}
           onUpdate={(patch) => handleUpdateSessionPlan(plan.id, patch)}
           onDelete={() => handleDeleteSessionPlan(plan.id)}
         />
@@ -1719,6 +1721,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
           onSelectNode={setActiveNode}
           modules={modules}
           courseTitle={title}
+          deliveryMode={deliveryMode}
           finalAssessmentWeight={finalAssessmentWeight}
           finalQuestionCount={questions.length}
           finalAssessmentTitle={quizTitle}
@@ -1744,7 +1747,7 @@ export function CourseCreatorShell({ onDone, onCancel, editingCourse, initialDel
 
       <ConfirmModal
         open={confirmDisableSessions}
-        title="Remove online sessions?"
+        title={deliveryMode === 'IN_PERSON_ONLY' ? 'Remove classroom sessions?' : 'Remove online sessions?'}
         description={`This removes ${sessionPlans.length} planned session(s) and their quizzes from the course.`}
         confirmText="Remove sessions"
         variant="warning"

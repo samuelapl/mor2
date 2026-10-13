@@ -406,7 +406,7 @@ export default function CourseScreen() {
           ) : null}
 
 
-          {/* In-person seat */}
+          {/* In-person seat / enrolled round */}
           {enrolled &&
           enrollment.data?.deliveryMode === 'IN_PERSON_ONLY' &&
           enrollment.data.venue ? (
@@ -421,18 +421,22 @@ export default function CourseScreen() {
                     : ''} · {enrollment.data.venue.branch}
                 </AppText>
               </View>
-              {enrollment.data.sessionId ? (
+              {(progress.data?.liveSessions?.length ?? 0) > 0 || enrollment.data.sessionId ? (
                 <Button
-                  title={t('screens.session')}
+                  title={t('courseSessions.classroomTitle', { defaultValue: 'Classroom Sessions' })}
                   variant="outline"
                   size="sm"
                   icon={<CalendarDays size={16} color={colors.text} />}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/session/[sessionId]',
-                      params: { sessionId: enrollment.data!.sessionId! },
-                    })
-                  }
+                  onPress={() => {
+                    if ((progress.data?.liveSessions?.length ?? 0) > 0) {
+                      openLiveSessions();
+                    } else if (enrollment.data?.sessionId) {
+                      router.push({
+                        pathname: '/session/[sessionId]',
+                        params: { sessionId: enrollment.data.sessionId },
+                      });
+                    }
+                  }}
                 />
               ) : null}
             </Card>

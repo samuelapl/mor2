@@ -30,6 +30,8 @@ import { RolesGuard } from '@common/guards';
 import { startsInSeconds } from '@common/utils';
 import { LiveKitProvider } from './virtual/providers/livekit.provider';
 import { AttendanceService } from '@modules/attendance/attendance.service';
+import { InPersonSessionsService } from './in-person/in-person-sessions.service';
+import { ScheduleInPersonRoundDto } from './in-person/dto/schedule-in-person-round.dto';
 
 @ApiTags('live-sessions')
 @ApiBearerAuth()
@@ -40,6 +42,7 @@ export class LiveSessionsController {
 
   constructor(
     private readonly liveSessionsService: LiveSessionsService,
+    private readonly inPersonSessionsService: InPersonSessionsService,
     private readonly liveKitProvider: LiveKitProvider,
     private readonly attendanceService: AttendanceService,
     private readonly quizResults: SessionQuizResultsService,
@@ -66,6 +69,19 @@ export class LiveSessionsController {
   @ApiOperation({ summary: 'Schedule batch in-person classroom sessions across multiple venues' })
   async createBatch(@Body() dto: CreateBatchSessionDto) {
     return this.liveSessionsService.createBatch(dto);
+  }
+
+  @Post('live-sessions/in-person/rounds')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
+  @ApiOperation({ summary: 'Schedule an In-Person Cohort Round (Round 1, Round 2, ...) containing 1 or more classroom sessions' })
+  async scheduleInPersonRound(@Body() dto: ScheduleInPersonRoundDto) {
+    return this.inPersonSessionsService.scheduleRound(dto);
+  }
+
+  @Get('live-sessions/in-person/rounds/:courseId')
+  @ApiOperation({ summary: 'List scheduled In-Person Rounds and their classroom sessions for a course' })
+  async listCourseRounds(@Param('courseId') courseId: string) {
+    return this.inPersonSessionsService.listCourseRounds(courseId);
   }
 
   // ─── IMPORTANT: specific routes before :id wildcard ───────────────────────

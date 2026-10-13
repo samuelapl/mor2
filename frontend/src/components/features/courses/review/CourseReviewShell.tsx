@@ -186,6 +186,7 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
           <SessionPlanStage
             plan={plan}
             index={index}
+            deliveryMode={course.deliveryMode}
             courseStatus={course.status}
             quizAssessments={assessments.all.filter((a) => plan.quizzes.some((q) => q.id === a.id))}
             courseId={course.id}

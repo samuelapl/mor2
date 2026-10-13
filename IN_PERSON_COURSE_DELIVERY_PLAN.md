@@ -1,110 +1,133 @@
-# In-Person & Online Course Delivery Implementation Plan
+# In-Person Classroom Sessions & Round-Based Cohort Scheduling Plan
 
 ## Executive Summary
-Consolidate the LMS course delivery architecture from three disparate modes (`ONLINE_ONLY`, `IN_PERSON_ONLY`, and `BOTH`/Hybrid) into two unified formats:
-1. **Online Self-Paced**: 100% digital curriculum (modules, lessons, online assessments) with optional virtual webinars.
-2. **In-Person Classroom**: Shares the exact same online curriculum and assessment engine, but requires learners to physically attend classroom sessions at branch venues, with on-site attendance verified via QR/PIN check-in.
 
-The redundant "Hybrid" mode is completely retired, simplifying course creation, enrollment, scheduling across country branches, and learner progress on both **Web** and **Mobile**.
+Enhance the **In-Person Classroom** (`IN_PERSON_ONLY`) delivery workflow across **Backend**, **Web Frontend**, and **Mobile App** while keeping all **Pure Online** (`ONLINE_ONLY` / `virtual`) features 100% untouched and isolated.
+
+### Core Requirements
+
+1. **Strict Module Isolation**:
+   - All new backend logic lives inside `backend/src/modules/live-sessions/in-person/`.
+   - All new frontend components live inside `frontend/src/components/features/sessions/in-person/`.
+   - Pure online (`ONLINE_ONLY` / `virtual/`) code paths remain completely untouched.
+2. **Classroom Sessions in Course Preparation**:
+   - When a Course Creator selects **In-Person Classroom** (`IN_PERSON_ONLY`) and checks **"Include classroom sessions"**, the sidebar and stage headers dynamically display **"Classroom Sessions"** (instead of _"Online Sessions"_).
+   - Creators can plan 1 or more **Classroom Sessions** (topics, objectives, descriptions, and formative classroom quizzes) in the curriculum.
+3. **Round-Based Scheduling (Round 1, Round 2, ...)**:
+   - A **Round** represents a complete scheduled cohort containing **1 or more planned Classroom Sessions** at a physical branch venue.
+   - During initial scheduling, the Training Admin schedules **Round 1** (assigning dates, times, branch venue, and instructor for the planned classroom sessions).
+   - Training Admins can create additional rounds (**Round 2, Round 3, ... — `+ Add Round`**) at any time based on learner demand or regional branch needs.
+4. **Round-Based Learner Enrollment (Web & Mobile)**:
+   - When enrolling in an `IN_PERSON_ONLY` course on Web or Mobile, learners select an available **Round** (e.g., _"Round 1 — Addis Ababa HQ"_ or _"Round 2 — Hawassa Branch"_), which reserves their seat across all classroom sessions in that Round.
 
 ---
 
-## Architecture Comparison
+## Architecture Flow
 
 ```mermaid
 flowchart TD
-    subgraph Previous Architecture (Fragmented)
-        A1[Online Self-Paced] 
-        A2[In-Person Only]
-        A3[Hybrid / Both - Complex Dual Pipeline]
+    subgraph Course Preparation (Creator)
+        A[Select In-Person Classroom] --> B[Check 'Include Classroom Sessions']
+        B --> C[Sidebar Shows 'Classroom Sessions']
+        C --> D[Plan Classroom Session 1, Session 2, ...]
     end
 
-    subgraph Target Architecture (Unified Engine)
-        B1["1. Online Self-Paced<br/>(Modules + Lessons + Assessments + Virtual Webinars)"]
-        B2["2. In-Person Classroom<br/>(Modules + Lessons + Assessments + On-Site Branch Sessions)"]
+    subgraph Round Scheduling (Training Admin)
+        D --> E[Schedule Round 1]
+        E --> E1[Set Venue, Trainer & Date/Time for Session 1..N]
+        D --> F[+ Add Round 2 / Round 3 as Needed]
+        F --> F1[Set Venue, Trainer & Date/Time for Session 1..N]
+    end
+
+    subgraph Learner Experience (Web & Mobile)
+        E1 & F1 --> G[Learner Views Available Rounds]
+        G --> H[Learner Enrolls in a Round]
+        H --> I[Seat Reserved for All Classroom Sessions in That Round]
+        I --> J[On-Site QR / PIN Check-In per Session]
     end
 ```
 
 ---
 
-## Phase 1: Backend & Core Data Model Streamlining
+## Phase 1: Backend — In-Person Round Architecture (`in-person/` Module)
 
 ### Objectives
-Clean up the delivery mode enums, allow session planning for in-person courses, support multi-branch cohort scheduling, and streamline seat reservations.
+
+Support grouping one or more planned Classroom Sessions into numbered **Rounds** (`Round 1`, `Round 2`, ...) inside the dedicated `in-person` module without altering virtual session logic.
 
 ### Tasks
-1. **Schema & Enums Cleanup (`schema.prisma` & Migrations)**:
-   - Deprecate/migrate `CourseDeliveryMode.BOTH` to `IN_PERSON` (or retain backward compatibility mapping in DB while enforcing 2 choices at the API layer: `ONLINE_ONLY` and `IN_PERSON`).
-   - Ensure `CourseSessionPlan` supports both `ONLINE_ONLY` and `IN_PERSON` courses.
-2. **Delivery Modes Service (`backend/src/modules/courses/delivery-modes.ts`)**:
-   - Update `ENABLED_DELIVERY_MODES` to allow `ONLINE_ONLY` and `IN_PERSON` (remove `BOTH`).
-   - Remove restrictions in `session-plans.service.ts` that previously blocked session plans for non-online courses.
-3. **Multi-Branch Session Batch Scheduling (`venues.service.ts` & `live-sessions.service.ts`)**:
-   - Provide clean API for scheduling a Session Round across multiple country branches in a single request (branch venue, local trainer, date/time, seat capacity).
-   - Ensure venue conflict checks (`assertVenueAvailable`) and transactional locking prevent room double-booking.
-4. **Enrollment & Seat Reservation (`enrollments.service.ts`)**:
-   - Learners enrolling in an in-person course select their branch venue / round.
-   - Separate course enrollment from session booking so a full classroom round does not prevent learning the online material (support alternate rounds / waitlist).
-5. **Backend Automated Testing**:
-   - Update unit tests in `src/modules/courses/`, `src/modules/live-sessions/`, `src/modules/enrollments/`, and `src/modules/session-plans/`.
+
+1. **Round Metadata on In-Person Sessions (`schema.prisma` & Migration)**:
+   - Add optional `roundNumber` (`Int?`, e.g., `1`, `2`, `3`) and `roundLabel` (`String?`, e.g., `"Round 1"`) to `LiveSession` (used exclusively by `IN_PERSON` sessions).
+2. **Dedicated In-Person Round Service (`backend/src/modules/live-sessions/in-person/in-person-sessions.service.ts`)**:
+   - **`scheduleRound(dto)`**:
+     - Auto-detects the next `roundNumber` (`1` for the first scheduling, `2` for the next, etc.) for the course or accepts an explicit round number.
+     - Takes the course's planned **Classroom Sessions** (`CourseSessionPlan[]`) and creates the corresponding `IN_PERSON` `LiveSession` records for that Round at the chosen branch venue(s) and trainer(s).
+     - Links the first round's sessions (or satisfies the course publishing check) so the course review screen knows all planned Classroom Sessions are scheduled.
+     - Duplicates planned formative quizzes (`SessionPreparedQuiz`) for each classroom session in the Round.
+   - **`listCourseRounds(courseId)`**:
+     - Returns all scheduled Rounds for an `IN_PERSON_ONLY` course, grouped by `roundNumber` + `venueId`, including all classroom sessions inside each Round and real-time seat availability (`capacity`, `bookedSeats`, `seatsLeft`).
+3. **Publishing Readiness Check (`courses.service.ts`)**:
+   - For `IN_PERSON_ONLY` courses, verify that at least **Round 1** has scheduled all planned Classroom Sessions (`sessionPlanId` or `originalPlanId` matched) so publishing is unblocked as soon as Round 1 is scheduled.
+4. **Round Enrollment (`enrollments.service.ts`)**:
+   - When a learner enrolls in an `IN_PERSON_ONLY` course and selects a Round (or primary session of a Round), validate seat capacity on that Round and link the learner's enrollment to the Round.
+5. **Backend Unit Tests**:
+   - Add unit tests for `InPersonSessionsService` round creation, multi-session round grouping, and seat capacity checks.
 
 ---
 
-## Phase 2: Web Frontend (Creator, Coordinator & Learner)
+## Phase 2: Web Frontend — "Classroom Sessions" Sidebar & Round Scheduler
 
 ### Objectives
-Provide a clean course-creation wizard with only two delivery options, an intuitive multi-branch schedule generator for coordinators, and smooth venue selection for learners.
+
+Update the Course Creator/Review sidebars to display **"Classroom Sessions"** for `IN_PERSON_ONLY` courses, and provide a dedicated In-Person Round Scheduler (`Round 1`, `+ Add Round 2`, ...) and Learner Round Picker.
 
 ### Tasks
-1. **Course Creator Wizard (`CourseDetailsStage.tsx` & `CourseCreatorShell.tsx`)**:
-   - Simplify format selection to two clear cards:
-     - **Online Self-Paced** (Digital modules & assessments, optional virtual webinars).
-     - **In-Person Classroom** (Digital modules & assessments, mandatory physical branch sessions).
-   - Remove "Hybrid" / "Coming Soon" badges.
-   - When **In-Person Classroom** is selected, enable the session plan editor step so creators can define in-person session topics, durations, and objectives.
-2. **Multi-Branch Scheduling UI (`ScheduleSessionModal.tsx` & `VenueAllocationStep.tsx`)**:
-   - For in-person course sessions, present a clean branch allocation grid.
-   - Training coordinators select which country branches/venues will run Round 1, assign local branch trainers, and pick dates/times in one batch.
-   - Real-time seat capacity and venue conflict indicators.
-3. **Learner Course Catalog & Enrollment (`CatalogCourseModal.tsx`)**:
-   - When enrolling in an In-Person course, learners choose their local branch/venue.
-   - Clear display of session dates, venue name/room, local trainer, and remaining seats.
-4. **Classroom & Learner Schedule View (`LiveSessionsStage.tsx`)**:
-   - For virtual sessions: show "Join LiveKit Video Call".
-   - For in-person sessions: display physical venue badge (Branch, Building, Room) and check-in status.
-   - Trainers display the **Classroom Check-In Modal** (`ClassroomQrModal.tsx`) on the classroom projector with dynamic QR & 6-digit PIN.
+
+1. **Course Creator & Review Sidebar Labels (`CreatorSidebar.tsx`, `ReviewSidebar.tsx`, `CourseDetailsStage.tsx`, `SessionPlanStage.tsx`)**:
+   - When `course.deliveryMode === 'IN_PERSON_ONLY'`:
+     - Display **"Include classroom sessions"** in Course Details.
+     - Display **"Classroom Sessions"** in the Creator Sidebar and Review Sidebar (and **"Add classroom session"** button).
+     - Display **"Classroom Session"** badges and headings in the session planning stage.
+   - When `course.deliveryMode === 'ONLINE_ONLY'`:
+     - Keep **"Online Sessions"** completely unchanged.
+2. **Dedicated In-Person Round Scheduler (`frontend/src/components/features/sessions/in-person/InPersonRoundSchedulerModal.tsx`)**:
+   - Built inside `sessions/in-person/` so virtual scheduling is untouched.
+   - Shows existing Rounds for the selected `IN_PERSON_ONLY` course (e.g., `Round 1`, `Round 2`) and a **`+ Schedule New Round (Round N)`** action.
+   - Lists all planned **Classroom Sessions** from the course curriculum (Session 1, Session 2, ...) so the coordinator can set the date/time, venue, and trainer for each classroom session in that Round in one clean workflow.
+3. **Course Review & Sessions Manager Integration (`SessionPlanStage.tsx` & `SessionsManager.tsx`)**:
+   - Display scheduled Rounds clearly (e.g., _"Round 1 — 2 Classroom Sessions Scheduled"_), with a button to **`+ Add Round`** whenever more cohorts are needed.
+4. **Web Learner Catalog Round Selection (`CatalogCourseModal.tsx`)**:
+   - Group in-person sessions by **Round & Venue** (e.g., _"Round 1 · Addis Ababa HQ - Training Hall A (35 seats left)"_) and list the included classroom session dates underneath so the learner sees all sessions in the Round they are booking.
 
 ---
 
-## Phase 3: Mobile App & End-to-End Verification
+## Phase 3: Mobile App — Round Selection, Classroom Sessions & E2E Verification
 
 ### Objectives
-Update the React Native mobile app (`mobile/`) to support in-person course viewing, branch selection, on-site QR/PIN check-in, and execute rigorous end-to-end testing.
+
+Update the React Native mobile app (`mobile/`) so learners can view Rounds, enroll in a Round, see all Classroom Sessions in their Round, and check in on-site via QR/PIN.
 
 ### Tasks
-1. **Mobile Course Catalog & Details (`mobile/src/app/course/[courseId]/`)**:
-   - Update course details card to display "In-Person Classroom" badge alongside "Online Self-Paced".
-   - Provide branch/venue picker when enrolling in an in-person course on mobile.
-2. **Mobile Live Sessions & Attendance (`mobile/src/features/live-sessions/`)**:
-   - In `SessionCard` and `live-sessions.tsx`, detect in-person sessions (`sessionType === 'IN_PERSON' || venueId`).
-   - Replace the video join button with physical venue details: Branch name, building, room number, and session time.
-3. **Mobile On-Site Check-In**:
-   - Add QR code scanner / 6-digit PIN check-in sheet in the mobile app.
-   - Learners scan the projector QR code or type the 6-digit PIN while in the room to record check-in (`checkInMethod: QR | PIN`) and mark themselves **Present**.
-4. **Internationalization & Localization (`mobile/src/core/i18n/`)**:
-   - Ensure all in-person badges, check-in prompts, and venue labels are translated into English (`en.json`) and Amharic (`am.json`).
-5. **Full System Verification**:
-   - Run `npx tsc --noEmit` on `backend`, `frontend`, and `mobile`.
-   - Run backend test suite: `npm test`.
-   - Verify complete user journey: Course Creation -> Multi-Branch Scheduling -> Learner Enrollment -> In-Person QR Check-In -> Attendance & Certificate.
+
+1. **Mobile Round Enrollment (`mobile/src/app/course/[courseId]/enroll.tsx`)**:
+   - Update `EnrollScreen` for `IN_PERSON_ONLY` courses to display selectable **Rounds** (showing Round number, Branch Venue, remaining seats, and the list of Classroom Session dates included in that Round).
+2. **Mobile Course & Classroom Session Views (`mobile/src/app/course/[courseId]/index.tsx` & `live-sessions.tsx`)**:
+   - Label the sessions section **"Classroom Sessions"** when `deliveryMode === 'IN_PERSON_ONLY'` (keeping **"Live Sessions"** for online courses).
+   - Display the learner's enrolled **Round badge** (e.g., `Round 1`) on each classroom session card along with Venue, Building, Room, and QR/PIN check-in button.
+3. **Localization (`mobile/src/core/i18n/locales/en.json` & `am.json`, `frontend/src/lib/i18n/locales/`)**:
+   - Add English and Amharic translations for `"Classroom Sessions"`, `"Round {{number}}"`, `"Schedule New Round"`, and `"Select Training Round"`.
+4. **Seed Update & Full E2E Verification**:
+   - Update `VAT102` seed for `samueltiruneh123@gmail.com` to demonstrate clean planned Classroom Sessions ready for Round 1 & Round 2 testing.
+   - Run `npx tsc --noEmit` across `backend`, `frontend`, and `mobile`, plus `npm test` on `backend`.
 
 ---
 
 ## Execution Checklist
 
-| Phase | Milestone | Scope | Status |
-| :--- | :--- | :--- | :---: |
-| **Phase 1** | Core API & Delivery Simplification | Backend (`prisma`, `courses`, `live-sessions`, `enrollments`) | **Completed** |
-| **Phase 2** | Web Creator, Scheduling & Classroom | Frontend (`creator`, `sessions`, `classroom`, `catalog`) | **Completed** |
-| **Phase 3** | Mobile Experience & Full E2E QA | Mobile (`mobile/src/features/live-sessions/`, `catalog`) + Tests | **Completed** |
+| Phase       | Milestone                              | Scope                                                                                    | Status  |
+| :---------- | :------------------------------------- | :--------------------------------------------------------------------------------------- | :-----: |
+| **Phase 1** | Backend In-Person Round Engine         | `backend/src/modules/live-sessions/in-person/`, `prisma`, `courses`, `enrollments`       | **Completed** |
+| **Phase 2** | Web "Classroom Sessions" & Round UI    | `frontend/src/components/features/courses/`, `sessions/in-person/`, `CatalogCourseModal` | **Completed** |
+| **Phase 3** | Mobile Round Enrollment & Verification | `mobile/src/app/course/`, `mobile/src/features/live-sessions/`, i18n, Tests              | **Completed** |
 

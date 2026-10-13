@@ -9,6 +9,7 @@ import type {
   ApiCourseDetail,
   ApiCourseSession,
   ApiEnrollment,
+  ApiInPersonRound,
   CatalogParams,
 } from '../types/course.types';
 
@@ -17,6 +18,7 @@ export const courseKeys = {
   catalog: (params: CatalogParams) => ['courses', 'catalog', params] as const,
   detail: (courseId: string) => ['courses', 'detail', courseId] as const,
   sessions: (courseId: string) => ['courses', 'sessions', courseId] as const,
+  rounds: (courseId: string) => ['courses', 'rounds', courseId] as const,
 };
 
 export const enrollmentKeys = {
@@ -105,3 +107,16 @@ export function useBookableSessions(courseId: string | undefined, enabled: boole
     },
   });
 }
+
+/**
+ * In-person cohort rounds (Round 1, Round 2, ...) a learner can book before enrolling.
+ * Each round groups all planned classroom sessions at a branch venue.
+ */
+export function useBookableRounds(courseId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: courseKeys.rounds(courseId ?? ''),
+    enabled: Boolean(courseId) && enabled,
+    queryFn: () => api.get<ApiInPersonRound[]>(endpoints.liveSessions.inPersonRounds(courseId!)),
+  });
+}
+

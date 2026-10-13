@@ -494,9 +494,16 @@ export class ProgressService {
         };
       }
 
-      // 2. Otherwise return current active/upcoming session for this plan
+      // 2. Otherwise return the learner's enrolled Round session (if any) or current active/upcoming session for this plan
+      const enrolledRoundSession = sessions.find(
+        (s) =>
+          (s.sessionPlanId === p.id || s.originalPlanId === p.id) &&
+          s.attendees.length > 0,
+      );
       const live =
-        p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined;
+        enrolledRoundSession ??
+        (p.liveSession && !p.liveSession.deletedAt ? byId.get(p.liveSession.id) : undefined) ??
+        sessions.find((s) => s.sessionPlanId === p.id || s.originalPlanId === p.id);
       return live
         ? { ...toInfo(live, p.id), missedRounds: missedRoundsOf(p.id, live.id) }
         : {

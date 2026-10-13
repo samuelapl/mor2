@@ -529,11 +529,12 @@ export function ClassroomSidebar({
           );
         })}
 
-        {/* Live Sessions (dates only) */}
+        {/* Live / Classroom Sessions */}
         {(() => {
           const sessionsItem = flatItems.find((i) => i.type === 'LIVE_SESSIONS');
           if (!sessionsItem) return null;
           const isActive = activeKey === sessionsItem.key;
+          const isInPerson = course.deliveryMode === 'IN_PERSON_ONLY';
           return (
             <div className="pt-2">
               <button
@@ -546,11 +547,22 @@ export function ClassroomSidebar({
                     : 'bg-card border-info/30 text-foreground hover:border-info/60',
                 )}
               >
-                <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border', isActive ? 'bg-sky-400 text-foreground border-info/30' : 'bg-info-soft border-info/30 text-info')}>
-                  <Video className="h-4 w-4" />
+                <div
+                  className={cn(
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border',
+                    isActive
+                      ? 'bg-sky-400 text-foreground border-info/30'
+                      : isInPerson
+                        ? 'bg-warning-soft border-warning/30 text-warning'
+                        : 'bg-info-soft border-info/30 text-info',
+                  )}
+                >
+                  {isInPerson ? <Building2 className="h-4 w-4" /> : <Video className="h-4 w-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate">{t('classroomSidebar.liveSessions')}</p>
+                  <p className="text-xs font-bold truncate">
+                    {isInPerson ? 'Classroom Sessions' : t('classroomSidebar.liveSessions')}
+                  </p>
                   <p className="text-[10px] opacity-75 mt-0.5 truncate">
                     {sessionsItem.completed ? t('classroomSidebar.allSessionsHeld') : t('classroomSidebar.upcomingSessions')}
                   </p>
