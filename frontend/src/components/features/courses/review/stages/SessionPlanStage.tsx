@@ -26,11 +26,13 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SearchableTrainerSelect } from '@/components/features/sessions/shared/SearchableTrainerSelect';
-import type { ApiAssessment, ApiUser } from '@/lib/api/types';
+import { fetchCourseRounds } from '@/lib/api/venues';
+import type { ApiAssessment, ApiInPersonRound, ApiUser } from '@/lib/api/types';
 import type { CourseDeliveryMode, CourseStatus, SessionPlan, User } from '@/types';
 import { AssessmentQuestionPreview } from '../../detail/AssessmentQuestionPreview';
 import { sessionPlanTrainerId } from '../nodes';
 import { RichSection, StageCard, StageTitle } from './StageParts';
+import { InPersonSessionScheduleExplorer } from '../InPersonSessionScheduleExplorer';
 
 const PLATFORM_LABEL: Record<string, string> = {
   LIVEKIT: 'Virtual classroom',
@@ -136,10 +138,59 @@ export function SessionPlanStage({
     }
   };
 
+  // For In-Person courses, load all rounds and extract instances specifically belonging to this session
+  const [courseRounds, setCourseRounds] = useState<ApiInPersonRound[]>([]);
+  const [roundsLoading, setRoundsLoading] = useState(isInPerson);
+
+  const loadRounds = async () => {
+    if (!isInPerson || !courseId) return;
+    setRoundsLoading(true);
+    try {
+      const data = await fetchCourseRounds(courseId);
+      setCourseRounds(data);
+    } catch {
+      setCourseRounds([]);
+    } finally {
+      setRoundsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRounds();
+  }, [isInPerson, courseId]);
+
+  // Extract all instances of THIS specific classroom session across every round and branch venue
+  const sessionInstances = useMemo(() => {
+    if (!isInPerson) return [];
+    return courseRounds.flatMap((round) => {
+      const matchingSession = round.sessions.find(
+        (s, idx) =>
+          (s.originalPlanId && s.originalPlanId === plan.id) ||
+          (s.sessionPlanId && s.sessionPlanId === plan.id) ||
+          (typeof s.plannedOrder === 'number' && s.plannedOrder === index) ||
+          idx === index,
+      );
+      if (!matchingSession) return [];
+      return [
+        {
+          sessionId: matchingSession.id,
+          roundNumber: round.roundNumber,
+          branch: round.venue?.branch || 'Branch Venue',
+          trainer: matchingSession.trainer || round.trainer || null,
+        },
+      ];
+    });
+  }, [isInPerson, courseRounds, plan.id, index]);
+
+  const uniqueRounds = useMemo(() => Array.from(new Set(sessionInstances.map((i) => i.roundNumber))), [sessionInstances]);
+  const uniqueBranches = useMemo(() => Array.from(new Set(sessionInstances.map((i) => i.branch))), [sessionInstances]);
+
+  const isSessionScheduled = isInPerson ? sessionInstances.length > 0 || Boolean(scheduled) : Boolean(scheduled);
+
   // Same checks as the backend publish guard (CoursesService.assertSessionsReadyToPublish).
   const publishBlockers: string[] = [];
-  if (afterApproval && !trainerId) publishBlockers.push(t('sessionPlanStage.noTrainerIsAssignedToThis'));
-  if (afterApproval && !scheduled) publishBlockers.push(t('sessionPlanStage.thisSessionIsNotScheduledYet'));
+  if (!isInPerson && afterApproval && !trainerId) publishBlockers.push(t('sessionPlanStage.noTrainerIsAssignedToThis'));
+  if (afterApproval && !isSessionScheduled) publishBlockers.push(t('sessionPlanStage.thisSessionIsNotScheduledYet'));
   for (const q of plan.quizzes) {
     const prepared = quizAssessments.find((a) => a.id === q.id);
     const questions = prepared?.questions ?? [];
@@ -149,7 +200,8 @@ export function SessionPlanStage({
   }
 
   const formatDate = (iso: string) => formatSessionDateTime(iso, isAmharic ? 'am-ET' : undefined);
-  const doneSteps = (trainerId ? 1 : 0) + (scheduled ? 1 : 0);
+  const doneSteps = isInPerson ? (isSessionScheduled ? 1 : 0) : (trainerId ? 1 : 0) + (scheduled ? 1 : 0);
+  const totalSteps = isInPerson ? 1 : 2;
   const stepLabels = { done: t('sessionPlanStage.done'), next: t('courseReviewShell.next'), pending: t('sessionPlanStage.pending') };
 
   return (
@@ -160,12 +212,27 @@ export function SessionPlanStage({
         title={plan.titleEn || t('creatorSidebar.untitledSession')}
         meta={
           <>
-            <StatusPill done={Boolean(trainerId)} icon={trainerId ? UserCheck : UserX}>
-              {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerYet')}
-            </StatusPill>
-            <StatusPill done={Boolean(scheduled)} icon={scheduled ? CalendarCheck : CalendarClock}>
-              {scheduled ? formatDate(scheduled.scheduledAt) : t('sessionPlanStage.notScheduledYet')}
-            </StatusPill>
+            {isInPerson ? (
+              <>
+                <StatusPill done={isSessionScheduled} icon={isSessionScheduled ? CalendarCheck : CalendarClock}>
+                  {isSessionScheduled
+                    ? `Scheduled in ${uniqueRounds.length} ${uniqueRounds.length === 1 ? 'round' : 'rounds'} across ${uniqueBranches.length} ${uniqueBranches.length === 1 ? 'branch' : 'branches'}`
+                    : t('sessionPlanStage.notScheduledYet')}
+                </StatusPill>
+                <StatusPill done={isSessionScheduled} icon={isSessionScheduled ? UserCheck : UserX}>
+                  {isSessionScheduled ? 'Branch Trainers Assigned' : 'Trainer assigned during scheduling'}
+                </StatusPill>
+              </>
+            ) : (
+              <>
+                <StatusPill done={Boolean(trainerId)} icon={trainerId ? UserCheck : UserX}>
+                  {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerYet')}
+                </StatusPill>
+                <StatusPill done={Boolean(scheduled)} icon={scheduled ? CalendarCheck : CalendarClock}>
+                  {scheduled ? formatDate(scheduled.scheduledAt) : t('sessionPlanStage.notScheduledYet')}
+                </StatusPill>
+              </>
+            )}
             <span>
               {plan.quizzes.length} {t(plan.quizzes.length === 1 ? 'sessionPlanStage.quizUnit' : 'sessionPlanStage.quizzesUnit')} ·{' '}
               {t('sessionPlanStage.formativeNotGraded')}
@@ -174,62 +241,99 @@ export function SessionPlanStage({
         }
       />
 
-      {/* Readiness steps: 1. assign trainer (here) → 2. schedule (Session Scheduling page) */}
+      {/* Readiness steps: For In-person: 1 step "Schedule session and assign trainer" */}
       <section className="overflow-hidden rounded-2xl border border-border/90 bg-card shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-primary-soft/80 via-card to-card px-6 py-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-primary">{t('sessionPlanStage.getThisSessionReady')}</p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">
-              {doneSteps === 2
-                ? t('sessionPlanStage.allSetThisSessionIsReady')
-                : t('sessionPlanStage.twoStepsBeforeThisSessionCan')}
+              {isInPerson
+                ? doneSteps === 1
+                  ? 'All set! This classroom session is scheduled with branch trainer assigned'
+                  : '1 step before this classroom session can be published'
+                : doneSteps === 2
+                  ? t('sessionPlanStage.allSetThisSessionIsReady')
+                  : t('sessionPlanStage.twoStepsBeforeThisSessionCan')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-24 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${doneSteps * 50}%` }} />
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                style={{ width: `${(doneSteps / totalSteps) * 100}%` }}
+              />
             </div>
-            <span className="text-xs font-bold text-secondary-foreground">{doneSteps}/2</span>
+            <span className="text-xs font-bold text-secondary-foreground">
+              {doneSteps}/{totalSteps}
+            </span>
           </div>
         </div>
 
-        <ol className="grid gap-px bg-secondary sm:grid-cols-2">
-          <Step
-            number={1}
-            done={Boolean(trainerId)}
-            active={!trainerId}
-            labels={stepLabels}
-            title={t('sessionPlanStage.assignATrainer')}
-            description={
-              trainerId
-                ? t('sessionPlanStage.willHostThisSession', { value: userName(trainerId) })
-                : t('sessionPlanStage.chooseWhoWillHostThisSession')
-            }
-          />
-          <Step
-            number={2}
-            done={Boolean(scheduled)}
-            active={Boolean(trainerId) && !scheduled}
-            labels={stepLabels}
-            title={t('sessionPlanStage.scheduleTheSession')}
-            description={
-              scheduled
-                ? t('sessionPlanStage.scheduledFor', { value: formatDate(scheduled.scheduledAt) })
-                : t('sessionPlanStage.pickTheDateAndTimeOn')
-            }
-            action={
-              !scheduled && afterApproval ? (
-                <Link
-                  href={schedulingHref}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
-                >
-                  {t('sessionPlanStage.openSessionScheduling')}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              ) : null
-            }
-          />
-        </ol>
+        {isInPerson ? (
+          <ol className="grid gap-px bg-secondary sm:grid-cols-1">
+            <Step
+              number={1}
+              done={isSessionScheduled}
+              active={!isSessionScheduled}
+              labels={stepLabels}
+              title="Schedule session and assign trainer"
+              description={
+                isSessionScheduled
+                  ? `Scheduled across ${uniqueBranches.length} branch venue(s) in ${uniqueRounds.length} round(s) with assigned branch trainers`
+                  : 'Classroom sessions and their branch trainers are scheduled on the Session Scheduling page.'
+              }
+              action={
+                !isSessionScheduled && afterApproval ? (
+                  <Link
+                    href={schedulingHref}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
+                  >
+                    Schedule Session &amp; Assign Trainer
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : null
+              }
+            />
+          </ol>
+        ) : (
+          <ol className="grid gap-px bg-secondary sm:grid-cols-2">
+            <Step
+              number={1}
+              done={Boolean(trainerId)}
+              active={!trainerId}
+              labels={stepLabels}
+              title={t('sessionPlanStage.assignATrainer')}
+              description={
+                trainerId
+                  ? t('sessionPlanStage.willHostThisSession', { value: userName(trainerId) })
+                  : t('sessionPlanStage.chooseWhoWillHostThisSession')
+              }
+            />
+            <Step
+              number={2}
+              done={Boolean(scheduled)}
+              active={Boolean(trainerId) && !scheduled}
+              labels={stepLabels}
+              title={t('sessionPlanStage.scheduleTheSession')}
+              description={
+                scheduled
+                  ? t('sessionPlanStage.scheduledFor', { value: formatDate(scheduled.scheduledAt) })
+                  : t('sessionPlanStage.pickTheDateAndTimeOn')
+              }
+              action={
+                !scheduled && afterApproval ? (
+                  <Link
+                    href={schedulingHref}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
+                  >
+                    {t('sessionPlanStage.openSessionScheduling')}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : null
+              }
+            />
+          </ol>
+        )}
       </section>
 
       {publishBlockers.length > 0 && (
@@ -251,8 +355,8 @@ export function SessionPlanStage({
         </div>
       )}
 
-      {/* Next step after a trainer is assigned: scheduling happens on the Session Scheduling page. */}
-      {waitingForSchedule && (
+      {/* Next step after a trainer is assigned: scheduling happens on the Session Scheduling page (online only). */}
+      {!isInPerson && waitingForSchedule && (
         <div
           className={cn(
             'flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between',
@@ -265,13 +369,9 @@ export function SessionPlanStage({
             </div>
             <div>
               <p className="text-sm font-bold text-primary">
-                {justAssigned
-                  ? t('sessionPlanStage.trainerAssignedNextScheduleTheSession')
-                  : t('sessionPlanStage.nextScheduleTheSession')}
+                {justAssigned ? t('sessionPlanStage.trainerAssignedNextScheduleTheSession') : t('sessionPlanStage.nextScheduleTheSession')}
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-primary/80">
-                {t('sessionPlanStage.goToTheSessionSchedulingPage')}
-              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-primary/80">{t('sessionPlanStage.goToTheSessionSchedulingPage')}</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -291,79 +391,79 @@ export function SessionPlanStage({
         </div>
       )}
 
-      {/* Step 1: trainer assignment. Scheduling itself happens on the Session Scheduling page. */}
-      <StageCard title={t('sessionPlanStage.step1SessionTrainer')} icon={<UserCheck className="h-4 w-4" />}>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted p-3">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold',
-                trainerId ? 'bg-indigo-600 text-white' : 'bg-border text-subtle-foreground',
-              )}
-            >
-              {trainerId ? initials(userName(trainerId)) : <UserX className="h-4 w-4" />}
-            </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">{t('sessionPlanStage.trainerForThisSession')}</p>
-              <p className="text-sm font-bold text-foreground">
-                {trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerAssignedYet')}
-              </p>
-            </div>
-          </div>
-          {trainerId && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
-              <Check className="h-3.5 w-3.5" />
-              {t('sessionPlanStage.assigned')}
-            </span>
-          )}
-        </div>
-
-        {canAssignTrainer ? (
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-secondary-foreground">
-              {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignATrainer2')}
-            </label>
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start">
-              <div className="flex-1">
-                <SearchableTrainerSelect
-                  trainers={pickerTrainers}
-                  courseTrainers={pickerCourseTrainers}
-                  value={selectedTrainerId}
-                  onChange={setSelectedTrainerId}
-                  disabled={busy}
-                />
-              </div>
-              <div className="flex items-center gap-2 sm:pt-1">
-                <Button
-                  size="sm"
-                  isLoading={busy}
-                  disabled={!selectedTrainerId || selectedTrainerId === trainerId}
-                  onClick={() => void saveTrainer(selectedTrainerId)}
-                  className="whitespace-nowrap"
-                >
-                  {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignTrainer')}
-                </Button>
-                {trainerId && (
-                  <Button variant="outline" size="sm" disabled={busy} onClick={() => void saveTrainer(null)} className="whitespace-nowrap text-danger hover:text-danger/80">
-                    {t('sessionPlanStage.remove')}
-                  </Button>
+      {/* Step 1: trainer assignment for pure online courses. For In-Person, trainers are assigned during multi-branch scheduling. */}
+      {!isInPerson && (
+        <StageCard title={t('sessionPlanStage.step1SessionTrainer')} icon={<UserCheck className="h-4 w-4" />}>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted p-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold',
+                  trainerId ? 'bg-indigo-600 text-white' : 'bg-border text-subtle-foreground',
                 )}
+              >
+                {trainerId ? initials(userName(trainerId)) : <UserX className="h-4 w-4" />}
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">{t('sessionPlanStage.trainerForThisSession')}</p>
+                <p className="text-sm font-bold text-foreground">{trainerId ? userName(trainerId) : t('sessionPlanStage.noTrainerAssignedYet')}</p>
               </div>
             </div>
-            <p className="text-[11px] text-subtle-foreground">
-              {t('sessionPlanStage.searchByNameOrEmailEach')}
-            </p>
+            {trainerId && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
+                <Check className="h-3.5 w-3.5" />
+                {t('sessionPlanStage.assigned')}
+              </span>
+            )}
           </div>
-        ) : (
-          !trainerId && (
-            <p className="text-xs text-muted-foreground">
-              {t('sessionPlanStage.aTrainingAdministratorAssignsTheTrainer')}
-            </p>
-          )
-        )}
-      </StageCard>
 
-      {scheduled && (
+          {canAssignTrainer ? (
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-secondary-foreground">
+                {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignATrainer2')}
+              </label>
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start">
+                <div className="flex-1">
+                  <SearchableTrainerSelect
+                    trainers={pickerTrainers}
+                    courseTrainers={pickerCourseTrainers}
+                    value={selectedTrainerId}
+                    onChange={setSelectedTrainerId}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="flex items-center gap-2 sm:pt-1">
+                  <Button
+                    size="sm"
+                    isLoading={busy}
+                    disabled={!selectedTrainerId || selectedTrainerId === trainerId}
+                    onClick={() => void saveTrainer(selectedTrainerId)}
+                    className="whitespace-nowrap"
+                  >
+                    {trainerId ? t('sessionPlanStage.changeTrainer') : t('sessionPlanStage.assignTrainer')}
+                  </Button>
+                  {trainerId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void saveTrainer(null)}
+                      className="whitespace-nowrap text-danger hover:text-danger/80"
+                    >
+                      {t('sessionPlanStage.remove')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[11px] text-subtle-foreground">{t('sessionPlanStage.searchByNameOrEmailEach')}</p>
+            </div>
+          ) : (
+            !trainerId && <p className="text-xs text-muted-foreground">{t('sessionPlanStage.aTrainingAdministratorAssignsTheTrainer')}</p>
+          )}
+        </StageCard>
+      )}
+
+      {!isInPerson && scheduled && (
         <StageCard title={t('sessionPlanStage.step2ScheduledSession')} icon={<CalendarCheck className="h-4 w-4" />}>
           <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <Detail label={t('sessionPlanStage.dateTime')}>
@@ -371,7 +471,9 @@ export function SessionPlanStage({
               <StartsInBadge seconds={scheduled.startsInSeconds} className="mt-1" />
             </Detail>
             <Detail label={t('sessionPlanStage.duration')}>{scheduled.durationMinutes ? `${scheduled.durationMinutes} min` : '—'}</Detail>
-            <Detail label={t('sessionPlanStage.platform')}>{scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}</Detail>
+            <Detail label={t('sessionPlanStage.platform')}>
+              {scheduled.platform ? (PLATFORM_LABEL[scheduled.platform] ?? scheduled.platform) : '—'}
+            </Detail>
             <Detail label={t('sessionPlanStage.status')}>{scheduled.status}</Detail>
           </dl>
           <p className="text-[11px] text-subtle-foreground">
@@ -381,6 +483,19 @@ export function SessionPlanStage({
             </Link>
           </p>
         </StageCard>
+      )}
+
+      {/* For In-Person courses, show the multi-branch scheduled rounds and assigned trainers scoped strictly to this session */}
+      {isInPerson && courseId && (
+        <InPersonSessionScheduleExplorer
+          courseId={courseId}
+          planId={plan.id}
+          sessionIndex={index}
+          sessionTitle={plan.titleEn || `Classroom Session ${index + 1}`}
+          rounds={courseRounds}
+          loading={roundsLoading}
+          onRefresh={loadRounds}
+        />
       )}
 
       <StageCard>
@@ -408,9 +523,7 @@ export function SessionPlanStage({
                 </span>
               </div>
               {questions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t('sessionPlanStage.noQuestionsPreparedYetTheTrainer')}
-                </p>
+                <p className="text-sm text-muted-foreground">{t('sessionPlanStage.noQuestionsPreparedYetTheTrainer')}</p>
               ) : (
                 <div className="space-y-3">
                   {questions.map((question, i) => (
@@ -423,9 +536,7 @@ export function SessionPlanStage({
         })
       )}
 
-      <p className="text-[11px] text-subtle-foreground">
-        {t('sessionPlanStage.eachSessionQuizIsGradedWhen')}
-      </p>
+      <p className="text-[11px] text-subtle-foreground">{t('sessionPlanStage.eachSessionQuizIsGradedWhen')}</p>
     </div>
   );
 }

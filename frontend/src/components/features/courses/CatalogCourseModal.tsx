@@ -96,6 +96,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
   const defaultMode: 'ONLINE_ONLY' | 'IN_PERSON_ONLY' = course?.deliveryMode === 'IN_PERSON_ONLY' ? 'IN_PERSON_ONLY' : 'ONLINE_ONLY';
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<'ONLINE_ONLY' | 'IN_PERSON_ONLY'>(defaultMode);
   const [availableRounds, setAvailableRounds] = useState<ApiInPersonRound[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('ALL');
+  const [selectedRoundFilter, setSelectedRoundFilter] = useState<string>('ALL');
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
 
@@ -119,6 +121,8 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
           if (rounds.length > 0) {
             const firstAvailable = rounds.find((r) => !r.isFull) ?? rounds[0];
             setSelectedSessionId(firstAvailable.primarySessionId);
+            setSelectedBranch('ALL');
+            setSelectedRoundFilter('ALL');
           }
           setLoadingSessions(false);
         }
@@ -516,121 +520,239 @@ export function CatalogCourseModal({ open, onClose, courseId }: CatalogCourseMod
             )}
 
             {/* In-Person Round Picker */}
-            {selectedDeliveryMode === 'IN_PERSON_ONLY' && (
-              <div className="mt-4 space-y-3 pt-3 border-t border-border/80">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground">Select Training Round &amp; Branch Venue:</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {availableRounds.length} round
-                    {availableRounds.length === 1 ? '' : 's'} scheduled
-                  </span>
-                </div>
+            {selectedDeliveryMode === 'IN_PERSON_ONLY' && (() => {
+              const branches = Array.from(
+                new Set(
+                  availableRounds
+                    .map((r) => r.venue?.branch)
+                    .filter((b): b is string => Boolean(b)),
+                ),
+              );
 
-                {loadingSessions ? (
-                  <div className="flex items-center justify-center p-6 text-xs text-muted-foreground gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    Loading scheduled classroom rounds…
-                  </div>
-                ) : availableRounds.length === 0 ? (
-                  <div className="rounded-xl border border-warning/25 bg-warning-soft/60 p-4 text-xs text-warning flex items-start gap-2.5">
-                    <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+              const roundNumbers = Array.from(
+                new Set(availableRounds.map((r) => r.roundNumber)),
+              ).sort((a, b) => a - b);
+
+              const displayedRounds = availableRounds.filter((r) => {
+                const matchBranch = selectedBranch === 'ALL' || r.venue?.branch === selectedBranch;
+                const matchRound = selectedRoundFilter === 'ALL' || String(r.roundNumber) === selectedRoundFilter;
+                return matchBranch && matchRound;
+              });
+
+              const handleFilterChange = (newBranch: string, newRound: string) => {
+                setSelectedBranch(newBranch);
+                setSelectedRoundFilter(newRound);
+                const nextFiltered = availableRounds.filter((r) => {
+                  const matchBranch = newBranch === 'ALL' || r.venue?.branch === newBranch;
+                  const matchRound = newRound === 'ALL' || String(r.roundNumber) === newRound;
+                  return matchBranch && matchRound;
+                });
+                const stillPresent = nextFiltered.some((r) => r.primarySessionId === selectedSessionId);
+                if (!stillPresent) {
+                  const firstAvail = nextFiltered.find((r) => !r.isFull) ?? nextFiltered[0];
+                  if (firstAvail) {
+                    setSelectedSessionId(firstAvail.primarySessionId);
+                  }
+                }
+              };
+
+              return (
+                <div className="mt-4 space-y-3.5 pt-3 border-t border-border/80">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-semibold">No classroom rounds scheduled yet</p>
-                      <p className="mt-0.5">
-                        Training coordinators have not yet scheduled in-person rounds for this course. Please contact your branch training
-                        administrator or check back soon.
-                      </p>
+                      <span className="text-xs font-bold text-foreground">Step 1: Filter Available Rounds & Venues</span>
+                      <p className="text-[11px] text-muted-foreground">Filter classroom locations and cohort rounds in your area</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground">
+                        {availableRounds.length} round{availableRounds.length === 1 ? '' : 's'} across {branches.length} branch venue{branches.length === 1 ? '' : 's'}
+                      </span>
+                      {(selectedBranch !== 'ALL' || selectedRoundFilter !== 'ALL') && (
+                        <button
+                          type="button"
+                          onClick={() => handleFilterChange('ALL', 'ALL')}
+                          className="text-[11px] font-semibold text-primary hover:underline ml-1"
+                        >
+                          Clear filters
+                        </button>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {availableRounds.map((round) => {
-                      const venue = round.venue;
-                      const { capacity, seatsLeft, isFull } = round;
-                      const isSelected = selectedSessionId === round.primarySessionId;
-                      const firstTrainer = round.sessions[0]?.trainer;
 
-                      return (
-                        <div
-                          key={round.roundKey}
-                          onClick={() => {
-                            if (!isFull) setSelectedSessionId(round.primarySessionId);
-                          }}
-                          className={`relative rounded-xl border p-4 text-left transition-all ${
-                            isFull
-                              ? 'opacity-60 bg-muted border-border cursor-not-allowed'
-                              : isSelected
-                                ? 'border-primary bg-primary-soft/40 ring-2 ring-ring/20 cursor-pointer shadow-xs'
-                                : 'border-border bg-card hover:border-input hover:bg-muted/60 cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-1.5 font-bold text-xs text-foreground">
-                                <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
-                                  {round.roundLabel}
-                                </span>
-                                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                                <span>{venue?.branch || 'Ministry Branch'}</span>
-                                <span className="text-subtle-foreground">·</span>
-                                <span className="font-semibold text-secondary-foreground">{venue?.name || 'Classroom'}</span>
+                  {/* Branch (First) and Round (Then) Dropdowns */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-muted/50 border border-border/80">
+                    {/* 1. Branch Dropdown (First) */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="learner-branch-select" className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground">
+                        <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>Branch Venue</span>
+                      </label>
+                      <select
+                        id="learner-branch-select"
+                        value={selectedBranch}
+                        onChange={(e) => handleFilterChange(e.target.value, selectedRoundFilter)}
+                        className="w-full rounded-xl border border-border/90 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-xs outline-none transition hover:border-input focus:border-ring focus:ring-2 focus:ring-ring/20 cursor-pointer"
+                      >
+                        <option value="ALL">All Branches ({availableRounds.length} sessions)</option>
+                        {branches.map((b) => {
+                          const count = availableRounds.filter((r) => r.venue?.branch === b).length;
+                          return (
+                            <option key={b} value={b}>
+                              {b} ({count} {count === 1 ? 'round' : 'rounds'})
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {/* 2. Round Dropdown (Then) */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="learner-round-select" className="flex items-center gap-1.5 text-xs font-semibold text-secondary-foreground">
+                        <Layers className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>Cohort Round</span>
+                      </label>
+                      <select
+                        id="learner-round-select"
+                        value={selectedRoundFilter}
+                        onChange={(e) => handleFilterChange(selectedBranch, e.target.value)}
+                        className="w-full rounded-xl border border-border/90 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-xs outline-none transition hover:border-input focus:border-ring focus:ring-2 focus:ring-ring/20 cursor-pointer"
+                      >
+                        <option value="ALL">All Rounds ({availableRounds.length} sessions)</option>
+                        {roundNumbers.map((num) => {
+                          const countInBranch = availableRounds.filter(
+                            (r) => r.roundNumber === num && (selectedBranch === 'ALL' || r.venue?.branch === selectedBranch),
+                          ).length;
+                          return (
+                            <option key={num} value={String(num)}>
+                              Round {num} ({countInBranch} {countInBranch === 1 ? 'venue' : 'venues'})
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="text-xs font-bold text-foreground">Step 2: Choose Available Round & Venue</span>
+                  </div>
+
+                  {loadingSessions ? (
+                    <div className="flex items-center justify-center p-6 text-xs text-muted-foreground gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      Loading scheduled classroom rounds…
+                    </div>
+                  ) : availableRounds.length === 0 ? (
+                    <div className="rounded-xl border border-warning/25 bg-warning-soft/60 p-4 text-xs text-warning flex items-start gap-2.5">
+                      <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">No classroom rounds scheduled yet</p>
+                        <p className="mt-0.5">
+                          Training coordinators have not yet scheduled in-person rounds for this course. Please contact your branch training
+                          administrator or check back soon.
+                        </p>
+                      </div>
+                    </div>
+                  ) : displayedRounds.length === 0 ? (
+                    <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground text-center space-y-2">
+                      <p>No classroom rounds match the selected filters ({selectedBranch !== 'ALL' ? selectedBranch : 'All Branches'}, {selectedRoundFilter !== 'ALL' ? `Round ${selectedRoundFilter}` : 'All Rounds'}).</p>
+                      <button
+                        type="button"
+                        onClick={() => handleFilterChange('ALL', 'ALL')}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      >
+                        Reset filters
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {displayedRounds.map((round) => {
+                        const venue = round.venue;
+                        const { capacity, seatsLeft, isFull } = round;
+                        const isSelected = selectedSessionId === round.primarySessionId;
+                        const firstTrainer = round.sessions[0]?.trainer;
+
+                        return (
+                          <div
+                            key={round.roundKey}
+                            onClick={() => {
+                              if (!isFull) setSelectedSessionId(round.primarySessionId);
+                            }}
+                            className={`relative rounded-xl border p-4 text-left transition-all ${
+                              isFull
+                                ? 'opacity-60 bg-muted border-border cursor-not-allowed'
+                                : isSelected
+                                  ? 'border-primary bg-primary-soft/40 ring-2 ring-ring/20 cursor-pointer shadow-xs'
+                                  : 'border-border bg-card hover:border-input hover:bg-muted/60 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-1.5 font-bold text-xs text-foreground">
+                                  <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
+                                    {round.roundLabel}
+                                  </span>
+                                  <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                                  <span>{venue?.branch || 'Ministry Branch'}</span>
+                                  <span className="text-subtle-foreground">·</span>
+                                  <span className="font-semibold text-secondary-foreground">{venue?.name || 'Classroom'}</span>
+                                </div>
+                                {venue?.building ? <p className="text-[11px] text-muted-foreground mt-0.5">Building: {venue.building}</p> : null}
                               </div>
-                              {venue?.building ? <p className="text-[11px] text-muted-foreground mt-0.5">Building: {venue.building}</p> : null}
+
+                              <span
+                                className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-input bg-card'
+                                }`}
+                              >
+                                {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                              </span>
                             </div>
 
-                            <span
-                              className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                                isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-input bg-card'
-                              }`}
-                            >
-                              {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                            </span>
-                          </div>
+                            {/* Classroom Sessions inside this Round */}
+                            <div className="mt-3 space-y-1.5 rounded-lg border border-border/70 bg-muted/50 p-2.5">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
+                                Classroom Sessions ({round.sessions.length})
+                              </p>
+                              {round.sessions.map((session, sIdx) => (
+                                <div key={session.id} className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-secondary-foreground">
+                                  <span className="font-semibold text-foreground truncate">
+                                    {sIdx + 1}. {session.titleEn}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 text-muted-foreground shrink-0">
+                                    <Calendar className="h-3 w-3 text-subtle-foreground" />
+                                    {formatDate(session.scheduledAt)} · {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
 
-                          {/* Classroom Sessions inside this Round */}
-                          <div className="mt-3 space-y-1.5 rounded-lg border border-border/70 bg-muted/50 p-2.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
-                              Classroom Sessions ({round.sessions.length})
-                            </p>
-                            {round.sessions.map((session, sIdx) => (
-                              <div key={session.id} className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-secondary-foreground">
-                                <span className="font-semibold text-foreground truncate">
-                                  {sIdx + 1}. {session.titleEn}
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-muted-foreground shrink-0">
-                                  <Calendar className="h-3 w-3 text-subtle-foreground" />
-                                  {formatDate(session.scheduledAt)} · {formatTime(session.scheduledAt)} ({session.durationMinutes}m)
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Trainer & Seat Capacity Meter */}
-                          <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px]">
-                            <span className="text-secondary-foreground truncate max-w-[140px]">
-                              {firstTrainer ? `${firstTrainer.firstName} ${firstTrainer.lastName}` : 'Assigned Trainer'}
-                            </span>
-
-                            {isFull ? (
-                              <span className="font-bold text-danger bg-danger-soft px-2 py-0.5 rounded-md border border-danger/30">Classroom Full</span>
-                            ) : seatsLeft <= 5 ? (
-                              <span className="font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded-md border border-warning/30">
-                                Only {seatsLeft} seat
-                                {seatsLeft === 1 ? '' : 's'} left
+                            {/* Trainer & Seat Capacity Meter */}
+                            <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px]">
+                              <span className="text-secondary-foreground truncate max-w-[140px]">
+                                {firstTrainer ? `${firstTrainer.firstName} ${firstTrainer.lastName}` : 'Assigned Trainer'}
                               </span>
-                            ) : (
-                              <span className="font-semibold text-success bg-success-soft px-2 py-0.5 rounded-md border border-success/30">
-                                {seatsLeft} of {capacity} seats available
-                              </span>
-                            )}
+
+                              {isFull ? (
+                                <span className="font-bold text-danger bg-danger-soft px-2 py-0.5 rounded-md border border-danger/30">Classroom Full</span>
+                              ) : seatsLeft <= 5 ? (
+                                <span className="font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded-md border border-warning/30">
+                                  Only {seatsLeft} seat
+                                  {seatsLeft === 1 ? '' : 's'} left
+                                </span>
+                              ) : (
+                                <span className="font-semibold text-success bg-success-soft px-2 py-0.5 rounded-md border border-success/30">
+                                  {seatsLeft} of {capacity} seats available
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Course Overview */}

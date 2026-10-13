@@ -31,7 +31,10 @@ import { startsInSeconds } from '@common/utils';
 import { LiveKitProvider } from './virtual/providers/livekit.provider';
 import { AttendanceService } from '@modules/attendance/attendance.service';
 import { InPersonSessionsService } from './in-person/in-person-sessions.service';
-import { ScheduleInPersonRoundDto } from './in-person/dto/schedule-in-person-round.dto';
+import {
+  ScheduleInPersonRoundDto,
+  ScheduleMultiBranchRoundsDto,
+} from './in-person/dto/schedule-in-person-round.dto';
 
 @ApiTags('live-sessions')
 @ApiBearerAuth()
@@ -76,6 +79,13 @@ export class LiveSessionsController {
   @ApiOperation({ summary: 'Schedule an In-Person Cohort Round (Round 1, Round 2, ...) containing 1 or more classroom sessions' })
   async scheduleInPersonRound(@Body() dto: ScheduleInPersonRoundDto) {
     return this.inPersonSessionsService.scheduleRound(dto);
+  }
+
+  @Post('live-sessions/in-person/multi-branch-rounds')
+  @Permissions('live_session.manage_all', 'live_session.manage_own')
+  @ApiOperation({ summary: 'Schedule In-Person Rounds across multiple branch venues at once' })
+  async scheduleMultiBranchRounds(@Body() dto: ScheduleMultiBranchRoundsDto) {
+    return this.inPersonSessionsService.scheduleMultiBranchRounds(dto);
   }
 
   @Get('live-sessions/in-person/rounds/:courseId')

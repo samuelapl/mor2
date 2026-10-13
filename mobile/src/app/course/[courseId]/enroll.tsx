@@ -49,10 +49,56 @@ export default function EnrollScreen() {
         ? 'online'
         : mode;
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string>('ALL');
+  const [selectedRound, setSelectedRound] = useState<string>('ALL');
 
   const rounds = useBookableRounds(courseId, effectiveMode === 'inPerson');
   const enroll = useSelfEnroll();
   const formError = useFormError(enroll.error);
+
+  // Derive unique branches from rounds
+  const branchList = Array.from(
+    new Set(
+      (rounds.data || [])
+        .map((r) => r.venue?.branch)
+        .filter((b): b is string => Boolean(b)),
+    ),
+  );
+
+  const roundList = Array.from(
+    new Set(
+      (rounds.data || [])
+        .map((r) => r.roundNumber)
+        .filter((num): num is number => typeof num === 'number'),
+    ),
+  ).sort((a, b) => a - b);
+
+  const displayedRounds = (rounds.data || []).filter((r) => {
+    const matchBranch = selectedBranch === 'ALL' || r.venue?.branch === selectedBranch;
+    const matchRound = selectedRound === 'ALL' || String(r.roundNumber) === selectedRound;
+    return matchBranch && matchRound;
+  });
+
+  const handleFilterChange = (branchVal: string, roundVal: string) => {
+    setSelectedBranch(branchVal);
+    setSelectedRound(roundVal);
+    const nextFiltered = (rounds.data || []).filter((r) => {
+      const matchBranch = branchVal === 'ALL' || r.venue?.branch === branchVal;
+      const matchRound = roundVal === 'ALL' || String(r.roundNumber) === roundVal;
+      return matchBranch && matchRound;
+    });
+    const stillPresent = nextFiltered.some((r) => r.primarySessionId === sessionId);
+    if (!stillPresent) {
+      const firstAvail = nextFiltered.find((r) => !r.isFull);
+      if (firstAvail) {
+        setSessionId(firstAvail.primarySessionId);
+      } else if (nextFiltered.length > 0) {
+        setSessionId(nextFiltered[0].primarySessionId);
+      } else {
+        setSessionId(null);
+      }
+    }
+  };
 
   if (course.isPending) {
     return (
@@ -112,19 +158,161 @@ export default function EnrollScreen() {
 
       {effectiveMode === 'inPerson' ? (
         <View className="gap-3">
-          <AppText variant="label">
-            {t('courses.chooseRound', { defaultValue: t('courses.chooseSession') })}
+          <View className="flex-row items-center justify-between">
+            <AppText variant="label">
+              Step 1: Filter by Round & Branch
+            </AppText>
+            {selectedBranch !== 'ALL' || selectedRound !== 'ALL' ? (
+              <Pressable onPress={() => handleFilterChange('ALL', 'ALL')}>
+                <AppText className="text-xs font-semibold text-brand-600">
+                  Clear filters
+                </AppText>
+              </Pressable>
+            ) : null}
+          </View>
+
+          {/* Branch Venue Filter Pills (First) */}
+          {branchList.length > 0 ? (
+            <View className="gap-1.5">
+              <AppText className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                1. Branch Venue:
+              </AppText>
+              <View className="flex-row flex-wrap gap-2">
+                <Pressable
+                  onPress={() => handleFilterChange('ALL', selectedRound)}
+                  className={cn(
+                    'rounded-xl border px-3 py-2',
+                    selectedBranch === 'ALL'
+                      ? 'border-brand-600 bg-brand-50 dark:bg-brand-950/40'
+                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
+                  )}
+                >
+                  <AppText
+                    className={cn(
+                      'text-xs font-semibold',
+                      selectedBranch === 'ALL'
+                        ? 'text-brand-600'
+                        : 'text-slate-600 dark:text-slate-300',
+                    )}
+                  >
+                    All Branches ({rounds.data?.length ?? 0})
+                  </AppText>
+                </Pressable>
+                {branchList.map((branch) => {
+                  const count = (rounds.data || []).filter(
+                    (r) => r.venue?.branch === branch,
+                  ).length;
+                  const isSelected = selectedBranch === branch;
+                  return (
+                    <Pressable
+                      key={branch}
+                      onPress={() => handleFilterChange(branch, selectedRound)}
+                      className={cn(
+                        'rounded-xl border px-3 py-2',
+                        isSelected
+                          ? 'border-brand-600 bg-brand-50 dark:bg-brand-950/40'
+                          : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
+                      )}
+                    >
+                      <AppText
+                        className={cn(
+                          'text-xs font-semibold',
+                          isSelected
+                            ? 'text-brand-600'
+                            : 'text-slate-600 dark:text-slate-300',
+                        )}
+                      >
+                        {branch} ({count})
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Cohort Round Filter Pills (Then) */}
+          {roundList.length > 0 ? (
+            <View className="gap-1.5">
+              <AppText className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                2. Cohort Round:
+              </AppText>
+              <View className="flex-row flex-wrap gap-2">
+                <Pressable
+                  onPress={() => handleFilterChange(selectedBranch, 'ALL')}
+                  className={cn(
+                    'rounded-xl border px-3 py-2',
+                    selectedRound === 'ALL'
+                      ? 'border-brand-600 bg-brand-50 dark:bg-brand-950/40'
+                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
+                  )}
+                >
+                  <AppText
+                    className={cn(
+                      'text-xs font-semibold',
+                      selectedRound === 'ALL'
+                        ? 'text-brand-600'
+                        : 'text-slate-600 dark:text-slate-300',
+                    )}
+                  >
+                    All Rounds ({rounds.data?.length ?? 0})
+                  </AppText>
+                </Pressable>
+                {roundList.map((rnd) => {
+                  const count = (rounds.data || []).filter(
+                    (r) => r.roundNumber === rnd && (selectedBranch === 'ALL' || r.venue?.branch === selectedBranch),
+                  ).length;
+                  const isSelected = selectedRound === String(rnd);
+                  return (
+                    <Pressable
+                      key={rnd}
+                      onPress={() => handleFilterChange(selectedBranch, String(rnd))}
+                      className={cn(
+                        'rounded-xl border px-3 py-2',
+                        isSelected
+                          ? 'border-brand-600 bg-brand-50 dark:bg-brand-950/40'
+                          : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
+                      )}
+                    >
+                      <AppText
+                        className={cn(
+                          'text-xs font-semibold',
+                          isSelected
+                            ? 'text-brand-600'
+                            : 'text-slate-600 dark:text-slate-300',
+                        )}
+                      >
+                        Round {rnd} ({count})
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
+          <AppText variant="label" className="mt-1">
+            Step 2: Choose Available Round & Venue
           </AppText>
           {rounds.isPending ? (
             <Skeleton height={120} />
           ) : rounds.isError ? (
             <ErrorState error={rounds.error} onRetry={() => void rounds.refetch()} />
-          ) : rounds.data.length === 0 ? (
-            <EmptyState
-              title={t('courses.noRounds', { defaultValue: t('courses.noSessions') })}
-            />
+          ) : displayedRounds.length === 0 ? (
+            <View className="gap-2 items-center py-4">
+              <EmptyState
+                title={t('courses.noRounds', { defaultValue: t('courses.noSessions') })}
+              />
+              {selectedBranch !== 'ALL' || selectedRound !== 'ALL' ? (
+                <Pressable onPress={() => handleFilterChange('ALL', 'ALL')}>
+                  <AppText className="text-xs font-semibold text-brand-600">
+                    Reset filters
+                  </AppText>
+                </Pressable>
+              ) : null}
+            </View>
           ) : (
-            rounds.data.map((round) => (
+            displayedRounds.map((round) => (
               <RoundOption
                 key={round.roundKey}
                 round={round}

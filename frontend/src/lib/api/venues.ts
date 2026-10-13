@@ -78,4 +78,17 @@ export async function fetchCourseRounds(courseId: string): Promise<ApiInPersonRo
   return api<ApiInPersonRound[]>(`live-sessions/in-person/rounds/${courseId}`);
 }
 
+export async function scheduleMultiBranchRounds(
+  body: import("./types").ScheduleMultiBranchRoundsInput,
+): Promise<{ message: string; count: number; rounds: any[] }> {
+  return api<{ message: string; count: number; rounds: any[] }>(
+    "live-sessions/in-person/multi-branch-rounds",
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+
 

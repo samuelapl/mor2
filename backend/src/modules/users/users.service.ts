@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ApprovalStatus, Prisma, RoleName } from '@prisma/client';
+import { ApprovalStatus, Prisma, RoleName, TrainerDeliveryType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@config/prisma.service';
 import {
@@ -35,7 +35,14 @@ export class UsersService {
     private readonly emailQueue: EmailQueue,
   ) {}
 
-  async findAll(query: PaginationQuery & { role?: RoleName; registrationStatus?: ApprovalStatus }) {
+  async findAll(
+    query: PaginationQuery & {
+      role?: RoleName;
+      registrationStatus?: ApprovalStatus;
+      trainerType?: TrainerDeliveryType;
+      venueId?: string;
+    },
+  ) {
     const { page, limit, skip } = buildPaginationArgs(query);
     const searchFilter = buildSearchFilter(query.search, ['firstName', 'lastName', 'email']);
     const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
@@ -45,6 +52,8 @@ export class UsersService {
       ...(searchFilter as any),
       ...(query.role ? { roles: { some: { role: query.role } } } : {}),
       ...(query.registrationStatus ? { registrationStatus: query.registrationStatus } : {}),
+      ...(query.trainerType ? { trainerType: { in: [query.trainerType, 'BOTH'] } } : {}),
+      ...(query.venueId ? { primaryVenueId: query.venueId } : {}),
     };
 
     const [users, total] = await Promise.all([
@@ -332,6 +341,7 @@ export class UsersService {
         isActive: true,
         mustChangePassword: dto.mustChangePassword ?? false,
         primaryVenueId: dto.primaryVenueId || null,
+        trainerType: dto.trainerType || 'ONLINE',
         roles: {
           create: { role: roleName },
         },

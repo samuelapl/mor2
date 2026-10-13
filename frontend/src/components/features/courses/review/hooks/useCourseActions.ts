@@ -39,8 +39,8 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
   const status = course?.status;
   const editable = status === 'draft' || status === 'rejected';
   const isPrivilegedAdmin = hasRole('training_admin') || hasRole('system_admin');
-  /** A trainer is only required when the course has planned online sessions (self-paced courses publish without one). */
-  const requiresTrainer = (course?.sessionPlans?.length ?? 0) > 0;
+  /** A trainer is only required when the course has planned online sessions (in-person courses have trainers assigned per branch round; self-paced courses publish without one). */
+  const requiresTrainer = (course?.sessionPlans?.length ?? 0) > 0 && course?.deliveryMode !== 'IN_PERSON_ONLY';
 
   const can: Record<CourseActionKey, boolean> = {
     edit: Boolean(course) && (hasPermission('course.update.own') || hasPermission('course.update.all')) && editable,
@@ -62,6 +62,7 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
   };
 
   const needsTrainerOptions = requiresTrainer && (can.assignTrainer || can.publish);
+
   useEffect(() => {
     if (!needsTrainerOptions) {
       setTrainerOptions([]);
@@ -70,7 +71,7 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetchTrainers();
+        const res = await fetchTrainers(course?.deliveryMode === 'ONLINE_ONLY' ? { deliveryType: 'ONLINE' } : undefined);
         if (!cancelled) setTrainerOptions(res.data.map(userFromApi).filter((u) => u.status === 'active'));
       } catch {
         // trainer picker is best-effort
@@ -79,7 +80,7 @@ export function useCourseActions(course: Course | undefined, opts: { onDeleted?:
     return () => {
       cancelled = true;
     };
-  }, [needsTrainerOptions]);
+  }, [needsTrainerOptions, course?.deliveryMode]);
 
   /** Wraps an action so the busy flag is always reset, even if the store throws. */
   const withBusy = async <T>(fn: () => Promise<T>): Promise<T> => {

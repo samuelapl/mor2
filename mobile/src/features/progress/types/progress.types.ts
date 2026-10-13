@@ -118,6 +118,18 @@ export interface LearnerSession {
   status: 'TO_BE_SCHEDULED' | 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED';
   attended: boolean;
   planned: boolean;
+  sessionType?: string | null;
+  venueId?: string | null;
+  venue?: {
+    id: string;
+    name: string;
+    branch?: string | null;
+    building?: string | null;
+    room?: string | null;
+    capacity?: number | null;
+    address?: string | null;
+    directions?: string | null;
+  } | null;
   /** Seconds until an upcoming session starts, on the server clock when it was loaded. */
   startsInSeconds?: number | null;
   /** Earlier held rounds of this planned session the learner missed (oldest first). */

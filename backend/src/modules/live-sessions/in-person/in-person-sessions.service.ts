@@ -13,7 +13,10 @@ import {
   SessionType,
 } from '@prisma/client';
 import { PrismaService } from '@config/prisma.service';
-import { ScheduleInPersonRoundDto } from './dto/schedule-in-person-round.dto';
+import {
+  ScheduleInPersonRoundDto,
+  ScheduleMultiBranchRoundsDto,
+} from './dto/schedule-in-person-round.dto';
 
 /** Either the root client or an interactive-transaction client. */
 type Db = PrismaService | Prisma.TransactionClient;
@@ -248,6 +251,22 @@ export class InPersonSessionsService {
         const plan = slot.sessionPlanId ? planMap.get(slot.sessionPlanId) : undefined;
         const assignedTrainerId = slot.trainerId || dto.trainerId || plan?.trainerId || null;
 
+        if (assignedTrainerId) {
+          const trainer = await tx.user.findUnique({
+            where: { id: assignedTrainerId },
+            select: { primaryVenueId: true, trainerType: true, firstName: true, lastName: true },
+          });
+          if (
+            trainer?.trainerType === 'IN_PERSON' &&
+            trainer.primaryVenueId &&
+            trainer.primaryVenueId !== dto.venueId
+          ) {
+            throw new BadRequestException(
+              `Trainer ${trainer.firstName} ${trainer.lastName} is registered at a different branch and cannot be assigned to venue "${venue.name}" (${venue.branch}).`,
+            );
+          }
+        }
+
         // If the CourseSessionPlan does not yet have a primary liveSession linked, link it now
         // so the course review checklist marks this planned classroom session as scheduled!
         const hasActivePlanLink = plan?.liveSession && !plan.liveSession.deletedAt;
@@ -326,6 +345,34 @@ export class InPersonSessionsService {
       roundNumber,
       count: createdSessions.length,
       data: createdSessions,
+    };
+  }
+
+  /**
+   * Schedules In-Person Cohort Rounds across multiple branch venues at once.
+   * Validates each branch venue and ensures assigned in-person trainers belong to the respective branch.
+   */
+  async scheduleMultiBranchRounds(dto: ScheduleMultiBranchRoundsDto) {
+    if (!dto.branches || dto.branches.length === 0) {
+      throw new BadRequestException('At least one branch allocation is required to schedule rounds');
+    }
+
+    const scheduledRounds: any[] = [];
+    for (const branch of dto.branches) {
+      const result = await this.scheduleRound({
+        courseId: dto.courseId,
+        venueId: branch.venueId,
+        trainerId: branch.trainerId,
+        roundNumber: branch.roundNumber,
+        sessions: branch.sessions,
+      });
+      scheduledRounds.push(result);
+    }
+
+    return {
+      message: `Successfully scheduled rounds across ${scheduledRounds.length} branch venue(s).`,
+      count: scheduledRounds.length,
+      rounds: scheduledRounds,
     };
   }
 

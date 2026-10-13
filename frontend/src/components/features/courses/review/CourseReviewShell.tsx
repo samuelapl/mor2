@@ -78,14 +78,20 @@ export function CourseReviewShell({ courseId }: { courseId: string }) {
 
   // Each planned session needs a trainer and a schedule; point at the first one that is not ready.
   const handlePublish = () => {
-    const notReady = (course?.sessionPlans ?? []).filter((p) => !sessionPlanTrainerId(p) || !p.liveSession);
+    const isInPerson = course?.deliveryMode === 'IN_PERSON_ONLY';
+    const notReady = (course?.sessionPlans ?? []).filter((p) => {
+      if (isInPerson) {
+        return !p.liveSession;
+      }
+      return !sessionPlanTrainerId(p) || !p.liveSession;
+    });
     if (notReady.length === 0) {
       void actions.publish();
       return;
     }
     const first = notReady[0]!;
     const missing = [
-      !sessionPlanTrainerId(first) && t('courseReviewShell.noTrainerAssigned'),
+      !isInPerson && !sessionPlanTrainerId(first) && t('courseReviewShell.noTrainerAssigned'),
       !first.liveSession && t('courseReviewShell.notScheduledYet'),
     ].filter(Boolean);
     toast.error(

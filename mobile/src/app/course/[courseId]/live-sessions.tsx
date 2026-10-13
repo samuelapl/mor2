@@ -137,6 +137,16 @@ export default function CourseLiveSessionsScreen() {
                         : ''}
                     </AppText>
                     <StartsInBadge seconds={s.startsInSeconds} />
+                    {s.venue ? (
+                      <View className="flex-row items-center gap-1.5 pt-0.5">
+                        <Building2 size={13} color="#d97706" />
+                        <AppText className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                          {[s.venue.branch, s.venue.name, s.venue.building ? `(${s.venue.building})` : null]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </AppText>
+                      </View>
+                    ) : null}
                     {s.platform || s.trainerName ? (
                       <AppText variant="caption">
                         {[
@@ -151,27 +161,63 @@ export default function CourseLiveSessionsScreen() {
                     ) : null}
                   </View>
                   <View className="flex-row items-center gap-1">
+                    {s.attended ? (
+                      <Badge label={t('courseSessions.attended')} tone="success" />
+                    ) : null}
                     <badge.icon size={14} color={colors.textMuted} />
                     <Badge label={badge.label} tone={badge.tone} />
                   </View>
                 </View>
-                {joinable ? (
-                  <Button
-                    title={
-                      s.status === 'LIVE'
-                        ? t('courseSessions.joinNow')
-                        : t('courseSessions.viewSession')
-                    }
-                    size="sm"
-                    variant={s.status === 'LIVE' ? 'primary' : 'outline'}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/session/[sessionId]',
-                        params: { sessionId: s.sessionId! },
-                      })
-                    }
-                  />
-                ) : null}
+                <View className="flex-row flex-wrap items-center gap-2 pt-1">
+                  {joinable ? (
+                    <Button
+                      title={
+                        s.status === 'LIVE'
+                          ? t('courseSessions.joinNow')
+                          : t('courseSessions.viewSession')
+                      }
+                      size="sm"
+                      variant={s.status === 'LIVE' ? 'primary' : 'outline'}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/session/[sessionId]',
+                          params: { sessionId: s.sessionId! },
+                        })
+                      }
+                    />
+                  ) : null}
+                  {isInPerson && s.venue?.id ? (
+                    <Button
+                      title={t('sessions.venue', { defaultValue: 'Venue' })}
+                      size="sm"
+                      variant="outline"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/venue/[venueId]',
+                          params: { venueId: s.venue!.id },
+                        })
+                      }
+                    />
+                  ) : null}
+                  {isInPerson && s.sessionId ? (
+                    <Button
+                      title={
+                        s.attended
+                          ? t('courseSessions.attended', { defaultValue: 'Checked In' })
+                          : t('sessions.checkIn', { defaultValue: 'Classroom Check-In' })
+                      }
+                      size="sm"
+                      variant={s.attended ? 'outline' : 'primary'}
+                      disabled={s.attended}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/session/[sessionId]/check-in',
+                          params: { sessionId: s.sessionId! },
+                        })
+                      }
+                    />
+                  ) : null}
+                </View>
                 {s.status === 'COMPLETED' && s.sessionId ? (
                   <View className="border-t border-slate-100 pt-3 dark:border-slate-800">
                     <SessionQuizResults sessionId={s.sessionId} />

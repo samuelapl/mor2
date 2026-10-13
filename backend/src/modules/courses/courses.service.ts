@@ -8,6 +8,7 @@ import {
 import { PermissionsService } from '@modules/permissions/permissions.service';
 import {
   ApprovalStatus,
+  CourseDeliveryMode,
   CourseStatus,
   EnrollmentStatus,
   NotificationType,
@@ -859,7 +860,11 @@ export class CoursesService {
    * and each session quiz has questions.
    */
   private async assertSessionsReadyToPublish(courseId: string) {
-    const [plans, activeOriginalSessions] = await Promise.all([
+    const [courseRecord, plans, activeOriginalSessions] = await Promise.all([
+      this.prisma.course.findUnique({
+        where: { id: courseId },
+        select: { deliveryMode: true },
+      }),
       this.prisma.courseSessionPlan.findMany({
         where: { courseId },
         orderBy: { order: 'asc' },
@@ -882,6 +887,7 @@ export class CoursesService {
         select: { originalPlanId: true, trainerId: true },
       }),
     ]);
+    const isInPerson = courseRecord?.deliveryMode === CourseDeliveryMode.IN_PERSON_ONLY;
     const fallbackByPlan = new Map<string, { trainerId: string | null }>();
     for (const s of activeOriginalSessions) {
       if (s.originalPlanId && !fallbackByPlan.has(s.originalPlanId)) {
@@ -892,8 +898,11 @@ export class CoursesService {
     for (const plan of plans) {
       const directSession = plan.liveSession && !plan.liveSession.deletedAt ? plan.liveSession : null;
       const session = directSession ?? fallbackByPlan.get(plan.id) ?? null;
-      if (!(session?.trainerId ?? plan.trainerId))
+      if (!isInPerson && !(session?.trainerId ?? plan.trainerId)) {
         problems.push(`"${plan.titleEn}" has no trainer assigned`);
+      } else if (isInPerson && session && !session.trainerId) {
+        problems.push(`"${plan.titleEn}" has no branch trainer assigned`);
+      }
       if (!session) problems.push(`"${plan.titleEn}" is not scheduled yet`);
       for (const quiz of plan.assessments) {
         if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
@@ -902,7 +911,11 @@ export class CoursesService {
       }
     }
     if (problems.length > 0) {
-      throw new BadRequestException(`Online sessions are not ready: ${problems.join('; ')}.`);
+      throw new BadRequestException(
+        isInPerson
+          ? `Classroom sessions are not ready: ${problems.join('; ')}.`
+          : `Online sessions are not ready: ${problems.join('; ')}.`,
+      );
     }
   }
 

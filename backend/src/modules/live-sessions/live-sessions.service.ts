@@ -88,13 +88,46 @@ export class LiveSessionsService {
     });
     if (enrollments.length === 0) return { id: { in: [] } };
 
+    const bookedSessionIds = enrollments
+      .map((e) => e.sessionId)
+      .filter((sid): sid is string => Boolean(sid));
+
+    const bookedSessions =
+      bookedSessionIds.length > 0
+        ? await this.prisma.liveSession.findMany({
+            where: { id: { in: bookedSessionIds } },
+            select: { id: true, courseId: true, venueId: true, rescheduleStatus: true },
+          })
+        : [];
+
+    const bookedSessionMap = new Map(bookedSessions.map((s) => [s.id, s]));
+
     return {
       OR: enrollments.map((e): Prisma.LiveSessionWhereInput => {
         if (!isInPersonEnrollment(e)) {
           return { courseId: e.courseId, sessionType: SessionType.VIRTUAL, venueId: null };
         }
         if (e.sessionId) {
-          return { id: e.sessionId, courseId: e.courseId };
+          const booked = bookedSessionMap.get(e.sessionId);
+          if (booked?.rescheduleStatus?.startsWith('ROUND_') && booked.venueId) {
+            return {
+              courseId: e.courseId,
+              OR: [
+                {
+                  venueId: booked.venueId,
+                  rescheduleStatus: booked.rescheduleStatus,
+                },
+                { attendees: { some: { userId } } },
+              ],
+            };
+          }
+          return {
+            courseId: e.courseId,
+            OR: [
+              { id: e.sessionId },
+              { attendees: { some: { userId } } },
+            ],
+          };
         }
         return e.venueId
           ? { courseId: e.courseId, venueId: e.venueId }

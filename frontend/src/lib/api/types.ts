@@ -101,6 +101,7 @@ export interface ApiUser {
   roles: ApiUserRole[];
   primaryVenueId?: string | null;
   primaryVenue?: ApiVenue | null;
+  trainerType?: 'ONLINE' | 'IN_PERSON' | 'BOTH';
   /** Whether in-app notifications are also emailed. */
   emailNotifications?: boolean;
 }
@@ -548,6 +549,9 @@ export interface ApiLearnerSession {
   startsInSeconds?: number | null;
   /** Earlier held rounds of this planned session the learner missed (oldest first). */
   missedRounds?: ApiMissedRound[];
+  sessionType?: 'VIRTUAL' | 'IN_PERSON' | string | null;
+  venueId?: string | null;
+  venue?: ApiVenue | null;
 }
 
 export interface ApiMissedRound {
@@ -766,12 +770,31 @@ export interface ScheduleInPersonRoundInput {
   sessions: RoundSessionSlotInput[];
 }
 
+export interface BranchRoundAllocationInput {
+  venueId: string;
+  trainerId?: string;
+  roundNumber?: number;
+  sessions: RoundSessionSlotInput[];
+}
+
+export interface ScheduleMultiBranchRoundsInput {
+  courseId: string;
+  branches: BranchRoundAllocationInput[];
+}
+
 export interface ApiInPersonRound {
   roundKey: string;
   roundNumber: number;
   roundLabel: string;
   venueId: string | null;
   venue: ApiVenue | null;
+  trainer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatarUrl?: string | null;
+  } | null;
   capacity: number;
   bookedSeats: number;
   seatsLeft: number;
@@ -796,6 +819,8 @@ export interface ApiLiveSession {
   startsInSeconds?: number | null;
   /** Set when the session was scheduled from a course's planned session. */
   sessionPlanId?: string | null;
+  originalPlanId?: string | null;
+  plannedOrder?: number | null;
   titleAm: string;
   titleEn: string;
   descriptionAm: string | null;
@@ -1099,6 +1124,7 @@ export interface CreateActorBody {
   phone?: string;
   locale?: 'en' | 'am';
   primaryVenueId?: string;
+  trainerType?: 'ONLINE' | 'IN_PERSON' | 'BOTH';
   mustChangePassword?: boolean;
 }
 

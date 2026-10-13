@@ -156,8 +156,9 @@ flowchart TD
 ## Execution Checklist
 
 | Phase | Milestone | Key Deliverables | Status |
-| :--- | :--- | :--- | :---: |
-| **Phase 1** | **Backend Foundation** | `TrainerDeliveryType` in schema, branch-filtered trainer query, multi-branch round scheduler, decoupling in-person approval from trainer assignment, roster bug fix. | **Pending** |
-| **Phase 2** | **Web Frontend Experience** | Multi-branch scheduler UI with info icons, branch-filtered trainer picker, trainer registration with branch binding, branch-first learner round enrollment. | **Pending** |
-| **Phase 3** | **Mobile App & Seed Verification** | Mobile branch filter & round picker, all round sessions listed, direct syllabus check-in button, PIN code fix, 2 trainers per branch seed, full E2E test. | **Pending** |
+| :--- | :--- | :--- | :--- |
+| **Phase 1** | **Backend Foundation** | `TrainerDeliveryType` in schema, branch-filtered trainer query, multi-branch round scheduler, decoupling in-person approval from trainer assignment, roster bug fix. | **Completed** |
+| **Phase 2** | **Web Frontend Experience** | Multi-branch scheduler UI with info icons, branch-filtered trainer picker, trainer registration with branch binding, branch-first learner round enrollment. | **Completed** |
+| **Phase 3** | **Mobile App & Seed Verification** | Mobile branch filter & round picker, all round sessions listed, direct syllabus check-in button, PIN code fix, 2 trainers per branch seed, full E2E test. | **Completed** |
+
 

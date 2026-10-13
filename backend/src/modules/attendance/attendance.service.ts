@@ -15,7 +15,16 @@ export class AttendanceService {
   ) {}
 
   private async getSessionOrFail(sessionId: string) {
-    const session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
+    let session = await this.prisma.liveSession.findUnique({ where: { id: sessionId } });
+    if (!session || session.deletedAt) {
+      session = await this.prisma.liveSession.findFirst({
+        where: {
+          OR: [{ originalPlanId: sessionId }, { sessionPlanId: sessionId }],
+          deletedAt: null,
+          status: { in: [SessionStatus.SCHEDULED, SessionStatus.LIVE] },
+        },
+      });
+    }
     if (!session || session.deletedAt) {
       throw new NotFoundException('Live session not found');
     }

@@ -152,7 +152,11 @@ export function ReviewHeader({
             onClick={onPublish}
             className="gap-1.5 bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700"
             title={
-              course.trainerId || !(course.sessionPlans?.length ?? 0)
+              course.deliveryMode === 'IN_PERSON_ONLY'
+                ? ((course.sessionPlans?.every((p) => p.liveSession) ?? true)
+                    ? t('reviewHeader.publishThisCourseToAllLearners')
+                    : 'Schedule classroom sessions and assign branch trainers before publishing')
+                : course.trainerId || !(course.sessionPlans?.length ?? 0)
                 ? t('reviewHeader.publishThisCourseToAllLearners')
                 : t('reviewHeader.assignATrainerBeforePublishing')
             }

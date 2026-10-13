@@ -81,3 +81,41 @@ export class ScheduleInPersonRoundDto {
   sessions!: RoundSessionSlotDto[];
 }
 
+export class BranchRoundAllocationDto {
+  @ApiProperty({ example: 'venue-uuid-1' })
+  @IsString()
+  @IsNotEmpty()
+  venueId!: string;
+
+  @ApiPropertyOptional({ example: 'trainer-uuid-1' })
+  @IsOptional()
+  @IsString()
+  trainerId?: string;
+
+  @ApiPropertyOptional({ example: 1, description: 'Explicit round number (auto-calculated per venue if omitted)' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  roundNumber?: number;
+
+  @ApiProperty({ type: [RoundSessionSlotDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RoundSessionSlotDto)
+  sessions!: RoundSessionSlotDto[];
+}
+
+export class ScheduleMultiBranchRoundsDto {
+  @ApiProperty({ example: 'course-uuid-1' })
+  @IsString()
+  @IsNotEmpty()
+  courseId!: string;
+
+  @ApiProperty({ type: [BranchRoundAllocationDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BranchRoundAllocationDto)
+  branches!: BranchRoundAllocationDto[];
+}
+
+

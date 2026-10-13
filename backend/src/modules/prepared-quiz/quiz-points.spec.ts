@@ -31,4 +31,3 @@ describe('isEvenSplit', () => {
     expect(isEvenSplit([], 10)).toBe(true);
   });
 });
-

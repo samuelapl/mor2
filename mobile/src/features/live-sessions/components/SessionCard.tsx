@@ -1,8 +1,9 @@
+import { router } from 'expo-router';
 import { CalendarDays, MapPin, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { AppText, Badge, Card } from '@/components/ui';
+import { AppText, Badge, Button, Card } from '@/components/ui';
 import { useLocaleStore, useLocalized } from '@/core/i18n';
 import { useThemeColors } from '@/core/theme/colors';
 import { formatTime } from '@/core/utils/formatters';
@@ -59,6 +60,38 @@ export function SessionCard({
             : t(`sessions.platform.${session.platform}`)}
         </AppText>
       </View>
+      {inPerson && (session.venue?.id || session.id) ? (
+        <View className="flex-row items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+          {session.venue?.id ? (
+            <View className="flex-1">
+              <Button
+                title={t('sessions.venue', { defaultValue: 'Venue' })}
+                size="sm"
+                variant="outline"
+                onPress={() =>
+                  router.push({
+                    pathname: '/venue/[venueId]',
+                    params: { venueId: session.venue!.id },
+                  })
+                }
+              />
+            </View>
+          ) : null}
+          <View className="flex-1">
+            <Button
+              title={t('sessions.checkIn', { defaultValue: 'Check-In' })}
+              size="sm"
+              variant="primary"
+              onPress={() =>
+                router.push({
+                  pathname: '/session/[sessionId]/check-in',
+                  params: { sessionId: session.id },
+                })
+              }
+            />
+          </View>
+        </View>
+      ) : null}
     </Card>
   );
 }

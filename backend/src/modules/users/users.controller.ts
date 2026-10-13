@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { ApprovalStatus, RoleName } from '@prisma/client';
+import { ApprovalStatus, RoleName, TrainerDeliveryType } from '@prisma/client';
 import { UsersService } from './users.service';
 import {
   UpdateUserDto,
@@ -53,8 +53,18 @@ export class UsersController {
   @ApiOperation({
     summary: 'List active trainers (trainer-assignment and session scheduling pickers)',
   })
-  async findTrainers() {
-    return this.usersService.findAll({ role: RoleName.TRAINER, limit: 100 });
+  @ApiQuery({ name: 'deliveryType', enum: ['ONLINE', 'IN_PERSON', 'BOTH'], required: false })
+  @ApiQuery({ name: 'venueId', type: String, required: false })
+  async findTrainers(
+    @Query('deliveryType') deliveryType?: TrainerDeliveryType,
+    @Query('venueId') venueId?: string,
+  ) {
+    return this.usersService.findAll({
+      role: RoleName.TRAINER,
+      limit: 100,
+      trainerType: deliveryType,
+      venueId,
+    });
   }
 
   @Get(':id')

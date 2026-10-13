@@ -49,6 +49,11 @@ export class CreateActorDto {
   @IsString()
   primaryVenueId?: string;
 
+  @ApiPropertyOptional({ enum: ['ONLINE', 'IN_PERSON', 'BOTH'], default: 'ONLINE' })
+  @IsOptional()
+  @IsEnum(['ONLINE', 'IN_PERSON', 'BOTH'])
+  trainerType?: 'ONLINE' | 'IN_PERSON' | 'BOTH';
+
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()

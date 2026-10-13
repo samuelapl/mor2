@@ -61,6 +61,9 @@ export interface LearnerSessionInfo {
    * so they can see what they missed above the round they can still attend.
    */
   missedRounds: MissedRoundInfo[];
+  sessionType?: string | null;
+  venueId?: string | null;
+  venue?: any | null;
 }
 
 export interface MissedRoundInfo {
@@ -433,6 +436,9 @@ export class ProgressService {
           scheduledAt: true,
           durationMinutes: true,
           platform: true,
+          sessionType: true,
+          venueId: true,
+          venue: true,
           status: true,
           trainer: { select: { firstName: true, lastName: true } },
           attendees: { where: { userId }, select: { status: true } },
@@ -445,12 +451,15 @@ export class ProgressService {
     ]);
 
     const toInfo = (s: (typeof sessions)[number], planId: string | null): LearnerSessionInfo => ({
-      id: planId ?? s.id,
+      id: s.id,
       sessionId: s.id,
       titleEn: s.titleEn,
       scheduledAt: s.scheduledAt.toISOString(),
       durationMinutes: s.durationMinutes,
       platform: s.platform,
+      sessionType: s.sessionType,
+      venueId: s.venueId,
+      venue: s.venue,
       trainerName: s.trainer ? `${s.trainer.firstName} ${s.trainer.lastName}`.trim() : null,
       status: s.status,
       attended: s.attendees.some((a) => a.status === 'PRESENT' || a.status === 'LATE'),
@@ -477,6 +486,19 @@ export class ProgressService {
           scheduledAt: s.scheduledAt.toISOString(),
           durationMinutes: s.durationMinutes,
         }));
+
+    // If the learner is enrolled in specific sessions/round (has Attendance rows),
+    // return all sessions they are registered for in chronological order!
+    const enrolledSessions = sessions.filter((s) => s.attendees.length > 0);
+    if (enrolledSessions.length > 0) {
+      return enrolledSessions.map((s) => {
+        const planId = s.sessionPlanId ?? s.originalPlanId;
+        return {
+          ...toInfo(s, planId),
+          missedRounds: planId ? missedRoundsOf(planId, s.id) : [],
+        };
+      });
+    }
 
     const byId = new Map(sessions.map((s) => [s.id, s]));
     const planned = plans.map((p): LearnerSessionInfo => {

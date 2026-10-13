@@ -28,6 +28,7 @@ export interface RegisterActorInput {
   role: Role | string;
   phone?: string;
   primaryVenueId?: string;
+  trainerType?: 'ONLINE' | 'IN_PERSON' | 'BOTH';
   mustChangePassword?: boolean;
 }
 
@@ -199,6 +200,7 @@ export const useUserStore = create<UserStore>()((set, get) => ({
         role: roleToApi(input.role),
         phone: input.phone || undefined,
         primaryVenueId: input.primaryVenueId || undefined,
+        trainerType: input.trainerType || undefined,
         mustChangePassword: input.mustChangePassword,
       });
       await reloadAll();

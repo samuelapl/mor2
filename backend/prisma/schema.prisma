@@ -57,6 +57,7 @@ model User {
   mustChangePassword Boolean @default(false) @map("must_change_password")
   primaryVenueId String?  @map("primary_venue_id")
   primaryVenue   Venue?   @relation("TrainerPrimaryVenue", fields: [primaryVenueId], references: [id], onDelete: SetNull)
+  trainerType    TrainerDeliveryType @default(ONLINE) @map("trainer_type")
 
   // Polymorphic role assignment — a user may hold multiple roles
   roles                   UserRole[]
@@ -125,6 +126,13 @@ enum RoleName {
   LEARNER
   SYSTEM_ADMIN
 }
+
+enum TrainerDeliveryType {
+  ONLINE
+  IN_PERSON
+  BOTH
+}
+
 
 model UserRole {
   id        String   @id @default(uuid())

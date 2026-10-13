@@ -10,6 +10,7 @@ import {
   Trophy,
   Video,
 } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -485,27 +486,76 @@ function LiveSessionsRow({
   const Icon = isInPerson ? Building2 : Video;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      className="flex-row items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 active:opacity-80 dark:border-sky-900 dark:bg-sky-950/30"
-    >
-      <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/50">
-        <Icon size={19} color="#0284c7" />
-      </View>
-      <View className="flex-1">
-        <AppText className="text-sm font-bold text-slate-900 dark:text-white">
-          {isInPerson
-            ? t('courseSessions.classroomTitle', { defaultValue: 'Classroom Sessions' })
-            : t('courseSessions.title')}
-        </AppText>
-        <AppText variant="caption">
-          {t('courseSessions.heldOf', { held, total: sessions.length })}
-        </AppText>
-      </View>
-      {live ? <Badge label={t('courseSessions.liveNow')} tone="live" /> : null}
-      <ChevronRight size={18} color={colors.textMuted} />
-    </Pressable>
+    <View className="gap-2 rounded-xl border border-sky-200 bg-sky-50 p-3.5 dark:border-sky-900 dark:bg-sky-950/30">
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        className="flex-row items-center gap-3 active:opacity-80"
+      >
+        <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/50">
+          <Icon size={19} color="#0284c7" />
+        </View>
+        <View className="flex-1">
+          <AppText className="text-sm font-bold text-slate-900 dark:text-white">
+            {isInPerson
+              ? t('courseSessions.classroomTitle', { defaultValue: 'Classroom Sessions' })
+              : t('courseSessions.title')}
+          </AppText>
+          <AppText variant="caption">
+            {t('courseSessions.heldOf', { held, total: sessions.length })}
+          </AppText>
+        </View>
+        {live ? <Badge label={t('courseSessions.liveNow')} tone="live" /> : null}
+        <ChevronRight size={18} color={colors.textMuted} />
+      </Pressable>
+
+      {/* Classroom Quick Check-In cards when enrolled in an in-person round */}
+      {isInPerson && sessions.length > 0 ? (
+        <View className="gap-1.5 border-t border-sky-200/60 pt-2.5 dark:border-sky-800/60">
+          {sessions.map((s, idx) => {
+            const isAttended = s.attended || s.status === 'COMPLETED';
+            const canCheckIn = (s.status === 'LIVE' || s.status === 'SCHEDULED') && !isAttended && s.sessionId;
+
+            return (
+              <View
+                key={s.id}
+                className="flex-row items-center justify-between rounded-lg bg-white/80 p-2 dark:bg-slate-900/60"
+              >
+                <View className="flex-1 pr-2">
+                  <AppText className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    {idx + 1}. {s.titleEn}
+                  </AppText>
+                  <AppText variant="caption" className="text-[11px] text-slate-500">
+                    {s.trainerName ? `${s.trainerName} · ` : ''}
+                    {s.scheduledAt ? s.scheduledAt.slice(0, 10) : 'Date TBA'}
+                  </AppText>
+                </View>
+
+                {isAttended ? (
+                  <Badge label="Attended" tone="success" />
+                ) : canCheckIn ? (
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: '/session/[sessionId]/check-in',
+                        params: { sessionId: s.sessionId! },
+                      })
+                    }
+                    className="rounded-lg bg-brand-600 px-3 py-1.5 active:opacity-80"
+                  >
+                    <AppText className="text-xs font-bold text-white">
+                      Check In
+                    </AppText>
+                  </Pressable>
+                ) : (
+                  <Badge label={s.status} tone="neutral" />
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
   );
 }
 

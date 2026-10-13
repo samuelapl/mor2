@@ -266,10 +266,10 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
         moduleIndex: 9999,
         quizId: finalAssessment.id,
         quizKind: 'FINAL_ASSESSMENT',
-        unlocked: !isInPerson && (isOpenProgression || (contentCompleted && allLiveSessionsAttended)),
+        unlocked: isOpenProgression || (contentCompleted && allLiveSessionsAttended),
         completed: finalPassed,
         assessment: finalAssessment,
-        isInPersonLocked: isInPerson,
+        isInPersonLocked: false,
       });
     }
 
@@ -277,9 +277,8 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
     const finalPassed = progress?.courseCompletion.finalAssessmentPassed ?? false;
     const contentCompleted = progress?.courseCompletion.contentCompleted ?? false;
     const isCompleted =
-      !isInPerson &&
-      (progress?.courseCompletion.certificateEligible ??
-        (contentCompleted && (!finalAssessment || finalPassed) && allLiveSessionsAttended));
+      progress?.courseCompletion.certificateEligible ??
+      (contentCompleted && (!finalAssessment || finalPassed) && allLiveSessionsAttended);
 
     items.push({
       key: 'course-certificate',
@@ -289,7 +288,7 @@ export function useClassroomNavigation({ course, progress }: UseClassroomNavigat
       moduleIndex: 10000,
       unlocked: isCompleted,
       completed: isCompleted,
-      isInPersonLocked: isInPerson,
+      isInPersonLocked: false,
     });
 
     return items;

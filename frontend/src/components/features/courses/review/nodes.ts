@@ -74,7 +74,9 @@ export function buildIssueMap(course: Course, assessments: AssessmentsByScope): 
     const planIssues: string[] = [];
     if (!plan.titleEn?.trim()) planIssues.push('Session title is missing');
     if (course.status === 'approved' || course.status === 'published') {
-      if (!sessionPlanTrainerId(plan)) planIssues.push('Trainer not assigned (blocks publishing)');
+      if (course.deliveryMode !== 'IN_PERSON_ONLY' && !sessionPlanTrainerId(plan)) {
+        planIssues.push('Trainer not assigned (blocks publishing)');
+      }
       if (!plan.liveSession) planIssues.push('Not scheduled yet (blocks publishing)');
       plan.quizzes.forEach((q) => {
         const prepared = assessments.all.find((a) => a.id === q.id);

@@ -4,6 +4,7 @@ import { formatDuration, getCourseDurationMinutes } from '@/lib/duration';
 import { useMemo } from 'react';
 import {
   BookOpen,
+  Building2,
   Clock,
   FileQuestion,
   Layers,
@@ -154,23 +155,30 @@ export function OverviewStage({
                 <UserRound className="h-3.5 w-3.5 text-primary" />
                 {t('overviewStage.owner')} {userName(course.ownerId)}
               </Chip>
-              {sessionTrainers.map(({ plan, number, trainerId }) =>
-                trainerId ? (
-                  <Chip key={plan.id}>
-                    <UserRound className="h-3.5 w-3.5 text-primary" />
-                    <span title={plan.titleEn}>
-                      {t('overviewStage.session', { number })} {userName(trainerId)}
+              {course.deliveryMode === 'IN_PERSON_ONLY' ? (
+                <Chip>
+                  <Building2 className="h-3.5 w-3.5 text-warning" />
+                  In-Person Classroom Course
+                </Chip>
+              ) : (
+                sessionTrainers.map(({ plan, number, trainerId }) =>
+                  trainerId ? (
+                    <Chip key={plan.id}>
+                      <UserRound className="h-3.5 w-3.5 text-primary" />
+                      <span title={plan.titleEn}>
+                        {t('overviewStage.session', { number })} {userName(trainerId)}
+                      </span>
+                    </Chip>
+                  ) : (
+                    <span
+                      key={plan.id}
+                      title={plan.titleEn}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning"
+                    >
+                      {t('overviewStage.sessionNoTrainerAssigned', { number })}
                     </span>
-                  </Chip>
-                ) : (
-                  <span
-                    key={plan.id}
-                    title={plan.titleEn}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning"
-                  >
-                    {t('overviewStage.sessionNoTrainerAssigned', { number })}
-                  </span>
-                ),
+                  ),
+                )
               )}
               {otherTrainers.length > 0 && (
                 <Chip>

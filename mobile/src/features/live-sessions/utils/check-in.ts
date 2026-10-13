@@ -5,10 +5,14 @@
  * The backend itself does not validate codes (spec §8.6) — these checks stop mistaken check-ins.
  */
 
-export const pinFor = (sessionId: string) => sessionId.slice(-6).toUpperCase();
+export const pinFor = (sessionId: string) => (sessionId || '').slice(-6).toUpperCase();
 
 export function isValidPin(sessionId: string, pin: string): boolean {
-  return pin.trim().toUpperCase() === pinFor(sessionId);
+  if (!sessionId || !pin) return false;
+  const normalizedPin = pin.trim().toUpperCase();
+  const rawPin = pinFor(sessionId);
+  const alnumPin = (sessionId.replace(/[^a-zA-Z0-9]/g, '')).slice(-6).toUpperCase();
+  return normalizedPin === rawPin || normalizedPin === alnumPin;
 }
 
 /** Returns the session id encoded in a scanned QR, or null if it isn't an ELTMS check-in code. */

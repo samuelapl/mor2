@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  Building2,
   CalendarClock,
   CheckCircle2,
   Clock,
   Globe,
   Info,
   Loader2,
+  MapPin,
   Radio,
   User,
   Video,
@@ -19,6 +21,8 @@ import { StartsInBadge } from '@/components/features/sessions/shared/StartsInBad
 import type { ApiLearnerSession } from '@/lib/api/types';
 import { fetchLiveSession, fetchSessionJoinUrl } from '@/lib/api/monitoring';
 import { LiveSessionWorkspace } from '@/components/features/sessions/virtual/LiveSessionWorkspace';
+import { LearnerCheckInModal } from '@/components/features/sessions/in-person/LearnerCheckInModal';
+import { VenueDetailModal } from '@/components/features/sessions/in-person/VenueDetailModal';
 import { toast } from '@/lib/toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Modal } from '@/components/ui/Modal';
@@ -41,6 +45,10 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
   const [selectedSession, setSelectedSession] = useState<ApiLearnerSession | null>(null);
   const [activeVirtualSession, setActiveVirtualSession] = useState<any | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [inspectVenueSession, setInspectVenueSession] = useState<ApiLearnerSession | null>(null);
+  const [checkInSession, setCheckInSession] = useState<ApiLearnerSession | null>(null);
+  const [checkedInIds, setCheckedInIds] = useState<string[]>([]);
+
   // Platform time (EAT), whatever the browser's time zone.
   const fmt = (iso: string) =>
     `${new Date(iso).toLocaleString(isAmharic ? 'am-ET' : 'en-US', {
@@ -50,6 +58,16 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
     })} ${APP_TIME_ZONE_LABEL}`;
 
   const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
+  const isPersonSession = (s: ApiLearnerSession) =>
+    s.sessionType === 'IN_PERSON' ||
+    Boolean(s.venueId) ||
+    Boolean(s.venue) ||
+    s.platform === 'IN_PERSON' ||
+    (s.titleEn || '').toLowerCase().includes('in_person') ||
+    (s.titleEn || '').toLowerCase().includes('classroom');
+
+  const anyInPerson = sessions.some(isPersonSession);
 
   const isTimeReached = (s: ApiLearnerSession) => {
     if (s.status === 'LIVE') return true;
@@ -114,13 +132,22 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6 md:p-10">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
-          <Video className="h-5 w-5" />
+        <div
+          className={cn(
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+            anyInPerson ? 'bg-warning-soft text-warning' : 'bg-info-soft text-info',
+          )}
+        >
+          {anyInPerson ? <Building2 className="h-5 w-5" /> : <Video className="h-5 w-5" />}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">{t('classroomSidebar.liveSessions')}</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            {anyInPerson ? 'Classroom Sessions' : t('classroomSidebar.liveSessions')}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t('liveSessionsStage.onlineSessionsForThisCourseAttend')}
+            {anyInPerson
+              ? 'In-person classroom sessions for this course. Attend them at your assigned branch venue; your certificate is issued once you have attended every session and satisfied course requirements.'
+              : t('liveSessionsStage.onlineSessionsForThisCourseAttend')}
           </p>
         </div>
       </div>
@@ -129,6 +156,9 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
         {sessions.map((s, i) => {
           const badge = statusBadge(s);
           const Icon = badge.icon;
+          const isPerson = isPersonSession(s);
+          const isCheckedIn = s.attended || checkedInIds.includes(s.sessionId || s.id);
+
           return (
             <li key={s.id} className="rounded-2xl border border-border bg-card p-4 shadow-2xs">
               {(s.missedRounds ?? []).length > 0 && (
@@ -161,6 +191,15 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     {s.durationMinutes ? ` · ${s.durationMinutes} ${t('liveSessionsStage.min')}` : ''}
                   </p>
                   <StartsInBadge seconds={s.startsInSeconds} className="mt-1" />
+                  {s.venue && (
+                    <div className="flex items-center gap-1.5 text-xs text-secondary-foreground font-medium mt-1">
+                      <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      <span>
+                        {s.venue.branch} · {s.venue.name}
+                        {s.venue.building ? ` (${s.venue.building})` : ''}
+                      </span>
+                    </div>
+                  )}
                   {(s.platform || s.trainerName) && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {[s.platform ? (PLATFORM_LABEL[s.platform] ?? s.platform) : null, s.trainerName].filter(Boolean).join(' · ')}
@@ -168,10 +207,19 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
-                  <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold', badge.tone)}>
-                    <Icon className="h-3.5 w-3.5" />
-                    {badge.label}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {isCheckedIn && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Checked In
+                      </span>
+                    )}
+                    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold', badge.tone)}>
+                      <Icon className="h-3.5 w-3.5" />
+                      {badge.label}
+                    </span>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -180,7 +228,27 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                     >
                       {t('liveSessionsStage.viewSession')}
                     </button>
-                    {s.status === 'LIVE' ? (
+                    {isPerson && s.venue && (
+                      <button
+                        type="button"
+                        onClick={() => setInspectVenueSession(s)}
+                        className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:bg-muted hover:text-foreground flex items-center gap-1.5 shadow-2xs"
+                        title="View classroom venue location & directions"
+                      >
+                        <MapPin className="h-3.5 w-3.5 text-amber-500" />
+                        Venue
+                      </button>
+                    )}
+                    {isPerson ? (
+                      <button
+                        type="button"
+                        onClick={() => setCheckInSession(s)}
+                        className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 active:bg-amber-800 shadow-xs flex items-center gap-1.5"
+                      >
+                        <Building2 className="h-3.5 w-3.5" />
+                        {isCheckedIn ? 'Checked In' : 'Classroom Check-In'}
+                      </button>
+                    ) : s.status === 'LIVE' ? (
                       <button
                         type="button"
                         onClick={() => handleJoinSession(s)}
@@ -230,7 +298,11 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
           open={Boolean(selectedSession)}
           onClose={() => setSelectedSession(null)}
           title={selectedSession.titleEn}
-          subtitle={t('liveSessionsStage.onlineScheduledSessionDetails')}
+          subtitle={
+            isPersonSession(selectedSession)
+              ? 'In-person classroom session schedule and venue details'
+              : t('liveSessionsStage.onlineScheduledSessionDetails')
+          }
           size="md"
           footer={
             <div className="flex items-center justify-between w-full">
@@ -241,7 +313,22 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               >
                 {t('liveSessionsStage.close')}
               </Button>
-              {selectedSession.status === 'LIVE' ? (
+              {isPersonSession(selectedSession) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const s = selectedSession;
+                    setSelectedSession(null);
+                    setCheckInSession(s);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 shadow transition"
+                >
+                  <Building2 className="h-4 w-4" />
+                  {selectedSession.attended || checkedInIds.includes(selectedSession.sessionId || selectedSession.id)
+                    ? 'Checked In'
+                    : 'Classroom Check-In'}
+                </button>
+              ) : selectedSession.status === 'LIVE' ? (
                 <button
                   type="button"
                   onClick={() => handleJoinSession(selectedSession)}
@@ -295,7 +382,7 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               })()}
             </div>
 
-            {!isTimeReached(selectedSession) && (
+            {!isTimeReached(selectedSession) && !isPersonSession(selectedSession) && (
               <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/30 text-warning text-xs font-medium">
                 <Clock className="h-4 w-4 shrink-0 text-warning" />
                 <span>
@@ -328,11 +415,15 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
 
               <div className="p-3 rounded-xl border border-border/60 bg-muted/50">
                 <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  {t('liveSessionsStage.platform')}
+                  {isPersonSession(selectedSession) ? <Building2 className="h-3.5 w-3.5" /> : <Globe className="h-3.5 w-3.5" />}
+                  {isPersonSession(selectedSession) ? 'Delivery Mode' : t('liveSessionsStage.platform')}
                 </span>
                 <p className="mt-1 font-semibold text-foreground text-xs">
-                  {selectedSession.platform ? (PLATFORM_LABEL[selectedSession.platform] ?? selectedSession.platform) : t('liveSessionsStage.virtualClassroom')}
+                  {isPersonSession(selectedSession)
+                    ? 'In-Person Physical Classroom'
+                    : selectedSession.platform
+                      ? (PLATFORM_LABEL[selectedSession.platform] ?? selectedSession.platform)
+                      : t('liveSessionsStage.virtualClassroom')}
                 </p>
               </div>
 
@@ -345,6 +436,24 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
                   {selectedSession.trainerName || t('liveSessionsStage.assignedCourseTrainer')}
                 </p>
               </div>
+
+              {selectedSession.venue && (
+                <div className="p-3 rounded-xl border border-border/60 bg-muted/50 sm:col-span-2">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-subtle-foreground">
+                    <MapPin className="h-3.5 w-3.5 text-amber-500" />
+                    Classroom Venue Location
+                  </span>
+                  <p className="mt-1 font-semibold text-foreground text-xs">
+                    {selectedSession.venue.branch} · {selectedSession.venue.name}
+                    {selectedSession.venue.building ? ` (${selectedSession.venue.building})` : ''}
+                  </p>
+                  {selectedSession.venue.facilities && selectedSession.venue.facilities.length > 0 && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Facilities: {selectedSession.venue.facilities.join(', ')}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="p-3 rounded-xl bg-warning-soft border border-warning/30 text-xs text-warning">
@@ -373,6 +482,43 @@ export function LiveSessionsStage({ sessions }: { sessions: ApiLearnerSession[] 
               : selectedSession?.trainerName || undefined
           }
           userRole="learner"
+        />
+      )}
+
+      {checkInSession && (
+        <LearnerCheckInModal
+          open={Boolean(checkInSession)}
+          onClose={() => setCheckInSession(null)}
+          session={
+            {
+              ...checkInSession,
+              id: checkInSession.sessionId || checkInSession.id,
+              venue: checkInSession.venue ?? undefined,
+            } as any
+          }
+          onSuccess={() => {
+            if (checkInSession) {
+              const sid = checkInSession.sessionId || checkInSession.id;
+              setCheckedInIds((prev) => (prev.includes(sid) ? prev : [...prev, sid]));
+              toast.success('Successfully checked in to classroom session!');
+            }
+          }}
+        />
+      )}
+
+      {inspectVenueSession && inspectVenueSession.venue && (
+        <VenueDetailModal
+          open={Boolean(inspectVenueSession)}
+          onClose={() => setInspectVenueSession(null)}
+          venue={inspectVenueSession.venue}
+          session={
+            {
+              ...inspectVenueSession,
+              id: inspectVenueSession.sessionId || inspectVenueSession.id,
+              venue: inspectVenueSession.venue ?? undefined,
+            } as any
+          }
+          courseTitle={inspectVenueSession.titleEn}
         />
       )}
     </div>

@@ -84,6 +84,87 @@ async function main() {
   }
   console.log(`Found ${venues.length} active physical venues`);
 
+  // 2.1 Seed at least 2 In-Person Trainers for each branch venue
+  console.log('Seeding specialized In-Person Trainers (2 per branch venue)...');
+  const seededBranchTrainers: Record<string, any[]> = {};
+
+  for (const venue of venues) {
+    seededBranchTrainers[venue.id] = [];
+    const branchPrefix = venue.branch.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    for (let tNum = 1; tNum <= 2; tNum++) {
+      const trainerEmail = `trainer.${branchPrefix}.${tNum}@mor.gov.et`;
+      const trainerFirstName = `${venue.branch.split(' ')[0]}Trainer`;
+      const trainerLastName = `Specialist${tNum}`;
+
+      const tUser = await prisma.user.upsert({
+        where: { email: trainerEmail },
+        update: {
+          primaryVenueId: venue.id,
+          trainerType: 'IN_PERSON',
+          isActive: true,
+          registrationStatus: ApprovalStatus.APPROVED,
+        },
+        create: {
+          email: trainerEmail,
+          password: passwordHash,
+          firstName: trainerFirstName,
+          lastName: trainerLastName,
+          phone: `+251911${Math.floor(100000 + Math.random() * 900000)}`,
+          locale: 'en',
+          isActive: true,
+          registrationStatus: ApprovalStatus.APPROVED,
+          primaryVenueId: venue.id,
+          trainerType: 'IN_PERSON',
+          emailVerifiedAt: new Date(),
+        },
+      });
+
+      await prisma.userRole.upsert({
+        where: { userId_role: { userId: tUser.id, role: 'TRAINER' } },
+        update: {},
+        create: { userId: tUser.id, role: 'TRAINER' },
+      });
+
+      seededBranchTrainers[venue.id].push(tUser);
+      console.log(`  ✓ Seeded In-Person Trainer ${tUser.email} for "${venue.branch}" (Venue: ${venue.name})`);
+    }
+  }
+
+  // Also seed dedicated Online Trainers
+  for (let oNum = 1; oNum <= 2; oNum++) {
+    const onlineEmail = `trainer.online.${oNum}@mor.gov.et`;
+    const oUser = await prisma.user.upsert({
+      where: { email: onlineEmail },
+      update: {
+        trainerType: 'ONLINE',
+        primaryVenueId: null,
+        isActive: true,
+        registrationStatus: ApprovalStatus.APPROVED,
+      },
+      create: {
+        email: onlineEmail,
+        password: passwordHash,
+        firstName: `OnlineTrainer`,
+        lastName: `Virtual${oNum}`,
+        phone: `+251922${Math.floor(100000 + Math.random() * 900000)}`,
+        locale: 'en',
+        isActive: true,
+        registrationStatus: ApprovalStatus.APPROVED,
+        primaryVenueId: null,
+        trainerType: 'ONLINE',
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: oUser.id, role: 'TRAINER' } },
+      update: {},
+      create: { userId: oUser.id, role: 'TRAINER' },
+    });
+    console.log(`  ✓ Seeded Pure Online Trainer ${oUser.email}`);
+  }
+
   // 3. Upsert Course VAT102 (In-Person Classroom version of VAT101)
   const courseCode = 'VAT102';
 
@@ -348,12 +429,30 @@ async function main() {
     },
   });
 
+  const venueA = venues[0];
+  const venueB = venues[1] || venues[0];
+
+  const trainerA = seededBranchTrainers[venueA.id]?.[0] || user;
+  const trainerB = seededBranchTrainers[venueB.id]?.[0] || user;
+
   const roundSchedules = [
     {
       roundNumber: 1,
       rescheduleStatus: 'ROUND_1',
-      venue: venues[0],
+      venue: venueA,
+      trainer: trainerA,
       isFirstRound: true,
+      slots: [
+        { plan: plan1, scheduledAt: round1Day1, durationMinutes: 90 },
+        { plan: plan2, scheduledAt: round1Day2, durationMinutes: 90 },
+      ],
+    },
+    {
+      roundNumber: 1,
+      rescheduleStatus: 'ROUND_1',
+      venue: venueB,
+      trainer: trainerB,
+      isFirstRound: false,
       slots: [
         { plan: plan1, scheduledAt: round1Day1, durationMinutes: 90 },
         { plan: plan2, scheduledAt: round1Day2, durationMinutes: 90 },
@@ -362,7 +461,19 @@ async function main() {
     {
       roundNumber: 2,
       rescheduleStatus: 'ROUND_2',
-      venue: venues[1] || venues[0],
+      venue: venueA,
+      trainer: trainerA,
+      isFirstRound: false,
+      slots: [
+        { plan: plan1, scheduledAt: round2Day1, durationMinutes: 90 },
+        { plan: plan2, scheduledAt: round2Day2, durationMinutes: 90 },
+      ],
+    },
+    {
+      roundNumber: 2,
+      rescheduleStatus: 'ROUND_2',
+      venue: venueB,
+      trainer: trainerB,
       isFirstRound: false,
       slots: [
         { plan: plan1, scheduledAt: round2Day1, durationMinutes: 90 },
@@ -377,7 +488,7 @@ async function main() {
         data: {
           courseId: course.id,
           venueId: round.venue.id,
-          trainerId: user.id,
+          trainerId: round.trainer.id,
           sessionPlanId: round.isFirstRound ? slot.plan.id : null,
           originalPlanId: slot.plan.id,
           plannedOrder: slot.plan.order,
@@ -413,20 +524,21 @@ async function main() {
       });
 
       console.log(
-        `Scheduled [Round ${round.roundNumber}] "${slot.plan.titleEn}" at venue "${round.venue.name}" (${round.venue.branch}), date: ${slot.scheduledAt.toISOString()}`,
+        `Scheduled [Round ${round.roundNumber}] "${slot.plan.titleEn}" at venue "${round.venue.name}" (${round.venue.branch}) with Trainer ${round.trainer.firstName} ${round.trainer.lastName}, date: ${slot.scheduledAt.toISOString()}`,
       );
     }
   }
 
   console.log(`\n======================================================`);
-  console.log(`SUCCESS! IN-PERSON TEST COURSE SEEDED:`);
+  console.log(`SUCCESS! MULTI-BRANCH IN-PERSON TEST COURSE & TRAINERS SEEDED:`);
   console.log(`  Course Code : ${course.code}`);
   console.log(`  Title       : ${course.title}`);
   console.log(`  Delivery    : ${course.deliveryMode}`);
   console.log(`  Status      : ${course.status}`);
   console.log(`  Account     : ${user.email} (Password: Password123!)`);
   console.log(`  Roles       : ${roles.join(', ')}`);
-  console.log(`  Rounds      : 2 Rounds scheduled (2 Classroom Sessions per Round)`);
+  console.log(`  Rounds      : Round 1 at "${venueA.branch}" & Round 2 at "${venueB.branch}"`);
+  console.log(`  Trainers    : 2 In-Person Trainers seeded for each branch venue`);
   console.log(`======================================================\n`);
 }
 

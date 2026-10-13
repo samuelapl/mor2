@@ -37,6 +37,11 @@ export class UpdateUserDto {
   @IsString()
   primaryVenueId?: string;
 
+  @ApiPropertyOptional({ enum: ['ONLINE', 'IN_PERSON', 'BOTH'] })
+  @IsOptional()
+  @IsEnum(['ONLINE', 'IN_PERSON', 'BOTH'])
+  trainerType?: 'ONLINE' | 'IN_PERSON' | 'BOTH';
+
   @ApiPropertyOptional({ description: 'Email me copies of in-app notifications' })
   @IsOptional()
   @IsBoolean()

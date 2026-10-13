@@ -65,6 +65,15 @@ describe('InPersonSessionsService — Round Scheduling & Grouping', () => {
       enrollment: {
         count: jest.fn().mockResolvedValue(5),
       },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'trainer-1',
+          firstName: 'Samuel',
+          lastName: 'Tiruneh',
+          trainerType: 'IN_PERSON',
+          primaryVenueId: 'venue-1',
+        }),
+      },
       $queryRaw: jest.fn().mockResolvedValue([]),
       $transaction: jest.fn((cb: any) => cb(prisma)),
       ...overrides,
@@ -196,6 +205,56 @@ describe('InPersonSessionsService — Round Scheduling & Grouping', () => {
         courseId: 'course-1',
         venueId: 'venue-1',
         sessions: [],
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('schedules rounds across multiple branch venues at once via scheduleMultiBranchRounds', async () => {
+    const { service } = makeService();
+    const result = await service.scheduleMultiBranchRounds({
+      courseId: 'course-1',
+      branches: [
+        {
+          venueId: 'venue-1',
+          trainerId: 'trainer-1',
+          sessions: [
+            {
+              scheduledAt: '2026-10-15T09:00:00.000Z',
+              durationMinutes: 90,
+              titleEn: 'Session 1',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.count).toBe(1);
+    expect(result.rounds).toHaveLength(1);
+    expect(result.rounds[0].roundNumber).toBe(1);
+  });
+
+  it('rejects an in-person trainer assigned to a different branch venue', async () => {
+    const { service, prisma } = makeService();
+    prisma.user.findUnique.mockResolvedValueOnce({
+      id: 'trainer-other',
+      firstName: 'Other',
+      lastName: 'Trainer',
+      trainerType: 'IN_PERSON',
+      primaryVenueId: 'venue-different',
+    });
+
+    await expect(
+      service.scheduleRound({
+        courseId: 'course-1',
+        venueId: 'venue-1',
+        trainerId: 'trainer-other',
+        sessions: [
+          {
+            scheduledAt: '2026-10-15T09:00:00.000Z',
+            durationMinutes: 90,
+            titleEn: 'Session 1',
+          },
+        ],
       }),
     ).rejects.toThrow(BadRequestException);
   });
